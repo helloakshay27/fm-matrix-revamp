@@ -29,7 +29,7 @@ export const EditServicePage = () => {
   const [formData, setFormData] = useState({
     serviceName: '',
     executionType: '',
-    umo: '',
+    uom: '',
     serviceDescription: '',
     siteId: null as number | null,
     buildingId: null as number | null,
@@ -56,18 +56,31 @@ export const EditServicePage = () => {
   const [errors, setErrors] = useState({
     serviceName: false,
     executionType: false,
-    siteId: false,
     buildingId: false,
     wingId: false,
     areaId: false,
     floorId: false,
   });
 
+  // Upload constraints (match Add Service page)
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+  const ALLOWED_EXTS = new Set(['pdf', 'jpg', 'jpeg', 'xls', 'xlsx']);
+  const getExt = (name: string) => (name.split('.').pop() || '').toLowerCase();
+  const formatMB = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+
   useEffect(() => {
     if (id) {
       dispatch(fetchService(id));
       dispatch(fetchSites());
       dispatch(fetchGroups());
+      
+      // Auto-set site based on user's current site
+      const userSiteId = localStorage.getItem('selectedSiteId') || localStorage.getItem('siteId');
+      if (userSiteId && !formData.siteId) {
+        const siteId = Number(userSiteId);
+        setFormData(prev => ({ ...prev, siteId }));
+        dispatch(fetchBuildings(siteId));
+      }
     }
     return () => {
       dispatch(resetServiceState());
@@ -79,7 +92,7 @@ export const EditServicePage = () => {
       setFormData({
         serviceName: fetchedService.service_name || '',
         executionType: fetchedService.execution_type || '',
-        umo: fetchedService.base_uom || '',
+        uom: fetchedService.base_uom || '',
         serviceDescription: fetchedService.description || '',
         siteId: fetchedService.site_id || null,
         buildingId: fetchedService.building_id || null,
@@ -142,11 +155,6 @@ export const EditServicePage = () => {
     if (field === 'executionType' && value !== '') {
       setErrors(prev => ({ ...prev, executionType: false }));
     }
-    if (field === 'siteId' && value !== null) {
-      setErrors(prev => ({ ...prev, siteId: false }));
-      dispatch(fetchBuildings(Number(value)));
-      setFormData(prev => ({ ...prev, buildingId: null, wingId: null, areaId: null, floorId: null, roomId: null }));
-    }
     if (field === 'buildingId' && value !== null) {
       setErrors(prev => ({ ...prev, buildingId: false }));
       const selectedBuilding = buildings.find(b => b.id === value);
@@ -179,12 +187,41 @@ export const EditServicePage = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      const newFiles = Array.from(files);
+      const incoming = Array.from(files);
+      const rejected: string[] = [];
+
       setSelectedFile(prevFiles => {
         const existingNames = new Set(prevFiles.map(f => f.name));
-        const filteredNewFiles = newFiles.filter(f => !existingNames.has(f.name));
-        return [...prevFiles, ...filteredNewFiles];
+        const accepted: File[] = [];
+
+        for (const f of incoming) {
+          const ext = getExt(f.name);
+          if (!ALLOWED_EXTS.has(ext)) {
+            rejected.push(`${f.name}: unsupported format`);
+            continue;
+          }
+          if (f.size > MAX_FILE_SIZE) {
+            rejected.push(`${f.name}: too large (${formatMB(f.size)}). Max 10 MB`);
+            continue;
+          }
+          if (existingNames.has(f.name)) {
+            // skip duplicates by name
+            continue;
+          }
+          accepted.push(f);
+        }
+
+        if (rejected.length) {
+          toast.error(
+            `Some files were not added:\n` + rejected.slice(0, 5).join('\n') + (rejected.length > 5 ? `\n…and ${rejected.length - 5} more` : ''),
+            { duration: 5000 }
+          );
+        }
+
+        return [...prevFiles, ...accepted];
       });
+
+      // Reset input so same file can be reselected after modifying
       event.target.value = '';
     }
   };
@@ -195,7 +232,6 @@ export const EditServicePage = () => {
 
     const hasServiceNameError = formData.serviceName.trim() === '';
     const hasExecutionTypeError = formData.executionType === '';
-    const hasSiteIdError = formData.siteId === null;
     const hasBuildingIdError = formData.buildingId === null;
     const hasWingIdError = formData.wingId === null;
     const hasAreaIdError = formData.areaId === null;
@@ -204,7 +240,6 @@ export const EditServicePage = () => {
     if (
       hasServiceNameError ||
       hasExecutionTypeError ||
-      hasSiteIdError ||
       hasBuildingIdError ||
       hasWingIdError ||
       hasAreaIdError ||
@@ -213,7 +248,6 @@ export const EditServicePage = () => {
       setErrors({
         serviceName: hasServiceNameError,
         executionType: hasExecutionTypeError,
-        siteId: hasSiteIdError,
         buildingId: hasBuildingIdError,
         wingId: hasWingIdError,
         areaId: hasAreaIdError,
@@ -223,7 +257,6 @@ export const EditServicePage = () => {
       const errorFields = [];
       if (hasServiceNameError) errorFields.push('Service Name');
       if (hasExecutionTypeError) errorFields.push('Execution Type');
-      if (hasSiteIdError) errorFields.push('Site');
       if (hasBuildingIdError) errorFields.push('Building');
       if (hasWingIdError) errorFields.push('Wing');
       if (hasAreaIdError) errorFields.push('Area');
@@ -238,7 +271,6 @@ export const EditServicePage = () => {
     setErrors({
       serviceName: false,
       executionType: false,
-      siteId: false,
       buildingId: false,
       wingId: false,
       areaId: false,
@@ -249,7 +281,7 @@ export const EditServicePage = () => {
     try {
       sendData.append('pms_service[service_name]', formData.serviceName);
       sendData.append('pms_service[execution_type]', formData.executionType);
-      sendData.append('pms_service[base_uom]', formData.umo || '');
+      sendData.append('pms_service[base_uom]', formData.uom || '');
       sendData.append('pms_service[site_id]', formData.siteId?.toString() || '');
       sendData.append('pms_service[building_id]', formData.buildingId?.toString() || '');
       sendData.append('pms_service[wing_id]', formData.wingId?.toString() || '');
@@ -319,7 +351,7 @@ export const EditServicePage = () => {
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT SERVICE - ID: {id}</h1>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT SERVICE</h1>
       </div>
 
       <Card className="mb-6">
@@ -366,10 +398,10 @@ export const EditServicePage = () => {
               )}
             </FormControl>
             <TextField
-              label="UMO"
-              placeholder="Enter UMO"
-              value={formData.umo}
-              onChange={(e) => handleInputChange('umo', e.target.value)}
+              label="UOM"
+              placeholder="Enter UOM"
+              value={formData.uom}
+              onChange={(e) => handleInputChange('uom', e.target.value)}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -379,35 +411,6 @@ export const EditServicePage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <FormControl fullWidth variant="outlined" error={errors.siteId}>
-              <InputLabel id="site-select-label" shrink>
-                Site<span style={{ color: '#C72030' }}>*</span>
-              </InputLabel>              <MuiSelect
-                labelId="site-select-label"
-                label="Site"
-                value={formData.siteId || ''}
-                onChange={(e) => handleInputChange('siteId', Number(e.target.value))}
-                sx={fieldStyles}
-                disabled={isSubmitting || locationLoading.sites}
-                displayEmpty
-              >
-                <MenuItem value="">
-                  <em>Select Site</em>
-                </MenuItem>
-                {Array.isArray(sites) && sites.map((site) => (
-                  <MenuItem key={site.id} value={site.id}>
-                    {site.name}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-              {errors.siteId && <FormHelperText>Site is required</FormHelperText>}
-              {locationLoading.sites && (
-                <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-                  <CircularProgress size={16} />
-                </div>
-              )}
-            </FormControl>
-
             <FormControl fullWidth variant="outlined" error={errors.buildingId}>
               <InputLabel id="building-select-label" shrink>
                 Building<span style={{ color: '#C72030' }}>*</span>
@@ -494,9 +497,7 @@ export const EditServicePage = () => {
                 </div>
               )}
             </FormControl>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <FormControl fullWidth variant="outlined" error={errors.floorId}>
               <InputLabel id="floor-select-label" shrink>
                 Floor<span style={{ color: '#C72030' }}>*</span>
@@ -525,7 +526,9 @@ export const EditServicePage = () => {
                 </div>
               )}
             </FormControl>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <FormControl fullWidth variant="outlined">
               <InputLabel id="room-select-label" shrink>Room</InputLabel>
               <MuiSelect
@@ -606,6 +609,9 @@ export const EditServicePage = () => {
                 </div>
               )}
             </FormControl>
+
+            {/* Empty slot for consistent grid layout */}
+            <div></div>
           </div>
         </CardContent>
       </Card>
@@ -650,7 +656,7 @@ export const EditServicePage = () => {
               className="hidden"
               id="file-upload"
               onChange={handleFileUpload}
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png"
+              accept=".pdf,.jpg,.jpeg,.xls,.xlsx"
               multiple
               disabled={isSubmitting}
             />
@@ -673,6 +679,19 @@ export const EditServicePage = () => {
               <Upload className="w-4 h-4 mr-1" />
               Upload Files
             </Button>
+
+            {/* Upload guidelines (identical to Add Service page) */}
+            <div className="mt-4 w-full max-w-[520px]">
+              <div className="text-[12px] text-gray-700 border border-gray-200 rounded-md bg-gray-50 px-3 py-2">
+                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                  {/* <span className="font-medium text-gray-800">Upload guidelines:</span> */}
+                  <span className="text-gray-600 font-bold">Allowed formats:</span>
+                  <span className="text-gray-800">PDF, JPG, JPEG, XLS, XLSX</span>
+                  <span className="text-gray-600 font-bold">Max size per file:</span>
+                  <span className="text-gray-800">10 MB</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {(existingFiles.length > 0 || selectedFile.length > 0) && (

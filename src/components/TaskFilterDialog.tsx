@@ -125,7 +125,8 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
   const typeOptions = [
     'PPM',
     'AMC',
-    'Preparedness'
+    'Preparedness',
+    'Routine'
   ];
 
   // Date validation function
@@ -224,7 +225,6 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
     setDateError(''); // Clear date error
     
     onApply({});
-    onClose();
     toast.success('Filters cleared successfully');
   };
 

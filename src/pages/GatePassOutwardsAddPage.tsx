@@ -20,7 +20,6 @@ interface DropdownOption {
   unit?: string;
 }
 
-
 interface AttachmentFile {
   id: string;
   file: File;
@@ -37,6 +36,7 @@ interface MaterialRow {
   unit: string | null;
   description: string;
   maxQuantity: number | null;
+  otherMaterialName?: string; // NEW: for "Other"
 }
 
 export const GatePassOutwardsAddPage = () => {
@@ -47,7 +47,7 @@ export const GatePassOutwardsAddPage = () => {
   const [returnableStatus, setReturnableStatus] = useState<'returnable' | 'non-returnable'>('returnable');
 
   const [materialRows, setMaterialRows] = useState<MaterialRow[]>([
-    { id: 1, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null }
+    { id: 1, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null, otherMaterialName: '' }
   ]);
 
   const [visitorDetails, setVisitorDetails] = useState({
@@ -138,15 +138,24 @@ export const GatePassOutwardsAddPage = () => {
 
   const handleAddRow = () => {
     const newId = materialRows.length > 0 ? Math.max(...materialRows.map(r => r.id)) + 1 : 1;
-    setMaterialRows([...materialRows, { id: newId, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null }]);
+    setMaterialRows([...materialRows, { id: newId, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null, otherMaterialName: '' }]);
   };
 
   const handleDeleteRow = (id: number) => {
     setMaterialRows(materialRows.filter(row => row.id !== id));
   };
 
+  // Always add "Other" to itemCategoryOptions
+  const getItemCategoryOptionsWithOther = (rowId: number) => {
+    const options = itemCategoryOptions[rowId] || [];
+    const hasOther = options.some(opt => opt.id === -1);
+    return hasOther
+      ? options
+      : [...options, { id: -1, name: 'Other' }];
+  };
+
   const handleRowChange = async (id: number, field: keyof Omit<MaterialRow, 'id'>, value: any) => {
-    const newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
+    let newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
 
     if (field === 'itemTypeId') {
       const updatedRows = newRows.map(row => row.id === id ? { ...row, itemCategoryId: null, itemNameId: null, maxQuantity: null, quantity: '', unit: '' } : row);
@@ -181,6 +190,8 @@ export const GatePassOutwardsAddPage = () => {
       console.log("Selected Item:", selectedItem);
 
       setMaterialRows(updatedRows);
+    } else if (field === 'otherMaterialName') {
+      setMaterialRows(newRows);
     } else if (field === 'quantity') {
       // const currentRow = newRows.find(row => row.id === id);
       // if (currentRow && currentRow.maxQuantity !== null && Number(value) > currentRow.maxQuantity) {
@@ -236,86 +247,84 @@ export const GatePassOutwardsAddPage = () => {
 
   // Field-level error state
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+  const [vendorCompanyName, setVendorCompanyName] = useState<string>(''); // NEW: vendor company name field
+  const [isSubmitting, setIsSubmitting] = useState(false); // NEW: submission state
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; // Prevent double submit
 
     // Field-level validation
     if (!visitorDetails.contactPerson) {
-          toast.error("Visitor Name is required");
-          return;
-        }
-        if (!visitorDetails.contactPersonNo) {
-          toast.error("Mobile No. is required");
-          return;
-        }
-        if (visitorDetails.contactPersonNo.length !== 10) {
-          toast.error("Mobile No. must be 10 digits");
-          return;
-        }
-        
-        if (!visitorDetails.modeOfTransport) {
-          toast.error("Mode Of Transport is required");
-          return;
-        }
-        if (!visitorDetails.vehicleNo && (visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck")) {
-          toast.error("Vehicle No. is required");
-          return;
-        }
-        if (!visitorDetails.reportingTime) {
-          toast.error("Reporting Time is required");
-          return;
-        }
-        if (!selectedSite) {
-          toast.error("Site is required");
-          return;
-        }
-        if (!gatePassDetails.buildingId) {
-          toast.error("Building is required");
-          return;
-        }
-        if (!selectedCompany) {
-          toast.error("Company is required");
-          return;
-        }
-        if (!gatePassDetails.vendorId) {
-          toast.error("Vendor is required");
-          return;
-        }
-        console.log("Gate Pass Details:", gatePassDetails);
+      toast.error("Visitor Name is required");
+      return;
+    }
+    if (!visitorDetails.contactPersonNo) {
+      toast.error("Mobile No. is required");
+      return;
+    }
+    if (visitorDetails.contactPersonNo.length !== 10) {
+      toast.error("Mobile No. must be 10 digits");
+      return;
+    }
+    if (!visitorDetails.modeOfTransport) {
+      toast.error("Mode Of Transport is required");
+      return;
+    }
+    if (!visitorDetails.vehicleNo && (visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck")) {
+      toast.error("Vehicle No. is required");
+      return;
+    }
+    if (!visitorDetails.reportingTime) {
+      toast.error("Reporting Time is required");
+      return;
+    }
+    if (!selectedSite) {
+      toast.error("Site is required");
+      return;
+    }
+    if (!gatePassDetails.buildingId) {
+      toast.error("Building is required");
+      return;
+    }
+    if (!selectedCompany) {
+      toast.error("Company is required");
+      return;
+    }
+    if (!visitorDetails.gateNoId) {
+      toast.error("Gate Number is required");
+      return;
+    }
+    if (!gatePassDetails.gatePassTypeId) {
+      toast.error("Gate Pass Type is required");
+      return;
+    }
+    if (!gatePassDetails.gatePassDate) {
+      toast.error("Gate Pass Date is required");
+      return;
+    }
+    // Validate all item details and show toast for each missing field
+    for (let idx = 0; idx < materialRows.length; idx++) {
+      const row = materialRows[idx];
+      if (!row.itemTypeId) {
+        toast.error(`Item Type is required for row ${idx + 1}`);
+        return;
+      }
+      if (!row.itemCategoryId) {
+        toast.error(`Item Category is required for row ${idx + 1}`);
+        return;
+      }
+      // Require either itemNameId or otherMaterialName (for "Other")
+      if (
+        (row.itemCategoryId === -1 && !row.otherMaterialName) ||
+        (row.itemCategoryId !== -1 && !row.itemNameId)
+      ) {
+        toast.error(`Item Name is required for row ${idx + 1}`);
+        return;
+      }
+    }
 
-        if (!visitorDetails.gateNoId) {
-          toast.error("Gate Number is required");
-          return;
-        }
-        if (!gatePassDetails.gatePassTypeId) {
-          toast.error("Gate Pass Type is required");
-          return;
-        }
-        if (!gatePassDetails.gatePassDate) {
-          toast.error("Gate Pass Date is required");
-          return;
-        }
-    
-        // Validate all item details and show toast for each missing field
-        for (let idx = 0; idx < materialRows.length; idx++) {
-          const row = materialRows[idx];
-          if (!row.itemTypeId) {
-            toast.error(`Item Type is required for row ${idx + 1}`);
-            return;
-          }
-          if (!row.itemCategoryId) {
-            toast.error(`Item Category is required for row ${idx + 1}`);
-            return;
-          }
-          if (!row.itemNameId) {
-            toast.error(`Item Name is required for row ${idx + 1}`);
-            return;
-          }
-        }
-
-    // setFieldErrors(errors);
-    // if (Object.keys(errors).length > 0) return;
+    setIsSubmitting(true); // Only set after validation passes
 
     const formData = new FormData();
 
@@ -336,7 +345,8 @@ export const GatePassOutwardsAddPage = () => {
     if (visitorDetails.driverContactNo) formData.append('gate_pass[driver_contact_no]', visitorDetails.driverContactNo);
     if (visitorDetails.contactPerson) formData.append('gate_pass[contact_person]', visitorDetails.contactPerson);
     if (visitorDetails.contactPersonNo) formData.append('gate_pass[contact_person_no]', visitorDetails.contactPersonNo);
-    // Vendor
+
+    if(vendorCompanyName) formData.append('gate_pass[vendor_company_name]', vendorCompanyName); // NEW: Append vendor company name
     if (gatePassDetails.vendorId) formData.append('gate_pass[pms_supplier_id]', gatePassDetails.vendorId.toString());
     // Returnable: pass 'true' if returnable, 'false' if non-returnable
     formData.append('gate_pass[returnable]', returnableStatus === 'returnable' ? 'true' : 'false');
@@ -348,7 +358,16 @@ export const GatePassOutwardsAddPage = () => {
 
     // Append material details
     materialRows.forEach((row, index) => {
-      if (row.itemNameId) {
+      if (row.itemCategoryId === -1) {
+        if (row.otherMaterialName)
+          formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_name]`, row.otherMaterialName);        
+        if (row.itemTypeId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_type_id]`, row.itemTypeId.toString());
+        if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][item_category]`, row.itemCategoryId.toString() || 'Other');
+        if (row.quantity || row.maxQuantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][gate_pass_qty]`, String(Number(row.quantity || row.maxQuantity)));
+        if (row.unit) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][unit]`, row.unit);
+        formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_description]`, row.description ?? '');
+        formData.append(`gate_pass[gate_pass_materials_attributes][${index}][remarks]`, gatePassDetails.remarks ?? '');
+      } else {
         formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_id]`, row.itemNameId.toString());
         if (row.itemTypeId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_type_id]`, row.itemTypeId.toString());
         if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][item_category]`, row.itemCategoryId.toString());
@@ -373,12 +392,13 @@ export const GatePassOutwardsAddPage = () => {
       // if (!response.ok) throw new Error('Failed to create entry');
 
       await gatePassInwardService.createGatePassInward(formData);
-
       toast.success("Gate pass outward entry created successfully!");
       navigate('/security/gate-pass/outwards');
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error("Failed to create entry. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
   useEffect(() => {
@@ -485,6 +505,16 @@ export const GatePassOutwardsAddPage = () => {
               error={!!fieldErrors.reportingTime}
               helperText={fieldErrors.reportingTime}
             />
+            <TextField
+              label="Company Name"
+              placeholder="Enter Company Name"
+              fullWidth
+              variant="outlined"
+              value={vendorCompanyName}
+              onChange={e => setVendorCompanyName(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
 
             {returnableStatus === 'returnable' && (
               <TextField
@@ -496,10 +526,30 @@ export const GatePassOutwardsAddPage = () => {
                 onChange={e => handleVisitorChange('expectedReturnDate', e.target.value)}
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
+                inputProps={{
+                min: new Date().toISOString().split('T')[0]
+              }}
                 error={!!fieldErrors.expectedReturnDate}
                 helperText={fieldErrors.expectedReturnDate}
               />
             )}
+
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
+              <InputLabel shrink>Vendor</InputLabel>
+              <MuiSelect
+                label="Vendor"
+                notched
+                displayEmpty
+                value={gatePassDetails.vendorId || ''}
+                onChange={e => handleGatePassChange('vendorId', e.target.value)}
+              >
+                <MenuItem value="">Select Vendor</MenuItem>
+                {companies.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
+            </FormControl>
 
             
             {/* <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) =>{
@@ -541,7 +591,7 @@ export const GatePassOutwardsAddPage = () => {
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Gate Pass Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.site}>
+              {/* <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.site}>
               <InputLabel shrink>Site <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
                 label="Site"
@@ -554,7 +604,7 @@ export const GatePassOutwardsAddPage = () => {
                 {selectedSite && <MenuItem value={selectedSite.id}>{selectedSite.name}</MenuItem>}
               </MuiSelect>
               {fieldErrors.site && <Typography variant="caption" color="error">{fieldErrors.site}</Typography>}
-            </FormControl>
+            </FormControl> */}
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.buildingId}>
               <InputLabel shrink>Building <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
@@ -572,7 +622,7 @@ export const GatePassOutwardsAddPage = () => {
               </MuiSelect>
               {fieldErrors.buildingId && <Typography variant="caption" color="error">{fieldErrors.buildingId}</Typography>}
             </FormControl>
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.company}>
+            {/* <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.company}>
               <InputLabel shrink>Company Name <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
                 label="Company Name"
@@ -585,25 +635,10 @@ export const GatePassOutwardsAddPage = () => {
                 {selectedCompany && <MenuItem value={selectedCompany.id}>{selectedCompany.name}</MenuItem>}
               </MuiSelect>
               {fieldErrors.company && <Typography variant="caption" color="error">{fieldErrors.company}</Typography>}
-            </FormControl>
+            </FormControl> */}
 
             {/* Vendor Dropdown */}
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
-              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
-              <MuiSelect
-                label="Vendor"
-                notched
-                displayEmpty
-                value={gatePassDetails.vendorId || ''}
-                onChange={e => handleGatePassChange('vendorId', e.target.value)}
-              >
-                <MenuItem value="">Select Vendor</MenuItem>
-                {companies.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                ))}
-              </MuiSelect>
-              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
-            </FormControl>
+            
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gateNoId}>
               <InputLabel shrink>Gate No. <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
@@ -636,10 +671,35 @@ export const GatePassOutwardsAddPage = () => {
               </MuiSelect>
               {fieldErrors.gatePassTypeId && <Typography variant="caption" color="error">{fieldErrors.gatePassTypeId}</Typography>}
             </FormControl>
-            <TextField label={<span>Gate Pass Date <span style={{ color: 'red' }}>*</span></span>} type="date" fullWidth variant="outlined" value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
+            <TextField
+              label={<span>Gate Pass Date <span style={{ color: 'red' }}>*</span></span>}
+              type="date"
+              fullWidth
+              variant="outlined"
+              value={gatePassDetails.gatePassDate}
+              onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
               error={!!fieldErrors.gatePassDate}
               helperText={fieldErrors.gatePassDate}
+              inputProps={{
+                min: new Date().toISOString().split('T')[0]
+              }}
             />
+             <div className="lg:col-span-3">
+                          <TextField
+                            label="Remarks"
+                            placeholder="Enter remarks"
+                            fullWidth
+                            variant="outlined"
+                            value={gatePassDetails.remarks}
+                            onChange={(e) => handleGatePassChange('remarks', e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            // Removed multiline and rows for single-line input
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          />
+                        </div>
+            
           </div>
         </div>
 
@@ -692,36 +752,92 @@ export const GatePassOutwardsAddPage = () => {
                           label="Item Category"
                           notched
                           displayEmpty
-                          value={row.itemCategoryId || ''}
-                          onChange={e => handleRowChange(row.id, 'itemCategoryId', e.target.value)}
-                          disabled={!row.itemTypeId}
-                        >
-                          <MenuItem value="">Select Category</MenuItem>
-                          {(itemCategoryOptions[row.id] || []).filter(option => option.id !== '').map((option) => (
-                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                    </td>
-                    <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      <FormControl fullWidth variant="outlined" size="small" >
-                        <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
-                        <MuiSelect
-                          label="Item Name"
-                          notched
-                          displayEmpty
-                          value={row.itemNameId || ''}
-                          onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
-                          disabled={!row.itemCategoryId}
-                        >
-                          <MenuItem value="">Select Item</MenuItem>
-                          {(itemNameOptions[row.id] || []).map((option) => (
-                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                    </td>
-                    <td className="px-4 py-4">
+                          value={
+        row.itemCategoryId !== null && row.itemCategoryId !== undefined
+          ? String(row.itemCategoryId)
+          : ''
+      }
+      onChange={e => {
+        const value = e.target.value;
+        if (value === String(-1)) {
+          handleRowChange(row.id, 'itemCategoryId', -1);
+        } else if (value === '') {
+          handleRowChange(row.id, 'itemCategoryId', null);
+        } else {
+          const numVal = Number(value);
+          handleRowChange(row.id, 'itemCategoryId', isNaN(numVal) ? value : numVal);
+        }
+      }}
+      disabled={!row.itemTypeId}
+    >
+      <MenuItem value="">Select Category</MenuItem>
+      {(itemCategoryOptions[row.id] || [])
+        .filter(option => option.id !== "" && option.name !== "")
+        .map((option) => (
+          <MenuItem key={option.id} value={String(option.id)}>
+            <span style={{
+              display: 'inline-block',
+              maxWidth: 180,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {option.name}
+            </span>
+          </MenuItem>
+        ))}
+      <MenuItem key={-1} value={String(-1)}>Other</MenuItem>
+    </MuiSelect>
+  </FormControl>
+</td>
+<td className="px-4 py-4" style={{ minWidth: 150 }}>
+  {/* If "Other" is selected, show input, else dropdown */}
+  {row.itemCategoryId === -1 ? (
+    <TextField
+      variant="outlined"
+      size="small"
+      placeholder="Enter Item Name"
+      value={row.otherMaterialName || ''}
+      onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
+      required
+    />
+  ) : (
+    <FormControl fullWidth variant="outlined" size="small" >
+      <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
+      <MuiSelect
+        label="Item Name"
+        notched
+        displayEmpty
+        value={row.itemNameId || ''}
+        onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
+        disabled={!row.itemCategoryId}
+        MenuProps={{
+          PaperProps: {
+            style: {
+              maxWidth: 200,
+            },
+          },
+        }}
+      >
+        <MenuItem value="">Select Item</MenuItem>
+        {(itemNameOptions[row.id] || []).map((option) => (
+          <MenuItem key={option.id} value={option.id}>
+            <span style={{
+              display: 'inline-block',
+              maxWidth: 180,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {option.name}
+            </span>
+          </MenuItem>
+        ))}
+      </MuiSelect>
+    </FormControl>
+  )}
+</td>
+<td className="px-4 py-4">
                       <TextField
                         variant="outlined"
                         size="small"
@@ -868,8 +984,14 @@ export const GatePassOutwardsAddPage = () => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-4 pt-4">
-          <Button type="submit" className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2">Submit</Button>
+        <div className="flex items-center justify-center gap-4 pt-4">
+          <Button
+            type="submit"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </Button>
           <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => navigate('/security/gate-pass/outwards')}>Cancel</Button>
         </div>
       </form>

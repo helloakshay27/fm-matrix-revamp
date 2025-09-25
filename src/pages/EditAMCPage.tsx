@@ -8,7 +8,6 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Form
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
-import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
 import { fetchServicesData } from '@/store/slices/servicesSlice';
 import { fetchAMCDetails } from '@/store/slices/amcDetailsSlice';
 import { apiClient } from '@/utils/apiClient';
@@ -27,7 +26,7 @@ export const EditAMCPage = () => {
 
   // Redux state
   const { data: assetsData, loading: assetsLoading } = useAppSelector(state => state.assets);
-  const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
+  // Suppliers will be fetched directly (no Redux slice)
   const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
   const { data: amcData, loading: amcLoading, error: amcError } = useAppSelector(state => state.amcDetails);
 
@@ -87,7 +86,8 @@ export const EditAMCPage = () => {
   // Extract data from Redux state
   // const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
   const [assetList, setAssetList] = useState<any[]>([]);
-  const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [suppliersLoading, setSuppliersLoading] = useState(false);
   const fetchAsset = async () => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem("token"); // Get token from localStorage
@@ -236,10 +236,49 @@ useEffect(() => {
     }));
   };
 
-  // Fetch data using Redux slices
+  // Fetch data using Redux slices (assets/services) & direct suppliers
   useEffect(() => {
     dispatch(fetchAssetsData({ page: 1 }));
-    dispatch(fetchSuppliersData());
+    // Direct suppliers load
+    const loadSuppliers = async () => {
+      try {
+        let baseUrl = localStorage.getItem('baseUrl') || '';
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) {
+          console.warn('Missing baseUrl or token for suppliers fetch');
+          return;
+        }
+        // Remove protocol if user stored full URL
+        baseUrl = baseUrl.replace(/^https?:\/\//i, '');
+        setSuppliersLoading(true);
+        const endpoint = `https://${baseUrl}/pms/suppliers/get_suppliers.json`;
+        const resp = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+        console.debug('Suppliers fetch status', resp.status, 'url', endpoint);
+        if (!resp.ok) {
+          console.warn('Suppliers response not ok');
+          setSuppliers([]);
+          return;
+        }
+        const data = await resp.json();
+        console.debug('Suppliers raw payload', data);
+        const arr = Array.isArray(data)
+          ? data
+          : (Array.isArray(data?.pms_suppliers)
+            ? data.pms_suppliers
+            : (Array.isArray(data?.suppliers) ? data.suppliers : (Array.isArray(data?.data) ? data.data : [])));
+        setSuppliers(arr);
+        if (!arr.length) {
+          toast({ title: 'No suppliers', description: 'Supplier list empty from API.', variant: 'destructive' });
+        }
+      } catch (e) {
+        console.error('Suppliers load error', e);
+        setSuppliers([]);
+        toast({ title: 'Error', description: 'Failed to load suppliers.', variant: 'destructive' });
+      } finally {
+        setSuppliersLoading(false);
+      }
+    };
+    loadSuppliers();
 
     const fetchAssetGroups = async () => {
       setLoading(true);
@@ -418,7 +457,7 @@ useEffect(() => {
   const handleSubmit = useCallback(async (action: string) => {
     if (!id) return;
 
-    if (assetsLoading || suppliersLoading || servicesLoading || loading) {
+  if (assetsLoading || suppliersLoading || servicesLoading || loading) {
       toast({
         title: 'Error',
         description: 'Please wait for all data to load.',
@@ -802,13 +841,13 @@ useEffect(() => {
                           return <em>Select Supplier</em>;
                         }
                         const supplier = suppliers.find(s => s.id.toString() === selected);
-                        return supplier ? supplier.company_name : selected;
+                        return supplier ? (supplier.company_name || supplier.name) : selected;
                       }}
                     >
                       <MenuItem value=""><em>Select Supplier</em></MenuItem>
                       {Array.isArray(suppliers) && suppliers.map((supplier) => (
                         <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                          {supplier.company_name}
+                          {supplier.company_name || supplier.name}
                         </MenuItem>
                       ))}
                     </MuiSelect>
@@ -883,7 +922,7 @@ useEffect(() => {
                         <MenuItem value=""><em>Select Supplier</em></MenuItem>
                         {Array.isArray(suppliers) && suppliers.map((supplier) => (
                           <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                            {supplier.company_name}
+                            {supplier.company_name || supplier.name}
                           </MenuItem>
                         ))}
                       </MuiSelect>
@@ -907,23 +946,7 @@ useEffect(() => {
 
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <TextField
-                  label={<span>Cost<span style={{ color: '#C72030' }}>*</span></span>}
-                  placeholder="Enter Cost"
-                  name="cost"
-                  type="number"
-                  value={formData.cost}
-                  onChange={e => handleInputChange('cost', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  error={!!errors.cost}
-                  helperText={errors.cost}
-                />
-              </div>
-
+              {/* Row 1: Contract Name | Start Date | End Date */}
               <div>
                 <TextField
                   label={<span>Contract Name<span style={{ color: '#C72030' }}>*</span></span>}
@@ -955,6 +978,23 @@ useEffect(() => {
                 />
               </div>
 
+              <div>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label={<span>End Date<span style={{ color: '#C72030' }}>*</span></span>}
+                  value={formData.endDate}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ style: { height: 46 }, min: formData.startDate || undefined }}
+                  sx={{ '& .MuiInputBase-root': { height: 46 } }}
+                  error={!!errors.endDate}
+                  helperText={errors.endDate || (!formData.startDate && "Please select a start date first.")}
+                  disabled={!formData.startDate || updateLoading}
+                />
+              </div>
+
+              {/* Row 2: First Service Date | Payment Terms | AMC Cost */}
               <div>
                 <TextField
                   fullWidth
@@ -995,20 +1035,22 @@ useEffect(() => {
 
               <div>
                 <TextField
+                  label={<span>Cost<span style={{ color: '#C72030' }}>*</span></span>}
+                  placeholder="Enter Cost"
+                  name="cost"
+                  type="number"
+                  value={formData.cost}
+                  onChange={e => handleInputChange('cost', e.target.value)}
                   fullWidth
-                  type="date"
-                  label={<span>End Date<span style={{ color: '#C72030' }}>*</span></span>}
-                  value={formData.endDate}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  inputProps={{ style: { height: 46 }, min: formData.startDate || undefined }}
-                  sx={{ '& .MuiInputBase-root': { height: 46 } }}
-                  error={!!errors.endDate}
-                  helperText={errors.endDate || (!formData.startDate && "Please select a start date first.")}
-                  disabled={!formData.startDate || updateLoading}
+                  InputProps={{ sx: fieldStyles }}
+                  error={!!errors.cost}
+                  helperText={errors.cost}
                 />
               </div>
 
+              {/* Row 3: No. of Visits */}
               <div>
                 <TextField
                   label={<span>No. of Visits<span style={{ color: '#C72030' }}>*</span></span>}

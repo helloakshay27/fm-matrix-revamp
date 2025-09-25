@@ -94,7 +94,9 @@ export const ExternalUsersDashboard = () => {
           setLoading(false);
           return;
         }
-        let url = `https://${baseUrl}/pms/users/non_fte_users.json?page=${page}`;
+        // Ensure baseUrl doesn't get double https://
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        let url = `${cleanBaseUrl}/pms/users/non_fte_users.json?page=${page}`;
         // If any filter is applied, use the correct param for each filter
         const hasFilters = Object.values(filters).some(v => v && v !== '');
         const hasSearch = Boolean(debouncedSearch.trim());
@@ -113,7 +115,9 @@ export const ExternalUsersDashboard = () => {
           if (filters.circle) filterParams.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
           if (filters.department) filterParams.push(`q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`);
           if (filters.role) filterParams.push(`q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`);
-          if (filters.report_to_id) filterParams.push(`q[report_to_email_cont]=${filters.report_to_id}`);
+          if (filters.report_to_id && filters.report_to_id.includes('@')) {
+            filterParams.push(`q[report_to_email_cont]=${encodeURIComponent(filters.report_to_id)}`);
+          }
           url += `&${filterParams.join('&')}`;
         } else {
           // Only search by email if no filters

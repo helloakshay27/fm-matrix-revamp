@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Upload, X, CalendarIcon, Download } from "lucide-react";
+import { ArrowLeft, Upload, X, Download, User, Ticket, Settings, FileText, Users, AlertTriangle, Building, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/utils/apiClient";
 import { getToken, getUser } from "@/utils/auth";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchHelpdeskCategories } from "@/store/slices/helpdeskCategoriesSlice";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,11 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 interface SelectedTicket {
   id: number;
@@ -148,7 +142,7 @@ const UpdateTicketsPage: React.FC = () => {
   const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
-  const [reviewDate, setReviewDate] = useState<Date>();
+  const [reviewDate, setReviewDate] = useState<string>(""); // Changed to string for date input
   const [ticketApiData, setTicketApiData] = useState<any>(null); // Store original API data
   const [costApprovalRequests, setCostApprovalRequests] = useState<
     Array<{
@@ -171,6 +165,30 @@ const UpdateTicketsPage: React.FC = () => {
       isFromAPI?: boolean; // Add flag to distinguish API data from new requests
     }>
   >([]);
+
+  // Field styles for Material-UI components
+  const fieldStyles = {
+    height: '45px',
+    backgroundColor: '#fff',
+    borderRadius: '4px',
+    '& .MuiOutlinedInput-root': {
+      height: '45px',
+      '& fieldset': {
+        borderColor: '#ddd',
+      },
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
 
   // Fetch ticket data for editing
   const fetchTicketData = async (ticketId: string) => {
@@ -313,30 +331,25 @@ const UpdateTicketsPage: React.FC = () => {
         );
         if (dateMatch) {
           const [, day, month, year] = dateMatch;
-          const parsedDate = new Date(
-            parseInt(year),
-            parseInt(month) - 1,
-            parseInt(day)
-          );
-          if (!isNaN(parsedDate.getTime())) {
-            setReviewDate(parsedDate);
-            console.log("Set review date from DD/MM/YYYY format:", parsedDate);
-          } else {
-            console.log("Invalid date parsed from DD/MM/YYYY:", parsedDate);
-          }
+          // Convert to YYYY-MM-DD format for input[type="date"]
+          const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          setReviewDate(formattedDate);
+          console.log("Set review date from DD/MM/YYYY format:", formattedDate);
         } else {
           // Try ISO format as fallback
           const date = new Date(ticketData.review_tracking);
           if (!isNaN(date.getTime())) {
-            setReviewDate(date);
-            console.log("Set review date from ISO format:", date);
+            // Convert to YYYY-MM-DD format for input[type="date"]
+            const formattedDate = date.toISOString().split('T')[0];
+            setReviewDate(formattedDate);
+            console.log("Set review date from ISO format:", formattedDate);
           } else {
             console.log("Invalid date value:", ticketData.review_tracking);
           }
         }
       } else {
         console.log("No review tracking date available");
-        setReviewDate(undefined);
+        setReviewDate("");
       }
 
       // Fetch sub-categories if category is set
@@ -1012,9 +1025,9 @@ const UpdateTicketsPage: React.FC = () => {
 
       // Format review tracking date properly
       if (reviewDate) {
-        const formattedDate = format(reviewDate, "yyyy-MM-dd");
-        formDataToSend.append("complaint[review_tracking_date]", formattedDate);
-        console.log("Review date formatted:", formattedDate);
+        // reviewDate is already in YYYY-MM-DD format from the date input
+        formDataToSend.append("complaint[review_tracking_date]", reviewDate);
+        console.log("Review date formatted:", reviewDate);
       } else {
         formDataToSend.append("complaint[review_tracking_date]", "");
       }
@@ -1251,16 +1264,8 @@ const UpdateTicketsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="w-full p-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button
-            onClick={handleBack}
-            variant="ghost"
-            size="sm"
-            className="p-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <h1 className="text-xl font-semibold text-gray-900">TICKET EDIT</h1>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">UPDATE TICKET</h1>
         </div>
 
         {/* Loading State */}
@@ -1271,508 +1276,573 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Row 1 */}
-              {/* Title */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Title
-                </label>
-                <Textarea
-                  value={formData.title}
-                  onChange={(e) => handleInputChange("title", e.target.value)}
-                  disabled
-                  placeholder="Enter title"
-                  className="h-10 min-h-[2.5rem] w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
-                />
+          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+            {/* Section 1: Ticket Information */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-3 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                    <Ticket size={16} color="#C72030" />
+                  </span>
+                  Ticket Information
+                </h2>
               </div>
-
-              {/* Preventive Action */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Preventive Action
-                </label>
-                <Input
-                  type="text"
-                  value={formData.preventiveAction}
-                  onChange={(e) =>
-                    handleInputChange("preventiveAction", e.target.value)
-                  }
-                  placeholder="Enter preventive action"
-                  className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Status */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Status
-                </label>
-                <Select
-                  value={formData.selectedStatus}
-                  onValueChange={(value) =>
-                    handleInputChange("selectedStatus", value)
-                  }
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select status"
-                      className="text-gray-500"
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Title */}
+                  <div className="space-y-1">
+                    <TextField
+                      label="Title"
+                      placeholder="Enter title"
+                      value={formData.title}
+                      onChange={(e) => handleInputChange("title", e.target.value)}
+                      disabled
+                      fullWidth
+                      variant="outlined"
+                      // multiline
+                      // rows={2}
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                      }}
+                      InputProps={{
+                        sx: {
+                          ...fieldStyles,
+                          backgroundColor: '#f9fafb',
+                        },
+                      }}
                     />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {complaintStatuses.map((status) => (
-                      <SelectItem
-                        key={status.id}
-                        value={status.id.toString()}
-                        className="text-gray-900 hover:bg-gray-100"
+                  </div>
+
+                  {/* Preventive Action */}
+                  <div className="space-y-1">
+                    <TextField
+                      label="Preventive Action"
+                      placeholder="Enter preventive action"
+                      value={formData.preventiveAction}
+                      onChange={(e) => handleInputChange("preventiveAction", e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                      }}
+                      InputProps={{
+                        sx: fieldStyles,
+                      }}
+                    />
+                  </div>
+
+                  {/* Status */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Status</InputLabel>
+                      <MuiSelect
+                        value={formData.selectedStatus}
+                        onChange={(e) => handleInputChange("selectedStatus", e.target.value)}
+                        label="Status"
+                        notched
+                        displayEmpty
                       >
-                        {status.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Row 2 */}
-              {/* Responsible Person */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Responsible Person
-                </label>
-                <Select
-                  value={formData.responsiblePerson}
-                  onValueChange={(value) =>
-                    handleInputChange("responsiblePerson", value)
-                  }
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select responsible person"
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {fmUsers.map((user) => (
-                      <SelectItem
-                        key={user.id}
-                        value={user.id.toString()}
-                        className="text-gray-900 hover:bg-gray-100"
-                      >
-                        {user.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Review (Tracking) */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Review (Tracking)
-                </label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 justify-start text-left font-normal text-black"
-                    >
-                      {reviewDate ? (
-                        format(reviewDate, "MM/dd/yyyy")
-                      ) : (
-                        <span className="text-gray-500">mm/dd/yyyy</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={reviewDate || undefined}
-                      onSelect={(date) => setReviewDate(date || null)}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Category Type */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Category Type*
-                </label>
-                <Select
-                  value={formData.categoryType}
-                  onValueChange={(value) =>
-                    handleInputChange("categoryType", value)
-                  }
-                  disabled={helpdeskLoading}
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select category"
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {helpdeskData?.helpdesk_categories?.map((category) => (
-                      <SelectItem
-                        key={category.id}
-                        value={category.id.toString()}
-                        className="text-gray-900 hover:bg-gray-100"
-                      >
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Row 3 */}
-              {/* Proactive/Reactive */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Proactive/Reactive
-                </label>
-                <Select
-                  value={formData.proactiveReactive}
-                  onValueChange={(value) =>
-                    handleInputChange("proactiveReactive", value)
-                  }
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select proactive/reactive"
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    <SelectItem
-                      value="Proactive"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      Proactive
-                    </SelectItem>
-                    <SelectItem
-                      value="Reactive"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      Reactive
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Sub Category Type */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Sub Category Type
-                </label>
-                <Select
-                  value={formData.subCategoryType}
-                  onValueChange={(value) =>
-                    handleInputChange("subCategoryType", value)
-                  }
-                  disabled={subCategoriesLoading || !formData.categoryType}
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select Category First"
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {Array.isArray(subCategories) &&
-                      subCategories.map((subCategory) => (
-                        <SelectItem
-                          key={subCategory.id}
-                          value={subCategory.id.toString()}
-                          className="text-gray-900 hover:bg-gray-100"
-                        >
-                          {subCategory.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Assign To */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Assigned To
-                </label>
-                <Select
-                  value={formData.assignTo}
-                  onValueChange={(value) =>
-                    handleInputChange("assignTo", value)
-                  }
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select engineer"
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {fmUsers.map((user) => (
-                      <SelectItem
-                        key={user.id}
-                        value={user.id.toString()}
-                        className="text-gray-900 hover:bg-gray-100"
-                      >
-                        {user.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Row 4 */}
-              {/* Admin Priority */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Admin Priority
-                </label>
-                <Select
-                  value={formData.adminPriority}
-                  onValueChange={(value) =>
-                    handleInputChange("adminPriority", value)
-                  }
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select admin priority"
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    <SelectItem
-                      value="p1"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      P1 - Critical
-                    </SelectItem>
-                    <SelectItem
-                      value="p2"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      P2 - Very High
-                    </SelectItem>
-                    <SelectItem
-                      value="p3"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      P3 - High
-                    </SelectItem>
-                    <SelectItem
-                      value="p4"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      P4 - Medium
-                    </SelectItem>
-                    <SelectItem
-                      value="p5"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      P5 - Low
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* External Priority */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  External Priority
-                </label>
-                <Select
-                  value={formData.externalPriority}
-                  onValueChange={(value) =>
-                    handleInputChange("externalPriority", value)
-                  }
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select external priority"
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    <SelectItem
-                      value="High"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      High
-                    </SelectItem>
-                    <SelectItem
-                      value="Medium"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      Medium
-                    </SelectItem>
-                    <SelectItem
-                      value="Low"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      Low
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Mode */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Mode
-                </label>
-                <Select
-                  value={formData.mode}
-                  onValueChange={(value) => handleInputChange("mode", value)}
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select mode"
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {complaintModes.map((mode) => (
-                      <SelectItem
-                        key={mode.id}
-                        value={mode.id.toString()}
-                        className="text-gray-900 hover:bg-gray-100"
-                      >
-                        {mode.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Row 5 */}
-              {/* Root Cause */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Root Cause
-                </label>
-                <Input
-                  type="text"
-                  value={formData.rootCause}
-                  onChange={(e) =>
-                    handleInputChange("rootCause", e.target.value)
-                  }
-                  placeholder="Enter root cause"
-                  className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Impact */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Impact
-                </label>
-                <Input
-                  type="text"
-                  value={formData.impact}
-                  onChange={(e) => handleInputChange("impact", e.target.value)}
-                  placeholder="Enter impact"
-                  className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Correction */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Correction
-                </label>
-                <Input
-                  type="text"
-                  value={formData.correction}
-                  onChange={(e) =>
-                    handleInputChange("correction", e.target.value)
-                  }
-                  placeholder="Enter correction"
-                  className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Row 6 */}
-              {/* Reference Number */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Reference Number
-                </label>
-                <Input
-                  type="text"
-                  value={formData.refNumber}
-                  placeholder="Enter reference number"
-                  onChange={(e) =>
-                    handleInputChange("refNumber", e.target.value)
-                  }
-
-                  className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Corrective Action */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Corrective Action
-                </label>
-                <Input
-                  type="text"
-                  value={formData.correctiveAction}
-                  onChange={(e) =>
-                    handleInputChange("correctiveAction", e.target.value)
-                  }
-                  placeholder="Enter corrective action"
-                  className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Service Type */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Service Type
-                </label>
-                <Select
-                  value={formData.serviceType}
-                  onValueChange={(value) =>
-                    handleInputChange("serviceType", value)
-                  }
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select service type"
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    <SelectItem
-                      value="product"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      Product
-                    </SelectItem>
-                    <SelectItem
-                      value="service"
-                      className="text-gray-900 hover:bg-gray-100"
-                    >
-                      Service
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select status</span>
+                        </MenuItem>
+                        {complaintStatuses.map((status) => (
+                          <MenuItem key={status.id} value={status.id.toString()}>
+                            {status.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Issue Related To */}
-            <div className="mt-6">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-gray-700 min-w-[120px]">
+            {/* Section 2: Assignment Details */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-3 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                    <Users size={16} color="#C72030" />
+                  </span>
+                  Assignment Details
+                </h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Responsible Person */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Responsible Person</InputLabel>
+                      <MuiSelect
+                        value={formData.responsiblePerson}
+                        onChange={(e) => handleInputChange("responsiblePerson", e.target.value)}
+                        label="Responsible Person"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select responsible person</span>
+                        </MenuItem>
+                        {fmUsers.map((user) => (
+                          <MenuItem key={user.id} value={user.id.toString()}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Review (Tracking) */}
+                  <div className="space-y-1">
+                    <TextField
+                      label="Review (Tracking)"
+                      type="date"
+                      value={reviewDate}
+                      onChange={(e) => setReviewDate(e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                      }}
+                      InputProps={{
+                        sx: fieldStyles,
+                      }}
+                    />
+                  </div>
+
+                  {/* Category Type */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      required
+                      disabled={helpdeskLoading}
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Category Type*</InputLabel>
+                      <MuiSelect
+                        value={formData.categoryType}
+                        onChange={(e) => handleInputChange("categoryType", e.target.value)}
+                        label="Category Type*"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select category</span>
+                        </MenuItem>
+                        {helpdeskData?.helpdesk_categories?.map((category) => (
+                          <MenuItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Priority & Classification */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-3 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                    <AlertTriangle size={16} color="#C72030" />
+                  </span>
+                  Priority & Classification
+                </h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Proactive/Reactive */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Proactive/Reactive</InputLabel>
+                      <MuiSelect
+                        value={formData.proactiveReactive}
+                        onChange={(e) => handleInputChange("proactiveReactive", e.target.value)}
+                        label="Proactive/Reactive"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select proactive/reactive</span>
+                        </MenuItem>
+                        <MenuItem value="Proactive">Proactive</MenuItem>
+                        <MenuItem value="Reactive">Reactive</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Sub Category Type */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      disabled={subCategoriesLoading || !formData.categoryType}
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Sub Category Type</InputLabel>
+                      <MuiSelect
+                        value={formData.subCategoryType}
+                        onChange={(e) => handleInputChange("subCategoryType", e.target.value)}
+                        label="Sub Category Type"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select Category First</span>
+                        </MenuItem>
+                        {Array.isArray(subCategories) &&
+                          subCategories.map((subCategory) => (
+                            <MenuItem key={subCategory.id} value={subCategory.id.toString()}>
+                              {subCategory.name}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Assign To */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Assigned To</InputLabel>
+                      <MuiSelect
+                        value={formData.assignTo}
+                        onChange={(e) => handleInputChange("assignTo", e.target.value)}
+                        label="Assigned To"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select engineer</span>
+                        </MenuItem>
+                        {fmUsers.map((user) => (
+                          <MenuItem key={user.id} value={user.id.toString()}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Additional Details */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-3 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                    <Settings size={16} color="#C72030" />
+                  </span>
+                  Additional Details
+                </h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Admin Priority */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Admin Priority</InputLabel>
+                      <MuiSelect
+                        value={formData.adminPriority}
+                        onChange={(e) => handleInputChange("adminPriority", e.target.value)}
+                        label="Admin Priority"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select admin priority</span>
+                        </MenuItem>
+                        <MenuItem value="p1">P1 - Critical</MenuItem>
+                        <MenuItem value="p2">P2 - Very High</MenuItem>
+                        <MenuItem value="p3">P3 - High</MenuItem>
+                        <MenuItem value="p4">P4 - Medium</MenuItem>
+                        <MenuItem value="p5">P5 - Low</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* External Priority */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>External Priority</InputLabel>
+                      <MuiSelect
+                        value={formData.externalPriority}
+                        onChange={(e) => handleInputChange("externalPriority", e.target.value)}
+                        label="External Priority"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select external priority</span>
+                        </MenuItem>
+                        <MenuItem value="High">High</MenuItem>
+                        <MenuItem value="Medium">Medium</MenuItem>
+                        <MenuItem value="Low">Low</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Mode */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Mode</InputLabel>
+                      <MuiSelect
+                        value={formData.mode}
+                        onChange={(e) => handleInputChange("mode", e.target.value)}
+                        label="Mode"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select mode</span>
+                        </MenuItem>
+                        {complaintModes.map((mode) => (
+                          <MenuItem key={mode.id} value={mode.id.toString()}>
+                            {mode.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Root Cause */}
+                  <div className="space-y-1">
+                    <TextField
+                      label="Root Cause"
+                      placeholder="Enter root cause"
+                      value={formData.rootCause}
+                      onChange={(e) => handleInputChange("rootCause", e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                      }}
+                      InputProps={{
+                        sx: fieldStyles,
+                      }}
+                    />
+                  </div>
+
+                  {/* Impact */}
+                  <div className="space-y-1">
+                    <TextField
+                      label="Impact"
+                      placeholder="Enter impact"
+                      value={formData.impact}
+                      onChange={(e) => handleInputChange("impact", e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                      }}
+                      InputProps={{
+                        sx: fieldStyles,
+                      }}
+                    />
+                  </div>
+
+                  {/* Correction */}
+                  <div className="space-y-1">
+                    <TextField
+                      label="Correction"
+                      placeholder="Enter correction"
+                      value={formData.correction}
+                      onChange={(e) => handleInputChange("correction", e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                      }}
+                      InputProps={{
+                        sx: fieldStyles,
+                      }}
+                    />
+                  </div>
+
+                   <div className="space-y-1">
+                <TextField
+                  label="Reference Number"
+                  placeholder="Enter reference number"
+                  value={formData.refNumber}
+                  onChange={(e) => handleInputChange("refNumber", e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
+              </div>
+               <div className="space-y-1">
+                <TextField
+                  label="Corrective Action"
+                  placeholder="Enter corrective action"
+                  value={formData.correctiveAction}
+                  onChange={(e) => handleInputChange("correctiveAction", e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
+              </div>
+                <div className="space-y-1">
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                >
+                  <InputLabel shrink>Service Type</InputLabel>
+                  <MuiSelect
+                    value={formData.serviceType}
+                    onChange={(e) => handleInputChange("serviceType", e.target.value)}
+                    label="Service Type"
+                    notched
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      <span className="text-gray-500">Select service type</span>
+                    </MenuItem>
+                    {[
+                      { id: 'product', name: 'Product' },
+                      { id: 'service', name: 'Service' }
+                    ].map((type) => (
+                      <MenuItem key={type.id} value={type.id.toString()}>
+                        {type.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Details section continues with remaining fields */}
+            {/* <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6"> */}
+              {/* Reference Number */}
+              {/* <div className="space-y-1">
+                <TextField
+                  label="Reference Number"
+                  placeholder="Enter reference number"
+                  value={formData.refNumber}
+                  onChange={(e) => handleInputChange("refNumber", e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
+              </div> */}
+
+              {/* Corrective Action */}
+             
+
+              {/* Service Type */}
+              {/* <div className="space-y-1">
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                >
+                  <InputLabel shrink>Service Type</InputLabel>
+                  <MuiSelect
+                    value={formData.serviceType}
+                    onChange={(e) => handleInputChange("serviceType", e.target.value)}
+                    label="Service Type"
+                    notched
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      <span className="text-gray-500">Select service type</span>
+                    </MenuItem>
+                    {[
+                      { id: 'product', name: 'Product' },
+                      { id: 'service', name: 'Service' }
+                    ].map((type) => (
+                      <MenuItem key={type.id} value={type.id.toString()}>
+                        {type.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div> */}
+            {/* </div> */}
+
+        {/* Section 5: Issue Related To */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <Building size={16} color="#C72030" />
+              </span>
+              Issue Related To
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Issue Related To */}
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Issue Related To
-                </span>
+                </label>
                 <div className="flex gap-6">
                   <label className="flex items-center gap-2">
                     <input
@@ -1780,9 +1850,7 @@ const UpdateTicketsPage: React.FC = () => {
                       name="issueRelatedTo"
                       value="Projects"
                       checked={formData.issueRelatedTo === "Projects"}
-                      onChange={(e) =>
-                        handleInputChange("issueRelatedTo", e.target.value)
-                      }
+                      onChange={(e) => handleInputChange("issueRelatedTo", e.target.value)}
                       style={{
                         accentColor: "#C72030",
                         width: "16px",
@@ -1812,124 +1880,106 @@ const UpdateTicketsPage: React.FC = () => {
                   </label>
                 </div>
               </div>
-            </div>
 
-            {/* Associated To */}
-            <div className="mt-4">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-gray-700 min-w-[120px]">
-                  Associated To
-                </span>
-                <div className="flex gap-6">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="associatedTo"
-                      value="asset"
-                      checked={formData.associatedTo.asset}
-                      onChange={(e) =>
-                        handleCheckboxChange(
-                          "associatedTo",
-                          "asset",
-                          e.target.checked
-                        )
-                      }
-                      style={{
-                        accentColor: "#C72030",
-                        width: "16px",
-                        height: "16px",
-                        borderColor: "#C72030",
+              {/* Associated To */}
+              <div className="space-y-1">
+
+                <label className="block text-sm font-medium text-gray-700 mb-2">Associated To</label>
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  <div className="flex gap-6">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="associatedTo"
+                        value="asset"
+                        checked={formData.associatedTo.asset}
+                        onChange={(e) =>
+                          handleCheckboxChange(
+                            "associatedTo",
+                            "asset",
+                            e.target.checked
+                          )
+                        }
+                        style={{
+                          accentColor: "#C72030",
+                          width: "16px",
+                          height: "16px",
+                          borderColor: "#C72030",
+                        }}
+                      />
+                      <span className="text-sm text-gray-700">Asset</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="associatedTo"
+                        value="service"
+                        checked={formData.associatedTo.service}
+                        onChange={(e) =>
+                          handleCheckboxChange(
+                            "associatedTo",
+                            "service",
+                            e.target.checked
+                          )
+                        }
+                        style={{
+                          accentColor: "#C72030",
+                          width: "16px",
+                          height: "16px",
+                          borderColor: "#C72030",
+                        }}
+                      />
+                      <span className="text-sm text-gray-700">Service</span>
+                    </label>
+                  </div>
+                  {(formData.associatedTo.asset || formData.associatedTo.service) && (
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{
+                        minWidth: 260, // Increased width
+                        maxWidth: 340, // Optional: limit max width
+                        ...fieldStyles,
                       }}
-                    />
-                    <span className="text-sm text-gray-700">Asset</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="associatedTo"
-                      value="service"
-                      checked={formData.associatedTo.service}
-                      onChange={(e) =>
-                        handleCheckboxChange(
-                          "associatedTo",
-                          "service",
-                          e.target.checked
-                        )
-                      }
-                      style={{
-                        accentColor: "#C72030",
-                        width: "16px",
-                        height: "16px",
-                        borderColor: "#C72030",
-                      }}
-                    />
-                    <span className="text-sm text-gray-700">Service</span>
-                  </label>
+                    >
+                      <InputLabel shrink>{formData.associatedTo.asset ? "Select Asset" : "Select Service"}</InputLabel>
+                      <MuiSelect
+                        value={formData.associatedTo.asset ? formData.selectedAsset : formData.selectedService}
+                        onChange={(e) => {
+                          if (formData.associatedTo.asset) {
+                            handleInputChange("selectedAsset", e.target.value);
+                          } else {
+                            handleInputChange("selectedService", e.target.value);
+                          }
+                        }}
+                        label={formData.associatedTo.asset ? "Select Asset" : "Select Service"}
+                        notched
+                        displayEmpty
+                        disabled={isLoadingAssets || isLoadingServices}
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">{isLoadingAssets || isLoadingServices ? "Loading..." : `Select ${formData.associatedTo.asset ? "Asset" : "Service"}`}</span>
+                        </MenuItem>
+                        {formData.associatedTo.asset &&
+                          assetOptions.map((asset) => (
+                            <MenuItem key={asset.id} value={asset.id.toString()}>
+                              {asset.name}
+                            </MenuItem>
+                          ))}
+                        {formData.associatedTo.service &&
+                          serviceOptions.map((service) => (
+                            <MenuItem key={service.id} value={service.id.toString()}>
+                              {service.service_name}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Select Asset/Service */}
-            {(formData.associatedTo.asset || formData.associatedTo.service) && (
-              <div className="mt-6 space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  {formData.associatedTo.asset
-                    ? "Select Asset"
-                    : "Select Service"}
-                </label>
-                <Select
-                  value={
-                    formData.associatedTo.asset
-                      ? formData.selectedAsset
-                      : formData.selectedService
-                  }
-                  onValueChange={(value) => {
-                    if (formData.associatedTo.asset) {
-                      handleInputChange("selectedAsset", value);
-                    } else {
-                      handleInputChange("selectedService", value);
-                    }
-                  }}
-                  disabled={isLoadingAssets || isLoadingServices}
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder={
-                        isLoadingAssets || isLoadingServices
-                          ? "Loading..."
-                          : `Select ${formData.associatedTo.asset ? "Asset" : "Service"
-                          }`
-                      }
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {formData.associatedTo.asset &&
-                      assetOptions.map((asset) => (
-                        <SelectItem
-                          key={asset.id}
-                          value={asset.id.toString()}
-                          className="text-gray-900 hover:bg-gray-100"
-                        >
-                          {asset.name}
-                        </SelectItem>
-                      ))}
-                    {formData.associatedTo.service &&
-                      serviceOptions.map((service) => (
-                        <SelectItem
-                          key={service.id}
-                          value={service.id.toString()}
-                          className="text-gray-900 hover:bg-gray-100"
-                        >
-                          {service.service_name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Comments */}
+            {/* Comments Section */}
             <div className="mt-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Add Comments
@@ -1959,189 +2009,192 @@ const UpdateTicketsPage: React.FC = () => {
                 </label>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Cost Approval Requests */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-6">
-              <div className="px-6 py-3 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">
+            {/* Section 6: Cost Approval Requests */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-3 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                    <DollarSign size={16} color="#C72030" />
+                  </span>
                   Cost Approval Requests
-                </h3>
+                </h2>
               </div>
-              <div className="overflow-x-auto bg-white rounded-lg border">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
-                        Request Id
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
-                        Amount
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
-                        Comments
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
-                        Created On
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
-                        Created By
-                      </th>
-                      <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">
-                        L1
-                      </th>
-                      <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">
-                        L2
-                      </th>
-                      <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">
-                        L3
-                      </th>
-                      <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">
-                        L4
-                      </th>
-                      <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">
-                        L5
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
-                        Master Status
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
-                        Cancelled By
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
-                        Attachments
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {costApprovalRequests.length > 0 ? (
-                      costApprovalRequests.map((request) => (
-                        <tr key={request.id}>
-                          <td className="px-4 py-3 text-gray-900 border-b">
-                            {request.id}
-                          </td>
-                          <td className="px-4 py-3 text-gray-900 border-b">
-                            {request.amount}
-                          </td>
-                          <td className="px-4 py-3 text-gray-900 border-b">
-                            {request.comments}
-                          </td>
-                          <td className="px-4 py-3 text-gray-900 border-b">
-                            {request.createdOn}
-                          </td>
-                          <td className="px-4 py-3 text-gray-900 border-b">
-                            {request.createdBy}
-                          </td>
-                          <td className="px-4 py-3 text-center text-gray-900 border-b">
-                            {request.approvals?.L1 || "-"}
-                          </td>
-                          <td className="px-4 py-3 text-center text-gray-900 border-b">
-                            {request.approvals?.L2 || "-"}
-                          </td>
-                          <td className="px-4 py-3 text-center text-gray-900 border-b">
-                            {request.approvals?.L3 || "-"}
-                          </td>
-                          <td className="px-4 py-3 text-center text-gray-900 border-b">
-                            {request.approvals?.L4 || "-"}
-                          </td>
-                          <td className="px-4 py-3 text-center text-gray-900 border-b">
-                            {request.approvals?.L5 || "-"}
-                          </td>
-                          <td className="px-4 py-3 text-gray-900 border-b">
-                            {request.masterStatus || "Pending"}
-                          </td>
-                          <td className="px-4 py-3 text-gray-900 border-b">
-                            {request.cancelledBy || "-"}
-                          </td>
-                          <td className="px-4 py-3 text-gray-900 border-b">
-                            {request.attachments &&
-                              request.attachments.length > 0 ? (
-                              <div className="flex flex-col gap-1 max-w-xs">
-                                {request.attachments.map(
-                                  (attachment, index) => {
-                                    const fileName =
-                                      attachment.name ||
-                                      (attachment.url
-                                        ? attachment.url.split("/").pop()
-                                        : `Attachment ${index + 1}`);
+              <div className="p-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
+                          Request Id
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
+                          Amount
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
+                          Comments
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
+                          Created On
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
+                          Created By
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">
+                          L1
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">
+                          L2
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">
+                          L3
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">
+                          L4
+                        </th>
+                        <th className="px-4 py-3 text-center font-medium text-gray-700 border-b">
+                          L5
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
+                          Master Status
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
+                          Cancelled By
+                        </th>
+                        <th className="px-4 py-3 text-left font-medium text-gray-700 border-b">
+                          Attachments
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {costApprovalRequests.length > 0 ? (
+                        costApprovalRequests.map((request) => (
+                          <tr key={request.id}>
+                            <td className="px-4 py-3 text-gray-900 border-b">
+                              {request.id}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 border-b">
+                              {request.amount}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 border-b">
+                              {request.comments}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 border-b">
+                              {request.createdOn}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 border-b">
+                              {request.createdBy}
+                            </td>
+                            <td className="px-4 py-3 text-center text-gray-900 border-b">
+                              {request.approvals?.L1 || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-center text-gray-900 border-b">
+                              {request.approvals?.L2 || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-center text-gray-900 border-b">
+                              {request.approvals?.L3 || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-center text-gray-900 border-b">
+                              {request.approvals?.L4 || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-center text-gray-900 border-b">
+                              {request.approvals?.L5 || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 border-b">
+                              {request.masterStatus || "Pending"}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 border-b">
+                              {request.cancelledBy || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900 border-b">
+                              {request.attachments &&
+                                request.attachments.length > 0 ? (
+                                <div className="flex flex-col gap-1 max-w-xs">
+                                  {request.attachments.map(
+                                    (attachment, index) => {
+                                      const fileName =
+                                        attachment.name ||
+                                        (attachment.url
+                                          ? attachment.url.split("/").pop()
+                                          : `Attachment ${index + 1}`);
 
-                                    return (
-                                      <button
-                                        key={index}
-                                        onClick={() => {
-                                          if (attachment.url) {
-                                            // API attachment with URL
-                                            handleDownloadAttachment(
-                                              attachment.url,
-                                              fileName
-                                            );
-                                          } else if (
-                                            attachment instanceof File
-                                          ) {
-                                            // File object (new upload)
-                                            handleDownloadAttachment(
-                                              attachment
-                                            );
-                                          } else {
-                                            // Fallback for other formats
-                                            handleDownloadAttachment(
-                                              attachment,
-                                              fileName
-                                            );
-                                          }
-                                        }}
-                                        className="flex items-center gap-2 text-[#C72030] hover:text-[#a81926] rounded px-2 py-1 text-sm text-left transition-colors"
-
-                                        title="Download attachment"
-                                      >
-                                        <Download className="w-4 h-4 flex-shrink-0" />
-                                        <span className="truncate">
-                                          {fileName}
-                                        </span>
-                                      </button>
-                                    );
-                                  }
-                                )}
-                                {request.attachments.length > 1 && (
-                                  <span className="text-xs text-gray-500 mt-1">
-                                    {request.attachments.length} file(s) total
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              "-"
-                            )}
+                                      return (
+                                        <button
+                                          key={index}
+                                          onClick={() => {
+                                            if (attachment.url) {
+                                              // API attachment with URL
+                                              handleDownloadAttachment(
+                                                attachment.url,
+                                                fileName
+                                              );
+                                            } else if (
+                                              attachment instanceof File
+                                            ) {
+                                              // File object (new upload)
+                                              handleDownloadAttachment(
+                                                attachment
+                                              );
+                                            } else {
+                                              // Fallback for other formats
+                                              handleDownloadAttachment(
+                                                attachment,
+                                                fileName
+                                              );
+                                            }
+                                          }}
+                                          className="flex items-center gap-2 text-[#C72030] hover:text-[#a81926] rounded px-2 py-1 text-sm text-left transition-colors"
+                                          title="Download attachment"
+                                        >
+                                          <Download className="w-4 h-4 flex-shrink-0" />
+                                          <span className="truncate">
+                                            {fileName}
+                                          </span>
+                                        </button>
+                                      );
+                                    }
+                                  )}
+                                  {request.attachments.length > 1 && (
+                                    <span className="text-xs text-gray-500 mt-1">
+                                      {request.attachments.length} file(s) total
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                "-"
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            className="px-4 py-3 text-gray-500 text-center"
+                            colSpan={13}
+                          >
+                            No data available
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          className="px-4 py-3 text-gray-500 text-center"
-                          colSpan={13}
-                        >
-                          No data available
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
+
             {/* Submit Button */}
             <div className="flex justify-center mt-8">
               <Button
-                onClick={() => {
-                  console.log("=== SAVE BUTTON CLICKED ===");
-                  console.log("Button clicked, calling handleSubmit");
-                  handleSubmit();
-                }}
+                type="submit"
                 className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-8 py-2"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "SAVING..." : "SAVE"}
               </Button>
             </div>
-          </div>
+          </form>
         )}
 
         {/* Cost Popup Modal */}

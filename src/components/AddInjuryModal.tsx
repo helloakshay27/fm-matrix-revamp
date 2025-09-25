@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AddInjuryModalProps {
   isOpen: boolean;
@@ -88,26 +89,42 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
   }, [isOpen]);
 
   const handleInputChange = (injuryId: string, field: string, value: string) => {
-    setInjuries(prev => prev.map(injury =>
-      injury.id === injuryId
-        ? { ...injury, [field]: value }
-        : injury
-    ));
+    // Handle mobile field validation
+    if (field === 'mobile') {
+      // Only allow numbers and limit to 10 digits
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setInjuries(prev => prev.map(injury =>
+        injury.id === injuryId
+          ? { ...injury, [field]: numericValue }
+          : injury
+      ));
+    } else {
+      setInjuries(prev => prev.map(injury =>
+        injury.id === injuryId
+          ? { ...injury, [field]: value }
+          : injury
+      ));
+    }
   };
 
   const handleAddInjury = async () => {
     // Validate all injuries
     for (const injury of injuries) {
       if (!injury.injuryType) {
-        alert('Please select an injury type for all entries');
+        toast.error('Please select an injury type for all entries');
         return;
       }
       if (!injury.whoGotInjured) {
-        alert('Please select who got injured for all entries');
+        toast.error('Please select who got injured for all entries');
         return;
       }
       if (!injury.name.trim()) {
-        alert('Please enter the name for all entries');
+        toast.error('Please enter the name for all entries');
+        return;
+      }
+      // Validate mobile number if provided
+      if (injury.mobile && injury.mobile.length !== 10) {
+        toast.error('Mobile number must be exactly 10 digits');
         return;
       }
     }
@@ -139,7 +156,7 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
       if (response.ok) {
         const result = await response.json();
         console.log('Injuries added successfully:', result);
-        alert('Injuries added successfully');
+        toast.success('Injuries added successfully');
         // Reset form
         setInjuries([{
           id: '1',
@@ -152,11 +169,11 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
         onClose();
       } else {
         console.error('Failed to add injuries');
-        alert('Failed to add injuries. Please try again.');
+        toast.error('Failed to add injuries. Please try again.');
       }
     } catch (error) {
       console.error('Error adding injuries:', error);
-      alert('Error occurred while adding injuries. Please try again.');
+      toast.error('Error occurred while adding injuries. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -267,9 +284,11 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
                 <div className="space-y-2">
                   <Label>Mobile</Label>
                   <Input
+                    type="tel"
                     value={injury.mobile}
                     onChange={(e) => handleInputChange(injury.id, 'mobile', e.target.value)}
-                    placeholder=""
+                    placeholder="Enter 10-digit mobile number"
+                    maxLength={10}
                   />
                 </div>
                 <div className="space-y-2">

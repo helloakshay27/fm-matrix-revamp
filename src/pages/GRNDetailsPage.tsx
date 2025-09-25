@@ -340,97 +340,93 @@ export const GRNDetailsPage = () => {
         Back
       </Button>
       {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
-        <div className="flex flex-col">
-          <h1 className="font-work-sans font-semibold text-xl sm:text-2xl text-gray-900 mb-2">
-            GRN DETAILS
-          </h1>
-          <TooltipProvider>
-            <div className="flex items-center gap-3">
-              {approvalStatus?.approval_levels?.map((approval: Approval) => (
-                <div className="space-y-2" key={approval.id}>
-                  {approval.status.toLowerCase() === "rejected" ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div
-                          className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
-                            approval.status
-                          )}`}
-                        >
-                          {`${approval.name} Approval : ${approval.status}`}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          Rejection Reason:{" "}
-                          {approval.rejection_reason ?? "No reason provided"}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
+      <div className="flex justify-between items-end">
+        <h1 className="text-2xl font-semibold">
+          GRN DETAILS
+        </h1>
+        <div className="flex gap-2 flex-wrap">
+          {sendToSap && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            >
+              Send to SAP
+            </Button>
+          )}
+          {
+            grnDetails.all_level_approved && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                onClick={handleOpenDebitModal}
+              >
+                Debit Note
+              </Button>
+            )
+          }
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            onClick={handleFeeds}
+          >
+            <Rss className="w-4 h-4 mr-1" />
+            Feeds
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            onClick={handlePrint}
+          >
+            <Printer className="w-4 h-4 mr-1" />
+            Print
+          </Button>
+        </div>
+      </div>
+
+      <TooltipProvider>
+        <div className="flex items-center gap-3 my-4">
+          {approvalStatus?.approval_levels?.map((approval: Approval) => (
+            <div className="space-y-2" key={approval.id}>
+              {approval.status.toLowerCase() === "rejected" ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <div
-                      className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                      className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
                         approval.status
                       )}`}
                     >
                       {`${approval.name} Approval : ${approval.status}`}
                     </div>
-                  )}
-                  {approval.approved_by && approval.approved_at && (
-                    <div className="ms-2 w-[190px]">
-                      {`${approval.approved_by} (${approval.approved_at})`}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </TooltipProvider>
-        </div>
-
-        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
-          <div className="flex gap-2 flex-wrap">
-            {sendToSap && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              >
-                Send to SAP
-              </Button>
-            )}
-            {
-              grnDetails.all_level_approved && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={handleOpenDebitModal}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Rejection Reason:{" "}
+                      {approval.rejection_reason ?? "No reason provided"}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div
+                  className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                    approval.status
+                  )}`}
                 >
-                  Debit Note
-                </Button>
-              )
-            }
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={handleFeeds}
-            >
-              <Rss className="w-4 h-4 mr-1" />
-              Feeds
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={handlePrint}
-            >
-              <Printer className="w-4 h-4 mr-1" />
-              Print
-            </Button>
-          </div>
+                  {`${approval.name} Approval : ${approval.status}`}
+                </div>
+              )}
+              {approval.approved_by && approval.approved_at && (
+                <div className="ms-2 w-[190px]">
+                  {`${approval.approved_by} (${approval.approved_at})`}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-      </div>
+      </TooltipProvider>
 
       {/* Vendor/Contact Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">

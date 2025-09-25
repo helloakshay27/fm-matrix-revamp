@@ -1,18 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useLayout } from '@/contexts/LayoutContext';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
-import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
-import { fetchOccupantUserCounts } from '@/store/slices/occupantUserCountsSlice';
-import { StatsCard } from '@/components/StatsCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Users, Download, X, Eye, Plus } from 'lucide-react';
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useLayout } from "@/contexts/LayoutContext";
+import { useDispatch } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchOccupantUsers } from "@/store/slices/occupantUsersSlice";
+import { fetchOccupantUserCounts } from "@/store/slices/occupantUserCountsSlice";
+import { StatsCard } from "@/components/StatsCard";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Users, Download, X, Eye, Plus } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -21,46 +17,88 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { toast } from 'sonner';
-import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import axios from 'axios';
+} from "@/components/ui/pagination";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { toast } from "sonner";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import axios from "axios";
+import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { OccupantUsersFilterDialog } from "@/components/OccupantUsersFilterDialog";
+import { useAppSelector } from "@/store/hooks";
+import { debounce } from "lodash";
 
+const columns: ColumnConfig[] = [
+  { key: "id", label: "ID", sortable: true, draggable: true },
+  { key: "company", label: "Company", sortable: true, draggable: true },
+  { key: "name", label: "Name", sortable: true, draggable: true },
+  { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
+  { key: "email", label: "Email", sortable: true, draggable: true },
+  { key: "entity", label: "Entity", sortable: true, draggable: true },
+  { key: "status", label: "Status", sortable: true, draggable: true },
+  { key: "appDownloaded", label: "App Downloaded", sortable: true, draggable: true },
+];
 
 export const OccupantUserMasterDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
-  const [occupantUser, setOccupantUser] = useState([])
+  const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [occupantUser, setOccupantUser] = useState([]);
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
     total_pages: 0,
   });
-  const [filters, setFilters] = useState({
-    name: '',
-    email: '',
-    mobile: '',
-    status: '',
-    entity: ''
+  const [filters, setFilters] = useState<{
+    name?: string;
+    email?: string;
+    mobile?: string;
+    status?: string;
+    entity?: string;
+    downloaded?: undefined | boolean;
+  }>({
+    name: "",
+    email: "",
+    mobile: "",
+    status: "",
+    entity: "",
+    downloaded: undefined,
   });
 
-  const { users: occupantUsersData, pagination: statePagination, loading } = useSelector((state: RootState) => state.occupantUsers as any);
-  const occupantUserCounts = useSelector((state: RootState) => state.occupantUserCounts);
-  const { total: totalUsers = 0, approved: approvedUsers = 0, pending: pendingUsers = 0, rejected: rejectedUsers = 0, appDownloaded = 0 } = occupantUserCounts || {};
+  const {
+    users: occupantUsersData,
+    pagination: statePagination,
+    loading,
+  } = useAppSelector((state: RootState) => state.occupantUsers as any);
+  const occupantUserCounts = useAppSelector(
+    (state: RootState) => state.occupantUserCounts
+  );
+
+  const {
+    total: totalUsers = 0,
+    approved: approvedUsers = 0,
+    pending: pendingUsers = 0,
+    rejected: rejectedUsers = 0,
+    appDownloaded = 0,
+  } = occupantUserCounts || {};
 
   const [showActionPanel, setShowActionPanel] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     const data: any = occupantUsersData;
     if (data?.transformedUsers) {
       setOccupantUser(data.transformedUsers);
       setPagination({
-        current_page: statePagination?.current_page ?? data.pagination?.current_page ?? 1,
-        total_count: statePagination?.total_count ?? data.pagination?.total_count ?? 0,
-        total_pages: statePagination?.total_pages ?? data.pagination?.total_pages ?? 0,
+        current_page:
+          statePagination?.current_page ?? data.pagination?.current_page ?? 1,
+        total_count:
+          statePagination?.total_count ?? data.pagination?.total_count ?? 0,
+        total_pages:
+          statePagination?.total_pages ?? data.pagination?.total_pages ?? 0,
       });
     } else if (Array.isArray(data)) {
       setOccupantUser(data);
@@ -70,37 +108,41 @@ export const OccupantUserMasterDashboard = () => {
         total_pages: statePagination?.total_pages ?? prev.total_pages,
       }));
     }
-  }, [occupantUsersData, statePagination])
+  }, [occupantUsersData, statePagination]);
 
-  const handleFilterChange = (field: string, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleApplyFilters = () => {
-    toast.success('Filters applied successfully');
-    setFilterDialogOpen(false);
-  };
-
-  const handleResetFilters = () => {
-    setFilters({
-      name: '',
-      email: '',
-      mobile: '',
-      status: '',
-      entity: ''
-    });
-    toast.success('Filters reset successfully');
+  const handleApplyFilters = async (newFilters: {
+    name?: string;
+    email?: string;
+    mobile?: string;
+    status?: string;
+    entity?: string;
+    downloaded?: undefined | boolean;
+    search?: string;
+  }) => {
+    setFilters(newFilters);
+    const [firstName = "", lastName = ""] = (newFilters?.name?.trim().split(" ") ?? []);
+    await dispatch(
+      fetchOccupantUsers({
+        page: 1,
+        perPage: 10,
+        firstname_cont: firstName,
+        lastname_cont: lastName,
+        email_cont: newFilters.email,
+        lock_user_permission_status_eq: newFilters.status,
+        entity_id_eq: newFilters.entity,
+        app_downloaded_eq: newFilters.downloaded,
+        search_all_fields_cont: newFilters.search
+      })
+    );
     setFilterDialogOpen(false);
   };
 
   const handleExport = async () => {
     try {
-      // Create CSV data
       const response = await axios.get(
-        `https://${localStorage.getItem("baseUrl")}/pms/account_setups/export_occupant_users.xlsx`,
+        `https://${localStorage.getItem(
+          "baseUrl"
+        )}/pms/account_setups/export_occupant_users.xlsx`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -117,28 +159,43 @@ export const OccupantUserMasterDashboard = () => {
       link.click();
       link.remove();
 
-      toast.success('Data exported successfully');
+      toast.success("Data exported successfully");
     } catch (error) {
-      toast.error('Failed to export data');
+      toast.error("Failed to export data");
     }
   };
 
   const { setCurrentSection } = useLayout();
 
+  const fetchUsers = () => {
+    try {
+      dispatch(
+        fetchOccupantUsers({ page: pagination.current_page, perPage: 10 })
+      );
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   useEffect(() => {
-    setCurrentSection('Master');
-    dispatch(fetchOccupantUsers({ page: pagination.current_page, perPage: 10 }));
+    setCurrentSection("Master");
+    fetchUsers();
     dispatch(fetchOccupantUserCounts());
   }, [setCurrentSection, dispatch]);
 
-  const columns: ColumnConfig[] = [
-    { key: "id", label: "ID", sortable: true, draggable: true },
-    { key: "company", label: "Company", sortable: true, draggable: true },
-    { key: "name", label: "Name", sortable: true, draggable: true },
-    { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
-    { key: "email", label: "Email", sortable: true, draggable: true },
-    { key: "status", label: "Status", sortable: true, draggable: true },
-  ];
+  const debouncedSearch = useCallback(
+    debounce(async (searchQuery: string) => {
+      handleApplyFilters({
+        search: searchQuery,
+      })
+    }, 500),
+    [pagination.current_page]
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    debouncedSearch(value);
+  };
 
   const handlePageChange = async (page: number) => {
     setPagination((prev) => ({
@@ -146,9 +203,21 @@ export const OccupantUserMasterDashboard = () => {
       current_page: page,
     }));
     try {
-      dispatch(fetchOccupantUsers({ page: page, perPage: 10 }));
+      dispatch(
+        fetchOccupantUsers({
+          page: page,
+          perPage: 10,
+          firstname_cont: filters?.name?.split(" ")[0],
+          lastname_cont: filters?.name?.split(" ")[1],
+          email_cont: filters.email,
+          lock_user_permission_status_eq: filters.status,
+          entity_id_eq: filters.entity,
+          app_downloaded_eq: filters.downloaded,
+          search_all_fields_cont: searchTerm
+        })
+      );
     } catch (error) {
-      toast.error('Failed to fetch bookings');
+      toast.error("Failed to fetch bookings");
     }
   };
 
@@ -163,11 +232,11 @@ export const OccupantUserMasterDashboard = () => {
 
     if (showEllipsis) {
       items.push(
-        <PaginationItem key={1} className='cursor-pointer'>
+        <PaginationItem key={1} className="cursor-pointer">
           <PaginationLink
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
-            className={loading ? 'pointer-events-none opacity-50' : ''}
+            className={loading ? "pointer-events-none opacity-50" : ""}
           >
             1
           </PaginationLink>
@@ -176,18 +245,18 @@ export const OccupantUserMasterDashboard = () => {
 
       if (currentPage > 4) {
         items.push(
-          <PaginationItem key="ellipsis1" >
+          <PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>
         );
       } else {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
-            <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationItem key={i} className="cursor-pointer">
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
-                className={loading ? 'pointer-events-none opacity-50' : ''}
+                className={loading ? "pointer-events-none opacity-50" : ""}
               >
                 {i}
               </PaginationLink>
@@ -199,11 +268,11 @@ export const OccupantUserMasterDashboard = () => {
       if (currentPage > 3 && currentPage < totalPages - 2) {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
-            <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationItem key={i} className="cursor-pointer">
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
-                className={loading ? 'pointer-events-none opacity-50' : ''}
+                className={loading ? "pointer-events-none opacity-50" : ""}
               >
                 {i}
               </PaginationLink>
@@ -222,11 +291,11 @@ export const OccupantUserMasterDashboard = () => {
         for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
           if (!items.find((item) => item.key === i.toString())) {
             items.push(
-              <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationItem key={i} className="cursor-pointer">
                 <PaginationLink
                   onClick={() => handlePageChange(i)}
                   isActive={currentPage === i}
-                  className={loading ? 'pointer-events-none opacity-50' : ''}
+                  className={loading ? "pointer-events-none opacity-50" : ""}
                 >
                   {i}
                 </PaginationLink>
@@ -238,11 +307,11 @@ export const OccupantUserMasterDashboard = () => {
 
       if (totalPages > 1) {
         items.push(
-          <PaginationItem key={totalPages} className='cursor-pointer'>
+          <PaginationItem key={totalPages} className="cursor-pointer">
             <PaginationLink
               onClick={() => handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
-              className={loading ? 'pointer-events-none opacity-50' : ''}
+              className={loading ? "pointer-events-none opacity-50" : ""}
             >
               {totalPages}
             </PaginationLink>
@@ -252,11 +321,11 @@ export const OccupantUserMasterDashboard = () => {
     } else {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
-          <PaginationItem key={i} className='cursor-pointer'>
+          <PaginationItem key={i} className="cursor-pointer">
             <PaginationLink
               onClick={() => handlePageChange(i)}
               isActive={currentPage === i}
-              className={loading ? 'pointer-events-none opacity-50' : ''}
+              className={loading ? "pointer-events-none opacity-50" : ""}
             >
               {i}
             </PaginationLink>
@@ -268,26 +337,98 @@ export const OccupantUserMasterDashboard = () => {
     return items;
   };
 
+  // Status update functionality
+  const getStatusBadgeProps = (status: string | null) => {
+    if (status === "approved" || status === "active") {
+      return {
+        variant: "default" as const,
+        className:
+          "bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer",
+        children: "Approved",
+      };
+    } else if (status === "pending") {
+      return {
+        variant: "secondary" as const,
+        className:
+          "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer",
+        children: "Pending",
+      };
+    } else if (status === "rejected") {
+      return {
+        variant: "destructive" as const,
+        className: "bg-red-100 text-red-800 hover:bg-red-200 cursor-pointer",
+        children: "Rejected",
+      };
+    } else {
+      return {
+        variant: "secondary" as const,
+        className:
+          "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer",
+        children: "Pending",
+      };
+    }
+  };
+
+  const handleStatusClick = (user: any) => {
+    console.log(user);
+    setSelectedUser(user);
+    setSelectedStatus(user.status ?? "pending");
+    setStatusDialogOpen(true);
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!selectedUser?.lockUserId) return;
+
+    try {
+      const baseUrl = localStorage.getItem("baseUrl") ?? "";
+      const token = localStorage.getItem("token") ?? "";
+
+      const response = await fetch(
+        `https://${baseUrl}/pms/users/status_update?id=${selectedUser.lockUserId}&status=${selectedStatus}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update user status");
+      }
+
+      // Update local state
+      setOccupantUser((prevUsers: any[]) =>
+        prevUsers.map((user) =>
+          user.id === selectedUser.id
+            ? {
+              ...user,
+              status: selectedStatus,
+            }
+            : user
+        )
+      );
+
+      toast.success("User status updated successfully!");
+      dispatch(fetchOccupantUserCounts()); // Refresh counts
+      setStatusDialogOpen(false);
+      setSelectedUser(null);
+      setSelectedStatus("");
+    } catch (error: unknown) {
+      console.error("Error updating user status:", error);
+      toast.error("Failed to update user status.");
+    }
+  };
+
   const renderCell = (user: any, columnKey: string) => {
     switch (columnKey) {
       case "status":
         return (
           <Badge
-            variant={
-              user.status === 'approved' ? 'default' :
-                (user.status === 'pending' || user.status === null) ? 'secondary' :
-                  'destructive'
-            }
-            className={
-              user.status === 'approved' ? 'bg-green-100 text-green-800' :
-                (user.status === 'pending' || user.status === null) ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
-            }
-          >
-            {user.status === null
-              ? 'Pending'
-              : user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-          </Badge>
+            {...getStatusBadgeProps(user.status)}
+            onClick={() => handleStatusClick(user)}
+          />
         );
       default:
         return user[columnKey];
@@ -309,10 +450,11 @@ export const OccupantUserMasterDashboard = () => {
   return (
     <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="w-full space-y-6">
-
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-[#1a1a1a]">Occupant Users</h1>
+          <h1 className="text-2xl font-semibold text-[#1a1a1a]">
+            Occupant Users
+          </h1>
         </div>
 
         {/* Statistics Cards */}
@@ -321,26 +463,35 @@ export const OccupantUserMasterDashboard = () => {
             title="Total Users"
             value={totalUsers}
             icon={<Users className="w-6 h-6" />}
+            onClick={fetchUsers}
           />
           <StatsCard
             title="Approved"
             value={approvedUsers}
             icon={<Users className="w-6 h-6" />}
+            onClick={() => handleApplyFilters({ status: "approved" })}
+            className="cursor-pointer"
           />
           <StatsCard
             title="Pending"
             value={pendingUsers}
             icon={<Users className="w-6 h-6" />}
+            onClick={() => handleApplyFilters({ status: "pending" })}
+            className="cursor-pointer"
           />
           <StatsCard
             title="Rejected"
             value={rejectedUsers}
             icon={<Users className="w-6 h-6" />}
+            onClick={() => handleApplyFilters({ status: "rejected" })}
+            className="cursor-pointer"
           />
           <StatsCard
             title="App Downloaded"
             value={appDownloaded}
             icon={<Download className="w-6 h-6" />}
+            onClick={() => handleApplyFilters({ downloaded: true })}
+            className="cursor-pointer"
           />
         </div>
 
@@ -352,7 +503,15 @@ export const OccupantUserMasterDashboard = () => {
             renderCell={renderCell}
             renderActions={(item: any) => (
               <div className="flex justify-center">
-                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/master/user/occupant-users/view/${item.id}`); }} title="View">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/master/user/occupant-users/view/${item.id}`);
+                  }}
+                  title="View"
+                >
                   <Eye className="w-4 h-4" />
                 </Button>
               </div>
@@ -360,6 +519,8 @@ export const OccupantUserMasterDashboard = () => {
             onFilterClick={() => setFilterDialogOpen(true)}
             enableExport
             handleExport={handleExport}
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
             storageKey="fm-user-master-table"
             searchPlaceholder="Search users..."
             loading={loading}
@@ -372,15 +533,33 @@ export const OccupantUserMasterDashboard = () => {
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                  className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  onClick={() =>
+                    handlePageChange(Math.max(1, pagination.current_page - 1))
+                  }
+                  className={
+                    pagination.current_page === 1 || loading
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
               {renderPaginationItems()}
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                  className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  onClick={() =>
+                    handlePageChange(
+                      Math.min(
+                        pagination.total_pages,
+                        pagination.current_page + 1
+                      )
+                    )
+                  }
+                  className={
+                    pagination.current_page === pagination.total_pages ||
+                      loading
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
@@ -390,111 +569,62 @@ export const OccupantUserMasterDashboard = () => {
 
       {showActionPanel && (
         <SelectionPanel
-          onAdd={() => navigate('/master/user/occupant-users/add')}
+          onAdd={() => navigate("/master/user/occupant-users/add")}
           onImport={() => { }}
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
 
-      {/* Filter Dialog */}
-      <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] p-0 bg-white">
-          <DialogHeader className="p-6 pb-4 border-b">
+      <OccupantUsersFilterDialog
+        filterDialogOpen={filterDialogOpen}
+        setFilterDialogOpen={setFilterDialogOpen}
+        filters={filters}
+        setFilters={setFilters}
+        handleApplyFilters={handleApplyFilters}
+      />
+
+      <Dialog open={statusDialogOpen} onClose={setStatusDialogOpen} maxWidth="xs" fullWidth>
+        <DialogContent className="p-0 bg-white">
+          <div className="px-6 py-3 border-b mb-3">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">FILTER</DialogTitle>
+              <h1 className="text-xl font-semibold">
+                Update Status
+              </h1>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setFilterDialogOpen(false)}
+                onClick={() => setStatusDialogOpen(false)}
                 className="h-6 w-6 p-0"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-          </DialogHeader>
+          </div>
 
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Name Field */}
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Name</Label>
-                <Input
-                  value={filters.name}
-                  onChange={(e) => handleFilterChange('name', e.target.value)}
-                  placeholder=""
-                  className="w-full"
-                />
-              </div>
-
-              {/* Email Field */}
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Email</Label>
-                <Input
-                  value={filters.email}
-                  onChange={(e) => handleFilterChange('email', e.target.value)}
-                  placeholder=""
-                  className="w-full"
-                />
-              </div>
-
-              {/* Mobile Number Field */}
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Mobile Number</Label>
-                <Input
-                  value={filters.mobile}
-                  onChange={(e) => handleFilterChange('mobile', e.target.value)}
-                  placeholder=""
-                  className="w-full"
-                />
-              </div>
-
-              {/* Status Field */}
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Status</Label>
-                <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-                  <SelectTrigger className="w-full bg-white">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Entity Field */}
-              <div className="md:col-span-1">
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Entity</Label>
-                <Select value={filters.entity} onValueChange={(value) => handleFilterChange('entity', value)}>
-                  <SelectTrigger className="w-full bg-white">
-                    <SelectValue placeholder="Select Entity" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="all">All Entities</SelectItem>
-                    <SelectItem value="entity1">Entity 1</SelectItem>
-                    <SelectItem value="entity2">Entity 2</SelectItem>
-                    <SelectItem value="entity3">Entity 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button
-                onClick={handleResetFilters}
-                variant="outline"
-                className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 px-6 py-2"
+          <div className="px-6 py-3 space-y-6">
+            <FormControl fullWidth>
+              <InputLabel id="status-label">Select Status</InputLabel>
+              <Select
+                labelId="status-label"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
               >
-                Reset
-              </Button>
+                <MenuItem value="" disabled>
+                  Select Status
+                </MenuItem>
+                <MenuItem value="approved">Approved</MenuItem>
+                <MenuItem value="rejected">Rejected</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+              </Select>
+            </FormControl>
+
+            <div className="flex justify-center">
               <Button
-                onClick={handleApplyFilters}
-                className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
+                onClick={handleStatusUpdate}
+                className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2 rounded-md"
+                disabled={!selectedStatus || selectedStatus === "Select Status"}
               >
-                Apply
+                Submit
               </Button>
             </div>
           </div>

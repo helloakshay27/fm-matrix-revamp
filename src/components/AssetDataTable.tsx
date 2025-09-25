@@ -6,6 +6,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { StatusBadge } from "./StatusBadge";
 import type { Asset } from "@/hooks/useAssets";
 import { SelectionPanel } from "./water-asset-details/PannelTab";
+import { toast } from "sonner";
 
 // Asset interface now imported from useAssets hook
 
@@ -49,25 +50,96 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   // Status color logic moved to StatusBadge component
 
   const [showActionPanel, setShowActionPanel] = useState(false);
-  const handleExcelExport = async () => {
+  // const handleExcelExport = async (columnVisibility?: Record<string, boolean>) => {
+  //   try {
+  //     // Use the current column visibility from EnhancedTable if provided, otherwise fallback to visibleColumns prop
+  //     const currentVisibility = columnVisibility || visibleColumns;
 
+  //     console.log(currentVisibility)
+
+  //     // Get visible column keys where value is true
+  //     const visibleColumnKeys = Object.keys(currentVisibility).filter(
+  //       key => currentVisibility[key] === true
+  //     );
+
+  //     // Join them with commas for query parameter
+  //     const columnsParam = visibleColumnKeys.join(',');
+
+  //     // Build the URL with columns query parameter
+  //     const baseUrl = `https://${localStorage.getItem('baseUrl')}/pms/assets/assets_data_report.xlsx`;
+  //     const urlWithColumns = columnsParam ? `${baseUrl}?columns=${encodeURIComponent(columnsParam)}` : baseUrl;
+
+  //     console.log('Exporting with columns:', visibleColumnKeys);
+  //     console.log('Export URL:', urlWithColumns);
+
+  //     toast.info("Preparing export with selected columns...");
+
+  //     const response = await fetch(urlWithColumns, {
+  //       method: "GET",
+  //       headers: {
+  //         Authorization: `Bearer ${localStorage.getItem('token')}`,
+  //         Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  //       },
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error("Failed to export assets to Excel");
+  //     }
+
+  //     const blob = await response.blob();
+  //     const url = window.URL.createObjectURL(blob);
+  //     const a = document.createElement("a");
+  //     a.href = url;
+  //     a.download = "assets_data_report.xlsx";
+  //     document.body.appendChild(a);
+  //     a.click();
+  //     document.body.removeChild(a);
+  //     window.URL.revokeObjectURL(url);
+
+  //     toast.success("Assets exported successfully!");
+
+  //   } catch (error) {
+  //     console.error("Error exporting assets to Excel:", error);
+  //     toast.error("Failed to export assets. Please try again.");
+  //   }
+  // };
+
+
+  const handleExcelExport = async (columnVisibility?: Record<string, boolean>) => {
     try {
-      const response = await fetch(
-        `https://${localStorage.getItem('baseUrl')}/pms/assets/assets_data_report.xlsx`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+      const currentVisibility = columnVisibility || visibleColumns;
 
-            Accept:
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          },
-        }
-      );
+      // Transform keys:
+      const visibleColumnKeys = Object.keys(currentVisibility)
+        .filter(key => currentVisibility[key] === true)
+        // remove "actions"
+        .filter(key => key !== "actions")
+        // convert camelCase → snake_case
+        .map(key =>
+          key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase()
+        );
 
-      if (!response.ok) {
-        throw new Error("Failed to export assets to Excel");
-      }
+      // ✅ Pass as a JSON string in the `fields` query parameter
+      const fieldsParam = encodeURIComponent(JSON.stringify(visibleColumnKeys));
+
+      const baseUrl = `https://${localStorage.getItem("baseUrl")}/pms/assets/assets_data_report.xlsx`;
+      const urlWithColumns = `${baseUrl}?fields=${fieldsParam}`;
+
+      console.log("Exporting with fields:", visibleColumnKeys);
+      console.log("Export URL:", urlWithColumns);
+
+      toast.info("Preparing export with selected columns...");
+
+      const response = await fetch(urlWithColumns, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Accept:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to export assets to Excel");
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -79,11 +151,15 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
-
+      toast.success("Assets exported successfully!");
     } catch (error) {
       console.error("Error exporting assets to Excel:", error);
+      toast.error("Failed to export assets. Please try again.");
     }
   };
+
+
+
   const selectionActions = [
     {
       label: "Add Schedule",

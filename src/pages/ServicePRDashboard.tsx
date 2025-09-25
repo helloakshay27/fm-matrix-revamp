@@ -7,8 +7,19 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { getServicePr, updateServiceActiveStaus } from "@/store/slices/servicePRSlice";
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import {
+  getServicePr,
+  updateServiceActiveStaus,
+} from "@/store/slices/servicePRSlice";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Switch } from "@/components/ui/switch";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
@@ -98,35 +109,42 @@ export const ServicePRDashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
-  const { loading } = useAppSelector(state => state.getServicePr)
+  const { loading } = useAppSelector((state) => state.getServicePr);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [servicePR, setServicePR] = useState([]);
   const [filters, setFilters] = useState({
-    referenceNumber: '',
-    prNumber: '',
-    supplierName: '',
-    approvalStatus: 'Select'
+    referenceNumber: "",
+    prNumber: "",
+    supplierName: "",
+    approvalStatus: "Select",
   });
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
     total_pages: 0,
   });
-  const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
+  const [updatingStatus, setUpdatingStatus] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const fetchData = async (filterParams = {}) => {
     try {
       const response = await dispatch(
-        getServicePr({ baseUrl, token, page: pagination.current_page, ...filterParams })
+        getServicePr({
+          baseUrl,
+          token,
+          page: pagination.current_page,
+          ...filterParams,
+        })
       ).unwrap();
       setServicePR(response.work_orders);
       setPagination({
         current_page: response.current_page,
         total_count: response.total_count,
-        total_pages: response.total_pages
-      })
+        total_pages: response.total_pages,
+      });
     } catch (error) {
       toast.error(error);
     }
@@ -210,7 +228,9 @@ export const ServicePRDashboard = () => {
         )
       );
 
-      toast.success(`Service PR ${newStatus ? "activated" : "deactivated"} successfully`);
+      toast.success(
+        `Service PR ${newStatus ? "activated" : "deactivated"} successfully`
+      );
     } catch (error) {
       console.error("Error updating active status:", error);
       toast.error(error || "Failed to update active status. Please try again.");
@@ -225,19 +245,25 @@ export const ServicePRDashboard = () => {
         return (
           <span
             className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-              item.approved_status
+              item.all_level_approved
+                ? "Approved"
+                : item.all_level_approved === false
+                  ? "Rejected"
+                  : "Pending"
             )}`}
           >
-            {item.approved_status}
+            {item.all_level_approved
+              ? "Approved"
+              : item.all_level_approved === false
+                ? "Rejected"
+                : "Pending"}
           </span>
         );
       case "active":
         return (
           <Switch
             checked={item.active}
-            onCheckedChange={() =>
-              handleCheckboxChange(item)
-            }
+            onCheckedChange={() => handleCheckboxChange(item)}
             className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
             disabled={updatingStatus[item.id]}
           />
@@ -257,22 +283,24 @@ export const ServicePRDashboard = () => {
         className="p-1"
         onClick={(e) => {
           e.stopPropagation();
-          navigate(`/finance/service-pr/edit/${item.id}`);
-        }}
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
           navigate(`/finance/service-pr/details/${item.id}`);
         }}
       >
         <Eye className="w-4 h-4" />
       </Button>
+      {item.all_level_approved === null && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/finance/service-pr/edit/${item.id}`);
+          }}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      )}
     </div>
   );
 
@@ -289,7 +317,12 @@ export const ServicePRDashboard = () => {
   );
 
   const handlePageChange = async (page: number) => {
-    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
+    if (
+      page < 1 ||
+      page > pagination.total_pages ||
+      page === pagination.current_page ||
+      loading
+    ) {
       return;
     }
 
@@ -320,7 +353,7 @@ export const ServicePRDashboard = () => {
 
     if (showEllipsis) {
       items.push(
-        <PaginationItem key={1} className='cursor-pointer'>
+        <PaginationItem key={1} className="cursor-pointer">
           <PaginationLink
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
@@ -334,14 +367,14 @@ export const ServicePRDashboard = () => {
 
       if (currentPage > 4) {
         items.push(
-          <PaginationItem key="ellipsis1" >
+          <PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>
         );
       } else {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
-            <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationItem key={i} className="cursor-pointer">
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
@@ -358,7 +391,7 @@ export const ServicePRDashboard = () => {
       if (currentPage > 3 && currentPage < totalPages - 2) {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
-            <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationItem key={i} className="cursor-pointer">
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
@@ -382,7 +415,7 @@ export const ServicePRDashboard = () => {
         for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
           if (!items.find((item) => item.key === i.toString())) {
             items.push(
-              <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationItem key={i} className="cursor-pointer">
                 <PaginationLink
                   onClick={() => handlePageChange(i)}
                   isActive={currentPage === i}
@@ -399,7 +432,7 @@ export const ServicePRDashboard = () => {
 
       if (totalPages > 1) {
         items.push(
-          <PaginationItem key={totalPages} className='cursor-pointer'>
+          <PaginationItem key={totalPages} className="cursor-pointer">
             <PaginationLink
               onClick={() => handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
@@ -414,7 +447,7 @@ export const ServicePRDashboard = () => {
     } else {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
-          <PaginationItem key={i} className='cursor-pointer'>
+          <PaginationItem key={i} className="cursor-pointer">
             <PaginationLink
               onClick={() => handlePageChange(i)}
               isActive={currentPage === i}
@@ -457,15 +490,32 @@ export const ServicePRDashboard = () => {
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                onClick={() =>
+                  handlePageChange(Math.max(1, pagination.current_page - 1))
+                }
+                className={
+                  pagination.current_page === 1 || loading
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
               />
             </PaginationItem>
             {renderPaginationItems()}
             <PaginationItem>
               <PaginationNext
-                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                onClick={() =>
+                  handlePageChange(
+                    Math.min(
+                      pagination.total_pages,
+                      pagination.current_page + 1
+                    )
+                  )
+                }
+                className={
+                  pagination.current_page === pagination.total_pages || loading
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
               />
             </PaginationItem>
           </PaginationContent>

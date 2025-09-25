@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management' | 'checklist_management' | 'surveys';
   endpoint: string;
   title: string;
 }
@@ -107,8 +107,8 @@ const analyticsOptions = {
       { id: 'mr_revenue_overview', endpoint: 'revenue_generation_overview', label: 'Revenue Generation Overview' },
       { id: 'mr_center_performance', endpoint: 'center_performance_overview', label: 'Center Wise - Performance Overview' },
       { id: 'mr_center_wise_utilization', endpoint: 'center_wise_meeting_room_utilization', label: 'Center Wise - Meeting Room Utilization' },
-      { id: 'mr_response_tat_quarterly', endpoint: 'response_tat_performance_quarterly', label: 'Response TAT Performance (Quarterly)' },
-      { id: 'mr_resolution_tat_quarterly', endpoint: 'resolution_tat_performance_quarterly', label: 'Resolution TAT Performance (Quarterly)' },
+  { id: 'mr_response_tat_quarterly', endpoint: 'response_tat_performance_quarterly', label: 'Response TAT Performance' },
+  { id: 'mr_resolution_tat_quarterly', endpoint: 'resolution_tat_performance_quarterly', label: 'Resolution TAT Performance' },
     ]
   },
   community: {
@@ -163,7 +163,7 @@ const analyticsOptions = {
     color: '#C4B89D',
     options: [
       { id: 'consumables_top_center', endpoint: 'top_consumables_center', label: 'Top Consumables – Centre-wise Overview' },
-      { id: 'consumables_value_quarterly', endpoint: 'consumable_inventory_value_quarterly', label: 'Consumable Inventory Value – Quarterly Comparison' },
+  { id: 'consumables_value_quarterly', endpoint: 'consumable_inventory_value_quarterly', label: 'Consumable Inventory Value – Comparison' },
     ]
   },
 
@@ -185,7 +185,28 @@ const analyticsOptions = {
     ]
   },
 
-};
+  checklist_management: {
+    icon: CheckSquare,
+    label: 'Checklist Management',
+    color: '#C4B89D',
+    options: [
+  { id: 'cm_progress_quarterly', endpoint: 'cm_progress_quarterly', label: 'Checklist Progress Status – Center-Wise Comparison' },
+      { id: 'cm_overdue_centerwise', endpoint: 'cm_overdue_centerwise', label: 'Top 10 Overdue Checklists – Center-wise Contribution Comparison' },
+    ]
+  },
+
+  surveys: {
+    icon: BarChart3,
+    label: 'Surveys',
+    color: '#8B5CF6',
+    options: [
+      { id: 'survey_summary', endpoint: 'survey_summary', label: 'Survey Summary' },
+      { id: 'survey_status_distribution', endpoint: 'survey_status_distribution', label: 'Survey Status Distribution' },
+      { id: 'top_surveys', endpoint: 'top_surveys', label: 'Top Surveys' },
+    ]
+  },
+
+} as const;
 
 export const UnifiedAnalyticsSelector: React.FC<UnifiedAnalyticsSelectorProps> = ({
   selectedAnalytics,

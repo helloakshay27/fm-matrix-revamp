@@ -12,6 +12,8 @@ import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { KRCCFormFilterDialog } from '@/components/KRCCFormFilterDialog';
 import { toast } from 'sonner';
 import axios from 'axios';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 // Local debounce hook (kept here to avoid external dependency assumptions)
 function useDebounce<T>(value: T, delay: number) {
@@ -361,31 +363,613 @@ export const KRCCFormListDashboard = () => {
       toast.error('Missing base URL or token');
       return;
     }
+    setDownloading(prev => ({ ...prev, [form.id]: true }));
     try {
-      setDownloading(prev => ({ ...prev, [form.id]: true }));
-      const url = `https://${baseUrl}/krcc_forms/${form.id}/krcc_form_report.pdf`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        throw new Error(text || `Download failed (${res.status})`);
-      }
-      const blob = await res.blob();
-      const cd = res.headers.get('content-disposition') || '';
-      const match = cd.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
-      const filename = decodeURIComponent(match?.[1] || match?.[2] || `krcc-form-${form.id}.pdf`);
+      const protocolBase = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      // 1) Fetch KRCC detail JSON (same as detail page uses)
+      const detailRes = await fetch(`${protocolBase}/krcc_forms/${form.id}.json`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      });
+      if (!detailRes.ok) throw new Error(`HTTP ${detailRes.status}`);
+      const detailJson = await detailRes.json();
 
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(blobUrl);
-      toast.success(`PDF Downloaded Successfully`);
+      // Helpers
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const fmtDate = (iso?: string | null) => {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '—';
+        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+      };
+      const fmtDateTime = (iso?: string | null) => {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '—';
+        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      };
+      const toTitle = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      const isImage = (url?: string, doctype?: string | null) => {
+        const u = url || '';
+        const dt = (doctype || '').toLowerCase();
+        return /(jpg|jpeg|png|webp|gif|svg)$/i.test(u) || dt.startsWith('image/');
+      };
+      const extToMime = (url?: string | null) => {
+        const u = (url || '').toLowerCase();
+        if (u.endsWith('.png')) return 'image/png';
+        if (u.endsWith('.jpg') || u.endsWith('.jpeg')) return 'image/jpeg';
+        if (u.endsWith('.webp')) return 'image/webp';
+        if (u.endsWith('.gif')) return 'image/gif';
+        if (u.endsWith('.svg')) return 'image/svg+xml';
+        return 'image/jpeg';
+      };
+      const fixDataUrlMime = (dataUrl: string, fallbackUrl?: string | null) => {
+        if (!dataUrl.startsWith('data:image')) {
+          const mime = extToMime(fallbackUrl);
+          return dataUrl.replace(/^data:[^;]+/, `data:${mime}`);
+        }
+        return dataUrl;
+      };
+      const toDataUrl = async (url: string): Promise<string> => {
+        try {
+          const resp = await fetch(url, { mode: 'cors', credentials: 'omit' });
+          const blob = await resp.blob();
+          const reader = new FileReader();
+          const p: Promise<string> = new Promise((resolve, reject) => {
+            reader.onload = () => resolve(fixDataUrlMime(String(reader.result || url), url));
+            reader.onerror = reject;
+          });
+          reader.readAsDataURL(blob);
+          return await p;
+        } catch {
+          return url; // fallback to direct URL
+        }
+      };
+      const toDataUrlViaApi = async (attId?: number | null, fallbackUrl?: string | null): Promise<string> => {
+        if (!attId) return fallbackUrl || '';
+        try {
+          const apiUrl = `${protocolBase}/attachfiles/${attId}?show_file=true`;
+          const resp = await fetch(apiUrl, { headers: { Authorization: `Bearer ${token}` } });
+          if (!resp.ok) throw new Error('attach fetch failed');
+          const blob = await resp.blob();
+          const reader = new FileReader();
+          const p: Promise<string> = new Promise((resolve, reject) => {
+            reader.onload = () => resolve(fixDataUrlMime(String(reader.result || fallbackUrl || ''), fallbackUrl));
+            reader.onerror = reject;
+          });
+          reader.readAsDataURL(blob);
+          return await p;
+        } catch {
+          return fallbackUrl ? await toDataUrl(fallbackUrl) : '';
+        }
+      };
+
+      // Extract data parts
+      const user = detailJson?.user || {};
+      const approvedBy = detailJson?.approved_by || null;
+      const status = detailJson?.status || '—';
+      const createdAt = detailJson?.created_at || null;
+      const updatedAt = detailJson?.updated_at || null;
+      const formType = detailJson?.form_details?.form_type || '—';
+      const formDetails = detailJson?.form_details || {};
+      const categories = detailJson?.categories || {};
+      const topLevelAtts: Array<{ id?: number; url?: string; doctype?: string | null }> = detailJson?.krcc_attachments || [];
+
+      // Attachment groups per category with preloaded thumbnails
+      type AttItem = { id?: number; url?: string; doctype?: string | null; dataUrl?: string };
+      type AttGroup = { title: string; items: AttItem[] };
+      const preloadGroup = async (title: string, arr?: any[]): Promise<AttGroup | null> => {
+        const items = (arr || [])
+          .filter((a) => a && (a.url || a.id))
+          .filter((a) => isImage(a.url, a.doctype || a.document_content_type)) as AttItem[];
+        if (items.length === 0) return null;
+        const withData = await Promise.all(items.map(async (a) => ({
+          ...a,
+          dataUrl: a.id ? await toDataUrlViaApi(a.id as number, a.url || '') : (a.url ? await toDataUrl(a.url!) : ''),
+        })));
+        return { title, items: withData };
+      };
+      const collectCatGroups = async (cat: any): Promise<AttGroup[]> => {
+        const res: AttGroup[] = [];
+        const att = cat?.attachments || {};
+        const entries = Object.entries(att as Record<string, any[] | undefined>);
+        for (const [key, list] of entries) {
+          const pretty = key
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+          const grp = await preloadGroup(pretty, list || []);
+          if (grp) res.push(grp);
+        }
+        return res;
+      };
+      const topLevelImageGroups: AttGroup[] = [];
+      if (topLevelAtts && topLevelAtts.length) {
+        const grp = await preloadGroup('Other Attachments', topLevelAtts as any[]);
+        if (grp) topLevelImageGroups.push(grp);
+      }
+
+      // Build offscreen DOM for PDF
+      const container = document.createElement('div');
+      container.style.padding = '24px';
+      container.style.fontFamily = 'Arial, sans-serif';
+      container.style.width = '1000px';
+      container.style.background = '#f3f4f6';
+      container.style.position = 'absolute';
+      container.style.left = '-10000px';
+
+  const section = (title: string, bodyHtml: string, opts?: { marginTop?: number }) => `
+    <div style='background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin:${opts?.marginTop ?? 0}px 0 24px;'>
+          <div style='display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f6f4ee;'>
+            <div style='width:32px;height:32px;flex:0 0 auto;display:inline-block;'>
+              <svg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'><circle cx='16' cy='16' r='16' fill='#C72030' /><text x='16' y='16' dy='.35em' fill='#fff' font-family='Arial, sans-serif' font-size='16' font-weight='700' text-anchor='middle'>${title.charAt(0).toUpperCase()}</text></svg>
+            </div>
+            <h2 style='margin:0;font-size:16px;font-weight:700;color:#111;'>${title}</h2>
+          </div>
+      <div style='padding:24px;'>${bodyHtml}</div>
+        </div>`;
+      const label = (l: string, v: string) => `
+        <div style='display:flex;flex-direction:column;gap:4px;'>
+          <span style='color:#6b7280;font-size:12px;'>${l}</span>
+          <span style='color:#111;font-size:13px;font-weight:600;'>${v || '—'}</span>
+        </div>`;
+      const labelIf = (l: string, v?: any) => {
+        const has = v !== undefined && v !== null && String(v).toString().trim() !== '';
+        return has ? label(l, String(v)) : '';
+      };
+      const grid3 = (items: string[]) => `
+        <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 32px;margin-top:4px;'>${items.join('')}</div>`;
+
+      const userHtml = grid3([
+        label('Full Name', user?.fullname || [user?.firstname, user?.lastname].filter(Boolean).join(' ') || '—'),
+        label('Employee ID', user?.employee_id || '—'),
+        label('Email Id', user?.email || '—'),
+        label('Mobile Number', user?.mobile || '—'),
+        label('Gender', user?.gender || '—'),
+        label('Blood Group', user?.blood_group || '—'),
+        label('DOB', user?.birth_date || '—'),
+        label('Circle', user?.circle_name || '—'),
+        label('Company', user?.company_name || '—'),
+        label('Department', user?.department_name || '—'),
+        label('Role', user?.role_name || '—'),
+        label('Status', status || '—'),
+        label('Form Type', formType || '—'),
+        label('Created On', fmtDateTime(createdAt)),
+        label('Updated On', fmtDateTime(updatedAt)),
+      ]);
+
+      const approvedByHtml = approvedBy ? (() => {
+        const items = [
+          labelIf('Full Name', approvedBy?.fullname || [approvedBy?.firstname, approvedBy?.lastname].filter(Boolean).join(' ')),
+          labelIf('Employee ID', approvedBy?.employee_id),
+          labelIf('Email Id', approvedBy?.email),
+          labelIf('Mobile Number', approvedBy?.mobile),
+          labelIf('Department', approvedBy?.department_name),
+          labelIf('Role', approvedBy?.role_name),
+        ].filter(Boolean) as string[];
+        return items.length ? grid3(items) : '';
+      })() : '';
+
+      // Checklist helpers (mirror detail page logic)
+      const FIELD_LABELS: Record<string, string> = {
+        dl_number: 'Driving License Number',
+        dl_date: 'DL Date',
+        reg_number: 'Registration Number',
+        vehicle_type: 'Vehicle Type',
+        valid_insurence: 'Valid Insurance',
+        valid_insurence_date: 'Valid Insurance Till',
+        valid_puc: 'Valid PUC',
+        valid_puc_date: 'Valid PUC Till',
+        medical_certificate_valid_date: 'Medical Certificate Valid Till',
+        full_face_helmet: 'Full Face Helmet',
+        reflective_jacket: 'Reflective Jacket',
+        yoe: 'Experience (Years)',
+        role: 'Role',
+        fit_to_work: 'Fit to Work',
+      };
+      const isYes = (v: any) => String(v).toLowerCase() === 'yes' || v === true || String(v).toLowerCase() === 'true' || v === 1;
+      const isNo = (v: any) => String(v).toLowerCase() === 'no' || String(v).toLowerCase() === 'false' || v === 0;
+      const buildChecklist = (prefix: string, title: string) => {
+        const entries = Object.entries(formDetails || {})
+          .filter(([k]) => k.startsWith(prefix))
+          .map(([k, v]) => {
+            const base = k.slice(prefix.length).replace(/^_/, '');
+            const labelText = FIELD_LABELS[base] || toTitle(base);
+            const checked = isYes(v) || (!isNo(v) && typeof v === 'string' && v.trim() !== '') || (typeof v === 'number' && !isNaN(Number(v)));
+            const showVal = typeof v === 'string' && !['yes', 'no', 'true', 'false'].includes(v.toLowerCase()) && v.trim() !== '';
+            return { labelText, checked, valueText: showVal ? String(v) : '' };
+          })
+          .filter(it => !!it.labelText);
+        if (!entries.length) return '';
+        const items = entries.map(it => `
+          <div data-avoid-split='1' style='display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;'>
+            <div style='width:14px;height:14px;border-radius:3px;border:1px solid #94a3b8;background:${it.checked ? '#16a34a' : '#fff'}'></div>
+            <div style='font-size:12px;color:#111;font-weight:600;'>${it.labelText}</div>
+            ${it.valueText ? `<div style='font-size:12px;color:#374151;margin-left:auto;'>${it.valueText}</div>` : ''}
+          </div>`).join('');
+  return section(title.toUpperCase(), `<div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px;'>${items}</div>`, { marginTop: 12 });
+      };
+
+      // Build category sections mirroring detail page
+      const buildCatKV = (cat: any, keys: string[]) => {
+        const items: string[] = [];
+        keys.forEach(k => {
+          const v = cat?.[k];
+          const has = v !== undefined && v !== null && String(v).toString().trim() !== '';
+          if (has) items.push(label(toTitle(k), String(v)));
+        });
+        return items.length ? grid3(items) : '';
+      };
+      const catHtml: string[] = [];
+      // Consolidated KRCC Details (2W/4W) section
+  if (categories?.bike || categories?.car) {
+        let krccBody = '';
+        // Bike / 2 Wheeler subsection
+        if (categories?.bike) {
+          const bike = (categories as any).bike;
+          const kvBike = buildCatKV(bike, ['dl_number','dl_valid_till','reg_number']);
+          const checklist2w = buildChecklist('2w_', '2 Wheeler Checklist');
+          const groups = await collectCatGroups(bike);
+      const attHtml = groups.map(g => `
+            <div style='margin-top:8px;'>
+              <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
+              <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
+  ${g.items.map(it => `<div data-avoid-split='1' style='border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;'>
+      <img src='${it.dataUrl || it.url || ''}' style='width:100%;height:auto;max-height:240px;object-fit:contain;display:block;background:#fff;'/>
+                </div>`).join('')}
+              </div>
+            </div>`).join('');
+          if (kvBike || checklist2w || attHtml) {
+            krccBody += `
+            <div style='margin-bottom:16px;'>
+              <div style='font-size:14px;font-weight:700;color:#111;margin-bottom:8px;'>Ride a 2 Wheeler</div>
+              ${kvBike}
+              ${checklist2w}
+              ${attHtml}
+            </div>`;
+          }
+        }
+        // Car / 4 Wheeler subsection
+        if (categories?.car) {
+          const car = (categories as any).car;
+          const kvCar = buildCatKV(car, ['dl_number','dl_valid_till','vehicle_type','reg_number','valid_insurance','valid_insurance_till','valid_puc','medical_certificate_valid_till']);
+          const checklist4w = buildChecklist('4w_', '4 Wheeler Checklist');
+          const groups = await collectCatGroups(car);
+      const attHtml = groups.map(g => `
+            <div style='margin-top:8px;'>
+              <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
+              <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
+  ${g.items.map(it => `<div data-avoid-split='1' style='border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;'>
+      <img src='${it.dataUrl || it.url || ''}' style='width:100%;height:auto;max-height:240px;object-fit:contain;display:block;background:#fff;'/>
+                </div>`).join('')}
+              </div>
+            </div>`).join('');
+          if (kvCar || checklist4w || attHtml) {
+            krccBody += `
+            <div style='margin-bottom:16px;'>
+              <div style='font-size:14px;font-weight:700;color:#111;margin-bottom:8px;'>Drive a 4 Wheeler</div>
+              ${kvCar}
+              ${checklist4w}
+              ${attHtml}
+            </div>`;
+          }
+        }
+        // Build consolidated section only if some body exists
+        if (krccBody.trim().length > 0) {
+          catHtml.push(section('KRCC Details (Drive a ..)', krccBody));
+        }
+      }
+      // Electrical Work
+  if (categories?.electrical) {
+        const electrical = (categories as any).electrical;
+        const kv = buildCatKV(electrical, ['qualification','license_number','license_validity','fit_to_work','medical_certificate_valid_till','first_aid_valid_till']);
+        const groups = await collectCatGroups(electrical);
+    const attHtml = groups.map(g => `
+          <div style='margin-top:8px;'>
+            <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
+            <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
+  ${g.items.map(it => `<div data-avoid-split='1' style='border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;'>
+        <img src='${it.dataUrl || it.url || ''}' style='width:100%;height:auto;max-height:240px;object-fit:contain;display:block;background:#fff;'/>
+              </div>`).join('')}
+            </div>
+          </div>`).join('');
+        if (kv || attHtml) {
+          catHtml.push(section('ELECTRICAL WORK', kv + attHtml));
+        }
+      }
+  // Work at Height
+  if (categories?.height) {
+        const height = (categories as any).height;
+        const kv = buildCatKV(height, ['experience_years','fit_to_work','full_body_harness','medical_certificate_valid_till','first_aid_certificate_valid_till']);
+        const groups = await collectCatGroups(height);
+    const attHtml = groups.map(g => `
+          <div style='margin-top:8px;'>
+            <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
+            <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
+  ${g.items.map(it => `<div data-avoid-split='1' style='border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;'>
+        <img src='${it.dataUrl || it.url || ''}' style='width:100%;height:auto;max-height:240px;object-fit:contain;display:block;background:#fff;'/>
+              </div>`).join('')}
+            </div>
+          </div>`).join('');
+        if (kv || attHtml) {
+          catHtml.push(section('WORK AT HEIGHT', kv + attHtml));
+        }
+      }
+      // Underground Work
+      if (categories?.underground) {
+        const underground = (categories as any).underground;
+        const kv = buildCatKV(underground, ['experience_years','role','fit_to_work','medical_certificate_valid_till']);
+        const checklistUG = buildChecklist('work_under_ground_', 'Work Underground Checklist');
+        const groups = await collectCatGroups(underground);
+        const attHtml = groups.map(g => `
+          <div style='margin-top:8px;'>
+            <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
+            <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
+              ${g.items.map(it => `<div data-avoid-split='1' style='border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;'>
+                <img src='${it.dataUrl || it.url || ''}' style='width:100%;height:auto;max-height:240px;object-fit:contain;display:block;background:#fff;'/>
+              </div>`).join('')}
+            </div>
+          </div>`).join('');
+        if (kv || checklistUG || attHtml) {
+          catHtml.push(section('Work Underground', kv + checklistUG + attHtml));
+        }
+      }
+      // Ride a Bicycle
+      if (categories?.bicycle) {
+        const bicycle = (categories as any).bicycle;
+        const kv = buildCatKV(bicycle, ['reflective_jacket','training_available']);
+        if (kv) {
+          catHtml.push(section('Ride a Bicycle', kv));
+        }
+      }
+      // Exclude MHE, None of the Above, and top-level attachments per requirement
+      container.innerHTML = `
+  ${section('Personal Details', userHtml)}
+  ${approvedByHtml ? section('Approved Details', approvedByHtml) : ''}
+        ${catHtml.join('')}
+        <div style='text-align:right;font-size:10px;color:#666;margin-top:8px;'>Generated: ${new Date().toLocaleString()}</div>
+      `;
+
+      document.body.appendChild(container);
+
+      // Helper to compute non-splittable regions (CSS px -> canvas px) with extra padding
+      const computeAvoidRanges = (scaleVal: number) => {
+        const rootRect = container.getBoundingClientRect();
+        const nodes = Array.from(container.querySelectorAll('[data-avoid-split]')) as HTMLElement[];
+        const pad = Math.ceil(8 * scaleVal); // add safety padding around avoid blocks
+        const ranges = nodes.map((el) => {
+          const r = el.getBoundingClientRect();
+          const topCss = r.top - rootRect.top;
+          const bottomCss = r.bottom - rootRect.top;
+          return {
+            top: Math.max(0, Math.floor(topCss * scaleVal) - pad),
+            bottom: Math.max(0, Math.ceil(bottomCss * scaleVal) + pad),
+          };
+        });
+        // Merge overlapping ranges for faster checks
+        ranges.sort((a, b) => a.top - b.top);
+        const merged: { top: number; bottom: number }[] = [];
+        for (const rng of ranges) {
+          const last = merged[merged.length - 1];
+          if (!last || rng.top > last.bottom) merged.push({ ...rng });
+          else last.bottom = Math.max(last.bottom, rng.bottom);
+        }
+        return merged;
+      };
+
+      let canvas: HTMLCanvasElement;
+      try {
+        const renderScale = 3;
+        const avoidRanges = computeAvoidRanges(renderScale);
+        canvas = await html2canvas(container, { scale: renderScale, useCORS: true, allowTaint: false });
+        // Pagination & slicing with avoid-split awareness
+        const pdf = new jsPDF('p', 'pt', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const marginX = 20;
+        const marginY = 20;
+        const usableWidth = pageWidth - marginX * 2;
+        const ratio = usableWidth / canvas.width;
+        const fullHeightPt = canvas.height * ratio;
+
+        if (fullHeightPt <= pageHeight - marginY * 2) {
+          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', marginX, marginY, usableWidth, fullHeightPt, undefined, 'FAST');
+        } else {
+          const pageUsableHeightPt = pageHeight - marginY * 2;
+          const sliceHeightPxBase = Math.floor(pageUsableHeightPt / ratio);
+          let startY = 0;
+          let pageIndex = 0;
+          const minSlicePx = Math.max(120, Math.floor(60 * renderScale));
+          const findSafeEnd = (start: number, desired: number) => {
+            let end = Math.min(canvas.height, desired);
+            // If ending inside an avoid-split block, snap to just above it
+            const hit = avoidRanges.find(r => r.top < end && r.bottom > end);
+            if (hit) end = Math.max(start + minSlicePx, hit.top - 2);
+            // Ensure not inside any avoid block
+            let safety = 0;
+            while (avoidRanges.some(r => r.top < end && r.bottom > end) && safety < 5) {
+              const r = avoidRanges.find(rr => rr.top < end && rr.bottom > end)!;
+              end = Math.max(start + minSlicePx, r.top - 2);
+              safety++;
+            }
+            // If too small, push past the next block's bottom when possible
+            if (end - start < minSlicePx) {
+              const next = avoidRanges.find(r => r.bottom > start);
+              if (next) end = Math.min(canvas.height, Math.max(next.bottom + 2, start + minSlicePx));
+            }
+            if (end <= start) end = Math.min(canvas.height, start + sliceHeightPxBase);
+            return end;
+          };
+          while (startY < canvas.height) {
+            let endY = findSafeEnd(startY, startY + sliceHeightPxBase);
+
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = Math.min(endY - startY, canvas.height - startY);
+            const ctx = sliceCanvas.getContext('2d');
+            ctx?.drawImage(canvas, 0, startY, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
+            const sliceData = sliceCanvas.toDataURL('image/png');
+            if (pageIndex > 0) pdf.addPage();
+            const sliceHeightPt = sliceCanvas.height * ratio;
+            pdf.addImage(sliceData, 'PNG', marginX, marginY, usableWidth, sliceHeightPt, undefined, 'FAST');
+            startY += sliceCanvas.height;
+            pageIndex++;
+          }
+        }
+
+        try { pdf.save(`krcc_${form.id}.pdf`); }
+        catch {
+          try {
+            const blob = pdf.output('blob');
+            const urlObj = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = urlObj; a.download = `krcc_${form.id}.pdf`; document.body.appendChild(a); a.click();
+            setTimeout(() => { URL.revokeObjectURL(urlObj); document.body.removeChild(a); }, 1500);
+          } catch {}
+        }
+
+        document.body.removeChild(container);
+        toast.success('PDF generated');
+        return; // end normal path early so we don't run old pagination logic below
+      } catch (e) {
+        console.warn('[KRCC][PDF] html2canvas failed, falling back to text-only sections', e);
+        // Fallback: rebuild with text-only sections (no images)
+        const buildKRCCTextOnly = () => {
+          let body = '';
+          if (categories?.bike) {
+            const bike = (categories as any).bike;
+            const kvBike = buildCatKV(bike, ['dl_number','dl_valid_till','reg_number']);
+            const checklist2w = buildChecklist('2w_', '2 Wheeler Checklist');
+            body += `
+              <div style='margin-bottom:16px;'>
+                <div style='font-size:14px;font-weight:700;color:#111;margin-bottom:8px;'>Ride a 2 Wheeler</div>
+                ${kvBike}
+                ${checklist2w}
+              </div>`;
+          }
+          if (categories?.car) {
+            const car = (categories as any).car;
+            const kvCar = buildCatKV(car, ['dl_number','dl_valid_till','vehicle_type','reg_number','valid_insurance','valid_insurance_till','valid_puc','medical_certificate_valid_till']);
+            const checklist4w = buildChecklist('4w_', '4 Wheeler Checklist');
+            body += `
+              <div style='margin-bottom:16px;'>
+                <div style='font-size:14px;font-weight:700;color:#111;margin-bottom:8px;'>Drive a 4 Wheeler</div>
+                ${kvCar}
+                ${checklist4w}
+              </div>`;
+          }
+          return body;
+        };
+
+        const ugText = categories?.underground ? (() => {
+          const underground = (categories as any).underground;
+          const kv = buildCatKV(underground, ['experience_years','role','fit_to_work','medical_certificate_valid_till']);
+          const checklistUG = buildChecklist('work_under_ground_', 'Work Underground Checklist');
+          return kv + checklistUG;
+        })() : '';
+
+        const heightText = categories?.height ? (() => {
+          const height = (categories as any).height;
+          return buildCatKV(height, ['experience_years','fit_to_work','full_body_harness','medical_certificate_valid_till','first_aid_certificate_valid_till']);
+        })() : '';
+
+        const electricalText = categories?.electrical ? (() => {
+          const electrical = (categories as any).electrical;
+          return buildCatKV(electrical, ['qualification','license_number','license_validity','fit_to_work','medical_certificate_valid_till','first_aid_valid_till']);
+        })() : '';
+
+        const bicycleText = categories?.bicycle ? (() => {
+          const bicycle = (categories as any).bicycle;
+          return buildCatKV(bicycle, ['reflective_jacket','training_available']);
+        })() : '';
+
+        const consolidatedKRCC = buildKRCCTextOnly();
+        const sectionsHtml = [
+          section('Personal Details', userHtml),
+          approvedBy ? section('Approved Details', approvedByHtml) : '',
+          consolidatedKRCC ? section('KRCC Details (Drive a ..)', consolidatedKRCC) : '',
+          ugText ? section('Work Underground', ugText) : '',
+          bicycleText ? section('Ride a Bicycle', bicycleText) : '',
+          heightText ? section('Work at Height', heightText) : '',
+          electricalText ? section('Electrical Work', electricalText) : '',
+        ].join('');
+
+        container.innerHTML = `
+          ${sectionsHtml}
+          <div style='text-align:right;font-size:10px;color:#666;margin-top:8px;'>Generated: ${new Date().toLocaleString()}</div>
+        `;
+        const renderScale2 = 2;
+        const avoidRanges2 = computeAvoidRanges(renderScale2);
+        canvas = await html2canvas(container, { scale: renderScale2 });
+
+        // Repeat pagination with avoid ranges for fallback
+        const pdf = new jsPDF('p', 'pt', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const marginX = 20;
+        const marginY = 20;
+        const usableWidth = pageWidth - marginX * 2;
+        const ratio = usableWidth / canvas.width;
+        const fullHeightPt = canvas.height * ratio;
+
+        if (fullHeightPt <= pageHeight - marginY * 2) {
+          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', marginX, marginY, usableWidth, fullHeightPt, undefined, 'FAST');
+        } else {
+          const pageUsableHeightPt = pageHeight - marginY * 2;
+          const sliceHeightPxBase = Math.floor(pageUsableHeightPt / ratio);
+          let startY = 0;
+          let pageIndex = 0;
+          const minSlicePx = Math.max(120, Math.floor(60 * renderScale2));
+          const findSafeEnd = (start: number, desired: number) => {
+            let end = Math.min(canvas.height, desired);
+            const hit = avoidRanges2.find(r => r.top < end && r.bottom > end);
+            if (hit) end = Math.max(start + minSlicePx, hit.top - 2);
+            let safety = 0;
+            while (avoidRanges2.some(r => r.top < end && r.bottom > end) && safety < 5) {
+              const r = avoidRanges2.find(rr => rr.top < end && rr.bottom > end)!;
+              end = Math.max(start + minSlicePx, r.top - 2);
+              safety++;
+            }
+            if (end - start < minSlicePx) {
+              const next = avoidRanges2.find(r => r.bottom > start);
+              if (next) end = Math.min(canvas.height, Math.max(next.bottom + 2, start + minSlicePx));
+            }
+            if (end <= start) end = Math.min(canvas.height, start + sliceHeightPxBase);
+            return end;
+          };
+          while (startY < canvas.height) {
+            let endY = findSafeEnd(startY, startY + sliceHeightPxBase);
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = Math.min(endY - startY, canvas.height - startY);
+            const ctx = sliceCanvas.getContext('2d');
+            ctx?.drawImage(canvas, 0, startY, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
+            const sliceData = sliceCanvas.toDataURL('image/png');
+            if (pageIndex > 0) pdf.addPage();
+            const sliceHeightPt = sliceCanvas.height * ratio;
+            pdf.addImage(sliceData, 'PNG', marginX, marginY, usableWidth, sliceHeightPt, undefined, 'FAST');
+            startY += sliceCanvas.height;
+            pageIndex++;
+          }
+        }
+
+        try { pdf.save(`krcc_${form.id}.pdf`); }
+        catch {
+          try {
+            const blob = pdf.output('blob');
+            const urlObj = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = urlObj; a.download = `krcc_${form.id}.pdf`; document.body.appendChild(a); a.click();
+            setTimeout(() => { URL.revokeObjectURL(urlObj); document.body.removeChild(a); }, 1500);
+          } catch {}
+        }
+
+        document.body.removeChild(container);
+        toast.success('PDF generated');
+        return;
+      }
+      
     } catch (e: any) {
-      console.error('KRCC download error', e);
-      toast.error(e?.message || 'Download failed');
+      console.error('[KRCC][PDF] Generation error', e);
+      toast.error(e?.message || 'Failed to generate PDF');
     } finally {
       setDownloading(prev => ({ ...prev, [form.id]: false }));
     }

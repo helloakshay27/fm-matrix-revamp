@@ -789,41 +789,6 @@ const exportToExcel = <T extends Record<string, any>>(
   URL.revokeObjectURL(url);
 };
 
-// Ticket export function for API integration
-const exportTicketRecords = async () => {
-  try {
-    const url = `${API_CONFIG.BASE_URL}/pms/admin/complaints.xlsx`;
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: getAuthHeader(),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    // Get the blob from the response
-    const blob = await response.blob();
-
-    // Create download link
-    const downloadUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = 'ticket_records.xlsx';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(downloadUrl);
-
-  } catch (error) {
-    console.error('Error exporting tickets:', error);
-    alert('Failed to export ticket records');
-  }
-};
-
 interface BulkAction<T> {
   label: string;
   icon?: React.ComponentType<any>;
@@ -866,14 +831,14 @@ interface EnhancedTableProps<T> {
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
-  handleExport?: () => void;
-  enableGlobalSearch?: boolean;
-  onGlobalSearch?: (searchTerm: string) => void;
   canAddRow?: boolean;
   onAddRow?: (newRowData: Partial<T>) => void;
   renderEditableCell?: (columnKey: string, value: any, onChange: (value: any) => void) => React.ReactNode;
   newRowPlaceholder?: string;
   readonlyColumns?: string[]; // Array of column keys that should be readonly when adding
+  handleExport?: (columnVisibility?: Record<string, boolean>) => void;
+  enableGlobalSearch?: boolean; // Add this prop
+  onGlobalSearch?: (searchTerm: string) => void; // Add this prop
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -970,6 +935,13 @@ export function EnhancedTable<T extends Record<string, any>>({
       }
     }
   }, [debouncedSearchInput, externalSearchTerm, enableGlobalSearch, onGlobalSearch, lastProcessedSearch]);
+
+  // Synchronize external search term with internal search input
+  useEffect(() => {
+    if (externalSearchTerm !== undefined && searchInput !== externalSearchTerm) {
+      setSearchInput(externalSearchTerm);
+    }
+  }, [externalSearchTerm, searchInput]);
 
   // Add effect to reset loading state when search completes
   useEffect(() => {
@@ -1256,6 +1228,20 @@ export function EnhancedTable<T extends Record<string, any>>({
     return pages;
   };
 
+  // Remove the hardcoded exportTicketRecords function and replace with conditional logic
+  const handleExportClick = () => {
+    if (onExport) {
+      // Use custom export function if provided
+      onExport();
+    } else if (handleExport) {
+      // Use handleExport with column visibility if provided
+      handleExport(columnVisibility);
+    } else {
+      // Fallback to CSV export
+      exportToExcel(data, columns, exportFileName);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
@@ -1323,7 +1309,7 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleExport || (() => exportTicketRecords())}
+              onClick={handleExportClick}
               className="flex items-center gap-2"
               title='Export'
             >
@@ -1363,10 +1349,10 @@ export function EnhancedTable<T extends Record<string, any>>({
                       <SortableColumnHeader
                         key={column.key}
                         id={column.key}
-                        sortable={column.sortable}
+                        sortable={column.sortable !== false} // Default to true unless explicitly set to false
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
-                        onSort={() => handleSort(column.key)}
+                        onSort={() => column.sortable !== false && handleSort(column.key)} // Only call handleSort if sortable
                         className="bg-[#f6f4ee] text-center text-black min-w-32 sticky top-0"
                       >
                         {column.label}

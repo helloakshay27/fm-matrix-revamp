@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
@@ -34,9 +33,7 @@ export const AttendanceDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  // No pagination: we'll render a scrollable table
   useEffect(() => {
     const fetchAttendanceData = async () => {
       try {
@@ -64,25 +61,8 @@ export const AttendanceDetailsPage = () => {
     }
   }, [id]);
 
-  // Pagination logic
-  const totalRecords = attendanceData?.attendances.length || 0;
-  const totalPages = Math.ceil(totalRecords / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedRecords = attendanceData?.attendances.slice(startIndex, endIndex) || [];
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-  const handleNext = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
+  // Derived records
+  const allRecords = attendanceData?.attendances || [];
   return <div className="p-6">
       <div className="mb-6">
         <div className="flex items-center mb-2">
@@ -128,54 +108,34 @@ export const AttendanceDetailsPage = () => {
 
           {/* Attendance Records Table */}
           <div className="bg-white rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Punched In Time</TableHead>
-                  <TableHead>Punched Out Time</TableHead>
-                  <TableHead>Duration</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedRecords.length > 0 ? paginatedRecords.map(record => <TableRow key={record.id}>
+            <div className="max-h-[60vh] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="sticky top-0 bg-white z-10">Date</TableHead>
+                    <TableHead className="sticky top-0 bg-white z-10">Punched In Time</TableHead>
+                    <TableHead className="sticky top-0 bg-white z-10">Punched Out Time</TableHead>
+                    <TableHead className="sticky top-0 bg-white z-10">Duration</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allRecords.length > 0 ? allRecords.map(record => (
+                    <TableRow key={record.id}>
                       <TableCell className="font-medium">{record.date}</TableCell>
                       <TableCell>{record.punched_in_time}</TableCell>
                       <TableCell>{record.punched_out_time || '-'}</TableCell>
                       <TableCell>{record.duration}</TableCell>
-                    </TableRow>) : <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                      No attendance records found for this user.
-                    </TableCell>
-                  </TableRow>}
-              </TableBody>
-            </Table>
-
-            {/* Functional Pagination */}
-            {totalPages > 1 && <div className="p-4">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious onClick={handlePrevious} className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
-                    </PaginationItem>
-                    
-                    {Array.from({
-                length: totalPages
-              }, (_, i) => i + 1).map(page => <PaginationItem key={page}>
-                        <PaginationLink onClick={() => handlePageChange(page)} isActive={currentPage === page} className="cursor-pointer">
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>)}
-                    
-                    <PaginationItem>
-                      <PaginationNext onClick={handleNext} className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'} />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-                
-                {/* Pagination Info */}
-                
-              </div>}
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                        No attendance records found for this user.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </>}
 

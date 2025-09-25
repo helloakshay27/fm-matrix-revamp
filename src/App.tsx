@@ -18,6 +18,9 @@ import "./styles/enhanced-select.css"; // Global enhanced select styles
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
+import DashboardConfiguration from "./pages/DashboardConfiguration";
+import ParkingBookingListSiteWise from "./pages/ParkingBookingListSiteWise";
+import ConditionalParkingPage from "./pages/ConditionalParkingPage";
 
 // Import existing pages
 import Index from "./pages/Index";
@@ -179,6 +182,7 @@ import FillJSAForm from "./pages/FillJSAForm";
 import { AddPermitChecklist } from "./pages/AddPermitChecklist";
 import { PermitChecklistList } from "./pages/PermitChecklistList";
 import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
+import { EditPermitPage } from "./pages/EditPermitPage";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
 import { EnergyDashboard } from "./pages/EnergyDashboard";
@@ -712,7 +716,6 @@ import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
 import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
 import EditInventorySubTypePage from "./pages/master/EditInventorySubTypePage";
 import AddOccupantUserPage from "./pages/master/AddOccupantUserPage";
-import ViewOccupantUserPage from "./pages/master/ViewOccupantUserPage";
 import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
 import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 import CheckHierarchy from "./components/CheckHierarchy";
@@ -733,6 +736,15 @@ import ProjectDetailsPage from "./pages/ProjectDetailsPage";
 import ProjectMilestones from "./pages/ProjectMilestones";
 import ProjectTasksPage from "./pages/ProjectTasksPage";
 import ProjectTaskDetailsPage from "./pages/ProjectTaskDetailsPage";
+import MobileLMCPage from "./pages/MobileLMCPage";
+import { CompanyPartnersSetupDashboard } from "./pages/CompanyPartnersSetupDashboard";
+import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
+import BannerSetupDashboard from "./pages/BannerSetupDashboard";
+import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
+import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
+import BannerDetailsPage from "./pages/BannerDetailsPage";
+import AmenityDetailsPage from "./pages/AmenityDetailsPage";
+import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 
 const queryClient = new QueryClient();
 
@@ -900,15 +912,6 @@ function App() {
                   />
 
                   <Route
-                    path="/visitors/:id"
-                    element={
-                      <ProtectedRoute>
-                        <VisitorDetailsPage />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  <Route
                     path="/bookings"
                     element={
                       <ProtectedRoute>
@@ -935,6 +938,8 @@ function App() {
                     }
                   />
 
+
+
                   <Route
                     path="/"
                     element={
@@ -946,6 +951,10 @@ function App() {
                     }
                   >
                     <Route index element={<Index />} />
+
+                    {/* Dashboard Routes */}
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard/configuration" element={<DashboardConfiguration />} />
 
                     {/* Holiday Calendar Route */}
                     <Route
@@ -1088,20 +1097,13 @@ function App() {
                       path="/settings/account/roster/create"
                       element={<RosterCreatePage />}
                     />
+
                     <Route
-                      path="/roster"
-                      element={<AccountRosterDashboard />}
-                    />
-                    <Route
-                      path="/roster/create"
-                      element={<RosterCreatePage />}
-                    />
-                    <Route
-                      path="/roster/detail/:id"
+                      path="/settings/account/roster/detail/:id"
                       element={<RosterDetailPage />}
                     />
                     <Route
-                      path="/roster/edit/:id"
+                      path="/settings/account/roster/edit/:id"
                       element={<RosterEditPage />}
                     />
                     <Route
@@ -1145,27 +1147,33 @@ function App() {
                       element={<ChecklistGroupsPage />}
                     />
 
-                    {/* Settings Masters Routes */}
                     <Route
-                      path="/settings/masters/checklist"
+                      path="/master/checklist"
+                      element={<ChecklistListPage />}
+                    />
+                    <Route
+                      path="/master/checklist-master"
                       element={<ChecklistMasterDashboard />}
                     />
                     <Route
-                      path="/settings/masters/checklist-master"
-                      element={<ChecklistMasterDashboard />}
+                      path="/master/checklist-master/add"
+                      element={<ChecklistMasterPage />}
                     />
                     <Route
-                      path="/settings/masters/checklist-master/add"
-                      element={<AddChecklistMasterPage />}
-                    />
-                    <Route
-                      path="/settings/masters/checklist-master/edit/:id"
+                      path="/master/checklist-master/edit/:id"
                       element={<EditChecklistMasterPage />}
                     />
                     <Route
-                      path="/settings/masters/checklist-master/view/:id"
+                      path="/master/checklist-master/view/:id"
                       element={<ViewChecklistMasterPage />}
                     />
+                    <Route
+                      path="/master/checklist/create"
+                      element={<ChecklistMasterPage />}
+                    />
+                    <Route
+                      path="/master/checklist/edit/:id"
+                      element={<ChecklistMasterPage />} />
                     <Route
                       path="/settings/masters/unit"
                       element={<UnitMasterPage />}
@@ -1476,6 +1484,14 @@ function App() {
                       element={<PermitDetails />}
                     />
                     <Route
+                      path="/safety/permit/edit/:id"
+                      element={
+                        <ProtectedRoute>
+                          <EditPermitPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
                       path="/safety/permit/vendor-form/:id?"
                       element={<VendorPermitForm />}
                     />
@@ -1521,6 +1537,12 @@ function App() {
                     <Route
                       path="/maintenance/m-safe/training-list/training-user-details/:id"
                       element={<TrainingUserDetailPage />}
+                    />
+
+                    {/* M-Safe Routes */}
+                    <Route
+                      path="/maintenance/m-safe/internal"
+                      element={<MSafeDashboard />}
                     />
 
                     <Route
@@ -2239,55 +2261,59 @@ function App() {
                       path="/security/visitor"
                       element={<VisitorsDashboard />}
                     />
-                    <Route path="/visitor-form" element={<VisitorFormPage />} />
+                    <Route
+                      path="/security/visitor/add"
+                      element={<VisitorFormPage />}
+                    />
                     <Route
                       path="/security/visitor/history"
                       element={<VisitorsHistoryDashboard />}
                     />
                     <Route
-                      path="/visitor-details/:id"
+                      path="/security/visitor/details/:id"
                       element={<VisitorDetailsPage />}
                     />
                     <Route
-                      path="/security/visitor-management/setup"
+                      path="/settings/visitor-management/setup"
                       element={<VisitorManagementSetup />}
                     />
                     <Route
-                      path="/security/visitor-management/add-gate"
+                      path="/settings/visitor-management/setup/add-gate"
                       element={<AddVisitorGatePage />}
                     />
                     <Route
-                      path="/security/visitor-management/edit/:id"
+                      path="/settings/visitor-management/setup/edit/:id"
                       element={<EditVisitorGatePage />}
                     />
                     <Route
-                      path="/security/visitor-management/support-staff"
+                      path="/settings/visitor-management/support-staff"
                       element={<SupportStaffPage />}
                     />
                     <Route
-                      path="/security/visitor-management/support-staff/edit/:id"
+                      path="/settings/visitor-management/support-staff/edit/:id"
                       element={<EditSupportStaffPage />}
                     />
                     <Route
-                      path="/security/visitor-management/visiting-purpose"
+                      path="/settings/visitor-management/visiting-purpose"
                       element={<VisitingPurposePage />}
                     />
                     <Route
-                      path="/security/visitor-management/icons"
+                      path="/settings/visitor-management/icons"
                       element={<IconsDashboard />}
                     />
                     <Route
-                      path="/security/visitor-management/icons/add"
+                      path="/settings/visitor-management/icons/add"
                       element={<AddIconPage />}
                     />
                     <Route
-                      path="/security/visitor-management/icons/edit/:iconId"
+                      path="/settings/visitor-management/icons/edit/:iconId"
                       element={<EditIconPage />}
                     />
                     <Route
-                      path="/security/staff"
+                      path="/settings/staff"
                       element={<StaffsDashboard />}
                     />
+
                     <Route
                       path="/maintenance/msafe-report"
                       element={<MsafeReportDownload />}
@@ -2393,7 +2419,7 @@ function App() {
                       path="/vas/fnb/discounts"
                       element={<FnBDiscountsPage />}
                     />
-                    <Route path="/vas/parking" element={<ParkingDashboard />} />
+                    <Route path="/vas/parking" element={<ConditionalParkingPage />} />
                     <Route
                       path="/vas/parking/details/:clientId"
                       element={<ParkingDetailsPage />}
@@ -2401,6 +2427,10 @@ function App() {
                     <Route
                       path="/vas/parking/bookings"
                       element={<ParkingBookingsDashboard />}
+                    />
+                    <Route
+                      path="/vas/parking/site-wise-bookings"
+                      element={<ParkingBookingListSiteWise />}
                     />
                     <Route
                       path="/vas/parking/create"
@@ -2450,7 +2480,7 @@ function App() {
                       path="/vas/fnb/discounts"
                       element={<FnBDiscountsPage />}
                     />
-                    <Route path="/vas/parking" element={<ParkingDashboard />} />
+                    <Route path="/vas/parking" element={<ConditionalParkingPage />} />
                     <Route
                       path="/vas/parking/details/:clientId"
                       element={<ParkingDetailsPage />}
@@ -2577,6 +2607,8 @@ function App() {
                       element={<ExportDashboard />}
                     />
 
+
+
                     {/* M Safe Routes */}
 
                     <Route
@@ -2593,10 +2625,7 @@ function App() {
                         <Navigate to="/maintenance/m-safe/internal" replace />
                       }
                     />
-                    <Route
-                      path="/maintenance/m-safe/internal"
-                      element={<MSafeDashboard />}
-                    />
+
                     <Route
                       path="/maintenance/m-safe/external"
                       element={<ExternalUsersDashboard />}
@@ -2813,6 +2842,18 @@ function App() {
                       element={<EditInventoryTypePage />}
                     />
                     <Route
+                      path="/settings/inventory-management/inventory-type"
+                      element={<InventoryTypePage />}
+                    />
+                    <Route
+                      path="/settings/inventory-management/inventory-type/add"
+                      element={<AddInventoryTypePage />}
+                    />
+                    <Route
+                      path="/settings/inventory-management/inventory-type/edit/:id"
+                      element={<EditInventoryTypePage />}
+                    />
+                    <Route
                       path="/master/inventory-sub-type"
                       element={<InventorySubTypePage />}
                     />
@@ -2830,11 +2871,11 @@ function App() {
                       element={<AddWasteGenerationPage />}
                     />
                     <Route
-                      path="maintenance/task"
+                      path="/maintenance/task"
                       element={<ScheduledTaskDashboard />}
                     />
                     <Route
-                      path="task-details/:id"
+                      path="/maintenance/task-details/:id"
                       element={<TaskDetailsPage />}
                     />
                     <Route path="*" element={<NotFound />} />
@@ -3012,6 +3053,34 @@ function App() {
                       path="/settings/account/lock-sub-function/edit/:id"
                       element={<LockSubFunctionEdit />}
                     />
+                    <Route
+                      path="/settings/community-modules/testimonial-setup"
+                      element={<TestimonialsSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/testimonial-setup/:id"
+                      element={<TestimonialDetailsPage />}
+                    />
+                    <Route
+                      path="/settings/community-modules/company-partner-setup"
+                      element={<CompanyPartnersSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/banner-setup"
+                      element={<BannerSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/banner-setup/:id"
+                      element={<BannerDetailsPage />}
+                    />
+                    <Route
+                      path="/settings/community-modules/amenity-setup"
+                      element={<AmenitySetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/amenity-setup/:id"
+                      element={<AmenityDetailsPage />}
+                    />
                   </Route>
 
                   {/* Setup Routes - Outside of settings parent route */}
@@ -3064,6 +3133,10 @@ function App() {
                         <AddOccupantUserDashboard />
                       </ProtectedRoute>
                     }
+                  />
+                  <Route
+                    path="/mobile/lmc"
+                    element={<MobileLMCPage />}
                   />
 
                   {/* Mobile Routes */}

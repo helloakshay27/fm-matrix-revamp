@@ -18,18 +18,61 @@ const fieldStyles = {
       sm: '10px',
       md: '12px'
     }
-  }
+  },
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    backgroundColor: 'white',
+    '& fieldset': {
+      borderColor: '#e5e7eb',
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#6b7280',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
+
+const menuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 300,
+      zIndex: 9999,
+      backgroundColor: 'white',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    },
+  },
+  MenuListProps: {
+    style: {
+      padding: 0,
+    },
+  },
+  anchorOrigin: {
+    vertical: 'bottom' as const,
+    horizontal: 'left' as const,
+  },
+  transformOrigin: {
+    vertical: 'top' as const,
+    horizontal: 'left' as const,
+  },
 };
 
 
 export const AddIncidentPage = () => {
   const navigate = useNavigate();
   const [incidentData, setIncidentData] = useState({
-    year: '2025',
-    month: 'August',
-    day: '12',
-    hour: '12',
-    minute: '25',
+    year: '',
+    month: '',
+    day: '',
+    hour: '',
+    minute: '',
     building: '',
     // Primary hierarchy
     categoryForIncident: '',
@@ -156,7 +199,7 @@ export const AddIncidentPage = () => {
     const riskScore = sev * prob;
     let riskLevelText = '';
 
-    // Determine risk level text based on score
+    // Determine risk level text based on score~
     if (riskScore >= 1 && riskScore <= 6) {
       riskLevelText = 'Low Risk';
     } else if (riskScore >= 8 && riskScore <= 12) {
@@ -383,8 +426,7 @@ export const AddIncidentPage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto bg-white min-h-screen">
-      {/* Header */}
+    <div className="p-6">
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
           <span>Home</span>
@@ -399,18 +441,14 @@ export const AddIncidentPage = () => {
       </div>
 
       {/* Basic Details */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">ℹ️</span>
-            </div>
-            <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
-              INCIDENT DETAILS
-            </Heading>
+      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-4'>
+          <CardTitle className="text-lg text-black flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+            INCIDENT DETAILS
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-base">
+        <CardContent className="p-6 bg-white">
           {/* Time & Date Section */}
           <div className="mb-6">
             <h3 className="text-sm font-medium mb-3">Time & Date *</h3>
@@ -421,8 +459,11 @@ export const AddIncidentPage = () => {
                   label="Year"
                   value={incidentData.year}
                   onChange={e => handleInputChange('year', e.target.value)}
+                  displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
+                  <MenuItem value=""><em>Select Year</em></MenuItem>
                   {Array.from({ length: new Date().getFullYear() + 50 - 2010 + 1 }, (_, i) => {
                     const year = new Date().getFullYear() + 50 - i; // From current year + 50 down to 2010
                     return (
@@ -440,8 +481,11 @@ export const AddIncidentPage = () => {
                   label="Month"
                   value={incidentData.month}
                   onChange={e => handleInputChange('month', e.target.value)}
+                  displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
+                  <MenuItem value=""><em>Select Month</em></MenuItem>
                   <MenuItem value="January">January</MenuItem>
                   <MenuItem value="February">February</MenuItem>
                   <MenuItem value="March">March</MenuItem>
@@ -463,8 +507,11 @@ export const AddIncidentPage = () => {
                   label="Day"
                   value={incidentData.day}
                   onChange={e => handleInputChange('day', e.target.value)}
+                  displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
+                  <MenuItem value=""><em>Select Day</em></MenuItem>
                   {Array.from({ length: 31 }, (_, i) => (
                     <MenuItem key={i + 1} value={String(i + 1)}>{i + 1}</MenuItem>
                   ))}
@@ -477,8 +524,11 @@ export const AddIncidentPage = () => {
                   label="Hour"
                   value={incidentData.hour}
                   onChange={e => handleInputChange('hour', e.target.value)}
+                  displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
+                  <MenuItem value=""><em>Select Hour</em></MenuItem>
                   {Array.from({ length: 24 }, (_, i) => (
                     <MenuItem key={i} value={String(i)}>{i}</MenuItem>
                   ))}
@@ -491,8 +541,11 @@ export const AddIncidentPage = () => {
                   label="Minute"
                   value={incidentData.minute}
                   onChange={e => handleInputChange('minute', e.target.value)}
+                  displayEmpty
                   sx={fieldStyles}
+                  MenuProps={menuProps}
                 >
+                  <MenuItem value=""><em>Select Minute</em></MenuItem>
                   {Array.from({ length: 60 }, (_, i) => (
                     <MenuItem key={i} value={String(i)}>{i}</MenuItem>
                   ))}
@@ -513,6 +566,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('building', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Building</em></MenuItem>
                 {buildings.map(b => (
@@ -531,6 +585,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('categoryForIncident', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Primary Category</em></MenuItem>
                 {categories.map(cat => (
@@ -548,6 +603,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('primaryCategory', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Sub Category</em></MenuItem>
                 {subCategories.filter(sub => String(sub.parent_id) === incidentData.categoryForIncident).map(sub => (
@@ -565,6 +621,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('subCategory', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Sub Sub Category</em></MenuItem>
                 {subSubCategories.filter(subsub => String(subsub.parent_id) === incidentData.primaryCategory).map(subsub => (
@@ -582,6 +639,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('subSubCategory', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Sub Sub Sub Category</em></MenuItem>
                 {subSubSubCategories.filter(subsubsub => String(subsubsub.parent_id) === incidentData.subCategory).map(subsubsub => (
@@ -600,6 +658,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('secondaryCategory', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Secondary Category</em></MenuItem>
                 {secondaryCategories.map(cat => (
@@ -617,6 +676,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('secondarySubCategory', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Secondary Sub Category</em></MenuItem>
                 {secondarySubCategories.filter(sub => String(sub.parent_id) === incidentData.secondaryCategory).map(sub => (
@@ -634,6 +694,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('secondarySubSubCategory', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Secondary Sub Sub Category</em></MenuItem>
                 {secondarySubSubCategories.filter(subsub => String(subsub.parent_id) === incidentData.secondarySubCategory).map(subsub => (
@@ -651,6 +712,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('secondarySubSubSubCategory', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Secondary Sub Sub Sub Category</em></MenuItem>
                 {secondarySubSubSubCategories.filter(subsubsub => String(subsubsub.parent_id) === incidentData.secondarySubSubCategory).map(subsubsub => (
@@ -667,6 +729,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('severity', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Severity</em></MenuItem>
                 <MenuItem value="1">Insignificant</MenuItem>
@@ -685,6 +748,7 @@ export const AddIncidentPage = () => {
                 onChange={e => handleInputChange('probability', e.target.value)}
                 displayEmpty
                 sx={fieldStyles}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Probability</em></MenuItem>
                 <MenuItem value="1">Rare</MenuItem>
@@ -710,6 +774,7 @@ export const AddIncidentPage = () => {
                     backgroundColor: '#f5f5f5'
                   }
                 }}
+                MenuProps={menuProps}
               >
                 <MenuItem value=""><em>Select Level</em></MenuItem>
                 {incidentLevels.map(level => (
@@ -737,17 +802,21 @@ export const AddIncidentPage = () => {
               InputLabelProps={{
                 shrink: true
               }}
-              sx={{
-                mt: 1
-              }}
+              sx={fieldStyles}
             />
           </div>
         </CardContent>
       </Card>
 
       {/* Support and Disclaimer */}
-      <Card className="mb-6">
-        <CardContent>
+      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-4'>
+          <CardTitle className="text-lg text-black flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+            SUPPORT & DISCLAIMER
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 bg-white">
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-medium mb-3">Support</h3>
@@ -791,18 +860,14 @@ export const AddIncidentPage = () => {
       </Card>
 
       {/* Attachments */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">📎</span>
-            </div>
-            <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
-              ATTACHMENTS
-            </Heading>
+      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-4'>
+          <CardTitle className="text-lg text-black flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+            ATTACHMENTS
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 bg-white">
           <div className="space-y-4">
             <div>
               <input

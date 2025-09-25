@@ -671,106 +671,102 @@ export const PODetailsPage = () => {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
-      <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
-        <div className="flex flex-col">
-          <h1 className="font-work-sans font-semibold text-2xl text-gray-900 mb-2">
-            Purchase Order Details
-          </h1>
-          <TooltipProvider>
-            <div className="flex items-start gap-3 mt-3">
-              {poDetails?.approval_levels?.map((level: ApprovalLevel) => (
-                <div className="space-y-2" key={level.id}>
-                  {level.status_label.toLowerCase() === "rejected" ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div
-                          className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
-                            level.status_label
-                          )}`}
-                        >
-                          {`${level.name} Approval : ${level.status_label}`}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          Rejection Reason:{" "}
-                          {level.rejection_reason ?? "No reason provided"}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
+      <div className="flex justify-between items-end">
+        <h1 className="text-2xl font-semibold">
+          Purchase Order Details
+        </h1>
+        <div className="flex gap-2 items-center">
+          {poDetails.show_send_sap_yes && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              onClick={handleSendToSap}
+            >
+              Send To SAP Team
+            </Button>
+          )}
+          {poDetails.all_level_approved && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                onClick={handleOpenDebitCreditModal}
+              >
+                Debit/Credit Note
+              </Button>
+            </>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            onClick={() => navigate(`/finance/po/add?clone=${id}`)}
+          >
+            <Copy className="w-4 h-4 mr-1" />
+            Clone
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            onClick={() => navigate(`/finance/po/feeds/${id}`)}
+          >
+            <Rss className="w-4 h-4 mr-1" />
+            Feeds
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            onClick={handlePrint}
+          >
+            <Printer className="w-4 h-4 mr-1" />
+            Print
+          </Button>
+        </div>
+      </div>
+      <TooltipProvider>
+        <div className="flex items-start gap-3 my-4">
+          {poDetails?.approval_levels?.map((level: ApprovalLevel) => (
+            <div className="space-y-2" key={level.id}>
+              {level.status_label.toLowerCase() === "rejected" ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <div
-                      className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                      className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
                         level.status_label
                       )}`}
                     >
                       {`${level.name} Approval : ${level.status_label}`}
                     </div>
-                  )}
-                  {level.approved_by && level.approval_date && (
-                    <div className="ms-2">
-                      {`${level.approved_by} (${level.approval_date})`}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </TooltipProvider>
-        </div>
-        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
-          <div className="flex gap-2 flex-wrap">
-            {poDetails.show_send_sap_yes && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                onClick={handleSendToSap}
-              >
-                Send To SAP Team
-              </Button>
-            )}
-            {poDetails.all_level_approved && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={handleOpenDebitCreditModal}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Rejection Reason:{" "}
+                      {level.rejection_reason ?? "No reason provided"}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div
+                  className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                    level.status_label
+                  )}`}
                 >
-                  Debit/Credit Note
-                </Button>
-              </>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={() => navigate(`/finance/po/add?clone=${id}`)}
-            >
-              <Copy className="w-4 h-4 mr-1" />
-              Clone
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={() => navigate(`/finance/po/feeds/${id}`)}
-            >
-              <Rss className="w-4 h-4 mr-1" />
-              Feeds
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={handlePrint}
-            >
-              <Printer className="w-4 h-4 mr-1" />
-              Print
-            </Button>
-          </div>
+                  {`${level.name} Approval : ${level.status_label}`}
+                </div>
+              )}
+              {level.approved_by && level.approval_date && (
+                <div className="ms-2">
+                  {`${level.approved_by} (${level.approval_date})`}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-      </div>
+      </TooltipProvider>
 
       <div className="space-y-6">
         <Card className="shadow-sm border border-border">

@@ -1,4 +1,3 @@
-
 // Authentication utility functions
 export interface User {
   id: number;
@@ -29,6 +28,7 @@ export interface User {
     modules: string[];
     role_for: string;
   };
+  user_type?: string;
 }
 
 export interface LoginResponse {
@@ -80,11 +80,11 @@ export interface Organization {
 
 // Local storage keys
 export const AUTH_KEYS = {
-  USER: 'user',
-  TOKEN: 'token',
-  TEMP_PHONE: 'temp_phone',
-  TEMP_EMAIL: 'temp_email',
-  BASE_URL: 'baseUrl'
+  USER: "user",
+  TOKEN: "token",
+  TEMP_PHONE: "temp_phone",
+  TEMP_EMAIL: "temp_email",
+  BASE_URL: "baseUrl",
 } as const;
 
 // Save user data to localStorage
@@ -117,9 +117,9 @@ export const saveBaseUrl = (baseUrl: string): void => {
 export const getBaseUrl = (): string | null => {
   const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
   if (!savedUrl) return null;
-  
+
   // Ensure the URL includes the protocol
-  return savedUrl.startsWith('http') ? savedUrl : `https://${savedUrl}`;
+  return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
 };
 
 // Check if user is authenticated
@@ -131,8 +131,6 @@ export const isAuthenticated = (): boolean => {
 
 // Clear all auth data
 
-
-
 // Clear all auth data
 export const clearAuth = (): void => {
   localStorage.removeItem(AUTH_KEYS.USER);
@@ -141,41 +139,82 @@ export const clearAuth = (): void => {
   localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
   localStorage.removeItem(AUTH_KEYS.BASE_URL);
   localStorage.clear();
-  
 };
+const hostname = window.location.hostname;
 
-export const getOrganizationsByEmail = async (email: string): Promise<Organization[]> => {
-  const response = await fetch(`https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`);
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch organizations');
+const isOmanSite = hostname.includes("oig.gophygital.work");
+const isViSite =
+  hostname.includes("vi-web.gophygital.work") ||
+  hostname.includes("web.gophygital.work");
+
+const isFmSite =
+  hostname.includes("fm-uat.gophygital.work") ||
+  hostname.includes("fm.gophygital.work");
+
+export const getOrganizationsByEmail = async (
+  email: string
+): Promise<Organization[]> => {
+  if (isOmanSite || isFmSite) {
+    const response = await fetch(
+      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
   }
-  
+
+  if (isViSite) {
+    const response = await fetch(
+      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  // Default fallback for other sites
+  const response = await fetch(
+    `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch organizations");
+  }
+
   const data = await response.json();
   return data.organizations || [];
 };
 
-
-export const loginUser = async (email: string, password: string, baseUrl: string): Promise<User> => {
+export const loginUser = async (
+  email: string,
+  password: string,
+  baseUrl: string
+): Promise<User> => {
   const response = await fetch(`https://${baseUrl}/api/users/sign_in.json`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       email,
-      password
+      password,
     }),
   });
 
   if (!response.ok) {
-    throw new Error('Login failed');
+    throw new Error("Login failed");
   }
 
   const data = await response.json();
   return data;
 };
-
 
 // Login with email and password
 // export const loginWithEmail = async (email: string, password: string): Promise<LoginResponse> => {
@@ -199,117 +238,209 @@ export const loginUser = async (email: string, password: string, baseUrl: string
 // };
 
 // Login with phone and password (first step)
-export const loginWithPhone = async (phone: string, password: string): Promise<{ success: boolean; message: string }> => {
+export const loginWithPhone = async (
+  phone: string,
+  password: string
+): Promise<{ success: boolean; message: string }> => {
   // Simulate API call for phone login
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
   // Store temp phone for OTP verification
   localStorage.setItem(AUTH_KEYS.TEMP_PHONE, phone);
-  
+
   // For now, simulate success - replace with actual API call
   return {
     success: true,
-    message: 'OTP sent to your phone number'
+    message: "OTP sent to your phone number",
   };
 };
 
 // Verify OTP after phone login
 export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
-  const email = localStorage.getItem('temp_email');
+  const email = localStorage.getItem("temp_email");
   const baseUrl = getBaseUrl();
   const token = getToken();
-  
+
   if (!email) {
-    throw new Error('Email not found. Please login again.');
+    throw new Error("Email not found. Please login again.");
   }
 
   if (!baseUrl) {
-    throw new Error('Base URL not found. Please login again.');
+    throw new Error("Base URL not found. Please login again.");
   }
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   // Add Bearer token if available
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`https://live-api.gophygital.work/verify_code.json`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      email: email,
-      otp: otp
-    }),
-  });
+  const response = await fetch(
+    `https://live-api.gophygital.work/verify_code.json`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        email: email,
+        otp: otp,
+      }),
+    }
+  );
 
   if (!response.ok) {
-    throw new Error('OTP verification failed');
+    throw new Error("OTP verification failed");
   }
 
   const data = await response.json();
-  
+
   // Clear temp email after successful verification
-  localStorage.removeItem('temp_email');
-  
+  localStorage.removeItem("temp_email");
+
   return data;
 };
 
 // Send forgot password OTP
-export const sendForgotPasswordOTP = async (emailOrPhone: string): Promise<OTPResponse> => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Store temp email/phone for password reset
-  if (emailOrPhone.includes('@')) {
-    localStorage.setItem(AUTH_KEYS.TEMP_EMAIL, emailOrPhone);
-  } else {
-    localStorage.setItem(AUTH_KEYS.TEMP_PHONE, emailOrPhone);
+export const sendForgotPasswordOTP = async (
+  emailOrMobile: string
+): Promise<OTPResponse> => {
+  const baseUrl = getBaseUrl();
+
+  if (!baseUrl) {
+    throw new Error("Base URL not configured");
   }
-  
+
+  // Determine if input is email or mobile
+  const isEmail = emailOrMobile.includes("@");
+  const requestBody: any = {
+    request_otp: 1,
+  };
+
+  if (isEmail) {
+    requestBody.mobile = emailOrMobile;
+    // Store temp email for password reset
+    localStorage.setItem(AUTH_KEYS.TEMP_EMAIL, emailOrMobile);
+  } else {
+    requestBody.mobile = emailOrMobile;
+    // Store temp mobile for password reset
+    localStorage.setItem(AUTH_KEYS.TEMP_PHONE, emailOrMobile);
+  }
+
+  const response = await fetch(
+    `${baseUrl}/api/users/forgot_password_otp.json`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to send OTP");
+  }
+
+  const data = await response.json();
+
   return {
     success: true,
-    message: 'OTP sent successfully',
-    otp: '123456' // For development
+    message: data.message || "OTP sent successfully",
   };
 };
 
-// Verify forgot password OTP
-export const verifyForgotPasswordOTP = async (otp: string): Promise<{ success: boolean; message: string }> => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  if (otp === '123456') {
-    return {
-      success: true,
-      message: 'OTP verified successfully'
-    };
-  } else {
-    throw new Error('Invalid OTP');
-  }
-};
+// Verify forgot password OTP and reset password
+export const verifyForgotPasswordOTPAndResetPassword = async (
+  emailOrMobile: string,
+  otp: string,
+  newPassword: string,
+  confirmPassword: string
+): Promise<{ success: boolean; message: string }> => {
+  const baseUrl = getBaseUrl();
 
-// Reset password
-export const resetPassword = async (newPassword: string, confirmPassword: string): Promise<{ success: boolean; message: string }> => {
+  if (!baseUrl) {
+    throw new Error("Base URL not configured");
+  }
+
   if (newPassword !== confirmPassword) {
-    throw new Error('Passwords do not match');
+    throw new Error("Passwords do not match");
   }
-  
-  if (newPassword.length < 6) {
-    throw new Error('Password must be at least 6 characters long');
+
+  // Determine if input is email or mobile
+  const isEmail = emailOrMobile.includes("@");
+  const requestBody: any = {
+    verify_otp: 1,
+    otp: otp,
+    newpassword: newPassword,
+    newpassword_confirm: confirmPassword,
+  };
+
+  if (isEmail) {
+    requestBody.mobile = emailOrMobile;
+  } else {
+    requestBody.mobile = emailOrMobile;
   }
-  
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
+
+  const response = await fetch(
+    `${baseUrl}/api/users/forgot_password_otp.json`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to reset password");
+  }
+
+  const data = await response.json();
+
   // Clear temp data
   localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
   localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
-  
+
   return {
     success: true,
-    message: 'Password reset successfully'
+    message: data.message || "Password reset successfully",
+  };
+};
+
+// Verify forgot password OTP (kept for backward compatibility)
+export const verifyForgotPasswordOTP = async (
+  otp: string
+): Promise<{ success: boolean; message: string }> => {
+  // This function is now mainly for validation, actual reset happens in the combined function above
+  if (!otp) {
+    throw new Error("OTP is required");
+  }
+
+  return {
+    success: true,
+    message: "OTP verified successfully",
+  };
+};
+
+// Reset password (kept for backward compatibility)
+export const resetPassword = async (
+  newPassword: string,
+  confirmPassword: string
+): Promise<{ success: boolean; message: string }> => {
+  if (newPassword !== confirmPassword) {
+    throw new Error("Passwords do not match");
+  }
+
+  if (newPassword.length < 6) {
+    throw new Error("Password must be at least 6 characters long");
+  }
+
+  return {
+    success: true,
+    message: "Password validation successful",
   };
 };

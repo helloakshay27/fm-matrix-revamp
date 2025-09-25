@@ -12,9 +12,11 @@ interface MaterialDatePickerProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
-export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date", className }: MaterialDatePickerProps) => {
+export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date", className, minDate, maxDate }: MaterialDatePickerProps) => {
   const parseDate = (dateString: string): Date | undefined => {
     if (!dateString) return undefined;
     
@@ -30,6 +32,7 @@ export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date
   };
 
   const [date, setDate] = useState<Date | undefined>(parseDate(value));
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     setDate(parseDate(value));
@@ -39,13 +42,16 @@ export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date
     setDate(selectedDate);
     if (selectedDate) {
       onChange(format(selectedDate, 'dd/MM/yyyy'));
+      // Close the calendar popover after selecting a date
+      setOpen(false);
     } else {
       onChange('');
+      setOpen(false);
     }
   };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -59,6 +65,7 @@ export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date
             "[&_svg]:!text-gray-400",
             className
           )}
+          onClick={() => setOpen(true)}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {date ? format(date, "dd/MM/yyyy") : placeholder}
@@ -69,6 +76,10 @@ export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date
           mode="single"
           selected={date}
           onSelect={handleDateSelect}
+          disabled={[
+            ...(minDate ? [{ before: minDate }] : []),
+            ...(maxDate ? [{ after: maxDate }] : []),
+          ]}
           initialFocus
         />
       </PopoverContent>

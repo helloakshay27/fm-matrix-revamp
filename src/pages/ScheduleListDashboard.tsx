@@ -45,26 +45,51 @@ export const ScheduleListDashboard = () => {
     category: ''
   });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  // Debounced filters to prevent excessive API calls
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+
+  // Debounce filter changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedFilters(filters);
+      setCurrentPage(1); // Reset to first page when filters change
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [filters]);
+
   // Build query parameters for API
-  const buildQueryParams = () => {
+  const buildQueryParams = (page: number = 1) => {
     const params: Record<string, string> = {};
     
-    if (filters.activityName) {
-      params['q[form_name_cont]'] = filters.activityName;
+    // Add pagination
+    params['page'] = page.toString();
+    
+    // Add access_token from API_CONFIG.TOKEN
+    if (API_CONFIG.TOKEN) {
+      params['access_token'] = API_CONFIG.TOKEN;
     }
     
-    if (filters.type) {
-      params['q[schedule_type_eq]'] = filters.type.toUpperCase();
+    if (debouncedFilters.activityName) {
+      params['q[form_name_cont]'] = debouncedFilters.activityName;
     }
     
-    if (filters.category) {
-      params['q[tasks_category_eq]'] = filters.category.charAt(0).toUpperCase() + filters.category.slice(1).toLowerCase();
+    if (debouncedFilters.type) {
+      params['q[schedule_type_eq]'] = debouncedFilters.type.toUpperCase();
+    }
+    
+    if (debouncedFilters.category) {
+      params['q[tasks_category_eq]'] = debouncedFilters.category.charAt(0).toUpperCase() + debouncedFilters.category.slice(1).toLowerCase();
     }
     
     return params;
   };
 
-  // Fetch custom forms data with filters
+  // Single API call for all schedule data with pagination
   const {
     data: customFormsData,
     isLoading,
@@ -72,18 +97,23 @@ export const ScheduleListDashboard = () => {
     isError,
     refetch
   } = useQuery({
-    queryKey: ['custom-forms', filters],
+    queryKey: ['custom-forms', debouncedFilters, currentPage],
     queryFn: async () => {
       try {
-        const params = buildQueryParams();
-        // Add access_token from API_CONFIG.TOKEN
-        if (API_CONFIG.TOKEN) {
-          params['access_token'] = API_CONFIG.TOKEN;
-        }
+        const params = buildQueryParams(currentPage);
         console.log('Fetching custom forms with params:', params);
-        const result = await fetchCustomForms(params);
-        console.log('API Response:', result);
-        return result;
+        
+        // Use axios for consistent API calls
+        const queryString = Object.entries(params)
+          .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+          .join('&');
+        
+        const response = await axios.get(
+          `${API_CONFIG.BASE_URL}/pms/custom_forms.json?${queryString}`
+        );
+        
+        console.log('API Response:', response.data);
+        return response.data;
       } catch (error) {
         console.error('API Error:', error);
         // Re-throw with more context if it's a configuration error
@@ -103,9 +133,12 @@ export const ScheduleListDashboard = () => {
            error.message.includes('Authentication token is not available'))) {
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 2; // Reduced retry attempts
     },
-    retryDelay: 1000
+    retryDelay: 1000,
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 60000, // Keep in garbage collection for 1 minute
+    enabled: !!(API_CONFIG.BASE_URL && API_CONFIG.TOKEN), // Only run if configured
   });
   
   console.log('Query State:', { 
@@ -113,7 +146,7 @@ export const ScheduleListDashboard = () => {
     isLoading, 
     error, 
     isError,
-    filters: filters 
+    filters: debouncedFilters 
   });
   
   // Debug configuration
@@ -124,26 +157,54 @@ export const ScheduleListDashboard = () => {
     tokenPresent: API_CONFIG.TOKEN ? 'Present' : 'Missing'
   });
   
-  // Debug localStorage
-  console.log('LocalStorage Debug:', {
-    baseUrl: localStorage.getItem('base_url'),
-    token: localStorage.getItem('token'),
-    user: localStorage.getItem('user')
-  });
+  // Process schedules data for both analytics and table
+  const schedules = React.useMemo(() => {
+    if (!customFormsData?.custom_forms) return [];
+    
+    const forms = Array.isArray(customFormsData.custom_forms) 
+      ? customFormsData.custom_forms 
+      : Object.values(customFormsData.custom_forms);
+      
+    return forms.map((item: any) => {
+      let scheduleType = '';
+      if (item.checklist_for && typeof item.checklist_for === 'string' && item.checklist_for.includes('::')) {
+        scheduleType = item.checklist_for.split('::')[1] || '';
+      } else {
+        scheduleType = item.schedule_type || '';
+      }
+      
+      return {
+        id: item.id,
+        activityName: item.form_name || '',
+        type: item.schedule_type || '',
+        scheduleType,
+        noOfAssociation: item.no_of_associations?.toString() || '0',
+        category: item.category_name
+          ? (item.category_name.charAt(0).toUpperCase() + item.category_name.slice(1).toLowerCase())
+          : (item.schedule_type === 'PPM' ? 'Technical' : 'Non Technical'),
+        active: item.active === null || item.active === true || item.active === 1,
+        validFrom: item.start_date ? formatDateDDMMYYYY(item.start_date) : '',
+        validTill: item.end_date ? formatDateDDMMYYYY(item.end_date) : '',
+        createdOn: item.created_at ? formatDateDDMMYYYY(item.created_at) : '',
+        custom_form_code: item.custom_form_code,
+      };
+    });
+  }, [customFormsData]);
   
-  // Transform the data
-  const schedules = customFormsData ? transformCustomFormsData(customFormsData.custom_forms) : [];
+  // Pagination info
+  const totalCount = customFormsData?.pagination?.total_count || schedules.length;
+  const totalPages = customFormsData?.pagination?.total_pages || Math.ceil(schedules.length / pageSize);
   
-  console.log('Transformed schedules:', schedules);
-  console.log('Custom forms raw data:', customFormsData?.custom_forms);
+  console.log('Processed schedules:', schedules);
+  console.log('Pagination info:', { currentPage, totalPages, totalCount });
 
   function formatDateDDMMYYYY(dateString: string): string {
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-}
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
   
   const handleAddSchedule = () => navigate('/maintenance/schedule/add');
   
@@ -297,7 +358,7 @@ export const ScheduleListDashboard = () => {
     sortable: true
   }, {
     key: 'scheduleType',
-    label: 'Schedule Type',
+    label: 'Schedule For',
     sortable: true
   }, {
     key: 'noOfAssociation',
@@ -370,8 +431,7 @@ export const ScheduleListDashboard = () => {
         ? optimisticActive[item.custom_form_code]
         : (
             item.active === null ||
-            item.active === true ||
-            item.active === 1
+            item.active === true
           );
       return (
         <div className="flex items-center justify-center">
@@ -679,246 +739,10 @@ export const ScheduleListDashboard = () => {
   const selectionActions = [
   ];
 
-  // Pagination state and logic (copied from ScheduledTaskDashboard)
-    const [currentPage, setCurrentPage] = useState(1);
-    const pageSize = 10;
-    const totalPages = Math.ceil(schedules.length / pageSize);
-    const paginatedSchedules = schedules.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  
-    useEffect(() => {
-      // Reset to first page if schedules change and currentPage is out of range
-      if (currentPage > totalPages) {
-        setCurrentPage(1);
-      }
-    }, [schedules, totalPages]);
-  
-    // Pagination handler for consistent UI
-    const totalCount = schedules.length;
-    const handlePageChange = (page: number) => {
-      setCurrentPage(page);
-    };
-
-    // Remove old schedules state and pagination logic for table
-    // Add new state for paginated API data
-    const [tableSchedules, setTableSchedules] = useState<any[]>([]);
-    const [tableLoading, setTableLoading] = useState(false);
-    const [tableError, setTableError] = useState<string | null>(null);
-    const [tablePage, setTablePage] = useState(1);
-    const [tableTotalPages, setTableTotalPages] = useState(1);
-    const [tableTotalCount, setTableTotalCount] = useState(0);
-
-    // Fetch paginated schedule list for table only
-    useEffect(() => {
-      let isMounted = true;
-      setTableLoading(true);
-      setTableError(null);
-
-      // Use token from API_CONFIG
-      const token = API_CONFIG.TOKEN;
-      if (!token) {
-        setTableError('Authentication token is missing.');
-        setTableLoading(false);
-        return;
-      }
-
-      // Build query params from filters
-      const params = buildQueryParams();
-      params['page'] = tablePage.toString();
-      params['access_token'] = token;
-
-      // Convert params object to query string
-      const queryString = Object.entries(params)
-        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-        .join('&');
-
-      axios.get(
-        `${API_CONFIG.BASE_URL}/pms/custom_forms.json?${queryString}`
-      )
-        .then(res => {
-          if (!isMounted) return;
-          let forms: any[] = [];
-          console.log('API Response for schedules:', res.data);
-          if (Array.isArray(res.data.custom_forms)) {
-            forms = res.data.custom_forms;
-          } else if (res.data.custom_forms && typeof res.data.custom_forms === 'object') {
-            forms = [res.data.custom_forms];
-          }
-          // Map API fields to table fields
-          const mappedForms = forms.map((item: any) => {
-            // Extract scheduleType from checklist_for (after '::'), fallback to item.schedule_type
-            let scheduleType = '';
-            if (item.checklist_for && typeof item.checklist_for === 'string' && item.checklist_for.includes('::')) {
-              scheduleType = item.checklist_for.split('::')[1] || '';
-            } else {
-              scheduleType = item.schedule_type || '';
-            }
-            return {
-              id: item.id,
-              activityName: item.form_name || '',
-              type: item.schedule_type || '',
-              scheduleType,
-              noOfAssociation: item.no_of_associations?.toString() || '',
-              category: item.category_name
-                ? (item.category_name.charAt(0).toUpperCase() + item.category_name.slice(1).toLowerCase())
-                : '',
-              active: item.active,
-              validFrom: item.start_date ? formatDateDDMMYYYY(item.start_date) : '',
-              validTill: item.end_date ? formatDateDDMMYYYY(item.end_date) : '',
-              createdOn: item.created_at ? formatDateDDMMYYYY(item.created_at) : '',
-              custom_form_code: item.custom_form_code,
-              // Add any other fields you need
-            };
-          });
-          setTableSchedules(mappedForms);
-          if (res.data.pagination) {
-            setTableTotalPages(res.data.pagination.total_pages);
-            setTableTotalCount(res.data.pagination.total_count);
-          } else {
-            setTableTotalPages(1);
-            setTableTotalCount(mappedForms.length);
-          }
-          setTableLoading(false);
-        })
-        .catch(err => {
-          if (!isMounted) return;
-          setTableError('Failed to load schedule list');
-          setTableLoading(false);
-        });
-      return () => { isMounted = false; };
-    }, [tablePage, filters]);
-
-    // Add new state for global search
-    const [globalSearchTerm, setGlobalSearchTerm] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [isGlobalSearching, setIsGlobalSearching] = useState(false);
-    const [lastSearchTerm, setLastSearchTerm] = useState(''); // Add this to track last search
-
-    // Global search function
-    const handleGlobalSearch = async (searchTerm: string) => {
-      if (!searchTerm.trim()) {
-        setGlobalSearchTerm('');
-        setSearchResults([]);
-        setIsGlobalSearching(false);
-        setLastSearchTerm('');
-        return;
-      }
-
-      // Prevent duplicate searches
-      if (searchTerm === lastSearchTerm && !isGlobalSearching) {
-        return;
-      }
-
-      setGlobalSearchTerm(searchTerm);
-      setLastSearchTerm(searchTerm);
-      setIsGlobalSearching(true);
-
-      try {
-        const token = API_CONFIG.TOKEN;
-        const baseUrl = API_CONFIG.BASE_URL;
-        
-        if (!token) {
-          setTableError('Authentication token is missing.');
-          setIsGlobalSearching(false);
-          return;
-        }
-
-        if (!baseUrl) {
-          setTableError('Base URL is not configured.');
-          setIsGlobalSearching(false);
-          return;
-        }
-
-        // Search across all pages by calling API with search parameter
-        const response = await axios.get(
-          `${baseUrl}/pms/custom_forms.json?q[form_name_cont]=${encodeURIComponent(searchTerm)}&access_token=${token}`,
-          { 
-            timeout: 30000,
-            signal: AbortSignal.timeout(30000)
-          }
-        );
-
-        let forms: any[] = [];
-        if (Array.isArray(response.data.custom_forms)) {
-          forms = response.data.custom_forms;
-        } else if (response.data.custom_forms && typeof response.data.custom_forms === 'object') {
-          forms = [response.data.custom_forms];
-        }
-
-        // Map API fields to table fields (same mapping as before)
-        const mappedForms = forms.map((item: any) => {
-          let scheduleType = '';
-          if (item.checklist_for && typeof item.checklist_for === 'string' && item.checklist_for.includes('::')) {
-            scheduleType = item.checklist_for.split('::')[1] || '';
-          } else {
-            scheduleType = item.schedule_type || '';
-          }
-          return {
-            id: item.id,
-            activityName: item.form_name || '',
-            type: item.schedule_type || '',
-            scheduleType,
-            noOfAssociation: item.no_of_associations?.toString() || '',
-            category: item.category_name
-              ? (item.category_name.charAt(0).toUpperCase() + item.category_name.slice(1).toLowerCase())
-              : '',
-            active: item.active,
-            validFrom: item.start_date ? formatDateDDMMYYYY(item.start_date) : '',
-                validTill: item.end_date ? formatDateDDMMYYYY(item.end_date) : '',
-                createdOn: item.created_at ? formatDateDDMMYYYY(item.created_at) : '',
-            custom_form_code: item.custom_form_code,
-          };
-        });
-
-        setSearchResults(mappedForms);
-        setTableError(null);
-        
-        // Show toast only once per unique search
-        if (searchTerm !== lastSearchTerm) {
-          if (mappedForms.length === 0) {
-            toast.info(`No schedules found for "${searchTerm}"`, {
-              position: 'top-right',
-              duration: 3000,
-            });
-          } else {
-            toast.success(`Found ${mappedForms.length} schedule(s) for "${searchTerm}"`, {
-              position: 'top-right',
-              duration: 3000,
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Global search error:', error);
-        let errorMessage = 'Failed to search schedules. Please try again.';
-        
-        if (axios.isAxiosError(error)) {
-          if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-            errorMessage = 'Search request timed out. The server may be slow. Please try again.';
-          } else if (error.response?.status === 404) {
-            errorMessage = 'Search endpoint not found. Please contact support.';
-          } else if (error.response?.status === 401) {
-            errorMessage = 'Authentication failed. Please log in again.';
-          } else if (error.response?.status >= 500) {
-            errorMessage = 'Server error occurred. Please try again later.';
-          }
-        }
-        
-        setTableError(errorMessage);
-        setSearchResults([]);
-        
-        // Show error toast only once per unique search attempt
-        if (searchTerm !== lastSearchTerm) {
-          toast.error(errorMessage, {
-            position: 'top-right',
-            duration: 5000,
-          });
-        }
-      } finally {
-        setIsGlobalSearching(false);
-      }
-    };
-
-    // Determine which data to display in table
-    const displayTableSchedules = globalSearchTerm ? searchResults : tableSchedules;
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const renderListTab = () => (
     <div className="space-y-4">
@@ -931,20 +755,20 @@ export const ScheduleListDashboard = () => {
         />
       )}
 
-      {tableLoading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center h-32">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
           </div>
         </div>
-      ) : tableError ? (
+      ) : error ? (
         <div className="flex items-center justify-center h-32">
           <div className="text-center max-w-md">
             <p className="text-sm text-red-600 mb-2">Error loading schedules</p>
-            <p className="text-xs text-gray-500 mb-3">{tableError}</p>
+            <p className="text-xs text-gray-500 mb-3">{error instanceof Error ? error.message : 'Unknown error'}</p>
             <button
-              onClick={() => setTablePage(1)}
+              onClick={() => refetch()}
               className="mt-2 px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
             >
               Retry
@@ -954,7 +778,7 @@ export const ScheduleListDashboard = () => {
       ) : (
         <>
           <EnhancedTable
-            data={displayTableSchedules}
+            data={schedules}
             columns={columns}
             renderCell={renderCell}
             pagination={false}
@@ -962,43 +786,40 @@ export const ScheduleListDashboard = () => {
             exportFileName="schedules"
             storageKey="schedules-table"
             enableSearch={true}
-            enableGlobalSearch={true}
-            onGlobalSearch={handleGlobalSearch}
             searchPlaceholder="Search schedules..."
             leftActions={renderCustomActions()}
             onFilterClick={() => setShowFilterDialog(true)}
-            loading={isGlobalSearching || tableLoading}
-            // onExport={handleScheduleExport}
-            handleExport={handleScheduleExport}
+            onExport={handleScheduleExport}
+            loading={isLoading}
           />
 
-          {/* Pagination - only show when not searching globally */}
-          {!globalSearchTerm && tableTotalPages > 1 && (
+          {/* Pagination */}
+          {totalPages > 1 && (
             <div className="mt-6">
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
                       onClick={() => {
-                        if (tablePage > 1) setTablePage(tablePage - 1);
+                        if (currentPage > 1) handlePageChange(currentPage - 1);
                       }}
-                      className={tablePage === 1 ? "pointer-events-none opacity-50" : ""}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
                   {Array.from(
-                    { length: Math.min(tableTotalPages, 10) },
+                    { length: Math.min(totalPages, 10) },
                     (_, i) => i + 1
                   ).map((page) => (
                     <PaginationItem key={page}>
                       <PaginationLink
-                        onClick={() => setTablePage(page)}
-                        isActive={tablePage === page}
+                        onClick={() => handlePageChange(page)}
+                        isActive={currentPage === page}
                       >
                         {page}
                       </PaginationLink>
                     </PaginationItem>
                   ))}
-                  {tableTotalPages > 10 && (
+                  {totalPages > 10 && (
                     <PaginationItem>
                       <PaginationEllipsis />
                     </PaginationItem>
@@ -1006,15 +827,15 @@ export const ScheduleListDashboard = () => {
                   <PaginationItem>
                     <PaginationNext
                       onClick={() => {
-                        if (tablePage < tableTotalPages) setTablePage(tablePage + 1);
+                        if (currentPage < totalPages) handlePageChange(currentPage + 1);
                       }}
-                      className={tablePage === tableTotalPages ? "pointer-events-none opacity-50" : ""}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
               <div className="text-center mt-2 text-sm text-gray-600">
-                Showing page {tablePage} of {tableTotalPages} ({tableTotalCount} total tasks)
+                Showing page {currentPage} of {totalPages} ({totalCount} total schedules)
               </div>
             </div>
           )}
@@ -1065,34 +886,54 @@ export const ScheduleListDashboard = () => {
   // Custom export handler for schedules
   const handleScheduleExport = async () => {
     try {
-      // const url = `https://fm-uat-api.lockated.com/pms/custom_forms/export_checklist.xlsx?access_token=ojrsRqfNo0GLUT2roCu7O8z9eRt2OdyVrsF0AtsECGg`;
       const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/export_checklist.xlsx`;
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
         },
       });
+      
       if (!response.ok) throw new Error('Failed to export schedule data');
+      
       const blob = await response.blob();
-      // Use file-saver or fallback
-      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveOrOpenBlob(blob, 'schedules.xlsx');
-      } else {
-        const link = document.createElement('a');
-        const url = window.URL.createObjectURL(blob);
-        link.href = url;
-        link.download = 'schedules.xlsx';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        }, 100);
-      }
+      
+      // Create download link
+      const link = document.createElement('a');
+      const downloadUrl = window.URL.createObjectURL(blob);
+      link.href = downloadUrl;
+      link.download = 'schedules.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      }, 100);
+      
+      toast.success('Schedules exported successfully!', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#fff',
+          color: 'black',
+          border: 'none',
+        },
+      });
     } catch (error) {
-      toast.error('Failed to export schedules.');
+      console.error('Export error:', error);
+      toast.error('Failed to export schedules. Please try again.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
     }
   };
+
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">

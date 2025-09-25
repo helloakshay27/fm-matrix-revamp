@@ -7,7 +7,7 @@ import { ticketManagementAPI } from '../services/ticketManagementAPI';
 import { toast } from 'sonner';
 
 interface SurveyResponse {
-    answer_id: number;
+    // option_id: number;
     question_id: number;
     question_name: string;
     option_id: number;
@@ -248,15 +248,7 @@ export const RecentSurveysSidebar: React.FC = () => {
                 </div>
             )}
 
-            <div className="mt-6 pt-4 border-t border-gray-200">
-                <Button
-                    variant="outline"
-                    className="w-full text-sm"
-                    onClick={() => {/* Navigate to all surveys */}}
-                >
-                    View All Surveys
-                </Button>
-            </div>
+           
         </div>
     );
 };

@@ -1,9 +1,12 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Plus, Download, Eye, Search, Grid3x3, X, Upload, MoreHorizontal, Car, Bike, MapPin, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Car, CheckCircle, AlertTriangle, MapPin, Bike, Plus, Download, Upload, Search, Eye, Filter, X } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Pagination,
   PaginationContent,
@@ -15,66 +18,163 @@ import {
 } from "@/components/ui/pagination";
 import { BulkUploadModal } from "@/components/BulkUploadModal";
 import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useNavigate } from "react-router-dom";
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 
-// Define the data structure based on the API response
-interface SocietyStaff {
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999, // High z-index to ensure dropdown appears above other elements
+    },
+  },
+  // Prevent focus conflicts with Dialog
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+// Define the data structure based on the actual API response
+interface ParkingBookingUser {
   id: number;
-  first_name: string;
-  last_name: string;
-  mobile: string;
-  soc_staff_id: string;
-  vendor_name: string;
-  active: number;
-  staff_type: string | null;
+  full_name: string;
+  department_name: string;
+  designation: string;
+  email: string;
+}
+
+interface ParkingCategory {
+  id: number;
+  name: string;
+}
+
+interface ParkingConfiguration {
+  id: number;
+  building_name: string;
+  floor_name: string;
+  parking_category: ParkingCategory;
+}
+
+interface Attendance {
+  punched_in_at: string | null;
+  punched_out_at: string | null;
+  formatted_punched_in_at: string | null;
+  formatted_punched_out_at: string | null;
+}
+
+interface QRCode {
+  id: number;
+  document_url: string;
+}
+
+interface CanCancel {
+  allowed: boolean;
+  reason: string;
+}
+
+interface ParkingBooking {
+  id: number;
+  user_id: number;
+  booking_date: string;
   status: string;
-  resource_id: number;
-  resource_type: string;
-  department_id: number | null;
-  type_id: number;
-  pms_unit_id: number | null;
-  created_by: number | null;
-  expiry_type: string | null;
-  expiry_value: string | null;
-  number_verified: boolean;
-  otp: string | null;
-  notes: string | null;
-  valid_from: string;
-  expiry: string;
+  booking_schedule: string;
+  cancelled_at: string | null;
   created_at: string;
   updated_at: string;
-  full_name: string;
-  email: string;
-  user_id: number;
-  unit_name: string | null;
-  department_name: string | null;
-  work_type_name: string;
-  status_text: string;
-  staff_image_url: string;
-  qr_code_present: boolean;
-  qr_code_url: string;
-  helpdesk_operations: unknown[];
-  staff_workings: unknown[];
-  documents: unknown[];
+  user: ParkingBookingUser;
+  parking_configuration: ParkingConfiguration;
+  attendance: Attendance;
+  cancelled_by: string | null;
+  qr_code: QRCode;
+  can_cancel: CanCancel;
+  url: string;
+}
+
+interface PaginationInfo {
+  current_page: number;
+  total_pages: number;
+  total_count: number;
 }
 
 interface ParkingBookingApiResponse {
-  society_staffs: SocietyStaff[];
-  pagination: {
-    current_page: number;
-    total_count: number;
-    total_pages: number;
+  cards: {
+    total_slots: number;
+    total_two_wheeler: number;
+    total_four_wheeler: number;
+    vacant_two_wheeler: number;
+    vacant_four_wheeler: number;
+    alloted: number;
+    vacant: number;
   };
+  parking_bookings: ParkingBooking[];
+  pagination: PaginationInfo;
+}
+
+// Interface for users API response
+interface User {
+  id: number;
+  full_name: string;
+}
+
+interface UsersApiResponse {
+  users: User[];
+}
+
+// Interface for parking categories API response
+interface ParkingCategoryImage {
+  id: number;
+  relation: string;
+  relation_id: number;
+  document: string;
+}
+
+interface ParkingCategoryResponse {
+  id: number;
+  name: string;
+  resource_id: number;
+  resource_type: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  image_url: string;
+  parking_image: ParkingCategoryImage;
+}
+
+interface ParkingCategoriesApiResponse {
+  parking_categories: ParkingCategoryResponse[];
+}
+
+// Interface for API filter parameters
+interface ApiFilterParams {
+  category?: string;
+  user_ids?: string[];
+  parking_slot?: string;
+  statuses?: string[];
+  scheduled_date_range?: string;
+  booked_date_range?: string;
 }
 
 // Transform API data to match our UI structure
 interface ParkingBookingSite {
   id: number;
   employee_name: string;
+  employee_email: string;
   schedule_date: string;
+  booking_schedule: string;
   category: string;
   building: string;
   floor: string;
@@ -100,16 +200,30 @@ interface ParkingBookingSiteSummary {
 
 const ParkingBookingListSiteWise = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFiltersModal, setShowFiltersModal] = useState(false);
   const navigate = useNavigate();
   const { isSidebarCollapsed } = useLayout();
   const panelRef = useRef<HTMLDivElement>(null);
 
   // API state
+  const [bookings, setBookings] = useState<ParkingBooking[]>([]);
   const [bookingData, setBookingData] = useState<ParkingBookingSite[]>([]);
   const [summary, setSummary] = useState<ParkingBookingSiteSummary | null>(null);
+  const [cards, setCards] = useState<{
+    total_slots: number;
+    total_two_wheeler: number;
+    total_four_wheeler: number;
+    vacant_two_wheeler: number;
+    vacant_four_wheeler: number;
+    alloted: number;
+    vacant: number;
+  } | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [parkingCategories, setParkingCategories] = useState<ParkingCategoryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [apiPagination, setApiPagination] = useState({
@@ -122,112 +236,254 @@ const ParkingBookingListSiteWise = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // API function to fetch parking bookings
-  const fetchParkingBookings = async (page: number = 1) => {
-    try {
-      const url = getFullUrl('/pms/admin/parking_bookings.json');
-      const options = getAuthenticatedFetchOptions();
-      
-      const requestOptions = {
-        ...options,
-        method: 'GET',
-      };
-      
-      console.log('🚀 Calling parking bookings API:', url);
-      
-      const response = await fetch(`${url}?page=${page}`, requestOptions);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Parking Bookings API Error Response:', errorText);
-        throw new Error(`Failed to fetch parking bookings: ${response.status} ${response.statusText}`);
-      }
-      
-      const data: ParkingBookingApiResponse = await response.json();
-      console.log('✅ Parking bookings fetched successfully:', data);
-      
-      return data;
-    } catch (error) {
-      console.error('❌ Error fetching parking bookings:', error);
-      throw error;
-    }
-  };
-
   // Transform API data to match UI structure
-  const transformApiDataToBookings = (societyStaffs: SocietyStaff[]): ParkingBookingSite[] => {
-    return societyStaffs.map(staff => ({
-      id: staff.id,
-      employee_name: staff.full_name,
-      schedule_date: new Date(staff.valid_from).toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      }),
-      category: Math.random() > 0.5 ? 'Two Wheeler' : 'Car', // Random for now, replace with actual field
-      building: 'Building A', // Replace with actual field from API if available
-      floor: 'Ground Floor', // Replace with actual field from API if available
-      designation: staff.work_type_name || 'N/A',
-      department: staff.department_name || '',
-      slot_parking_no: `Slot-${staff.id}`, // Replace with actual parking slot info
-      status: staff.status_text,
-      checked_in_at: null, // Replace with actual check-in data if available
-      checked_out_at: null, // Replace with actual check-out data if available
-      created_on: new Date(staff.created_at).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }),
-      cancel: staff.status === 'Approved'
+  const transformApiDataToBookings = (parkingBookings: ParkingBooking[]): ParkingBookingSite[] => {
+    return parkingBookings.map((booking, index) => ({
+      id: booking.id,
+      employee_name: booking.user.full_name,
+      employee_email: booking.user.email,
+      schedule_date: booking.booking_date,
+      booking_schedule: booking.booking_schedule,
+      category: booking.parking_configuration.parking_category.name,
+      building: booking.parking_configuration.building_name,
+      floor: booking.parking_configuration.floor_name,
+      designation: booking.user.designation,
+      department: booking.user.department_name,
+      slot_parking_no: `Slot-${booking.id}`, // Using booking ID as slot number
+      status: booking.status,
+      checked_in_at: booking.attendance.formatted_punched_in_at,
+      checked_out_at: booking.attendance.formatted_punched_out_at,
+      created_on: booking.created_at,
+      cancel: booking.can_cancel.allowed
     }));
   };
 
-  // Generate summary from transformed data
-  const generateSummary = (bookings: ParkingBookingSite[]): ParkingBookingSiteSummary => {
-    const confirmed = bookings.filter(b => b.status === 'Approved').length;
-    const cancelled = bookings.filter(b => b.status === 'Cancelled').length;
-    const twoWheeler = bookings.filter(b => b.category === 'Two Wheeler').length;
-    const fourWheeler = bookings.filter(b => b.category === 'Car').length;
-    
+  // Generate summary from API data
+  const generateSummaryFromBookings = (parkingBookings: ParkingBooking[]): ParkingBookingSiteSummary => {
+    const total_bookings = parkingBookings.length;
+    const confirmed_bookings = parkingBookings.filter(b => b.status === 'confirmed').length;
+    const cancelled_bookings = parkingBookings.filter(b => b.status === 'cancelled').length;
+    const two_wheeler_bookings = parkingBookings.filter(b => 
+      b.parking_configuration.parking_category.name.toLowerCase().includes('two') ||
+      b.parking_configuration.parking_category.name.toLowerCase().includes('bike')
+    ).length;
+    const four_wheeler_bookings = parkingBookings.filter(b => 
+      b.parking_configuration.parking_category.name.toLowerCase().includes('four') ||
+      b.parking_configuration.parking_category.name.toLowerCase().includes('car')
+    ).length;
+    const checked_in_count = parkingBookings.filter(b => b.attendance.punched_in_at !== null).length;
+    const checked_out_count = parkingBookings.filter(b => b.attendance.punched_out_at !== null).length;
+
     return {
-      total_bookings: bookings.length,
-      confirmed_bookings: confirmed,
-      cancelled_bookings: cancelled,
-      two_wheeler_bookings: twoWheeler,
-      four_wheeler_bookings: fourWheeler,
-      checked_in_count: bookings.filter(b => b.checked_in_at).length,
-      checked_out_count: bookings.filter(b => b.checked_out_at).length
+      total_bookings,
+      confirmed_bookings,
+      cancelled_bookings,
+      two_wheeler_bookings,
+      four_wheeler_bookings,
+      checked_in_count,
+      checked_out_count
     };
+  };
+
+  // Helper function to convert date from YYYY-MM-DD to DD/MM/YYYY format
+  const formatDateForAPI = (dateString: string): string => {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      const day = date.getDate(); // No padding for single digits
+      const month = date.getMonth() + 1; // No padding for single digits
+      const year = date.getFullYear(); // Get full 4-digit year
+      const formattedDate = `${day}/${month}/${year}`;
+      
+      console.log('🔍 Date Formatting Debug:');
+      console.log('Input date string:', dateString);
+      console.log('Parsed date object:', date);
+      console.log('Formatted date (DD/MM/YYYY):', formattedDate);
+      
+      return formattedDate;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString; // Return original if conversion fails
+    }
   };
 
   // Filter states
   const [filters, setFilters] = useState({
-    category: '',
-    building: '',
-    floor: '',
-    status: '',
-    department: ''
+    category: 'all',
+    user: 'all',
+    parking_slot: '',
+    status: 'all',
+    scheduled_on_from: '',
+    scheduled_on_to: '',
+    booked_on_from: '',
+    booked_on_to: ''
+  });
+
+  // Export date range states
+  const [exportDateRange, setExportDateRange] = useState({
+    startDate: '',
+    endDate: ''
   });
 
   // Column visibility state
   const [columns, setColumns] = useState([
-    { key: 'id', label: 'ID', visible: true },
+    { key: 'sr_no', label: 'Sr No.', visible: true },
+    // { key: 'id', label: 'ID', visible: true },
     { key: 'employee_name', label: 'Employee Name', visible: true },
+    { key: 'employee_email', label: 'Employee Email ID', visible: true },
     { key: 'schedule_date', label: 'Schedule Date', visible: true },
+    { key: 'booking_schedule', label: 'Booking Time', visible: true },
     { key: 'category', label: 'Category', visible: true },
     { key: 'building', label: 'Building', visible: true },
     { key: 'floor', label: 'Floor', visible: true },
     { key: 'designation', label: 'Designation', visible: true },
     { key: 'department', label: 'Department', visible: true },
-    { key: 'slot_parking_no', label: 'Slot & Parking No.', visible: true },
+    // { key: 'slot_parking_no', label: 'Slot & Parking No.', visible: true },
     { key: 'status', label: 'Status', visible: true },
     { key: 'checked_in_at', label: 'Checked In At', visible: true },
     { key: 'checked_out_at', label: 'Checked Out At', visible: true },
     { key: 'created_on', label: 'Created On', visible: true },
     { key: 'cancel', label: 'Cancel', visible: true }
   ]);
+
+  // Debounce search term to avoid excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log('🔍 Debounce Effect Debug:');
+      console.log('Original searchTerm:', searchTerm);
+      console.log('Setting debouncedSearchTerm to:', searchTerm);
+      setDebouncedSearchTerm(searchTerm);
+      // Reset to first page when search term changes
+      if (searchTerm !== debouncedSearchTerm) {
+        setCurrentPage(1);
+      }
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, debouncedSearchTerm]);
+
+  // Fetch parking bookings from API
+  const fetchParkingBookings = async (page = 1, searchQuery = '', filterParams: ApiFilterParams = {}) => {
+    try {
+      const url = getFullUrl('/pms/admin/parking_bookings.json');
+      const options = getAuthenticatedFetchOptions();
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      
+      // Add search query
+      if (searchQuery.trim()) {
+        console.log('🔍 Search Query Debug:');
+        console.log('Search query value:', searchQuery);
+        console.log('Search query trimmed:', searchQuery.trim());
+        console.log('Search query type:', typeof searchQuery);
+        params.append('q[user_full_name_or_user_email_or_user_designation_cont]', searchQuery.trim());
+      }
+      
+      // Add filter parameters
+      if (filterParams.category && filterParams.category !== 'all') {
+        console.log('🔍 Category Filter Debug:');
+        console.log('Category filter value:', filterParams.category);
+        console.log('Category filter type:', typeof filterParams.category);
+        // Try with _id_eq suffix since we're passing the category ID
+        params.append('q[parking_configuration_parking_category_id_eq]', filterParams.category);
+      }
+      
+      if (filterParams.user_ids && filterParams.user_ids.length > 0) {
+        filterParams.user_ids.forEach(userId => {
+          params.append('q[user_id_in][]', userId);
+        });
+      }
+      
+      if (filterParams.parking_slot) {
+        console.log('🔍 Parking Slot Filter Debug:');
+        console.log('Parking slot filter value:', filterParams.parking_slot);
+        console.log('Parking slot filter type:', typeof filterParams.parking_slot);
+        params.append('q[parking_number_name_cont]', filterParams.parking_slot);
+      }
+      
+      if (filterParams.statuses && filterParams.statuses.length > 0) {
+        filterParams.statuses.forEach(status => {
+          params.append('q[status_in][]', status);
+        });
+      }
+      
+      if (filterParams.scheduled_date_range) {
+        params.append('q[date_range]', filterParams.scheduled_date_range);
+      }
+      
+      if (filterParams.booked_date_range) {
+        params.append('q[date_range1]', filterParams.booked_date_range);
+      }
+      
+      const fullUrl = `${url}?${params.toString()}`;
+      
+      console.log('🔍 API Debug Info:');
+      console.log('Base URL from config:', API_CONFIG.BASE_URL);
+      console.log('Full URL being called:', fullUrl);
+      console.log('Query Parameters:', params.toString());
+      console.log('Filter Params passed:', filterParams);
+      console.log('Auth options:', options);
+      
+      const response = await fetch(fullUrl, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data: ParkingBookingApiResponse = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching parking bookings:', error);
+      throw error;
+    }
+  };
+
+  // Fetch users from API for filter dropdown
+  const fetchUsers = async () => {
+    try {
+      const url = getFullUrl('/pms/users/get_escalate_to_users.json');
+      const options = getAuthenticatedFetchOptions();
+      
+      console.log('🔍 Fetching users from:', url);
+      
+      const response = await fetch(url, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data: UsersApiResponse = await response.json();
+      return data.users;
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+  };
+
+  // Fetch parking categories from API for filter dropdown
+  const fetchParkingCategories = async () => {
+    try {
+      const url = getFullUrl('/pms/admin/parking_categories.json');
+      const options = getAuthenticatedFetchOptions();
+      
+      console.log('🔍 Fetching parking categories from:', url);
+      
+      const response = await fetch(url, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data: ParkingCategoriesApiResponse = await response.json();
+      return data.parking_categories;
+    } catch (error) {
+      console.error('Error fetching parking categories:', error);
+      throw error;
+    }
+  };
 
   // Load booking data from API
   useEffect(() => {
@@ -236,13 +492,97 @@ const ParkingBookingListSiteWise = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetchParkingBookings(currentPage);
-        const transformedBookings = transformApiDataToBookings(response.society_staffs);
-        const generatedSummary = generateSummary(transformedBookings);
+        // Additional debugging for URL construction
+        console.log('🔍 Detailed URL Debug:');
+        console.log('Raw Base URL from API_CONFIG:', API_CONFIG.BASE_URL);
+        console.log('Raw endpoint:', '/pms/admin/parking_bookings.json');
         
+        // Convert UI filters to API filter parameters
+        const buildApiFilterParams = (): ApiFilterParams => {
+          const apiParams: ApiFilterParams = {};
+          
+          if (filters.category !== 'all') {
+            console.log('🔍 Building API Filter - Category:');
+            console.log('UI Filter category value:', filters.category);
+            console.log('UI Filter category type:', typeof filters.category);
+            apiParams.category = filters.category;
+          }
+          
+          if (filters.user !== 'all') {
+            apiParams.user_ids = [filters.user];
+          }
+          
+          if (filters.parking_slot.trim()) {
+            console.log('🔍 Building API Filter - Parking Slot:');
+            console.log('UI Filter parking_slot value:', filters.parking_slot);
+            console.log('UI Filter parking_slot trimmed:', filters.parking_slot.trim());
+            apiParams.parking_slot = filters.parking_slot.trim();
+          }
+          
+          if (filters.status !== 'all') {
+            // Map UI status to API status
+            const statusMap: { [key: string]: string } = {
+              'Confirmed': 'confirmed',
+              'Cancelled': 'cancelled',
+              'confirmed': 'confirmed',
+              'cancelled': 'cancelled'
+            };
+            const apiStatus = statusMap[filters.status] || filters.status;
+            apiParams.statuses = [apiStatus];
+          }
+          
+          if (filters.scheduled_on_from.trim() || filters.scheduled_on_to.trim()) {
+            // Build date range for scheduled_on with proper date formatting
+            const fromDate = filters.scheduled_on_from.trim() ? formatDateForAPI(filters.scheduled_on_from.trim()) : formatDateForAPI(filters.scheduled_on_to.trim());
+            const toDate = filters.scheduled_on_to.trim() ? formatDateForAPI(filters.scheduled_on_to.trim()) : formatDateForAPI(filters.scheduled_on_from.trim());
+            apiParams.scheduled_date_range = `${fromDate} - ${toDate}`;
+            console.log('🔍 Formatted Scheduled Date Range:', apiParams.scheduled_date_range);
+          }
+          
+          if (filters.booked_on_from.trim() || filters.booked_on_to.trim()) {
+            // Build date range for booked_on with proper date formatting
+            const fromDate = filters.booked_on_from.trim() ? formatDateForAPI(filters.booked_on_from.trim()) : formatDateForAPI(filters.booked_on_to.trim());
+            const toDate = filters.booked_on_to.trim() ? formatDateForAPI(filters.booked_on_to.trim()) : formatDateForAPI(filters.booked_on_from.trim());
+            apiParams.booked_date_range = `${fromDate} - ${toDate}`;
+            console.log('🔍 Formatted Booked Date Range:', apiParams.booked_date_range);
+          }
+          
+          return apiParams;
+        };
+        
+        // Fetch both parking bookings and users in parallel
+        const [response, usersData, categoriesData] = await Promise.all([
+          fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParams()),
+          fetchUsers(),
+          fetchParkingCategories()
+        ]);
+        
+        // Set users data
+        setUsers(usersData);
+        
+        // Set parking categories data
+        setParkingCategories(categoriesData);
+        
+        // Set cards data from API response
+        setCards(response.cards);
+        
+        // Set raw API data
+        setBookings(response.parking_bookings);
+        
+        // Transform for UI
+        const transformedBookings = transformApiDataToBookings(response.parking_bookings);
         setBookingData(transformedBookings);
+        
+        // Generate summary
+        const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
         setSummary(generatedSummary);
-        setApiPagination(response.pagination);
+        
+        // Set pagination
+        setApiPagination({
+          current_page: response.pagination.current_page,
+          total_count: response.pagination.total_count,
+          total_pages: response.pagination.total_pages
+        });
         
       } catch (error) {
         console.error('Error loading booking data:', error);
@@ -254,36 +594,122 @@ const ParkingBookingListSiteWise = () => {
     };
 
     loadBookingData();
-  }, [currentPage]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm, filters]);
 
-  // Generate parking stats from summary data
+  // Generate parking stats from cards data
   const parkingStats = useMemo(() => {
-    if (!summary) {
+    if (!cards) {
       return [
-        { title: "Total Bookings", count: 0, icon: MapPin },
-        { title: "Confirmed", count: 0, icon: CheckCircle },
-        { title: "Cancelled", count: 0, icon: AlertTriangle },
-        { title: "Two Wheeler", count: 0, icon: Bike },
-        { title: "Four Wheeler", count: 0, icon: Car },
-        { title: "Checked In", count: 0, icon: CheckCircle },
-        { title: "Checked Out", count: 0, icon: AlertTriangle }
+        // First row - Car parking stats
+        { title: "Total Parking for 4 Wheeler", count: 0, icon: Car },
+        { title: "Total Booked Parking", count: 0, icon: CheckCircle },
+        { title: "Total Vacant Parking", count: 0, icon: AlertTriangle },
+        // Second row - Bike parking stats
+        { title: "Total Parking for 2 Wheeler", count: 0, icon: Bike },
+        { title: "Total Booked Parking", count: 0, icon: CheckCircle },
+        { title: "Total Vacant Parking", count: 0, icon: AlertTriangle }
       ];
     }
 
     return [
-      { title: "Total Bookings", count: summary.total_bookings, icon: MapPin },
-      { title: "Confirmed", count: summary.confirmed_bookings, icon: CheckCircle },
-      { title: "Cancelled", count: summary.cancelled_bookings, icon: AlertTriangle },
-      { title: "Two Wheeler", count: summary.two_wheeler_bookings, icon: Bike },
-      { title: "Four Wheeler", count: summary.four_wheeler_bookings, icon: Car },
-      { title: "Checked In", count: summary.checked_in_count, icon: CheckCircle },
-      { title: "Checked Out", count: summary.checked_out_count, icon: AlertTriangle }
+      // First row - Car parking stats
+      { title: "Total Parking for 4 Wheeler", count: cards.total_four_wheeler, icon: Car },
+      { title: "Total Booked Parking", count: Math.abs(cards.total_four_wheeler - cards.vacant_four_wheeler), icon: CheckCircle },
+      { title: "Total Vacant Parking", count: cards.vacant_four_wheeler, icon: AlertTriangle },
+      // Second row - Bike parking stats
+      { title: "Total Parking for 2 Wheeler", count: cards.total_two_wheeler, icon: Bike },
+      { title: "Total Booked Parking", count: Math.abs(cards.total_two_wheeler - cards.vacant_two_wheeler), icon: CheckCircle },
+      { title: "Total Vacant Parking", count: cards.vacant_two_wheeler, icon: AlertTriangle }
     ];
-  }, [summary]);
+  }, [cards]);
 
   const handleExport = () => {
-    setIsBulkUploadOpen(true);
+    setIsExportModalOpen(true);
     setShowActionPanel(false);
+  };
+
+  const handleExportWithDateRange = async () => {
+    try {
+      if (!exportDateRange.startDate || !exportDateRange.endDate) {
+        toast.error('Please select both start and end dates');
+        return;
+      }
+
+      if (new Date(exportDateRange.startDate) > new Date(exportDateRange.endDate)) {
+        toast.error('Start date cannot be after end date');
+        return;
+      }
+
+      toast.info('Exporting parking bookings...');
+      
+      // Use the dedicated export API endpoint
+      const exportUrl = getFullUrl('/parking_booking/export.xlsx');
+      const options = getAuthenticatedFetchOptions();
+      
+      // Build query parameters for the export API
+      const params = new URLSearchParams();
+      params.append('start_date', exportDateRange.startDate);
+      params.append('end_date', exportDateRange.endDate);
+      
+      const fullExportUrl = `${exportUrl}?${params.toString()}`;
+      
+      console.log('🔍 Export API Debug Info:');
+      console.log('Export URL:', fullExportUrl);
+      console.log('Start Date:', exportDateRange.startDate);
+      console.log('End Date:', exportDateRange.endDate);
+      
+      const response = await fetch(fullExportUrl, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Check if the response is actually an Excel file
+      const contentType = response.headers.get('Content-Type');
+      console.log('Response Content-Type:', contentType);
+      
+      // Get the blob data
+      const blob = await response.blob();
+      
+      // Create download link
+      const link = document.createElement('a');
+      const downloadUrl = URL.createObjectURL(blob);
+      link.setAttribute('href', downloadUrl);
+      
+      // Set filename with date range
+      const filename = `parking_bookings_${exportDateRange.startDate}_to_${exportDateRange.endDate}.xlsx`;
+      link.setAttribute('download', filename);
+      
+      // Trigger download
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the object URL
+      URL.revokeObjectURL(downloadUrl);
+      
+      toast.success('Parking bookings exported successfully!');
+      setIsExportModalOpen(false);
+      
+      // Reset date range
+      setExportDateRange({
+        startDate: '',
+        endDate: ''
+      });
+      
+    } catch (error) {
+      console.error('Error exporting parking bookings:', error);
+      toast.error('Failed to export parking bookings. Please try again.');
+    }
+  };
+
+  const handleCancelExport = () => {
+    setIsExportModalOpen(false);
+    setExportDateRange({
+      startDate: '',
+      endDate: ''
+    });
   };
 
   const handleFileImport = async (file: File) => {
@@ -293,36 +719,40 @@ const ParkingBookingListSiteWise = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      const url = getFullUrl('/pms/manage/parking_bookings/site_wise/import.json');
+      const url = getFullUrl('/pms/admin/parking_bookings/import');
       const options = getAuthenticatedFetchOptions();
       
-      const requestOptions = {
+      const response = await fetch(url, {
         ...options,
         method: 'POST',
         body: formData,
-        headers: {
-          ...options.headers,
-        }
-      };
-      
-      delete requestOptions.headers['Content-Type'];
-      
-      console.log('🚀 Calling site-wise parking bookings import API:', url);
-      
-      const response = await fetch(url, requestOptions);
+      });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Import API Error Response:', errorText);
-        throw new Error(`Failed to import parking bookings: ${response.status} ${response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
-      console.log('✅ Site-wise parking bookings imported successfully:', data);
+      const result = await response.json();
+      console.log('✅ Site-wise parking bookings imported successfully:', result);
       
       toast.success('Site-wise parking bookings imported successfully!');
       
-      // Refresh the data (would need actual API call here)
+      // Refresh the data
+      const refreshedData = await fetchParkingBookings();
+      
+      // Set raw API data
+      setBookings(refreshedData.parking_bookings);
+      
+      // Set cards data from API response
+      setCards(refreshedData.cards);
+      
+      // Transform for UI
+      const transformedBookings = transformApiDataToBookings(refreshedData.parking_bookings);
+      setBookingData(transformedBookings);
+      
+      // Generate summary
+      const generatedSummary = generateSummaryFromBookings(refreshedData.parking_bookings);
+      setSummary(generatedSummary);
       
     } catch (error) {
       console.error('❌ Error importing site-wise parking bookings:', error);
@@ -340,23 +770,7 @@ const ParkingBookingListSiteWise = () => {
   };
 
   const handleToggleFilters = () => {
-    setShowFilters(!showFilters);
-  };
-
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page when filtering
-  };
-
-  const handleClearFilters = () => {
-    setFilters({
-      category: '',
-      building: '',
-      floor: '',
-      status: '',
-      department: ''
-    });
-    setCurrentPage(1);
+    setShowFiltersModal(!showFiltersModal);
   };
 
   const handleCancelBooking = async (bookingId: number) => {
@@ -372,40 +786,29 @@ const ParkingBookingListSiteWise = () => {
     try {
       toast.info(`Cancelling booking ${bookingId}...`);
       
-      const url = getFullUrl(`/pms/admin/parking_bookings/${bookingId}.json`);
+      const url = getFullUrl(`/pms/admin/parking_bookings/${bookingId}`);
       const options = getAuthenticatedFetchOptions();
       
-      const requestOptions = {
+      const response = await fetch(url, {
         ...options,
         method: 'PUT',
+        headers: {
+          ...options.headers,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           parking_booking: {
             status: "cancelled"
           }
-        }),
-        headers: {
-          ...options.headers,
-          'Content-Type': 'application/json',
-        }
-      };
-      
-      console.log('🚀 Calling cancel booking API:', url);
-      console.log('📤 Request body:', {
-        parking_booking: {
-          status: "cancelled"
-        }
+        })
       });
       
-      const response = await fetch(url, requestOptions);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Cancel Booking API Error Response:', errorText);
-        throw new Error(`Failed to cancel booking: ${response.status} ${response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
-      console.log('✅ Booking cancelled successfully:', data);
+      const result = await response.json();
+      console.log('✅ Booking cancelled successfully:', result);
       
       toast.success(`Booking ${bookingId} cancelled successfully!`);
       
@@ -413,7 +816,7 @@ const ParkingBookingListSiteWise = () => {
       setBookingData(prevData => 
         prevData.map(booking => 
           booking.id === bookingId 
-            ? { ...booking, status: 'Cancelled', cancel: false }
+            ? { ...booking, status: 'cancelled', cancel: false }
             : booking
         )
       );
@@ -448,57 +851,167 @@ const ParkingBookingListSiteWise = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showActionPanel]);
 
-  // Filter booking data based on search term and filters (client-side filtering)
-  const filteredBookingData = useMemo(() => {
-    let filtered = bookingData;
+  // Client-side search filtering for immediate feedback
+  // Filter data based on search term across multiple fields
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return bookingData;
+    }
 
-    // Apply search filter
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(row => 
-        row.employee_name.toLowerCase().includes(searchLower) ||
-        row.id.toString().toLowerCase().includes(searchLower) ||
-        row.designation.toLowerCase().includes(searchLower) ||
-        row.building.toLowerCase().includes(searchLower)
+    const searchLower = searchTerm.toLowerCase().trim();
+    console.log('🔍 Client-side Search Debug:');
+    console.log('Search term:', searchTerm);
+    console.log('Search term lowercased:', searchLower);
+    console.log('Total bookings to search:', bookingData.length);
+
+    const filtered = bookingData.filter(booking => {
+      const searchableFields = [
+        booking.employee_name,
+        booking.employee_email,
+        booking.designation,
+        booking.department,
+        booking.category,
+        booking.building,
+        booking.floor,
+        booking.status,
+        booking.slot_parking_no,
+        booking.schedule_date,
+        booking.booking_schedule,
+        booking.id.toString()
+      ].filter(Boolean); // Remove null/undefined values
+
+      const matches = searchableFields.some(field => 
+        field.toLowerCase().includes(searchLower)
       );
-    }
 
-    // Apply other filters
-    if (filters.category) {
-      filtered = filtered.filter(row => row.category === filters.category);
-    }
-    if (filters.building) {
-      filtered = filtered.filter(row => row.building === filters.building);
-    }
-    if (filters.floor) {
-      filtered = filtered.filter(row => row.floor === filters.floor);
-    }
-    if (filters.status) {
-      filtered = filtered.filter(row => row.status === filters.status);
-    }
-    if (filters.department) {
-      filtered = filtered.filter(row => row.department === filters.department);
-    }
+      if (matches) {
+        console.log('🔍 Match found:', {
+          id: booking.id,
+          employee_name: booking.employee_name,
+          designation: booking.designation,
+          department: booking.department
+        });
+      }
 
+      return matches;
+    });
+
+    console.log('🔍 Filtered results count:', filtered.length);
     return filtered;
-  }, [searchTerm, bookingData, filters]);
+  }, [bookingData, searchTerm]);
 
-  // Use API pagination - show all filtered data since API handles pagination
-  const paginatedData = filteredBookingData;
+  // Use filtered data for display
+  const paginatedData = filteredData;
 
   // Use API pagination for total pages
   const totalPages = apiPagination.total_pages;
+  const currentApiPage = apiPagination.current_page;
 
   // Handle page change - this will trigger API call
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handlePageChange = async (page: number) => {
+    try {
+      setCurrentPage(page);
+      setLoading(true);
+      
+      // Convert UI filters to API filter parameters
+      const buildApiFilterParams = (): ApiFilterParams => {
+        const apiParams: ApiFilterParams = {};
+        
+        if (filters.category !== 'all') {
+          console.log('🔍 Building API Filter (Page Change) - Category:');
+          console.log('UI Filter category value:', filters.category);
+          console.log('UI Filter category type:', typeof filters.category);
+          apiParams.category = filters.category;
+        }
+        
+        if (filters.user !== 'all') {
+          apiParams.user_ids = [filters.user];
+        }
+        
+        if (filters.parking_slot.trim()) {
+          console.log('🔍 Building API Filter (Page Change) - Parking Slot:');
+          console.log('UI Filter parking_slot value:', filters.parking_slot);
+          console.log('UI Filter parking_slot trimmed:', filters.parking_slot.trim());
+          apiParams.parking_slot = filters.parking_slot.trim();
+        }
+        
+        if (filters.status !== 'all') {
+          // Map UI status to API status
+          const statusMap: { [key: string]: string } = {
+            'Confirmed': 'confirmed',
+            'Cancelled': 'cancelled',
+            'confirmed': 'confirmed',
+            'cancelled': 'cancelled'
+          };
+          const apiStatus = statusMap[filters.status] || filters.status;
+          apiParams.statuses = [apiStatus];
+        }
+        
+        if (filters.scheduled_on_from.trim() || filters.scheduled_on_to.trim()) {
+          // Build date range for scheduled_on with proper date formatting
+          const fromDate = filters.scheduled_on_from.trim() ? formatDateForAPI(filters.scheduled_on_from.trim()) : formatDateForAPI(filters.scheduled_on_to.trim());
+          const toDate = filters.scheduled_on_to.trim() ? formatDateForAPI(filters.scheduled_on_to.trim()) : formatDateForAPI(filters.scheduled_on_from.trim());
+          apiParams.scheduled_date_range = `${fromDate} - ${toDate}`;
+          console.log('🔍 Formatted Scheduled Date Range (Page Change):', apiParams.scheduled_date_range);
+        }
+        
+        if (filters.booked_on_from.trim() || filters.booked_on_to.trim()) {
+          // Build date range for booked_on with proper date formatting
+          const fromDate = filters.booked_on_from.trim() ? formatDateForAPI(filters.booked_on_from.trim()) : formatDateForAPI(filters.booked_on_to.trim());
+          const toDate = filters.booked_on_to.trim() ? formatDateForAPI(filters.booked_on_to.trim()) : formatDateForAPI(filters.booked_on_from.trim());
+          apiParams.booked_date_range = `${fromDate} - ${toDate}`;
+          console.log('🔍 Formatted Booked Date Range (Page Change):', apiParams.booked_date_range);
+        }
+        
+        return apiParams;
+      };
+      
+      const response = await fetchParkingBookings(page, debouncedSearchTerm, buildApiFilterParams());
+      
+      // Set raw API data
+      setBookings(response.parking_bookings);
+      
+      // Set cards data from API response
+      setCards(response.cards);
+      
+      // Transform for UI
+      const transformedBookings = transformApiDataToBookings(response.parking_bookings);
+      setBookingData(transformedBookings);
+      
+      // Generate summary
+      const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
+      setSummary(generatedSummary);
+      
+      // Set pagination
+      setApiPagination({
+        current_page: response.pagination.current_page,
+        total_count: response.pagination.total_count,
+        total_pages: response.pagination.total_pages
+      });
+      
+    } catch (error) {
+      console.error('Error changing page:', error);
+      toast.error('Failed to load page data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to capitalize first letter of status
+  const capitalizeStatus = (status: string): string => {
+    if (!status) return '';
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   };
 
   // Handle search
   const handleSearch = (term: string) => {
+    console.log('🔍 Search Handler Debug:');
+    console.log('Search term received:', term);
+    console.log('Search term type:', typeof term);
+    console.log('Search term length:', term.length);
     setSearchTerm(term);
-    // Note: For server-side search, you might want to trigger API call here
-    // setCurrentPage(1); // Reset to first page when searching
+    // Note: The useEffect will trigger API call automatically due to dependency changes
+    // Page reset happens in the debounce effect to avoid unnecessary resets
   };
 
   // Column visibility functions
@@ -512,6 +1025,27 @@ const ParkingBookingListSiteWise = () => {
 
   const isColumnVisible = (columnKey: string) => {
     return columns.find(col => col.key === columnKey)?.visible ?? true;
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1); // Reset to first page when filtering
+    // Note: The useEffect will trigger API call automatically due to dependency changes
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      category: 'all',
+      user: 'all',
+      parking_slot: '',
+      status: 'all',
+      scheduled_on_from: '',
+      scheduled_on_to: '',
+      booked_on_from: '',
+      booked_on_to: ''
+    });
+    setCurrentPage(1);
+    // Note: The useEffect will trigger API call automatically due to dependency changes
   };
 
   // Get unique values for filter dropdowns
@@ -530,9 +1064,9 @@ const ParkingBookingListSiteWise = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
         {loading ? (
-          Array.from({ length: 7 }).map((_, index) => (
+          Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
               className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 animate-pulse bg-[#f6f4ee]"
@@ -575,22 +1109,13 @@ const ParkingBookingListSiteWise = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Left Side Controls */}
         <div className="flex gap-2">
-          <Button 
+          {/* <Button 
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
             onClick={handleActionClick}
           >
             <Plus className="w-4 h-4 mr-2" />
             Action
-          </Button>
-          
-          <Button 
-            variant="outline"
-            onClick={handleToggleFilters}
-            className="px-4 py-2"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
+          </Button> */}
         </div>
 
         {/* Right Side Controls */}
@@ -604,105 +1129,62 @@ const ParkingBookingListSiteWise = () => {
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-10 w-64"
             />
+            {/* Search Results Counter */}
+            {searchTerm.trim() && (
+              <div className="absolute -bottom-6 left-0 text-xs text-gray-500">
+                {filteredData.length} result{filteredData.length !== 1 ? 's' : ''} found
+              </div>
+            )}
           </div>
+
+          {/* Filter Button */}
+          <Button 
+            variant="outline"
+            onClick={handleToggleFilters}
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 w-10 h-10 p-0"
+          >
+            <Filter className="w-4 h-4" />
+          </Button>
+
+          {/* Export Button */}
+         
 
           {/* Column Visibility */}
           <ColumnVisibilityDropdown
             columns={columns}
             onColumnToggle={handleColumnToggle}
           />
+
+           <Button 
+            variant="outline"
+            onClick={handleExport}
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 w-10 h-10 p-0"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
       {/* Filters Section */}
-      {showFilters && (
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select
-                  value={filters.category}
-                  onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">All Categories</option>
-                  {getUniqueValues('category').map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Building</label>
-                <select
-                  value={filters.building}
-                  onChange={(e) => handleFilterChange('building', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">All Buildings</option>
-                  {getUniqueValues('building').map(building => (
-                    <option key={building} value={building}>{building}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Floor</label>
-                <select
-                  value={filters.floor}
-                  onChange={(e) => handleFilterChange('floor', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">All Floors</option>
-                  {getUniqueValues('floor').map(floor => (
-                    <option key={floor} value={floor}>{floor}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">All Statuses</option>
-                  {getUniqueValues('status').map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  onClick={handleClearFilters}
-                  className="w-full"
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Filters are now in a modal - see below */}
 
       {/* Data Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              {isColumnVisible('id') && <TableHead className="font-semibold">ID</TableHead>}
+              {isColumnVisible('sr_no') && <TableHead className="font-semibold">Sr No.</TableHead>}
+              {/* {isColumnVisible('id') && <TableHead className="font-semibold">ID</TableHead>} */}
               {isColumnVisible('employee_name') && <TableHead className="font-semibold">Employee Name</TableHead>}
+              {isColumnVisible('employee_email') && <TableHead className="font-semibold">Employee Email ID</TableHead>}
               {isColumnVisible('schedule_date') && <TableHead className="font-semibold">Schedule Date</TableHead>}
+              {isColumnVisible('booking_schedule') && <TableHead className="font-semibold">Booking Time</TableHead>}
               {isColumnVisible('category') && <TableHead className="font-semibold">Category</TableHead>}
               {isColumnVisible('building') && <TableHead className="font-semibold">Building</TableHead>}
               {isColumnVisible('floor') && <TableHead className="font-semibold">Floor</TableHead>}
               {isColumnVisible('designation') && <TableHead className="font-semibold">Designation</TableHead>}
               {isColumnVisible('department') && <TableHead className="font-semibold">Department</TableHead>}
-              {isColumnVisible('slot_parking_no') && <TableHead className="font-semibold">Slot & Parking No.</TableHead>}
+              {/* {isColumnVisible('slot_parking_no') && <TableHead className="font-semibold">Slot & Parking No.</TableHead>} */}
               {isColumnVisible('status') && <TableHead className="font-semibold">Status</TableHead>}
               {isColumnVisible('checked_in_at') && <TableHead className="font-semibold">Checked In At</TableHead>}
               {isColumnVisible('checked_out_at') && <TableHead className="font-semibold">Checked Out At</TableHead>}
@@ -721,19 +1203,33 @@ const ParkingBookingListSiteWise = () => {
               <TableRow>
                 <TableCell colSpan={columns.filter(col => col.visible).length} className="text-center py-8 text-gray-500">
                   {error ? error :
-                   searchTerm.trim() ? `No bookings found matching "${searchTerm}"` : 'No parking booking data available'}
+                   searchTerm.trim() ? (
+                     <div>
+                       <p>No bookings found matching "<strong>{searchTerm}</strong>"</p>
+                       <p className="text-sm mt-1 text-gray-400">
+                         Searched in: Employee Name, Designation, Department, Category, Building, Floor, Status, and Slot Number
+                       </p>
+                     </div>
+                   ) : 'No parking booking data available'}
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedData.map((row) => (
+              paginatedData.map((row, index) => (
                 <TableRow key={row.id} className="hover:bg-gray-50">
-                  {isColumnVisible('id') && <TableCell className="font-medium">{row.id}</TableCell>}
-                  {isColumnVisible('employee_name') && <TableCell>{row.employee_name}</TableCell>}
+                  {isColumnVisible('sr_no') && <TableCell className="font-medium">{(currentApiPage - 1) * itemsPerPage + index + 1}</TableCell>}
+                  {/* {isColumnVisible('id') && <TableCell className="font-medium">{row.id}</TableCell>} */}
+                  {isColumnVisible('employee_name') && (
+                    <TableCell>{row.employee_name}</TableCell>
+                  )}
+                  {isColumnVisible('employee_email') && (
+                    <TableCell>{row.employee_email}</TableCell>
+                  )}
                   {isColumnVisible('schedule_date') && <TableCell>{row.schedule_date}</TableCell>}
+                  {isColumnVisible('booking_schedule') && <TableCell>{row.booking_schedule}</TableCell>}
                   {isColumnVisible('category') && (
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {row.category === 'Two Wheeler' ? <Bike className="w-4 h-4" /> : <Car className="w-4 h-4" />}
+                        {/* {row.category === 'Two Wheeler' ? <Bike className="w-4 h-4" /> : <Car className="w-4 h-4" />} */}
                         {row.category}
                       </div>
                     </TableCell>
@@ -742,17 +1238,17 @@ const ParkingBookingListSiteWise = () => {
                   {isColumnVisible('floor') && <TableCell>{row.floor}</TableCell>}
                   {isColumnVisible('designation') && <TableCell>{row.designation}</TableCell>}
                   {isColumnVisible('department') && <TableCell>{row.department || '-'}</TableCell>}
-                  {isColumnVisible('slot_parking_no') && <TableCell>{row.slot_parking_no}</TableCell>}
+                  {/* {isColumnVisible('slot_parking_no') && <TableCell>{row.slot_parking_no}</TableCell>} */}
                   {isColumnVisible('status') && (
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        row.status === 'Approved' 
+                        row.status.toLowerCase() === 'confirmed' || row.status.toLowerCase() === 'approved'
                           ? 'bg-green-100 text-green-800' 
-                          : row.status === 'Cancelled'
+                          : row.status.toLowerCase() === 'cancelled'
                           ? 'bg-red-100 text-red-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {row.status}
+                        {capitalizeStatus(row.status)}
                       </span>
                     </TableCell>
                   )}
@@ -784,22 +1280,22 @@ const ParkingBookingListSiteWise = () => {
       {totalPages > 1 && (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="text-sm text-gray-700">
+            {/* <div className="text-sm text-gray-700">
               Showing page {apiPagination.current_page} of {apiPagination.total_pages} 
               ({apiPagination.total_count} total items)
-            </div>
+            </div> */}
           </div>
           <Pagination>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => {
-                    if (currentPage > 1) {
-                      handlePageChange(currentPage - 1);
+                    if (currentApiPage > 1) {
+                      handlePageChange(currentApiPage - 1);
                     }
                   }}
                   className={
-                    currentPage === 1
+                    currentApiPage === 1
                       ? "pointer-events-none opacity-50"
                       : ""
                   }
@@ -813,7 +1309,7 @@ const ParkingBookingListSiteWise = () => {
                 <PaginationItem key={page}>
                   <PaginationLink
                     onClick={() => handlePageChange(page)}
-                    isActive={currentPage === page}
+                    isActive={currentApiPage === page}
                   >
                     {page}
                   </PaginationLink>
@@ -829,12 +1325,12 @@ const ParkingBookingListSiteWise = () => {
               <PaginationItem>
                 <PaginationNext
                   onClick={() => {
-                    if (currentPage < totalPages) {
-                      handlePageChange(currentPage + 1);
+                    if (currentApiPage < totalPages) {
+                      handlePageChange(currentApiPage + 1);
                     }
                   }}
                   className={
-                    currentPage === totalPages
+                    currentApiPage === totalPages
                       ? "pointer-events-none opacity-50"
                       : ""
                   }
@@ -852,6 +1348,59 @@ const ParkingBookingListSiteWise = () => {
         description="Upload a file to import site-wise parking booking data"
         onImport={handleFileImport}
       />
+
+      {/* Export Modal */}
+      <Dialog open={isExportModalOpen} onOpenChange={setIsExportModalOpen}>
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+            <DialogTitle className="text-xl font-bold text-[hsl(var(--analytics-text))]">Export Parking Bookings</DialogTitle>
+            <Button variant="ghost" size="sm" onClick={handleCancelExport}>
+              <X className="w-4 h-4" />
+            </Button>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Start Date *</Label>
+              <Input
+                type="date"
+                value={exportDateRange.startDate}
+                onChange={(e) => setExportDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                className="h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">End Date *</Label>
+              <Input
+                type="date"
+                value={exportDateRange.endDate}
+                onChange={(e) => setExportDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                className="h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white"
+                required
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex justify-end gap-3 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={handleCancelExport}
+              className="text-[hsl(var(--analytics-text))] border-[hsl(var(--analytics-border))]"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleExportWithDateRange}
+              className="bg-[hsl(var(--analytics-primary))] hover:bg-[hsl(var(--analytics-primary))]/90 text-white"
+              disabled={!exportDateRange.startDate || !exportDateRange.endDate}
+            >
+              Export
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Action Panel */}
       {showActionPanel && (
@@ -888,6 +1437,262 @@ const ParkingBookingListSiteWise = () => {
           </div>
         </div>
       )}
+
+      {/* Filters Modal */}
+      <Dialog open={showFiltersModal} onOpenChange={setShowFiltersModal} modal={false}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white" aria-describedby="parking-filter-dialog-description">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <DialogTitle className="text-lg font-semibold text-gray-900">FILTER BY</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFiltersModal(false)}
+              className="h-6 w-6 p-0 hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <div id="parking-filter-dialog-description" className="sr-only">
+              Filter parking bookings by category, user, parking slot, status, and date ranges
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Filter Options Section */}
+            <div>
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">Filter Options</h3>
+              <div className="grid grid-cols-2 gap-6">
+                {/* Category */}
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="category-label" shrink>Category</InputLabel>
+                  <MuiSelect
+                    labelId="category-label"
+                    label="Category"
+                    value={filters.category}
+                    onChange={(e) => handleFilterChange('category', e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="all"><em>All Categories</em></MenuItem>
+                    {parkingCategories.map(category => (
+                      <MenuItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* User */}
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="user-label" shrink>User</InputLabel>
+                  <MuiSelect
+                    labelId="user-label"
+                    label="User"
+                    value={filters.user}
+                    onChange={(e) => handleFilterChange('user', e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="all"><em>All Users</em></MenuItem>
+                    {users.map(user => (
+                      <MenuItem key={user.id} value={user.id.toString()}>
+                        {user.full_name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Parking Slot */}
+                <TextField
+                  label="Parking Slot"
+                  placeholder="Enter parking slot"
+                  value={filters.parking_slot}
+                  onChange={(e) => handleFilterChange('parking_slot', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="status-label" shrink>Status</InputLabel>
+                  <MuiSelect
+                    labelId="status-label"
+                    label="Status"
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="all"><em>All Statuses</em></MenuItem>
+                    {getUniqueValues('status').map(status => (
+                      <MenuItem key={status} value={status}>
+                        {status}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-6 mt-4">
+                {/* Status */}
+              </div>
+            </div>
+
+            {/* Date Filters Section */}
+            <div>
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">Date Filters</h3>
+              <div className="grid grid-cols-2 gap-6">
+                {/* Scheduled On */}
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium text-gray-700">Scheduled On</Label>
+                  <div className="grid grid-cols-1 gap-3">
+                    <TextField
+                      label="From Date"
+                      type="date"
+                      value={filters.scheduled_on_from}
+                      onChange={(e) => handleFilterChange('scheduled_on_from', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ max: "9999-12-31" }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
+                    <TextField
+                      label="To Date"
+                      type="date"
+                      value={filters.scheduled_on_to}
+                      onChange={(e) => handleFilterChange('scheduled_on_to', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ 
+                        min: filters.scheduled_on_from || undefined,
+                        max: "9999-12-31"
+                      }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
+                  </div>
+                </div>
+
+                {/* Booked On */}
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium text-gray-700">Booked On</Label>
+                  <div className="grid grid-cols-1 gap-3">
+                    <TextField
+                      label="From Date"
+                      type="date"
+                      value={filters.booked_on_from}
+                      onChange={(e) => handleFilterChange('booked_on_from', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ max: "9999-12-31" }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
+                    <TextField
+                      label="To Date"
+                      type="date"
+                      value={filters.booked_on_to}
+                      onChange={(e) => handleFilterChange('booked_on_to', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ 
+                        min: filters.booked_on_from || undefined,
+                        max: "9999-12-31"
+                      }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Filters Display */}
+            {(filters.category !== 'all' || filters.user !== 'all' || filters.parking_slot.trim() || filters.status !== 'all' || filters.scheduled_on_from.trim() || filters.scheduled_on_to.trim() || filters.booked_on_from.trim() || filters.booked_on_to.trim()) && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Active Filters:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {filters.category !== 'all' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      Category: {parkingCategories.find(cat => cat.id.toString() === filters.category)?.name || filters.category}
+                      <button onClick={() => handleFilterChange('category', 'all')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {filters.user !== 'all' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      User: {users.find(u => u.id.toString() === filters.user)?.full_name || filters.user}
+                      <button onClick={() => handleFilterChange('user', 'all')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {filters.parking_slot.trim() && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      Parking Slot: {filters.parking_slot}
+                      <button onClick={() => handleFilterChange('parking_slot', '')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {filters.status !== 'all' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      Status: {filters.status}
+                      <button onClick={() => handleFilterChange('status', 'all')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {(filters.scheduled_on_from.trim() || filters.scheduled_on_to.trim()) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      Scheduled On: {filters.scheduled_on_from && filters.scheduled_on_to ? `${filters.scheduled_on_from} to ${filters.scheduled_on_to}` : filters.scheduled_on_from || filters.scheduled_on_to}
+                      <button onClick={() => {
+                        handleFilterChange('scheduled_on_from', '');
+                        handleFilterChange('scheduled_on_to', '');
+                      }}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {(filters.booked_on_from.trim() || filters.booked_on_to.trim()) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      Booked On: {filters.booked_on_from && filters.booked_on_to ? `${filters.booked_on_from} to ${filters.booked_on_to}` : filters.booked_on_from || filters.booked_on_to}
+                      <button onClick={() => {
+                        handleFilterChange('booked_on_from', '');
+                        handleFilterChange('booked_on_to', '');
+                      }}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+              <Button 
+                variant="secondary" 
+                onClick={() => setShowFiltersModal(false)}
+                className="flex-1 h-11"
+              >
+                Apply
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleClearFilters}
+                className="flex-1 h-11"
+              >
+                Reset
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

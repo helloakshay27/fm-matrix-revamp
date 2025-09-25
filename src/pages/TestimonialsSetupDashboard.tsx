@@ -1,136 +1,238 @@
-
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddTestimonialModal } from "@/components/AddTestimonialModal";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { ColumnConfig } from "@/hooks/useEnhancedTable"
+import { useAppDispatch } from "@/store/hooks";
+import { editTestimonial, fetchTestimonials } from "@/store/slices/testimonialSlice";
+import { Eye, Edit, Plus } from 'lucide-react'
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
+const columns: ColumnConfig[] = [
+  {
+    key: "name",
+    label: "Testimonial Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "designation",
+    label: "Designation",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "company_name",
+    label: "Company Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "description",
+    label: "Description",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "profile",
+    label: "Profile Image",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "active",
+    label: "Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+]
+
+const data = [
+  {
+    id: 1,
+    siteName: "Site 1",
+    testimonialName: "Testimonial 1",
+    designation: "Designation 1",
+    companyName: "Company 1",
+    description: "Description 1",
+    profile: "Profile 1",
+    status: "Active",
+  },
+  {
+    id: 2,
+    siteName: "Site 2",
+    testimonialName: "Testimonial 2",
+    designation: "Designation 2",
+    companyName: "Company 2",
+    description: "Description 2",
+    profile: "Profile 2",
+    status: "Inactive",
+  },
+]
 
 export const TestimonialsSetupDashboard = () => {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
+  const siteId = localStorage.getItem("selectedSiteId");
 
-  const testimonialsData = [
-    {
-      id: 1,
-      site: "Lockated",
-      testimonialName: "Aman Gupta",
-      designation: "Ceo",
-      companyName: "Godrej",
-      description: "This is test text...",
-      profileImage: "/placeholder.svg",
-      status: true
-    },
-    {
-      id: 2,
-      site: "Lockated", 
-      testimonialName: "Ankit Sharma",
-      designation: "CEO",
-      companyName: "Godrej",
-      description: "The flexibility a...",
-      profileImage: "/placeholder.svg",
-      status: true
-    },
-    {
-      id: 3,
-      site: "Lockated",
-      testimonialName: "Sanjay Sharma", 
-      designation: "Director",
-      companyName: "Godrej",
-      description: "Lockated is a Mul...",
-      profileImage: "/placeholder.svg",
-      status: true
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [testimonials, setTestimonials] = useState([]);
+  const [isEditing, setIsEditing] = useState(false)
+  const [record, setRecord] = useState({})
+  const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
+  const [loadingData, setLoadingData] = useState(true)
+
+  const fetchData = async () => {
+    setLoadingData(true)
+    try {
+      const response = await dispatch(fetchTestimonials({ baseUrl, token, siteId })).unwrap();
+      setTestimonials(response.data);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    } finally {
+      setLoadingData(false)
     }
-  ];
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, [])
+
+  const handleCheckboxChange = async (item: any) => {
+    const newStatus = !item.active;
+    const itemId = item.id;
+
+    if (updatingStatus[itemId]) return;
+
+    try {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: true }));
+
+      await dispatch(
+        editTestimonial({
+          baseUrl,
+          token,
+          id: itemId,
+          data: {
+            testimonial: {
+              active: newStatus,
+            },
+          },
+        })
+      ).unwrap();
+
+      setTestimonials((prevData: any[]) =>
+        prevData.map((row) =>
+          row.id === itemId ? { ...row, active: newStatus } : row
+        )
+      );
+
+      toast.success(`Testimonial ${newStatus ? "activated" : "deactivated"} successfully`);
+    } catch (error) {
+      console.error("Error updating active status:", error);
+      toast.error(error || "Failed to update active status. Please try again.");
+    } finally {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: false }));
+    }
+  };
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case "description":
+        return <div className="w-[20rem] text-ellipsis overflow-hidden">{item.description}</div>
+      case "profile":
+        return <div className="flex justify-center">
+          <img src={item.video_preview_image} className="w-14 h-14 object-cover" />
+        </div>
+      case "active":
+        return (
+          <Switch
+            checked={item.active}
+            onCheckedChange={() =>
+              handleCheckboxChange(item)
+            }
+            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            disabled={updatingStatus[item.id]}
+          />
+        );
+      default:
+        return item[columnKey] || "-";
+    }
+  };
+
+  const renderActions = (item: any) => {
+    return (
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => navigate(`/settings/community-modules/testimonial-setup/${item.id}`)}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => {
+            setIsEditing(true)
+            setShowAddModal(true)
+            setRecord(item)
+          }}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      </div>
+    )
+  };
+
+  const leftActions = (
+    <>
+      <Button
+        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        onClick={() => setShowAddModal(true)}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add
+      </Button>
+    </>
+  );
 
   return (
     <div className="p-6">
-      {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
-        Settings &gt; Testimonials
-      </div>
+      <EnhancedTable
+        data={testimonials}
+        columns={columns}
+        renderActions={renderActions}
+        renderCell={renderCell}
+        leftActions={leftActions}
+        pagination={true}
+        pageSize={10}
+        loading={loadingData}
+      />
 
-      {/* Page Title and Add Button */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Testimonial LIST</h1>
-        <Button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Testimonial
-        </Button>
-      </div>
-
-      {/* Search Bar */}
-      <div className="mb-6 flex justify-end">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="px-3 py-2 border border-gray-300 rounded-md w-64"
-          />
-          <Button variant="outline" className="px-4">
-            Go!
-          </Button>
-          <Button variant="outline" className="px-4">
-            Reset
-          </Button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Actions</TableHead>
-              <TableHead className="font-semibold">Site</TableHead>
-              <TableHead className="font-semibold">Testimonial Name</TableHead>
-              <TableHead className="font-semibold">Designation</TableHead>
-              <TableHead className="font-semibold">Company Name</TableHead>
-              <TableHead className="font-semibold">Description</TableHead>
-              <TableHead className="font-semibold">Profile Image</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {testimonialsData.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="ghost" className="p-1">
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="p-1">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell>{item.site}</TableCell>
-                <TableCell className="text-blue-600">{item.testimonialName}</TableCell>
-                <TableCell>{item.designation}</TableCell>
-                <TableCell>{item.companyName}</TableCell>
-                <TableCell className="max-w-xs truncate">{item.description}</TableCell>
-                <TableCell>
-                  <img 
-                    src={item.profileImage} 
-                    alt="Profile" 
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className={`w-6 h-6 rounded-full ${item.status ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Add Testimonial Modal */}
-      <AddTestimonialModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
+      <AddTestimonialModal
+        isOpen={showAddModal}
+        onClose={() => {
+          setShowAddModal(false)
+          setIsEditing(false)
+          setRecord({})
+        }}
+        fetchData={fetchData}
+        isEditing={isEditing}
+        record={record}
       />
     </div>
-  );
-};
+  )
+}

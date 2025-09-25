@@ -211,7 +211,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             </div>
             <div className="w-full h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 40 }} barCategoryGap={20}>
+                <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 48 }} barCategoryGap={20}>
                   <defs>
                     <linearGradient id="invCostBar" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#E84A4A" />
@@ -219,8 +219,20 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 12 }} interval={0} tickLine={false} />
-                  <YAxis domain={yDomain} tickFormatter={(v) => `${currency}${formatNumber(v)}`} tick={{ fontSize: 11 }} width={70} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 12 }}
+                    interval={0}
+                    tickLine={false}
+                    label={{ value: 'Month', position: 'bottom', offset: 10, fill: '#374151', fontSize: 12 }}
+                  />
+                  <YAxis
+                    domain={yDomain}
+                    tickFormatter={(v) => `${currency}${formatNumber(v)}`}
+                    tick={{ fontSize: 11 }}
+                    width={70}
+                    label={{ value: `Cost (${currency})`, angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }}
+                  />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="cost" fill="url(#invCostBar)" radius={[4, 4, 0, 0]} maxBarSize={50}>
                     <LabelList dataKey="cost" position="top" formatter={(v: number) => v ? `${currency}${formatNumber(v)}` : ''} className="text-[10px] fill-gray-800 font-medium" />
@@ -280,120 +292,168 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         if (!data.response || !Array.isArray(data.response)) {
           return <div>No consumption data available</div>;
         }
-        // Scroll container similar to greenConsumption (≈5 rows visible)
+        // Responsive rendering: cards on small screens, table on >=sm
         return (
-          <div className="overflow-x-auto">
-            <div className="max-h-[270px] overflow-y-auto rounded border border-gray-200">
-              <table className="min-w-full table-auto">
-                <thead className="sticky top-0 bg-gray-50 z-10 shadow-sm">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Product</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Opening</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Addition</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.response.map((row: any, index: number) => (
-                    <tr key={index} className="border-t hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-2 text-sm text-gray-600 whitespace-nowrap">{row.date}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.unit}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.opening}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.addition}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.consumption}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.current_stock}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.cost_per_unit}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.cost}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="w-full">
+            {/* Mobile: Stacked cards */}
+            <div className="block sm:hidden space-y-2">
+              {data.response.map((row: any, index: number) => (
+                <div key={index} className="border border-gray-200 rounded-md p-3 bg-white">
+                  <div className="flex items-center justify-between text-[13px]">
+                    <span className="text-gray-500">Date</span>
+                    <span className="font-medium text-gray-900">{row.date}</span>
+                  </div>
+                  <div className="mt-1 text-[13px]">
+                    <div className="text-gray-500">Product</div>
+                    <div className="font-medium text-gray-900 break-words">{row.product}</div>
+                  </div>
+                  <div className="mt-1 grid grid-cols-2 gap-2 text-[13px]">
+                    <div>
+                      <div className="text-gray-500">Unit</div>
+                      <div className="font-medium text-gray-900">{row.unit}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Current Stock</div>
+                      <div className="font-medium text-gray-900">{row.current_stock}</div>
+                    </div>
+                  </div>
+                  <div className="mt-1 grid grid-cols-3 gap-2 text-[13px]">
+                    <div>
+                      <div className="text-gray-500">Opening</div>
+                      <div className="font-medium text-gray-900">{row.opening}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Addition</div>
+                      <div className="font-medium text-gray-900">{row.addition}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Consumption</div>
+                      <div className="font-medium text-gray-900">{row.consumption}</div>
+                    </div>
+                  </div>
+                  <div className="mt-1 grid grid-cols-2 gap-2 text-[13px]">
+                    <div>
+                      <div className="text-gray-500">Cost/Unit</div>
+                      <div className="font-medium text-gray-900">{row.cost_per_unit}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Total Cost</div>
+                      <div className="font-medium text-gray-900">{row.cost}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {data.info?.info && (
+                <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
+              )}
             </div>
-            {data.info?.info && (
-              <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
-            )}
+
+            {/* Tablet/Desktop: Scrollable table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <div className="rounded border border-gray-200">
+                <table className="min-w-[900px] md:min-w-full table-fixed">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700 whitespace-nowrap">Date</th>
+                      <th className="w-64 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Product</th>
+                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Unit</th>
+                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Opening</th>
+                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Addition</th>
+                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Consumption</th>
+                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Current Stock</th>
+                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Cost/Unit</th>
+                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Total Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.response.map((row: any, index: number) => (
+                      <tr key={index} className="border-t odd:bg-white even:bg-gray-50 hover:bg-gray-100/60 transition-colors">
+                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700 whitespace-nowrap">{row.date}</td>
+                        <td className="w-64 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-800 break-words">{row.product}</td>
+                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.unit}</td>
+                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.opening}</td>
+                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.addition}</td>
+                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.consumption}</td>
+                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.current_stock}</td>
+                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.cost_per_unit}</td>
+                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.cost}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {data.info?.info && (
+                <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
+              )}
+            </div>
           </div>
         );
       }
 
       case 'itemsStatus': {
-        // Convert status data to chart format
+        // Convert status data to chart format with safe fallbacks
         const statusChartData = [
-          { name: 'Active', value: data.count_of_active_items, color: '#22C55E' },
-          { name: 'Inactive', value: data.count_of_inactive_items, color: '#EF4444' },
-          { name: 'Critical', value: data.count_of_critical_items, color: '#F97316' },
-          { name: 'Non-Critical', value: data.count_of_non_critical_items, color: '#3B82F6' }
+          { name: 'Active', value: Number(data?.count_of_active_items) || 0, color: '#22C55E' },
+          { name: 'Inactive', value: Number(data?.count_of_inactive_items) || 0, color: '#EF4444' },
+          { name: 'Critical', value: Number(data?.count_of_critical_items) || 0, color: '#F97316' },
+          { name: 'Non-Critical', value: Number(data?.count_of_non_critical_items) || 0, color: '#3B82F6' }
         ];
         const total = statusChartData.reduce((sum, item) => sum + (item.value || 0), 0);
-        // Custom label for PieChart to show value outside the arc
-        const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, value, index }) => {
-          if (!value) return null;
-          const RADIAN = Math.PI / 180;
-          const radius = outerRadius + 18; // smaller offset for smaller chart
-          const x = cx + radius * Math.cos(-midAngle * RADIAN);
-          const y = cy + radius * Math.sin(-midAngle * RADIAN);
-          return (
-            <text
-              x={x}
-              y={y}
-              fill="#222"
-              textAnchor={x > cx ? 'start' : 'end'}
-              dominantBaseline="central"
-              fontSize={15}
-              fontWeight={700}
-              stroke="#fff"
-              strokeWidth={0.5}
-            >
-              {value}
-            </text>
-          );
-        };
+        const withPct = statusChartData.map((s) => ({
+          ...s,
+          pct: total > 0 ? Math.round((s.value / total) * 100) : 0,
+        }));
+
         return (
-          <div className="flex flex-col items-center justify-center w-full h-full">
-            <div className="p-6 w-full flex flex-col items-center">
-              <div className="flex flex-col md:flex-row items-center justify-center gap-8 w-full">
-                <ResponsiveContainer width={170} height={170}>
+          <div className="w-full h-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              {/* Donut with centered total */}
+              <div className="relative mx-auto">
+                <ResponsiveContainer width={240} height={240}>
                   <PieChart>
                     <Pie
-                      data={statusChartData}
+                      data={withPct}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
-                      outerRadius={65}
+                      innerRadius={70}
+                      outerRadius={100}
                       paddingAngle={2}
                       dataKey="value"
-                      label={renderCustomLabel}
+                      isAnimationActive={false}
                       stroke="#fff"
                     >
-                      {statusChartData.map((entry, index) => (
+                      {withPct.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      formatter={(value: number, name: string, props: any) => [`${value}`, statusChartData[props.index]?.name]}
-                    />
+                    <Tooltip formatter={(value: number, name: string, props: any) => [`${value}`, withPct[props.index]?.name]} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="flex flex-col gap-3 min-w-[160px]">
-                  {statusChartData.map((item, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <span className="inline-block w-4 h-4 rounded-full" style={{ backgroundColor: item.color }}></span>
-                      <span className="text-base font-medium text-gray-700">{item.name}</span>
-                      <span className="ml-auto text-base font-semibold text-gray-900">{item.value}</span>
-                    </div>
-                  ))}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="text-center">
+                    <div className="text-3xl font-extrabold text-gray-900 leading-tight">{total}</div>
+                    <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Items</div>
+                  </div>
                 </div>
-
               </div>
 
+              {/* Legend with counts and tiny progress */}
+              <div className="space-y-3 w-full">
+                {withPct.map((item, idx) => (
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block w-3.5 h-3.5 rounded-full" style={{ backgroundColor: item.color }}></span>
+                      <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                      <span className="ml-auto text-sm font-semibold text-gray-900">{item.value}</span>
+                      <span className="text-xs text-gray-500 w-10 text-right">{item.pct}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-200 rounded">
+                      <div className="h-1.5 rounded" style={{ width: `${item.pct}%`, backgroundColor: item.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="text-2xl font-bold text-gray-800 mb-2">Total Items: {total}</div>
           </div>
         );
       }
@@ -404,10 +464,27 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         return (
           <div className="space-y-4">
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+              <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 48 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="group_name" angle={-45} textAnchor="end" interval={0} height={80} />
-                <YAxis allowDecimals={false} />
+                <XAxis
+                  dataKey="group_name"
+                  angle={-45}
+                  textAnchor="end"
+                  interval={0}
+                  height={80}
+                  label={{ value: 'Category', position: 'bottom', offset: 10, fill: '#374151', fontSize: 12 }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  label={{
+                    value: 'Stock Count',
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: 8,
+                    fill: '#374151',
+                    fontSize: 12,
+                  }}
+                />
                 <Tooltip />
                 <Bar dataKey="item_count" fill="#3B82F6" />
               </BarChart>
@@ -429,44 +506,100 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         if (!data.response || !Array.isArray(data.response)) {
           return <div>No consumption data available</div>;
         }
-        // Approx row height (~44px) * 5 + header (~48px) => ~268px. Use max-h to allow shrink when fewer rows.
+        // Responsive rendering: cards on small screens, table on >=sm
         return (
-          <div className="overflow-x-auto">
-            <div className="max-h-[270px] overflow-y-auto rounded border border-gray-200">
-              <table className="min-w-full table-auto">
-                <thead className="sticky top-0 bg-gray-50 z-10 shadow-sm">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Product</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Opening</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Addition</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.response.map((row: any, index: number) => (
-                    <tr key={index} className="border-t hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-2 text-sm text-gray-600 whitespace-nowrap">{row.date}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.unit}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.opening}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.addition}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.consumption}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.current_stock}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.cost_per_unit}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.cost}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="w-full">
+            {/* Mobile: Stacked cards */}
+            <div className="block sm:hidden space-y-2">
+              {data.response.map((row: any, index: number) => (
+                <div key={index} className="border border-gray-200 rounded-md p-3 bg-white">
+                  <div className="flex items-center justify-between text-[13px]">
+                    <span className="text-gray-500">Date</span>
+                    <span className="font-medium text-gray-900">{row.date}</span>
+                  </div>
+                  <div className="mt-1 text-[13px]">
+                    <div className="text-gray-500">Product</div>
+                    <div className="font-medium text-gray-900 break-words">{row.product}</div>
+                  </div>
+                  <div className="mt-1 grid grid-cols-2 gap-2 text-[13px]">
+                    <div>
+                      <div className="text-gray-500">Unit</div>
+                      <div className="font-medium text-gray-900">{row.unit}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Current Stock</div>
+                      <div className="font-medium text-gray-900">{row.current_stock}</div>
+                    </div>
+                  </div>
+                  <div className="mt-1 grid grid-cols-3 gap-2 text-[13px]">
+                    <div>
+                      <div className="text-gray-500">Opening</div>
+                      <div className="font-medium text-gray-900">{row.opening}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Addition</div>
+                      <div className="font-medium text-gray-900">{row.addition}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Consumption</div>
+                      <div className="font-medium text-gray-900">{row.consumption}</div>
+                    </div>
+                  </div>
+                  <div className="mt-1 grid grid-cols-2 gap-2 text-[13px]">
+                    <div>
+                      <div className="text-gray-500">Cost/Unit</div>
+                      <div className="font-medium text-gray-900">{row.cost_per_unit}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Total Cost</div>
+                      <div className="font-medium text-gray-900">{row.cost}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {data.info?.info && (
+                <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
+              )}
             </div>
-            {data.info?.info && (
-              <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
-            )}
+
+            {/* Tablet/Desktop: Scrollable table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <div className="rounded border border-gray-200">
+                <table className="min-w-[900px] md:min-w-full table-fixed">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700 whitespace-nowrap">Date</th>
+                      <th className="w-64 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Product</th>
+                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Unit</th>
+                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Opening</th>
+                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Addition</th>
+                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Consumption</th>
+                      <th className="w-28 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Current Stock</th>
+                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Cost/Unit</th>
+                      <th className="w-24 px-3 md:px-4 py-2 text-left text-xs md:text-sm font-medium text-gray-700">Total Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.response.map((row: any, index: number) => (
+                      <tr key={index} className="border-t odd:bg-white even:bg-gray-50 hover:bg-gray-100/60 transition-colors">
+                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700 whitespace-nowrap">{row.date}</td>
+                        <td className="w-64 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-800 break-words">{row.product}</td>
+                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.unit}</td>
+                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.opening}</td>
+                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.addition}</td>
+                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.consumption}</td>
+                        <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.current_stock}</td>
+                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.cost_per_unit}</td>
+                        <td className="w-24 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700">{row.cost}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {data.info?.info && (
+                <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
+              )}
+            </div>
           </div>
         );
       }

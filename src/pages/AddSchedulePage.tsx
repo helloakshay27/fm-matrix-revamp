@@ -4800,7 +4800,6 @@ export const AddSchedulePage = () => {
                               <MenuItem value="dropdown">Dropdown</MenuItem>
                               <MenuItem value="radio">Radio</MenuItem>
                               <MenuItem value="date">Date</MenuItem>
-                              <MenuItem value="multiline">Multiline</MenuItem>
                               <MenuItem value="options-inputs">Options & Inputs</MenuItem>
                             </Select>
                           </FormControl>

@@ -296,7 +296,7 @@ export const EditVisitorGatePage = () => {
       console.log('Update response:', response);
       
       toast.success('Visitor gate updated successfully!');
-      navigate('/security/visitor-management/setup');
+      navigate('/settings/visitor-management/setup');
       
     } catch (error) {
       console.error('Error updating visitor gate:', error);
@@ -305,7 +305,7 @@ export const EditVisitorGatePage = () => {
   };
 
   const handleBack = () => {
-    navigate('/security/visitor-management/setup');
+    navigate('/settings/visitor-management/setup');
   };
 
   if (loading) {
@@ -326,7 +326,7 @@ export const EditVisitorGatePage = () => {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate('/security/visitor-management/setup')}
+            onClick={() => navigate('/settings/visitor-management/setup')}
             className="mb-4 p-0 h-auto text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

@@ -21,7 +21,7 @@ import {
   clearState 
 } from '@/store/slices/resolutionEscalationSlice';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import ReactSelect from 'react-select';
 import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
 import { API_CONFIG } from '@/config/apiConfig';
@@ -106,7 +106,6 @@ type ResolutionEscalationFormData = z.infer<typeof resolutionEscalationSchema>;
 
 export const ResolutionEscalationTab: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { toast } = useToast();
   
   const { 
     loading, 
@@ -201,7 +200,7 @@ export const ResolutionEscalationTab: React.FC = () => {
       console.log('User account loaded:', userAccountData);
     } catch (error) {
       console.error('Error loading user account:', error);
-      toast({ title: 'Error', description: 'Failed to load user account data', variant: 'destructive' });
+      toast.error('Failed to load user account data!');
     }
   };
 
@@ -214,7 +213,7 @@ export const ResolutionEscalationTab: React.FC = () => {
       console.log('Escalation users loaded:', response.users);
     } catch (error) {
       console.error('Error loading escalation users:', error);
-      toast({ title: 'Error', description: 'Failed to load escalation users', variant: 'destructive' });
+      toast.error('Failed to load escalation users!');
     } finally {
       setLoadingUsers(false);
     }
@@ -231,7 +230,7 @@ export const ResolutionEscalationTab: React.FC = () => {
   // Handle success/error states
   useEffect(() => {
     if (success) {
-      toast({ title: 'Success', description: 'Resolution escalation saved successfully' });
+      toast.success('Resolution escalation saved successfully!');
       reset();
       dispatch(clearState());
       dispatch(fetchResolutionEscalations());
@@ -239,10 +238,10 @@ export const ResolutionEscalationTab: React.FC = () => {
     if (error) {
       // Ensure error is a string for toast display
       const errorMessage = typeof error === 'string' ? error : 'An error occurred while processing your request';
-      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
+      toast.error(errorMessage + '!');
       dispatch(clearState());
     }
-  }, [success, error, toast, reset, dispatch]);
+  }, [success, error, reset, dispatch]);
 
   // Filter rules based on selected category
   useEffect(() => {
@@ -258,7 +257,7 @@ export const ResolutionEscalationTab: React.FC = () => {
     try {
       // Ensure user account is loaded to get site_id
       if (!userAccount?.site_id) {
-        toast({ title: 'Error', description: 'Unable to determine site ID from user account. Please refresh and try again.', variant: 'destructive' });
+        toast.error('Unable to determine site ID from user account. Please refresh and try again!');
         return;
       }
 
@@ -412,9 +411,9 @@ export const ResolutionEscalationTab: React.FC = () => {
       }
       
       if (shouldShowCategoryTakenMessage) {
-        toast({ title: 'Error', description: 'Category already been taken', variant: 'destructive' });
+        toast.error('Category name already exists. Please choose a different name!');
       } else {
-        toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
+        toast.error(errorMessage + '!');
       }
     }
   };
@@ -565,25 +564,17 @@ export const ResolutionEscalationTab: React.FC = () => {
       dispatch(fetchResolutionEscalations());
     } catch (err) {
       console.error('Error updating resolution escalation:', err);
-      toast({ 
-        title: 'Error', 
-        description: 'Failed to update resolution escalation. Please try again.', 
-        variant: 'destructive' 
-      });
+      toast.error('Failed to update resolution escalation. Please try again!');
     }
   };
 
   const handleDelete = async (id: number) => {
     try {
       await dispatch(deleteResolutionEscalation(id));
-      toast({ title: 'Success', description: 'Resolution escalation deleted successfully' });
+      toast.success('Resolution escalation deleted successfully!');
     } catch (err) {
       console.error('Error deleting resolution escalation:', err);
-      toast({ 
-        title: 'Error', 
-        description: 'Failed to delete resolution escalation. Please try again.', 
-        variant: 'destructive' 
-      });
+      toast.error('Failed to delete resolution escalation. Please try again!');
     }
   };
 
@@ -607,7 +598,7 @@ export const ResolutionEscalationTab: React.FC = () => {
       {/* Create Form */}
       <Card>
         <CardHeader>
-          <CardTitle>on submit if for the api it will get the 422 error please give toast as Category alredy been taken.</CardTitle>
+          <CardTitle>Resolution Escalation Configuration</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

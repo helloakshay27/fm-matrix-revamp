@@ -27,6 +27,7 @@ interface ConsumptionData {
 interface ApiConsumptionData {
   id: number;
   entity_id: number;
+  entity_name: string;
   from_date: string;
   to_date: string;
   total_consumption: number;
@@ -201,12 +202,11 @@ export const UtilityRequestDashboard = () => {
 
         // Map API response to our component data structure
         const mappedData: ConsumptionData[] = response.data.map((item: ApiConsumptionData) => {
-          const entityName = entityMap.get(item.entity_id.toString());
-          console.log(`Mapping entity ID ${item.entity_id} to name: ${entityName || 'not found'}`);
+          console.log(`Using entity_name: ${item.entity_name} for entity ID: ${item.entity_id}`);
 
           return {
             id: item.id.toString(),
-            entity: entityName || `Entity ID: ${item.entity_id}`,
+            entity: item.entity_name || `Entity ID: ${item.entity_id}`,
             fromDate: item.from_date,
             toDate: item.to_date,
             totalConsumption: item.total_consumption.toString(),
@@ -298,7 +298,7 @@ export const UtilityRequestDashboard = () => {
         // Map API response to our component data structure
         const mappedData: ConsumptionData[] = response.data.map((item: ApiConsumptionData) => ({
           id: item.id.toString(),
-          entity: entityMap.get(item.entity_id.toString()) || `Entity ID: ${item.entity_id}`,
+          entity: item.entity_name || `Entity ID: ${item.entity_id}`,
           fromDate: item.from_date,
           toDate: item.to_date,
           totalConsumption: item.total_consumption.toString(),

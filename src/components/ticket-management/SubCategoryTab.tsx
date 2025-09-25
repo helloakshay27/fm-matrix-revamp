@@ -429,11 +429,18 @@ export const SubCategoryTab: React.FC = () => {
                       <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="relative">
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent 
+                          position="popper" 
+                          side="bottom" 
+                          align="start" 
+                          sideOffset={8}
+                          avoidCollisions={false}
+                          className="z-[9999] min-w-[var(--radix-select-trigger-width)] max-h-[200px] overflow-y-auto"
+                        >
                           {(() => {
                             console.log('Rendering categories in dropdown:', availableCategories);
                             return availableCategories.length === 0 ? (

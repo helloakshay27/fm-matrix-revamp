@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
-import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
 import { createAMC, resetAmcCreate } from '@/store/slices/amcCreateSlice';
 import { apiClient } from '@/utils/apiClient';
 import { useSelector } from 'react-redux';
@@ -29,7 +28,7 @@ export const AddAMCPage = () => {
   // Redux state
   const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
   const { data: assetsData, loading: assetsLoading } = useAppSelector(state => state.assets);
-  const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
+  // Removed suppliers slice usage; we'll fetch directly
   const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
   const { success: amcCreateSuccess, error: amcCreateError } = useAppSelector(state => state.amcCreate);
   const [services, setServices] = useState<Service[]>([]);
@@ -95,13 +94,8 @@ export const AddAMCPage = () => {
 
   const [loading, setLoading] = useState(false);
 
-  const suppliers = Array.isArray((suppliersData as any)?.suppliers)
-    ? (suppliersData as any).suppliers
-    : Array.isArray((suppliersData as any)?.pms_suppliers)
-    ? (suppliersData as any).pms_suppliers
-    : Array.isArray(suppliersData)
-    ? (suppliersData as any)
-    : [];
+  const suppliers: any[] = []; // not used now; kept for group type select reuse logic below
+  const [suppliersLoading, setSuppliersLoading] = useState(false);
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
@@ -158,7 +152,26 @@ export const AddAMCPage = () => {
   useEffect(() => {
     dispatch(fetchAssetsData({ page: 1 }));
     dispatch(fetchInventoryAssets());
-    dispatch(fetchSuppliersData());
+    // Initial supplier load
+    // const initialLoad = async () => {
+    //   try {
+    //     const baseUrl = localStorage.getItem('baseUrl');
+    //     const token = localStorage.getItem('token');
+    //     if (!baseUrl || !token) return;
+    //     setSuppliersLoading(true);
+    //     const resp = await fetch(`https://${baseUrl}/pms/suppliers/get_suppliers.json`, { headers: { Authorization: `Bearer ${token}` } });
+    //     if (resp.ok) {
+    //       const data = await resp.json();
+    //       const arr = Array.isArray(data) ? data : (Array.isArray(data?.pms_suppliers) ? data.pms_suppliers : (Array.isArray(data?.suppliers) ? data.suppliers : []));
+    //       setSupplierOptions(arr);
+    //     }
+    //   } catch (e) {
+    //     console.error('Initial suppliers load error', e);
+    //   } finally {
+    //     setSuppliersLoading(false);
+    //   }
+    // };
+    // initialLoad();
 
     const fetchAssetGroups = async () => {
       setLoading(true);
@@ -275,20 +288,32 @@ export const AddAMCPage = () => {
     return () => { active = false; clearTimeout(handler); };
   }, [assetQuery]);
 
-  // Clear and seed supplier options
-  useEffect(() => {
-    const list = Array.isArray(suppliers) ? suppliers : [];
-    setSupplierOptions(list);
-  }, [suppliers]);
-
-  // Reset to initial suppliers when search is cleared
+  // Reset to initial suppliers when search is cleared (re-fetch base list)
   useEffect(() => {
     if (supplierQuery.length === 0) {
-      const list = Array.isArray(suppliers) ? suppliers : [];
-      setSupplierOptions(list);
-      setSupplierSearchLoading(false);
+      (async () => {
+        try {
+          const baseUrl = localStorage.getItem('baseUrl');
+          const token = localStorage.getItem('token');
+          if (!baseUrl || !token) return;
+          setSupplierSearchLoading(true);
+          const resp = await fetch(`https://${baseUrl}/pms/suppliers/get_suppliers.json`, { headers: { Authorization: `Bearer ${token}` } });
+          if (resp.ok) {
+            const data = await resp.json();
+            const arr = Array.isArray(data) ? data : (Array.isArray(data?.pms_suppliers) ? data.pms_suppliers : (Array.isArray(data?.suppliers) ? data.suppliers : []));
+            setSupplierOptions(arr);
+          } else {
+            setSupplierOptions([]);
+          }
+        } catch (e) {
+          console.error('Suppliers reset load error', e);
+          setSupplierOptions([]);
+        } finally {
+          setSupplierSearchLoading(false);
+        }
+      })();
     }
-  }, [supplierQuery, suppliers]);
+  }, [supplierQuery]);
 
   // Debounced remote search for suppliers on any input (1+ char)
   useEffect(() => {
@@ -300,10 +325,9 @@ export const AddAMCPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         setSupplierSearchLoading(true);
-        // Prefer company_name match; fallbacks exist in slices using pms_supplier_company_name_cont
         const url = `https://${baseUrl}/pms/suppliers/get_suppliers.json?q[company_name_cont]=${encodeURIComponent(supplierQuery)}`;
         const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (!active) return;
+        if (!active) return;
         if (resp.ok) {
           const data = await resp.json();
           const arr = Array.isArray(data) ? data : (Array.isArray(data?.pms_suppliers) ? data.pms_suppliers : (Array.isArray(data?.suppliers) ? data.suppliers : []));
@@ -466,6 +490,7 @@ export const AddAMCPage = () => {
 
     const sendData = new FormData();
     // sendData.append('pms_asset_amc);
+    
     sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
     sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
@@ -491,7 +516,18 @@ export const AddAMCPage = () => {
           sendData.append('sub_group_id', formData.subgroup);
         }
       }
-    } else if (formData.details === 'Service') {
+    } 
+
+    // Include selected asset IDs for Individual Asset flow
+    if (formData.details === 'Asset' && formData.type === 'Individual' && Array.isArray(formData.asset_ids) && formData.asset_ids.length > 0) {
+      formData.asset_ids.forEach((id) => {
+        // Append as array param
+        sendData.append('asset_ids[]', String(id));
+      });
+    }
+
+    // Service (Individual) specific parameter
+    if (formData.details === 'Service') {
       if (formData.type === 'Individual' && formData.assetName) {
         sendData.append('pms_asset_amc[service_id]', formData.assetName);
       }
@@ -802,11 +838,11 @@ export const AddAMCPage = () => {
                       {!supplierSearchLoading && supplierOptions.length === 0 && (
                         <MenuItem disabled>No results</MenuItem>
                       )}
-                      {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
-                        <MenuItem key={supplier.id} value={supplier.id?.toString?.() || String(supplier.id)}>
-                          {supplier.company_name || supplier.name}
-                        </MenuItem>
-                      ))}
+                        {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
+                          <MenuItem key={supplier.id} value={supplier.id?.toString?.() || String(supplier.id)}>
+                            {supplier.company_name || supplier.name}
+                          </MenuItem>
+                        ))}
                     </MuiSelect>
                     {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
                   </FormControl>
@@ -875,9 +911,9 @@ export const AddAMCPage = () => {
                         disabled={loading || suppliersLoading || isSubmitting}
                       >
                         <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                        {Array.isArray(suppliers) && suppliers.map((supplier) => (
+                        {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
                           <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                            {supplier.company_name}
+                            {supplier.company_name || supplier.name}
                           </MenuItem>
                         ))}
                       </MuiSelect>
@@ -901,28 +937,7 @@ export const AddAMCPage = () => {
 
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <TextField
-                  label={
-                    <span>
-                      Cost<span style={{ color: 'red' }}>*</span>
-                    </span>
-                  }
-                  placeholder="Enter Cost"
-                  name="cost"
-                  type="number"
-                  value={formData.cost}
-                  onChange={e => handleInputChange('cost', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  error={!!errors.cost}
-                  helperText={errors.cost}
-                  disabled={isSubmitting}
-                />
-              </div>
-
+              {/* Row 1: Contract Name | Start Date | End Date */}
               <div>
                 <TextField
                   label={
@@ -969,6 +984,35 @@ export const AddAMCPage = () => {
                 />
               </div>
 
+              <div>
+                <TextField
+                  fullWidth
+                  label={
+                    <span>
+                      End Date<span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
+                  type="date"
+                  value={formData.endDate || ''}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  error={!!errors.endDate}
+                  helperText={errors.endDate}
+                  inputProps={{
+                    min: formData.startDate || undefined,
+                  }}
+                  sx={{
+                    height: '45px',
+                    '& .MuiInputBase-root': {
+                      height: '45px',
+                    },
+                  }}
+                  disabled={!formData.startDate || isSubmitting}
+                />
+              </div>
+
+              {/* Row 2: First Service Date | Payment Terms | AMC Cost */}
               <div>
                 <TextField
                   fullWidth
@@ -1022,32 +1066,27 @@ export const AddAMCPage = () => {
 
               <div>
                 <TextField
-                  fullWidth
                   label={
                     <span>
-                      End Date<span style={{ color: 'red' }}>*</span>
+                      Cost<span style={{ color: 'red' }}>*</span>
                     </span>
                   }
-                  type="date"
-                  value={formData.endDate || ''}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  size="small"
+                  placeholder="Enter Cost"
+                  name="cost"
+                  type="number"
+                  value={formData.cost}
+                  onChange={e => handleInputChange('cost', e.target.value)}
+                  fullWidth
+                  variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  error={!!errors.endDate}
-                  helperText={errors.endDate}
-                  inputProps={{
-                    min: formData.startDate || undefined,
-                  }}
-                  sx={{
-                    height: '45px',
-                    '& .MuiInputBase-root': {
-                      height: '45px',
-                    },
-                  }}
-                  disabled={!formData.startDate || isSubmitting}
+                  InputProps={{ sx: fieldStyles }}
+                  error={!!errors.cost}
+                  helperText={errors.cost}
+                  disabled={isSubmitting}
                 />
               </div>
 
+              {/* Row 3: No. of Visits */}
               <div>
                 <TextField
                   label={

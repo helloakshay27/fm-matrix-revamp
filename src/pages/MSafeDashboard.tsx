@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ interface ApiPagination { current_page: number; total_pages: number; total_count
 
 export const MSafeDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation()
   const dispatch = useAppDispatch();
 
   const [fmUsers, setFmUsers] = useState<any[]>([]);
@@ -37,6 +38,7 @@ export const MSafeDashboard = () => {
   const [filters, setFilters] = useState({ firstname: '', lastname: '', email: '', mobile: '', cluster: '', cluster_id: '', circle: '', department: '', role: '', report_to_id: '' });
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
+
 
 
   const cardData = [
@@ -74,7 +76,9 @@ export const MSafeDashboard = () => {
           setLoading(false);
           return;
         }
-        let url = `https://${baseUrl}/pms/users/fte_users.json?page=${page}`;
+        // Ensure baseUrl doesn't get double https://
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        let url = `${cleanBaseUrl}/pms/users/fte_users.json?page=${page}`;
         const hasFilters = Object.values(filters).some(v => v && v !== '');
         if (hasFilters) {
           const params: string[] = [];
@@ -92,7 +96,9 @@ export const MSafeDashboard = () => {
           if (filters.circle) params.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
           if (filters.department) params.push(`q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`);
           if (filters.role) params.push(`q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`);
-          if (filters.report_to_id) params.push(`q[report_to_email_cont]=${encodeURIComponent(filters.report_to_id)}`);
+          if (filters.report_to_id && filters.report_to_id.includes('@')) {
+            params.push(`q[report_to_email_cont]=${encodeURIComponent(filters.report_to_id)}`);
+          }
           if (params.length) url += `&${params.join('&')}`;
         } else {
           const emailQuery = debouncedSearch.trim();

@@ -55,6 +55,7 @@ interface ServicesApiData {
   total_services_count: number;
   active_services_count: number;
   inactive_services_count: number;
+  ids?: number[]; // all matching service IDs for current filter
 }
 
 interface ServiceActionPanelProps {
@@ -133,6 +134,7 @@ export const ServiceDashboard = () => {
     () => apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 },
     [apiData]
   );
+  const allIds: string[] = useMemo(() => (apiData?.ids || []).map(String), [apiData]);
 
   // Derived counts to avoid optional chaining on unknown
   const totalServicesCount = apiData?.total_services_count ?? 0;
@@ -175,8 +177,17 @@ export const ServiceDashboard = () => {
   }, []);
 
   const handleSelectAll = useCallback((checked: boolean) => {
-    setSelectedItems(checked ? servicesData.map((item) => item.id.toString()) : []);
-  }, [servicesData]);
+    if (checked) {
+      // Prefer full ids list from API if available (select all across pages)
+      if (allIds.length > 0) {
+        setSelectedItems(allIds);
+      } else {
+        setSelectedItems(servicesData.map((item) => item.id.toString()));
+      }
+    } else {
+      setSelectedItems([]);
+    }
+  }, [servicesData, allIds]);
 
   const downloadAttachment = async (file: { attachment_id: number; document_name: string }) => {
     try {
@@ -225,14 +236,34 @@ export const ServiceDashboard = () => {
     } else {
       serviceIds = selectedItems;
     }
-    const validServices = servicesData.filter((service) => serviceIds.includes(service.id.toString()) && service.qr_code && service.qr_code_id);
-    if (validServices.length === 0) {
-      toast.error('No valid QR codes to download');
-      setDownloadingQR(false);
-      return;
-    }
-    if (validServices.length === 1) {
-      const service = validServices[0];
+    // Single download flow (use current record details if present)
+    if (serviceIds.length === 1) {
+      const service = servicesData.find((s) => s.id.toString() === serviceIds[0]);
+      if (!service) {
+        // Fallback to bulk endpoint even for single if record not in current page
+        try {
+          const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+          const token = localStorage.getItem('token');
+          const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?service_ids[]=${encodeURIComponent(serviceIds[0])}`;
+          const response = await fetch(apiUrl, { method: 'GET', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+          if (!response.ok) throw new Error('Failed to fetch the QR PDF');
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `Service_${serviceIds[0]}_qr.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        } catch (err) {
+          console.error('Error downloading QR PDF:', err);
+          toast.error('Error downloading QR PDF');
+        } finally {
+          setDownloadingQR(false);
+        }
+        return;
+      }
       const serviceIdStr = service.id.toString();
       const downloadQR = async () => {
         try {
@@ -261,7 +292,7 @@ export const ServiceDashboard = () => {
           toast.error('Error downloading QR PDF');
         }
       };
-      if (downloadedQRCodes.has(serviceIdStr)) {
+  if (downloadedQRCodes.has(serviceIdStr)) {
         const downloadPromise = new Promise<void>((resolve) => {
           toast.custom((t) => (
             <div className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0">
@@ -308,42 +339,41 @@ export const ServiceDashboard = () => {
         await downloadQR();
         setDownloadingQR(false);
       }
-    } else {
-      try {
-        const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
-        const token = localStorage.getItem('token');
-        const idsArray = validServices.map((s) => s.id);
-        const params = idsArray.map((id) => `service_ids[]=${encodeURIComponent(id)}`).join('&');
-        const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?${params}`;
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!response.ok) {
-          throw new Error('Failed to fetch the QR PDF');
-        }
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Service_QR_Bulk_${idsArray.join('_')}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        setDownloadedQRCodes((prev) => {
-          const newSet = new Set(prev);
-          validServices.forEach((s) => newSet.add(s.id.toString()));
-          return newSet;
-        });
-      } catch (err) {
-        console.error('Error downloading QR PDF:', err);
-        toast.error('Error downloading QR PDF');
-      } finally {
-        setDownloadingQR(false);
-      }
     }
-    if (validServices.length === 1 && !downloadedQRCodes.has(validServices[0].id.toString())) {
+    // Bulk download flow using selected IDs directly (supports select-all across pages)
+    try {
+      if (!serviceIds || serviceIds.length === 0) {
+        toast.error('No services selected');
+        setDownloadingQR(false);
+        return;
+      }
+      const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+      const token = localStorage.getItem('token');
+      const params = serviceIds.map((id) => `service_ids[]=${encodeURIComponent(id)}`).join('&');
+      const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?${params}`;
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error('Failed to fetch the QR PDF');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Service_QR_Bulk.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      setDownloadedQRCodes((prev) => {
+        const newSet = new Set(prev);
+        serviceIds.forEach((sid) => newSet.add(sid));
+        return newSet;
+      });
+    } catch (err) {
+      console.error('Error downloading QR PDF:', err);
+      toast.error('Error downloading QR PDF');
+    } finally {
       setDownloadingQR(false);
     }
   }, [downloadingQR, selectedItems, servicesData, downloadedQRCodes]);
@@ -480,7 +510,7 @@ export const ServiceDashboard = () => {
     { key: 'actions', label: 'Actions', sortable: false },
     { key: 'serviceName', label: 'Service Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
-    { key: 'referenceNumber', label: 'Reference Number', sortable: true },
+    { key: 'serviceCode', label: 'Service Code', sortable: true },
     { key: 'executionType', label: 'Execution Type', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
     { key: 'subGroup', label: 'Sub Group', sortable: true },
@@ -565,7 +595,7 @@ export const ServiceDashboard = () => {
         return <span>{item.service_name || '-'}</span>;
       case 'id':
         return <span className="font-medium">{item.id}</span>;
-      case 'referenceNumber':
+      case 'serviceCode':
         return item.service_code || '-';
       case 'executionType':
         if (!item.execution_type) return '-';

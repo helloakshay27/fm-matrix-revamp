@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X } from "lucide-react";
@@ -67,6 +67,7 @@ export const EditMaterialPRDashboard = () => {
   const [items, setItems] = useState([
     {
       id: 1,
+      item_id: null,
       itemDetails: "",
       sacHsnCode: "",
       sacHsnCodeId: "",
@@ -76,6 +77,7 @@ export const EditMaterialPRDashboard = () => {
       expectedDate: "",
       amount: "",
       wbsCode: "",
+      _destroy: 0,
     },
   ]);
   const [supplierDetails, setSupplierDetails] = useState({
@@ -97,8 +99,8 @@ export const EditMaterialPRDashboard = () => {
   const [files, setFiles] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
   const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState(null);
 
   useEffect(() => {
     if (Array.isArray(data) && data.length > 0) {
@@ -146,8 +148,9 @@ export const EditMaterialPRDashboard = () => {
         });
 
         setItems(
-          response.pms_po_inventories.map((item) => ({
-            id: item.id,
+          response.pms_po_inventories.map((item, index) => ({
+            id: index + 1,
+            item_id: item.id,
             itemDetails: item.inventory?.id,
             sacHsnCodeId: item.hsn_id,
             sacHsnCode: item.sac_hsn_code,
@@ -157,6 +160,7 @@ export const EditMaterialPRDashboard = () => {
             expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
             amount: item.total_value,
             wbsCode: item.wbs_code,
+            _destroy: 0,
           }))
         );
 
@@ -244,22 +248,55 @@ export const EditMaterialPRDashboard = () => {
     }
   }, [supplierDetails.plantDetail, dispatch, baseUrl, token]);
 
-  const handleItemChange = (id, field, value) => {
+  const handleItemChange = useCallback((id, field, value) => {
     setItems((prevItems) =>
       prevItems.map((item) => {
-        if (item.id === id) {
-          const updatedItem = { ...item, [field]: value };
-          if (field === "each" || field === "quantity") {
-            const rate = field === "each" ? parseFloat(value) || 0 : parseFloat(item.each) || 0;
-            const quantity = field === "quantity" ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
-            updatedItem.amount = (rate * quantity).toFixed(2);
-          }
-          return updatedItem;
+        if (item.id !== id) return item;
+
+        const updatedItem = { ...item, [field]: value };
+        if (field === "each" || field === "quantity") {
+          const rate = field === "each" ? parseFloat(value) || 0 : parseFloat(item.each) || 0;
+          const quantity = field === "quantity" ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
+          updatedItem.amount = (rate * quantity).toFixed(2);
         }
-        return item;
+        return updatedItem;
       })
     );
-  };
+  }, []);
+
+  const onInventoryChange = useCallback(async (inventoryId, itemId) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/${inventoryId}/hsn_code_categories.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setItems((prevItems) =>
+        prevItems.map((item) => {
+          if (item.id !== itemId) return item;
+
+          const newQuantity = parseFloat(item.quantity) || 0;
+          const newRate = parseFloat(response.data.rate) || 0;
+          const newAmount = (newRate * newQuantity).toFixed(2);
+
+          return {
+            ...item,
+            sacHsnCode: response.data.hsn?.code || "",
+            sacHsnCodeId: response.data.hsn?.id || "",
+            each: response.data.rate || "",
+            amount: newAmount,
+          };
+        })
+      );
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    }
+  }, [baseUrl, token]);
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
@@ -280,10 +317,12 @@ export const EditMaterialPRDashboard = () => {
   };
 
   const addItem = () => {
+    const nextId = Math.max(...items.map(item => item.id || 0)) + 1;
     setItems([
       ...items,
       {
-        id: items.length + 1,
+        id: nextId,
+        item_id: null,
         itemDetails: "",
         sacHsnCode: "",
         sacHsnCodeId: "",
@@ -293,46 +332,22 @@ export const EditMaterialPRDashboard = () => {
         expectedDate: "",
         amount: "",
         wbsCode: "",
+        _destroy: 0
       },
     ]);
   };
 
   const removeItem = (id) => {
-    setItems(items.filter((item) => item.id !== id));
-  };
-
-  const onInventoryChange = async (inventoryId, itemId) => {
-    try {
-      const response = await axios.get(
-        `https://${baseUrl}/pms/purchase_orders/${inventoryId}/hsn_code_categories.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === itemId
-            ? {
-              ...item,
-              sacHsnCode: response.data.hsn?.code || "",
-              sacHsnCodeId: response.data.hsn?.id || "",
-              each: response.data.rate || "",
-              amount: ((parseFloat(response.data.rate) || 0) * (parseFloat(item.quantity) || 0)).toFixed(2),
-            }
-            : item
-        )
-      );
-    } catch (error) {
-      console.log(error);
-      toast.error(error);
-    }
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, _destroy: 1, amount: "0.00" } : item
+      )
+    );
   };
 
   const calculateTotalAmount = () => {
     return items
+      .filter(item => item._destroy !== 1)
       .reduce((total, item) => total + (parseFloat(item.amount) || 0), 0)
       .toFixed(2);
   };
@@ -364,6 +379,7 @@ export const EditMaterialPRDashboard = () => {
     }
 
     for (const item of items) {
+      if (item._destroy === 1) continue; // Skip validation for items marked for deletion
       if (!item.itemDetails) {
         toast.error("Item Details is required for all items");
         return false;
@@ -413,7 +429,7 @@ export const EditMaterialPRDashboard = () => {
         advance_amount: supplierDetails.advanceAmount,
         ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_po_inventories_attributes: items.map((item) => ({
-          id: item.id,
+          id: item.item_id,
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
           rate: item.each,
@@ -421,6 +437,7 @@ export const EditMaterialPRDashboard = () => {
           expected_date: item.expectedDate,
           sac_hsn_code: item.sacHsnCodeId,
           prod_desc: item.productDescription,
+          _destroy: item._destroy,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
@@ -756,150 +773,152 @@ export const EditMaterialPRDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg relative"
-                >
-                  {items.length > 1 && (
-                    <Button
-                      onClick={() => removeItem(item.id)}
-                      size="sm"
-                      className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-full"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
+              {items
+                .filter(item => !item._destroy)
+                .map((item) => (
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg relative"
+                  >
+                    {items.length > 1 && (
+                      <Button
+                        onClick={() => removeItem(item.id)}
+                        size="sm"
+                        className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-full"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
 
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>Item Details*</InputLabel>
-                    <MuiSelect
-                      label="Item Details*"
-                      value={item.itemDetails}
-                      onChange={(e) => {
-                        handleItemChange(item.id, "itemDetails", e.target.value);
-                        onInventoryChange(e.target.value, item.id);
-                      }}
-                      displayEmpty
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value="">
-                        <em>Select Inventory</em>
-                      </MenuItem>
-                      {inventories.map((inventory) => (
-                        <MenuItem key={inventory.id} value={inventory.id}>
-                          {inventory.name}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-
-                  <TextField
-                    label="SAC/HSN Code"
-                    value={item.sacHsnCode}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "sacHsnCode", e.target.value)
-                    }
-                    placeholder="Enter Code"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Product Description*"
-                    value={item.productDescription}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "productDescription", e.target.value)
-                    }
-                    placeholder="Product Description"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Expected Date*"
-                    type="date"
-                    value={item.expectedDate}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "expectedDate", e.target.value)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Rate"
-                    value={item.each}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "each", e.target.value)
-                    }
-                    placeholder="Enter Number"
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Quantity*"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "quantity", e.target.value)
-                    }
-                    placeholder="Enter Number"
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Amount*"
-                    value={item.amount}
-                    placeholder="Calculated Amount"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles, readOnly: true }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  {wbsSelection === "individual" && (
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel shrink>WBS Code*</InputLabel>
+                      <InputLabel shrink>Item Details*</InputLabel>
                       <MuiSelect
-                        label="WBS Code*"
-                        value={item.wbsCode}
-                        onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
+                        label="Item Details*"
+                        value={item.itemDetails}
+                        onChange={(e) => {
+                          handleItemChange(item.id, "itemDetails", e.target.value);
+                          onInventoryChange(e.target.value, item.id);
+                        }}
                         displayEmpty
                         sx={fieldStyles}
                       >
                         <MenuItem value="">
-                          <em>Select WBS Code</em>
+                          <em>Select Inventory</em>
                         </MenuItem>
-                        {wbsCodes.map((wbs) => (
-                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                            {wbs.wbs_code}
+                        {inventories.map((inventory) => (
+                          <MenuItem key={inventory.id} value={inventory.id}>
+                            {inventory.name}
                           </MenuItem>
                         ))}
                       </MuiSelect>
                     </FormControl>
-                  )}
-                </div>
-              ))}
+
+                    <TextField
+                      label="SAC/HSN Code"
+                      value={item.sacHsnCode}
+                      onChange={(e) =>
+                        handleItemChange(item.id, "sacHsnCode", e.target.value)
+                      }
+                      placeholder="Enter Code"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Product Description*"
+                      value={item.productDescription}
+                      onChange={(e) =>
+                        handleItemChange(item.id, "productDescription", e.target.value)
+                      }
+                      placeholder="Product Description"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Expected Date*"
+                      type="date"
+                      value={item.expectedDate}
+                      onChange={(e) =>
+                        handleItemChange(item.id, "expectedDate", e.target.value)
+                      }
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Rate"
+                      value={item.each}
+                      onChange={(e) =>
+                        handleItemChange(item.id, "each", e.target.value)
+                      }
+                      placeholder="Enter Number"
+                      fullWidth
+                      variant="outlined"
+                      type="number"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Quantity*"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleItemChange(item.id, "quantity", e.target.value)
+                      }
+                      placeholder="Enter Number"
+                      fullWidth
+                      variant="outlined"
+                      type="number"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Amount*"
+                      value={item.amount}
+                      placeholder="Calculated Amount"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles, readOnly: true }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    {wbsSelection === "individual" && (
+                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                        <InputLabel shrink>WBS Code*</InputLabel>
+                        <MuiSelect
+                          label="WBS Code*"
+                          value={item.wbsCode}
+                          onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
+                          displayEmpty
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value="">
+                            <em>Select WBS Code</em>
+                          </MenuItem>
+                          {wbsCodes.map((wbs) => (
+                            <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                              {wbs.wbs_code}
+                            </MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+                    )}
+                  </div>
+                ))}
             </CardContent>
           </Card>
 

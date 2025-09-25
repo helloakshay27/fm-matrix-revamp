@@ -360,7 +360,9 @@ export const AddPermitPage = () => {
   const fetchSuppliers = async () => {
     try {
       setLoadingSuppliers(true);
-      const url = getFullUrl('/pms/suppliers/get_suppliers.json');
+      // const url = getFullUrl('/pms/suppliers/get_suppliers.json');
+      const url = getFullUrl('/pms/suppliers/vendor_with_user_name.json');
+
       const options = getAuthenticatedFetchOptions('GET');
       const response = await fetch(url, options);
 
@@ -1103,7 +1105,7 @@ export const AddPermitPage = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <Button variant="ghost" onClick={() => navigate('/maintenance/permit')} className="mb-4">
+        <Button variant="ghost" onClick={() => navigate('/safety/permit')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Permit List
         </Button>
@@ -1484,10 +1486,10 @@ export const AddPermitPage = () => {
       </Card>
 
       {/* Permit Details */}
-      <Card className="mb-8 shadow-sm border-0">
-        <CardHeader className="bg-white border-b border-gray-100">
-          <CardTitle className="flex items-center text-[#C72030] text-lg font-semibold">
-            <span className="mr-3 w-2 h-2 bg-[#C72030] rounded-full"></span>
+      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className='bg-[#F6F4EE] mb-4'>
+          <CardTitle className="text-lg text-black flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             PERMIT DETAILS
           </CardTitle>
         </CardHeader>
@@ -1541,7 +1543,10 @@ export const AddPermitPage = () => {
               )}
             </div>
 
-
+            {/* Enter Permit Description */}
+            <div>
+              <label className="block text-sm font-medium mb-3 text-gray-700">Enter Permit Description*</label>
+            </div>
 
             {/* Dynamic Activities */}
             {activities.map((activity, index) => (

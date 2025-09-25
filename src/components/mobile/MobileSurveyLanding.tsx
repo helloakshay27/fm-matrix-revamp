@@ -52,6 +52,7 @@ interface SurveyMapping {
     id: number;
     name: string;
     questions_count: number;
+    checklist_image_url?: string;
     snag_questions: SurveyQuestion[];
   };
 }
@@ -65,7 +66,7 @@ interface SurveyAnswers {
     label?: string;
     selectedTags?: GenericTag[];
     selectedOptions?: SurveyOption[];
-    description?: string;
+    comments?: string;
   };
 }
 
@@ -89,6 +90,11 @@ export const MobileSurveyLanding: React.FC = () => {
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [selectedTags, setSelectedTags] = useState<GenericTag[]>([]);
   const [showGenericTags, setShowGenericTags] = useState(false);
+  const [negativeComments, setNegativeComments] = useState<string>("");
+  const [negativeComments1, setNegativeComments1] = useState<string>("");
+  const [negativeComments2, setNegativeComments2] = useState<string>("");
+  const [negativeComments3, setNegativeComments3] = useState<string>("");
+
   const [pendingNegativeType, setPendingNegativeType] = useState<
     null | "emoji" | "smiley" | "multiple" | "rating"
   >(null);
@@ -98,6 +104,43 @@ export const MobileSurveyLanding: React.FC = () => {
     | SurveyOption[]
     | number
   >(null);
+
+  console.log("Negative cmnt", negativeComments);
+  console.log("Negative cmnt1", negativeComments1);
+  console.log("Negative cmnt2", negativeComments2);
+  console.log("Negative cmnt3", negativeComments3);
+
+  // Get the appropriate negative comment state based on current question index
+  const getCurrentNegativeComments = (): string => {
+    switch (currentQuestionIndex) {
+      case 0:
+        return negativeComments1;
+      case 1:
+        return negativeComments2;
+      case 2:
+        return negativeComments3;
+      default:
+        return negativeComments; // fallback to original for any additional questions
+    }
+  };
+
+  // Set the appropriate negative comment state based on current question index
+  const setCurrentNegativeComments = (value: string): void => {
+    switch (currentQuestionIndex) {
+      case 0:
+        setNegativeComments1(value);
+        break;
+      case 1:
+        setNegativeComments2(value);
+        break;
+      case 2:
+        setNegativeComments3(value);
+        break;
+      default:
+        setNegativeComments(value); // fallback to original for any additional questions
+        break;
+    }
+  };
 
   // Fetch survey data
   useEffect(() => {
@@ -136,7 +179,22 @@ export const MobileSurveyLanding: React.FC = () => {
   const getProgressPercentage = (): number => {
     if (!surveyData) return 0;
     const totalQuestions = surveyData.snag_checklist.questions_count;
+    // For the final "Any additional comments?" page, show 100%
+    if (currentQuestionIndex >= totalQuestions) {
+      return 100;
+    }
     return Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100);
+  };
+
+  // Check if survey has text-based questions (text, input, description)
+  const hasTextBasedQuestions = (): boolean => {
+    if (!surveyData) return false;
+    return surveyData.snag_checklist.snag_questions.some(
+      (question) =>
+        question.qtype === "text" ||
+        question.qtype === "input" ||
+        question.qtype === "description"
+    );
   };
 
   // Check if current answer is valid
@@ -148,6 +206,7 @@ export const MobileSurveyLanding: React.FC = () => {
       case "multiple":
         return selectedOptions.length > 0;
       case "input":
+      case "text":
       case "description":
         return currentQuestionValue.trim() !== "";
       case "rating":
@@ -161,74 +220,97 @@ export const MobileSurveyLanding: React.FC = () => {
   };
 
   // Handle option selection for multiple choice
-  // Make multiple choice single-selectable (radio behavior)
+  // Auto-progress based on selection (positive/negative)
   const handleOptionSelect = (option: SurveyOption) => {
     setSelectedOptions([option]);
-  };
+    
+    // Auto-progress after selection
+    setTimeout(() => {
+      const currentQuestion = getCurrentQuestion();
+      if (!currentQuestion) return;
 
-  // Handle next for multiple choice (with negative flow)
-  const handleMultipleNext = () => {
-    const currentQuestion = getCurrentQuestion();
-    if (!currentQuestion) return;
+      const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
 
-    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
-
-    // Check for negative option (option_type === 'n')
-    const hasNegative = selectedOptions.some((opt) => opt.option_type === "n");
-    if (
-      hasNegative &&
-      currentQuestion.generic_tags &&
-      currentQuestion.generic_tags.length > 0
-    ) {
-      setPendingNegativeType("multiple");
-      setPendingNegativeAnswer(selectedOptions);
-      setShowGenericTags(true);
-    } else {
-      const answerData = saveCurrentAnswer();
-
-      if (isSingleQuestion) {
-        // For single question surveys, submit immediately with answer data
-        handleSingleQuestionSubmit(answerData);
+      // Check for negative option (option_type === 'n')
+      const hasNegative = option.option_type === "n";
+      if (
+        hasNegative &&
+        currentQuestion.generic_tags &&
+        currentQuestion.generic_tags.length > 0
+      ) {
+        // Negative response - go to generic tags page
+        setPendingNegativeType("multiple");
+        setPendingNegativeAnswer([option]);
+        setShowGenericTags(true);
       } else {
-        // For multi-question surveys, proceed to next question
-        handleNextQuestion();
+        // Positive response - auto-progress
+        // Save with the selected option data - pass option directly to ensure it's included
+        const tempAnswerData = {
+          qtype: currentQuestion.qtype,
+          value: option.qname,
+          selectedOptions: [option],
+          comments: ""
+        };
+        
+        // Update answers object
+        setAnswers(prev => ({
+          ...prev,
+          [currentQuestion.id]: tempAnswerData
+        }));
+
+        if (isSingleQuestion) {
+          // For single question surveys, submit immediately with answer data
+          handleSingleQuestionSubmit(tempAnswerData);
+        } else {
+          // For multi-question surveys, proceed to next question
+          // Data is already saved above, just move to next question
+          moveToNextQuestion();
+        }
       }
-    }
+    }, 300); // Small delay for visual feedback
   };
+
+
 
   // Handle rating selection
   const handleRatingSelect = (rating: number) => {
     setSelectedRating(rating);
+    
+    // Auto-progress after selection
+    setTimeout(() => {
+      const currentQuestion = getCurrentQuestion();
+      if (!currentQuestion) return;
+
+      const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+
+      if (
+        rating <= 3 &&
+        currentQuestion.generic_tags &&
+        currentQuestion.generic_tags.length > 0
+      ) {
+        // Negative response - go to generic tags page
+        setPendingNegativeType("rating");
+        setPendingNegativeAnswer(rating);
+        setShowGenericTags(true);
+      } else {
+        // Positive response - auto-progress
+        // Save with the rating data
+        const answerData = saveCurrentAnswer(rating);
+
+        if (isSingleQuestion) {
+          // For single question surveys, submit immediately with answer data
+          handleSingleQuestionSubmit(answerData);
+        } else {
+          // For multi-question surveys, proceed to next question
+          // Data is already saved above, just move to next question
+          moveToNextQuestion();
+        }
+      }
+    }, 300); // Small delay for visual feedback
   };
 
   // Handle next for rating (with negative flow)
-  const handleRatingNext = () => {
-    const currentQuestion = getCurrentQuestion();
-    if (!currentQuestion) return;
 
-    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
-
-    if (
-      selectedRating !== null &&
-      selectedRating <= 3 &&
-      currentQuestion.generic_tags &&
-      currentQuestion.generic_tags.length > 0
-    ) {
-      setPendingNegativeType("rating");
-      setPendingNegativeAnswer(selectedRating);
-      setShowGenericTags(true);
-    } else {
-      const answerData = saveCurrentAnswer();
-
-      if (isSingleQuestion) {
-        // For single question surveys, submit immediately with answer data
-        handleSingleQuestionSubmit(answerData);
-      } else {
-        // For multi-question surveys, proceed to next question
-        handleNextQuestion();
-      }
-    }
-  };
 
   // Handle emoji/smiley selection
   const handleEmojiSelect = (rating: number, emoji: string, label: string) => {
@@ -253,7 +335,8 @@ export const MobileSurveyLanding: React.FC = () => {
         handleSingleQuestionSubmit(answerData);
       } else {
         // For multi-question surveys, proceed to next question
-        handleNextQuestion();
+        // Data is already saved above, just move to next question
+        moveToNextQuestion();
       }
     }
   };
@@ -276,10 +359,14 @@ export const MobileSurveyLanding: React.FC = () => {
     emoji?: string,
     label?: string,
     tags?: GenericTag[],
-    description?: string
+    comments?: string
   ): SurveyAnswers[number] => {
     const currentQuestion = getCurrentQuestion();
     if (!currentQuestion) return { qtype: "", value: "" };
+
+    console.log("=== SAVE CURRENT ANSWER START ===");
+    console.log("saveCurrentAnswer called with description:", comments);
+    console.log("Current question ID:", currentQuestion.id);
 
     const answerData: SurveyAnswers[number] = {
       qtype: currentQuestion.qtype,
@@ -295,12 +382,9 @@ export const MobileSurveyLanding: React.FC = () => {
           tags || (selectedTags.length > 0 ? selectedTags : undefined);
         if (multipleTags && multipleTags.length > 0) {
           answerData.selectedTags = multipleTags;
-          console.log(
-            `[Multiple Question ${currentQuestion.id}] Saved tags:`,
-            multipleTags.map((t) => t.category_name)
-          );
         }
-        if (description) answerData.description = description;
+        // Always set description, defaulting to empty string
+        answerData.comments = comments || "";
         break;
       }
       case "rating": {
@@ -311,12 +395,9 @@ export const MobileSurveyLanding: React.FC = () => {
           tags || (selectedTags.length > 0 ? selectedTags : undefined);
         if (ratingTags && ratingTags.length > 0) {
           answerData.selectedTags = ratingTags;
-          console.log(
-            `[Rating Question ${currentQuestion.id}] Saved tags:`,
-            ratingTags.map((t) => t.category_name)
-          );
         }
-        if (description) answerData.description = description;
+        // Always set comments, defaulting to empty string
+        answerData.comments = comments || "";
         break;
       }
       case "emoji":
@@ -328,7 +409,9 @@ export const MobileSurveyLanding: React.FC = () => {
         answerData.selectedTags = tags || selectedTags;
         answerData.value =
           emoji && label ? `${emoji} ${label}` : emoji || label || "Good";
-        if (description) answerData.description = description;
+        // Always set comments, defaulting to empty string
+        answerData.comments = comments || "";
+
         if (answerData.selectedTags && answerData.selectedTags.length > 0) {
           console.log(
             `[${currentQuestion.qtype} Question ${currentQuestion.id}] Saved tags:`,
@@ -337,17 +420,31 @@ export const MobileSurveyLanding: React.FC = () => {
         }
         break;
       }
+      default: {
+        // Handle text-based questions (input, text, description) and any other types
+        answerData.value = currentQuestionValue;
+        // Always set description, defaulting to empty string
+        answerData.comments = comments || "";
+        break;
+      }
     }
 
-    setAnswers((prev) => ({
-      ...prev,
-      [currentQuestion.id]: answerData,
-    }));
+    console.log("Final answerData before saving:", answerData);
+    console.log("Comments in answerData:", answerData.comments);
+
+    setAnswers((prev) => {
+      const newAnswers = {
+        ...prev,
+        [currentQuestion.id]: answerData,
+      };
+      console.log("Updated answers state:", newAnswers);
+      return newAnswers;
+    });
 
     return answerData;
   };
 
-  // Handle single question submission - COMPREHENSIVE FOR RAILS BACKEND
+  // Handle single question submission - ARRAY FORMAT FOR RAILS BACKEND
   const handleSingleQuestionSubmit = async (
     answerOverride?: SurveyAnswers[number]
   ) => {
@@ -368,14 +465,12 @@ export const MobileSurveyLanding: React.FC = () => {
         return;
       }
 
-      console.log("Current answer for single question:", currentAnswer);
-
       // Build issues array from selected tags
       const issues =
         currentAnswer.selectedTags?.map((tag) => tag.category_name) || [];
 
       // Create comprehensive payload with all available fields
-      const surveyResponse: {
+      const surveyResponseItem: {
         mapping_id: string;
         question_id: number;
         issues: string[];
@@ -384,8 +479,11 @@ export const MobileSurveyLanding: React.FC = () => {
         emoji?: string;
         label?: string;
         response_text?: string;
-        description?: string;
-        final_description?: string;
+        ans_descr?: string;
+        level_id?: number;
+        comments?: string;
+        answer_type?: string;
+        answer_mode?: string;
       } = {
         mapping_id: mappingId || "",
         question_id: currentQuestion.id,
@@ -399,49 +497,114 @@ export const MobileSurveyLanding: React.FC = () => {
             currentAnswer.selectedOptions &&
             currentAnswer.selectedOptions.length > 0
           ) {
-            surveyResponse.option_id = currentAnswer.selectedOptions[0].id;
+            surveyResponseItem.option_id = currentAnswer.selectedOptions[0].id;
           }
+          // New fields for multiple choice
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "multiple_choice";
           break;
-
         case "emoji":
         case "smiley":
           if (currentAnswer.rating !== undefined) {
-            surveyResponse.rating = currentAnswer.rating;
+            surveyResponseItem.rating = currentAnswer.rating;
+            surveyResponseItem.level_id = currentAnswer.rating; // New field: level_id
           }
           if (currentAnswer.emoji) {
-            surveyResponse.emoji = currentAnswer.emoji;
+            surveyResponseItem.emoji = currentAnswer.emoji;
           }
           if (currentAnswer.label) {
-            surveyResponse.label = currentAnswer.label;
+            surveyResponseItem.label = currentAnswer.label;
+            surveyResponseItem.ans_descr = currentAnswer.label; // New field: ans_descr
+          }
+          // New fields for emoji/smiley
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "emoji_selection";
+
+          // For emoji/smiley questions, find and add option_id based on rating
+          if (currentAnswer.rating !== undefined) {
+            const emojiOptionMapping = [
+              { rating: 1, option_id: 1 }, // Terrible
+              { rating: 2, option_id: 2 }, // Bad
+              { rating: 3, option_id: 3 }, // Okay
+              { rating: 4, option_id: 4 }, // Good
+              { rating: 5, option_id: 5 }, // Amazing
+            ];
+            const emojiOption = emojiOptionMapping.find(
+              (opt) => opt.rating === currentAnswer.rating
+            );
+            if (emojiOption) {
+              surveyResponseItem.option_id = emojiOption.option_id;
+            }
           }
           break;
 
         case "rating":
           if (currentAnswer.rating !== undefined) {
-            surveyResponse.rating = currentAnswer.rating;
+            surveyResponseItem.rating = currentAnswer.rating;
+            surveyResponseItem.level_id = currentAnswer.rating; // New field: level_id
+          }
+          // New fields for rating
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "star_rating";
+          surveyResponseItem.ans_descr = `${currentAnswer.rating} star${
+            currentAnswer.rating > 1 ? "s" : ""
+          }`;
+          
+          // Add option_id mapping for rating questions (similar to emoji)
+          if (currentAnswer.rating !== undefined) {
+            const ratingOptionMapping = [
+              { rating: 1, option_id: 1 }, // 1 star
+              { rating: 2, option_id: 2 }, // 2 stars  
+              { rating: 3, option_id: 3 }, // 3 stars
+              { rating: 4, option_id: 4 }, // 4 stars
+              { rating: 5, option_id: 5 }, // 5 stars
+            ];
+            const ratingOption = ratingOptionMapping.find(
+              (opt) => opt.rating === currentAnswer.rating
+            );
+            if (ratingOption) {
+              surveyResponseItem.option_id = ratingOption.option_id;
+            }
           }
           break;
 
         case "input":
+        case "text":
         case "description":
           if (currentAnswer.value && currentAnswer.value.toString().trim()) {
-            surveyResponse.response_text = currentAnswer.value
+            surveyResponseItem.response_text = currentAnswer.value
               .toString()
               .trim();
           }
+          // New fields for text-based inputs
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "text_input";
           break;
       }
 
-      // Add description if available
-      if (currentAnswer.description && currentAnswer.description.trim()) {
-        surveyResponse.description = currentAnswer.description.trim();
+      // Add individual question comment if available
+      console.log("Current answer for payload building:", currentAnswer);
+      console.log("Current answer comments:", currentAnswer.comments);
+      if (currentAnswer.comments && currentAnswer.comments.trim()) {
+        surveyResponseItem.comments = currentAnswer.comments.trim();
+        console.log(
+          "Setting comments in payload:",
+          currentAnswer.comments.trim()
+        );
+      } else {
+        surveyResponseItem.comments = ""; // Ensure comments field is always present
+        console.log("No comments found, setting empty string");
       }
 
-      console.log("Submitting single question survey:", surveyResponse);
+      // Create array format payload
+      const payload = {
+        survey_response: [surveyResponseItem],
+        final_comment: {
+          body: "", // Empty for single question surveys
+        },
+      };
 
-      await surveyApi.submitSurveyResponse({
-        survey_response: surveyResponse,
-      });
+      await surveyApi.submitSurveyResponse(payload);
 
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
@@ -460,7 +623,7 @@ export const MobileSurveyLanding: React.FC = () => {
     }
   };
 
-  // Handle single question submission with negative data - COMPREHENSIVE FOR RAILS BACKEND
+  // Handle single question submission with negative data - ARRAY FORMAT FOR RAILS BACKEND
   const handleSingleQuestionSubmitWithNegativeData = async (
     answerData: SurveyAnswers[number]
   ) => {
@@ -471,14 +634,12 @@ export const MobileSurveyLanding: React.FC = () => {
       const currentQuestion = getCurrentQuestion();
       if (!currentQuestion) return;
 
-      console.log("Submitting single question with negative data:", answerData);
-
       // Build issues array from selected tags
       const issues =
         answerData.selectedTags?.map((tag) => tag.category_name) || [];
 
       // Create comprehensive payload with all available fields
-      const surveyResponse: {
+      const surveyResponseItem: {
         mapping_id: string;
         question_id: number;
         issues: string[];
@@ -487,8 +648,11 @@ export const MobileSurveyLanding: React.FC = () => {
         emoji?: string;
         label?: string;
         response_text?: string;
-        description?: string;
-        final_description?: string;
+        ans_descr?: string;
+        level_id?: number;
+        comments?: string;
+        answer_type?: string;
+        answer_mode?: string;
       } = {
         mapping_id: mappingId || "",
         question_id: currentQuestion.id,
@@ -502,50 +666,92 @@ export const MobileSurveyLanding: React.FC = () => {
             answerData.selectedOptions &&
             answerData.selectedOptions.length > 0
           ) {
-            surveyResponse.option_id = answerData.selectedOptions[0].id;
+            surveyResponseItem.option_id = answerData.selectedOptions[0].id;
           }
+          // New fields for multiple choice
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "multiple_choice";
           break;
 
         case "emoji":
         case "smiley":
           if (answerData.rating !== undefined) {
-            surveyResponse.rating = answerData.rating;
+            surveyResponseItem.rating = answerData.rating;
+            surveyResponseItem.level_id = answerData.rating; // New field: level_id
           }
           if (answerData.emoji) {
-            surveyResponse.emoji = answerData.emoji;
+            surveyResponseItem.emoji = answerData.emoji;
           }
           if (answerData.label) {
-            surveyResponse.label = answerData.label;
+            surveyResponseItem.label = answerData.label;
+            surveyResponseItem.ans_descr = answerData.label; // New field: ans_descr
+          }
+          // New fields for emoji/smiley
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "emoji_selection";
+
+          // For emoji/smiley questions, find and add option_id based on rating
+          if (answerData.rating !== undefined) {
+            // Find the emoji option that matches the rating
+            const emojiOptionMapping = [
+              { rating: 1, option_id: 1 }, // Terrible
+              { rating: 2, option_id: 2 }, // Bad
+              { rating: 3, option_id: 3 }, // Okay
+              { rating: 4, option_id: 4 }, // Good
+              { rating: 5, option_id: 5 }, // Amazing
+            ];
+            const emojiOption = emojiOptionMapping.find(
+              (opt) => opt.rating === answerData.rating
+            );
+            if (emojiOption) {
+              surveyResponseItem.option_id = emojiOption.option_id;
+            }
           }
           break;
 
         case "rating":
           if (answerData.rating !== undefined) {
-            surveyResponse.rating = answerData.rating;
+            surveyResponseItem.rating = answerData.rating;
+            surveyResponseItem.level_id = answerData.rating; // New field: level_id
           }
+          // New fields for rating
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "star_rating";
+          surveyResponseItem.ans_descr = `${answerData.rating} star${
+            answerData.rating > 1 ? "s" : ""
+          }`;
           break;
 
         case "input":
+        case "text":
         case "description":
           if (answerData.value && answerData.value.toString().trim()) {
-            surveyResponse.response_text = answerData.value.toString().trim();
+            surveyResponseItem.response_text = answerData.value
+              .toString()
+              .trim();
           }
+          // New fields for text-based inputs
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "text_input";
           break;
       }
 
-      // Add description if available
-      if (answerData.description && answerData.description.trim()) {
-        surveyResponse.description = answerData.description.trim();
+      // Add individual question comment if available
+      if (answerData.comments && answerData.comments.trim()) {
+        surveyResponseItem.comments = answerData.comments.trim();
+      } else {
+        surveyResponseItem.comments = ""; // Ensure comments field is always present
       }
 
-      console.log(
-        "Submitting single question survey with negative response:",
-        surveyResponse
-      );
+      // Create array format payload
+      const payload = {
+        survey_response: [surveyResponseItem],
+        final_comment: {
+          body: "", // Empty for single question surveys
+        },
+      };
 
-      await surveyApi.submitSurveyResponse({
-        survey_response: surveyResponse,
-      });
+      await surveyApi.submitSurveyResponse(payload);
 
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
@@ -569,9 +775,72 @@ export const MobileSurveyLanding: React.FC = () => {
     const currentQuestion = getCurrentQuestion();
     if (!currentQuestion) return;
 
-    // Save current answer
-    saveCurrentAnswer();
+    // Only save if we don't already have an answer for this question
+    const existingAnswer = answers[currentQuestion.id];
+    if (!existingAnswer) {
+      // Save current answer with proper parameters for emoji/smiley questions
+      if (
+        currentQuestion.qtype === "emoji" ||
+        currentQuestion.qtype === "smiley"
+      ) {
+        // For emoji/smiley questions, we need to find the emoji and label based on selectedRating
+        if (selectedRating !== null) {
+          const emojiOptions = getStaticEmojiOptions();
+          const selectedOption = emojiOptions.find(
+            (opt) => opt.rating === selectedRating
+          );
 
+          if (selectedOption) {
+            const savedAnswer = saveCurrentAnswer(
+              selectedRating,
+              selectedOption.emoji,
+              selectedOption.label
+            );
+          } else {
+            console.warn(
+              `[${currentQuestion.qtype}] No option found for rating:`,
+              selectedRating
+            );
+            const savedAnswer = saveCurrentAnswer(selectedRating);
+          }
+        } else {
+          console.warn(`[${currentQuestion.qtype}] No rating selected`);
+          const savedAnswer = saveCurrentAnswer();
+        }
+      } else if (currentQuestion.qtype === "rating") {
+        // For rating questions, save with the rating
+
+        const savedAnswer = saveCurrentAnswer(selectedRating || undefined);
+      } else {
+        // For other question types, save normally
+
+        const savedAnswer = saveCurrentAnswer();
+      }
+    } else {
+      console.log(
+        `[HandleNextQuestion] Answer already exists, skipping save:`,
+        existingAnswer
+      );
+    }
+
+    // Reset question-specific states
+    setCurrentQuestionValue("");
+    setSelectedOptions([]);
+    setSelectedRating(null);
+    setSelectedTags([]);
+    setShowGenericTags(false);
+
+    // Move to next question or show final comments
+    if (currentQuestionIndex < surveyData!.snag_checklist.questions_count - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    } else {
+      // All questions completed, show final comments step
+      setCurrentQuestionIndex(surveyData!.snag_checklist.questions_count);
+    }
+  };
+
+  // Move to next question without re-saving data (used when data is already saved)
+  const moveToNextQuestion = () => {
     // Reset question-specific states
     setCurrentQuestionValue("");
     setSelectedOptions([]);
@@ -588,38 +857,65 @@ export const MobileSurveyLanding: React.FC = () => {
     }
   };
 
-  // Handle survey submission - SUBMIT EACH QUESTION INDIVIDUALLY
+  // Move to previous question
+  const moveToPreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      // Reset current question states
+      setCurrentQuestionValue("");
+      setSelectedOptions([]);
+      setSelectedRating(null);
+      setSelectedTags([]);
+      setShowGenericTags(false);
+
+      // Move to previous question
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  };
+
+  // Handle survey submission - ARRAY FORMAT FOR ALL QUESTIONS
   const handleSubmitSurvey = async () => {
     if (!surveyData) return;
 
     setIsSubmitting(true);
     try {
       console.log("=== MULTI-QUESTION SURVEY SUBMISSION ===");
-      console.log("All answers before processing:", answers);
+      console.log("All answers in state:", answers);
 
       // For multi-question surveys, we need to create answers array for each question
       const allAnswers = Object.values(answers);
-      console.log("Processed all answers:", allAnswers);
+      console.log("All answers values:", allAnswers);
 
       if (allAnswers.length === 0) {
         console.error("No answers found for multi-question survey");
         throw new Error("No answers found");
       }
 
-      // Submit each question individually since Rails backend expects single questions
+      // Create array of survey responses
+      const surveyResponseArray = [];
+
+      // Process each question individually since Rails backend expects array format
       for (const questionId in answers) {
+        console.log(`Processing question ID: ${questionId}`);
         const answer = answers[parseInt(questionId)];
         const question = surveyData.snag_checklist.snag_questions.find(
           (q) => q.id === parseInt(questionId)
         );
 
-        if (!question || !answer) continue;
+        console.log(`Found question:`, question);
+        console.log(`Answer for question ${questionId}:`, answer);
+
+        if (!question || !answer) {
+          console.log(
+            `Skipping question ${questionId} - missing question or answer`
+          );
+          continue;
+        }
 
         const issues =
           answer.selectedTags?.map((tag) => tag.category_name) || [];
 
         // Create comprehensive payload with all available fields for each question type
-        const surveyResponse: {
+        const surveyResponseItem: {
           mapping_id: string;
           question_id: number;
           issues: string[];
@@ -628,8 +924,11 @@ export const MobileSurveyLanding: React.FC = () => {
           emoji?: string;
           label?: string;
           response_text?: string;
-          description?: string;
-          final_description?: string;
+          ans_descr?: string;
+          level_id?: number;
+          comments?: string;
+          answer_type?: string;
+          answer_mode?: string;
         } = {
           mapping_id: mappingId || "",
           question_id: question.id,
@@ -640,60 +939,131 @@ export const MobileSurveyLanding: React.FC = () => {
         switch (question.qtype) {
           case "multiple":
             if (answer.selectedOptions && answer.selectedOptions.length > 0) {
-              surveyResponse.option_id = answer.selectedOptions[0].id;
+              surveyResponseItem.option_id = answer.selectedOptions[0].id;
             }
+            // New fields for multiple choice
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "multiple_choice";
             break;
 
           case "emoji":
           case "smiley":
             if (answer.rating !== undefined) {
-              surveyResponse.rating = answer.rating;
+              surveyResponseItem.rating = answer.rating;
+              surveyResponseItem.level_id = answer.rating; // New field: level_id
             }
             if (answer.emoji) {
-              surveyResponse.emoji = answer.emoji;
+              surveyResponseItem.emoji = answer.emoji;
             }
             if (answer.label) {
-              surveyResponse.label = answer.label;
+              surveyResponseItem.label = answer.label;
+              surveyResponseItem.ans_descr = answer.label; // New field: ans_descr
+            }
+            // New fields for emoji/smiley
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "emoji_selection";
+
+            // For emoji questions, find and add option_id based on rating
+            if (answer.rating !== undefined) {
+              const emojiOptionMapping = [
+                { rating: 1, option_id: 1 }, // Terrible
+                { rating: 2, option_id: 2 }, // Bad
+                { rating: 3, option_id: 3 }, // Okay
+                { rating: 4, option_id: 4 }, // Good
+                { rating: 5, option_id: 5 }, // Amazing
+              ];
+              const emojiOption = emojiOptionMapping.find(
+                (opt) => opt.rating === answer.rating
+              );
+              if (emojiOption) {
+                surveyResponseItem.option_id = emojiOption.option_id;
+              } else {
+                console.warn(
+                  `[Multi-Submit ${question.qtype}] No option_id found for rating:`,
+                  answer.rating
+                );
+              }
             }
             break;
 
           case "rating":
             if (answer.rating !== undefined) {
-              surveyResponse.rating = answer.rating;
+              surveyResponseItem.rating = answer.rating;
+              surveyResponseItem.level_id = answer.rating; // New field: level_id
+            }
+            // New fields for rating
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "star_rating";
+            surveyResponseItem.ans_descr = `${answer.rating} star${
+              answer.rating > 1 ? "s" : ""
+            }`;
+            
+            // Add option_id mapping for rating questions (similar to emoji)
+            if (answer.rating !== undefined) {
+              const ratingOptionMapping = [
+                { rating: 1, option_id: 1 }, // 1 star
+                { rating: 2, option_id: 2 }, // 2 stars  
+                { rating: 3, option_id: 3 }, // 3 stars
+                { rating: 4, option_id: 4 }, // 4 stars
+                { rating: 5, option_id: 5 }, // 5 stars
+              ];
+              const ratingOption = ratingOptionMapping.find(
+                (opt) => opt.rating === answer.rating
+              );
+              if (ratingOption) {
+                surveyResponseItem.option_id = ratingOption.option_id;
+              } else {
+                console.warn(
+                  `[Multi-Submit ${question.qtype}] No option_id found for rating:`,
+                  answer.rating
+                );
+              }
             }
             break;
 
           case "input":
+          case "text":
           case "description":
             if (answer.value && answer.value.toString().trim()) {
-              surveyResponse.response_text = answer.value.toString().trim();
+              surveyResponseItem.response_text = answer.value.toString().trim();
             }
+            // New fields for text-based inputs
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "text_input";
             break;
         }
 
-        // Add description if available
-        if (answer.description && answer.description.trim()) {
-          surveyResponse.description = answer.description.trim();
+        // Add individual question comment if available
+        console.log(`[Multi-Submit] Question ${question.id} answer:`, answer);
+        console.log(
+          `[Multi-Submit] Question ${question.id} comments:`,
+          answer.comments
+        );
+        if (answer.comments && answer.comments.trim()) {
+          surveyResponseItem.comments = answer.comments.trim();
+          console.log(
+            `[Multi-Submit] Setting comments for question ${question.id}:`,
+            answer.comments.trim()
+          );
+        } else {
+          surveyResponseItem.comments = ""; // Ensure comments field is always present
+          console.log(
+            `[Multi-Submit] No comments for question ${question.id}, setting empty string`
+          );
         }
 
-        // Add final description if this is the last question and we have it
-        if (
-          finalDescription.trim() &&
-          parseInt(questionId) ===
-            surveyData.snag_checklist.snag_questions[
-              surveyData.snag_checklist.snag_questions.length - 1
-            ].id
-        ) {
-          surveyResponse.final_description = finalDescription.trim();
-        }
-
-        console.log(`Submitting question ${question.id}:`, surveyResponse);
-
-        // Submit each question individually
-        await surveyApi.submitSurveyResponse({
-          survey_response: surveyResponse,
-        });
+        surveyResponseArray.push(surveyResponseItem);
       }
+
+      // Create array format payload
+      const payload = {
+        survey_response: surveyResponseArray,
+        final_comment: {
+          body: finalDescription.trim() || "",
+        },
+      };
+
+      await surveyApi.submitSurveyResponse(payload);
 
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
@@ -754,14 +1124,28 @@ export const MobileSurveyLanding: React.FC = () => {
       <div className="bg-gray-50 py-4 px-4 text-center">
         <div className="flex justify-center items-center">
           <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
-            <img
-              src="/Without bkg.svg"
-              alt="OIG Logo"
-              className="w-full h-full object-contain"
-            />
+            {window.location.origin === "https://oig.gophygital.work" ? (
+              <img
+                src="/Without bkg.svg"
+                alt="OIG Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <img
+                src="/gophygital-logo-min.jpg"
+                alt="Gophygital Logo"
+                className="bg-white rounded"
+                style={{ 
+                  backgroundColor: "#fff",
+                  maxWidth: "200%",
+                  height: "auto"
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
+  
 
       {/* Progress Bar for Multi-Question Surveys */}
       {isMultiQuestion && (
@@ -791,6 +1175,35 @@ export const MobileSurveyLanding: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
         <div className="flex flex-col items-center justify-center max-w-md mx-auto w-full min-h-full">
+          {/* Back button - positioned above survey title */}
+          {((currentQuestion &&
+            !isLastStep &&
+            currentQuestionIndex > 0 &&
+            !showGenericTags) ||
+            (isLastStep && isMultiQuestion)) && (
+            <div className="w-full flex justify-start mb-4">
+              <button
+                onClick={moveToPreviousQuestion}
+                className="flex items-center text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors"
+              >
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                Back
+              </button>
+            </div>
+          )}
+
           <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-black mb-4 text-center leading-tight">
             {surveyData.survey_title}
           </h1>
@@ -799,7 +1212,7 @@ export const MobileSurveyLanding: React.FC = () => {
           {!showGenericTags && (
             <div className="text-center mb-6">
               <img
-                src="/9019830 1.png"
+                src={surveyData?.snag_checklist?.checklist_image_url || "/9019830 1.png"}
                 alt="Survey Illustration"
                 className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto"
               />
@@ -848,66 +1261,53 @@ export const MobileSurveyLanding: React.FC = () => {
           {/* Show Current Question */}
           {currentQuestion && !isLastStep && (
             <div className="w-full space-y-4">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-black mb-2 leading-tight">
-                  {currentQuestion.descr}
-                </h3>
-              </div>
+              {!showGenericTags && (
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-black mb-2 leading-tight">
+                    {currentQuestion.descr}
+                  </h3>
+                </div>
+              )}
 
               <div className="space-y-4">
                 {/* Multiple Choice Question */}
                 {currentQuestion.qtype === "multiple" && !showGenericTags && (
-                  <>
-                    <div className="space-y-3 mt-10">
-                      {currentQuestion.snag_quest_options.map((option) => (
-                        <button
-                          key={option.id}
-                          onClick={() => handleOptionSelect(option)}
-                          className={`w-full p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${
-                            selectedOptions.some((opt) => opt.id === option.id)
-                              ? "border-blue-500 bg-blue-50 text-blue-700"
-                              : "border-gray-200 bg-white hover:border-gray-300"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm sm:text-base">
-                              {option.qname}
-                            </span>
-                            {selectedOptions.some(
-                              (opt) => opt.id === option.id
-                            ) && (
-                              <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                <svg
-                                  className="w-3 h-3 text-white"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={handleMultipleNext}
-                      disabled={!isCurrentAnswerValid()}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                    >
-                      {surveyData!.snag_checklist.questions_count === 1
-                        ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
-                        : "Continue"}
-                    </button>
-                  </>
+                  <div className="space-y-3 mt-10">
+                    {currentQuestion.snag_quest_options.map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => handleOptionSelect(option)}
+                        className={`w-full p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${
+                          selectedOptions.some((opt) => opt.id === option.id)
+                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm sm:text-base">
+                            {option.qname}
+                          </span>
+                          {selectedOptions.some(
+                            (opt) => opt.id === option.id
+                          ) && (
+                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
 
                 {/* Input Question */}
@@ -945,9 +1345,45 @@ export const MobileSurveyLanding: React.FC = () => {
                     >
                       {surveyData!.snag_checklist.questions_count === 1
                         ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
+                        : "Continue"}
+                    </button>
+                  </>
+                )}
+
+                {/* Text Question */}
+                {currentQuestion.qtype === "text" && (
+                  <>
+                    <div className="mt-14">
+                      <textarea
+                        value={currentQuestionValue}
+                        onChange={(e) =>
+                          setCurrentQuestionValue(e.target.value)
+                        }
+                        placeholder="Please enter your comments..."
+                        className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                      />
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        const isSingleQuestion =
+                          surveyData!.snag_checklist.questions_count === 1;
+
+                        // Save current answer first
+                        const answerData = saveCurrentAnswer();
+
+                        if (isSingleQuestion) {
+                          // Submit immediately with answer data
+                          handleSingleQuestionSubmit(answerData);
+                        } else {
+                          handleNextQuestion();
+                        }
+                      }}
+                      disabled={!isCurrentAnswerValid()}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                    >
+                      {surveyData!.snag_checklist.questions_count === 1
+                        ? "Submit Survey"
                         : "Continue"}
                     </button>
                   </>
@@ -987,9 +1423,6 @@ export const MobileSurveyLanding: React.FC = () => {
                     >
                       {surveyData!.snag_checklist.questions_count === 1
                         ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
                         : "Continue"}
                     </button>
                   </>
@@ -1027,19 +1460,6 @@ export const MobileSurveyLanding: React.FC = () => {
                         </span>
                       </div>
                     )}
-
-                    <button
-                      onClick={handleRatingNext}
-                      disabled={!isCurrentAnswerValid()}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                    >
-                      {surveyData!.snag_checklist.questions_count === 1
-                        ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
-                        : "Continue"}
-                    </button>
                   </>
                 )}
 
@@ -1132,8 +1552,10 @@ export const MobileSurveyLanding: React.FC = () => {
                         Additional Comments (Optional)
                       </label>
                       <textarea
-                        value={finalDescription}
-                        onChange={(e) => setFinalDescription(e.target.value)}
+                        value={getCurrentNegativeComments()}
+                        onChange={(e) =>
+                          setCurrentNegativeComments(e.target.value)
+                        }
                         placeholder="Please describe any specific issues or suggestions..."
                         className="w-full h-20 sm:h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         disabled={isSubmitting}
@@ -1147,6 +1569,8 @@ export const MobileSurveyLanding: React.FC = () => {
 
                         // Save answer with tags and description, then proceed
                         let answerData;
+                        const currentComments = getCurrentNegativeComments();
+
                         if (
                           (pendingNegativeType === "emoji" ||
                             pendingNegativeType === "smiley") &&
@@ -1159,7 +1583,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             pendingNegativeAnswer.emoji,
                             pendingNegativeAnswer.label,
                             selectedTags,
-                            finalDescription
+                            currentComments
                           );
                         } else if (pendingNegativeType === "multiple") {
                           answerData = saveCurrentAnswer(
@@ -1167,7 +1591,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             undefined,
                             undefined,
                             selectedTags,
-                            finalDescription
+                            currentComments
                           );
                         } else if (
                           pendingNegativeType === "rating" &&
@@ -1178,14 +1602,14 @@ export const MobileSurveyLanding: React.FC = () => {
                             undefined,
                             undefined,
                             selectedTags,
-                            finalDescription
+                            currentComments
                           );
                         }
 
                         // Reset states immediately
                         setShowGenericTags(false);
                         setSelectedTags([]);
-                        setFinalDescription("");
+                        setCurrentNegativeComments(""); // Reset only current question's comments
                         setPendingNegativeType(null);
                         setPendingNegativeAnswer(null);
 
@@ -1196,11 +1620,13 @@ export const MobileSurveyLanding: React.FC = () => {
                           );
                         } else {
                           // For multi-question surveys, proceed to next question
-                          handleNextQuestion();
+                          // Use moveToNextQuestion to avoid re-saving the answer
+                          moveToNextQuestion();
                         }
                       }}
                       disabled={
-                        selectedTags.length === 0 && !finalDescription.trim()
+                        selectedTags.length === 0 &&
+                        !getCurrentNegativeComments().trim()
                       }
                       className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                     >
@@ -1223,7 +1649,7 @@ export const MobileSurveyLanding: React.FC = () => {
                       onClick={() => {
                         setShowGenericTags(false);
                         setSelectedTags([]);
-                        setFinalDescription("");
+                        setCurrentNegativeComments(""); // Reset only current question's comments
                         setPendingNegativeType(null);
                         setPendingNegativeAnswer(null);
                       }}

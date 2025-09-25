@@ -65,21 +65,43 @@ export const getFMUsers = createAsyncThunk(
       token,
       perPage,
       currentPage,
-      status = "",
-      downloaded,
+      firstname_cont = "",
+      lastname_cont = "",
+      email_cont = "",
+      lock_user_permission_status_eq = "",
+      app_downloaded_eq,
+      search_all_fields_cont = "",
     }: {
       baseUrl: string;
       token: string;
       perPage: number;
       currentPage: number;
-      status?: string;
-      downloaded?: boolean;
+      firstname_cont?: string;
+      lastname_cont?: string;
+      email_cont?: string;
+      lock_user_permission_status_eq?: string;
+      app_downloaded_eq?: boolean;
+      search_all_fields_cont?: string;
     },
     { rejectWithValue }
   ) => {
     try {
+      const params = new URLSearchParams({
+        per_page: perPage.toString(),
+        page: currentPage.toString(),
+        "q[lock_user_permission_status_eq]": lock_user_permission_status_eq,
+        "q[firstname_cont]": firstname_cont,
+        "q[lastname_cont]": lastname_cont,
+        "q[email_cont]": email_cont,
+        "q[search_all_fields_cont]": search_all_fields_cont,
+      });
+
+      if (app_downloaded_eq !== undefined) {
+        params.append("q[app_downloaded_eq]", String(app_downloaded_eq));
+      }
+
       const response = await axios.get(
-        `https://${baseUrl}/pms/account_setups/fm_users.json?per_page=${perPage}&page=${currentPage}&q[lock_user_permission_status_eq]=${status}&q[app_downloaded_eq]=${downloaded}`,
+        `https://${baseUrl}/pms/account_setups/fm_users.json?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

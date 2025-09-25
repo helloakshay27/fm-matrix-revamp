@@ -183,21 +183,27 @@ export const AddGRNDashboard = () => {
   const fetchItem = async (id: number) => {
     try {
       const response = await dispatch(fetchItemDetails({ baseUrl, token, id })).unwrap();
+      setGrnDetails({
+        ...grnDetails,
+        purchaseOrder: id,
+        supplier: response.pms_supplier_id,
+        relatedTo: response.related_to
+      })
       const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
         const inventoryItem = {
           ...item,
           inventoryType: item.inventory.id,
           rate: item.rate || "",
           cgstRate: item.cgst_rate || "",
-          cgstAmount: "",
+          cgstAmount: item.cgst_amount || "",
           sgstRate: item.sgst_rate || "",
-          sgstAmount: "",
+          sgstAmount: item.sgst_amount || "",
           igstRate: item.igst_rate || "",
-          igstAmount: "",
+          igstAmount: item.igst_amount || "",
           tcsRate: item.tcs_rate || "",
-          tcsAmount: "",
-          totalTaxes: "",
-          amount: "",
+          tcsAmount: item.tcs_amount || "",
+          totalTaxes: item.taxable_value || "",
+          amount: item.total_value || "",
           totalAmount: "",
           expectedQuantity: item.quantity || "",
           receivedQuantity: "",
@@ -215,7 +221,7 @@ export const AddGRNDashboard = () => {
 
   const calculateInventoryTaxes = (item: InventoryItem): InventoryItem => {
     const rate = parseFloat(item.rate) || 0;
-    const approvedQty = parseFloat(item.approvedQuantity) || 0;
+    const approvedQty = parseFloat(item.approvedQuantity ? item.approvedQuantity : item.expectedQuantity) || 0;
     const cgstRate = parseFloat(item.cgstRate) || 0;
     const sgstRate = parseFloat(item.sgstRate) || 0;
     const igstRate = parseFloat(item.igstRate) || 0;
@@ -266,6 +272,11 @@ export const AddGRNDashboard = () => {
       }
       return newDetails;
     });
+  };
+
+  const removeInventoryItem = (index: number) => {
+    setInventoryDetails((prev) => prev.filter((_, i) => i !== index));
+    toast.success("Inventory item removed successfully");
   };
 
   const addBatchField = (index: number) => {
@@ -742,6 +753,17 @@ export const AddGRNDashboard = () => {
                   INVENTORY DETAILS {index + 1}
                 </h2>
               </div>
+              {inventoryDetails.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeInventoryItem(index)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -1070,6 +1092,18 @@ export const AddGRNDashboard = () => {
             </div>
           </div>
         ))}
+
+        <div className="flex items-center justify-end mt-4">
+          <Button className="bg-[#C72030] hover:bg-[#C72030] text-white" type="button">
+            Total Amount :{" "}
+            {inventoryDetails
+              .reduce(
+                (sum, item) => sum + parseFloat(item.totalAmount || "0"),
+                0
+              )
+              .toFixed(2)}
+          </Button>
+        </div>
 
         <Card>
           <CardHeader>

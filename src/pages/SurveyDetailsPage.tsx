@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, X, Plus, ChevronDown, CheckCircle } from "lucide-react";
+import { ArrowLeft, X, Plus, ChevronDown, CheckCircle, Edit } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -401,6 +401,10 @@ export const SurveyDetailsPage = () => {
     navigate("/maintenance/survey/list");
   };
 
+  const handleEdit = () => {
+    navigate(`/maintenance/survey/edit/${id}`);
+  };
+
   const handleSubmitLocation = async () => {
     try {
       // Validate that we have some location selected
@@ -484,7 +488,7 @@ export const SurveyDetailsPage = () => {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <Button
           variant="ghost"
           onClick={handleBack}
@@ -493,6 +497,16 @@ export const SurveyDetailsPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Question List
         </Button>
+        
+        {!loading && snagChecklist && (
+          <Button
+            onClick={handleEdit}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Edit className="w-4 h-4" />
+            Edit Survey
+          </Button>
+        )}
       </div>
 
       {/* Main Question Content Card */}
@@ -500,7 +514,7 @@ export const SurveyDetailsPage = () => {
         <CardHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold text-gray-900">
-              Question Information
+              Question Details
             </CardTitle>
             <div className="flex items-center gap-2">
               {!loading && snagChecklist && (
@@ -562,60 +576,54 @@ export const SurveyDetailsPage = () => {
             </>
           )}
 
-          {/* Ticket Configuration Section - Shared for all questions */}
-          {!loading &&
-            snagChecklist &&
-            snagChecklist.snag_questions &&
-            snagChecklist.snag_questions.length > 0 &&
-            (snagChecklist.snag_questions[0] as any)?.ticket_configs && (
-              <div className="mb-6">
-                <Card className="border border-gray-200 bg-gray-50">
-                  <CardHeader className="px-6 py-4 border-b border-gray-200">
-                    <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                          />
-                        </svg>
-                      </div>
-                      Ticket Configuration
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Ticket Category
-                        </label>
-                        <div className="text-base font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
-                          {(snagChecklist.snag_questions[0] as any)
-                            ?.ticket_configs?.category ||
-                            "No Category Assigned"}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Assigned To
-                        </label>
-                        <div className="text-base font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
-                          {(snagChecklist.snag_questions[0] as any)
-                            ?.ticket_configs?.assigned_to || "Not Assigned"}
-                        </div>
+          {/* Ticket Configuration Section */}
+          {!loading && snagChecklist && (snagChecklist as any)?.ticket_configs && (
+            <div className="mb-6">
+              <Card className="border border-gray-200 bg-gray-50">
+                <CardHeader className="px-6 py-4 border-b border-gray-200">
+                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                    </div>
+                    Ticket Configuration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Ticket Category
+                      </label>
+                      <div className="text-base font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
+                        {(snagChecklist as any)?.ticket_configs?.category || "No Category Assigned"}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Assigned To
+                      </label>
+                      <div className="text-base font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
+                        {(snagChecklist as any)?.ticket_configs?.assigned_to || "Not Assigned"}
+                      </div>
+                    </div>
+
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Questions Section */}
           {!loading && snagChecklist && (

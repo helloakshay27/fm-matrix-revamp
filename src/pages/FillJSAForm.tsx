@@ -151,6 +151,22 @@ export const FillJSAForm = () => {
                 return;
             }
 
+            // Build control measures payload
+            const controlMeasures: Record<string, Record<string, string>> = {};
+
+            jsaActivities.forEach(activity => {
+                const activityMeasures: Record<string, string> = {};
+                Object.entries(activity.controlMeasures || {}).forEach(([measureName, value]) => {
+                    if (value) {
+                        activityMeasures[measureName] = value.toUpperCase();
+                    }
+                });
+
+                if (Object.keys(activityMeasures).length > 0) {
+                    controlMeasures[activity.id] = activityMeasures;
+                }
+            });
+
             const response = await fetch(`${API_CONFIG.BASE_URL}/pms/permits/${id}/submit_jsa_form.json`, {
                 method: 'POST',
                 headers: {
@@ -161,12 +177,11 @@ export const FillJSAForm = () => {
                 body: JSON.stringify({
                     pms_permit_jsa_form: {
                         checked_by_name: jsaInfo.checkedByName,
+                        control_measures: controlMeasures,
                         comments: comments
                     }
                 })
-            });
-
-            if (response.ok) {
+            }); if (response.ok) {
                 const data = await response.json();
                 console.log('JSA form submitted successfully:', data);
                 toast.success('JSA form submitted successfully!');
@@ -186,7 +201,7 @@ export const FillJSAForm = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
-            <div className="max-w-7xl mx-auto">
+            <div className=" mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
@@ -208,216 +223,215 @@ export const FillJSAForm = () => {
                     </Badge>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Basic Information */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardContent className="p-6">
-                            {loading ? (
-                                <div className="flex items-center justify-center py-8">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
-                                    <span className="ml-2 text-gray-600">Loading JSA details...</span>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    {/* Left Column */}
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                                            <Label className="text-sm font-medium text-gray-600">Permit ID</Label>
-                                            <span className="text-sm font-medium text-gray-900">
-                                                {jsaInfo.permitId}
-                                            </span>
+                <Card className="shadow-sm border border-gray-200 p-5 ">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Basic Information */}
+                        <Card className="shadow-sm border border-gray-200">
+                            <CardContent className="p-6">
+                                {loading ? (
+                                    <div className="flex items-center justify-center py-8">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+                                        <span className="ml-2 text-gray-600">Loading JSA details...</span>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* Left Column */}
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <Label className="text-sm font-medium text-gray-600">Permit ID</Label>
+                                                <span className="text-sm font-medium text-gray-900">{jsaInfo.permitId}</span>
+                                            </div>
+
+                                            <div className="flex justify-between items-center">
+                                                <Label className="text-sm font-medium text-gray-600">Name Of Department</Label>
+                                                <span className="text-sm font-medium text-gray-900">{jsaInfo.nameOfDepartment || '-'}</span>
+                                            </div>
+
+                                            <div className="flex justify-between items-center">
+                                                <Label className="text-sm font-medium text-gray-600">Date</Label>
+                                                <span className="text-sm font-medium text-gray-900">{jsaInfo.date}</span>
+                                            </div>
+
+                                            <div>
+                                                <Label htmlFor="checkedByName" className="text-sm font-medium text-gray-600">
+                                                    Checked By Name
+                                                </Label>
+                                                <Input
+                                                    id="checkedByName"
+                                                    value={jsaInfo.checkedByName}
+                                                    onChange={(e) =>
+                                                        setJsaInfo((prev) => ({ ...prev, checkedByName: e.target.value }))
+                                                    }
+                                                    placeholder="Enter Name"
+                                                    className="mt-1"
+                                                />
+                                            </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                                            <Label className="text-sm font-medium text-gray-600">Name Of Department</Label>
-                                            <span className="text-sm font-medium text-gray-900">
-                                                {jsaInfo.nameOfDepartment || '-'}
-                                            </span>
-                                        </div>
+                                        {/* Right Column */}
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-start">
+                                                <Label className="text-sm font-medium text-gray-600">Location</Label>
+                                                <span className="text-sm font-medium text-gray-900 text-right ml-4">
+                                                    {jsaInfo.location}
+                                                </span>
+                                            </div>
 
-                                        <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                                            <Label className="text-sm font-medium text-gray-600">Date</Label>
-                                            <span className="text-sm font-medium text-gray-900">
-                                                {jsaInfo.date}
-                                            </span>
-                                        </div>
+                                            <div className="flex justify-between items-center">
+                                                <Label className="text-sm font-medium text-gray-600">Permit For</Label>
+                                                <span className="text-sm font-medium text-gray-900 text-right ml-4">
+                                                    {jsaInfo.permitFor}
+                                                </span>
+                                            </div>
 
-                                        <div className="space-y-2">
-                                            <Label htmlFor="checkedByName" className="text-sm font-medium text-gray-600">
-                                                Checked By Name
-                                            </Label>
-                                            <Input
-                                                id="checkedByName"
-                                                value={jsaInfo.checkedByName}
-                                                onChange={(e) => setJsaInfo(prev => ({ ...prev, checkedByName: e.target.value }))}
-                                                placeholder="Enter Name"
-                                                className="mt-1"
-                                            />
+                                            <div className="flex justify-between items-center">
+                                                <Label className="text-sm font-medium text-gray-600">Work Permit Type/No</Label>
+                                                <span className="text-sm font-medium text-gray-900 text-right ml-4">
+                                                    {jsaInfo.workPermitType}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex justify-between items-center">
+                                                <Label className="text-sm font-medium text-gray-600">Checked By Sign</Label>
+                                                <span className="text-sm font-medium text-gray-900 text-right ml-4">
+                                                    {jsaInfo.checkedBySign || '-'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
+                                )}
+                            </CardContent>
 
-                                    {/* Right Column */}
-                                    <div className="md:col-span-3 space-y-4">
-                                        <div className="flex items-start py-2 border-b border-gray-100">
-                                            <Label className="text-sm font-medium text-gray-600 w-20">Location</Label>
-                                            <span className="text-sm font-medium text-gray-900 ml-4">
-                                                {jsaInfo.location}
-                                            </span>
-                                        </div>
+                        </Card>
 
-                                        <div className="flex items-center py-2 border-b border-gray-100">
-                                            <Label className="text-sm font-medium text-gray-600 w-20">Permit For</Label>
-                                            <span className="text-sm font-medium text-gray-900 ml-4">
-                                                {jsaInfo.permitFor}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center py-2 border-b border-gray-100">
-                                            <Label className="text-sm font-medium text-gray-600 w-20">Work Permit Type/No</Label>
-                                            <span className="text-sm font-medium text-gray-900 ml-4">
-                                                {jsaInfo.workPermitType}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center py-2 border-b border-gray-100">
-                                            <Label className="text-sm font-medium text-gray-600 w-20">Checked By Sign</Label>
-                                            <span className="text-sm font-medium text-gray-900 ml-4">
-                                                {jsaInfo.checkedBySign || '-'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* JSA Activities Table */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-blue-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
-                                <ClipboardCheck className="w-5 h-5" />
-                                Job Safety Analysis Activities
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="overflow-x-auto">
-                                <table className="w-full border-collapse border border-gray-300">
-                                    <thead>
-                                        <tr className="bg-gray-50">
-                                            <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900 w-16">Sr No</th>
-                                            <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900">Activity</th>
-                                            <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900">Sub Activity</th>
-                                            <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900">Hazard</th>
-                                            <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900">Risk</th>
-                                            <th className="border border-gray-300 p-3 text-center text-xs font-medium text-gray-900">Control Measures (Yes/No)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {jsaActivities.length > 0 ? (
-                                            jsaActivities.map((activity, index) => (
-                                                <tr key={activity.id}>
-                                                    <td className="border border-gray-300 p-3 text-sm text-center font-medium">
-                                                        {index + 1}
-                                                    </td>
-                                                    <td className="border border-gray-300 p-3 text-sm">
-                                                        {activity.activity}
-                                                    </td>
-                                                    <td className="border border-gray-300 p-3 text-sm">
-                                                        {activity.subActivity}
-                                                    </td>
-                                                    <td className="border border-gray-300 p-3 text-sm">
-                                                        {activity.hazard}
-                                                    </td>
-                                                    <td className="border border-gray-300 p-3 text-sm">
-                                                        {activity.risks && activity.risks.length > 0
-                                                            ? activity.risks.join(', ')
-                                                            : '-'
-                                                        }
-                                                    </td>
-                                                    <td className="border border-gray-300 p-3">
-                                                        <div className="space-y-3">
-                                                            {Object.keys(activity.controlMeasures || {}).map((measure) => (
-                                                                <div key={measure} className="flex items-center justify-between">
-                                                                    <span className="text-xs text-gray-700">{measure}</span>
-                                                                    <div className="flex gap-4">
-                                                                        <RadioGroup
-                                                                            value={activity.controlMeasures[measure] || ''}
-                                                                            onValueChange={(value) => handleControlMeasureChange(activity.id, measure, value as 'yes' | 'no')}
-                                                                            className="flex gap-4"
-                                                                        >
-                                                                            <div className="flex items-center space-x-2">
-                                                                                <RadioGroupItem value="yes" id={`${measure}-yes-${activity.id}`} />
-                                                                                <Label htmlFor={`${measure}-yes-${activity.id}`} className="text-xs">Yes</Label>
-                                                                            </div>
-                                                                            <div className="flex items-center space-x-2">
-                                                                                <RadioGroupItem value="no" id={`${measure}-no-${activity.id}`} />
-                                                                                <Label htmlFor={`${measure}-no-${activity.id}`} className="text-xs">No</Label>
-                                                                            </div>
-                                                                        </RadioGroup>
+                        {/* JSA Activities Table */}
+                        <Card className="shadow-sm border border-gray-200">
+                            <CardHeader className="pb-4 bg-[#f6f4ee] rounded-t-lg">
+                                <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
+                                    <ClipboardCheck className="w-5 h-5" />
+                                    Job Safety Analysis Activities
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse border border-gray-300">
+                                        <thead>
+                                            <tr className="bg-gray-50">
+                                                <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900 w-16">Sr No</th>
+                                                <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900">Activity</th>
+                                                <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900">Sub Activity</th>
+                                                <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900">Hazard</th>
+                                                <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900">Risk</th>
+                                                <th className="border border-gray-300 p-3 text-center text-xs font-medium text-gray-900">Control Measures (Yes/No)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {jsaActivities.length > 0 ? (
+                                                jsaActivities.map((activity, index) => (
+                                                    <tr key={activity.id}>
+                                                        <td className="border border-gray-300 p-3 text-sm text-center font-medium">
+                                                            {index + 1}
+                                                        </td>
+                                                        <td className="border border-gray-300 p-3 text-sm">
+                                                            {activity.activity}
+                                                        </td>
+                                                        <td className="border border-gray-300 p-3 text-sm">
+                                                            {activity.subActivity}
+                                                        </td>
+                                                        <td className="border border-gray-300 p-3 text-sm">
+                                                            {activity.hazard}
+                                                        </td>
+                                                        <td className="border border-gray-300 p-3 text-sm">
+                                                            {activity.risks && activity.risks.length > 0
+                                                                ? activity.risks.join(', ')
+                                                                : '-'
+                                                            }
+                                                        </td>
+                                                        <td className="border border-gray-300 p-3">
+                                                            <div className="space-y-3">
+                                                                {Object.keys(activity.controlMeasures || {}).map((measure) => (
+                                                                    <div key={measure} className="flex items-center justify-between">
+                                                                        <span className="text-xs text-gray-700">{measure}</span>
+                                                                        <div className="flex gap-4">
+                                                                            <RadioGroup
+                                                                                value={activity.controlMeasures[measure] || ''}
+                                                                                onValueChange={(value) => handleControlMeasureChange(activity.id, measure, value as 'yes' | 'no')}
+                                                                                className="flex gap-4"
+                                                                            >
+                                                                                <div className="flex items-center space-x-2">
+                                                                                    <RadioGroupItem value="yes" id={`${measure}-yes-${activity.id}`} />
+                                                                                    <Label htmlFor={`${measure}-yes-${activity.id}`} className="text-xs">Yes</Label>
+                                                                                </div>
+                                                                                <div className="flex items-center space-x-2">
+                                                                                    <RadioGroupItem value="no" id={`${measure}-no-${activity.id}`} />
+                                                                                    <Label htmlFor={`${measure}-no-${activity.id}`} className="text-xs">No</Label>
+                                                                                </div>
+                                                                            </RadioGroup>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            ))}
-                                                            {(!activity.controlMeasures || Object.keys(activity.controlMeasures).length === 0) && (
-                                                                <div className="text-xs text-gray-500 text-center">
-                                                                    No control measures available
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                                ))}
+                                                                {(!activity.controlMeasures || Object.keys(activity.controlMeasures).length === 0) && (
+                                                                    <div className="text-xs text-gray-500 text-center">
+                                                                        No control measures available
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={6} className="border border-gray-300 p-8 text-center text-gray-500">
+                                                        {loading ? 'Loading activities...' : 'No JSA activities found'}
                                                     </td>
                                                 </tr>
-                                            ))
-                                        ) : (
-                                            <tr>
-                                                <td colSpan={6} className="border border-gray-300 p-8 text-center text-gray-500">
-                                                    {loading ? 'Loading activities...' : 'No JSA activities found'}
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </CardContent>
-                    </Card>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                    {/* Comments Section */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-blue-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
-                                <FileText className="w-5 h-5" />
-                                Comments
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div>
-                                <Textarea
-                                    value={comments}
-                                    onChange={(e) => setComments(e.target.value)}
-                                    placeholder="Enter Comments"
-                                    rows={4}
-                                    className="w-full"
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
+                        {/* Comments Section */}
+                        <Card className="shadow-sm border border-gray-200">
+                            <CardHeader className="pb-4 bg-[#f6f4ee] rounded-t-lg">
+                                <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
+                                    <FileText className="w-5 h-5" />
+                                    Comments
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div>
+                                    <Textarea
+                                        value={comments}
+                                        onChange={(e) => setComments(e.target.value)}
+                                        placeholder="Enter Comments"
+                                        rows={4}
+                                        className="w-full"
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                    {/* Save Button */}
-                    <div className="flex justify-center pt-6">
-                        <Button
-                            type="submit"
-                            disabled={loading}
-                            className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 text-sm font-medium rounded"
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                    Saving...
-                                </>
-                            ) : (
-                                'Save'
-                            )}
-                        </Button>
-                    </div>
-                </form>
+                        {/* Save Button */}
+                        <div className="flex justify-center pt-6">
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 text-sm font-medium rounded"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    'Save'
+                                )}
+                            </Button>
+                        </div>
+                    </form>
+                </Card>
             </div>
         </div>
     );

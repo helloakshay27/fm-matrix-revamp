@@ -20,6 +20,7 @@ import { ArrowRightLeft } from "lucide-react";
 import logo from "../../assets/pdf/urbon.svg";
 
 // @ts-ignore
+import { getPeriodLabels } from '../../lib/periodLabel';
 import GoPhygital from "../../assets/pdf/Gophygital.svg";
 import axios from 'axios';
 
@@ -29,9 +30,10 @@ const AllContent = () => {
     const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const startDate = params.get('start_date') || '2025-01-15';
     const endDate = params.get('end_date') || '2025-02-15';
+    const auto = params.get('auto') === '1';
 
     const dateQuery = `?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
-    const dateRangeLabel = useMemo(() => {
+        const dateRangeLabel = useMemo(() => {
         if (!startDate || !endDate) return '';
         try {
             const s = new Date(startDate);
@@ -46,6 +48,12 @@ const AllContent = () => {
             return `${startDate} to ${endDate}`;
         }
     }, [startDate, endDate]);
+
+        // Compute dynamic period labels (Weekly/Monthly/Quarterly/Yearly) from selected dates
+        const { periodLabel, periodUnit, lastLabel, currentLabel } = useMemo(
+            () => getPeriodLabels(startDate, endDate),
+            [startDate, endDate]
+        );
 
 
     const [meetingRoomData, setMeetingRoomData] = useState<any>(null);
@@ -730,12 +738,15 @@ const AllContent = () => {
         return Number.isNaN(num) ? '₹ 0' : `₹ ${num.toLocaleString('en-IN')}`;
     };
 
-    // Format numeric values to "k" as per requirement (e.g., 932813.75 -> 93.2k)
+    // Format numeric values to "k" (e.g., 932813.75 -> 93.2k), trimming trailing .0
     const formatToK = (n: any) => {
         const val = Number(n || 0);
         // Divide by 10,000 to match the provided example mapping
         const scaled = val / 10000;
-        return `${scaled.toFixed(1)}k`;
+        if (!Number.isFinite(scaled)) return '0k';
+        // Keep one decimal only when needed
+        const s = scaled.toFixed(1).replace(/\.0$/, '');
+        return `${s}k`;
     };
 
     // Helpers for Overstock Top 10 mapping (new API shape)
@@ -1262,13 +1273,17 @@ const AllContent = () => {
             return (
                 <div className="bg-white border text-sm px-3 py-1 rounded shadow">
                     <p className="font-semibold">{label}</p>
-                    <p>Last Quarter: {payload[0].value}</p>
-                    <p>Current Quarter: {payload[1].value}</p>
+                    <p>{lastLabel}: {payload[0].value}</p>
+                    <p>{currentLabel}: {payload[1].value}</p>
                 </div>
             );
         }
         return null;
     };
+
+    // Unified section container styling for equal padding and consistent left/right alignment
+    // Applies to major section boxes across pages
+    const sectionBox = "bg-white border border-gray-300 w-[95%] mx-auto p-5 mb-10 print:w-[95%] print:mx-auto print:p-2 print:mb-4 no-break";
 
 
     // removed unused CustomResolutionDots and sample Bardata
@@ -1580,9 +1595,26 @@ const AllContent = () => {
         loadingHighestMaintenanceAssets
     );
 
+    // If auto flag is on and all data is ready, trigger print once.
+    useEffect(() => {
+        if (auto && !isGlobalLoading) {
+            const w = window;
+            try {
+                const handleAfter = () => {
+                    try { w.close(); } catch { }
+                    w.removeEventListener('afterprint', handleAfter as any);
+                };
+                w.addEventListener('afterprint', handleAfter as any);
+                setTimeout(() => {
+                    try { w.focus(); w.print(); } catch { }
+                }, 300);
+            } catch { }
+        }
+    }, [auto, isGlobalLoading]);
+
     if (isGlobalLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div data-loading="true" className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent border-red-600 mx-auto mb-3" />
                     <div className="text-gray-700">Loading report...</div>
@@ -1593,6 +1625,8 @@ const AllContent = () => {
 
     return (
         <>
+            {/* readiness marker for external polling */}
+            <div data-component="all-content" data-loading="false" style={{ display: 'none' }} />
 
             <style>{`@media print {
     @page {
@@ -1727,9 +1761,6 @@ const AllContent = () => {
                         <p>
                             <span className="font-semibold">Company</span>: {localStorage.getItem('selectedCompany') || 'URBZ NWRK'}
                         </p>
-                        <p>
-                            <span className="font-semibold">Industry</span>: Coworking Space
-                        </p>
                     </div>
                 </div>
 
@@ -1738,8 +1769,8 @@ const AllContent = () => {
                     {/* Red Rectangle */}
                     <div className="absolute left-[200px] top-[-100px] w-[450px] print:h-[750px] h-[600px] bg-[#bf0c0c] z-10 flex flex-col items-end justify-center space-y-6 text-white 
                     print:left-[50px] print:top-[-300px] print:w-[50%] print:text-right  print:items-end print:justify-center print:space-y-1">
-                        <div className="text-5xl print:ml-10 font-bold print:text-6xl">GOPHYGITAL</div>
-                        <div className="text-6xl font-extrabold print:text-7xl">REP</div>
+                        <div className="text-5xl print:ml-10 font-bold print:text-4xl">GOPHYGITAL</div>
+                        <div className="text-6xl font-extrabold print:text-4xl">REP</div>
                     </div>
 
                     {/* White Box with Right Half */}
@@ -1749,12 +1780,12 @@ const AllContent = () => {
                         {/* Overlaid Report Letters */}
                         <div className="absolute top-[-100px] print:top-[-76px] print:left-[45%] left-[45%] w-[450px] h-[600px] z-10 flex flex-col items-start print:justify-start justify-center space-y-6 text-left text-red-700
                        print:space-y-1 print:text-left print:text-red-700 print:items-start">
-                            <div className="text-5xl print:ml-20 print:mt-[75px] font-bold ml-2 print:text-6xl">WORK</div>
-                            <div className="text-6xl  print:ml-20  font-extrabold ml-2 print:text-7xl">ORT</div>
+                            <div className="text-5xl print:ml-20 print:mt-[105px] font-bold ml-2 print:text-4xl">WORK</div>
+                            <div className="text-6xl  print:ml-20  font-extrabold ml-2 print:text-4xl">ORT</div>
                         </div>
 
                         <div className="flex justify-end items-end print:mt-[110px]  print:mr-[110px] mb-4 mt-[10px] ml-[120px] print:w-full">
-                            <p className="text-xl print:text-[23px] font-medium text-red-700 print:text-red-700 print:mt-[40px]">
+                            <p className="text-xl print:text-[18px] font-medium text-red-700 print:text-red-700 print:mt-[40px]">
                                 {dateRangeLabel}
                             </p>
                         </div>
@@ -1853,7 +1884,7 @@ const AllContent = () => {
 
                             <h3 className="font-semibold mt-2">2- Community Programs Dashboard</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
-                                <li>Community Health and Engagement Summary</li>
+                                {/* <li>Community Health and Engagement Summary</li> */}
                                 <li>Site Wise Adoption Rate</li>
                             </ul>
                         </div>
@@ -1870,7 +1901,7 @@ const AllContent = () => {
                                 <li>Ticket Performance Metrics by Category – Volume, Closure Rate & Ageing</li>
                                 <li>Customer Experience Feedback</li>
                                 <li>Site Performance: Customer Rating Overview</li>
-                                <li>Response TAT Performance by Center – Quarterly Comparison</li>
+                                <li>Response TAT Performance by Center – {periodUnit}ly Comparison</li>
                             </ul>
 
                             <h3 className="font-semibold mt-2">2- Asset Management</h3>
@@ -1885,7 +1916,7 @@ const AllContent = () => {
 
                             <h3 className="font-semibold mt-2">3- Checklist Management</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
-                                <li>Checklist Progress Status – Center-wise Quarterly Comparison</li>
+                                <li>Checklist Progress Status – Center-wise {periodUnit}ly Comparison</li>
                                 <li>Top 10 Overdue Checklists – Center-wise Contribution Comparison</li>
                             </ul>
 
@@ -1894,7 +1925,7 @@ const AllContent = () => {
                                 <li>Overview Summary</li>
                                 <li>Overstock Analysis – Top 10 Items</li>
                                 <li>Top Consumables – Centre-wise Overview</li>
-                                <li>Consumable Inventory Value – Quarterly Comparison</li>
+                                <li>Consumable Inventory Value – {periodUnit}ly Comparison</li>
                             </ul>
 
                             <h3 className="font-semibold mt-2">5- Parking Management</h3>
@@ -1930,104 +1961,96 @@ const AllContent = () => {
                     Meeting Room
                 </h1>
 
-                <div className="border p-6 bg-white text-black shadow print:text-black print:bg-white print:p-6 print:border print:shadow-none print:w-[95%] print:mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 print:text-2xl print:font-bold">
-                        Revenue Generation Overview
-                    </h2>
+                {/* Unified section container */}
+                <div className={sectionBox}>
+                    <div className="border p-6 bg-white text-black shadow print:text-black print:bg-white print:p-6 print:border print:shadow-none">
+                        <h2 className="text-2xl font-bold mb-4 print:text-2xl print:font-bold">
+                            Revenue Generation Overview
+                        </h2>
 
-                    <hr className="mb-6 border-gray-400 print:border-gray-400" />
+                        <hr className="mb-6 border-gray-400 print:border-gray-400" />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-4">
-                        <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
-                            <p className="italic text-lg mb-1 print:italic print:text-lg">
-                                Total Revenue from
-                            </p>
-                            <div className="flex justify-between items-center print:flex print:justify-between">
-                                <p className="text-2xl font-bold print:text-1xl print:font-bold">
-                                    {localStorage.getItem('selectedCompany')}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-4">
+                            <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
+                                <p className="italic text-lg mb-1 print:italic print:text-lg">
+                                    Total Revenue from
                                 </p>
-                                <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
-                                    {meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? '-'}
-                                </p>
+                                <div className="flex justify-between items-center print:flex print:justify-between">
+                                    <p className="text-2xl font-bold print:text-1xl print:font-bold">
+                                        {localStorage.getItem('selectedCompany')}
+                                    </p>
+                                    <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
+                                        {meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? '-'}
+                                    </p>
+                                </div>
                             </div>
+                            {/* Optional second card removed for now */}
                         </div>
-
-                        {/* <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
-              <p className="italic text-lg mb-1 print:italic print:text-lg">
-                Total Revenue from
-              </p>
-              <div className="flex justify-between items-center print:flex print:justify-between">
-                <p className="text-2xl font-bold print:text-1xl print:font-bold">
-                  My HQ
-                </p>
-                <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
-                  ₹60,000
-                </p>
-              </div>
-            </div> */}
                     </div>
-                </div>
 
-                <div className="bg-white p-4 mt-4 avoid-break">
-                    <h2 className="text-lg font-semibold text-red-600 mb-4">
-                        Center Wise - Meeting Room Performance Overview
-                    </h2>
-                    <div className="overflow-x-auto print:overflow-visible">
-                        <table className="min-w-full border text-sm text-center print:text-xs print:w-full print:table-fixed">
-                            <thead className="bg-[#ded9cd] text-[#b62527] font-semibold text-sm">
-                                <tr>
-                                    <th className="border border-black p-3 text-left align-middle" rowSpan={2}>
-                                        Site Name
-                                    </th>
-                                    <th className="border border-black p-3 text-center" colSpan={3}>
-                                        Meeting Room
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <th className="border border-black p-2 text-center">Utilization<br />Rate (in %)</th>
-                                    <th className="border border-black p-2 text-center">Cancellation<br />Rate (in %)</th>
-                                    <th className="border border-black p-2 text-center">Revenue<br />(in ₹)</th>
-                                </tr>
-                            </thead>
+                    {/* Center-wise Meeting Room Performance */}
+                    <div className="bg-white p-4 mt-4 avoid-break">
+                        <h2 className="text-lg font-semibold text-black-600 mb-4">
+                            Center Wise - Meeting Room Performance Overview
+                        </h2>
+                        <div className="overflow-x-auto print:overflow-visible">
+                            <table className="min-w-full border text-sm text-center print:text-xs print:w-full print:table-fixed">
+                                <thead className="bg-[#ded9cd] text-[#b62527] font-semibold text-sm">
+                                    <tr>
+                                        <th className="border border-black p-3 text-left align-middle" rowSpan={2}>
+                                            Site Name
+                                        </th>
+                                        <th className="border border-black p-3 text-center" colSpan={3}>
+                                            Meeting Room
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th className="border border-black p-2 text-center">Utilization<br />Rate (in %)</th>
+                                        <th className="border border-black p-2 text-center">Cancellation<br />Rate (in %)</th>
+                                        <th className="border border-black p-2 text-center">Revenue<br />(in ₹)</th>
+                                    </tr>
+                                </thead>
 
-                            <tbody>
-                                {centerRows.map((row: any, idx: number) => {
-                                    const meeting = row.meeting_room || row.meeting || {};
-                                    const utilTrend = meeting.utilization_trend || meeting.utilization_trend === undefined ? meeting.utilization_trend : null;
-                                    const cancelTrend = meeting.cancellation_trend || null;
-                                    const revenueTrend = meeting.revenue_trend || null;
+                                <tbody>
+                                    {centerRows.map((row: any, idx: number) => {
+                                        const meeting = row.meeting_room || row.meeting || {};
+                                        const utilTrend = meeting.utilization_trend || meeting.utilization_trend === undefined ? meeting.utilization_trend : null;
+                                        const cancelTrend = meeting.cancellation_trend || null;
+                                        const revenueTrend = meeting.revenue_trend || null;
 
-                                    return (
-                                        <tr key={idx} className="border-t">
-                                            <td className="p-2 border font-medium text-left print:p-1">{row.site_name || row.site || '-'}</td>
-                                            <td className="p-2 border print:p-1">
-                                                {meeting.utilization_rate ?? '-'}{' '}
-                                                <Arrow up={utilTrend === '↑'} />
-                                            </td>
-                                            <td className="p-2 border print:p-1">
-                                                {meeting.cancellation_rate ?? '-'}{' '}
-                                                <Arrow up={cancelTrend === '↑'} />
-                                            </td>
-                                            <td className="p-2 border print:p-1">
-                                                {meeting.revenue ?? '-'}{' '}
-                                                <Arrow up={revenueTrend === '↑'} />
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                        <p className="text-xs text-gray-500 mt-2 print:text-[10px]">
-                            <strong>Note:</strong> This table illustrates meeting room utilization, cancellations, and revenue generation,
-                            along with directional arrows indicating growth, decline or neutral trend compared to the previous quarter.
-                        </p>
+                                        return (
+                                            <tr key={idx} className="border-t">
+                                                <td className="p-2 border font-medium text-left print:p-1">{row.site_name || row.site || '-'}</td>
+                                                <td className="p-2 border print:p-1">
+                                                    {meeting.utilization_rate ?? '-'}{' '}
+                                                    <Arrow up={utilTrend === '↑'} />
+                                                </td>
+                                                <td className="p-2 border print:p-1">
+                                                    {meeting.cancellation_rate ?? '-'}{' '}
+                                                    <Arrow up={cancelTrend === '↑'} />
+                                                </td>
+                                                <td className="p-2 border print:p-1">
+                                                    {meeting.revenue ?? '-'}{' '}
+                                                    <Arrow up={revenueTrend === '↑'} />
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                            <p className="text-xs text-gray-500 mt-2 print:text-[10px]">
+                                <strong>Note:</strong> This table illustrates meeting room utilization, cancellations, and revenue generation,
+                                along with directional arrows indicating growth, decline or neutral trend compared to the previous period.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Second Section: Center Wise - Meeting Room Utilization */}
-            <div className="mt-4 bg-white break-before-page print:p-2 print:bg-white print:overflow-visible print:origin-top-left meeting-room-utilization min-h-[800px] print:min-h-[300px]">
-                <div className="border border-gray-400 p-4 w-full print:w-[95%] print:max-w-none print:mx-auto">
+            <div className="print-page break-before-page">
+                <div className={sectionBox}>
+                    <div className="border border-gray-400 p-4 w-full print:max-w-none print:mx-auto">
                     {/* Title */}
                     <h1 className="text-lg text-left font-bold mb-6 print:text-xl">
                         Center Wise - Meeting Room Utilization
@@ -2055,9 +2078,9 @@ const AllContent = () => {
                     <div className="border border-gray-400 no-break">
                         {/* Data Grid (driven by API when available) */}
                         {centerList.map((center: any, siteIndex: number) => (
-                            <div key={siteIndex} className="grid grid-cols-9 border-b border-gray-400">
+                            <div key={siteIndex} className="grid grid-cols-9 print:grid-cols-10 border-b border-gray-400">
                                 {/* Site Label (NO left border) */}
-                                <div className="p-3 font-medium text-base text-right print:p-2 print:text-sm border-b border-gray-400">
+                                <div className="p-3 font-medium text-base text-right border-b border-gray-400 print:p-2 print:text-[10px] print:leading-tight print:whitespace-normal print:break-words print:text-left print:col-span-2">
                                     {center.center_name || center.site_name || center.name || `Center ${siteIndex + 1}`}
                                 </div>
 
@@ -2068,10 +2091,10 @@ const AllContent = () => {
                                     return (
                                         <div
                                             key={rangeIndex}
-                                            className={`border-l border-t border-gray-400 p-2 text-sm font-semibold text-center ${cellColor} min-h-[120px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[80px]`}
+                                            className={`border-l border-t border-gray-400 p-2 text-sm font-semibold text-center ${cellColor} min-h-[120px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[80px] print:col-span-1`}
                                         >
                                             {roomName ? (
-                                                <div className="leading-tight">
+                                                <div className="leading-tight print:whitespace-normal print:break-words print:leading-tight print:text-[10px]">
                                                     {roomName.includes(",")
                                                         ? roomName.split(",").map((name: string, i: number) => <div key={i}>{name.trim()}</div>)
                                                         : roomName}
@@ -2084,12 +2107,12 @@ const AllContent = () => {
                         ))}
 
                         {/* Bottom Header Row: Utilization Rate */}
-                        <div className="grid grid-cols-9">
-                            <div className="p-3 font-semibold text-center print:p-2 print:text-sm text-base"></div>
+                        <div className="grid grid-cols-9 print:grid-cols-10">
+                            <div className="p-3 font-semibold text-center print:p-2 print:text-sm text-base print:col-span-2 border-t border-gray-400"></div>
                             {rangeList.slice(0, 8).map((range, index) => (
                                 <div
                                     key={index}
-                                    className="border-t border-l border-gray-400 p-2 text-sm font-semibold text-center min-h-[60px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[40px]"
+                                    className="border-t border-l border-gray-400 p-2 text-sm font-semibold text-center min-h-[60px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[40px] print:col-span-1"
                                 >
                                     {range}
                                 </div>
@@ -2108,6 +2131,7 @@ const AllContent = () => {
                         <span className="font-semibold">Note :</span> This table presents meeting room-wise utilization along with
                         corresponding utilization percentages, providing a center-wise comparison to identify performance variations
                         across locations.
+                    </div>
                     </div>
                 </div>
             </div>
@@ -2249,7 +2273,7 @@ const AllContent = () => {
                 <h1 className="report-title text-3xl bg-[#F6F4EE] py-5 font-bold text-center text-gray-800 mb-6 print:text-black print:text-xl print:py-2 print:mb-1">
                     Community Programs Dashboard
                 </h1>
-                <div className="bg-white p-8 border print:border print:border-gray-300 print:p-2 print:w-[95%] print:mx-auto no-break">
+                <div className={sectionBox}>
                     <h2 className="text-lg font-semibold text-gray-700 mb-4 print:text-black print:text-sm ">Community Engagement Metrics</h2>
 
                     <div className="grid grid-cols-2 gap-4 mb-8 print:gap-1 print:mb-2">
@@ -2366,15 +2390,29 @@ const AllContent = () => {
                                     { color: "bg-green-600", underline: "border-green-600", label: "70–100%" },
                                 ];
                             }
-                            return legendArr.map(({ color, underline, label }, idx) => (
-                                <div key={idx} className="flex flex-col items-center gap-1 print:gap-[2px]">
-                                    <div className="flex items-center gap-1">
-                                        <span className={`w-4 h-4 rounded-full ${color} inline-block print:w-3 print:h-3`} />
-                                        <span className="text-sm font-bold text-black print:text-black print:text-[8.8px]">{label}</span>
+                            // Ensure consistent ascending order based on the starting number (e.g., 0, 40, 70)
+                            const sortedLegend = [...legendArr].sort((a: any, b: any) => {
+                                const pa = parseInt(String(a?.label ?? ''), 10);
+                                const pb = parseInt(String(b?.label ?? ''), 10);
+                                return (isNaN(pa) ? 0 : pa) - (isNaN(pb) ? 0 : pb);
+                            });
+
+                            return sortedLegend.map(({ color, underline, label }, idx) => {
+                                const lbl = String(label ?? '').trim();
+                                const displayLabel = lbl.startsWith('>') ? lbl : `> ${lbl}`;
+                                return (
+                                    <div key={idx} className="flex flex-col items-start gap-1 print:gap-[2px]">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-4 h-4 rounded-full ${color} inline-block print:w-3 print:h-3`} />
+                                            <span className="text-sm font-bold text-black print:text-black print:text-[8.8px] inline-block">
+                                                {displayLabel}
+                                                {/* underline exactly under the label text width */}
+                                                <span className={`block border-b-2 ${underline} rounded-full mt-1 print:mt-[2px]`}></span>
+                                            </span>
+                                        </div>
                                     </div>
-                                    <span className={`border-b-1 ${underline} w-full rounded-full`}></span>
-                                </div>
-                            ));
+                                );
+                            });
                         })()}
                     </div>
 
@@ -2460,43 +2498,43 @@ const AllContent = () => {
                 <h1 className="report-title text-3xl font-bold text-center mb-6 bg-[#F6F4EE] py-5 text-gray-800 print:text-black print:text-xl print:mb-5 print:py-2">
                     Helpdesk Management
                 </h1>
-                <div className="bg-white  p-8 py-0   print:p-2 print:w-[95%] print:mx-auto no-break">
+                <div className={sectionBox}>
                     {/* Snapshot Section */}
-                    <div className="mb-10 print:mb-5 border border-gray-300  print:px-2 ">
+                    <div className="mb-10 print:mb-5 border border-gray-300 px-6 py-5 print:px-2 print:py-2">
                         <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-sm print:mb-1 print:pb-1">Snapshot</h2>
-                        <div className="grid grid-cols-3 gap-6 print:gap-3">
+                        <div className="grid grid-cols-3 gap-8 print:gap-3">
                             {/* Total Tickets */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.count ?? 0}</div>
-                                <div className="text-sm font-medium print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.percentage ?? '-'} %</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.label ?? 'Total Tickets'}</div>
+                                <div className="text-sm font-medium text-gray-500 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.percentage ?? '-'} %</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.label ?? 'Total Tickets'}</div>
                             </div>
                             {/* Closed Tickets */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold text-green-600 print:text-xl print:text-green-600">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.count ?? 0}</div>
-                                <div className="text-sm font-medium print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.percentage ?? '-'} %</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.label ?? 'Closed Tickets'}</div>
+                                <div className="text-sm font-medium text-gray-500 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.percentage ?? '-'} %</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.label ?? 'Closed Tickets'}</div>
                             </div>
                             {/* Open Tickets */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold text-red-600 print:text-xl print:text-red-600">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.count ?? 0}</div>
-                                <div className="text-sm font-medium print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.percentage ?? '-'} %</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.label ?? 'Open Tickets'}</div>
+                                <div className="text-sm font-medium text-gray-500 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.percentage ?? '-'} %</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.label ?? 'Open Tickets'}</div>
                             </div>
                             {/* Customer Tickets */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.snapshot?.customer_tickets?.count ?? 0}</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.customer_tickets?.label ?? 'Customer Tickets'}</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.customer_tickets?.label ?? 'Customer Tickets'}</div>
                             </div>
                             {/* FM Tickets */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.snapshot?.fm_tickets?.count ?? 0}</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.fm_tickets?.label ?? 'FM Tickets'}</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.fm_tickets?.label ?? 'FM Tickets'}</div>
                             </div>
                             {/* Total Average Customer Rating */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.average_customer_rating?.rating ?? 0}</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.average_customer_rating?.label ?? 'Total Average Customer Rating'}</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.average_customer_rating?.label ?? 'Total Average Customer Rating'}</div>
                             </div>
                         </div>
                     </div>
@@ -2626,7 +2664,13 @@ const AllContent = () => {
                             <div className="flex items-center justify-between gap-4 flex-wrap text-sm print:text-xs print:gap-2">
                                 <div className="flex items-center gap-1">
                                     <span>% of tickets raised by category</span>
-                                    <ArrowRightLeft className="w-4 h-4 rotate-180 text-gray-500" />
+                                    <span className="mx-1 text-gray-600" aria-hidden>→</span>
+                                    {/* Diagonal split box indicator */}
+                                    <span className="relative inline-block w-5 h-5 border border-gray-300 mx-2 print:w-4 print:h-4" aria-hidden>
+                                        <span className="absolute inset-0 clip-triangle-tr" style={{ backgroundColor: '#DAD6C9' }} />
+                                        <span className="absolute inset-0 clip-triangle-bl" style={{ backgroundColor: '#FFFFFF' }} />
+                                    </span>
+                                    <span className="mx-1 text-gray-600" aria-hidden>←</span>
                                     <span>% of tickets closure by category</span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -2719,17 +2763,17 @@ const AllContent = () => {
                     <h2 className="text-lg font-bold mb-4 print:text-sm print:mb-2">
                         Site Performance: Customer Rating Overview
                     </h2>
-                    <table className="min-w-full text-base text-center border print:table-fixed print:w-full print:text-[10px]">
+            <table className="min-w-full text-base text-center border print:table-fixed print:w-full print:text-[10px] print:leading-tight">
                         <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
                             <tr>
-                                <th className="border border-gray-200 px-3 py-6 print:px-2 print:py-4 print:min-h-[40px]">
+                <th className="border border-gray-200 px-3 py-6 print:px-2 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top">
                                     Site Name
                                 </th>
 
                                 {customerExperienceSiteNames.map((name, index) => (
                                     <th
                                         key={index}
-                                        className="border border-gray-200 px-3 py-6 print:px-2 print:py-4 print:min-h-[40px]"
+                    className="border border-gray-200 px-3 py-6 print:px-1 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top"
                                     >
                                         {name}
                                     </th>
@@ -2746,7 +2790,7 @@ const AllContent = () => {
                                         className={isTotal ? "font-semibold bg-[#DAD6C9]" : ""}
                                     >
                                         <td
-                                            className={`px-3 py-6 print:px-2 print:py-4 print:min-h-[40px] font-medium ${isTotal
+                                            className={`px-3 py-6 print:px-2 print:py-2 print:min-h-[32px] print:text-[9px] print:leading-snug print:whitespace-normal print:break-words print:align-top font-medium ${isTotal
                                                 ? "border border-gray-300"
                                                 : "border-l border-r border-gray-200 bg-[#F3F1EB80] print:bg-[#F3F1EB80]"
                                                 }`}
@@ -2756,8 +2800,8 @@ const AllContent = () => {
                                         {row.values.map((val, vIdx) => (
                                             <td
                                                 key={vIdx}
-                                                className={`px-3 py-6 print:px-2 print:py-4 print:min-h-[40px] ${isTotal ? "border border-gray-300" : "border-l border-r border-gray-200"
-                                                    }`}
+                                                className={`px-3 py-6 print:px-1 print:py-2 print:min-h-[32px] print:text-[9px] print:leading-snug print:whitespace-normal print:break-words print:align-top ${isTotal ? "border border-gray-300" : "border-l border-r border-gray-200"}
+                                                    `}
                                             >
                                                 {val}
                                             </td>
@@ -2778,11 +2822,11 @@ const AllContent = () => {
 
 
             <div className="print-page break-before-page">
-                <div className="max-w-9xl  bg-white rounded-lg mb-10 flex flex-col print:pb-0">
+                <div className={sectionBox}>
 
                     {/* Title */}
                     <h1 className="text-2xl font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
-                        Response TAT Performance by Center – Quarterly Comparison
+                        Response TAT Performance by Center – {periodUnit}ly Comparison
                     </h1>
 
                     {/* Legend Row */}
@@ -2794,11 +2838,11 @@ const AllContent = () => {
 
                             {/* Striped Circle for Last Quarter */}
                             <div className="w-4 h-4 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
-                            <span>Last Quarter</span>
+                            <span>{lastLabel}</span>
 
                             {/* Solid Circle for Current Quarter */}
                             <div className="w-4 h-4 rounded-full bg-[#C4AD98] ml-6" />
-                            <span>Current Quarter</span>
+                            <span>{currentLabel}</span>
                         </div>
 
                         {/* Row 2: Resolution Achieved */}
@@ -2808,11 +2852,11 @@ const AllContent = () => {
 
                             {/* Striped Circle for Last Quarter */}
                             <div className="w-4 h-4 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
-                            <span>Last Quarter</span>
+                            <span>{lastLabel}</span>
 
                             {/* Solid Circle for Current Quarter */}
                             <div className="w-4 h-4 rounded-full bg-[#C4AD98] ml-6" />
-                            <span>Current Quarter</span>
+                            <span>{currentLabel}</span>
                         </div>
                     </div>
 
@@ -2823,7 +2867,89 @@ const AllContent = () => {
                         <div className="border-b border-gray-300 w-full" />
                     </div>
 
-                    <div className="w-full overflow-x-auto">
+                    {/* Print-only mini legend to ensure visibility in PDF */}
+                    <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
+                            <span>{lastLabel}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#C4AD98]" />
+                            <span>{currentLabel}</span>
+                        </div>
+                    </div>
+
+                    {/* Screen/Desktop full graph (hidden in print) */}
+                    <div className="w-full hidden md:block print:hidden">
+                        <div
+                            style={{
+                                width: '100%',
+                                height: `${Math.max(400, Math.min(900, ((dynamicResponseAchieved?.length || 1) * 48) + 160))}px`,
+                            }}
+                        >
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={dynamicResponseAchieved}
+                                    layout="vertical"
+                                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                                >
+                                    {/* 1. Add pattern defs for striped fill */}
+                                    <defs>
+                                        <pattern
+                                            id="stripedPattern"
+                                            patternUnits="userSpaceOnUse"
+                                            width="6"
+                                            height="6"
+                                            patternTransform="rotate(45)"
+                                        >
+                                            <line x1="0" y="0" x2="0" y2="6" stroke="#C4B89D" strokeWidth="2" />
+                                        </pattern>
+                                    </defs>
+
+                                    <CartesianGrid strokeDasharray="3 3" />
+
+                                    {/* 2. X Axis at top with % */}
+                                    <XAxis
+                                        type="number"
+                                        domain={[0, chartMaxResponse]}
+                                        ticks={Array.from({ length: Math.max(2, chartMaxResponse / 10) }, (_, i) => (i + 1) * 10)}
+                                        tickFormatter={(tick) => `${tick}%`}
+                                        orientation="top"
+                                        tick={{ fontSize: 12 }}
+                                        axisLine={{ stroke: '#000' }}
+                                        tickLine={{ stroke: '#000' }}
+                                    />
+
+                                    <YAxis
+                                        type="category"
+                                        dataKey="site"
+                                        tick={{ fontSize: 12 }}
+                                        width={160}
+                                    />
+
+                                    <Tooltip content={(props: any) => <CustomTooltip {...props} />} />
+                                    <Legend verticalAlign="top" align="right" />
+
+                                    {/* 3. Apply striped pattern to Last Quarter bar */}
+                                    <Bar
+                                        dataKey="responseLast"
+                                        fill="url(#stripedPattern)"
+                                        name={lastLabel}
+                                    />
+
+                                    {/* 4. Solid color for Current Quarter bar */}
+                                    <Bar
+                                        dataKey="responseCurrent"
+                                        fill="#C4AE9D"
+                                        name={currentLabel}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Print/PDF graph (no in-chart legend to avoid overlap) */}
+                    <div className="w-full overflow-x-auto block print:block md:hidden">
                         <BarChart
                             width={750}
                             height={700}
@@ -2866,20 +2992,19 @@ const AllContent = () => {
                             />
 
                             <Tooltip content={(props: any) => <CustomTooltip {...props} />} />
-                            <Legend verticalAlign="top" align="right" />
 
                             {/* 3. Apply striped pattern to Last Quarter bar */}
                             <Bar
                                 dataKey="responseLast"
                                 fill="url(#stripedPattern)"
-                                name="Last Quarter"
+                                name={lastLabel}
                             />
 
                             {/* 4. Solid color for Current Quarter bar */}
                             <Bar
                                 dataKey="responseCurrent"
                                 fill="#C4AE9D"
-                                name="Current Quarter"
+                                name={currentLabel}
                             />
                         </BarChart>
                     </div>
@@ -2888,14 +3013,94 @@ const AllContent = () => {
             </div>
 
             <div className="print-page break-before-page">
-                <div className="max-w-9xl bg-white mb-10 rounded-lg flex flex-col print:pb-0">
+                <div className={sectionBox}>
 
                     <div className="flex p-4 flex-col print:p-4 mb-8">
                         <h2 className="text-lg font-semibold mb-2">Resolution Achieved (TAT in Percentage)</h2>
                         <div className="border-b border-gray-300 w-full" />
                     </div>
 
-                    <div className="w-full overflow-x-auto">
+                    {/* Print-only mini legend for Resolution section */}
+                    <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
+                            <span>{lastLabel}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#C4AD98]" />
+                            <span>{currentLabel}</span>
+                        </div>
+                    </div>
+
+                    {/* Screen/Desktop full graph (hidden in print) */}
+                    <div className="w-full hidden md:block print:hidden">
+                        <div
+                            style={{
+                                width: '100%',
+                                height: `${Math.max(400, Math.min(900, ((dynamicResolutionAchieved?.length || 1) * 48) + 160))}px`,
+                            }}
+                        >
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={dynamicResolutionAchieved}
+                                    layout="vertical"
+                                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                                >
+                                    {/* Striped Pattern Def */}
+                                    <defs>
+                                        <pattern
+                                            id="stripedPattern"
+                                            patternUnits="userSpaceOnUse"
+                                            width="6"
+                                            height="6"
+                                            patternTransform="rotate(45)"
+                                        >
+                                            <line x1="0" y1="0" x2="0" y2="6" stroke="#C4B89D" strokeWidth="2" />
+                                        </pattern>
+                                    </defs>
+
+                                    <CartesianGrid strokeDasharray="3 3" />
+
+                                    <XAxis
+                                        type="number"
+                                        domain={[0, chartMaxResolution]}
+                                        ticks={Array.from({ length: Math.max(2, chartMaxResolution / 10) }, (_, i) => (i + 1) * 10)}
+                                        tickFormatter={(tick) => `${tick}%`}
+                                        orientation="top"
+                                        tick={{ fontSize: 12 }}
+                                        axisLine={{ stroke: '#000' }}
+                                        tickLine={{ stroke: '#000' }}
+                                    />
+
+                                    <YAxis
+                                        type="category"
+                                        dataKey="site"
+                                        tick={{ fontSize: 12 }}
+                                        width={160}
+                                    />
+
+                                    <Tooltip content={(props: any) => <CustomTooltip {...props} />} />
+                                    <Legend verticalAlign="top" align="right" />
+
+                                    {/* Last Quarter with Stripes */}
+                                    <Bar
+                                        dataKey="resolutionLast"
+                                        fill="url(#stripedPattern)"
+                                        name={lastLabel}
+                                    />
+
+                                    {/* Current Quarter with Solid Fill */}
+                                    <Bar
+                                        dataKey="resolutionCurrent"
+                                        fill="#C4AE9D"
+                                        name={currentLabel}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className="w-full overflow-x-auto block print:block md:hidden">
                         <BarChart
                             width={780}
                             height={700}
@@ -2937,39 +3142,38 @@ const AllContent = () => {
                             />
 
                             <Tooltip content={(props: any) => <CustomTooltip {...props} />} cursor={{ fill: "rgba(0, 0, 0, 0.05)" }} />
-                            <Legend verticalAlign="top" align="right" />
 
                             {/* Last Quarter with Stripes */}
                             <Bar
                                 dataKey="resolutionLast"
                                 fill="url(#stripedPattern)"
-                                name="Last Quarter"
+                                name={lastLabel}
                             />
 
                             {/* Current Quarter with Solid Fill */}
                             <Bar
                                 dataKey="resolutionCurrent"
                                 fill="#C4AE9D"
-                                name="Current Quarter"
+                                name={currentLabel}
                             />
 
                             {/* Scatter dots (optional, will still render over bars) */}
                             <Scatter
                                 data={scatterDataLast}
                                 fill="#000000"
-                                name="Last Quarter (Dots)"
+                                name={`${lastLabel} (Dots)`}
                                 shape="circle"
                             />
                             <Scatter
                                 data={scatterDataCurrent}
                                 fill="#FF0000"
-                                name="Current Quarter (Dots)"
+                                name={`${currentLabel} (Dots)`}
                                 shape="circle"
                             />
                         </BarChart>
                     </div>
                     <p className="print:text-[12px] text-sm text-gray-500 p-4 mt-4 print:mt-4">
-                        <strong>Note:</strong> This graph shows the total visitor count compared to the previous quarter,
+                        <strong>Note:</strong> This graph shows the total visitor count compared to the previous period,
                         providing a clear view of trends and changes in footfall over time for performance comparison.
                     </p>
                 </div>
@@ -2982,7 +3186,7 @@ const AllContent = () => {
                 </h1>
 
                 {/* Main Container */}
-                <div className="bg-white border print:w-[95%] w-[95%] m-auto p-4 print:border-black print:p-2  print:mx-auto no-break">
+                <div className={sectionBox}>
 
                     {/* Company Wise Overview */}
                     <div className="bg-white border border-gray-300 p-4 mb-10 print:p-2 print:mb-2 no-break">
@@ -3111,12 +3315,13 @@ const AllContent = () => {
 
             {/*  Active AMC Contracts + 90 Days Expiry (kept together) */}
             <div className="print-page break-before-page print:w-[95%] print:m-auto print-keep-together">
-                <div className="bg-white p-2 amc-summary no-break print:px-2 print:py-2 mt-1 print:mt-2 border border-gray-300 print-keep-together print-avoid-after print-tight">
-                    <h2 className="text-lg font-semibold px-4 py-3 border-gray-400 print:text-[15px] print:py-2">
+                {/* AMC Contract Summary - standardized section box */}
+                <div className={sectionBox}>
+                    <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-[15px] print:mb-2 print:pb-1">
                         AMC Contract Summary
                     </h2>
 
-                    <div className="grid grid-cols-3  border py-4 text-center bg-[#f2f0eb] text-black font-semibold print:py-2">
+                    <div className="grid grid-cols-3 border py-4 text-center bg-[#f2f0eb] text-black font-semibold print:py-2">
                         <div className="border-r border-gray-300 px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
                             Active AMC Contracts<br />
                             <span className="text-4xl text-[#C72030] font-bold print:text-xl">
@@ -3138,8 +3343,9 @@ const AllContent = () => {
                     </div>
                 </div>
 
-                <div className="border print:border py-3 px-3 mb-6 print:mb-2 break-inside-avoid print:break-inside-avoid print-avoid-before print-keep-together print-tight">
-                    <h2 className="bg-white text-lg font-bold print:text-2xl p-3 border-b border-gray-300 print:text-[13px] print:p-1 print:leading-relaxed">
+                {/* AMC Contract Summary – Expiry in 90 Days - standardized section box */}
+                <div className={sectionBox}>
+                    <h2 className="text-lg font-bold mb-4 border-b border-gray-300 pb-2 print:text-[13px] print:mb-2 print:pb-1">
                         AMC Contract Summary – Expiry in 90 Days
                     </h2>
                     <div className="overflow-x-auto">
@@ -3180,14 +3386,13 @@ const AllContent = () => {
                                 )}
                             </tbody>
                         </table>
-
-
                     </div>
                     <p className="p-3 text-xs text-gray-600 italic border-t border-gray-300 print:p-1 print:text-[8px] print:leading-relaxed print:mt-2">
                         <strong>Note:</strong> This table provides a site-wise summary of AMC contracts that are set to expire within the next 90 days, supporting proactive renewal planning and vendor coordination.
                     </p>
                 </div>
-                <div className="border py-3 px-3 shadow print:shadow-none print:border break-inside-avoid print:break-inside-avoid">
+                <div className={sectionBox}>
+<div className="border py-3 px-3  print:shadow-none print:border break-inside-avoid print:break-inside-avoid">
                     <h2 className="bg-white font-bold text-lg p-3 border-b border-gray-300 print:text-[13px] print:p-1 print:leading-relaxed">
                         AMC Contract Summary – Expired
                     </h2>
@@ -3236,6 +3441,8 @@ const AllContent = () => {
                         <strong>Note:</strong> This table provides a site-wise summary of AMC contracts that has been expired, supporting proactive renewal planning and vendor coordination.
                     </p>
                 </div>
+                </div>
+                
 
 
             </div>
@@ -3291,12 +3498,16 @@ const AllContent = () => {
                                             }
                                         `}</style>
 
+                    {/* Tables block: stretch to fill one print page */}
+                    <div className={sectionBox}>
+                    <div className="print:flex print:flex-col print:gap-2 print:h-[calc(100vh-180px)]">
                     {/* Table 1: Checklist Progress Status */}
-                    <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px]">
+                    <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
                         <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
-                            Checklist Progress Status – Center-Wise Quarterly Comparison
+                            Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
                         </div>
-                        <table className="w-full border print:table-fixed print:w-full print:text-[10px] ">
+                        <div className="print:flex-1">
+                        <table className="w-full border print:table-fixed print:w-full print:text-[10px] print:h-full">
                             <thead>
                                 <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
                                     <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Site Name</th>
@@ -3376,17 +3587,19 @@ const AllContent = () => {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
-                            <strong>Note :</strong> This table shows checklist progress by status across centers, comparing the current and last quarter. The "Change in Closed" column highlights the shift in closed checklists since the previous quarter.
+                            <strong>Note :</strong> This table shows checklist progress by status across centers, comparing the current period with the previous period. The "Change in Closed" column highlights the shift in closed checklists since the prior period.
                         </div>
                     </div>
 
                     {/* Table 2: Top 10 Overdue Checklists */}
-                    <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px]">
+                    <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
                         <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
                             Top 10 Overdue Checklists – Center-wise Contribution Comparison
                         </div>
-                        <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] ">
+                        <div className="print:flex-1">
+                        <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
                             <thead>
                                 <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
                                     <th className="py-4 px-4 site-col print:py-2 print:px-2 print:w-[18%]">Site Name</th>
@@ -3435,10 +3648,13 @@ const AllContent = () => {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
                             <strong>Note :</strong> The table displays the top 10 most overdue checklists, with a center-wise
                             breakdown of their contribution to the overall overdue count, helping identify key areas of concern.
                         </div>
+                    </div>
+                    </div>
                     </div>
 
                 </div>
@@ -3449,7 +3665,7 @@ const AllContent = () => {
                 <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-0">
                     Inventory Management
                 </h1>
-                <div className="bg-white p-6 print:p-2 print:mb-2 print:w-[95%] print:mx-auto  no-break">
+                <div className={sectionBox}>
 
                     <div className="border border-gray-300 p-3">
                         <h2 className="text-lg font-semibold mb-4 print:text-[12px] print:mb-1 print:py-0">
@@ -3476,8 +3692,8 @@ const AllContent = () => {
                         </div>
                     </div>
 
-                    {/* OverstockGridExact Component */}
-                    <div className=" mt-3 print:p-0  border border-gray-300 p-2">
+                                        {/* OverstockGridExact Component */}
+                                        <div className=" mt-3 print:p-0  border border-gray-300 p-2">
                         <style>{`
                 /* Screen view styles only, scoped to overstock-table class */
                 .overstock-table {
@@ -3533,8 +3749,8 @@ const AllContent = () => {
                                             {itemss.map((item, rowIdx) => (
                                                 <tr key={rowIdx}>
                                                     <td
-                                                        className="p-2  text-xs text-end font-semibold bg-white w-[150px] mx-0 my-0 
-                                    print:text-[10px] print:font-semibold print:bg-white print:w-[150px] print:text-left print:mx-2 print:my-1"
+                                                        className="p-2 text-xs text-left font-semibold bg-white w-[180px] align-top whitespace-normal break-words leading-tight mx-0 my-0 
+                                    print:text-[9px] print:font-semibold print:bg-white print:w-[160px] print:text-left print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
                                                     >
                                                         {item.name}
                                                     </td>
@@ -3552,14 +3768,14 @@ const AllContent = () => {
                                         <tfoot>
                                             <tr>
                                                 <th
-                                                    className="w-[150px] bg-white mx-0 my-0 
-                                print:w-[150px] print:bg-white print:mx-1 print:my-1"
+                                                    className="w-[180px] bg-white mx-0 my-0 
+                                print:w-[160px] print:bg-white print:mx-0 print:my-1"
                                                 ></th>
                                                 {sitesk.map((site, idx) => (
                                                     <th
                                                         key={idx}
-                                                        className="p-2   text-[10px] font-medium text-center bg-white w-20 mx-0 my-0 
-                                    print:text-[8px] print:font-medium print:text-center print:bg-white print:w-20 print:mx-1 print:my-1"
+                                                        className="p-2 text-[10px] font-medium text-center bg-white w-28 mx-0 my-0 whitespace-normal break-words leading-tight 
+                                    print:text-[8px] print:font-medium print:text-center print:bg-white print:w-24 print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
                                                     >
                                                         {site}
                                                     </th>
@@ -3584,7 +3800,7 @@ const AllContent = () => {
                 <h1 className="report-title text-2xl font-bold mb-0 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-2">
                     Consumables Overview
                 </h1>
-                <div className="bg-white p-6 no-break print:p-4 print:w-[99%] print:mx-auto">
+                <div className={sectionBox}>
 
 
                     {/* Top Consumables – Centre-wise Overview */}
@@ -3601,11 +3817,11 @@ const AllContent = () => {
                                 <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:leading-relaxed">
                                     <thead>
                                         <tr className="bg-[#DAD6C9] text-[#C72030] text-left print:bg-[#DAD6C9] print:text-[#C72030]">
-                                            <th className="py-1 px-4 print:py-1 print:px-2 print:w-[20%]">Inventory</th>
+                                            <th className="py-1 px-4 print:py-1 print:px-2 print:w-[22%] print:whitespace-normal print:break-words print:align-top">Inventory</th>
                                             {topConsumableHeaders.map((header, index) => (
                                                 <th
                                                     key={index}
-                                                    className="py-1 px-2 text-left print:py-1 print:px-2"
+                                                    className="py-1 px-2 text-left print:py-1 print:px-1 print:whitespace-normal print:break-words print:align-top print:text-[9px]"
                                                 >
                                                     {header}
                                                 </th>
@@ -3615,11 +3831,11 @@ const AllContent = () => {
                                     <tbody>
                                         {consumablesTableData.map((row, i) => (
                                             <tr key={i} className={i % 2 === 0 ? "bg-gray-50 print:bg-gray-50" : ""}>
-                                                <td className="py-1 px-4 bg-[#F6F4EE] font-medium print:py-1 print:px-2 print:bg-[#F6F4EE]">
+                                                <td className="py-1 px-4 bg-[#F6F4EE] font-medium print:py-1 print:px-2 print:bg-[#F6F4EE] print:whitespace-normal print:break-words print:align-top">
                                                     {row.inventory}
                                                 </td>
                                                 {row.values.map((value, j) => (
-                                                    <td key={j} className="py-1 px-2 text-center print:py-1 print:px-2">
+                                                    <td key={j} className="py-1 px-2 text-center print:py-1 print:px-1 print:whitespace-normal print:break-words print:align-top print:text-[9px]">
                                                         {value}
                                                     </td>
                                                 ))}
@@ -3635,15 +3851,15 @@ const AllContent = () => {
                             <strong>Note :</strong> This table highlights the top 10 consumable rate used across each
                             centre, helping to monitor usage patterns and manage inventory more effectively.
                             <br />
-                            <strong>Formula:</strong> Total consumable x( Average Sqft (1000) / Site Sqft )
+                            {/* <strong>Formula:</strong> Total consumable x( Average Sqft (1000) / Site Sqft ) */}
                         </div>
                     </div>
 
-                    {/* Consumable Inventory Value – Quarterly Comparison */}
+                    {/* Consumable Inventory Value – {periodUnit}ly Comparison */}
                     {/* Consumable Inventory Value – Quarterly Comparison */}
                     <div className="p-8 bg-white border border-gray-300   print-page-break print:p-3 print:border-gray-300   print:mt-2">
                         <h2 className="text-lg font-bold mb-4 text-gray-900 border-b pb-2 print:text-[14px] print:mb-1 print:pb-1 print:border-gray-300">
-                            Consumable Inventory Value – Quarterly Comparison
+                            Consumable Inventory Value – {periodUnit}ly Comparison
                         </h2>
                         <div className="h-[500px] print:h-[300px]">
                             {loadingConsumableInventoryComparison ? (
@@ -3654,7 +3870,7 @@ const AllContent = () => {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart
                                         data={consumableComparisonRows}
-                                        margin={{ top: 20, right: 20, left: 20, bottom: 80 }}
+                                        margin={{ top: 20, right: 20, left: 70, bottom: 80 }}
                                         barCategoryGap={20}
                                     >
                                         <CartesianGrid stroke="#ddd" strokeDasharray="3 3" />
@@ -3667,6 +3883,7 @@ const AllContent = () => {
                                             tick={{ fontSize: 12 }}
                                         />
                                         <YAxis
+                                            width={80}
                                             domain={[0, consumableMaxRaw || 0]}
                                             ticks={consumableTicks}
                                             tickFormatter={(v) => formatToK(v)}
@@ -3691,14 +3908,14 @@ const AllContent = () => {
                                         <Bar
                                             dataKey="lastQuarter"
                                             fill="#D6BBAF"
-                                            name="Last Quarter"
+                                            name={lastLabel}
                                             barSize={40}
                                             label={{ position: "top", formatter: (val: any) => formatToK(val), fill: "#444" }}
                                         />
                                         <Bar
                                             dataKey="currentQuarter"
                                             fill="#D3D6D4"
-                                            name="Current Quarter"
+                                            name={currentLabel}
                                             barSize={40}
                                             label={{ position: "top", formatter: (val: any) => formatToK(val), fill: "#444" }}
                                         />
@@ -3707,7 +3924,7 @@ const AllContent = () => {
                             )}
                         </div>
                         <p className="text-sm text-gray-700 mt-6 border-t pt-4 print:text-[11px] print:mt-1 print:pt-1 print:border-gray-300">
-                            <strong>Note:</strong> This graph illustrates total consumable inventory usage with a comparison to the previous quarter, highlighting trends in consumption.
+                            <strong>Note:</strong> This graph illustrates total consumable inventory usage with a comparison to the previous period, highlighting trends in consumption.
                         </p>
                     </div>
 
@@ -3716,61 +3933,109 @@ const AllContent = () => {
 
             {/* Parking and vistor Management */}
             <div className="print-page break-before-page">
-                <div className="max-w-9xl bg-white rounded-lg flex flex-col print:pb-0">
-                    <div>
-                        <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
-                            Parking Management            </h1>
+                <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
+                    Parking Management
+                </h1>
+                <div className={sectionBox}>
                         <div className="flex flex-col print:p-4 mb-8">
                             <h2 className="text-lg  p-4  font-semibold mb-2">Parking Allocation Overview – Paid, Free & Vacant</h2>
                             <div className="border-b border-gray-300 w-full" />
                         </div>
 
-                    </div>
+                        {/* Print-only mini legend for Parking section */}
+                        <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full bg-[#a0b5c1]" />
+                                <span>Free</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
+                                <span>Paid</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
+                                <span>Vacant</span>
+                            </div>
+                        </div>
 
-                    {/* Chart */}
-                    <div className="w-full overflow-x-auto">
+                    {/* Chart: Desktop responsive + Print/Mobile fixed */}
+                    <div className="w-full">
                         {loadingParkingDateSiteWise ? (
                             <div className="text-center py-6 text-gray-600">Loading parking data…</div>
                         ) : parkingChartData.length === 0 ? (
                             <div className="text-center py-6 text-gray-600">No parking data available.</div>
                         ) : (
-                            <BarChart
-                                width={800}
-                                height={Math.max(300, parkingChartData.length * 50)}
-                                data={parkingChartData}
-                                layout="vertical"
-                                margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
-                                barCategoryGap="10%"
-                                barGap={3}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis
-                                    type="number"
-                                    label={{
-                                        value: "Count of Parking Slots",
-                                        position: "insideBottom",
-                                        offset: -5,
-                                    }}
-                                    tick={{ fontSize: 12 }}
-                                />
-                                <YAxis
-                                    type="category"
-                                    dataKey="site"
-                                    tick={{ fontSize: 12 }}
-                                    width={200}
-                                />
-                                <Tooltip />
-                                <Legend verticalAlign="top" align="right" />
-                                <Bar dataKey="Free" fill="#a0b5c1" name="Free" barSize={28}>
-                                    <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }} />
-                                </Bar>
-                                <Bar dataKey="Paid" fill="#c5ae94" name="Paid" barSize={28}>
-                                    <LabelList dataKey="Paid" position="right" style={{ fontSize: 10 }} />
-                                </Bar>
-                                <Bar dataKey="Vacant" fill="#dad8cf" name="Vacant" barSize={28}>
-                                    <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }} />
-                                </Bar>
-                            </BarChart>
+                            <>
+                                {/* Desktop-only full graph (hidden in print) */}
+                                <div className="hidden md:block print:hidden">
+                                    <div
+                                        style={{
+                                            width: '100%',
+                                            height: `${Math.max(360, Math.min(900, ((parkingChartData?.length || 1) * 48) + 160))}px`,
+                                        }}
+                                    >
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart
+                                                data={parkingChartData}
+                                                layout="vertical"
+                                                margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                                                barCategoryGap="10%"
+                                                barGap={3}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis
+                                                    type="number"
+                                                    label={{ value: "Count of Parking Slots", position: "insideBottom", offset: -5 }}
+                                                    tick={{ fontSize: 12 }}
+                                                />
+                                                <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={220} />
+                                                <Tooltip />
+                                                <Legend verticalAlign="top" align="right" />
+                                                <Bar dataKey="Free" fill="#a0b5c1" name="Free" barSize={28}>
+                                                    <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }} />
+                                                </Bar>
+                                                <Bar dataKey="Paid" fill="#c5ae94" name="Paid" barSize={28}>
+                                                    <LabelList dataKey="Paid" position="right" style={{ fontSize: 10 }} />
+                                                </Bar>
+                                                <Bar dataKey="Vacant" fill="#dad8cf" name="Vacant" barSize={28}>
+                                                    <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }} />
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* Print/PDF and mobile fixed-size chart */}
+                                <div className="overflow-x-auto block print:block md:hidden">
+                                    <BarChart
+                                        width={800}
+                                        height={Math.max(300, parkingChartData.length * 50)}
+                                        data={parkingChartData}
+                                        layout="vertical"
+                                        margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                                        barCategoryGap="10%"
+                                        barGap={3}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            type="number"
+                                            label={{ value: "Count of Parking Slots", position: "insideBottom", offset: -5 }}
+                                            tick={{ fontSize: 12 }}
+                                        />
+                                        <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={200} />
+                                        <Tooltip />
+                                        <Bar dataKey="Free" fill="#a0b5c1" name="Free" barSize={28}>
+                                            <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }} />
+                                        </Bar>
+                                        <Bar dataKey="Paid" fill="#c5ae94" name="Paid" barSize={28}>
+                                            <LabelList dataKey="Paid" position="right" style={{ fontSize: 10 }} />
+                                        </Bar>
+                                        <Bar dataKey="Vacant" fill="#dad8cf" name="Vacant" barSize={28}>
+                                            <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }} />
+                                        </Bar>
+                                    </BarChart>
+                                </div>
+                            </>
                         )}
                     </div>
 
@@ -3782,71 +4047,103 @@ const AllContent = () => {
             </div>
             <div className='print-page break-before-page'>
                 {/* Visitor Management */}
-                <div className="max-w-9xl bg-white rounded-lg flex flex-col ">
+                <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
+                    Visitor Management
+                </h1>
+                <div className={sectionBox}>
                     {/* Header and legend */}
-                    <div>
-                        <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
-                            Visitor Management
-                        </h1>
-                        <div className="flex  p-4  flex-col print:p-4 mb-8">
-                            <h2 className="text-lg font-semibold mb-2">Visitor Trend Analysis</h2>
-                            <div className="border-b border-gray-300 w-full" />
-                        </div>
-
+                    <div className="flex p-4 flex-col print:p-4 mb-8">
+                        <h2 className="text-lg font-semibold mb-2">Visitor Trend Analysis</h2>
+                        <div className="border-b border-gray-300 w-full" />
                     </div>
 
-                    {/* Chart container with max height and scroll in screen if needed */}
-                    <div className="w-full overflow-x-auto">
+                    {/* Print-only mini legend for Visitor section */}
+                    <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
+                            <span>{lastLabel}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
+                            <span>{currentLabel}</span>
+                        </div>
+                    </div>
+
+                    {/* Chart: Desktop responsive + Print/Mobile fixed */}
+                    <div className="w-full">
                         {loadingVisitorTrendAnalysis ? (
                             <div className="p-4 text-sm text-gray-600">Loading visitor trends…</div>
                         ) : visitorTrendRows.length === 0 ? (
                             <div className="p-4 text-sm text-gray-600">No visitor trend data available.</div>
                         ) : (
-                            <BarChart
-                                width={800}
-                                height={visitorChartHeight}
-                                data={visitorTrendRows}
-                                layout="vertical"
-                                barCategoryGap="10%"
-                                barGap={3}
-                                margin={{ top: 5, right: 100, left: 0, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis
-                                    type="number"
-                                    label={{ value: "Counts", position: "insideBottom", offset: -5 }}
-                                    fontSize={15}
-                                />
-                                <YAxis
-                                    type="category"
-                                    dataKey="site"
-                                    tick={{ fontSize: 12 }}
-                                    width={180}
-                                    fontSize={15}
-                                />
-                                <Tooltip />
-                                <Legend verticalAlign="top" align="right" style={{ fontSize: 10 }} />
+                            <>
+                                {/* Desktop-only full graph (hidden in print) */}
+                                <div className="hidden md:block print:hidden">
+                                    <div
+                                        style={{
+                                            width: '100%',
+                                            height: `${Math.max(360, Math.min(900, ((visitorTrendRows?.length || 1) * 48) + 160))}px`,
+                                        }}
+                                    >
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart
+                                                data={visitorTrendRows}
+                                                layout="vertical"
+                                                barCategoryGap="10%"
+                                                barGap={3}
+                                                margin={{ top: 5, right: 100, left: 0, bottom: 5 }}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis type="number" label={{ value: "Counts", position: "insideBottom", offset: -5 }} fontSize={15} />
+                                                <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={200} fontSize={15} />
+                                                <Tooltip />
+                                                <Legend verticalAlign="top" align="right" style={{ fontSize: 10 }} />
+                                                <Bar dataKey="last" fill="#dad8cf" name={lastLabel} barSize={28}>
+                                                    <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
+                                                </Bar>
+                                                <Bar dataKey="current" fill="#c5ae94" name={currentLabel} barSize={28}>
+                                                    <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
 
-                                <Bar dataKey="last" fill="#dad8cf" name="Last Quarter" barSize={28}>
-                                    <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
-                                </Bar>
-
-                                <Bar dataKey="current" fill="#c5ae94" name="Current Quarter" barSize={28}>
-                                    <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
-                                </Bar>
-                            </BarChart>
+                                {/* Print/PDF and mobile fixed-size chart */}
+                                <div className="overflow-x-auto block print:block md:hidden">
+                                    <BarChart
+                                        width={800}
+                                        height={visitorChartHeight}
+                                        data={visitorTrendRows}
+                                        layout="vertical"
+                                        barCategoryGap="10%"
+                                        barGap={3}
+                                        margin={{ top: 5, right: 100, left: 0, bottom: 5 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis type="number" label={{ value: "Counts", position: "insideBottom", offset: -5 }} fontSize={15} />
+                                        <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={180} fontSize={15} />
+                                        <Tooltip />
+                                        {/* Legend removed for print/mobile to avoid overlap; see print-only legend above */}
+                                        <Bar dataKey="last" fill="#dad8cf" name={lastLabel} barSize={28}>
+                                            <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
+                                        </Bar>
+                                        <Bar dataKey="current" fill="#c5ae94" name={currentLabel} barSize={28}>
+                                            <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
+                                        </Bar>
+                                    </BarChart>
+                                </div>
+                            </>
                         )}
                     </div>
 
-
                     {/* Note */}
                     <p className="text-sm text-gray-500 p-4 mt-4 print:mt-4">
-                        <strong>Note:</strong> This graph shows the total visitor count compared to the previous quarter,
+                        <strong>Note:</strong> This graph shows the total visitor count compared to the previous period,
                         providing a clear view of trends and changes in footfall over time for performance comparison.
                     </p>
                 </div>
             </div>
-
         </>
     );
 };

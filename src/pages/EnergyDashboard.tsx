@@ -125,8 +125,8 @@ export const EnergyDashboard = () => {
         if (!response.ok) throw new Error("Failed to fetch energy assets");
         const data = await response.json();
         setEnergyAssets(data.assets || []);
-        setTotalCount(data.total_count || 0);
-        setTotalPages(data.total_pages || 1);
+        setTotalCount(data.pagination?.total_count || 0);
+        setTotalPages(data.pagination?.total_pages || 1);
       } catch (err) {
         setError(err.message || "Error fetching energy assets");
         setEnergyAssets([]);

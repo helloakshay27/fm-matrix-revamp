@@ -8,6 +8,9 @@ import { fetchInventory, updateInventory, clearError, resetInventoryState } from
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
@@ -46,6 +49,8 @@ export const EditInventoryPage = () => {
   const [invSubTypeLoading, setInvSubTypeLoading] = useState(false);
   const [invTypeId, setInvTypeId] = useState<string>('');
   const [invSubTypeId, setInvSubTypeId] = useState<string>('');
+  // Preserve the originally saved expiry date (YYYY-MM-DD) to enforce as minimum in edit
+  const [initialExpiryYMD, setInitialExpiryYMD] = useState<string>('');
   // Main form data state (moved up so suggestion filtering can reference it)
   const [formData, setFormData] = useState({
     assetName: '',
@@ -66,14 +71,21 @@ export const EditInventoryPage = () => {
     cgstRate: '',
     igstRate: ''
   });
-  // Today (YYYY-MM-DD) used to restrict selecting past dates for expiry
-  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // Today (YYYY-MM-DD) in LOCAL time to align with DatePicker disablePast and comparisons
+  const todayISO = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, []);
   // Validation errors state for required fields
   const [errors, setErrors] = useState<{
     inventoryName?: string;
     inventoryCode?: string;
     minStockLevel?: string;
-  expiryDate?: string;
+    maxStockLevel?: string;
+    expiryDate?: string;
   }>({});
   // Inventory name suggestion state
   const [nameSuggestions, setNameSuggestions] = useState<any[]>([]); // raw API suggestions
@@ -81,6 +93,25 @@ export const EditInventoryPage = () => {
   const [showNameSuggestions, setShowNameSuggestions] = useState(false); // actual dropdown visibility (only when filtered matches exist)
   const nameDebounceRef = useRef<number | null>(null);
   const inventoryNameWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  // Helpers to safely convert between YYYY-MM-DD and Date without timezone drift
+  const parseYMDToDate = (s: string | null | undefined): Date | null => {
+    if (!s) return null;
+    const parts = s.split('-');
+    if (parts.length !== 3) return null;
+    const y = Number(parts[0]);
+    const m = Number(parts[1]);
+    const d = Number(parts[2]);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
+  const formatDateToYMD = (date: Date | null): string => {
+    if (!date) return '';
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
   const fetchSAC = async () => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
@@ -198,6 +229,8 @@ export const EditInventoryPage = () => {
   useEffect(() => {
     if (fetchedInventory) {
       const normalizedExpiry = fetchedInventory.expiry_date ? formatDateForInput(fetchedInventory.expiry_date) : '';
+  // Keep a copy of the original expiry date for minDate/validation in edit
+  setInitialExpiryYMD(normalizedExpiry);
       // Prefer vendor name over id for display
       const vendorName = (fetchedInventory as any)?.vendor_name || (fetchedInventory as any)?.vendor?.company_name || '';
       setFormData({
@@ -313,7 +346,7 @@ export const EditInventoryPage = () => {
         const data = await res.json();
         let arr: any[] = [];
         if (Array.isArray(data)) arr = data;
-        else if (Array.isArray(data?.item_types)) arr = data.item_types;       
+        else if (Array.isArray(data?.item_types)) arr = data.item_types;
         setInvTypeOptions(arr);
       } catch (e) {
         console.error('Error fetching inventory types', e);
@@ -355,10 +388,9 @@ export const EditInventoryPage = () => {
   }, [invTypeId]);
 
   const handleInputChange = (field: string, value: string) => {
-    // Basic sanitization for specific fields
+    // Sanitize numeric-only fields: Min/Max Stock and Min Order should accept digits only
     let nextVal = value;
-    if (field === 'minStockLevel') {
-      // Only digits allowed for Min. Stock Level
+    if (field === 'minStockLevel' || field === 'maxStockLevel' || field === 'minOrderLevel') {
       nextVal = value.replace(/\D/g, '');
     }
 
@@ -368,7 +400,17 @@ export const EditInventoryPage = () => {
       setFormData(prev => ({ ...prev, expiryDate: val }));
       setErrors(prev => ({
         ...prev,
-        expiryDate: val && val < todayISO ? 'Expiry Date cannot be in the past.' : ''
+        // In edit, the minimum allowed should be the originally saved expiry date.
+        // Fallback to today only if we don't have an original.
+        expiryDate: (() => {
+          const minYMD = initialExpiryYMD || todayISO;
+          if (val && minYMD && val < minYMD) {
+            // Show friendly dd-MM-yyyy for the min date
+            const [y,m,d] = minYMD.split('-');
+            return `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
+          }
+          return '';
+        })()
       }));
       return;
     }
@@ -384,11 +426,29 @@ export const EditInventoryPage = () => {
       const msg = nextVal.trim() ? '' : 'Inventory Code is required.';
       setErrors(prev => ({ ...prev, inventoryCode: msg }));
     }
-    if (field === 'minStockLevel') {
-      let msg = '';
-      if (!nextVal.trim()) msg = 'Min. Stock Level is required.';
-      else if (!/^\d+$/.test(nextVal)) msg = 'Enter a valid number.';
-      setErrors(prev => ({ ...prev, minStockLevel: msg }));
+    // Min/Max Stock cross-field validation (Edit page)
+    if (field === 'minStockLevel' || field === 'maxStockLevel') {
+      const newMin = field === 'minStockLevel' ? nextVal : formData.minStockLevel;
+      const newMax = field === 'maxStockLevel' ? nextVal : formData.maxStockLevel;
+
+      let minErr = '';
+      let maxErr = '';
+
+      // Validate formats
+      if (!newMin.trim()) minErr = 'Min. Stock Level is required.';
+      else if (!/^\d+$/.test(newMin)) minErr = 'Enter a valid number.';
+
+      if (newMax && !/^\d+$/.test(newMax)) maxErr = 'Max Stock Level must be a valid number';
+
+      // Cross-field compare when both present and numeric
+      if (/^\d+$/.test(newMin) && /^\d+$/.test(newMax)) {
+        if (parseInt(newMin, 10) > parseInt(newMax, 10)) {
+          minErr = 'Min Stock Level cannot be greater than Max Stock Level';
+          maxErr = 'Max Stock Level cannot be less than Min Stock Level';
+        }
+      }
+
+      setErrors(prev => ({ ...prev, minStockLevel: minErr, maxStockLevel: maxErr }));
     }
   };
 
@@ -403,7 +463,21 @@ export const EditInventoryPage = () => {
     if (!formData.inventoryCode.trim()) newErrors.inventoryCode = 'Inventory Code is required.';
     if (!formData.minStockLevel.trim()) newErrors.minStockLevel = 'Min. Stock Level is required.';
     else if (!/^\d+$/.test(formData.minStockLevel)) newErrors.minStockLevel = 'Enter a valid number.';
-  if (formData.expiryDate && formData.expiryDate < todayISO) newErrors.expiryDate = 'Expiry Date cannot be in the past.';
+    if (formData.maxStockLevel && !/^\d+$/.test(formData.maxStockLevel)) newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
+    // Cross-field: Min <= Max when both provided
+    if (/^\d+$/.test(formData.minStockLevel) && /^\d+$/.test(formData.maxStockLevel)) {
+      if (parseInt(formData.minStockLevel, 10) > parseInt(formData.maxStockLevel, 10)) {
+        newErrors.minStockLevel = 'Min Stock Level cannot be greater than Max Stock Level';
+        newErrors.maxStockLevel = 'Max Stock Level cannot be less than Min Stock Level';
+      }
+    }
+    if (formData.expiryDate) {
+      const minYMD = initialExpiryYMD || todayISO;
+      if (formData.expiryDate < minYMD) {
+        const [y,m,d] = minYMD.split('-');
+        newErrors.expiryDate = `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
+      }
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -439,9 +513,9 @@ export const EditInventoryPage = () => {
       max_stock_level: parseInt(formData.maxStockLevel) || 0,
       min_stock_level: parseInt(formData.minStockLevel) || 0,
       min_order_level: formData.minOrderLevel || "0",
-  // New master fields
-  pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
-  pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
+      // New master fields
+      pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
+      pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
       green_product: ecoFriendly ? 1 : 0,
       // Use rate_contract_vendor_code to align with create endpoint (retain legacy key if backend still expects it)
       // Map vendor name back to id
@@ -528,6 +602,9 @@ export const EditInventoryPage = () => {
       </div>
     );
   }
+
+  // (removed duplicate today variable, rely on validations and DatePicker's disablePast)
+
 
   return (
     <div className="p-6 min-h-screen bg-gray-50">
@@ -760,7 +837,7 @@ export const EditInventoryPage = () => {
               </div>
 
               {/* Form Grid - Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div>
                   <TextField
                     label="Cost"
@@ -839,19 +916,62 @@ export const EditInventoryPage = () => {
                 </div>
 
                 <div>
-                  <TextField
-                    label="Expiry Date"
-                    type="date"
-                    value={formData.expiryDate}
-                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                    inputProps={{ min: todayISO }}
-                    error={Boolean(errors.expiryDate)}
-                    helperText={errors.expiryDate || ''}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      label="Expiry Date"
+                      value={parseYMDToDate(formData.expiryDate)}
+                      onChange={(date) => {
+                        const ymd = formatDateToYMD(date as Date | null);
+                        handleInputChange("expiryDate", ymd);
+                      }}
+                      // In edit mode, allow any date on/after the originally saved expiry date
+                      minDate={parseYMDToDate(initialExpiryYMD) || undefined}
+                      format='dd-MM-yyyy'
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: "outlined",
+                          size: "small", 
+                          InputLabelProps: { shrink: true },
+                          sx: {
+                            ...fieldStyles,
+                            "& .MuiInputBase-root": {
+                              height: 40, 
+                            },
+                            "& .MuiInputBase-input": {
+                              padding: "8px 12px", 
+                            },
+                          },
+                          error: Boolean(errors.expiryDate),
+                          helperText: errors.expiryDate || "",
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+
+                </div>
+
+                {/* Inventory Type moved here before Select Category */}
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                    <InputLabel shrink>Inventory Type</InputLabel>
+                    <MuiSelect
+                      value={invTypeId}
+                      onChange={(e) => {
+                        setInvTypeId(e.target.value as string);
+                      }}
+                      label="Inventory Type"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
+                      {invTypeOptions.map((opt) => (
+                        <MenuItem key={opt.id} value={String(opt.id)}>
+                          {opt.name || opt.title || opt.label || String(opt.id)}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
                 <div>
@@ -915,6 +1035,8 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
+                    error={Boolean(errors.maxStockLevel)}
+                    helperText={errors.maxStockLevel || ''}
                     sx={fieldStyles}
                   />
                 </div>
@@ -948,54 +1070,7 @@ export const EditInventoryPage = () => {
                 </div>
               </div>
 
-              {/* Inventory Type Masters - placed after Min Order Level */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Type</InputLabel>
-                    <MuiSelect
-                      value={invTypeId}
-                      onChange={(e) => {
-                        setInvTypeId(e.target.value as string);
-                        // Don't clear existing sub type id immediately; keep selected until list loads and validates
-                      }}
-                      label="Inventory Type"
-                      notched
-                      displayEmpty
-                    >
-                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
-                      {invTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Sub Type</InputLabel>
-                    <MuiSelect
-                      value={invSubTypeId}
-                      onChange={(e) => setInvSubTypeId(e.target.value as string)}
-                      label="Inventory Sub Type"
-                      notched
-                      displayEmpty
-                      disabled={!invTypeId || invSubTypeLoading}
-                    >
-                      <MenuItem value="">
-                        {invSubTypeLoading ? 'Loading...' : (!invTypeId ? 'Select Inventory Type first' : 'Select Inventory Sub Type')}
-                      </MenuItem>
-                      {invSubTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-              </div>
+              {/* Removed Inventory Sub Type field; Inventory Type moved above in Second Row */}
 
             </div>
           )}

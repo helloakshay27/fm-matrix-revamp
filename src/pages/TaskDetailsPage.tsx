@@ -16,6 +16,9 @@ import {
 } from '@mui/material';
 import { userService } from '@/services/userService';
 import { taskService, TaskOccurrence } from '@/services/taskService';
+import { JobSheetModal } from '@/components/JobSheetModal';
+
+
 
 
 // If User type is not imported, define minimally here:
@@ -36,7 +39,6 @@ export const TaskDetailsPage = () => {
   const [showJobSheetModal, setShowJobSheetModal] = useState(false);
   const [jobSheetData, setJobSheetData] = useState<any>(null);
   const [jobSheetLoading, setJobSheetLoading] = useState(false);
-  const [jobSheetComments, setJobSheetComments] = useState('');
 
   // Submit form state
   const [formData, setFormData] = useState({
@@ -102,8 +104,10 @@ export const TaskDetailsPage = () => {
       if (!id) return;
       try {
         setLoading(true);
-        const details = await taskService.getTaskDetails(id);
-        setTaskDetails(details);
+        const response = await taskService.getTaskDetails(id);
+        // Map the API response to match our component structure
+        const mappedDetails = (response as any).task_occurrence ? (response as any).task_occurrence : response;
+        setTaskDetails(mappedDetails);
       } catch (error) {
         toast({
           title: 'Error',
@@ -149,7 +153,6 @@ export const TaskDetailsPage = () => {
       setShowJobSheetModal(true);
       const jobSheet = await taskService.getJobSheet(id);
       setJobSheetData(jobSheet);
-      setJobSheetComments(jobSheet.task_comments || '');
     } catch (error) {
       toast({
         title: 'Error',
@@ -200,7 +203,9 @@ export const TaskDetailsPage = () => {
     try {
       const payload = {
         start_date: getStartDateString(),
-        email: rescheduleData.email
+        user_ids: [Number(taskDetails?.task_details?.assigned_to) || 1], // Ensure it's a number
+        email: rescheduleData.email,
+        sms: false // Default to false for SMS
       };
 
       await taskService.rescheduleTask(id!, payload);
@@ -222,22 +227,9 @@ export const TaskDetailsPage = () => {
     }
   };
 
-  const handleJobSheetUpdate = async () => {
-    if (!id) return;
-    try {
-      await taskService.updateTaskComments(id, jobSheetComments);
-      setShowJobSheetModal(false);
-      toast({
-        title: 'Success',
-        description: 'Comments updated successfully!'
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update comments. Please try again.',
-        variant: 'destructive'
-      });
-    }
+  const handleCloseJobSheet = () => {
+    setShowJobSheetModal(false);
+    setJobSheetData(null);
   };
 
   // --- UI Helper
@@ -296,7 +288,7 @@ export const TaskDetailsPage = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-[#1a1a1a]">Task Details</h1>
             <div className="flex gap-3">
-              {taskDetails.task_details.status.value.toLowerCase() === 'closed' && (
+              {(taskDetails?.actions?.can_view_job_sheet || taskDetails?.task_details?.status?.value?.toLowerCase() === 'closed') && (
                 <Button
                   onClick={handleJobSheetClick}
                   style={{
@@ -307,7 +299,7 @@ export const TaskDetailsPage = () => {
                   Job Sheet
                 </Button>
               )}
-              {/* {taskDetails.actions.can_submit_task && (
+              {taskDetails?.actions?.can_submit_task && (
                 <Button
                   onClick={handleSubmitTask}
                   style={{
@@ -317,8 +309,8 @@ export const TaskDetailsPage = () => {
                 >
                   Submit Task
                 </Button>
-              )} */}
-              {taskDetails.actions.can_reschedule && (
+              )}
+              {taskDetails?.actions?.can_reschedule && (
                 <Button
                   onClick={handleTaskReschedule}
                   style={{
@@ -359,7 +351,7 @@ export const TaskDetailsPage = () => {
                 <div>
                   <label className="text-sm text-gray-600">ID</label>
                   <p className="font-medium">
-                    {taskDetails.task_details.id}
+                    {taskDetails?.task_details?.id || taskDetails?.id}
                   </p>
                 </div>
                 <div>
@@ -367,7 +359,7 @@ export const TaskDetailsPage = () => {
                     Associated With
                   </label>
                   <p className="font-medium">
-                    {taskDetails.task_details.associated_with}
+                    {taskDetails?.task_details?.associated_with}
                   </p>
                 </div>
                 <div>
@@ -375,13 +367,13 @@ export const TaskDetailsPage = () => {
                     Asset/Service Code
                   </label>
                   <p className="font-medium">
-                    {taskDetails.task_details.asset_service_code}
+                    {taskDetails?.task_details?.asset_service_code}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Schedule on</label>
                   <p className="font-medium">
-                    {taskDetails.task_details.scheduled_on}
+                    {taskDetails?.task_details?.scheduled_on}
                   </p>
                 </div>
                 <div>
@@ -389,22 +381,22 @@ export const TaskDetailsPage = () => {
                     Task Duration
                   </label>
                   <p className="font-medium">
-                    {taskDetails.task_details.task_duration}
+                    {taskDetails?.task_details?.task_duration}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Created By</label>
                   <p className="font-medium">
-                    {taskDetails.task_details.created_by}
+                    {taskDetails?.task_details?.created_by}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Status</label>
-                  <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
-                    {taskDetails.task_details.status.display_name}
+                  <Badge className={getStatusColor(taskDetails?.task_details?.status?.value || '')}>
+                    {taskDetails?.task_details?.status?.display_name}
                   </Badge>
                 </div>
-                {taskDetails.task_details.completed_on && (
+                {taskDetails?.task_details?.completed_on && (
                   <div>
                     <label className="text-sm text-gray-600">Completed on</label>
                     <p className="font-medium">
@@ -412,7 +404,7 @@ export const TaskDetailsPage = () => {
                     </p>
                   </div>
                 )}
-                {taskDetails.task_details.start_time && (
+                {taskDetails?.task_details?.start_time && (
                   <div>
                     <label className="text-sm text-gray-600">Start time</label>
                     <p className="font-medium">
@@ -425,7 +417,7 @@ export const TaskDetailsPage = () => {
                 <div>
                   <label className="text-sm text-gray-600">Task</label>
                   <p className="font-medium">
-                    {taskDetails.task_details.task_name}
+                    {taskDetails?.task_details?.task_name}
                   </p>
                 </div>
                 <div>
@@ -433,34 +425,34 @@ export const TaskDetailsPage = () => {
                     Asset/Service Name
                   </label>
                   <p className="font-medium">
-                    {taskDetails.task_details.asset_service_name}
+                    {taskDetails?.task_details?.asset_service_name}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Supplier</label>
                   <p className="font-medium">
-                    {taskDetails.task_details.supplier}
+                    {taskDetails?.task_details?.supplier || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Assigned to</label>
                   <p className="font-medium">
-                    {taskDetails.task_details.assigned_to}
+                    {taskDetails?.task_details?.assigned_to}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Created on</label>
                   <p className="font-medium">
-                    {taskDetails.task_details.created_on}
+                    {taskDetails?.task_details?.created_on}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Location</label>
                   <p className="font-medium text-sm">
-                    {taskDetails.task_details.location.full_location}
+                    {taskDetails?.task_details?.location?.full_location}
                   </p>
                 </div>
-                {taskDetails.task_details.performed_by && (
+                {taskDetails?.task_details?.performed_by && (
                   <div>
                     <label className="text-sm text-gray-600">Performed by</label>
                     <p className="font-medium">
@@ -510,68 +502,91 @@ export const TaskDetailsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {taskDetails?.activity?.resp?.length > 0 ? (
-                    taskDetails.activity.resp.map((activity: any, index: number) => {
-                      const files = taskDetails.attachments?.blob_store_files?.filter(
-                        (file: any) => file.relation === `AssetQuestResponse${activity.name}`
-                      );
+                        {taskDetails?.activity?.resp?.length > 0 ? (
+                          taskDetails.activity.resp.map((activity: any, index: number) => {
+                            const files = taskDetails.attachments?.blob_store_files?.filter(
+                              (file: any) => file.relation === `AssetQuestResponse${activity.name}`
+                            );
 
-                      const score =
-                        typeof taskDetails.activity.total_score === 'object'
-                          ? taskDetails.activity.total_score?.score ?? '-'
-                          : taskDetails.activity.total_score ?? '-';
+                            const totalScore = taskDetails.activity.total_score;
+                            const score = totalScore ? `${totalScore.score}` : '-';
 
-                      return (
-                        <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
-                          <td className="p-3 border-b border-r">{activity.hint || '-'}</td>
-                          <td className="p-3 border-b border-r">{activity.label || '-'}</td>
-                          <td className="p-3 border-b border-r">
-                            {activity.userData?.length > 0 ? activity.userData.join(', ') : '-'}
-                          </td>
-                          <td className="p-3 border-b border-r">{activity.comment || '-'}</td>
-                          <td className="p-3 border-b border-r">{activity.weightage || '-'}</td>
-                          <td className="p-3 border-b border-r">{activity.rating || '-'}</td>
-                          <td className="p-3 border-b border-r">{score}</td>
-                          <td className="p-3 border-b border-r">
-                            <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
-                              {taskDetails.task_details.status.display_name}
-                            </Badge>
-                          </td>
-                          <td className="p-3 border-b">
-                            {files?.length > 0 ? (
-                              <div className="space-y-1">
-                                {files.map((file: any) => (
-                                  <div key={file.id} className="flex items-center gap-2">
-                                    <a
-                                      href={file.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
-                                      title={file.filename}
-                                    >
-                                      <img
-                                        src={file.url}
-                                        alt={file.filename}
-                                        className="w-8 h-8 object-cover rounded"
-                                      />
-                                    </a>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-sm text-gray-500">No attachments for this activity</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={9} className="p-3 text-center text-gray-500">
-                        No activities found for this task.
-                      </td>
-                    </tr>
-                  )}
+                            return (
+                              <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
+                                <td className="p-3 border-b border-r">{activity.hint || '-'}</td>
+                                <td className="p-3 border-b border-r">{activity.label || '-'}</td>
+                                <td className="p-3 border-b border-r">
+                                  {activity.userData?.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      {activity.userData.map((userValue: string, idx: number) => {
+                                        const matchingValue = activity.values?.find((val: any) => val.value === userValue);
+                                        const label = matchingValue ? matchingValue.label : userValue;
+                                        const type = matchingValue?.type;
+                                        
+                                        return (
+                                          <span
+                                            key={idx}
+                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                              type === 'positive' 
+                                                ? 'bg-green-100 text-green-800' 
+                                                : type === 'negative' 
+                                                ? 'bg-red-100 text-red-800' 
+                                                : 'bg-gray-100 text-gray-800'
+                                            }`}
+                                          >
+                                            {label}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-500">-</span>
+                                  )}
+                                </td>
+                                <td className="p-3 border-b border-r">{activity.comment || '-'}</td>
+                                <td className="p-3 border-b border-r">{activity.weightage || '-'}</td>
+                                <td className="p-3 border-b border-r">{activity.rating || '-'}</td>
+                                <td className="p-3 border-b border-r">{score}</td>
+                                <td className="p-3 border-b border-r">
+                                  <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
+                                    {taskDetails.task_details.status.display_name}
+                                  </Badge>
+                                </td>
+                                <td className="p-3 border-b">
+                                  {files?.length > 0 ? (
+                                    <div className="space-y-1">
+                                      {files.map((file: any) => (
+                                        <div key={file.id} className="flex items-center gap-2">
+                                          <a
+                                            href={file.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
+                                            title={file.filename}
+                                          >
+                                            <img
+                                              src={file.url}
+                                              alt={file.filename}
+                                              className="w-8 h-8 object-cover rounded"
+                                            />
+                                          </a>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-gray-500">No attachments for this activity</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan={9} className="p-3 text-center text-gray-500">
+                              No activities found for this task.
+                            </td>
+                          </tr>
+                        )}
 
 
                 </tbody>
@@ -747,221 +762,14 @@ export const TaskDetailsPage = () => {
       </Dialog>
 
       {/* Job Sheet Modal */}
-      <Dialog open={showJobSheetModal} onOpenChange={setShowJobSheetModal}>
-        <DialogContent
-          className="max-w-4xl max-h-[80vh] overflow-y-auto"
-          aria-describedby="job-sheet-dialog-description"
-        >
-          <span id="job-sheet-dialog-description" className="sr-only">
-            View and edit job sheet details with comments for the completed task.
-          </span>
-          <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">
-              Job Sheet
-            </DialogTitle>
-            <button
-              onClick={() => setShowJobSheetModal(false)}
-              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </button>
-          </DialogHeader>
-
-          <div className="p-4">
-            {jobSheetLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
-                <span className="ml-2">Loading job sheet...</span>
-              </div>
-            ) : jobSheetData ? (
-              <div className="space-y-6">
-                {/* Job Sheet Header Info */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <label className="text-sm text-gray-600">Created Date</label>
-                      <p className="font-medium">{jobSheetData.created_date || taskDetails?.task_details.created_on}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-600">Job Card No</label>
-                      <p className="font-medium">{jobSheetData.job_card_no || taskDetails?.task_details.id}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-600">Scheduled Date</label>
-                      <p className="font-medium">{jobSheetData.scheduled_date || taskDetails?.task_details.scheduled_on}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm text-gray-600">Job ID</label>
-                      <p className="font-medium">{jobSheetData.job_id || taskDetails?.task_details.id}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <input type="radio" disabled checked={jobSheetData.type === 'assets' || taskDetails?.task_details.associated_with === 'Assets'} />
-                        <label className="text-sm">Assets</label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input type="radio" disabled checked={jobSheetData.type === 'services' || taskDetails?.task_details.associated_with === 'Services'} />
-                        <label className="text-sm">Services</label>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm">Warranty</label>
-                        <input type="radio" disabled checked={jobSheetData.warranty === 'yes'} />
-                        <label className="text-sm">Yes</label>
-                        <input type="radio" disabled checked={jobSheetData.warranty === 'no'} />
-                        <label className="text-sm">No</label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm">Breakdown</label>
-                        <input type="radio" disabled checked={jobSheetData.breakdown === 'yes'} />
-                        <label className="text-sm">Yes</label>
-                        <input type="radio" disabled checked={jobSheetData.breakdown === 'no'} />
-                        <label className="text-sm">No</label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Activities Table */}
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-left bg-gray-50">
-                          <th className="p-3 border-b border-r">Help Text</th>
-                          <th className="p-3 border-b border-r">Activities</th>
-                          <th className="p-3 border-b border-r">Input</th>
-                          <th className="p-3 border-b border-r">Comments</th>
-                          <th className="p-3 border-b border-r">Weightage</th>
-                          <th className="p-3 border-b border-r">Rating</th>
-                          <th className="p-3 border-b border-r">Score</th>
-                          <th className="p-3 border-b border-r">Status</th>
-                          <th className="p-3 border-b">Attachments</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {taskDetails?.activity?.resp?.length > 0 ? (
-                          taskDetails.activity.resp.map((activity: any, index: number) => {
-                            const files = taskDetails.attachments?.blob_store_files?.filter(
-                              (file: any) => file.relation === `AssetQuestResponse${activity.name}`
-                            );
-
-                            const score =
-                              typeof taskDetails.activity.total_score === 'object'
-                                ? taskDetails.activity.total_score?.score ?? '-'
-                                : taskDetails.activity.total_score ?? '-';
-
-                            return (
-                              <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
-                                <td className="p-3 border-b border-r">{activity.hint || '-'}</td>
-                                <td className="p-3 border-b border-r">{activity.label || '-'}</td>
-                                <td className="p-3 border-b border-r">
-                                  {activity.userData?.length > 0 ? activity.userData.join(', ') : '-'}
-                                </td>
-                                <td className="p-3 border-b border-r">{activity.comment || '-'}</td>
-                                <td className="p-3 border-b border-r">{activity.weightage || '-'}</td>
-                                <td className="p-3 border-b border-r">{activity.rating || '-'}</td>
-                                <td className="p-3 border-b border-r">{score}</td>
-                                <td className="p-3 border-b border-r">
-                                  <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
-                                    {taskDetails.task_details.status.display_name}
-                                  </Badge>
-                                </td>
-                                <td className="p-3 border-b">
-                                  {files?.length > 0 ? (
-                                    <div className="space-y-1">
-                                      {files.map((file: any) => (
-                                        <div key={file.id} className="flex items-center gap-2">
-                                          <a
-                                            href={file.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
-                                            title={file.filename}
-                                          >
-                                            <img
-                                              src={file.url}
-                                              alt={file.filename}
-                                              className="w-8 h-8 object-cover rounded"
-                                            />
-                                          </a>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <span className="text-sm text-gray-500">No attachments for this activity</span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })
-                        ) : (
-                          <tr>
-                            <td colSpan={9} className="p-3 text-center text-gray-500">
-                              No activities found for this task.
-                            </td>
-                          </tr>
-                        )}
-
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Additional Comments Section */}
-                <div>
-                  <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
-                    Additional Comments:
-                  </h3>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={4}
-                    value={jobSheetComments}
-                    onChange={(e) => setJobSheetComments(e.target.value)}
-                    variant="outlined"
-                    placeholder="Enter Comments"
-                    sx={{
-                      mb: 2,
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'white'
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={handleJobSheetUpdate}
-                    style={{ backgroundColor: '#22c55e' }}
-                    className="text-white hover:bg-green-600"
-                  >
-                    Update
-                  </Button>
-                </div>
-
-                {/* Performed By and Supplier */}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                  <div>
-                    <label className="text-sm text-gray-600">Performed By (Internal/External)</label>
-                    <p className="font-medium">{jobSheetData.performed_by || taskDetails?.task_details.performed_by || 'a'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600">Supplier</label>
-                    <p className="font-medium">{jobSheetData.supplier || taskDetails?.task_details.supplier}</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p>No job sheet data available</p>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <JobSheetModal
+        isOpen={showJobSheetModal}
+        onClose={handleCloseJobSheet}
+        taskId={id || ''}
+        taskDetails={taskDetails}
+        jobSheetData={jobSheetData}
+        jobSheetLoading={jobSheetLoading}
+      />
     </>
   );
 };

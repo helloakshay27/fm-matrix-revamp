@@ -316,7 +316,7 @@ export const EditExternalUserPage = () => {
         };
         setFormData((prev: any) => ({
           ...prev,
-          company_id: data.company_id || data.lock_user_permission?.company_id || prev.company_id || '',
+          company_id: data.account_id || data.lock_user_permission?.account_id || prev.company_id || '',
           firstname: sanitizeName(data.firstname || ''),
             lastname: sanitizeName(data.lastname || ''),
           email: data.email || '',
@@ -357,7 +357,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyId = formData.company_id || 15;
+        const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
         const url = `https://${baseUrl}/pms/users/get_departments.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const list = resp.data?.departments || [];
@@ -385,7 +385,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyIdForRoles = formData.company_id;
+        const companyIdForRoles = getSelectedCompanyId() ?? formData.company_id;
         const url = `https://${baseUrl}/pms/users/get_lock_roles.json?company_id=${companyIdForRoles}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const list = resp.data?.lock_roles || [];
@@ -413,7 +413,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyId = formData.company_id || 15;
+        const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
         const url = `https://${baseUrl}/pms/users/get_circles.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setCircles(resp.data?.circles || []);
@@ -438,7 +438,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyId = formData.company_id || 145;
+        const companyId = getSelectedCompanyId() ?? (formData.company_id || 145);
         const url = `https://${baseUrl}/pms/users/get_clusters.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setClusters(resp.data?.clusters || []);
@@ -463,7 +463,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyId = formData.company_id || 15;
+        const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
         const url = `https://${baseUrl}/pms/users/get_work_locations.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setWorkLocations(resp.data?.work_locations || []);
@@ -501,7 +501,7 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         setLmLoading(true);
-        const companyId = (originalUser?.company_id || originalUser?.lock_user_permission?.company_id || formData.company_id || 145 || 15);
+        const companyId = getSelectedCompanyId() ?? (originalUser?.company_id || originalUser?.lock_user_permission?.company_id || formData.company_id || 145 || 15);
         const url = `https://${baseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(lmQuery)}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         if (!active) return;
@@ -537,6 +537,18 @@ export const EditExternalUserPage = () => {
     document.addEventListener('input', onInput, true);
     return () => document.removeEventListener('input', onInput, true);
   }, [lmMenuId]);
+
+  // Helper to read selectedCompanyId from localStorage
+  const getSelectedCompanyId = () => {
+    try {
+      const val = localStorage.getItem('selectedCompanyId');
+      if (!val) return null;
+      const n = Number(val);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    } catch {
+      return null;
+    }
+  };
 
   if (loading) {
     return (
@@ -767,38 +779,27 @@ export const EditExternalUserPage = () => {
                     return;
                   }
                   const today = dayjs();
-                  const maxDate = formData.birth_date && dayjs(formData.birth_date).isValid()
-                    ? dayjs.min(dayjs(formData.birth_date), today)
-                    : today;
-                  if (d.isAfter(maxDate, 'day')) {
-                    setFieldErrors(prev => ({
-                      ...prev,
-                      birth_date: `Birth Date cannot be after ${maxDate.format('DD/MM/YYYY')}`
-                    }));
+                  if (d.isAfter(today, 'day')) {
+                    setFieldErrors(prev => ({ ...prev, birth_date: `Birth Date cannot be after ${today.format('DD/MM/YYYY')}` }));
                     return;
                   }
+                  setFieldErrors(prev => ({ ...prev, birth_date: '' }));
+                  // Store in canonical ISO (YYYY-MM-DD) while displaying DD-MM-YYYY
                   handleChange('birth_date', d.format('YYYY-MM-DD'));
                 }}
-                maxDate={formData.birth_date && dayjs(formData.birth_date).isValid()
-                  ? dayjs.min(dayjs(formData.birth_date), dayjs())
-                  : dayjs()}
-                shouldDisableDate={(date) => {
-                  const today = dayjs();
-                  const maxDate = formData.birth_date && dayjs(formData.birth_date).isValid()
-                    ? dayjs.min(dayjs(formData.birth_date), today)
-                    : today;
-                  return dayjs(date).isAfter(maxDate, 'day');
-                }}
+                maxDate={dayjs()}
+                shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
                 slotProps={{
                   textField: {
                     size: 'small',
                     fullWidth: true,
                     error: !!fieldErrors.birth_date,
                     helperText: fieldErrors.birth_date || '',
-                    InputLabelProps: { shrink: true }
+                    InputLabelProps: { shrink: true },
+                    placeholder: 'DD-MM-YYYY'
                   }
                 }}
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
               />
             </LocalizationProvider>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -813,38 +814,26 @@ export const EditExternalUserPage = () => {
                     return;
                   }
                   const today = dayjs();
-                  const maxDate = formData.joining_date && dayjs(formData.joining_date).isValid()
-                    ? dayjs.min(dayjs(formData.joining_date), today)
-                    : today;
-                  if (d.isAfter(maxDate, 'day')) {
-                    setFieldErrors(prev => ({
-                      ...prev,
-                      joining_date: `Joining Date cannot be after ${maxDate.format('DD/MM/YYYY')}`
-                    }));
+                  if (d.isAfter(today, 'day')) {
+                    setFieldErrors(prev => ({ ...prev, joining_date: `Joining Date cannot be after ${today.format('DD/MM/YYYY')}` }));
                     return;
                   }
+                  setFieldErrors(prev => ({ ...prev, joining_date: '' }));
                   handleChange('joining_date', d.format('YYYY-MM-DD'));
                 }}
-                maxDate={formData.joining_date && dayjs(formData.joining_date).isValid()
-                  ? dayjs.min(dayjs(formData.joining_date), dayjs())
-                  : dayjs()}
-                shouldDisableDate={(date) => {
-                  const today = dayjs();
-                  const maxDate = formData.joining_date && dayjs(formData.joining_date).isValid()
-                    ? dayjs.min(dayjs(formData.joining_date), today)
-                    : today;
-                  return dayjs(date).isAfter(maxDate, 'day');
-                }}
+                maxDate={dayjs()}
+                shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
                 slotProps={{
                   textField: {
                     size: 'small',
                     fullWidth: true,
                     error: !!fieldErrors.joining_date,
                     helperText: fieldErrors.joining_date || '',
-                    InputLabelProps: { shrink: true }
+                    InputLabelProps: { shrink: true },
+                    placeholder: 'DD-MM-YYYY'
                   }
                 }}
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
               />
             </LocalizationProvider>
           </div>

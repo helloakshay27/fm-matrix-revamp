@@ -25,7 +25,7 @@ interface STPAssetResponse {
   assets: STPAsset[];
   pagination: {
     current_page: number;
-    total_pages: number;
+    total_pages?: number; // Optional since API might not always provide this
     total_count: number;
   };
   stats: {
@@ -138,7 +138,10 @@ const UtilitySTPDashboard = () => {
       if (response.data) {
         setStpAssets(response.data.assets || []);
         setCurrentPage(response.data.pagination?.current_page || 1);
-        setTotalPages(response.data.pagination?.total_pages || 1);
+        // Calculate total_pages if not provided, assuming 15 items per page
+        const totalPages = response.data.pagination?.total_pages ||
+          Math.ceil((response.data.pagination?.total_count || 0) / 15);
+        setTotalPages(totalPages);
         setTotalCount(response.data.pagination?.total_count || 0);
 
         // Set stats
@@ -411,8 +414,8 @@ const UtilitySTPDashboard = () => {
               )}
           </div>
 
-          {/* Pagination - only show when not in search mode */}
-          {!isSearchMode && (
+          {/* Pagination - only show when not in search mode and there are multiple pages */}
+          {!isSearchMode && pagination.totalPages > 1 && (
             <div className="mt-6">
               <Pagination>
                 <PaginationContent>
@@ -442,7 +445,7 @@ const UtilitySTPDashboard = () => {
                   </PaginationItem>
 
                   {/* Ellipsis before current pages */}
-                  {pagination.currentPage > 4 && (
+                  {pagination.currentPage > 4 && pagination.totalPages > 7 && (
                     <PaginationItem>
                       <span className="px-4 py-2">...</span>
                     </PaginationItem>
@@ -454,7 +457,7 @@ const UtilitySTPDashboard = () => {
                     (_, i) => pagination.currentPage - 1 + i
                   )
                     .filter(
-                      (page) => page > 1 && page < pagination.totalPages
+                      (page) => page > 1 && page < pagination.totalPages && page > 0
                     )
                     .map((page) => (
                       <PaginationItem key={page}>
@@ -468,7 +471,7 @@ const UtilitySTPDashboard = () => {
                     ))}
 
                   {/* Ellipsis after current pages */}
-                  {pagination.currentPage < pagination.totalPages - 3 && (
+                  {pagination.currentPage < pagination.totalPages - 3 && pagination.totalPages > 7 && (
                     <PaginationItem>
                       <span className="px-4 py-2">...</span>
                     </PaginationItem>

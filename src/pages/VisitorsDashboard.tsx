@@ -5,13 +5,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { ColumnVisibilityMenu } from '@/components/ColumnVisibilityDropdown';
 import { VisitorSelectionPanel } from '@/components/VisitorSelectionPanel';
 import { ActionSelectionPanel } from '@/components/ActionSelectionPanel';
 import {
@@ -23,8 +24,29 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
 import { toast } from 'sonner';
+
+// Get current site ID dynamically from localStorage
+const getCurrentSiteId = (): number => {
+  const siteId = localStorage.getItem('selectedSiteId') || 
+                localStorage.getItem('currentSiteId') ||
+                localStorage.getItem('site_id') || 
+                localStorage.getItem('siteId');
+  
+  if (!siteId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSiteId = urlParams.get('site_id');
+    if (urlSiteId) return parseInt(urlSiteId);
+    
+    console.warn('Site ID not found in localStorage or URL, using default: 2189');
+    return 2189;
+  }
+  
+  return parseInt(siteId);
+};
+
+
 
 // API Service using apiConfig
 const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string) => {
@@ -209,6 +231,20 @@ export const VisitorsDashboard = () => {
     perPage: 20
   });
 
+  // Column visibility state for visitor history table
+  const [visitorHistoryColumnVisibility, setVisitorHistoryColumnVisibility] = useState<Record<string, boolean>>({
+    action: true,
+    visitor_image: true,
+    guest_name: true,
+    guest_number: true,
+    primary_host: true,
+    visit_purpose: true,
+    guest_from: true,
+    visitor_type: true,
+    status: true,
+    check_in_time: true,
+  });
+
   // Mock visitor data for expected visitors
   const expectedVisitorData = [
     {
@@ -249,10 +285,12 @@ export const VisitorsDashboard = () => {
   const fetchUnexpectedVisitors = async (page: number = 1) => {
     setLoading(true);
     try {
+      const siteId = getCurrentSiteId();
       const personToMeetId = unexpectedFilters.personToMeet;
       console.log('🔍 Unexpected visitor filters:', unexpectedFilters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      const data = await getUnexpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      console.log('🔍 Using site ID:', siteId);
+      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId);
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -271,10 +309,12 @@ export const VisitorsDashboard = () => {
   const fetchUnexpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters) => {
     setLoading(true);
     try {
+      const siteId = getCurrentSiteId();
       const personToMeetId = filters?.personToMeet;
       console.log('🔍 Applying filters directly:', filters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      const data = await getUnexpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      console.log('🔍 Using site ID:', siteId);
+      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId);
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -293,10 +333,12 @@ export const VisitorsDashboard = () => {
   const fetchExpectedVisitors = async (page: number = 1) => {
     setExpectedLoading(true);
     try {
+      const siteId = getCurrentSiteId();
       const personToMeetId = expectedFilters.personToMeet;
       console.log('🔍 Expected visitor filters:', expectedFilters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      const data = await getExpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      console.log('🔍 Using site ID:', siteId);
+      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId);
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -315,10 +357,12 @@ export const VisitorsDashboard = () => {
   const fetchExpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters) => {
     setExpectedLoading(true);
     try {
+      const siteId = getCurrentSiteId();
       const personToMeetId = filters?.personToMeet;
       console.log('🔍 Applying filters to expected visitors:', filters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      const data = await getExpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      console.log('🔍 Using site ID:', siteId);
+      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId);
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -337,7 +381,9 @@ export const VisitorsDashboard = () => {
   const fetchVisitorHistory = async (page: number = 1) => {
     setHistoryLoading(true);
     try {
-      const data = await getVisitorHistory(2189, page); // Replace 2189 with your actual site ID
+      const siteId = getCurrentSiteId();
+      console.log('🔍 Using site ID for visitor history:', siteId);
+      const data = await getVisitorHistory(siteId, page);
       setVisitorHistoryData(data.visitors);
       setHistoryPagination({
         currentPage: data.pagination?.current_page || 1,
@@ -356,7 +402,9 @@ export const VisitorsDashboard = () => {
   const fetchVisitorsOut = async (page: number = 1) => {
     setVisitorsOutLoading(true);
     try {
-      const data = await getVisitorsOut(2189, page); // Replace 2189 with your actual site ID
+      const siteId = getCurrentSiteId();
+      console.log('🔍 Using site ID for visitors out:', siteId);
+      const data = await getVisitorsOut(siteId, page);
       // Flatten checked_in_at to checked_in_at.formatted for table display
       const mapped = (data.visitors || []).map((v: any) => ({
         ...v,
@@ -1032,14 +1080,7 @@ export const VisitorsDashboard = () => {
 
   const handleVisitorDetails = (visitorId: number) => {
     console.log('Navigating to visitor details:', visitorId);
-    const currentPath = window.location.pathname;
-
-    if (currentPath.includes("visitors")) {
-      navigate(`/visitors/${visitorId}`);
-    } else {
-      navigate(`/visitor-details/${visitorId}`);
-    }
-    // navigate(`/visitor-details/${visitorId}`);
+    navigate(`/security/visitor/details/${visitorId}`);
   };
 
   const handleEditVisitor = (visitorId: number) => {
@@ -1245,6 +1286,112 @@ export const VisitorsDashboard = () => {
     // TODO: Implement import functionality
     // This could open a file dialog, navigate to import page, etc.
   };
+
+  const handleExport = async () => {
+    console.log('VisitorsDashboard - Export clicked');
+    
+    // Show loading toast with infinite duration
+    const loadingToastId = toast.loading("Preparing export file...", {
+      duration: Infinity, // Keep it visible until we dismiss it
+    });
+    
+    try {
+      console.log('📥 Exporting visitor history data');
+      
+      // Build the export URL using the configured endpoint
+      const exportUrl = getFullUrl(ENDPOINTS.VISITOR_HISTORY_EXPORT);
+      
+      console.log('📥 Export URL:', exportUrl);
+
+      // Make the API call to get the Excel file
+      const response = await fetch(exportUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Export API error response:', errorText);
+        
+        if (response.status === 401) {
+          console.error('401 Authentication failed during export - invalid or expired token');
+          throw new Error('Authentication failed. Please login again.');
+        }
+        
+        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Get the file blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().slice(0, 10);
+      link.download = `visitor_history_${timestamp}.xlsx`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      console.log('✅ Export completed successfully');
+      
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToastId);
+      toast.success('Visitor history exported successfully!');
+      
+    } catch (error) {
+      console.error('❌ Export failed:', error);
+      
+      // Dismiss loading toast and show error
+      toast.dismiss(loadingToastId);
+      
+      // Handle authentication errors specifically
+      if (error instanceof Error && error.message.includes('Authentication failed')) {
+        toast.error("Your session has expired. Please login again.");
+        return;
+      }
+      
+      toast.error(`Failed to export visitor history: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  // Column visibility handlers for visitor history table
+  const handleVisitorHistoryColumnToggle = (columnKey: string) => {
+    setVisitorHistoryColumnVisibility(prev => ({
+      ...prev,
+      [columnKey]: !prev[columnKey]
+    }));
+  };
+
+  const handleVisitorHistoryColumnReset = () => {
+    setVisitorHistoryColumnVisibility({
+      action: true,
+      visitor_image: true,
+      guest_name: true,
+      guest_number: true,
+      primary_host: true,
+      visit_purpose: true,
+      guest_from: true,
+      visitor_type: true,
+      status: true,
+      check_in_time: true,
+    });
+  };
+
+  // Filter visible columns for visitor history
+  const visibleVisitorHistoryColumns = visitorHistoryColumns.filter(
+    column => visitorHistoryColumnVisibility[column.key] !== false
+  );
 
   const renderPaginationItems = () => {
     const items = [];
@@ -1578,7 +1725,7 @@ export const VisitorsDashboard = () => {
             {/* Visitor History Table - Direct display without sub-tabs */}
             <EnhancedTable
               data={visitorHistoryData}
-              columns={visitorHistoryColumns}
+              columns={visibleVisitorHistoryColumns}
               selectable={true}
               renderCell={renderVisitorHistoryCell}
               enableSearch={true}
@@ -1589,12 +1736,14 @@ export const VisitorsDashboard = () => {
               }
               onSelectAll={handleSelectAll}
               getItemId={visitor => visitor.id.toString()}
-              enableExport={true}
+              // enableExport={true}
+              handleExport={handleExport}
               exportFileName="visitor-history"
               pagination={false}
               storageKey="visitor-history-table"
               emptyMessage="No visitor history available"
               searchPlaceholder="Search..."
+              hideColumnsButton={true}
               onFilterClick={handleFilterOpen}
               leftActions={
                 <div className="flex gap-3">
@@ -1604,8 +1753,26 @@ export const VisitorsDashboard = () => {
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Action
-
                   </Button>
+                </div>
+              }
+              rightActions={
+                <div className="flex gap-2">
+                  {/* Export Button */}
+                  <Button
+                    onClick={handleExport}
+                    variant="outline"
+                    size="sm"
+                    className="h-9 px-3 bg-white hover:bg-gray-50 border-gray-300"
+                  >
+                    <Download className="w-4 h-4 " />
+                  </Button>
+                  <ColumnVisibilityMenu
+                    columns={visitorHistoryColumns}
+                    columnVisibility={visitorHistoryColumnVisibility}
+                    onToggleVisibility={handleVisitorHistoryColumnToggle}
+                    onResetToDefaults={handleVisitorHistoryColumnReset}
+                  />
                 </div>
               }
             />

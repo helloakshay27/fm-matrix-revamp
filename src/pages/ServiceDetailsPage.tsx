@@ -245,18 +245,23 @@ export const ServiceDetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6">
+      {/* Service Title */}
       {/* Top Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/maintenance/service')}
-          className="w-max"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Service List
-        </Button>
-
-        <div className="flex gap-2 flex-wrap">
+        <div>
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/maintenance/service')}
+            className="w-max pl-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Service List
+          </Button>
+          <div className="mb-3">
+            <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">{details.service_name || 'Service Details'}</h1>
+          </div>
+        </div>
+       <div className="flex gap-2 flex-wrap">
           <Button
             variant="outline"
             onClick={handleEditClick}

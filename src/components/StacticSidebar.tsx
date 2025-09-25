@@ -271,16 +271,16 @@ const navigationStructure = {
         name: "Visitor Management",
         icon: Users,
         subItems: [
-          { name: "Setup", href: "/security/visitor-management/setup" },
+          { name: "Setup", href: "/settings/visitor-management/setup" },
           {
             name: "Visiting Purpose",
-            href: "/security/visitor-management/visiting-purpose",
+            href: "/settings/visitor-management/visiting-purpose",
           },
           {
             name: "Support Staff",
-            href: "/security/visitor-management/support-staff",
+            href: "/settings/visitor-management/support-staff",
           },
-          { name: "Icons", href: "/security/visitor-management/icons" },
+          { name: "Icons", href: "/settings/visitor-management/icons" },
         ],
       },
       {
@@ -461,7 +461,7 @@ const modulesByPackage = {
     { name: "Ticket", icon: FileText, href: "/maintenance/ticket" },
     { name: "Task", icon: CheckSquare, href: "/maintenance/task" },
     { name: "Schedule", icon: Calendar, href: "/maintenance/schedule" },
-    { name: "Services", icon: Wrench, href: "/maintenance/service" },
+    { name: "Soft Service", icon: Wrench, href: "/maintenance/service" },
     { name: "Assets", icon: Building, href: "/maintenance/asset" },
 
     {
@@ -894,7 +894,7 @@ const modulesByPackage = {
       name: "Redemption Marketplace",
       icon: Globe,
       href: "/vas/redemonection-marketplace",
-    },
+    }
   ],
   "Market Place": [
     {
@@ -965,7 +965,7 @@ const modulesByPackage = {
       subItems: [
         {
           name: "Asset Setup",
-          href: "/settings/asset-setup",
+          href: "/settings/asset-setup/approval-matrix",
           subItems: [
             {
               name: "Approval Matrix",
@@ -1018,6 +1018,10 @@ const modulesByPackage = {
               name: "SAC/HSN Code",
               href: "/settings/inventory-management/sac-hsn-code",
             },
+            {
+              name: "Inventory Type",
+              href: "/settings/inventory-management/inventory-type",
+            },
           ],
         },
         {
@@ -1058,18 +1062,18 @@ const modulesByPackage = {
       subItems: [
         {
           name: "Visitor Management",
-          href: "/security/visitor-management",
+          href: "/settings/visitor-management/setup",
           subItems: [
-            { name: "Setup", href: "/security/visitor-management/setup" },
+            { name: "Setup", href: "/settings/visitor-management/setup" },
             {
               name: "Visiting Purpose",
-              href: "/security/visitor-management/visiting-purpose",
+              href: "/settings/visitor-management/visiting-purpose",
             },
             {
               name: "Support Staff",
-              href: "/security/visitor-management/support-staff",
+              href: "/settings/visitor-management/support-staff",
             },
-            { name: "Icons", href: "/security/visitor-management/icons" },
+            { name: "Icons", href: "/settings/visitor-management/icons" },
           ],
         },
         {
@@ -1092,7 +1096,7 @@ const modulesByPackage = {
       subItems: [
         {
           name: "F&B",
-          href: "/settings/vas/fnb",
+          href: "/settings/vas/fnb/setup",
           subItems: [{ name: "Setup", href: "/settings/vas/fnb/setup" }],
         },
         {
@@ -1162,7 +1166,7 @@ const modulesByPackage = {
               name: "Internal Users",
               href: "/settings/manage-users/internal-users"
             },
-            { 
+            {
               name: "External Users",
               href: "/settings/manage-users/external-users"
             },
@@ -1187,7 +1191,7 @@ const modulesByPackage = {
               name: "Country",
               href: "/settings/project-users/country"
             },
-            { 
+            {
               name: "Region",
               href: "/settings/project-users/region"
             },
@@ -1195,7 +1199,7 @@ const modulesByPackage = {
               name: "Zone",
               href: "/settings/project-users/zone"
             },
-            { 
+            {
               name: "Types",
               href: "/settings/project-users/types"
             },
@@ -1203,15 +1207,15 @@ const modulesByPackage = {
               name: "Tags",
               href: "/settings/project-users/tags"
             },
-            { 
+            {
               name: "Status",
               href: "/settings/project-users/status"
             },
-            { 
+            {
               name: "Project Group",
               href: "/settings/project-users/project-group"
             },
-            { 
+            {
               name: "Project Template",
               href: "/settings/project-users/project-template"
             }
@@ -1227,7 +1231,38 @@ const modulesByPackage = {
           ],
         },
       ]
+    },
+    {
+      name: "Community Modules",
+      icon: Users,
+      subItems: [
+        {
+          name: "Testimonial Setup",
+          href: "/settings/community-modules/testimonial-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Company Partner Setup",
+          href: "/settings/community-modules/company-partner-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Banner Setup",
+          href: "/settings/community-modules/banner-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Amenity Setup",
+          href: "/settings/community-modules/amenity-setup",
+          color: "text-[#1a1a1a]",
+        },
+      ]
     }
+    // {
+    //   name: 'Currency',
+    //   icon: Currency,
+    //   href: '/settings/currency',
+    // }
   ],
 };
 
@@ -1243,6 +1278,25 @@ export const StacticSidebar = () => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState("");
   const [selectedRole, setSelectedDepartment] = useState("");
+
+  // Helper function to find the deepest navigable sub-item
+  const findDeepestNavigableItem = (item: any): string | null => {
+    if (!item.subItems || item.subItems.length === 0) {
+      return item.href || null;
+    }
+
+    // Check if any sub-item has further sub-items
+    for (const subItem of item.subItems) {
+      if (subItem.subItems && subItem.subItems.length > 0) {
+        // Recursively find the deepest item
+        const deepest = findDeepestNavigableItem(subItem);
+        if (deepest) return deepest;
+      }
+    }
+
+    // If no deeper items, return the first sub-item's href
+    return item.subItems[0]?.href || null;
+  };
 
   // Reset expanded items on page load/refresh
   React.useEffect(() => {
@@ -1532,7 +1586,13 @@ export const StacticSidebar = () => {
           key={module.name}
           onClick={() => {
             if (hasSubItems) {
-              toggleExpanded(module.name);
+              // Navigate to the deepest navigable sub-item's href if it exists
+              const deepestHref = findDeepestNavigableItem(module);
+              if (deepestHref) {
+                handleNavigation(deepestHref, currentSection);
+              } else {
+                toggleExpanded(module.name);
+              }
             } else if (module.href) {
               handleNavigation(module.href, currentSection);
             }
@@ -1620,9 +1680,19 @@ export const StacticSidebar = () => {
               {currentModules.map((module) => (
                 <button
                   key={module.name}
-                  onClick={() =>
-                    module.href && handleNavigation(module.href, currentSection)
-                  }
+                  onClick={() => {
+                    if (module.subItems && module.subItems.length > 0) {
+                      // Navigate to the deepest navigable sub-item's href if it exists
+                      const deepestHref = findDeepestNavigableItem(module);
+                      if (deepestHref) {
+                        handleNavigation(deepestHref, currentSection);
+                      } else if (module.href) {
+                        handleNavigation(module.href, currentSection);
+                      }
+                    } else if (module.href) {
+                      handleNavigation(module.href, currentSection);
+                    }
+                  }}
                   className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
                     ? "bg-[#f0e8dc] shadow-inner"
                     : "hover:bg-[#DBC2A9]"

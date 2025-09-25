@@ -948,7 +948,7 @@ default:
 
   const handleVisitorDetails = (visitorId: number) => {
     console.log('Navigating to visitor details:', visitorId);
-    navigate(`/visitor-details/${visitorId}`);
+    navigate(`/security/visitor/details/${visitorId}`);
   };
 
   const handleEditVisitor = (visitorId: number) => {

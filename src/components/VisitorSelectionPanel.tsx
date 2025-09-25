@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { X, User, Edit, Download, QrCode, Loader2, HandCoins, UserCheck, UserX, UserPlus, Shield, RotateCcw, Ban, Flag } from 'lucide-react';
-import { getFullUrl, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
+import { getFullUrl, getAuthHeader, ENDPOINTS, API_CONFIG } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
 interface VisitorObject {
@@ -27,7 +27,6 @@ interface VisitorSelectionPanelProps {
   onCheckOut: () => Promise<void>;
   onApprove: () => Promise<void>;
   onVerifyOtp?: () => Promise<void>;
-  onResendOtp?: () => Promise<void>;
   onBlacklist?: () => Promise<void>;
   onFlag?: () => Promise<void>;
   onExport: () => void;
@@ -41,7 +40,6 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   onCheckOut,
   onApprove,
   onVerifyOtp,
-  onResendOtp,
   onBlacklist,
   onFlag,
   onExport,
@@ -122,17 +120,113 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
     setIsOtpVerifying(true);
     
     try {
-      if (onVerifyOtp) {
-        // You can pass the OTP value to the parent component if needed
-        // For now, we'll call the verification function
-        await onVerifyOtp();
-        toast.success(`Successfully verified OTP for ${selectedVisitors.length} visitor(s).`);
+      let successCount = 0;
+      let errorCount = 0;
+      
+      // Process each visitor individually for OTP verification
+      for (const visitorId of selectedVisitors) {
+        try {
+          console.log('🔐 Verifying OTP for visitor ID:', visitorId);
+          
+          // Construct the API URL for OTP verification
+          const url = getFullUrl('/pms/visitors/verify_otp.json');
+          const urlWithParams = new URL(url);
+          
+          // Add query parameters
+          urlWithParams.searchParams.append('otp', otpValue.trim());
+          urlWithParams.searchParams.append('gatekeeper_id', visitorId.toString());
+          
+          // Add access token if available
+          if (API_CONFIG.TOKEN) {
+            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+          }
+          
+          console.log('🚀 Calling OTP verification API:', urlWithParams.toString());
+          
+          const response = await fetch(urlWithParams.toString(), {
+            method: 'GET',
+            headers: {
+              'Authorization': getAuthHeader(),
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          // Parse the response data first
+          const data = await response.json();
+          console.log('📋 OTP Verification API Response for visitor', visitorId, ':', data);
+          
+          if (!response.ok) {
+            const errorText = JSON.stringify(data);
+            console.error('OTP Verification API Error Response for visitor', visitorId, ':', errorText);
+            
+            if (response.status === 401) {
+              throw new Error('Authentication failed. Please check your access token and try again.');
+            } else if (response.status === 404 && data.message === "OTP Verification failed") {
+              throw new Error('Invalid OTP');
+            } else if (response.status === 404) {
+              throw new Error('Visitor not found or OTP expired.');
+            } else if (response.status === 400) {
+              throw new Error('Invalid OTP code. Please check and try again.');
+            } else {
+              throw new Error(`OTP verification failed: ${response.status} ${response.statusText}`);
+            }
+          }
+          
+          // Check for error messages in successful responses (200 OK but with error content)
+          if (data.code === 404 && data.message === "OTP Verification failed") {
+            console.error('OTP Verification failed in 200 response for visitor', visitorId, ':', data);
+            throw new Error('Invalid OTP');
+          }
+          
+          // Check if OTP verification was actually successful
+          if (data.otp_verified === 0 || data.otp_verified === "0") {
+            console.error('OTP not verified for visitor', visitorId, ':', data);
+            throw new Error('Invalid OTP');
+          }
+          
+          console.log('✅ OTP verified successfully for visitor', visitorId, ':', data);
+          successCount++;
+          
+        } catch (visitorError) {
+          console.error('❌ Error verifying OTP for visitor', visitorId, ':', visitorError);
+          errorCount++;
+          
+          // Show specific error message for invalid OTP
+          if (visitorError instanceof Error && visitorError.message === 'Invalid OTP') {
+            toast.error(`Invalid OTP for visitor ${visitorId}`);
+          }
+        }
+      }
+      
+      // Show success/error summary
+      if (successCount > 0) {
+        toast.success(`Successfully verified OTP for ${successCount} visitor(s).`);
         setIsOtpModalOpen(false);
         setOtpValue('');
+        
+        // Call the parent component's onVerifyOtp if provided for additional handling
+        if (onVerifyOtp) {
+          await onVerifyOtp();
+        }
       }
+      
+      if (errorCount > 0 && successCount === 0) {
+        // If all failed, show specific error message
+        toast.error(`OTP verification failed for all ${errorCount} visitor(s). Please check the OTP and try again.`);
+      } else if (errorCount > 0) {
+        // If some failed, show partial failure message
+        toast.error(`Failed to verify OTP for ${errorCount} visitor(s).`);
+      }
+      
+      // If all failed, keep modal open for retry
+      if (successCount === 0) {
+        setOtpValue(''); // Clear the OTP field for retry
+      }
+      
     } catch (error) {
-      console.error('Failed to verify OTP:', error);
+      console.error('❌ Failed to verify OTP:', error);
       toast.error("Failed to verify OTP. Please check the code and try again.");
+      setOtpValue(''); // Clear the OTP field for retry
     } finally {
       setIsOtpVerifying(false);
     }
@@ -146,11 +240,72 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   const handleResendOtp = async () => {
     console.log('VisitorSelectionPanel - Resend OTP clicked for visitors:', selectedVisitors);
     setIsResendOtpLoading(true);
+    
     try {
-      if (onResendOtp) {
-        await onResendOtp();
-        toast.success(`Successfully resent OTP for ${selectedVisitors.length} visitor(s).`);
-        
+      // Show loading toast
+      toast.info(`Sending OTP to ${selectedVisitors.length} visitor(s)...`);
+      
+      // Process each visitor individually
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const visitorId of selectedVisitors) {
+        try {
+          console.log('🚀 Sending OTP for visitor ID:', visitorId);
+          
+          // Construct the API URL using the correct endpoint from ENDPOINTS
+          const url = getFullUrl(ENDPOINTS.RESEND_OTP);
+          const urlWithParams = new URL(url);
+          
+          // Add query parameters
+          urlWithParams.searchParams.append('id', visitorId.toString());
+          
+          // Add access token if available
+          if (API_CONFIG.TOKEN) {
+            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+          }
+          
+          console.log('🚀 Calling resend OTP API:', urlWithParams.toString());
+          
+          const response = await fetch(urlWithParams.toString(), {
+            method: 'GET',
+            headers: {
+              'Authorization': getAuthHeader(),
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error Response for visitor', visitorId, ':', errorText);
+            
+            if (response.status === 401) {
+              throw new Error('Authentication failed. Please check your access token and try again.');
+            } else {
+              throw new Error(`Failed to resend OTP for visitor ${visitorId}: ${response.status} ${response.statusText}`);
+            }
+          }
+          
+          const data = await response.json();
+          console.log('✅ OTP sent successfully for visitor', visitorId, ':', data);
+          successCount++;
+          
+        } catch (visitorError) {
+          console.error('❌ Error sending OTP for visitor', visitorId, ':', visitorError);
+          errorCount++;
+        }
+      }
+      
+      // Show success/error summary
+      if (successCount > 0) {
+        toast.success(`Successfully sent OTP to ${successCount} visitor(s).`);
+      }
+      if (errorCount > 0) {
+        toast.error(`Failed to send OTP to ${errorCount} visitor(s).`);
+      }
+      
+      // Only disable button if at least one was successful
+      if (successCount > 0) {
         // Disable resend button for 1 minute
         setResendOtpDisabled(true);
         setResendCountdown(60);
@@ -166,8 +321,9 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
           });
         }, 1000);
       }
+      
     } catch (error) {
-      console.error('Failed to resend OTP:', error);
+      console.error('❌ Failed to resend OTP:', error);
       toast.error("Failed to resend OTP. Please try again.");
     } finally {
       setIsResendOtpLoading(false);
@@ -231,7 +387,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
       console.log('📥 Generated visitor parameters:', visitorParams);
       
       // Build the export URL with selected visitor IDs
-      const exportEndpoint = `/pms/visitors/export.xlsx?${visitorParams}`;
+      const exportEndpoint = `/pms/admin/visitors/visitors_history.xlsx?${visitorParams}`;
       const exportUrl = getFullUrl(exportEndpoint);
       
       console.log('📥 Export endpoint:', exportEndpoint);
@@ -512,16 +668,19 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
             <p className="text-sm text-gray-600 mb-4">
               Enter the OTP code to verify {selectedVisitors.length} selected visitor(s):
             </p>
-            <div className="space-y-2">
-              {selectedVisitorObjects.slice(0, 3).map((visitor, index) => (
-                <div key={visitor.id} className="text-xs text-gray-500">
-                  • {visitor.guest_name || visitor.name || visitor.visitor_name || `Visitor ${visitor.id}`}
-                  {visitor.guest_number && ` (${visitor.guest_number})`}
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {selectedVisitorObjects.slice(0, 5).map((visitor, index) => (
+                <div key={visitor.id} className="text-xs text-gray-500 flex justify-between">
+                  <span>
+                    • {visitor.guest_name || visitor.name || visitor.visitor_name || `Visitor ${visitor.id}`}
+                    {visitor.guest_number && ` (${visitor.guest_number})`}
+                  </span>
+                  <span className="text-gray-400">ID: {visitor.id}</span>
                 </div>
               ))}
-              {selectedVisitorObjects.length > 3 && (
+              {selectedVisitorObjects.length > 5 && (
                 <div className="text-xs text-gray-500">
-                  • +{selectedVisitorObjects.length - 3} more visitors
+                  • +{selectedVisitorObjects.length - 5} more visitors
                 </div>
               )}
             </div>
@@ -539,7 +698,15 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
               maxLength={6}
               className="text-center text-lg tracking-widest"
               autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && otpValue.trim().length >= 4) {
+                  handleOtpSubmit();
+                }
+              }}
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Press Enter to verify or click the Verify button
+            </p>
           </div>
         </div>
         <DialogFooter className="gap-2">
@@ -552,7 +719,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
           </Button>
           <Button
             onClick={handleOtpSubmit}
-            disabled={isOtpVerifying || !otpValue.trim()}
+            disabled={isOtpVerifying || otpValue.trim().length < 4}
             className="bg-[#C72030] hover:bg-[#B01E2F] text-white"
           >
             {isOtpVerifying ? (

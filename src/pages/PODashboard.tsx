@@ -100,7 +100,7 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "poAmount",
+    key: "amount",
     label: "PO Amount",
     sortable: true,
     draggable: true,
@@ -134,55 +134,55 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
-  {
-    key: "retentionAmount",
-    label: "Retention Amount",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "retentionOutstanding",
-    label: "Retention Outstanding",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "qcAmount",
-    label: "QC Amount",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "qcOutstanding",
-    label: "QC Outstanding",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "noOfGrns",
-    label: "No of Grns",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "totalAmountPaid",
-    label: "Total Amount Paid",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "outstanding",
-    label: "Outstanding",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
+  // {
+  //   key: "retentionAmount",
+  //   label: "Retention Amount",
+  //   sortable: true,
+  //   draggable: true,
+  //   defaultVisible: true,
+  // },
+  // {
+  //   key: "retentionOutstanding",
+  //   label: "Retention Outstanding",
+  //   sortable: true,
+  //   draggable: true,
+  //   defaultVisible: true,
+  // },
+  // {
+  //   key: "qcAmount",
+  //   label: "QC Amount",
+  //   sortable: true,
+  //   draggable: true,
+  //   defaultVisible: true,
+  // },
+  // {
+  //   key: "qcOutstanding",
+  //   label: "QC Outstanding",
+  //   sortable: true,
+  //   draggable: true,
+  //   defaultVisible: true,
+  // },
+  // {
+  //   key: "noOfGrns",
+  //   label: "No of Grns",
+  //   sortable: true,
+  //   draggable: true,
+  //   defaultVisible: true,
+  // },
+  // {
+  //   key: "totalAmountPaid",
+  //   label: "Total Amount Paid",
+  //   sortable: true,
+  //   draggable: true,
+  //   defaultVisible: true,
+  // },
+  // {
+  //   key: "outstanding",
+  //   label: "Outstanding",
+  //   sortable: true,
+  //   draggable: true,
+  //   defaultVisible: true,
+  // },
   {
     key: "debitCreditNoteRaised",
     label: "Debit/Credit Note Raised",
@@ -231,18 +231,20 @@ export const PODashboard = () => {
         paymentTenure: item.payment_tenure,
         activeInactive: item.active,
         lastApprovedBy:
-          item.approval_levels[item.approval_levels.length - 1].approved_by,
+          item?.approval_levels[item.approval_levels.length - 1]?.approved_by,
         approvalStatus: item.all_level_approved
           ? "Approved"
           : item.all_level_approved === false
             ? "Rejected"
             : "Pending",
+        allLevelApproved: item.all_level_approved,
+        amount: item.amount,
         advanceAmount: item.advance_amount,
         poAmount: item.po_amount,
         retention: item.retention,
         tds: item.tds,
         qc: item.quality_holding,
-        tdsAmount: item.total_tax_amount,
+        tdsAmount: item.total_tax_amount.toFixed(2),
         retentionAmount: item.retention_amount,
         retentionOutstanding: item.retention_outstanding,
         qcAmount: item.qc_amount,
@@ -251,6 +253,7 @@ export const PODashboard = () => {
         totalAmountPaid: item.total_amount_paid,
         outstanding: item.outstanding,
         debitCreditNoteRaised: item.debit_credit_note_raised,
+
       }));
 
       setPoList(formattedData);
@@ -399,21 +402,23 @@ export const PODashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/finance/po/edit/${item.id}`);
-        }}
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
         onClick={() => navigate(`/finance/po/details/${item.id}`)}
       >
         <Eye className="w-4 h-4" />
       </Button>
+      {
+        item.allLevelApproved === null && <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/finance/po/edit/${item.id}`);
+          }}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      }
     </div>
   );
 

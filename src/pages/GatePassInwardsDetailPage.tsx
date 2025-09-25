@@ -1,28 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Upload, FileText, QrCode, Box, User, Download, Eye } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, FileText, QrCode, Box, User, Download, Eye, FileSpreadsheet, File } from 'lucide-react';
 import { API_CONFIG } from '@/config/apiConfig';
+import { AttachmentGoodsPreviewModal } from '@/components/AttachmentGoodsPreviewModal';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+
 
 export const GatePassInwardsDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
-  const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
   const [gatePassData, setGatePassData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Attachment/receive modal state
+  const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+  const [receivedItems, setReceivedItems] = useState<number[]>([]);
+  // Receive state for modal
   const [handoverTo, setHandoverTo] = useState('');
   const [receivedDate, setReceivedDate] = useState('');
   const [remarks, setRemarks] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [receivedItems, setReceivedItems] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Preview modal state
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -40,54 +45,11 @@ export const GatePassInwardsDetailPage = () => {
       .catch(() => setLoading(false));
   }, [id]);
 
-  const handleReceiveClick = (itemIndex: number) => {
-    setSelectedItemIndex(itemIndex);
-    setIsReceiveModalOpen(true);
-  };
 
-  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAttachments(Array.from(e.target.files));
-    }
-  };
-
-  const handleSubmitReceive = async () => {
-    if (selectedItemIndex === null || !gatePassData) return;
-    const material = gatePassData.gate_pass_materials[selectedItemIndex];
-    if (!material) return;
-    const formData = new FormData();
-    formData.append('gate_pass_material[remarks]', remarks);
-    formData.append('gate_pass_material[handover_to]', handoverTo);
-    formData.append('gate_pass_material[recieved_date]', receivedDate);
-    attachments.forEach(file => {
-      formData.append('gate_pass_material[attachments][]', file);
-    });
-    try {
-      await fetch(`${API_CONFIG.BASE_URL}/gate_passes/${gatePassData.id}/gate_pass_materials/${material.id}/update_material`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
-        },
-        body: formData,
-      });
-      setIsReceiveModalOpen(false);
-      setSelectedItemIndex(null);
-      setHandoverTo('');
-      setReceivedDate('');
-      setRemarks('');
-      setAttachments([]);
-      setReceivedItems(prev => [...prev, selectedItemIndex]);
-      // Optionally, refresh data here
-    } catch (err) {
-      // Handle error
-    }
-  };
-
-  // Replace sample data with API data
+  // Defensive fallback for missing fields
   if (loading) {
     return <div className="p-6 text-center text-gray-500">Loading...</div>;
   }
-
   if (!gatePassData) {
     return (
       <div className="p-6">
@@ -106,9 +68,9 @@ export const GatePassInwardsDetailPage = () => {
   const selectedEntry = gatePassData;
 
   // Defensive fallback for missing fields
-  const personName = selectedEntry.created_by_name || selectedEntry.contact_person || '--';
+  const personName = selectedEntry.contact_person || '--';
   const category = selectedEntry.gate_pass_type_name || selectedEntry.gate_pass_category || '--';
-  const companyName = (selectedEntry.company && selectedEntry.company.name) || '--';
+  const vendorCompanyName = gatePassData.vendor_company_name || '--';
   const siteName = (selectedEntry.site && selectedEntry.site.name) || '--';
   const buildingName = (selectedEntry.building && selectedEntry.building.name) || '--';
   const vehicleNo = selectedEntry.vehicle_no || '--';
@@ -117,24 +79,68 @@ export const GatePassInwardsDetailPage = () => {
   const gatePassNo = selectedEntry.gate_pass_no || selectedEntry.id;
   const passDate = selectedEntry.gate_pass_date ? new Date(selectedEntry.gate_pass_date).toLocaleString() : '--';
 
-  // Prepare itemsData from gatePassData.gate_pass_materials
-  const attachmentLinks = (gatePassData.attachments || []).map((att: any) =>
-    att.document ? `<a href="${att.document}" target="_blank" rel="noopener noreferrer">📎</a>` : ''
-  ).filter(Boolean).join(', ');
-  const itemsData = (gatePassData.gate_pass_materials || []).map((mat: any, idx: number) => ({
-    sNo: String(idx + 1).padStart(2, '0'),
-    itemName: mat.material_type || '--',
-    itemCategory: mat.item_category || '--',
-    itemNameDetail: mat.material || mat.other_material_name || '--',
-    unit: mat.unit || '--',
-    quantity: mat.gate_pass_qty ?? '--',
-    description: mat.other_material_description || mat.remarks || '--',
-    attachment: attachmentLinks || '--',
-    updates: 'Receive',
-  }));
+
+  // Prepare itemsData from gate_pass_materials, with per-item attachments
+  const itemsData = (gatePassData.gate_pass_materials || []).map((mat: any, idx: number) => {
+    return {
+      sNo: String(idx + 1).padStart(2, '0'),
+      itemName: mat.material_type || '--',
+      itemCategory: mat.item_category || '--',
+      itemNameDetail: mat.material || mat.other_material_name || '--',
+      unit: mat.unit || '--',
+      quantity: mat.gate_pass_qty ?? '--',
+      description: mat.other_material_description || mat.remarks || '--',
+      attachment: (
+        <button
+          className="text-blue-600 underline hover:text-blue-800 font-medium"
+          style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+          onClick={() => {
+            const attachmentsToShow = (mat.attachments && mat.attachments.length > 0)
+              ? mat.attachments
+              : gatePassData.attachments;
+            setSelectedAttachment({
+              attachments: attachmentsToShow || [],
+              itemIndex: idx,
+              itemName: mat.material || mat.other_material_name || '--',
+              received: !!mat.recieved_date,
+            });
+            setIsAttachmentModalOpen(true);
+          }}
+        >
+          View Attachments
+        </button>
+      )
+    };
+  });
 
   console.log(gatePassData.attachments.map);
   
+
+  // Prepare table data and columns for EnhancedTable
+  const tableData =
+    (gatePassData.gate_pass_materials || []).map((mat: any, idx: number) => ({
+      sNo: String(idx + 1).padStart(2, '0'),
+      itemType: mat.material_type || '--',
+      itemCategory: mat.item_category == '-1' ? 'Other' : mat.item_category || '--',
+      itemName: mat.material || mat.other_material_name || '--',
+      unit: mat.unit || '--',
+      quantity: mat.gate_pass_qty ?? '--',
+      description: mat.other_material_description || mat.remarks || '--',
+      updates: '', // Placeholder for updates/actions
+    })) || [];
+
+  const columns = [
+    { key: "itemType", label: "Item Type", sortable: false, defaultVisible: true },
+    { key: "itemCategory", label: "Item Category", sortable: false, defaultVisible: true },
+    { key: "itemName", label: "Item Name", sortable: false, defaultVisible: true },
+    { key: "unit", label: "Unit", sortable: false, defaultVisible: true },
+    { key: "quantity", label: "Quantity", sortable: false, defaultVisible: true },
+    { key: "description", label: "Description", sortable: false, defaultVisible: true },
+  ];
+
+  const renderCell = (item: any, columnKey: string) => {
+    return item[columnKey] ?? "--";
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -151,281 +157,223 @@ export const GatePassInwardsDetailPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">Gate Pass Inward Details</h1>
       </div>
 
-
-      <div className=" bg-white rounded-lg border border-gray-200 shadow-sm w-full">
-        <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="flex justify-start flex-nowrap overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg text-sm ">
-            <TabsTrigger
-              value="profile"
-              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-            >
-              PROFILE
-            </TabsTrigger>
-            <TabsTrigger
-              value="details"
-              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-            >
-              DETAILS
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Profile */}
-          <TabsContent value="profile" className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg border">
-              <div className="flex p-4 items-center bg-[#F6F4EE]">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <User className="w-4 h-4" />
-                </div>
-                <h2 className="text-lg font-[700]">PROFILE</h2>
-              </div>
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                {/* Profile Section */}
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-yellow-600 font-bold text-xl">{personName && typeof personName === 'string' ? personName.charAt(0).toUpperCase() : '-'}</span>
-                  </div>
-                  <h2 className="text-lg font-semibold text-gray-900">{personName}</h2>
-                  <p className="text-sm text-gray-600">{category}</p>
-                </div>
-
-                {/* Details */}
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Employee/Visitor Name:</span>
-                    <span className="text-sm text-gray-900">{selectedEntry?.contact_person || '--'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Visitor Mobile No.:</span>
-                    <span className="text-sm text-gray-900">{selectedEntry.contact_person_no || '--'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Site:</span>
-                    <span className="text-sm text-gray-900">{selectedEntry.site?.name || '--'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Company Name:</span>
-                    <span className="text-sm text-gray-900">{companyName}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Gate Number:</span>
-                    <span className="text-sm text-gray-900">{gatePassData.gate_number || '--'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Gate Pass Type:</span>
-                    <span className="text-sm text-gray-900">{gatePassData.gate_pass_type_name || '--'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Gate Pass No:</span>
-                    <span className="text-sm text-gray-900">{gatePassData.gate_pass_no || '--'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Gate Pass Date:</span>
-                    <span className="text-sm text-gray-900">{selectedEntry.gate_pass_date ? new Date(selectedEntry.gate_pass_date).toLocaleDateString() : '--'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Reporting Time:</span>
-                    <span className="text-sm text-gray-900">{selectedEntry.due_at ? new Date(selectedEntry.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Vendor:</span>
-                    <span className="text-sm text-gray-900">{gatePassData.supplier_name || '--'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Date/Time:</span>
-                    <span className="text-sm text-gray-900">{passDate}</span>
-                  </div>
-                  <div className='flex justify-between items-center'>
-                    <span className="text-sm font-medium text-gray-700">Mode Of Transport:</span>
-                    <span className={`text-sm text-gray-900`} style={{textTransform: 'capitalize'}}>{gatePassData.mode_of_transport || '--'}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Vehicle Number:</span>
-                    <span className="text-sm text-gray-900">{vehicleNo}</span>
-                  </div>
-                  
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Details */}
-          <TabsContent value="details" className="p-4 sm:p-6">
-            <div className="bg-white rounded-lg border">
-                <div className="flex p-4 items-center bg-[#F6F4EE]">
-                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                        <Box className="w-4 h-4" />
-                    </div>
-                    <h2 className="text-lg font-[700]">ITEM DETAILS</h2>
-                </div>
-                <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Sr No.</TableHead>
-                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
-                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item category</TableHead>
-                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
-                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Unit</TableHead>
-                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Quantity</TableHead>
-                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</TableHead>
-                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Attachment</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {itemsData.map((item, index) => (
-                      <TableRow key={item.sNo} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.sNo}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemName}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemCategory}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemNameDetail}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.unit}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.quantity}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">
-                          {gatePassData.attachments && gatePassData.attachments.length > 0 ? (
-                            gatePassData.attachments.map((att: any, idx: number) => (
-                              att.document ? (
-                                <span key={idx} className="inline-flex items-center gap-2 mr-2">
-                                  <a href={att.document} download title="Download">
-                                    <Download className="w-4 h-4 text-green-600 hover:text-green-800 inline-block" />
-                                  </a>
-                                </span>
-                              ) : null
-                            ))
-                          ) : (
-                            '--'
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* DOCUMENTS */}
-          <TabsContent value="documents" className="p-4 sm:p-6">
-            <div className="bg-white rounded-lg border">
-              <div className="flex items-center bg-[#F6F4EE] p-4">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <h2 className="text-lg font-[700]">DOCUMENTS</h2>
-              </div>
-              <div className="border border-[#D9D9D9] bg-[#F6F7F7] p-3 text-sm text-gray-600">
-                No documents available
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* QR CODE */}
-          <TabsContent value="qr-code" className="p-4 sm:p-6">
-            <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg">
-              <div className="flex items-center mb-4 bg-[#F6F4EE] p-4">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <QrCode className="w-4 h-4" />
-                </div>
-                <h2 className="text-lg font-[700]">QR CODE</h2>
-              </div>
-              <div className="text-center p-3 text-sm text-gray-600">
-                No QR code available
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* ASSOCIATED ASSETS */}
-          <TabsContent value="associated-assets" className="p-4 sm:p-6">
-            <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg">
-              <div className="flex items-center mb-2 bg-[#F6F4EE] p-4">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <Box className="w-4 h-4" />
-                </div>
-                <h2 className="text-lg font-[700]">ASSOCIATED ASSETS</h2>
-              </div>
-              <div className="p-4 max-w-5xl mx-auto overflow-x-auto text-sm text-gray-600">
-                No associated assets
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+      {/* Top Info Card */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4 flex flex-col md:flex-row gap-4">
+        {/* Right: Info grid */}
+        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2 text-sm">
+          <div>
+            <div className="text-gray-500 text-md">Employer/Visitor Name:</div>
+            <div className="font-medium text-gray-900">{personName}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-md">Company:</div>
+            <div className="font-medium text-gray-900">{vendorCompanyName}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-md">Mobile No.:</div>
+            <div className="font-medium text-gray-900">{selectedEntry.contact_person_no || '--'}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-md">Mode of Transport:</div>
+            <div className="font-medium text-gray-900">{gatePassData.mode_of_transport || '--'}{vehicleNo && ` / ${vehicleNo}`}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-md">Building:</div>
+            <div className="font-medium text-gray-900">{buildingName}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-md">Gate Pass Type:</div>
+            <div className="font-medium text-gray-900">{category}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-md">Gate Pass No. :</div>
+            <div className="font-medium text-gray-900">{gatePassData.gate_pass_no || '--'}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-md">Gate No:</div>
+            <div className="font-medium text-gray-900">{gatePassData.gate_number || '--'}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-md">Gate Pass Date:</div>
+            <div className="font-medium text-gray-900">{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-md">Reporting Time:</div>
+            <div className="font-medium text-gray-900">{gatePassData.due_at ? new Date(gatePassData.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</div>
+          </div>
+          {gatePassData.remarks && <div>
+            <div className="text-gray-500 text-md">Remarks:</div>
+            <div className="font-medium text-gray-900">{gatePassData.remarks || '--'}</div>
+          </div>}
+        </div>
       </div>
 
-      {/* Receive Modal */}
-      <Dialog open={isReceiveModalOpen} onOpenChange={setIsReceiveModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-900">Return Process</DialogTitle>
-          </DialogHeader>
+      {/* Vendor Details */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4">
+        <div className="text-[#C72030] font-semibold text-xl mb-2">Vendor Details</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div>
+            <div className="text-gray-500 text-md">Vendor Name:</div>
+            <div className="font-medium text-gray-900">{gatePassData.supplier_name || '--'}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-md">Mobile No.:</div>
+            <div className="font-medium text-gray-900">{selectedEntry.contact_person_no || '--'}</div>
+          </div>
+        </div>
+      </div>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="handover" className="text-sm font-medium text-gray-700">
-                Handover To
-              </Label>
-              <Input
-                id="handover"
-                placeholder="Enter handover details"
-                className="w-full"
-                value={handoverTo}
-                onChange={e => setHandoverTo(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="received-date" className="text-sm font-medium text-gray-700">
-                Received Date
-              </Label>
-              <Input
-                type="date"
-                id="received-date"
-                placeholder="Enter received date"
-                className="w-full"
-                value={receivedDate}
-                onChange={e => setReceivedDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">
-                Remarks
-              </Label>
-              <Textarea
-                id="remarks"
-                placeholder="Enter remarks"
-                className="w-full min-h-[80px]"
-                value={remarks}
-                onChange={e => setRemarks(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="attachment" className="text-sm font-medium text-gray-700">
-                Attachment
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="attachment"
-                  type="file"
-                  className="w-full"
-                  multiple
-                  ref={fileInputRef}
-                  onChange={handleAttachmentChange}
-                />
-                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                  <Upload className="w-4 h-4" />
-                </Button>
+      {/* Details Table */}
+      <div className="bg-white rounded-lg px-4 pb-4 border border-gray-200 shadow-sm">
+        <div className="flex items-center pt-4 pb-2">
+          <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
+        </div>
+        <div className="overflow-x-auto">
+          <EnhancedTable
+            data={tableData}
+            columns={columns}
+            renderCell={renderCell}
+            storageKey="gate-pass-inwards-details-items"
+            pagination={true}
+            pageSize={10}
+            hideColumnsButton={true}
+            hideTableExport={true}
+            hideTableSearch={true}
+            loading={loading}
+          />
+        </div>
+      </div>
+
+      {/* Attachments Section */}
+      <div className="mt-8">
+        <div className="shadow-sm border border-border rounded-lg bg-white">
+          <div className="pb-4 pt-6 px-6">
+            <div className="text-[#C72030] font-semibold text-xl mb-2">Attachments</div>
+          </div>
+          <div className="pb-6 px-6">
+            {Array.isArray(gatePassData.attachments) && gatePassData.attachments.length > 0 ? (
+              <div className="flex items-center flex-wrap gap-4">
+                {gatePassData.attachments.map((attachment: any) => {
+                  const url = attachment.document || attachment.url;
+                  const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                  const isPdf = /\.pdf$/i.test(url);
+                  const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                  const isWord = /\.(doc|docx)$/i.test(url);
+                  const isDownloadable = isPdf || isExcel || isWord;
+
+                  return (
+                    <div
+                      key={attachment.id}
+                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    >
+                      {isImage ? (
+                        <>
+                          <button
+                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            title="View"
+                            onClick={() => {
+                              setSelectedDoc({
+                                ...attachment,
+                                url,
+                                type: 'image'
+                              });
+                              setIsModalOpen(true);
+                            }}
+                            type="button"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <img
+                            src={url}
+                            alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                            onClick={() => {
+                              setSelectedDoc({
+                                ...attachment,
+                                url,
+                                type: 'image'
+                              });
+                              setIsModalOpen(true);
+                            }}
+                          />
+                        </>
+                      ) : isPdf ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : isExcel ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                          <FileSpreadsheet className="w-6 h-6" />
+                        </div>
+                      ) : isWord ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                          <File className="w-6 h-6" />
+                        </div>
+                      )}
+                      <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                        {attachment.document_name ||
+                          attachment.document_file_name ||
+                          url.split('/').pop() ||
+                          `Document_${attachment.id}`}
+                      </span>
+                      {isDownloadable && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                          onClick={() => {
+                            setSelectedDoc({
+                              ...attachment,
+                              url,
+                              type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
+                            });
+                            setIsModalOpen(true);
+                          }}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            ) : (
+              <p className="text-muted-foreground">No attachments</p>
+            )}
           </div>
+        </div>
+      </div>
 
-          <div className="flex justify-center pt-4">
-            <Button
-              onClick={handleSubmitReceive}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
-            >
-              Submit
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Attachment Preview Modal */}
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+        modalTitle={
+          selectedDoc?.document_name ||
+          selectedDoc?.document_file_name ||
+          (selectedDoc?.url ? selectedDoc.url.split('/').pop() : '') ||
+          `Document_${selectedDoc?.id || ''}`
+        }
+      />
+
+      {/* AttachmentGoodsPreviewModal for per-item attachments/receive */}
+      <AttachmentGoodsPreviewModal
+        isModalOpen={isAttachmentModalOpen}
+        setIsModalOpen={setIsAttachmentModalOpen}
+        selectedDoc={selectedAttachment}
+        setSelectedDoc={setSelectedAttachment}
+        toReceive={(() => {
+          if (!selectedAttachment || selectedAttachment.itemIndex === undefined) return false;
+          const mat = gatePassData?.gate_pass_materials?.[selectedAttachment.itemIndex];
+          return mat && (!mat.recieved_date || mat.recieved_date === '' || mat.recieved_date === null);
+        })()}
+      />
     </div>
   );
 };

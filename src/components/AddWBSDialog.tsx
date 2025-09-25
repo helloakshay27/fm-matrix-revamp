@@ -1,9 +1,12 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Dialog, DialogContent } from '@mui/material';
+import { DialogHeader } from './ui/dialog';
+import { useAppDispatch } from '@/store/hooks';
+import { getPlantDetails } from '@/store/slices/materialPRSlice';
+import { toast } from 'sonner';
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -13,12 +16,11 @@ const fieldStyles = {
 };
 
 interface WBSElement {
-  plantCode: string;
+  plant_code: string;
   category: string;
-  categoryWBSCode: string;
-  wbsName: string;
-  wbsCode: string;
-  site: string;
+  category_wbs_code: string;
+  wbs_name: string;
+  wbs_code: string;
 }
 
 interface AddWBSDialogProps {
@@ -32,18 +34,34 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
   onOpenChange,
   onSubmit,
 }) => {
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem('baseUrl');
+
+  const [plantDetails, setPlantDetails] = useState([])
+
   const [formData, setFormData] = useState({
-    wbsCode: '',
-    wbsName: '',
-    description: '',
-    parentWBS: '',
-    department: '',
-    status: 'active',
     plantCode: '',
     category: '',
     categoryWBSCode: '',
-    site: ''
+    wbsName: '',
+    wbsCode: ''
   });
+
+  useEffect(() => {
+    const fetchPlantDetails = async () => {
+      try {
+        const response = await dispatch(getPlantDetails({ baseUrl, token })).unwrap();
+        setPlantDetails(response);
+      } catch (error) {
+        console.log(error);
+        toast.dismiss();
+        toast.error(error);
+      }
+    };
+
+    fetchPlantDetails();
+  }, [])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -56,34 +74,27 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
   const handleSubmit = () => {
     console.log('Adding WBS:', formData);
     onSubmit({
-      plantCode: formData.plantCode,
+      plant_code: formData.plantCode,
       category: formData.category,
-      categoryWBSCode: formData.categoryWBSCode,
-      wbsName: formData.wbsName,
-      wbsCode: formData.wbsCode,
-      site: formData.site
+      category_wbs_code: formData.categoryWBSCode,
+      wbs_name: formData.wbsName,
+      wbs_code: formData.wbsCode,
     });
     onOpenChange(false);
-    // Reset form
     setFormData({
-      wbsCode: '',
-      wbsName: '',
-      description: '',
-      parentWBS: '',
-      department: '',
-      status: 'active',
       plantCode: '',
       category: '',
       categoryWBSCode: '',
-      site: ''
+      wbsName: '',
+      wbsCode: ''
     });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onClose={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold">ADD WBS</DialogTitle>
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 mb-3">
+          <h1 className="text-lg font-semibold">ADD WBS</h1>
           <Button
             variant="ghost"
             size="sm"
@@ -93,50 +104,34 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
             <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <TextField
-              label="WBS Code*"
-              placeholder="Enter WBS Code"
-              value={formData.wbsCode}
-              onChange={(e) => handleInputChange('wbsCode', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-            
-            <TextField
-              label="WBS Name*"
-              placeholder="Enter WBS Name"
-              value={formData.wbsName}
-              onChange={(e) => handleInputChange('wbsName', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-          </div>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Plant Code*</InputLabel>
+              <MuiSelect
+                label="Plant Code*"
+                name="plantCode"
+                value={formData.plantCode}
+                onChange={(e) => handleSelectChange('plantCode', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value="">
+                  <em>Select Plant Code</em>
+                </MenuItem>
+                {plantDetails.map((plantDetail) => (
+                  <MenuItem key={plantDetail.id} value={plantDetail.plant_name}>
+                    {plantDetail.plant_name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
-          <div className="grid grid-cols-2 gap-4">
             <TextField
-              label="Plant Code"
-              placeholder="Enter Plant Code"
-              value={formData.plantCode}
-              onChange={(e) => handleInputChange('plantCode', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-            
-            <TextField
-              label="Category"
-              placeholder="Enter Category"
+              label="Category*"
+              type="category"
+              name="category"
               value={formData.category}
               onChange={(e) => handleInputChange('category', e.target.value)}
               fullWidth
@@ -145,12 +140,11 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
             />
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <TextField
-              label="Category WBS Code"
-              placeholder="Enter Category WBS Code"
+              label="Category WBS Code*"
+              type="categoryWBSCode"
+              name="categoryWBSCode"
               value={formData.categoryWBSCode}
               onChange={(e) => handleInputChange('categoryWBSCode', e.target.value)}
               fullWidth
@@ -159,12 +153,26 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
             />
-            
+
             <TextField
-              label="Site"
-              placeholder="Enter Site"
-              value={formData.site}
-              onChange={(e) => handleInputChange('site', e.target.value)}
+              label="WBS Name*"
+              type="wbsName"
+              name="wbsName"
+              value={formData.wbsName}
+              onChange={(e) => handleInputChange('wbsName', e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
+
+            <TextField
+              label="WBS Code*"
+              type="wbsCode"
+              name="wbsCode"
+              value={formData.wbsCode}
+              onChange={(e) => handleInputChange('wbsCode', e.target.value)}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -172,76 +180,17 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
               sx={{ mt: 1 }}
             />
           </div>
-
-          <TextField
-            label="Description"
-            placeholder="Enter Description"
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
-            fullWidth
-            variant="outlined"
-            multiline
-            minRows={3}
-            InputLabelProps={{ shrink: true }}
-            sx={{ mt: 1 }}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Parent WBS</InputLabel>
-              <MuiSelect
-                label="Parent WBS"
-                value={formData.parentWBS}
-                onChange={(e) => handleSelectChange('parentWBS', e.target.value)}
-                displayEmpty
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Parent WBS</em></MenuItem>
-                <MenuItem value="WBS-001">WBS-001</MenuItem>
-                <MenuItem value="WBS-002">WBS-002</MenuItem>
-              </MuiSelect>
-            </FormControl>
-
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Department</InputLabel>
-              <MuiSelect
-                label="Department"
-                value={formData.department}
-                onChange={(e) => handleSelectChange('department', e.target.value)}
-                displayEmpty
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Department</em></MenuItem>
-                <MenuItem value="engineering">Engineering</MenuItem>
-                <MenuItem value="construction">Construction</MenuItem>
-                <MenuItem value="finance">Finance</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-            <InputLabel shrink>Status</InputLabel>
-            <MuiSelect
-              label="Status"
-              value={formData.status}
-              onChange={(e) => handleSelectChange('status', e.target.value)}
-              sx={fieldStyles}
-            >
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
-            </MuiSelect>
-          </FormControl>
         </div>
 
         <div className="flex gap-3 pt-4">
-          <Button 
+          <Button
             onClick={handleSubmit}
             className="flex-1 text-white"
             style={{ backgroundColor: '#C72030' }}
           >
             Add WBS
           </Button>
-          <Button 
+          <Button
             onClick={() => onOpenChange(false)}
             variant="outline"
             className="flex-1"

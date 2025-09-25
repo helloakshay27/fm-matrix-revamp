@@ -2,10 +2,59 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { FormControl, InputLabel, Select, MenuItem, TextField } from '@mui/material';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
+
+// MUI field styles
+const fieldStyles = {
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: '12px',
+  },
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    backgroundColor: 'white',
+    '& fieldset': {
+      borderColor: '#e5e7eb',
+    },
+    '&:hover fieldset': {
+      borderColor: '#9ca3af',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#6b7280',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
+
+const menuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 300,
+      zIndex: 9999,
+      backgroundColor: 'white',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    },
+  },
+  MenuListProps: {
+    style: {
+      padding: 0,
+    },
+  },
+  anchorOrigin: {
+    vertical: 'bottom' as const,
+    horizontal: 'left' as const,
+  },
+  transformOrigin: {
+    vertical: 'top' as const,
+    horizontal: 'left' as const,
+  },
+};
 
 interface UpdateIncidentModalProps {
   isOpen: boolean;
@@ -90,15 +139,15 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
 
     if (isClosedStatus) {
       if (!updateData.rca.trim()) {
-        alert('RCA is required when closing an incident');
+        toast.error('RCA is required when closing an incident');
         return;
       }
       if (!updateData.correctiveAction.trim()) {
-        alert('Corrective action is required when closing an incident');
+        toast.error('Corrective action is required when closing an incident');
         return;
       }
       if (!updateData.preventiveAction.trim()) {
-        alert('Preventive action is required when closing an incident');
+        toast.error('Preventive action is required when closing an incident');
         return;
       }
     }
@@ -138,15 +187,15 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
       if (response.ok) {
         const result = await response.json();
         console.log('Incident updated successfully:', result);
-        alert(`Incident ${isClosedStatus ? 'closed' : 'updated'} successfully`);
+        toast.success(`Incident ${isClosedStatus ? 'closed' : 'updated'} successfully`);
         onClose();
       } else {
         console.error('Failed to update incident');
-        alert('Failed to update incident. Please try again.');
+        toast.error('Failed to update incident. Please try again.');
       }
     } catch (error) {
       console.error('Error updating incident:', error);
-      alert('Error occurred while updating incident. Please try again.');
+      toast.error('Error occurred while updating incident. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -169,32 +218,42 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
 
         <div className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label>Status</Label>
-            <Select
-              value={updateData.status}
-              onValueChange={(value) => handleInputChange('status', value)}
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={loading ? "Loading statuses..." : "Select Status"} />
-              </SelectTrigger>
-              <SelectContent>
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+              <InputLabel shrink>Status</InputLabel>
+              <Select
+                label="Status"
+                value={updateData.status}
+                onChange={(e) => handleInputChange('status', e.target.value)}
+                disabled={loading}
+                displayEmpty
+                MenuProps={menuProps}
+              >
+                <MenuItem value="">
+                  <em>{loading ? "Loading statuses..." : "Select Status"}</em>
+                </MenuItem>
                 {incidenceStatuses.map((status) => (
-                  <SelectItem key={status.id} value={status.id.toString()}>
+                  <MenuItem key={status.id} value={status.id.toString()}>
                     {status.name}
-                  </SelectItem>
+                  </MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </Select>
+            </FormControl>
           </div>
 
           <div className="space-y-2">
-            <Label>Comment</Label>
-            <Textarea
+            <TextField
+              label="Comment"
               value={updateData.comment}
               onChange={(e) => handleInputChange('comment', e.target.value)}
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={4}
               placeholder="Message"
-              className="min-h-[100px]"
+              InputLabelProps={{
+                shrink: true
+              }}
+              sx={fieldStyles}
             />
           </div>
 
@@ -205,38 +264,53 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
           })() && (
               <>
                 <div className="space-y-2">
-                  <Label>
-                    RCA <span className="text-red-500">*</span>
-                  </Label>
-                  <Textarea
+                  <TextField
+                    label="RCA *"
                     value={updateData.rca}
                     onChange={(e) => handleInputChange('rca', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    multiline
+                    rows={3}
                     placeholder="Enter RCA details"
-                    className="min-h-[80px]"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>
-                    Corrective action <span className="text-red-500">*</span>
-                  </Label>
-                  <Textarea
+                  <TextField
+                    label="Corrective action *"
                     value={updateData.correctiveAction}
                     onChange={(e) => handleInputChange('correctiveAction', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    multiline
+                    rows={3}
                     placeholder="Enter corrective action"
-                    className="min-h-[80px]"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    sx={fieldStyles}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>
-                    Preventive action <span className="text-red-500">*</span>
-                  </Label>
-                  <Textarea
+                  <TextField
+                    label="Preventive action *"
                     value={updateData.preventiveAction}
                     onChange={(e) => handleInputChange('preventiveAction', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    multiline
+                    rows={3}
                     placeholder="Enter preventive action"
-                    className="min-h-[80px]"
+                    InputLabelProps={{
+                      shrink: true
+                    }}
+                    sx={fieldStyles}
                   />
                 </div>
               </>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   TextField,
@@ -19,7 +19,8 @@ import {
   getPurchaseOrdersList,
 } from "@/store/slices/grnSlice";
 import { getInventories, getSuppliers } from "@/store/slices/materialPRSlice";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X } from "lucide-react";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 // Define interfaces for type safety
 interface GRNDetails {
@@ -40,10 +41,12 @@ interface GRNDetails {
 interface Batch {
   batch_no: string;
   id: number;
+  _destroy: number;
 }
 
 interface InventoryItem {
   id: string;
+  item_id: string;
   inventoryType: string;
   expectedQuantity: string;
   receivedQuantity: string;
@@ -62,6 +65,7 @@ interface InventoryItem {
   amount: string;
   totalAmount: string;
   batch: Batch[];
+  _destroy?: number;
 }
 
 interface Supplier {
@@ -75,10 +79,12 @@ interface Inventory {
 }
 
 interface Attachment {
-  id: string;
-  name: string;
+  id: number;
+  name?: string;
   url: string;
-  size: number;
+  size?: number;
+  document_name?: string;
+  document_file_name?: string;
 }
 
 const fieldStyles = {
@@ -94,6 +100,7 @@ export const EditGRNDashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [grnDetails, setGrnDetails] = useState<GRNDetails>({
     purchaseOrder: 0,
@@ -113,6 +120,7 @@ export const EditGRNDashboard = () => {
   const [inventoryDetails, setInventoryDetails] = useState<InventoryItem[]>([
     {
       id: "",
+      item_id: "",
       inventoryType: "",
       expectedQuantity: "",
       receivedQuantity: "",
@@ -131,6 +139,7 @@ export const EditGRNDashboard = () => {
       amount: "",
       totalAmount: "",
       batch: [],
+      _destroy: 0,
     },
   ]);
 
@@ -140,6 +149,8 @@ export const EditGRNDashboard = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
 
   useEffect(() => {
     const fetchPO = async () => {
@@ -201,7 +212,9 @@ export const EditGRNDashboard = () => {
         });
 
         setInventoryDetails(
-          grn.grn_inventories.map((item: any) => ({
+          grn.grn_inventories.map((item: any, index: number) => ({
+            id: index + 1,
+            item_id: item.id,
             inventoryType: item.inventory_id,
             expectedQuantity: item.expected_quantity,
             receivedQuantity: item.received_quantity,
@@ -222,20 +235,24 @@ export const EditGRNDashboard = () => {
             batch: item.products && item.products.map((product: any) => ({
               batch_no: product.batch_no,
               id: product.id,
+              _destroy: 0,
             })) || [],
+            _destroy: 0,
           }))
         );
 
-        // Assuming grn.attachments contains an array of {id, name, url, size}
         setExistingAttachments(
           grn.attachments?.general_attachments?.map((att: any) => ({
             id: att.id,
             name: att.filename,
-            url: att.url,
+            url: att.document_url,
+            document_name: att.filename,
+            document_file_name: att.filename,
           })) || []
         );
       } catch (error) {
         console.log(error);
+        toast.error("Failed to fetch GRN details.");
       }
     };
 
@@ -270,19 +287,12 @@ export const EditGRNDashboard = () => {
     const igstRate = parseFloat(item.igstRate) || 0;
     const tcsRate = parseFloat(item.tcsRate) || 0;
 
-    // Calculate Amount (rate × approved quantity)
-    const amount = rate;
-
-    // Calculate Tax Amounts (rate * qty * %)
+    const amount = rate * approvedQty;
     const cgstAmount = (amount * cgstRate) / 100;
     const sgstAmount = (amount * sgstRate) / 100;
     const igstAmount = (amount * igstRate) / 100;
     const tcsAmount = (amount * tcsRate) / 100;
-
-    // Sum of all taxes
     const totalTaxes = cgstAmount + sgstAmount + igstAmount + tcsAmount;
-
-    // Total payable
     const totalAmount = amount + totalTaxes;
 
     return {
@@ -310,6 +320,8 @@ export const EditGRNDashboard = () => {
       const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
         const inventoryItem = {
           ...item,
+          id: "",
+          item_id: "",
           inventoryType: item.inventory.id,
           rate: item.rate || "",
           cgstRate: item.cgst_rate || "",
@@ -328,6 +340,7 @@ export const EditGRNDashboard = () => {
           approvedQuantity: "",
           rejectedQuantity: "",
           batch: [],
+          _destroy: 0,
         };
         return calculateInventoryTaxes(inventoryItem);
       });
@@ -351,15 +364,13 @@ export const EditGRNDashboard = () => {
         const newBatch = [...newDetails[index].batch];
         newBatch[batchIndex] = {
           ...newBatch[batchIndex],
-          batch_no: value
+          batch_no: value,
         };
         newDetails[index] = { ...newDetails[index], batch: newBatch };
       } else {
         newDetails[index] = { ...newDetails[index], [field]: value };
         if (field === "receivedQuantity") {
-          // Set approvedQuantity to match receivedQuantity
           newDetails[index].approvedQuantity = value;
-          // Calculate rejectedQuantity as expectedQuantity - approvedQuantity
           const expected = parseFloat(newDetails[index].expectedQuantity) || 0;
           const approved = parseFloat(value) || 0;
           const rejected = expected - approved;
@@ -371,12 +382,31 @@ export const EditGRNDashboard = () => {
     });
   };
 
+  const removeInventoryItem = (index: number) => {
+    if (inventoryDetails.length > 1) {
+      setInventoryDetails((prev) =>
+        prev.map((item, i) =>
+          i === index
+            ? {
+              ...item,
+              _destroy: 1,
+              amount: "0.00",
+              totalTaxes: "0.00",
+              totalAmount: "0.00",
+            }
+            : item
+        )
+      );
+      toast.success("Inventory item marked for deletion");
+    }
+  };
+
   const addBatchField = (index: number) => {
     setInventoryDetails((prev) => {
       const newDetails = [...prev];
       newDetails[index] = {
         ...newDetails[index],
-        batch: [...newDetails[index].batch, { batch_no: "", id: 0 }],
+        batch: [...newDetails[index].batch, { batch_no: "", id: 0, _destroy: 0 }],
       };
       return newDetails;
     });
@@ -387,11 +417,13 @@ export const EditGRNDashboard = () => {
       const newDetails = [...prev];
       newDetails[inventoryIndex] = {
         ...newDetails[inventoryIndex],
-        batch: newDetails[inventoryIndex].batch.filter((_, i) => i !== batchIndex),
+        batch: newDetails[inventoryIndex].batch.map((batch, i) =>
+          i === batchIndex ? { ...batch, _destroy: 1 } : batch
+        ),
       };
       return newDetails;
     });
-    toast.success("Batch field removed successfully");
+    toast.success("Batch field marked for deletion");
   };
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -468,31 +500,33 @@ export const EditGRNDashboard = () => {
   };
 
   const removeExistingAttachment = (id: string) => {
-    setExistingAttachments((prev) => prev.filter((att) => att.id !== id));
+    setExistingAttachments((prev) => prev.filter((att) => att.id.toString() !== id));
     toast.success("Existing attachment removed successfully");
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleDashedBorderClick = () => {
+    fileInputRef.current?.click();
+  };
 
-    // Validation
+  const validateForm = () => {
     if (!grnDetails.purchaseOrder) {
       toast.error("Please select a Purchase Order");
-      return;
+      return false;
     }
     if (!grnDetails.supplier) {
       toast.error("Please select a Supplier");
-      return;
+      return false;
     }
     if (!grnDetails.invoiceNumber) {
       toast.error("Please enter Invoice Number");
-      return;
+      return false;
     }
     if (!grnDetails.invoiceDate || !grnDetails.postingDate) {
       toast.error("Please provide valid Invoice and Posting Dates");
-      return;
+      return false;
     }
     for (const [index, item] of inventoryDetails.entries()) {
+      if (item._destroy === 1) continue;
       if (
         !item.expectedQuantity ||
         isNaN(parseFloat(item.expectedQuantity)) ||
@@ -501,7 +535,7 @@ export const EditGRNDashboard = () => {
         toast.error(
           `Please enter a valid Expected Quantity for inventory item ${index + 1}`
         );
-        return;
+        return false;
       }
       if (
         !item.receivedQuantity ||
@@ -511,12 +545,14 @@ export const EditGRNDashboard = () => {
         toast.error(
           `Please enter a valid Received Quantity for inventory item ${index + 1}`
         );
-        return;
+        return false;
       }
       if (
-        item.receivedQuantity > item.expectedQuantity
+        parseFloat(item.receivedQuantity) > parseFloat(item.expectedQuantity)
       ) {
-        toast.error(`Received Quantity cannot be greater than Expected Quantity for item ${index + 1}`);
+        toast.error(
+          `Received Quantity cannot be greater than Expected Quantity for item ${index + 1}`
+        );
         return false;
       }
       if (
@@ -527,11 +563,20 @@ export const EditGRNDashboard = () => {
         toast.error(
           `Please enter a valid Approved Quantity for inventory item ${index + 1}`
         );
-        return;
+        return false;
       }
     }
     if (selectedFiles.length === 0 && existingAttachments.length === 0) {
       toast.error("Please upload at least one attachment");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
       return;
     }
 
@@ -550,7 +595,7 @@ export const EditGRNDashboard = () => {
         adj_amount: grnDetails.adjustmentAmount,
         notes: grnDetails.notes,
         pms_grn_inventories_attributes: inventoryDetails.map((item) => ({
-          id: item.id,
+          id: item.item_id,
           pms_inventory_id: item.inventoryType,
           quantity: item.expectedQuantity,
           unit: item.receivedQuantity,
@@ -567,13 +612,15 @@ export const EditGRNDashboard = () => {
           tcs_amount: item.tcsAmount,
           taxable_value: item.totalTaxes,
           total_value: item.amount,
-          pms_products_attributes: item.batch.map(batch => ({
+          _destroy: item._destroy,
+          pms_products_attributes: item.batch.map((batch) => ({
             batch_no: batch.batch_no,
             id: batch.id,
+            _destroy: batch._destroy,
           })),
         })),
       },
-      attachments: selectedFiles, // Only send new files
+      attachments: selectedFiles,
     };
 
     setIsSubmitting(true);
@@ -593,7 +640,7 @@ export const EditGRNDashboard = () => {
       <Button
         variant="ghost"
         onClick={() => navigate(-1)}
-        className='p-0'
+        className="p-0"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
@@ -839,345 +886,372 @@ export const EditGRNDashboard = () => {
         </div>
 
         {/* Inventory Details Section */}
-        {inventoryDetails.map((item, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between gap-2 mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">2</span>
+        {inventoryDetails
+          .filter((item) => item._destroy !== 1)
+          .map((item, index) => (
+            <div key={index} className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between gap-2 mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm">2</span>
+                  </div>
+                  <h2 className="text-lg font-semibold text-[#C72030]">
+                    INVENTORY DETAILS {index + 1}
+                  </h2>
                 </div>
-                <h2 className="text-lg font-semibold text-[#C72030]">
-                  INVENTORY DETAILS {index + 1}
-                </h2>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Inventory Type</InputLabel>
-                <MuiSelect
-                  label="Inventory Type"
-                  value={item.inventoryType}
-                  onChange={(e) =>
-                    handleInventoryChange(
-                      index,
-                      "inventoryType",
-                      e.target.value
-                    )
-                  }
-                  displayEmpty
-                  sx={fieldStyles}
-                >
-                  <MenuItem value="">
-                    <em>Select</em>
-                  </MenuItem>
-                  {inventories.map((inventory) => (
-                    <MenuItem key={inventory.id} value={inventory.id}>
-                      {inventory.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-
-              <TextField
-                label="Expected Quantity*"
-                type="number"
-                placeholder="Expected Quantity"
-                value={item.expectedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "expectedQuantity",
-                    e.target.value
-                  )
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Received Quantity*"
-                type="number"
-                placeholder="Received Quantity"
-                value={item.receivedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "receivedQuantity",
-                    e.target.value
-                  )
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Approved Quantity*"
-                type="number"
-                placeholder="Approved Quantity"
-                value={item.approvedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "approvedQuantity",
-                    e.target.value
-                  )
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Rejected Quantity"
-                type="number"
-                placeholder="Rejected Quantity"
-                value={item.rejectedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "rejectedQuantity",
-                    e.target.value
-                  )}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles },
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Rate"
-                type="number"
-                placeholder="Enter Number"
-                value={item.rate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "rate", e.target.value)
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="CGST Rate"
-                type="number"
-                placeholder="Enter Number"
-                value={item.cgstRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "cgstRate", e.target.value)
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="CGST Amount"
-                type="number"
-                placeholder="Enter Number"
-                value={item.cgstAmount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="SGST Rate"
-                type="number"
-                placeholder="Enter Number"
-                value={item.sgstRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "sgstRate", e.target.value)
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="SGST Amount"
-                type="number"
-                placeholder="Enter Number"
-                value={item.sgstAmount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="IGST Rate"
-                type="number"
-                placeholder="Enter Number"
-                value={item.igstRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "igstRate", e.target.value)
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="IGST Amount"
-                type="number"
-                placeholder="Enter Number"
-                value={item.igstAmount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="TCS Rate"
-                type="number"
-                placeholder="Enter Number"
-                value={item.tcsRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "tcsRate", e.target.value)
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="TCS Amount"
-                type="number"
-                placeholder="Enter Number"
-                value={item.tcsAmount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Total Taxes"
-                type="number"
-                placeholder="Total Amount"
-                value={item.totalTaxes}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Amount"
-                type="number"
-                placeholder="Enter Number"
-                value={item.amount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Total Amount"
-                type="number"
-                placeholder="Total Amount"
-                value={item.totalAmount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-            </div>
-
-            <div className="mt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-md font-semibold">Batch Numbers</h3>
-              </div>
-              {item.batch.map((batch, batchIndex) => (
-                <div key={batchIndex} className="flex items-center gap-4 mb-2">
-                  <TextField
-                    label={`Batch ${batchIndex + 1}`}
-                    type="text"
-                    placeholder="Enter Batch Number"
-                    value={batch.batch_no}
-                    onChange={(e) =>
-                      handleInventoryChange(index, "batch", e.target.value, batchIndex)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
+                {inventoryDetails.length > 1 && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeBatchField(index, batchIndex)}
+                    onClick={() => removeInventoryItem(index)}
                     className="text-red-600 hover:text-red-700"
                   >
-                    Remove
+                    <X className="w-4 h-4" />
                   </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>Inventory Type</InputLabel>
+                  <MuiSelect
+                    label="Inventory Type"
+                    value={item.inventoryType}
+                    onChange={(e) =>
+                      handleInventoryChange(
+                        index,
+                        "inventoryType",
+                        e.target.value
+                      )
+                    }
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select</em>
+                    </MenuItem>
+                    {inventories.map((inventory) => (
+                      <MenuItem key={inventory.id} value={inventory.id}>
+                        {inventory.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                <TextField
+                  label="Expected Quantity*"
+                  type="number"
+                  placeholder="Expected Quantity"
+                  value={item.expectedQuantity}
+                  onChange={(e) =>
+                    handleInventoryChange(
+                      index,
+                      "expectedQuantity",
+                      e.target.value
+                    )
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Received Quantity*"
+                  type="number"
+                  placeholder="Received Quantity"
+                  value={item.receivedQuantity}
+                  onChange={(e) =>
+                    handleInventoryChange(
+                      index,
+                      "receivedQuantity",
+                      e.target.value
+                    )
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Approved Quantity*"
+                  type="number"
+                  placeholder="Approved Quantity"
+                  value={item.approvedQuantity}
+                  onChange={(e) =>
+                    handleInventoryChange(
+                      index,
+                      "approvedQuantity",
+                      e.target.value
+                    )
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Rejected Quantity"
+                  type="number"
+                  placeholder="Rejected Quantity"
+                  value={item.rejectedQuantity}
+                  onChange={(e) =>
+                    handleInventoryChange(
+                      index,
+                      "rejectedQuantity",
+                      e.target.value
+                    )
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Rate"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.rate}
+                  onChange={(e) =>
+                    handleInventoryChange(index, "rate", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="CGST Rate"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.cgstRate}
+                  onChange={(e) =>
+                    handleInventoryChange(index, "cgstRate", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="CGST Amount"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.cgstAmount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="SGST Rate"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.sgstRate}
+                  onChange={(e) =>
+                    handleInventoryChange(index, "sgstRate", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="SGST Amount"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.sgstAmount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="IGST Rate"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.igstRate}
+                  onChange={(e) =>
+                    handleInventoryChange(index, "igstRate", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="IGST Amount"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.igstAmount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="TCS Rate"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.tcsRate}
+                  onChange={(e) =>
+                    handleInventoryChange(index, "tcsRate", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="TCS Amount"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.tcsAmount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Total Taxes"
+                  type="number"
+                  placeholder="Total Amount"
+                  value={item.totalTaxes}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Amount"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.amount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Total Amount"
+                  type="number"
+                  placeholder="Total Amount"
+                  value={item.totalAmount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+              </div>
+
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-md font-semibold">Batch Numbers</h3>
                 </div>
-              ))}
-              <Button
-                type="button"
-                className="bg-[#C72030] hover:bg-[#A01020] text-white mt-4"
-                onClick={() => addBatchField(index)}
-              >
-                Add Batch
-              </Button>
+                {item.batch
+                  .filter((batch) => !batch._destroy)
+                  .map((batch, batchIndex) => (
+                    <div key={batchIndex} className="flex items-center gap-4 mb-2">
+                      <TextField
+                        label={`Batch ${batchIndex + 1}`}
+                        type="text"
+                        placeholder="Enter Batch Number"
+                        value={batch.batch_no}
+                        onChange={(e) =>
+                          handleInventoryChange(index, "batch", e.target.value, batchIndex)
+                        }
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeBatchField(index, batchIndex)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                <Button
+                  type="button"
+                  className="bg-[#C72030] hover:bg-[#A01020] text-white mt-4"
+                  onClick={() => addBatchField(index)}
+                >
+                  Add Batch
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+
+        <div className="flex items-center justify-end mt-4">
+          <Button className="bg-[#C72030] hover:bg-[#C72030] text-white" type="button">
+            Total Amount :{" "}
+            {inventoryDetails
+              .filter((item) => item._destroy !== 1)
+              .reduce(
+                (sum, item) => sum + parseFloat(item.totalAmount || "0"),
+                0
+              )
+              .toFixed(2)}
+          </Button>
+        </div>
 
         {/* Attachments Section */}
         <div className="bg-white rounded-lg shadow p-6">
@@ -1194,94 +1268,190 @@ export const EditGRNDashboard = () => {
             className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 transition-colors"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            onClick={() => document.getElementById("file-upload")?.click()}
+            onClick={handleDashedBorderClick}
           >
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Drag & Drop</span> or{" "}
-              <button type="button" className="text-[#C72030] underline">
-                Choose File
-              </button>{" "}
-              No file chosen
-            </p>
+            <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Drag & Drop or Click to Upload</span>
+              <input
+                id="file-upload"
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileUpload}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                ref={fileInputRef}
+              />
+              <span className="ml-1">
+                {(selectedFiles.length + existingAttachments.length) > 0
+                  ? `${selectedFiles.length + existingAttachments.length} file(s) selected`
+                  : "No files chosen"}
+              </span>
+            </div>
           </div>
 
-          <input
-            id="file-upload"
-            type="file"
-            multiple
-            className="hidden"
-            onChange={handleFileUpload}
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-          />
-
           {(existingAttachments.length > 0 || selectedFiles.length > 0) && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium mb-2">Uploaded Files:</h4>
-              <div className="space-y-2">
-                {existingAttachments.map((attachment) => (
+            <div className="flex items-center flex-wrap gap-4 my-6">
+              {existingAttachments.map((attachment, index) => {
+                const isImage = attachment.url.match(/\.(jpeg|jpg|png|gif)$/i);
+                const isPdf = attachment.url.match(/\.pdf$/i);
+                const isExcel = attachment.url.match(/\.(xlsx|xls)$/i);
+                const isWord = attachment.url.match(/\.(doc|docx)$/i);
+
+                return (
                   <div
-                    key={attachment.id}
-                    className="flex items-center justify-between bg-gray-100 p-3 rounded"
+                    key={`existing-${attachment.id}`}
+                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={attachment.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        {attachment.name}
-                      </a>
-                      <span className="text-xs text-gray-500">
-                        ({(attachment.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                      <span className="text-xs text-gray-500 italic">
-                        (Existing)
-                      </span>
-                    </div>
+                    {isImage ? (
+                      <>
+                        <button
+                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="View"
+                          onClick={() => {
+                            setSelectedDoc({
+                              id: attachment.id,
+                              url: attachment.url,
+                              document_name: attachment.name,
+                              document_file_name: attachment.name,
+                            });
+                            setIsModalOpen(true);
+                          }}
+                          type="button"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <img
+                          src={attachment.url}
+                          alt={attachment.name}
+                          className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                          onClick={() => {
+                            setSelectedDoc({
+                              id: attachment.id,
+                              url: attachment.url,
+                              document_name: attachment.name,
+                              document_file_name: attachment.name,
+                            });
+                            setIsModalOpen(true);
+                          }}
+                        />
+                      </>
+                    ) : isPdf ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    ) : isExcel ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                        <FileSpreadsheet className="w-6 h-6" />
+                      </div>
+                    ) : isWord ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    ) : (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                        <File className="w-6 h-6" />
+                      </div>
+                    )}
+                    <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                      {attachment.name}
+                    </span>
+                    <button
+                      className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                      title="Remove"
+                      onClick={() => removeExistingAttachment(attachment.id.toString())}
+                      type="button"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                ))}
-                {selectedFiles.map((file, index) => (
+                );
+              })}
+              {selectedFiles.map((file, index) => {
+                const isImage = file.type.match(/image\/(jpeg|jpg|png|gif)/i);
+                const isPdf = file.type.match(/application\/pdf/i);
+                const isExcel = file.type.match(
+                  /application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/i
+                );
+                const isWord = file.type.match(
+                  /application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document/i
+                );
+
+                return (
                   <div
                     key={`new-${index}`}
-                    className="flex items-center justify-between bg-gray-50 p-3 rounded"
+                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-700">{file.name}</span>
-                      <span className="text-xs text-gray-500">
-                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                      <span className="text-xs text-gray-500 italic">
-                        (New)
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
+                    {isImage ? (
+                      <>
+                        <button
+                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="View"
+                          onClick={() => {
+                            setSelectedDoc({
+                              id: index,
+                              url: URL.createObjectURL(file),
+                              document_name: file.name,
+                              document_file_name: file.name,
+                            });
+                            setIsModalOpen(true);
+                          }}
+                          type="button"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                          onClick={() => {
+                            setSelectedDoc({
+                              id: index,
+                              url: URL.createObjectURL(file),
+                              document_name: file.name,
+                              document_file_name: file.name,
+                            });
+                            setIsModalOpen(true);
+                          }}
+                        />
+                      </>
+                    ) : isPdf ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    ) : isExcel ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                        <FileSpreadsheet className="w-6 h-6" />
+                      </div>
+                    ) : isWord ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    ) : (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                        <File className="w-6 h-6" />
+                      </div>
+                    )}
+                    <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                      {file.name}
+                    </span>
+                    <button
+                      className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                      title="Remove"
                       onClick={() => removeFile(index)}
-                      className="text-red-600 hover:text-red-700"
+                      type="button"
                     >
-                      Remove
-                    </Button>
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
           )}
         </div>
 
         {/* Submit Section */}
-        <div className="flex justify-end items-center gap-4">
-          <div className="bg-[#C72030] text-white px-4 py-2 rounded text-right">
-            Total Amount -{" "}
-            {inventoryDetails
-              .reduce(
-                (sum, item) => sum + parseFloat(item.totalAmount || "0"),
-                0
-              )
-              .toFixed(2)}
-          </div>
+        <div className="flex justify-center items-center gap-4">
           <Button
             type="submit"
             className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
@@ -1291,6 +1461,13 @@ export const EditGRNDashboard = () => {
           </Button>
         </div>
       </form>
+
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

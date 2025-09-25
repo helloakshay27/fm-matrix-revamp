@@ -18,7 +18,7 @@ export const AddFacilityBookingPage = () => {
   const dispatch = useAppDispatch();
 
   const { data: fmUsersResponse, loading: fmUsersLoading, error: fmUsersError } = useAppSelector((state) => state.fmUsers);
-  const fmUsers = fmUsersResponse?.fm_users || [];
+  const fmUsers = fmUsersResponse?.users || [];
 
   const occupantUsersState = useAppSelector((state) => state.occupantUsers);
   const occupantUsers = occupantUsersState?.users?.transformedUsers || [];
@@ -305,6 +305,7 @@ export const AddFacilityBookingPage = () => {
                 label="Client"
                 value={selectedCompany}
                 onChange={(e) => setSelectedCompany(e.target.value)}
+                SelectProps={{ displayEmpty: true }}
                 variant="outlined"
                 fullWidth
                 InputLabelProps={{ shrink: true }}
@@ -313,6 +314,11 @@ export const AddFacilityBookingPage = () => {
                 helperText={entitiesError ? "Error loading companies" : ""}
                 error={!!entitiesError}
               >
+                <MenuItem value="" disabled>
+                  <em>
+                    Select Client
+                  </em>
+                </MenuItem>
                 {entitiesLoading && (
                   <MenuItem value="" disabled>
                     Loading companies...
@@ -342,6 +348,7 @@ export const AddFacilityBookingPage = () => {
               onChange={(e) => setSelectedUser(e.target.value)}
               variant="outlined"
               fullWidth
+              SelectProps={{ displayEmpty: true }}
               InputLabelProps={{
                 classes: {
                   asterisk: "text-red-500", // Tailwind class for red color
@@ -353,6 +360,11 @@ export const AddFacilityBookingPage = () => {
               helperText={userType === 'occupant' ? (occupantUsersError ? "Error loading users" : "") : (fmUsersError ? "Error loading users" : "")}
               error={userType === 'occupant' ? !!occupantUsersError : !!fmUsersError}
             >
+              <MenuItem value="" disabled>
+                <em>
+                  Select User
+                </em>
+              </MenuItem>
               {userType === 'occupant' && occupantUsersLoading && (
                 <MenuItem value="" disabled>
                   Loading users...
@@ -381,7 +393,7 @@ export const AddFacilityBookingPage = () => {
               )}
               {userType === 'fm' && fmUsers.map((user) => (
                 <MenuItem key={user.id} value={user.id.toString()}>
-                  {user.firstname} {user.lastname}
+                  {user.full_name}
                 </MenuItem>
               ))}
             </TextField>
@@ -397,6 +409,7 @@ export const AddFacilityBookingPage = () => {
               onChange={(e) => handleFacilityChange(e.target.value)}
               variant="outlined"
               fullWidth
+              SelectProps={{ displayEmpty: true }}
               InputLabelProps={{
                 classes: {
                   asterisk: "text-red-500", // Tailwind class for red color
@@ -408,6 +421,11 @@ export const AddFacilityBookingPage = () => {
               helperText={facilitySetupsError ? "Error loading facilities" : ""}
               error={!!facilitySetupsError}
             >
+              <MenuItem value="" disabled>
+                <em>
+                  Select Facility
+                </em>
+              </MenuItem>
               {facilitySetupsLoading && (
                 <MenuItem value="" disabled>
                   Loading facilities...
@@ -459,10 +477,22 @@ export const AddFacilityBookingPage = () => {
             rows={4}
             InputLabelProps={{ shrink: true }}
             sx={{
-              ...fieldStyles,
-              '& .MuiOutlinedInput-root': {
-                ...fieldStyles['& .MuiOutlinedInput-root'],
-                height: 'auto',
+              mt: 1,
+              "& .MuiOutlinedInput-root": {
+                height: "auto !important",
+                padding: "2px !important",
+                display: "flex",
+              },
+              "& .MuiInputBase-input[aria-hidden='true']": {
+                flex: 0,
+                width: 0,
+                height: 0,
+                padding: "0 !important",
+                margin: 0,
+                display: "none",
+              },
+              "& .MuiInputBase-input": {
+                resize: "none !important",
               },
             }}
             helperText={<span style={{ textAlign: 'right', display: 'block' }}>{`${comment.length}/255 characters`}</span>}

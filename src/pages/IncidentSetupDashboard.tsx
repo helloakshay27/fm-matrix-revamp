@@ -1,12 +1,10 @@
-
-// ...existing code...
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from 'lucide-react';
-import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel, Chip, OutlinedInput, Box } from '@mui/material';
+import { toast } from 'sonner';
 
 export const IncidentSetupDashboard = () => {
   // Get baseUrl and token from localStorage, ensure baseUrl starts with https://
@@ -82,11 +80,12 @@ export const IncidentSetupDashboard = () => {
   const [incidenceStatuses, setIncidenceStatuses] = useState([]);
   const [incidenceLevels, setIncidenceLevels] = useState([]);
   const [escalations, setEscalations] = useState([]);
+  const [escalationMatrix, setEscalationMatrix] = useState([]);
   // Fetch Escalations from API
   // Only use /pms/incidence_tags.json?q[tag_type_eq]=EscaltionMatrix for escalations GET
   const fetchEscalations = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=EscaltionMatrix`, {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -108,9 +107,35 @@ export const IncidentSetupDashboard = () => {
       setEscalations([]);
     }
   };
+
+  // Fetch Escalation Matrix from API
+  const fetchEscalationMatrix = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags/get_escalation_matrix.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        // Extract escalation_matrix from the response
+        setEscalationMatrix(result.escalation_matrix || []);
+        toast.success('Escalation matrix loaded successfully');
+      } else {
+        console.error('Failed to fetch escalation matrix');
+        toast.error('Failed to load escalation matrix');
+        setEscalationMatrix([]);
+      }
+    } catch (error) {
+      console.error('Error fetching escalation matrix:', error);
+      toast.error('Error loading escalation matrix');
+      setEscalationMatrix([]);
+    }
+  };
+
   const [selectedEscalationLevel, setSelectedEscalationLevel] = useState('');
   const [escalateInDays, setEscalateInDays] = useState('');
-  const [escalateToUsers, setEscalateToUsers] = useState('');
+  const [escalateToUsers, setEscalateToUsers] = useState([]);
   const [approvalSetups, setApprovalSetups] = useState([{
     id: 1,
     users: 'Mahendra Lungare, Vinayak Mane'
@@ -118,7 +143,8 @@ export const IncidentSetupDashboard = () => {
     id: 2,
     users: 'Abdul A, John Doe'
   }]);
-  const [selectedApprovalUsers, setSelectedApprovalUsers] = useState('');
+  const [selectedApprovalUsers, setSelectedApprovalUsers] = useState([]);
+  const [existingApprovalSetupId, setExistingApprovalSetupId] = useState(null);
   const [secondaryCategories, setSecondaryCategories] = useState([]);
   const [secondarySubCategories, setSecondarySubCategories] = useState([]);
   const [selectedSecondaryCategory, setSelectedSecondaryCategory] = useState('');
@@ -477,6 +503,50 @@ export const IncidentSetupDashboard = () => {
       console.error('Error fetching escalate to users:', error);
     }
   };
+
+  const fetchApprovalSetups = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags.json?tag_type=ApprovalSetup`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        // Since we're filtering by tag_type in the URL, all data should be ApprovalSetup
+        const approvalSetupData = result.data || [];
+
+        // Extract user IDs from the name field (comma-separated string) of the most recent ApprovalSetup entry
+        if (approvalSetupData.length > 0) {
+          const latestApprovalSetup = approvalSetupData[approvalSetupData.length - 1];
+          const nameString = latestApprovalSetup.name || '';
+          // Split comma-separated string into array and convert to string array for dropdown
+          const userIds = nameString ? nameString.split(',').map(id => id.trim()) : [];
+          setSelectedApprovalUsers(userIds);
+          setExistingApprovalSetupId(latestApprovalSetup.id);
+        } else {
+          // If no existing approval setup, clear the selection
+          setSelectedApprovalUsers([]);
+          setExistingApprovalSetupId(null);
+        }
+
+        // Also update the approvalSetups state for the table display
+        const approvalSetupsForTable = approvalSetupData.map(setup => ({
+          id: setup.id,
+          users: setup.name ? setup.name.split(',').map(userId => {
+            // Find user in escalateToUsersList
+            const user = escalateToUsersList.find(u => String(u.id) === userId.trim());
+            return user ? user.full_name : `User ID: ${userId.trim()}`;
+          }).join(', ') : 'No users selected'
+        }));
+        setApprovalSetups(approvalSetupsForTable);
+      } else {
+        console.error('Failed to fetch approval setups');
+      }
+    } catch (error) {
+      console.error('Error fetching approval setups:', error);
+    }
+  };
   useEffect(() => {
     if (selectedCategory === 'Category') {
       fetchCategories();
@@ -520,12 +590,66 @@ export const IncidentSetupDashboard = () => {
       fetchIncidenceLevels();
       fetchEscalateToUsers();
       fetchEscalations();
+      fetchEscalationMatrix();
+    } else if (selectedCategory === 'Approval Setup') {
+      fetchEscalateToUsers();
     }
   }, [selectedCategory]);
 
+  // Fetch approval setups after escalateToUsersList is loaded
+  useEffect(() => {
+    if (selectedCategory === 'Approval Setup' && escalateToUsersList.length > 0) {
+      fetchApprovalSetups();
+    } else if (selectedCategory !== 'Approval Setup') {
+      // Clear approval users selection when switching away from Approval Setup tab
+      setSelectedApprovalUsers([]);
+      setExistingApprovalSetupId(null);
+    }
+  }, [selectedCategory, escalateToUsersList]);
+
 
   const handleSubmit = async () => {
-    // if (!categoryName.trim()) return;
+    // Validation logic - check if all required fields are filled
+    const validateFields = () => {
+      if (selectedCategory === 'Category') {
+        if (!categoryName.trim()) return false;
+      } else if (selectedCategory === 'Sub Category') {
+        if (!selectedParentCategory || !categoryName.trim()) return false;
+      } else if (selectedCategory === 'Sub Sub Category') {
+        if (!selectedParentCategory || !selectedSubCategory || !categoryName.trim()) return false;
+      } else if (selectedCategory === 'Sub Sub Sub Category') {
+        if (!selectedParentCategory || !selectedSubCategory || !selectedSubSubCategory || !categoryName.trim()) return false;
+      } else if (selectedCategory === 'Incidence status') {
+        if (!categoryName.trim()) return false;
+      } else if (selectedCategory === 'Incidence level') {
+        if (!categoryName.trim()) return false;
+      } else if (selectedCategory === 'Escalations') {
+        if (!selectedEscalationLevel || !escalateInDays || escalateToUsers.length === 0) return false;
+      } else if (selectedCategory === 'Approval Setup') {
+        if (selectedApprovalUsers.length === 0) return false;
+      } else if (selectedCategory === 'Secondary Category') {
+        if (!categoryName.trim()) return false;
+      } else if (selectedCategory === 'Secondary Sub Category') {
+        if (!selectedSecondaryCategory || !categoryName.trim()) return false;
+      } else if (selectedCategory === 'Secondary Sub Sub Category') {
+        if (!selectedSecondaryCategory || !selectedSecondarySubCategory || !categoryName.trim()) return false;
+      } else if (selectedCategory === 'Secondary Sub Sub Sub Category') {
+        if (!selectedSecondaryCategory || !selectedSecondarySubCategory || !selectedSecondarySubSubCategory || !categoryName.trim()) return false;
+      } else if (selectedCategory === 'Who got injured') {
+        if (!categoryName.trim()) return false;
+      } else if (selectedCategory === 'Property Damage Category') {
+        if (!categoryName.trim()) return false;
+      } else if (selectedCategory === 'RCA Category') {
+        if (!categoryName.trim()) return false;
+      }
+      return true;
+    };
+
+    // Show toast error if validation fails
+    if (!validateFields()) {
+      toast.error("Please fill all required fields.");
+      return;
+    }
 
     const newId = Math.max(...(
       selectedCategory === 'Category' ? categories.map(c => c.id) :
@@ -730,11 +854,9 @@ export const IncidentSetupDashboard = () => {
         alert('An error occurred while adding the incidence level.');
       }
     } else if (selectedCategory === 'Escalations') {
-      if (selectedEscalationLevel && escalateInDays && escalateToUsers) {
+      if (selectedEscalationLevel && escalateInDays && escalateToUsers.length > 0) {
         try {
-          const usersArray = Array.isArray(escalateToUsers)
-            ? escalateToUsers
-            : escalateToUsers.split(',').map(u => u.trim()).filter(Boolean);
+          const usersArray = Array.isArray(escalateToUsers) ? escalateToUsers : [];
           const payload = {
             escalation_matrix: {
               name: selectedEscalationLevel,
@@ -754,7 +876,7 @@ export const IncidentSetupDashboard = () => {
             await fetchEscalations();
             setSelectedEscalationLevel('');
             setEscalateInDays('');
-            setEscalateToUsers('');
+            setEscalateToUsers([]);
           } else {
             const errorText = await response.text();
             // Enhanced error logging for debugging
@@ -774,12 +896,46 @@ export const IncidentSetupDashboard = () => {
         }
       }
     } else if (selectedCategory === 'Approval Setup') {
-      if (selectedApprovalUsers) {
-        setApprovalSetups([...approvalSetups, {
-          id: newId,
-          users: selectedApprovalUsers
-        }]);
-        setSelectedApprovalUsers('');
+      if (selectedApprovalUsers.length > 0) {
+        try {
+          // Determine if we're updating existing or creating new
+          const isUpdate = existingApprovalSetupId !== null;
+          const url = isUpdate
+            ? `${baseUrl}/pms/incidence_tags/${existingApprovalSetupId}.json`
+            : `${baseUrl}/pms/incidence_tags.json`;
+          const method = isUpdate ? 'PUT' : 'POST';
+
+          // Convert user IDs array to comma-separated string
+          const userIdsString = selectedApprovalUsers.join(',');
+
+          const response = await fetch(url, {
+            method: method,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              incidence_tag: {
+                tag_type: 'ApprovalSetup',
+                active: 1,
+                name: userIdsString
+              }
+            })
+          });
+
+          if (response.ok) {
+            // Refresh the approval setups data from the server
+            await fetchApprovalSetups();
+            toast.success(`Approval setup ${isUpdate ? 'updated' : 'created'} successfully!`);
+          } else {
+            const errorText = await response.text();
+            console.error(`Failed to ${isUpdate ? 'update' : 'create'} approval setup:`, response.status, errorText);
+            toast.error(`Failed to ${isUpdate ? 'update' : 'create'} approval setup. Please try again.`);
+          }
+        } catch (error) {
+          console.error('Error saving approval setup:', error);
+          toast.error('An error occurred while saving the approval setup.');
+        }
       }
     } else if (selectedCategory === 'Secondary Category') {
       if (categoryName.trim()) {
@@ -1054,15 +1210,21 @@ export const IncidentSetupDashboard = () => {
       type
     });
     if (type === 'Escalations') {
+      // Extract user IDs from escalate_to_users array for the form
+      const userIds = item.escalate_to_users ? item.escalate_to_users.map(user => String(user[2])) : [];
       setEditFormData({
         category: '',
         subCategory: '',
         subSubCategory: '',
-        name: '',
-        level: item.level || '',
-        escalateInDays: item.escalateInDays || '',
-        users: item.users || ''
+        name: item.name || '',
+        level: item.name || '',
+        escalateInDays: String(item.after_days) || '',
+        users: userIds.join(', ')
       });
+      // Also set the form states for escalations
+      setSelectedEscalationLevel(item.name || '');
+      setEscalateInDays(String(item.after_days) || '');
+      setEscalateToUsers(userIds);
     } else if (type === 'Secondary Sub Sub Category') {
       setEditFormData({
         category: item.secondaryCategory || '',
@@ -1109,6 +1271,16 @@ export const IncidentSetupDashboard = () => {
         subCategory: item.subCategory || '',
         subSubCategory: '',
         name: item.subCategory || '',
+        level: '',
+        escalateInDays: '',
+        users: ''
+      });
+    } else if (type === 'Sub Sub Sub Category') {
+      setEditFormData({
+        category: item.category || '',
+        subCategory: item.subCategory || '',
+        subSubCategory: item.subSubCategory || '',
+        name: item.subSubSubCategory || '',
         level: '',
         escalateInDays: '',
         users: ''
@@ -1266,6 +1438,13 @@ export const IncidentSetupDashboard = () => {
         return;
       }
     } else if (editingItem?.type === 'Sub Category') {
+      // Find the selected category object to get its id for parent_id
+      const parentCategoryObj = categories.find(cat => cat.name === editFormData.category);
+      if (!parentCategoryObj) {
+        alert('Please select a valid Category');
+        return;
+      }
+
       try {
         const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
           method: 'PUT',
@@ -1275,7 +1454,8 @@ export const IncidentSetupDashboard = () => {
           },
           body: JSON.stringify({
             incidence_tag: {
-              name: editFormData.name
+              name: editFormData.name,
+              parent_id: parentCategoryObj.id
             }
           })
         });
@@ -1293,6 +1473,16 @@ export const IncidentSetupDashboard = () => {
         return;
       }
     } else if (editingItem?.type === 'Sub Sub Category') {
+      // Find the selected sub category object to get its id for parent_id
+      const parentSubCategoryObj = subCategories.find(sub =>
+        sub.subCategory === editFormData.subCategory &&
+        sub.category === editFormData.category
+      );
+      if (!parentSubCategoryObj) {
+        alert('Please select a valid Sub Category');
+        return;
+      }
+
       try {
         const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
           method: 'PUT',
@@ -1302,7 +1492,8 @@ export const IncidentSetupDashboard = () => {
           },
           body: JSON.stringify({
             incidence_tag: {
-              name: editFormData.name
+              name: editFormData.name,
+              parent_id: parentSubCategoryObj.id
             }
           })
         });
@@ -1317,6 +1508,45 @@ export const IncidentSetupDashboard = () => {
       } catch (error) {
         console.error('Error updating sub sub category:', error);
         alert('An error occurred while updating the sub sub category.');
+        return;
+      }
+    } else if (editingItem?.type === 'Sub Sub Sub Category') {
+      // Find the selected sub sub category object to get its id for parent_id
+      const parentSubSubCategoryObj = subSubCategories.find(subsub =>
+        subsub.subSubCategory === editFormData.subSubCategory &&
+        subsub.subCategory === editFormData.subCategory &&
+        subsub.category === editFormData.category
+      );
+      if (!parentSubSubCategoryObj) {
+        alert('Please select a valid Sub Sub Category');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            incidence_tag: {
+              name: editFormData.name,
+              parent_id: parentSubSubCategoryObj.id
+            }
+          })
+        });
+
+        if (response.ok) {
+          await fetchSubSubSubCategories();
+        } else {
+          console.error('Failed to update sub sub sub category:', response.statusText);
+          alert('Failed to update sub sub sub category. Please try again.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error updating sub sub sub category:', error);
+        alert('An error occurred while updating the sub sub sub category.');
         return;
       }
     } else if (editingItem?.type === 'Incidence status') {
@@ -1454,6 +1684,150 @@ export const IncidentSetupDashboard = () => {
         alert('An error occurred while updating the RCA category.');
         return;
       }
+    } else if (editingItem?.type === 'Escalations') {
+      try {
+        const response = await fetch(`${baseUrl}/pms/update_escalation.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            escalation_matrix: {
+              id: String(editingItem.id),
+              name: editFormData.level,
+              after_days: editFormData.escalateInDays,
+              escalate_to_users: escalateToUsers
+            }
+          })
+        });
+
+        if (response.ok) {
+          toast.success('Escalation updated successfully!');
+          // Refresh the escalation matrix data
+          fetchEscalationMatrix();
+        } else {
+          console.error('Failed to update escalation:', response.statusText);
+          toast.error('Failed to update escalation');
+          return;
+        }
+      } catch (error) {
+        console.error('Error updating escalation:', error);
+        toast.error('Error updating escalation');
+        return;
+      }
+    } else if (editingItem?.type === 'Secondary Sub Category') {
+      // Find the selected secondary category object to get its id for parent_id
+      const parentSecondaryCategoryObj = secondaryCategories.find(cat => cat.name === editFormData.category);
+      if (!parentSecondaryCategoryObj) {
+        alert('Please select a valid Secondary Category');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            incidence_tag: {
+              name: editFormData.name,
+              parent_id: parentSecondaryCategoryObj.id
+            }
+          })
+        });
+
+        if (response.ok) {
+          await fetchSecondarySubCategories();
+        } else {
+          console.error('Failed to update secondary sub category:', response.statusText);
+          alert('Failed to update secondary sub category. Please try again.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error updating secondary sub category:', error);
+        alert('An error occurred while updating the secondary sub category.');
+        return;
+      }
+    } else if (editingItem?.type === 'Secondary Sub Sub Category') {
+      // Find the selected secondary sub category object to get its id for parent_id
+      const parentSecondarySubCategoryObj = secondarySubCategories.find(sub =>
+        sub.secondarySubCategory === editFormData.subCategory &&
+        sub.secondaryCategory === editFormData.category
+      );
+      if (!parentSecondarySubCategoryObj) {
+        alert('Please select a valid Secondary Sub Category');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            incidence_tag: {
+              name: editFormData.name,
+              parent_id: parentSecondarySubCategoryObj.id
+            }
+          })
+        });
+
+        if (response.ok) {
+          await fetchSecondarySubSubCategories();
+        } else {
+          console.error('Failed to update secondary sub sub category:', response.statusText);
+          alert('Failed to update secondary sub sub category. Please try again.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error updating secondary sub sub category:', error);
+        alert('An error occurred while updating the secondary sub sub category.');
+        return;
+      }
+    } else if (editingItem?.type === 'Secondary Sub Sub Sub Category') {
+      // Find the selected secondary sub sub category object to get its id for parent_id
+      const parentSecondarySubSubCategoryObj = secondarySubSubCategories.find(subsub =>
+        subsub.secondarySubSubCategory === editFormData.subSubCategory &&
+        subsub.secondarySubCategory === editFormData.subCategory &&
+        subsub.secondaryCategory === editFormData.category
+      );
+      if (!parentSecondarySubSubCategoryObj) {
+        alert('Please select a valid Secondary Sub Sub Category');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            incidence_tag: {
+              name: editFormData.name,
+              parent_id: parentSecondarySubSubCategoryObj.id
+            }
+          })
+        });
+
+        if (response.ok) {
+          await fetchSecondarySubSubSubCategories();
+        } else {
+          console.error('Failed to update secondary sub sub sub category:', response.statusText);
+          alert('Failed to update secondary sub sub sub category. Please try again.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error updating secondary sub sub sub category:', error);
+        alert('An error occurred while updating the secondary sub sub sub category.');
+        return;
+      }
     }
 
     setIsEditing(false);
@@ -1495,6 +1869,9 @@ export const IncidentSetupDashboard = () => {
       else if (type === 'Incidence level') fetchFn = fetchIncidenceLevels;
       else if (type === 'Secondary Category') fetchFn = fetchSecondaryCategories;
       else if (type === 'Secondary Sub Category') fetchFn = fetchSecondarySubCategories;
+      else if (type === 'Secondary Sub Sub Category') fetchFn = fetchSecondarySubSubCategories;
+      else if (type === 'Secondary Sub Sub Sub Category') fetchFn = fetchSecondarySubSubSubCategories;
+      else if (type === 'Escalations') fetchFn = fetchEscalations;
       else if (type === 'Who got injured') fetchFn = fetchWhoGotInjured;
       else if (type === 'Property Damage Category') fetchFn = fetchPropertyDamageCategories;
       else if (type === 'RCA Category') fetchFn = fetchRCACategories;
@@ -1502,12 +1879,36 @@ export const IncidentSetupDashboard = () => {
       // Only use local state for types that are not stored in backend
       if (fetchFn) {
         try {
-          const response = await fetch(url, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`
+          let response;
+          // Special handling for escalations which might need a different delete endpoint
+          if (type === 'Escalations') {
+            // Try special escalation delete endpoint first
+            try {
+              response = await fetch(`${baseUrl}/pms/escalations/${item.id}.json`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+            } catch (error) {
+              // If special endpoint fails, fall back to standard endpoint
+              response = await fetch(`${baseUrl}/pms/incidence_tags/${item.id}.json`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
             }
-          });
+          } else {
+            // Standard delete for all other types
+            response = await fetch(url, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+          }
+
           if (response.ok) {
             await fetchFn();
           } else {
@@ -1517,12 +1918,8 @@ export const IncidentSetupDashboard = () => {
           alert('An error occurred while deleting.');
         }
       } else {
-        // For local-only types
-        if (type === 'Sub Sub Sub Category') setSubSubSubCategories(subSubSubCategories.filter(subsubsub => subsubsub.id !== item.id));
-        else if (type === 'Escalations') setEscalations(escalations.filter(escalation => escalation.id !== item.id));
-        else if (type === 'Approval Setup') setApprovalSetups(approvalSetups.filter(approval => approval.id !== item.id));
-        else if (type === 'Secondary Sub Sub Category') setSecondarySubSubCategories(secondarySubSubCategories.filter(secondarySubSub => secondarySubSub.id !== item.id));
-        else if (type === 'Secondary Sub Sub Sub Category') setSecondarySubSubSubCategories(secondarySubSubSubCategories.filter(secondarySubSubSub => secondarySubSubSub.id !== item.id));
+        // For local-only types that don't have backend API
+        if (type === 'Approval Setup') setApprovalSetups(approvalSetups.filter(approval => approval.id !== item.id));
       }
     }
   };
@@ -1596,45 +1993,91 @@ export const IncidentSetupDashboard = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Escalate to users
+                      Escalate To Users <span style={{ color: '#C72030' }}>*</span>
                     </label>
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {editFormData.users.split(',').filter(user => user.trim()).map((user, index) => (
-                          <div key={index} className="bg-gray-200 px-3 py-1 rounded-md flex items-center gap-2">
-                            <span className="text-sm">{user.trim()}</span>
-                            <button
-                              onClick={() => {
-                                const userList = editFormData.users.split(',').filter(u => u.trim() !== user.trim());
-                                setEditFormData({ ...editFormData, users: userList.join(', ') });
-                              }}
-                              className="text-gray-500 hover:text-gray-700"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      <Select
-                        onValueChange={value => {
-                          const currentUsers = editFormData.users ? editFormData.users.split(',').map(u => u.trim()) : [];
-                          if (!currentUsers.includes(value)) {
-                            const newUsers = [...currentUsers, value].filter(u => u);
-                            setEditFormData({ ...editFormData, users: newUsers.join(', ') });
+                    <FormControl fullWidth className="mb-2">
+                      <InputLabel>Escalate To Users <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                      <MuiSelect
+                        multiple
+                        value={escalateToUsers}
+                        onChange={(e) => {
+                          const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
+                          setEscalateToUsers(value);
+                          // Update editFormData.users for consistency
+                          const userNames = value.map(userId => {
+                            const user = escalateToUsersList.find(u => String(u.id) === String(userId));
+                            return user ? user.full_name : userId;
+                          }).join(', ');
+                          setEditFormData({ ...editFormData, users: userNames });
+                        }}
+                        input={<OutlinedInput label="Escalate To Users" />}
+                        renderValue={(selected) => {
+                          if (selected.length === 0) {
+                            return <span style={{ color: '#999' }}>Select users...</span>;
                           }
+                          return (
+                            <span>
+                              {selected.length} user{selected.length !== 1 ? 's' : ''} selected
+                            </span>
+                          );
                         }}
                       >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select users to add..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
-                          <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
-                          <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
-                          <SelectItem value="Abdul A">Abdul A</SelectItem>
-                          <SelectItem value="John Doe">John Doe</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                        {escalateToUsersList.map(user => (
+                          <MenuItem key={user.id} value={String(user.id)}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+
+                    {/* Selected Users Display Area - Horizontal Compact Layout */}
+                    {escalateToUsers.length > 0 && (
+                      <div className="mt-3">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-xs font-medium text-gray-600">
+                            Selected ({escalateToUsers.length}):
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEscalateToUsers([]);
+                              setEditFormData({ ...editFormData, users: '' });
+                            }}
+                            className="text-xs text-red-600 hover:text-red-800 underline"
+                          >
+                            Clear All
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {escalateToUsers.map((userId) => {
+                            const user = escalateToUsersList.find(u => String(u.id) === String(userId));
+                            return (
+                              <Chip
+                                key={userId}
+                                label={user ? user.full_name : userId}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                                onDelete={() => {
+                                  const newUsers = escalateToUsers.filter(id => id !== userId);
+                                  setEscalateToUsers(newUsers);
+                                  const userNames = newUsers.map(id => {
+                                    const u = escalateToUsersList.find(user => String(user.id) === String(id));
+                                    return u ? u.full_name : id;
+                                  }).join(', ');
+                                  setEditFormData({ ...editFormData, users: userNames });
+                                }}
+                                style={{
+                                  fontSize: '11px',
+                                  height: '24px',
+                                  margin: '0'
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-3 pt-2">
@@ -1680,152 +2123,128 @@ export const IncidentSetupDashboard = () => {
                 <div className="space-y-6">
                   {(editingItem?.type === 'Secondary Sub Category' || editingItem?.type === 'Secondary Sub Sub Category' || editingItem?.type === 'Secondary Sub Sub Sub Category') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Secondary Category
-                      </label>
-                      <Select
-                        value={editFormData.category}
-                        onValueChange={value => setEditFormData({ ...editFormData, category: value })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Secondary Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.category}
+                          onChange={e => setEditFormData({ ...editFormData, category: e.target.value })}
+                          label="Secondary Category"
+                        >
                           {secondaryCategories.map(category => (
-                            <SelectItem key={category.id} value={category.name}>
+                            <MenuItem key={category.id} value={category.name}>
                               {category.name}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
                   {(editingItem?.type === 'Secondary Sub Sub Category' || editingItem?.type === 'Secondary Sub Sub Sub Category') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Secondary Sub Category
-                      </label>
-                      <Select
-                        value={editFormData.subCategory}
-                        onValueChange={value => setEditFormData({ ...editFormData, subCategory: value })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Secondary Sub Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.subCategory}
+                          onChange={e => setEditFormData({ ...editFormData, subCategory: e.target.value })}
+                          label="Secondary Sub Category"
+                        >
                           {secondarySubCategories
                             .filter(sub => sub.secondaryCategory === editFormData.category)
                             .map(subCategory => (
-                              <SelectItem key={subCategory.id} value={subCategory.secondarySubCategory}>
+                              <MenuItem key={subCategory.id} value={subCategory.secondarySubCategory}>
                                 {subCategory.secondarySubCategory}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
                   {editingItem?.type === 'Secondary Sub Sub Sub Category' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Secondary Sub Sub Category
-                      </label>
-                      <Select
-                        value={editFormData.subSubCategory}
-                        onValueChange={value => setEditFormData({ ...editFormData, subSubCategory: value })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Secondary Sub Sub Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.subSubCategory}
+                          onChange={e => setEditFormData({ ...editFormData, subSubCategory: e.target.value })}
+                          label="Secondary Sub Sub Category"
+                        >
                           {secondarySubSubCategories
                             .filter(subsub => subsub.secondaryCategory === editFormData.category && subsub.secondarySubCategory === editFormData.subCategory)
-                            .map(subSubCategory => (
-                              <SelectItem key={subSubCategory.id} value={subSubCategory.secondarySubSubCategory}>
-                                {subSubCategory.secondarySubSubCategory}
-                              </SelectItem>
+                            .map(subsubCategory => (
+                              <MenuItem key={subsubCategory.id} value={subsubCategory.secondarySubSubCategory}>
+                                {subsubCategory.secondarySubSubCategory}
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
                   {(editingItem?.type === 'Sub Category' || editingItem?.type === 'Sub Sub Category' || editingItem?.type === 'Sub Sub Sub Category') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Category
-                      </label>
-                      <Select
-                        value={editFormData.category}
-                        onValueChange={async value => {
-                          setEditFormData({ ...editFormData, category: value, subCategory: '', subSubCategory: '' });
-                          // Optionally, fetch subcategories for this category if not already loaded
-                          // If you want to always fetch, uncomment below:
-                          // await fetchSubCategories();
-                        }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.category}
+                          onChange={async (e) => {
+                            setEditFormData({ ...editFormData, category: e.target.value, subCategory: '', subSubCategory: '' });
+                            // Optionally, fetch subcategories for this category if not already loaded
+                            // If you want to always fetch, uncomment below:
+                            // await fetchSubCategories();
+                          }}
+                          label="Category"
+                        >
                           {categories.map(category => (
-                            <SelectItem key={category.id} value={category.name}>
+                            <MenuItem key={category.id} value={category.name}>
                               {category.name}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
                   {(editingItem?.type === 'Sub Sub Category' || editingItem?.type === 'Sub Sub Sub Category') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sub-Category
-                      </label>
-                      <Select
-                        value={editFormData.subCategory}
-                        onValueChange={(value) => { setSelectedSubCategory(value); setSelectedSubSubCategory(''); }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Sub Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Sub-Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.subCategory}
+                          onChange={(e) => setEditFormData({ ...editFormData, subCategory: e.target.value, subSubCategory: '' })}
+                          label="Sub-Category"
+                        >
                           {subCategories
                             .filter(sub => sub.category === editFormData.category)
                             .map(subCategory => (
-                              <SelectItem key={subCategory.id} value={subCategory.subCategory}>
+                              <MenuItem key={subCategory.id} value={subCategory.subCategory}>
                                 {subCategory.subCategory}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
                   {editingItem?.type === 'Sub Sub Sub Category' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sub Sub Category
-                      </label>
-                      <Select
-                        value={editFormData.subSubCategory}
-                        onValueChange={value => setEditFormData({ ...editFormData, subSubCategory: value })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Sub Sub Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Sub Sub Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.subSubCategory}
+                          onChange={e => setEditFormData({ ...editFormData, subSubCategory: e.target.value })}
+                          label="Sub Sub Category"
+                        >
                           {subSubCategories
                             .filter(subsub => subsub.category === editFormData.category && subsub.subCategory === editFormData.subCategory)
                             .map(subSubCategory => (
-                              <SelectItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
+                              <MenuItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
                                 {subSubCategory.subSubCategory}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
@@ -1861,29 +2280,86 @@ export const IncidentSetupDashboard = () => {
                 <div className="flex gap-4 items-end">
                   {selectedCategory === 'Approval Setup' ? (
                     <div className="flex-1">
-                      <FormControl fullWidth size="small">
-                        <InputLabel>Select up to 15 Options...</InputLabel>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Select Users <span style={{ color: '#C72030' }}>*</span>
+                      </label>
+                      <FormControl fullWidth className="mb-2">
+                        <InputLabel>Select up to 15 Options... <span style={{ color: '#C72030' }}>*</span></InputLabel>
                         <MuiSelect
+                          multiple
                           value={selectedApprovalUsers}
-                          onChange={e => setSelectedApprovalUsers(e.target.value)}
-                          label="Select up to 15 Options..."
+                          onChange={(e) => {
+                            const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
+                            setSelectedApprovalUsers(value);
+                          }}
+                          input={<OutlinedInput label="Select up to 15 Options..." />}
+                          renderValue={(selected) => {
+                            if (selected.length === 0) {
+                              return <span style={{ color: '#999' }}>Select users...</span>;
+                            }
+                            return (
+                              <span>
+                                {selected.length} user{selected.length !== 1 ? 's' : ''} selected
+                              </span>
+                            );
+                          }}
                         >
-                          <MenuItem value="Mahendra Lungare">Mahendra Lungare</MenuItem>
-                          <MenuItem value="Vinayak Mane">Vinayak Mane</MenuItem>
-                          <MenuItem value="Abdul A">Abdul A</MenuItem>
-                          <MenuItem value="John Doe">John Doe</MenuItem>
-                          <MenuItem value="Jane Smith">Jane Smith</MenuItem>
+                          {escalateToUsersList.map(user => (
+                            <MenuItem key={user.id} value={String(user.id)}>
+                              {user.full_name}
+                            </MenuItem>
+                          ))}
                         </MuiSelect>
                       </FormControl>
+
+                      {/* Selected Users Display Area - Horizontal Compact Layout */}
+                      {selectedApprovalUsers.length > 0 && (
+                        <div className="mt-3">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-xs font-medium text-gray-600">
+                              Selected ({selectedApprovalUsers.length}):
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedApprovalUsers([])}
+                              className="text-xs text-red-600 hover:text-red-800 underline"
+                            >
+                              Clear All
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {selectedApprovalUsers.map((userId) => {
+                              const user = escalateToUsersList.find(u => String(u.id) === String(userId));
+                              return (
+                                <Chip
+                                  key={userId}
+                                  label={user ? user.full_name : userId}
+                                  size="small"
+                                  color="primary"
+                                  variant="outlined"
+                                  onDelete={() => {
+                                    setSelectedApprovalUsers(selectedApprovalUsers.filter(id => id !== userId));
+                                  }}
+                                  style={{
+                                    fontSize: '11px',
+                                    height: '24px',
+                                    margin: '0'
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : selectedCategory === 'Escalations' ? (
                     <>
                       <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Level
+                          Level <span style={{ color: '#C72030' }}>*</span>
                         </label>
                         <FormControl fullWidth size="small">
-                          <InputLabel>Select Level</InputLabel>
+                          <InputLabel>Select Level <span style={{ color: '#C72030' }}>*</span></InputLabel>
                           <MuiSelect
                             value={selectedEscalationLevel}
                             onChange={e => setSelectedEscalationLevel(e.target.value)}
@@ -1899,7 +2375,7 @@ export const IncidentSetupDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Escalate In Days
+                          Escalate In Days <span style={{ color: '#C72030' }}>*</span>
                         </label>
                         <TextField
                           type="text"
@@ -1913,177 +2389,187 @@ export const IncidentSetupDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Escalate To Users
+                          Escalate To Users <span style={{ color: '#C72030' }}>*</span>
                         </label>
-                        {/* <Select value={escalateToUsers} onValueChange={setEscalateToUsers}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select up to 15 Options..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
-                            <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
-                            <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
-                            <SelectItem value="Abdul A">Abdul A</SelectItem>
-                            <SelectItem value="John Doe">John Doe</SelectItem>
-                          </SelectContent>
-                        </Select> */}
-                        <Select
-                          value={escalateToUsers}
-                          onValueChange={value => {
-                            // escalateToUsers is a comma-separated string of IDs
-                            const currentUserIds = escalateToUsers ? escalateToUsers.split(',').filter(u => u) : [];
-                            if (!currentUserIds.includes(value)) {
-                              const newUserIds = [...currentUserIds, value].filter(u => u);
-                              setEscalateToUsers(newUserIds.join(','));
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select up to 15 Options..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Escalate To Users <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <MuiSelect
+                            multiple
+                            value={escalateToUsers}
+                            onChange={(e) => {
+                              const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
+                              setEscalateToUsers(value);
+                            }}
+                            input={<OutlinedInput label="Escalate To Users" />}
+                            renderValue={(selected) => {
+                              if (selected.length === 0) {
+                                return <span style={{ color: '#999' }}>Select users...</span>;
+                              }
+                              return (
+                                <span>
+                                  {selected.length} user{selected.length !== 1 ? 's' : ''} selected
+                                </span>
+                              );
+                            }}
+                          >
                             {escalateToUsersList.map(user => (
-                              <SelectItem key={user.id} value={String(user.id)}>
+                              <MenuItem key={user.id} value={String(user.id)}>
                                 {user.full_name}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                          </SelectContent>
-                        </Select>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {escalateToUsers.split(',').filter(id => id.trim()).map((id, index) => {
-                            const user = escalateToUsersList.find(u => String(u.id) === id);
-                            return (
-                              <div key={index} className="bg-gray-200 px-3 py-1 rounded-md flex items-center gap-2">
-                                <span className="text-sm">{user ? user.full_name : id}</span>
-                                <button
-                                  onClick={() => {
-                                    const userList = escalateToUsers.split(',').filter(u => u !== id);
-                                    setEscalateToUsers(userList.join(','));
-                                  }}
-                                  className="text-gray-500 hover:text-gray-700"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
+                          </MuiSelect>
+                        </FormControl>
+
+                        {/* Selected Users Display Area - Horizontal Compact Layout */}
+                        {escalateToUsers.length > 0 && (
+                          <div className="mt-3">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="text-xs font-medium text-gray-600">
+                                Selected ({escalateToUsers.length}):
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setEscalateToUsers([])}
+                                className="text-xs text-red-600 hover:text-red-800 underline"
+                              >
+                                Clear All
+                              </button>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {escalateToUsers.map((userId) => {
+                                const user = escalateToUsersList.find(u => String(u.id) === String(userId));
+                                return (
+                                  <Chip
+                                    key={userId}
+                                    label={user ? user.full_name : userId}
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                    onDelete={() => {
+                                      setEscalateToUsers(escalateToUsers.filter(id => id !== userId));
+                                    }}
+                                    style={{
+                                      fontSize: '11px',
+                                      height: '24px',
+                                      margin: '0'
+                                    }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </>
                   ) : selectedCategory === 'Secondary Sub Category' ? (
                     <>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Category
-                        </label>
-                        <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <MuiSelect
+                            value={selectedSecondaryCategory}
+                            onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
+                            label="Secondary Category"
+                          >
                             {secondaryCategories.map(category => (
-                              <SelectItem key={category.id} value={category.name}>
+                              <MenuItem key={category.id} value={category.name}>
                                 {category.name}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                     </>
                   ) : selectedCategory === 'Secondary Sub Sub Category' ? (
                     <>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Category
-                        </label>
-                        <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <MuiSelect
+                            value={selectedSecondaryCategory}
+                            onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
+                            label="Secondary Category"
+                          >
                             {secondaryCategories.map(category => (
-                              <SelectItem key={category.id} value={category.name}>
+                              <MenuItem key={category.id} value={category.name}>
                                 {category.name}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Sub Category
-                        </label>
-                        <Select value={selectedSecondarySubCategory} onValueChange={setSelectedSecondarySubCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Secondary Sub Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <MuiSelect
+                            value={selectedSecondarySubCategory}
+                            onChange={(e) => setSelectedSecondarySubCategory(e.target.value)}
+                            label="Secondary Sub Category"
+                          >
                             {secondarySubCategories
                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
                               .map(sub => (
-                                <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                <MenuItem key={sub.id} value={sub.secondarySubCategory}>
                                   {sub.secondarySubCategory}
-                                </SelectItem>
+                                </MenuItem>
                               ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                     </>
                   ) : selectedCategory === 'Secondary Sub Sub Sub Category' ? (
                     <>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Category
-                        </label>
-                        <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <MuiSelect
+                            value={selectedSecondaryCategory}
+                            onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
+                            label="Secondary Category"
+                          >
                             {secondaryCategories.map(category => (
-                              <SelectItem key={category.id} value={category.name}>
+                              <MenuItem key={category.id} value={category.name}>
                                 {category.name}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Sub Category
-                        </label>
-                        <Select value={selectedSecondarySubCategory} onValueChange={setSelectedSecondarySubCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Secondary Sub Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <MuiSelect
+                            value={selectedSecondarySubCategory}
+                            onChange={(e) => setSelectedSecondarySubCategory(e.target.value)}
+                            label="Secondary Sub Category"
+                          >
                             {secondarySubCategories
                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
                               .map(sub => (
-                                <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                <MenuItem key={sub.id} value={sub.secondarySubCategory}>
                                   {sub.secondarySubCategory}
-                                </SelectItem>
+                                </MenuItem>
                               ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Sub Sub Category
-                        </label>
-                        <Select value={selectedSecondarySubSubCategory} onValueChange={setSelectedSecondarySubSubCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Secondary Sub Sub Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <MuiSelect
+                            value={selectedSecondarySubSubCategory}
+                            onChange={(e) => setSelectedSecondarySubSubCategory(e.target.value)}
+                            label="Secondary Sub Sub Category"
+                          >
                             {secondarySubSubCategories
                               .filter(subsub => subsub.secondaryCategory === selectedSecondaryCategory && subsub.secondarySubCategory === selectedSecondarySubCategory)
                               .map(subsub => (
-                                <SelectItem key={subsub.id} value={subsub.secondarySubSubCategory}>
+                                <MenuItem key={subsub.id} value={subsub.secondarySubSubCategory}>
                                   {subsub.secondarySubSubCategory}
-                                </SelectItem>
+                                </MenuItem>
                               ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                     </>
                   ) : selectedCategory === 'Incident Disclaimer' ? (
@@ -2106,10 +2592,10 @@ export const IncidentSetupDashboard = () => {
                   ) : (selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') ? (
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Category
+                        {/* Category <span style={{ color: '#C72030' }}>*</span> */}
                       </label>
                       <FormControl fullWidth size="small">
-                        <InputLabel>Select Category</InputLabel>
+                        <InputLabel>Select Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
                         <MuiSelect
                           value={selectedParentCategory}
                           onChange={e => {
@@ -2130,51 +2616,49 @@ export const IncidentSetupDashboard = () => {
                   ) : null}
                   {(selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && (
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Sub Category
-                      </label>
-                      <Select value={selectedSubCategory} onValueChange={(value) => { setSelectedSubCategory(value); setSelectedSubSubCategory(''); }}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Sub Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth className="mb-2">
+                        <InputLabel>Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <MuiSelect
+                          value={selectedSubCategory}
+                          onChange={(e) => {
+                            setSelectedSubCategory(e.target.value);
+                            setSelectedSubSubCategory('');
+                          }}
+                          label="Sub Category"
+                        >
                           {subCategories.filter(sub => String(sub.categoryId) === String(selectedParentCategory)).map(subCategory => (
-                            <SelectItem key={subCategory.id} value={subCategory.id}>
+                            <MenuItem key={subCategory.id} value={subCategory.id}>
                               {subCategory.subCategory}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
                   {selectedCategory === 'Sub Sub Sub Category' && (
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Sub Sub Category
-                      </label>
-                      <Select
-                        value={selectedSubSubCategory}
-                        onValueChange={setSelectedSubSubCategory}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Sub Sub Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth className="mb-2">
+                        <InputLabel>Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <MuiSelect
+                          value={selectedSubSubCategory}
+                          onChange={(e) => setSelectedSubSubCategory(e.target.value)}
+                          label="Sub Sub Category"
+                        >
                           {subSubCategories
                             .filter(subsub => String(subsub.categoryId) === String(selectedParentCategory) && String(subsub.subCategoryId) === String(selectedSubCategory))
                             .map(subSubCategory => (
-                              <SelectItem key={subSubCategory.id} value={String(subSubCategory.id)}>
+                              <MenuItem key={subSubCategory.id} value={String(subSubCategory.id)}>
                                 {subSubCategory.subSubCategory}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
-                  {selectedCategory !== 'Escalations' && (
+                  {selectedCategory !== 'Escalations' && selectedCategory !== 'Approval Setup' && (
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Name
+                        Name <span style={{ color: '#C72030' }}>*</span>
                       </label>
                       <TextField
                         type="text"
@@ -2188,348 +2672,360 @@ export const IncidentSetupDashboard = () => {
                     </div>
                   )}
                   <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
-                    Submit
+                    {selectedCategory === 'Approval Setup' && existingApprovalSetupId ? 'Update' : 'Submit'}
                   </Button>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-[#f6f4ee] border-b border-[#D5DbDB]">
-                        {selectedCategory === 'Secondary Sub Category' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'Secondary Sub Sub Category' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'Secondary Sub Sub Sub Category' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'Who got injured' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'Property Damage Category' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'RCA Category' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'Incident Disclaimer' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'Approval Setup' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'Escalations' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Level</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate In Days</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'Sub Sub Sub Category' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'Sub Sub Category' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : selectedCategory === 'Sub Category' ? (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        ) : (
-                          <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </>
-                        )}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(secondarySub => (
-                        <TableRow key={secondarySub.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondarySub.secondaryCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{secondarySub.secondarySubCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
+              {selectedCategory !== 'Approval Setup' && (
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-[#f6f4ee] border-b border-[#D5DbDB]">
+                          {selectedCategory === 'Secondary Sub Category' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Secondary Sub Sub Category' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Secondary Sub Sub Sub Category' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Who got injured' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Property Damage Category' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'RCA Category' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Incident Disclaimer' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Approval Setup' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Escalations' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Level</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate In Days</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate To Users</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Sub Sub Sub Category' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Sub Sub Category' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Sub Category' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          )}
                         </TableRow>
-                      )) : selectedCategory === 'Secondary Sub Sub Category' ? secondarySubSubCategories.map(item => (
-                        <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Secondary Sub Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Secondary Sub Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Secondary Sub Sub Sub Category' ? secondarySubSubSubCategories.map(item => (
-                        <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubSubCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Secondary Sub Sub Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Secondary Sub Sub Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Who got injured' ? whoGotInjured.map(item => (
-                        <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Who got injured')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Who got injured')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Property Damage Category' ? propertyDamageCategories.map(item => (
-                        <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Property Damage Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Property Damage Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'RCA Category' ? rcaCategories.map(item => (
-                        <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'RCA Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'RCA Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Incident Disclaimer' ? (
-                        [
-                          { id: 1, name: 'General Disclaimer' },
-                          { id: 2, name: 'Safety Disclaimer' },
-                          { id: 3, name: 'Legal Disclaimer' }
-                        ].map(item => (
-                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(secondarySub => (
+                          <TableRow key={secondarySub.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondarySub.secondaryCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{secondarySub.secondarySubCategory}</TableCell>
                             <TableCell className="px-4 py-3">
                               <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
                                   <Edit className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}>
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))
-                      ) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => (
-                        <TableRow key={approval.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{approval.users}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(approval, 'Approval Setup')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(approval, 'Approval Setup')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Escalations' ? escalations.map(escalation => (
-                        <TableRow key={escalation.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{escalation.level}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.escalateInDays}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.users}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(escalation, 'Escalations')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(escalation, 'Escalations')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Secondary Category' ? secondaryCategories.map(secondary => (
-                        <TableRow key={secondary.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondary.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondary, 'Secondary Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondary, 'Secondary Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Incidence level' ? incidenceLevels.map(level => (
-                        <TableRow key={level.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{level.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(level, 'Incidence level')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(level, 'Incidence level')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Incidence status' ? incidenceStatuses.map(status => (
-                        <TableRow key={status.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{status.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(status, 'Incidence status')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(status, 'Incidence status')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Sub Sub Sub Category' ? subSubSubCategories.map(item => (
-                        <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubSubCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Sub Sub Category' ? subSubCategories.map(item => (
-                        <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : selectedCategory === 'Sub Category' ? subCategories.map(item => (
-                        <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )) : categories.map(category => (
-                        <TableRow key={category.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{category.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(category, 'Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(category, 'Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                        )) : selectedCategory === 'Secondary Sub Sub Category' ? secondarySubSubCategories.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Secondary Sub Sub Category')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Secondary Sub Sub Category')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Secondary Sub Sub Sub Category' ? secondarySubSubSubCategories.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubSubCategory}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Secondary Sub Sub Sub Category')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Secondary Sub Sub Sub Category')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Who got injured' ? whoGotInjured.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Who got injured')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Who got injured')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Property Damage Category' ? propertyDamageCategories.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Property Damage Category')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Property Damage Category')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'RCA Category' ? rcaCategories.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'RCA Category')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'RCA Category')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Incident Disclaimer' ? (
+                          [
+                            { id: 1, name: 'General Disclaimer' },
+                            { id: 2, name: 'Safety Disclaimer' },
+                            { id: 3, name: 'Legal Disclaimer' }
+                          ].map(item => (
+                            <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                              <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                              <TableCell className="px-4 py-3">
+                                <div className="flex gap-2">
+                                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => (
+                          <TableRow key={approval.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{approval.users}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(approval, 'Approval Setup')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(approval, 'Approval Setup')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Escalations' ? escalationMatrix.map(escalation => (
+                          <TableRow key={escalation.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{escalation.name}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.after_days}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600 max-w-xs">
+                              <div className="flex flex-wrap gap-1">
+                                {escalation.escalate_to_users && escalation.escalate_to_users.length > 0 ? escalation.escalate_to_users.map((user, index) => (
+                                  <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs">
+                                    {`${user[0]} ${user[1]}`}
+                                  </span>
+                                )) : (
+                                  <span className="text-gray-400">No users assigned</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(escalation, 'Escalations')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(escalation, 'Escalations')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Secondary Category' ? secondaryCategories.map(secondary => (
+                          <TableRow key={secondary.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondary.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondary, 'Secondary Category')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondary, 'Secondary Category')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Incidence level' ? incidenceLevels.map(level => (
+                          <TableRow key={level.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{level.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(level, 'Incidence level')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(level, 'Incidence level')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Incidence status' ? incidenceStatuses.map(status => (
+                          <TableRow key={status.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{status.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(status, 'Incidence status')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(status, 'Incidence status')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Sub Sub Sub Category' ? subSubSubCategories.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubSubCategory}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Sub Category')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Sub Category')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Sub Sub Category' ? subSubCategories.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Category')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Category')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Sub Category' ? subCategories.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Category')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Category')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : categories.map(category => (
+                          <TableRow key={category.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{category.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(category, 'Category')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(category, 'Category')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>

@@ -18,6 +18,7 @@ import {
   Eye,
   FileSpreadsheet,
   Download,
+  Edit
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPRById, fetchWBS } from "@/store/slices/materialPRSlice";
@@ -500,7 +501,7 @@ export const MaterialPRDetailsPage = () => {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
-      <div className="flex items-start justify-between">
+      <div className="flex items-end justify-between">
         <h1 className="text-2xl font-semibold">Material PR Details</h1>
         <div className="flex items-center gap-3">
           {buttonCondition.showSap && (
@@ -513,6 +514,17 @@ export const MaterialPRDetailsPage = () => {
               Send To SAP Team
             </Button>
           )}
+          {
+            pr.all_level_approved === null && <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300"
+              onClick={() => navigate(`/finance/material-pr/edit/${id}`)}
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              Edit
+            </Button>
+          }
           <Button
             variant="outline"
             size="sm"
@@ -547,7 +559,7 @@ export const MaterialPRDetailsPage = () => {
       </div>
 
       <TooltipProvider>
-        <div className="flex items-start gap-4 my-6">
+        <div className="flex items-start gap-4 my-4">
           {pr.approval_levels?.map((level, index) => (
             <div key={index} className="space-y-2">
               {level.status_label.toLowerCase() === "rejected" ? (

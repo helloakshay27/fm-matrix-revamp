@@ -48,7 +48,7 @@ import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
 import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
 import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
-import { addWOInvoiceReducer, approveRejectWOReducer, fetchBOQReducer, fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
+import { addWOInvoiceReducer, approveRejectWOReducer, fetchBOQReducer, fetchServicePRReducer, fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
 import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, getAddressesReducer, getFeedsReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer, updateActiveStausReducer, updateMaterialPRReducer } from './slices/materialPRSlice'
 import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer, rejectPOReducer, updatePurchaseOrderReducer } from './slices/purchaseOrderSlice'
 import { createServicePRReducer, editServicePRReducer, getServiceFeedsReducer, getServicePrReducer, getServicesReducer, updateServiceActiveStausReducer } from './slices/servicePRSlice'
@@ -60,6 +60,11 @@ import { createRuleReducer, fetchCardCountReducer, fetchCustomersReducer, fetchR
 import { createExpiryRuleReducer, editExpiryRuleReducer, fetchLogsReducer, fetchWalletRuleReducer } from './slices/pointExpirySlice'
 import { createAddressReducer, fetchAddressesReducer, getAddressByIdReducer, updateAddressReducer } from './slices/addressMasterSlice'
 import { fetchProjectsReducer } from './slices/projectManagementSlice'
+import { createWBSCodeReducer, fetchWBSListReducer, updateWBSCodeReducer } from './slices/wbsSlice'
+import { createBannerReducers, editBannerReducers, fetchBannersByIdReducers, fetchBannersReducers } from './slices/bannerSlice'
+import { createTestimonialReucers, editTestimonialReucers, fetchTestimonialsByIdReucers, fetchTestimonialsReucers } from './slices/testimonialSlice'
+import { createAmenityReducer, editAmenityReducer, fetchAmenityByIdReducer, fetchAmenityReducer } from './slices/amenitySlice'
+import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPartnersReducer } from './slices/companyPartnerSlice'
 
 export const store = configureStore({
   reducer: {
@@ -184,6 +189,7 @@ export const store = configureStore({
     approveRejectWO: approveRejectWOReducer,
     fetchBOQ: fetchBOQReducer,
     addWOInvoice: addWOInvoiceReducer,
+    fetchServicePR: fetchServicePRReducer,
 
     // Material PR
     getSuppliers: getSuppliersReducer,
@@ -237,6 +243,11 @@ export const store = configureStore({
     approveInvoice: approveInvoiceReducer,
     getInvoiceFeeds: getInvoiceFeedsReducer,
 
+    // WBS Codes
+    fetchWBSList: fetchWBSListReducer,
+    createWBSCode: createWBSCodeReducer,
+    updateWBSCode: updateWBSCodeReducer,
+
     // Customer List
     getCustomerList: getCustomerListReducer,
     getCustomerById: getCustomerByIdReducer,
@@ -268,6 +279,28 @@ export const store = configureStore({
 
     // Projects Management
     fetchProjects: fetchProjectsReducer,
+    // Banner
+    fetchBanners: fetchBannersReducers,
+    fetchBannersById: fetchBannersByIdReducers,
+    createBanner: createBannerReducers,
+    editBanner: editBannerReducers,
+
+    // Testimonials
+    fetchTestimonials: fetchTestimonialsReucers,
+    fetchTestimonialById: fetchTestimonialsByIdReucers,
+    createTestimonial: createTestimonialReucers,
+    editTestimonial: editTestimonialReucers,
+
+    // Amenity
+    fetchAmenity: fetchAmenityReducer,
+    fetchAmenityById: fetchAmenityByIdReducer,
+    createAmenity: createAmenityReducer,
+    editAmenity: editAmenityReducer,
+
+    // Company Partner
+    createCompanyPartner: createCompanyPartnerReducers,
+    fetchCompanyPartners: fetchCompanyPartnersReducer,
+    editCompanyPartner: editCompanyPartnerReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

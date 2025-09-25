@@ -7,12 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
-import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, Box, Typography } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, Box, Typography, Tooltip } from '@mui/material';
 import AttachFile from '@mui/icons-material/AttachFile';
 import { assetService } from '@/services/assetService';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCustomFormDetails } from '@/services/customFormsAPI';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import { custom } from 'zod';
 
 const muiFieldStyles = {
   width: '100%',
@@ -927,19 +928,50 @@ export const ViewSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4 mt-3">
               <div className="space-y-2">
-                <TextField
-                  label="Assign to"
-                  value={
-                    Array.isArray(assetTask.assigned_to) && assetTask.assigned_to.length > 0
-                      ? assetTask.assigned_to.map((user: any) => user.name).join(', ')
-                      : 'Not assigned'
-                  }
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
+                <Tooltip 
+  title={
+    Array.isArray(assetTask.assigned_to) && assetTask.assigned_to.length > 0
+      ? assetTask.assigned_to.map((user: any) => user.name).join('\n')
+      : 'Not assigned'
+  }
+  arrow
+  placement="bottom-start"
+  componentsProps={{
+    tooltip: {
+      sx: {
+        backgroundColor: '#333',
+        color: 'white',
+        fontSize: '12px',
+        maxWidth: '300px',
+        whiteSpace: 'pre-line', // This allows line breaks from \n
+        padding: '8px 12px',
+        borderRadius: '4px',
+      }
+    }
+  }}
+>
+  <TextField
+    label="Assign to"
+    value={
+      Array.isArray(assetTask.assigned_to) && assetTask.assigned_to.length > 0
+        ? assetTask.assigned_to.map((user: any) => user.name).join(', ')
+        : 'Not assigned'
+    }
+    InputProps={{ readOnly: true, disabled: true }}
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: true }}
+    sx={{
+      ...muiFieldStyles,
+      '& .MuiOutlinedInput-input': {
+        ...muiFieldStyles['& .MuiOutlinedInput-input, & .MuiSelect-select'],
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }
+    }}
+  />
+</Tooltip>
               </div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
@@ -1070,10 +1102,11 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div> */}
+              
               <div className="space-y-2">
                 <TextField
                   label="Submission Type"
-                  value={customForm?.submission_time_type || ''}
+                  value={customForm?.submission_time_type || 'No Submission Time'}
                   InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
@@ -1084,7 +1117,7 @@ export const ViewSchedulePage = () => {
               <div className="space-y-2">
                 <TextField
                   label="Submission Time Value"
-                  value={customForm?.submission_time_value?.toString() || ''}
+                  value={customForm?.submission_time_value?.toString() || 'No Submission Value'}
                   InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"

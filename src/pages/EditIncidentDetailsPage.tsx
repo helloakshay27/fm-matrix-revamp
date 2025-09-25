@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Info, FileText, Users, Settings, AlertTriangle, Search, Loader2, Paperclip } from 'lucide-react';
+import { Info, FileText, Users, Settings, AlertTriangle, Search, Loader2, Paperclip, Heart, Stethoscope, UserSearch } from 'lucide-react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField, Checkbox, FormControlLabel } from '@mui/material';
 import { incidentService, type Incident } from '@/services/incidentService';
+import { toast } from 'sonner';
 
 export const EditIncidentDetailsPage = () => {
   const { id } = useParams();
@@ -116,6 +117,22 @@ export const EditIncidentDetailsPage = () => {
   useEffect(() => {
     console.log('Form data state updated:', formData);
   }, [formData]);
+
+  // Calculate total cost whenever individual cost fields change
+  useEffect(() => {
+    const calculateTotalCost = () => {
+      const equipmentCost = parseFloat(formData.equipmentPropertyDamagedCost) || 0;
+      const production = parseFloat(formData.productionLoss) || 0;
+      const treatment = parseFloat(formData.treatmentCost) || 0;
+      const absenteeism = parseFloat(formData.absenteeismCost) || 0;
+      const other = parseFloat(formData.otherCost) || 0;
+
+      const total = equipmentCost + production + treatment + absenteeism + other;
+      setFormData(prev => ({ ...prev, totalCost: total.toFixed(2) }));
+    };
+
+    calculateTotalCost();
+  }, [formData.equipmentPropertyDamagedCost, formData.productionLoss, formData.treatmentCost, formData.absenteeismCost, formData.otherCost]);
 
   // Helper to calculate and set incident level based on risk score (same as AddIncidentPage)
   const calculateAndSetIncidentLevel = (severity: string, probability: string) => {
@@ -509,18 +526,22 @@ export const EditIncidentDetailsPage = () => {
       const updatedIncident = await incidentService.updateIncident(id!, updatedFormData);
       console.log('Incident updated successfully:', updatedIncident);
 
+      // Show success message
+      toast.success('Incident updated successfully!');
+
       // Navigate back to the details page
-      navigate(`${basePath}/incident/details/${id}`);
+      navigate(`${basePath}/incident/${id}`);
     } catch (err) {
       setError('Failed to update incident details');
       console.error('Error updating incident:', err);
+      toast.error('Failed to update incident. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    navigate(`${basePath}/incident/details/${id}`);
+    navigate(`${basePath}/incident/${id}`);
   };
 
   if (loading) {
@@ -1372,8 +1393,8 @@ export const EditIncidentDetailsPage = () => {
         <Card className="mb-6 border border-[#D9D9D9]">
           <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
             <CardTitle className="flex items-center gap-3 text-lg">
-              <div className="w-8 h-8 bg-[#FF8C42] text-white rounded-full flex items-center justify-center">
-                <Settings className="h-4 w-4" />
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center">
+                <Heart className="h-4 w-4" />
               </div>
               <span className="text-[#1A1A1A] font-semibold uppercase">FIRST AID PROVIDED</span>
             </CardTitle>
@@ -1412,8 +1433,8 @@ export const EditIncidentDetailsPage = () => {
         <Card className="mb-6 border border-[#D9D9D9]">
           <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
             <CardTitle className="flex items-center gap-3 text-lg">
-              <div className="w-8 h-8 bg-[#FF8C42] text-white rounded-full flex items-center justify-center">
-                <Settings className="h-4 w-4" />
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center">
+                <Stethoscope className="h-4 w-4" />
               </div>
               <span className="text-[#1A1A1A] font-semibold uppercase">MEDICAL TREATMENT</span>
             </CardTitle>
@@ -1462,8 +1483,8 @@ export const EditIncidentDetailsPage = () => {
         <Card className="mb-6 border border-[#D9D9D9]">
           <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
             <CardTitle className="flex items-center gap-3 text-lg">
-              <div className="w-8 h-8 bg-[#FF8C42] text-white rounded-full flex items-center justify-center">
-                <Settings className="h-4 w-4" />
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center">
+                <UserSearch className="h-4 w-4" />
               </div>
               <span className="text-[#1A1A1A] font-semibold uppercase">ADD INVESTIGATION TEAM DETAILS</span>
             </CardTitle>
@@ -1656,7 +1677,7 @@ export const EditIncidentDetailsPage = () => {
                       if (e.target.files) {
                         const files = Array.from(e.target.files);
                         setNewAttachments(prev => [...prev, ...files]);
-                        handleInputChange('attachments', e.target.files[0]);
+                        // Don't call handleInputChange with file object
                       }
                     }}
                     className="hidden"

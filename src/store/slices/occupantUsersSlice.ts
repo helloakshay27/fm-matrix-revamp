@@ -3,7 +3,6 @@ import { apiClient } from "@/utils/apiClient";
 import axios from "axios";
 import createApiSlice from "../api/apiSlice";
 
-// API type for a single occupant user item from backend
 export interface OccupantUserApiResponse {
   id: number;
   company: string;
@@ -13,7 +12,9 @@ export interface OccupantUserApiResponse {
   mobile: string;
   email: string;
   gender?: string;
-  department?: string;
+  department?: {
+    department_name: string;
+  };
   user_type: string;
   status: string;
   active: boolean;
@@ -22,10 +23,12 @@ export interface OccupantUserApiResponse {
   face_added: boolean;
   app_downloaded: string;
   lock_user_permission: {
+    id: string;
     status: string;
     employee_id?: string;
     access_level?: string;
   };
+  entity_name?: string;
 }
 
 // API response shape
@@ -77,13 +80,44 @@ const initialState: OccupantUsersState = {
 // Async thunk to fetch occupant users
 export const fetchOccupantUsers = createAsyncThunk(
   "occupantUsers/fetchOccupantUsers",
-  async ({ page, perPage }: { page: number; perPage: number }) => {
+  async ({
+    page,
+    perPage,
+    firstname_cont = "",
+    lastname_cont = "",
+    email_cont = "",
+    lock_user_permission_status_eq = "",
+    entity_id_eq = "",
+    app_downloaded_eq,
+    search_all_fields_cont = "",
+  }: {
+    page: number;
+    perPage: number;
+    firstname_cont?: string;
+    lastname_cont?: string;
+    email_cont?: string;
+    lock_user_permission_status_eq?: string;
+    entity_id_eq?: string;
+    app_downloaded_eq?: boolean;
+    search_all_fields_cont?: string;
+  }) => {
+    const params = new URLSearchParams({
+      "q[lock_user_permission_status_eq]": lock_user_permission_status_eq,
+      "q[firstname_cont]": firstname_cont,
+      "q[lastname_cont]": lastname_cont,
+      "q[email_cont]": email_cont,
+      "q[entity_id_eq]": entity_id_eq,
+      "q[search_all_fields_cont]": search_all_fields_cont,
+    });
+    if (app_downloaded_eq !== undefined) {
+      params.append("q[app_downloaded_eq]", String(app_downloaded_eq));
+    }
     const response = await apiClient.get<OccupantUsersResponse>(
-      `/pms/account_setups/occupant_users.json?page=${page}&per_page=${perPage}`
+      `/pms/account_setups/occupant_users.json?page=${page}&per_page=${perPage}&${params.toString()}`
     );
 
-    const transformedUsers: OccupantUser[] =
-      response.data.occupant_users.map((user) => ({
+    const transformedUsers: OccupantUser[] = response.data.occupant_users.map(
+      (user) => ({
         id: user.id,
         company: user.company,
         name: `${user.firstname} ${user.lastname}`,
@@ -97,8 +131,11 @@ export const fetchOccupantUsers = createAsyncThunk(
         type: user.user_type === "pms_occupant_admin" ? "Admin" : "Member",
         active: user.active ? "Yes" : "No",
         faceRecognition: user.face_added ? "Yes" : "No",
-        appDownloaded: user.app_downloaded
-      }));
+        appDownloaded: user.app_downloaded,
+        lockUserId: user.lock_user_permission.id ?? null,
+        entity: user.entity_name
+      })
+    );
 
     const pagination: Pagination = {
       current_page: response.data.current_page,
@@ -106,7 +143,7 @@ export const fetchOccupantUsers = createAsyncThunk(
       total_count: response.data.total_count,
     };
 
-    console.log(transformedUsers)
+    console.log(transformedUsers);
 
     return { transformedUsers, pagination };
   }
@@ -114,16 +151,22 @@ export const fetchOccupantUsers = createAsyncThunk(
 
 export const exportOccupantUsers = createAsyncThunk(
   "exportOccupantUsers",
-  async ({ token, baseUrl }: { token: string, baseUrl: string }, { rejectWithValue }) => {
+  async (
+    { token, baseUrl }: { token: string; baseUrl: string },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/account_setups/export_occupant_users.xlsx`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        responseType: "blob",
-      })
+      const response = await axios.get(
+        `https://${baseUrl}/pms/account_setups/export_occupant_users.xlsx`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+        }
+      );
 
-      return response.data
+      return response.data;
     } catch (error) {
       const message =
         error.response?.data?.message ||
@@ -132,7 +175,7 @@ export const exportOccupantUsers = createAsyncThunk(
       return rejectWithValue(message);
     }
   }
-)
+);
 
 const occupantUsersSlice = createSlice({
   name: "occupantUsers",
@@ -151,14 +194,16 @@ const occupantUsersSlice = createSlice({
       })
       .addCase(fetchOccupantUsers.rejected, (state, action) => {
         state.loading = false;
-        state.error =
-          action.error.message || "Failed to fetch occupant users";
+        state.error = action.error.message || "Failed to fetch occupant users";
       });
   },
 });
 
-const exportOccupantUsersSlice = createApiSlice("exportOccupantUsers", exportOccupantUsers);
-export const exportOccupantUsersReducer = exportOccupantUsersSlice.reducer
+const exportOccupantUsersSlice = createApiSlice(
+  "exportOccupantUsers",
+  exportOccupantUsers
+);
+export const exportOccupantUsersReducer = exportOccupantUsersSlice.reducer;
 
 export const occupantUsersReducer = occupantUsersSlice.reducer;
 export default occupantUsersSlice.reducer;
