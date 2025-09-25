@@ -211,7 +211,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             </div>
             <div className="w-full h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 40 }} barCategoryGap={20}>
+                <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 48 }} barCategoryGap={20}>
                   <defs>
                     <linearGradient id="invCostBar" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#E84A4A" />
@@ -219,8 +219,20 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 12 }} interval={0} tickLine={false} />
-                  <YAxis domain={yDomain} tickFormatter={(v) => `${currency}${formatNumber(v)}`} tick={{ fontSize: 11 }} width={70} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 12 }}
+                    interval={0}
+                    tickLine={false}
+                    label={{ value: 'Month', position: 'bottom', offset: 10, fill: '#374151', fontSize: 12 }}
+                  />
+                  <YAxis
+                    domain={yDomain}
+                    tickFormatter={(v) => `${currency}${formatNumber(v)}`}
+                    tick={{ fontSize: 11 }}
+                    width={70}
+                    label={{ value: `Cost (${currency})`, angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }}
+                  />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="cost" fill="url(#invCostBar)" radius={[4, 4, 0, 0]} maxBarSize={50}>
                     <LabelList dataKey="cost" position="top" formatter={(v: number) => v ? `${currency}${formatNumber(v)}` : ''} className="text-[10px] fill-gray-800 font-medium" />
@@ -396,10 +408,27 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         return (
           <div className="space-y-4">
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+              <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 48 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="group_name" angle={-45} textAnchor="end" interval={0} height={80} />
-                <YAxis allowDecimals={false} />
+                <XAxis
+                  dataKey="group_name"
+                  angle={-45}
+                  textAnchor="end"
+                  interval={0}
+                  height={80}
+                  label={{ value: 'Category', position: 'bottom', offset: 10, fill: '#374151', fontSize: 12 }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  label={{
+                    value: 'Stock Count',
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: 8,
+                    fill: '#374151',
+                    fontSize: 12,
+                  }}
+                />
                 <Tooltip />
                 <Bar dataKey="item_count" fill="#3B82F6" />
               </BarChart>
@@ -421,22 +450,22 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         if (!data.response || !Array.isArray(data.response)) {
           return <div>No consumption data available</div>;
         }
-        // Approx row height (~44px) * 5 + header (~48px) => ~268px. Use max-h to allow shrink when fewer rows.
+    // Let the outer card provide vertical scrolling; avoid nested scrollbars which cause sticky header overlap.
         return (
           <div className="overflow-x-auto">
-            <div className="max-h-[270px] overflow-y-auto rounded border border-gray-200">
+      <div className="rounded border border-gray-200">
               <table className="min-w-full table-auto">
-                <thead className="sticky top-0 bg-gray-50 z-10 shadow-sm">
+        <thead className="sticky top-0 bg-gray-50 z-20 shadow-sm">
                   <tr>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Product</th>
+          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Product</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Opening</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Addition</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
+          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Opening</th>
+          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Addition</th>
+          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Consumption</th>
+          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Current Stock</th>
+          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Cost/Unit</th>
+          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Total Cost</th>
                   </tr>
                 </thead>
                 <tbody>
