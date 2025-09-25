@@ -2333,21 +2333,21 @@ export const SurveyResponseDetailPage = () => {
                     if (columnKey === "ticket_number") {
                       return (
                         <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                          {item.ticket_number}
+                          {item.ticket_number || "-"}
                         </span>
                       );
                     }
                     if (columnKey === "category") {
                       return (
                         <span className="px-2 py-1 rounded-full text-xs font-medium ">
-                          {item.category}
+                          {item.category || "-"}
                         </span>
                       );
                     }
                     if (columnKey === "assignee") {
                       return (
                         <span className="px-2 py-1 rounded-full text-xs font-medium">
-                          {item.assignee}
+                          {item.assignee || "-"}
                         </span>
                       );
                     }
