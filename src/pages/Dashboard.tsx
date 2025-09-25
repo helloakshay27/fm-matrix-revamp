@@ -1577,7 +1577,7 @@ export const Dashboard = () => {
             const rows = Array.isArray(rawData) ? rawData : [];
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <ResponseTATQuarterlyCard data={rows} />
+                <ResponseTATQuarterlyCard data={rows} dateRange={dateRange ? { startDate: dateRange.from!, endDate: dateRange.to! } : undefined} />
               </SortableChartItem>
             );
           }
@@ -1585,7 +1585,7 @@ export const Dashboard = () => {
             const rows = Array.isArray(rawData) ? rawData : [];
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <ResolutionTATQuarterlyCard data={rows} />
+                <ResolutionTATQuarterlyCard data={rows} dateRange={dateRange ? { startDate: dateRange.from!, endDate: dateRange.to! } : undefined} />
               </SortableChartItem>
             );
           }
@@ -1686,7 +1686,7 @@ export const Dashboard = () => {
           case 'consumable_inventory_value_quarterly':
             return (
               <SortableChartItem key={analytic.id} id={analytic.id} className="lg:col-span-2">
-                <ConsumableInventoryQuarterlyComparisonCard data={rawData} />
+                <ConsumableInventoryQuarterlyComparisonCard data={rawData} dateRange={dateRange ? { startDate: dateRange.from!, endDate: dateRange.to! } : undefined} />
               </SortableChartItem>
             );
           default:
@@ -1708,7 +1708,7 @@ export const Dashboard = () => {
           case 'visitor_trend_analysis':
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <VisitorTrendAnalysisCard data={rawData} />
+                <VisitorTrendAnalysisCard data={rawData} dateRange={dateRange ? { startDate: dateRange.from!, endDate: dateRange.to! } : undefined} />
               </SortableChartItem>
             );
           default:
@@ -1720,7 +1720,7 @@ export const Dashboard = () => {
             const rows = Array.isArray(rawData) ? rawData : [];
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <ChecklistProgressQuarterlyCard title={analytic.title} rows={rows} />
+                <ChecklistProgressQuarterlyCard rows={rows} dateRange={dateRange ? { startDate: dateRange.from!, endDate: dateRange.to! } : undefined} />
               </SortableChartItem>
             );
           }

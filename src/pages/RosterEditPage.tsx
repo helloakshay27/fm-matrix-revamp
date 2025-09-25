@@ -720,7 +720,7 @@ export const RosterEditPage: React.FC = () => {
 
   // Handle cancel
   const handleCancel = () => {
-    navigate(`/roster/detail/${id}`);
+    navigate(`/settings/account/roster/detail/${id}`);
   };
 
   if (isLoading) {
@@ -825,7 +825,7 @@ export const RosterEditPage: React.FC = () => {
 
           <div>
             <Label className="text-sm font-medium text-gray-700 mb-4 block mt-6">
-              Working Days *
+              Working Days <span className="text-red-500">*</span>
             </Label>
 
             {/* Day Type Selection - Compact inline */}
@@ -1047,7 +1047,7 @@ export const RosterEditPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <TextField
-                label="Location *"
+                label="Location"
                 value={formData.location}
                 disabled
                 placeholder="Current site location"
@@ -1067,7 +1067,7 @@ export const RosterEditPage: React.FC = () => {
 
             <div className="relative">
               <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Department *</InputLabel>
+                <InputLabel shrink>Department <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   multiple
                   value={formData.departments}
@@ -1076,39 +1076,17 @@ export const RosterEditPage: React.FC = () => {
                   renderValue={(selected) => {
                     const selectedArray = selected as number[];
                     if (selectedArray.length === 0) return "";
-                    if (selectedArray.length <= 2) {
-                      return (
-                        <Box sx={{ display: "flex", flexWrap: "nowrap", gap: 0.5, overflow: "hidden" }}>
-                          {selectedArray.map((value) => {
-                            const dept = departments.find((d) => d.id === value);
-                            return (
-                              <Chip
-                                key={value}
-                                label={dept?.department_name || `ID: ${value}`}
-                                size="small"
-                                sx={{ 
-                                  backgroundColor: "#C72030", 
-                                  color: "white",
-                                  maxWidth: "150px",
-                                  "& .MuiChip-label": {
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap"
-                                  }
-                                }}
-                              />
-                            );
-                          })}
-                        </Box>
-                      );
+                    if (selectedArray.length === 1) {
+                      const dept = departments.find((d) => d.id === selectedArray[0]);
+                      return dept?.department_name || `ID: ${selectedArray[0]}`;
                     }
-                    return (
-                      <Chip
-                        label={`${selectedArray.length} departments selected`}
-                        size="small"
-                        sx={{ backgroundColor: "#C72030", color: "white" }}
-                      />
-                    );
+                    if (selectedArray.length <= 3) {
+                      return selectedArray.map((value) => {
+                        const dept = departments.find((d) => d.id === value);
+                        return dept?.department_name || `ID: ${value}`;
+                      }).join(", ");
+                    }
+                    return `${selectedArray.length} departments selected`;
                   }}
                   displayEmpty
                   disabled={loadingDepartments || isSubmitting}
@@ -1155,7 +1133,7 @@ export const RosterEditPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="relative">
               <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Shift *</InputLabel>
+                <InputLabel shrink>Shift <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   value={formData.shift || ''}
                   onChange={(e) => handleInputChange('shift', Number(e.target.value))}
@@ -1190,7 +1168,7 @@ export const RosterEditPage: React.FC = () => {
                   variant="outlined"
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel shrink>List Of Selected Employees *</InputLabel>
+                  <InputLabel shrink>List Of Selected Employees <span className="text-red-500">*</span></InputLabel>
                   <MuiSelect
                     multiple
                     value={formData.selectedEmployees}
@@ -1206,51 +1184,21 @@ export const RosterEditPage: React.FC = () => {
                         label="List Of Selected Employees *"
                       />
                     }
-                    renderValue={(selected) => (
-                      <Box sx={{ 
-                        display: "flex", 
-                        flexWrap: "nowrap", 
-                        gap: 0.5,
-                        overflow: 'hidden',
-                        maxWidth: '100%'
-                      }}>
-                        {(selected as number[]).length <= 2 ? (
-                          // Show individual chips for 1-2 selections
-                          (selected as number[]).map((value) => {
-                            const user = filteredFMUsers.find(
-                              (u) => u.id === value
-                            );
-                            return (
-                              <Chip
-                                key={value}
-                                label={user?.name || `User ${value}`}
-                                size="small"
-                                sx={{
-                                  backgroundColor: "#C72030",
-                                  color: "white",
-                                  maxWidth: '150px',
-                                  '& .MuiChip-label': {
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                  }
-                                }}
-                              />
-                            );
-                          })
-                        ) : (
-                          // Show count for 3+ selections
-                          <Chip
-                            label={`${(selected as number[]).length} employees selected`}
-                            size="small"
-                            sx={{
-                              backgroundColor: "#C72030",
-                              color: "white",
-                            }}
-                          />
-                        )}
-                      </Box>
-                    )}
+                    renderValue={(selected) => {
+                      const selectedArray = selected as number[];
+                      if (selectedArray.length === 0) return "";
+                      if (selectedArray.length === 1) {
+                        const user = filteredFMUsers.find((u) => u.id === selectedArray[0]);
+                        return user?.name || `User ${selectedArray[0]}`;
+                      }
+                      if (selectedArray.length <= 3) {
+                        return selectedArray.map((value) => {
+                          const user = filteredFMUsers.find((u) => u.id === value);
+                          return user?.name || `User ${value}`;
+                        }).join(", ");
+                      }
+                      return `${selectedArray.length} employees selected`;
+                    }}
                     displayEmpty
                     disabled={
                       loadingFilteredFMUsers ||
@@ -1339,7 +1287,7 @@ export const RosterEditPage: React.FC = () => {
           <div className="space-y-6">
             <div>
               <Label className="text-sm font-medium text-gray-700 mb-4 block">
-                Roster Period *
+                Roster Period <span className="text-red-500">*</span>
               </Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Start Date */}
@@ -1392,20 +1340,18 @@ export const RosterEditPage: React.FC = () => {
                   <Calendar className="w-4 h-4" />
                   <span className="font-medium">Selected Period:</span>
                   <span>
-                    {period.startDate.toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
+                    {period.startDate.toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: '2-digit'
                     })}
                   </span>
                   <span className="mx-1">→</span>
                   <span>
-                    {period.endDate.toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
+                    {period.endDate.toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: '2-digit'
                     })}
                   </span>
                   <span className="ml-2 text-blue-600">

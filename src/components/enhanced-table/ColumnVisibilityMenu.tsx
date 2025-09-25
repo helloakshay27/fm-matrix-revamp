@@ -70,7 +70,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-80 h-[368px] overflow-y-auto"
+        className="w-80 max-h-[280px] overflow-y-auto"
       >
         <DropdownMenuLabel className="flex items-center justify-between">
           <Button

@@ -36,6 +36,15 @@ interface ManpowerDetail {
     emergencyContact: string;
 }
 
+interface CheckPoint {
+    id: number;
+    description: string;
+    checked: boolean;
+    req: boolean;
+    not_req: boolean;
+    parameters?: string;
+}
+
 interface ExtensionSheet {
     id: string;
     date: string;
@@ -106,9 +115,9 @@ export const VendorPermitForm = () => {
                     ...prev,
                     docNo: data.pms_permit?.reference_number || '',
                     rev: data.pms_permit?.revision || '',
-                    permitRequestedDate: data.pms_permit?.created_at ? convertDateFormat(data.pms_permit.created_at) : '',
+                    permitRequestedDate: data.pms_permit?.requested_date ? convertDateFormat(data.pms_permit.requested_date) : '',
                     permitIssueDate: data.pms_permit?.issued_at ? convertDateFormat(data.pms_permit.issued_at) : '',
-                    permitId: id || data.pms_permit?.id || ''
+                    permitId: id || data.pms_permit?.permit_id || ''
                 }));
 
                 // Update detailed information with backend data
@@ -134,6 +143,19 @@ export const VendorPermitForm = () => {
                     safetyOfficerName: data.pms_permit?.safety_officer?.name || '',
                     safetyOfficerContact: data.pms_permit?.safety_officer?.contact_number || ''
                 }));
+
+                // Update checkpoints with backend data
+                if (data.pms_permit?.safety_checkpoints) {
+                    const mappedCheckpoints = data.pms_permit.safety_checkpoints.map((checkpoint, index) => ({
+                        id: index,
+                        description: checkpoint.label || '',
+                        checked: checkpoint.checked || false,
+                        req: checkpoint.req || false,
+                        not_req: checkpoint.not_req || false,
+                        parameters: checkpoint.parameters || ''
+                    }));
+                    setCheckPoints(mappedCheckpoints);
+                }
             } catch (error) {
                 console.error('Error fetching permit data:', error);
             }
@@ -176,16 +198,32 @@ export const VendorPermitForm = () => {
             electricalSupply: false,
             airSupply: false
         },
-        energyIsolationRequired: ''
+        energyIsolationRequired: '',
+        // Fields for hazardous material work
+        jobSafetyAnalysisAttached: '',
+        riskAssessmentNumber: '',
+        vehicleEntryRequired: '',
+        gasTestingConductedFor: {
+            hydrocarbons: false,
+            h2o: false,
+            oxygen: false,
+            others: false
+        },
+        gasTestToBeRepeatedAfter: '',
+        continuousGasMonitoringRequired: '',
+        worksiteExaminationBy: '',
+        anySimultaneousOperation: '',
+        ifYesSpecifyTheOperation: '',
+        ppesProvided: '',
+        isolationRequired: '',
+        tagOutDetailsElectrical: '',
+        energyIsolationDoneBy: '',
+        energyDeIsolationDoneBy: '',
+        permissionIsGivenToContractor: ''
     });
 
-    // Check Points
-    const [checkPoints, setCheckPoints] = useState([
-        { description: 'Surrounding area checked, Clean & covered Proper ventilation and lighting provided.', checked: false },
-        { description: 'All area tools & caution boards/tags provided & certified.', checked: false },
-        { description: 'All Lifting tools & tackles are inspected & certified.', checked: false },
-        { description: 'Necessary barricades are provided.', checked: false }
-    ]);
+    // Check Points - will be populated from API
+    const [checkPoints, setCheckPoints] = useState<CheckPoint[]>([]);
 
     // Persons Information
     const [personsInfo, setPersonsInfo] = useState({
@@ -245,6 +283,13 @@ export const VendorPermitForm = () => {
         }));
     };
 
+    const handleGasTestingChange = (gas: string, checked: boolean) => {
+        setDetailedInfo(prev => ({
+            ...prev,
+            gasTestingConductedFor: { ...prev.gasTestingConductedFor, [gas]: checked }
+        }));
+    };
+
     const handleCheckPointChange = (index: number, checked: boolean) => {
         setCheckPoints(prev => prev.map((item, i) => i === index ? { ...item, checked } : item));
     };
@@ -300,10 +345,13 @@ export const VendorPermitForm = () => {
                 return;
             }
 
-            // Create FormData for multipart/form-data submission
+
             const formData = new FormData();
 
-            // Basic form fields mapping to API
+            // Check if this is hazardous material work to include additional fields
+            const isHazardousMaterialWork = permitData?.permit_type === "Loading, Unloading Hazardous Material Work";
+
+            // Common fields for all permit types
             formData.append('pms_permit_form[job_safty_analysis_required]', detailedInfo.jobSafetyAnalysisRequired || 'No');
             formData.append('pms_permit_form[emergency_contact_name]', detailedInfo.emergencyContactName || '');
             formData.append('pms_permit_form[emergency_contact_number]', detailedInfo.emergencyContactNumber || '');
@@ -314,22 +362,62 @@ export const VendorPermitForm = () => {
             formData.append('pms_permit_form[necessary_ppes_provided]', detailedInfo.necessaryPPEsProvided || '');
             formData.append('pms_permit_form[energy_isolation_required]', detailedInfo.energyIsolationRequired || 'No');
 
-            // Utilities - multiple values need to be handled
-            const utilities = [];
-            if (detailedInfo.utilitiesToBeProvided.waterSupply) utilities.push('Water Supply');
-            if (detailedInfo.utilitiesToBeProvided.electricalSupply) utilities.push('Electrical Supply');
-            if (detailedInfo.utilitiesToBeProvided.airSupply) utilities.push('Air Supply');
-            if (utilities.length > 0) {
-                formData.append('pms_permit_form[utilities_to_be_provided_by_company1]', utilities.join(', '));
+            // Additional fields specific to hazardous material work
+            if (isHazardousMaterialWork) {
+                formData.append('pms_permit_form[job_safety_analysis_attached]', detailedInfo.jobSafetyAnalysisAttached || '');
+                formData.append('pms_permit_form[risk_assessment_number]', detailedInfo.riskAssessmentNumber || '');
+                formData.append('pms_permit_form[vehicle_entry_required]', detailedInfo.vehicleEntryRequired || 'No');
+
+
+                formData.append('pms_permit_form[gas_testing_conducted_for_hydrocarbons]',
+                    detailedInfo.gasTestingConductedFor.hydrocarbons ? '1' : '0');
+                formData.append('pms_permit_form[gas_testing_conducted_for_h2o]',
+                    detailedInfo.gasTestingConductedFor.h2o ? '1' : '0');
+                formData.append('pms_permit_form[gas_testing_conducted_for_oxygen]',
+                    detailedInfo.gasTestingConductedFor.oxygen ? '1' : '0');
+                formData.append('pms_permit_form[gas_testing_conducted_for_others]',
+                    detailedInfo.gasTestingConductedFor.others ? '1' : '0');
+
+                formData.append('pms_permit_form[gas_test_to_be_repeated_after]', detailedInfo.gasTestToBeRepeatedAfter || '');
+                formData.append('pms_permit_form[continuous_gas_monitoring_required]', detailedInfo.continuousGasMonitoringRequired || 'No');
+                formData.append('pms_permit_form[worksite_examination_By]', detailedInfo.worksiteExaminationBy || 'No');
+                formData.append('pms_permit_form[any_simultaneous_operation]', detailedInfo.anySimultaneousOperation || 'No');
+                formData.append('pms_permit_form[if_yes_specify_the_operation]', detailedInfo.ifYesSpecifyTheOperation || '');
+                formData.append('pms_permit_form[ppes_provided]', detailedInfo.ppesProvided || '');
+                formData.append('pms_permit_form[isolation_required_electrical_machnical]', detailedInfo.isolationRequired || '');
+                formData.append('pms_permit_form[tag_out_details_electrical]', detailedInfo.tagOutDetailsElectrical || '');
+                formData.append('pms_permit_form[energy_isolation_done_by_electrical]', detailedInfo.energyIsolationDoneBy || '');
+                formData.append('pms_permit_form[energy_de_isolation_done_by_electrical]', detailedInfo.energyDeIsolationDoneBy || '');
+                formData.append('pms_permit_form[permission_is_given_to_contractor]', detailedInfo.permissionIsGivenToContractor || '');
+                if (detailedInfo.utilitiesToBeProvided.waterSupply) {
+                    formData.append('pms_permit_form[utilities_provided_by_company_water_supply]', '1');
+                }
+                if (detailedInfo.utilitiesToBeProvided.electricalSupply) {
+                    formData.append('pms_permit_form[utilities_provided_by_company_elecrical_supply]', '1');
+                }
+                if (detailedInfo.utilitiesToBeProvided.airSupply) {
+                    formData.append('pms_permit_form[utilities_provided_by_company_air_supply]', '1');
+                }
+
             }
 
-            // Check points mapping
-            formData.append('pms_permit_form[surrounding_area_checked_req_or_not]', checkPoints[0]?.checked ? 'Req' : 'Not Req');
-            formData.append('pms_permit_form[area_cordoned_off_req_or_not]', checkPoints[1]?.checked ? 'Req' : 'Not Req');
-            formData.append('pms_permit_form[all_lifting_tool_req_or_not]', checkPoints[2]?.checked ? 'Req' : 'Not Req');
-            formData.append('pms_permit_form[necessary_ppes_are_proided_req_or_not]', checkPoints[3]?.checked ? 'Req' : 'Not Req');
+            // Handle utilities - send as separate numbered parameters
+            if (detailedInfo.utilitiesToBeProvided.waterSupply) {
+                formData.append('pms_permit_form[utilities_to_be_provided_by_company1]', 'Water Supply');
+            }
+            if (detailedInfo.utilitiesToBeProvided.electricalSupply) {
+                formData.append('pms_permit_form[utilities_to_be_provided_by_company2]', 'Electrical Supply');
+            }
+            if (detailedInfo.utilitiesToBeProvided.airSupply) {
+                formData.append('pms_permit_form[utilities_to_be_provided_by_company3]', 'Air Supply');
+            }
 
-            // Person information
+            checkPoints.forEach((checkpoint) => {
+                if (checkpoint.parameters) {
+                    formData.append(`pms_permit_form[${checkpoint.parameters}]`, checkpoint.checked ? 'Req' : 'Not Req');
+                }
+            });
+
             formData.append('pms_permit_form[contract_supervisor_name]', personsInfo.contractorsSupervisorName || '');
             formData.append('pms_permit_form[contract_supervisor_number]', personsInfo.contractSupervisorNumber || '');
 
@@ -394,10 +482,11 @@ export const VendorPermitForm = () => {
             setLoading(false);
         }
     };
+    console.log(`Rendering VendorPermitForm with permitData:`, checkPoints);
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
-            <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen bg-white-50 p-4 sm:p-6">
+            <div className=" mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
@@ -406,7 +495,7 @@ export const VendorPermitForm = () => {
                             Back
                         </Button>
                         <h1 className="text-2xl font-bold text-gray-900">
-                            {permitData?.permit_type || 'WORK PERMIT'}
+                            {permitData?.permit_type || '-'}
                             {id && <span className="text-sm text-gray-600 ml-2">(Permit ID: {id})</span>}
                         </h1>
                     </div>
@@ -414,14 +503,14 @@ export const VendorPermitForm = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Basic Information */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-orange-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
-                                <FileText className="w-5 h-5" />
-                                Basic Information
+                    <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-4">
+                            <CardTitle className="text-lg text-black flex items-center">
+                                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+                                BASIC INFORMATION
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 bg-white">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="docNo">Doc No</Label>
@@ -448,14 +537,14 @@ export const VendorPermitForm = () => {
                     </Card>
 
                     {/* Detailed Information */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-orange-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
-                                <Building2 className="w-5 h-5" />
-                                Detailed Information
+                    <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-4">
+                            <CardTitle className="text-lg text-black flex items-center">
+                                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+                                DETAILED INFORMATION
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6 space-y-6">
+                        <CardContent className="p-6 bg-white space-y-6">
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     <div>
@@ -495,172 +584,504 @@ export const VendorPermitForm = () => {
                                 </div>
                             </div>
 
+
+
                             {/* Additional fields in full width sections */}
-                            <div className="space-y-6">
+                            {permitData?.permit_type === "Loading, Unloading Hazardous Material Work" ? (
+                                // ✅ Hazardous Material Work Form
+                                <div className="space-y-6">
+                                    <Label>( Attach the list of Contractor employees )</Label>
 
-
-                                <div>
-                                    <Label className="text-sm font-medium">Job Safety Analysis required :</Label>
-                                    <div className="mt-2">
-                                        <RadioGroup value={detailedInfo.jobSafetyAnalysisRequired} onValueChange={(value) => handleDetailedInfoChange('jobSafetyAnalysisRequired', value)} className="flex gap-6">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="Yes" id="jsa-yes" />
-                                                <Label htmlFor="jsa-yes">Yes</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="No" id="jsa-no" />
-                                                <Label htmlFor="jsa-no">No</Label>
-                                            </div>
-                                        </RadioGroup>
-                                        <div className="mt-2">
-                                            <Label className="text-xs text-gray-500">(if yes, do it on attached sheet)</Label>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label htmlFor="jobSafetyAnalysisAttached">Job Safety Analysis Attached (JSA No.)</Label>
+                                            <Input
+                                                id="jobSafetyAnalysisAttached"
+                                                value={detailedInfo.jobSafetyAnalysisAttached}
+                                                onChange={(e) => handleDetailedInfoChange('jobSafetyAnalysisAttached', e.target.value)}
+                                                placeholder="Enter JSA Number"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="riskAssessmentNumber">Risk Assessment Number</Label>
+                                            <Input
+                                                id="riskAssessmentNumber"
+                                                value={detailedInfo.riskAssessmentNumber}
+                                                onChange={(e) => handleDetailedInfoChange('riskAssessmentNumber', e.target.value)}
+                                                placeholder="Enter Risk Assessment Number"
+                                            />
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label className="text-sm font-medium">Vehicle Entry Required</Label>
+                                            <div className="mt-2">
+                                                <RadioGroup
+                                                    value={detailedInfo.vehicleEntryRequired}
+                                                    onValueChange={(value) => handleDetailedInfoChange('vehicleEntryRequired', value)}
+                                                    className="flex gap-6"
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="Yes" id="vehicle-yes" />
+                                                        <Label htmlFor="vehicle-yes">Yes</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="No" id="vehicle-no" />
+                                                        <Label htmlFor="vehicle-no">No</Label>
+                                                    </div>
+                                                </RadioGroup>
+                                                <div className="mt-2">
+                                                    <Label className="text-xs text-gray-500">
+                                                        If Yes attach Vehicle Access checklist, driver checklist for loading/unloading of hazardous material
+                                                    </Label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <Label className="text-sm font-medium">Gas Testing conducted for</Label>
+                                            <div className="flex gap-4 mt-2 flex-wrap">
+                                                <div className="flex items-center space-x-2">
+                                                    <Checkbox id="hydrocarbons" checked={detailedInfo.gasTestingConductedFor.hydrocarbons}
+                                                        onCheckedChange={(checked) => handleGasTestingChange('hydrocarbons', checked as boolean)} />
+                                                    <Label htmlFor="hydrocarbons">Hydrocarbons</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <Checkbox id="h2o" checked={detailedInfo.gasTestingConductedFor.h2o}
+                                                        onCheckedChange={(checked) => handleGasTestingChange('h2o', checked as boolean)} />
+                                                    <Label htmlFor="h2o">H2O</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <Checkbox id="oxygen" checked={detailedInfo.gasTestingConductedFor.oxygen}
+                                                        onCheckedChange={(checked) => handleGasTestingChange('oxygen', checked as boolean)} />
+                                                    <Label htmlFor="oxygen">Oxygen</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <Checkbox id="others" checked={detailedInfo.gasTestingConductedFor.others}
+                                                        onCheckedChange={(checked) => handleGasTestingChange('others', checked as boolean)} />
+                                                    <Label htmlFor="others">Other</Label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label htmlFor="gasTestToBeRepeatedAfter">Gas Test to be repeated after</Label>
+                                            <Input
+                                                id="gasTestToBeRepeatedAfter"
+                                                value={detailedInfo.gasTestToBeRepeatedAfter}
+                                                onChange={(e) => handleDetailedInfoChange('gasTestToBeRepeatedAfter', e.target.value)}
+                                                placeholder="Hrs"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Label className="text-sm font-medium">Continuous Gas Monitoring Required</Label>
+                                            <div className="mt-2">
+                                                <RadioGroup
+                                                    value={detailedInfo.continuousGasMonitoringRequired}
+                                                    onValueChange={(value) => handleDetailedInfoChange('continuousGasMonitoringRequired', value)}
+                                                    className="flex gap-6"
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="Yes" id="monitoring-yes" />
+                                                        <Label htmlFor="monitoring-yes">Yes</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="No" id="monitoring-no" />
+                                                        <Label htmlFor="monitoring-no">No</Label>
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label className="text-sm font-medium">
+                                                Worksite Examination By Initiator, Issuer, Supervisor:- Every Day /First Day
+                                            </Label>
+                                            <div className="mt-2">
+                                                <RadioGroup
+                                                    value={detailedInfo.worksiteExaminationBy}
+                                                    onValueChange={(value) => handleDetailedInfoChange('worksiteExaminationBy', value)}
+                                                    className="flex gap-6"
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="Yes" id="worksite-yes" />
+                                                        <Label htmlFor="worksite-yes">Yes</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="No" id="worksite-no" />
+                                                        <Label htmlFor="worksite-no">No</Label>
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <Label className="text-sm font-medium">Any Simultaneous Operation</Label>
+                                            <div className="mt-2">
+                                                <RadioGroup
+                                                    value={detailedInfo.anySimultaneousOperation}
+                                                    onValueChange={(value) => handleDetailedInfoChange('anySimultaneousOperation', value)}
+                                                    className="flex gap-6"
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="Yes" id="simultaneous-yes" />
+                                                        <Label htmlFor="simultaneous-yes">Yes</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="No" id="simultaneous-no" />4
+                                                        <Label htmlFor="simultaneous-no">No</Label>
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div>
-                                        <Label htmlFor="emergencyContactName">Emergency Contact Name :</Label>
-                                        <Input id="emergencyContactName" value={detailedInfo.emergencyContactName} onChange={(e) => handleDetailedInfoChange('emergencyContactName', e.target.value)} placeholder="Enter Emergency Contact Name" />
+                                        <Label htmlFor="ifYesSpecifyTheOperation">If Yes Specify the Operation</Label>
+                                        <Input
+                                            id="ifYesSpecifyTheOperation"
+                                            value={detailedInfo.ifYesSpecifyTheOperation}
+                                            onChange={(e) => handleDetailedInfoChange('ifYesSpecifyTheOperation', e.target.value)}
+                                            placeholder="Enter Operation"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-sm font-medium">Necessary PPEs provided</Label>
+                                        <div className="mt-2">
+                                            <RadioGroup
+                                                value={detailedInfo.ppesProvided}
+                                                onValueChange={(value) => handleDetailedInfoChange('ppesProvided', value)}
+                                                className="flex gap-6"
+                                            >
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="By Company" id="ppe-company-haz" />
+                                                    <Label htmlFor="ppe-company-haz">by Company</Label>
+                                                    <Label className="text-xs text-gray-500 ml-2">(to be returned back to security)</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="By Contractor" id="ppe-contractor-haz" />
+                                                    <Label htmlFor="ppe-contractor-haz">by Contractor</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-sm font-medium">Utilities to be provided by company</Label>
+                                        <div className="flex gap-6 mt-2">
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="water-supply-haz" checked={detailedInfo.utilitiesToBeProvided.waterSupply}
+                                                    onCheckedChange={(checked) => handleUtilityChange('waterSupply', checked as boolean)} />
+                                                <Label htmlFor="water-supply-haz">Water Supply</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="electrical-supply-haz" checked={detailedInfo.utilitiesToBeProvided.electricalSupply}
+                                                    onCheckedChange={(checked) => handleUtilityChange('electricalSupply', checked as boolean)} />
+                                                <Label htmlFor="electrical-supply-haz">Electrical Supply</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="air-supply-haz" checked={detailedInfo.utilitiesToBeProvided.airSupply}
+                                                    onCheckedChange={(checked) => handleUtilityChange('airSupply', checked as boolean)} />
+                                                <Label htmlFor="air-supply-haz">Air Supply</Label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label className="text-sm font-medium">Isolation is required</Label>
+                                            <div className="mt-2">
+                                                <RadioGroup
+                                                    value={detailedInfo.isolationRequired}
+                                                    onValueChange={(value) => handleDetailedInfoChange('isolationRequired', value)}
+                                                    className="flex gap-6"
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="Electrical" id="isolation-electrical" />
+                                                        <Label htmlFor="isolation-electrical">Electrical</Label>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <RadioGroupItem value="Mechanical" id="isolation-mechanical" />
+                                                        <Label htmlFor="isolation-mechanical">Mechanical</Label>
+                                                    </div>
+                                                </RadioGroup>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="tagOutDetailsElectrical">If Yes, Lock Out Tag Out details</Label>
+                                            <Input
+                                                id="tagOutDetailsElectrical"
+                                                value={detailedInfo.tagOutDetailsElectrical}
+                                                onChange={(e) => handleDetailedInfoChange('tagOutDetailsElectrical', e.target.value)}
+                                                placeholder="Enter"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label htmlFor="energyIsolationDoneBy">Energy Isolation Done By</Label>
+                                            <Input
+                                                id="energyIsolationDoneBy"
+                                                value={detailedInfo.energyIsolationDoneBy}
+                                                onChange={(e) => handleDetailedInfoChange('energyIsolationDoneBy', e.target.value)}
+                                                placeholder="Enter"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="energyDeIsolationDoneBy">Energy De-Isolation Done By</Label>
+                                            <Input
+                                                id="energyDeIsolationDoneBy"
+                                                value={detailedInfo.energyDeIsolationDoneBy}
+                                                onChange={(e) => handleDetailedInfoChange('energyDeIsolationDoneBy', e.target.value)}
+                                                placeholder="Enter"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6">
+                                        <h6 className="text-orange-600 font-semibold mb-4">Vehicle Access to restricted area</h6>
+                                        <div>
+                                            <Label htmlFor="permissionIsGivenToContractor">
+                                                Permission is given to contractor supervisor to take vehicle(s) of following types
+                                            </Label>
+                                            <Input
+                                                id="permissionIsGivenToContractor"
+                                                value={detailedInfo.permissionIsGivenToContractor}
+                                                onChange={(e) => handleDetailedInfoChange('permissionIsGivenToContractor', e.target.value)}
+                                                placeholder="Enter"
+                                            />
+                                        </div>
+                                        <Label className="text-sm text-gray-600 mt-2 block">
+                                            To location subject to satisfactory gas testing, spark arrestor with the result recorded below
+                                        </Label>
                                     </div>
                                     <div>
-                                        <Label htmlFor="emergencyContactNumber">Emergency Contact Number :</Label>
-                                        <Input id="emergencyContactNumber" value={detailedInfo.emergencyContactNumber} onChange={(e) => handleDetailedInfoChange('emergencyContactNumber', e.target.value)} placeholder="Enter Emergency Contact Number" />
+                                        <h5 className="title font-semibold mb-4">Gas Testing Record</h5>
+
+                                        {/* First table */}
+                                        <div className="overflow-x-auto border border-gray-300 rounded-md mb-6">
+                                            <table className="min-w-full text-sm text-left border-collapse">
+                                                <thead className="bg-gray-100">
+                                                    <tr>
+                                                        <th className="px-2 py-1">Time</th>
+                                                        <th className="px-2 py-1">Gas</th>
+                                                        <th className="px-2 py-1">Result</th>
+                                                        <th className="px-2 py-1">Sign</th>
+                                                        <th className="px-2 py-1">Time</th>
+                                                        <th className="px-2 py-1">Gas</th>
+                                                        <th className="px-2 py-1">Result</th>
+                                                        <th className="px-2 py-1">Time</th>
+                                                        <th className="px-2 py-1">Gas</th>
+                                                        <th className="px-2 py-1">Result</th>
+                                                        <th className="px-2 py-1">Time</th>
+                                                        <th className="px-2 py-1">Gas</th>
+                                                        <th className="px-2 py-1">Result</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {[1, 2].map((row) => (
+                                                        <tr key={row} className="border-t">
+                                                            {Array.from({ length: 13 }).map((_, i) => (
+                                                                <td key={i} className="px-2 py-1">&nbsp;</td>
+                                                            ))}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+
+
                                     </div>
                                 </div>
 
-                                <div>
-                                    <Label className="text-sm font-medium">Any Chemicals to be used then MSDS available :</Label>
-                                    <div className="mt-2">
-                                        <RadioGroup value={detailedInfo.anyChemicalsUsedMSDS} onValueChange={(value) => handleDetailedInfoChange('anyChemicalsUsedMSDS', value)} className="flex gap-6">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="Yes" id="msds-yes" />
-                                                <Label htmlFor="msds-yes">Yes</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="No" id="msds-no" />
-                                                <Label htmlFor="msds-no">No</Label>
-                                            </div>
-                                        </RadioGroup>
+
+
+                            ) : (
+                                <div className="space-y-6">
+                                    <Label>( Attach the List of Contractor’s Employees )</Label>
+
+                                    <div>
+                                        <Label className="text-sm font-medium">Job Safety Analysis required :</Label>
                                         <div className="mt-2">
-                                            <Label className="text-xs text-gray-500">(If yes, Please attach MSDS)</Label>
+                                            <RadioGroup value={detailedInfo.jobSafetyAnalysisRequired} onValueChange={(value) => handleDetailedInfoChange('jobSafetyAnalysisRequired', value)} className="flex gap-6">
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="Yes" id="jsa-yes" />
+                                                    <Label htmlFor="jsa-yes">Yes</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="No" id="jsa-no" />
+                                                    <Label htmlFor="jsa-no">No</Label>
+                                                </div>
+                                            </RadioGroup>
+                                            <div className="mt-2">
+                                                <Label className="text-xs text-gray-500">(if yes, do it on attached sheet)</Label>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div>
-                                    <Label htmlFor="ifYesSpecifyName">If 'Yes' Please specify the name :</Label>
-                                    <Input id="ifYesSpecifyName" value={detailedInfo.ifYesSpecifyName} onChange={(e) => handleDetailedInfoChange('ifYesSpecifyName', e.target.value)} />
-                                </div>
-
-                                <div>
-                                    <Label className="text-sm font-medium">Contractor's Material Storage Place required :</Label>
-                                    <div className="mt-2">
-                                        <RadioGroup value={detailedInfo.contractorMaterialStorageRequired} onValueChange={(value) => handleDetailedInfoChange('contractorMaterialStorageRequired', value)} className="flex gap-6">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="Yes" id="storage-yes" />
-                                                <Label htmlFor="storage-yes">Yes</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="No" id="storage-no" />
-                                                <Label htmlFor="storage-no">No</Label>
-                                            </div>
-                                        </RadioGroup>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label htmlFor="emergencyContactName">Emergency Contact Name :</Label>
+                                            <Input id="emergencyContactName" value={detailedInfo.emergencyContactName} onChange={(e) => handleDetailedInfoChange('emergencyContactName', e.target.value)} placeholder="Enter Emergency Contact Name" />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="emergencyContactNumber">Emergency Contact Number :</Label>
+                                            <Input id="emergencyContactNumber" value={detailedInfo.emergencyContactNumber} onChange={(e) => handleDetailedInfoChange('emergencyContactNumber', e.target.value)} placeholder="Enter Emergency Contact Number" />
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div>
-                                    <Label htmlFor="areaAllocated">Area Allocated :</Label>
-                                    <Input id="areaAllocated" value={detailedInfo.areaAllocated} onChange={(e) => handleDetailedInfoChange('areaAllocated', e.target.value)} />
-                                </div>
-
-                                <div>
-                                    <Label className="text-sm font-medium">Necessary PPEs provided :</Label>
-                                    <div className="mt-2">
-                                        <RadioGroup value={detailedInfo.necessaryPPEsProvided} onValueChange={(value) => handleDetailedInfoChange('necessaryPPEsProvided', value)} className="flex gap-6">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="by company" id="ppe-company" />
-                                                <Label htmlFor="ppe-company">by company</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="by Contractor" id="ppe-contractor" />
-                                                <Label htmlFor="ppe-contractor">by Contractor</Label>
-                                            </div>
-                                        </RadioGroup>
+                                    <div>
+                                        <Label className="text-sm font-medium">Any Chemicals to be used then MSDS available :</Label>
                                         <div className="mt-2">
-                                            <Label className="text-xs text-gray-500">(to be returned back to security )</Label>
+                                            <RadioGroup value={detailedInfo.anyChemicalsUsedMSDS} onValueChange={(value) => handleDetailedInfoChange('anyChemicalsUsedMSDS', value)} className="flex gap-6">
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="Yes" id="msds-yes" />
+                                                    <Label htmlFor="msds-yes">Yes</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="No" id="msds-no" />
+                                                    <Label htmlFor="msds-no">No</Label>
+                                                </div>
+                                            </RadioGroup>
+                                            <div className="mt-2">
+                                                <Label className="text-xs text-gray-500">(If yes, Please attach MSDS)</Label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="ifYesSpecifyName">If 'Yes' Please specify the name :</Label>
+                                        <Input id="ifYesSpecifyName" value={detailedInfo.ifYesSpecifyName} onChange={(e) => handleDetailedInfoChange('ifYesSpecifyName', e.target.value)} />
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-sm font-medium">Contractor's Material Storage Place required :</Label>
+                                        <div className="mt-2">
+                                            <RadioGroup value={detailedInfo.contractorMaterialStorageRequired} onValueChange={(value) => handleDetailedInfoChange('contractorMaterialStorageRequired', value)} className="flex gap-6">
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="Yes" id="storage-yes" />
+                                                    <Label htmlFor="storage-yes">Yes</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="No" id="storage-no" />
+                                                    <Label htmlFor="storage-no">No</Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="areaAllocated">Area Allocated :</Label>
+                                        <Input id="areaAllocated" value={detailedInfo.areaAllocated} onChange={(e) => handleDetailedInfoChange('areaAllocated', e.target.value)} />
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-sm font-medium">Necessary PPEs provided :</Label>
+                                        <div className="mt-2">
+                                            <RadioGroup value={detailedInfo.necessaryPPEsProvided} onValueChange={(value) => handleDetailedInfoChange('necessaryPPEsProvided', value)} className="flex gap-6">
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="By Company" id="ppe-company" />
+                                                    <Label htmlFor="ppe-company">by company</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="By Contractor" id="ppe-contractor" />
+                                                    <Label htmlFor="ppe-contractor">by Contractor</Label>
+                                                </div>
+                                            </RadioGroup>
+                                            <div className="mt-2">
+                                                <Label className="text-xs text-gray-500">(to be returned back to security )</Label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-sm font-medium">Utilities to be provided by company :</Label>
+                                        <div className="flex gap-6 mt-2">
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="water-supply" checked={detailedInfo.utilitiesToBeProvided.waterSupply} onCheckedChange={(checked) => handleUtilityChange('waterSupply', checked as boolean)} />
+                                                <Label htmlFor="water-supply">Water Supply</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="electrical-supply" checked={detailedInfo.utilitiesToBeProvided.electricalSupply} onCheckedChange={(checked) => handleUtilityChange('electricalSupply', checked as boolean)} />
+                                                <Label htmlFor="electrical-supply">Electrical Supply</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="air-supply" checked={detailedInfo.utilitiesToBeProvided.airSupply} onCheckedChange={(checked) => handleUtilityChange('airSupply', checked as boolean)} />
+                                                <Label htmlFor="air-supply">Air Supply</Label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-sm font-medium">Energy Isolation is required :</Label>
+                                        <div className="mt-2">
+                                            <RadioGroup value={detailedInfo.energyIsolationRequired} onValueChange={(value) => handleDetailedInfoChange('energyIsolationRequired', value)} className="flex gap-6">
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="Yes" id="energy-yes" />
+                                                    <Label htmlFor="energy-yes">Yes</Label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="No" id="energy-no" />
+                                                    <Label htmlFor="energy-no">No</Label>
+                                                </div>
+                                            </RadioGroup>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <Label className="text-sm font-medium">Utilities to be provided by company :</Label>
-                                    <div className="flex gap-6 mt-2">
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox id="water-supply" checked={detailedInfo.utilitiesToBeProvided.waterSupply} onCheckedChange={(checked) => handleUtilityChange('waterSupply', checked as boolean)} />
-                                            <Label htmlFor="water-supply">Water Supply</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox id="electrical-supply" checked={detailedInfo.utilitiesToBeProvided.electricalSupply} onCheckedChange={(checked) => handleUtilityChange('electricalSupply', checked as boolean)} />
-                                            <Label htmlFor="electrical-supply">Electrical Supply</Label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox id="air-supply" checked={detailedInfo.utilitiesToBeProvided.airSupply} onCheckedChange={(checked) => handleUtilityChange('airSupply', checked as boolean)} />
-                                            <Label htmlFor="air-supply">Air Supply</Label>
-                                        </div>
-                                    </div>
-                                </div>
+                            )}
 
-                                <div>
-                                    <Label className="text-sm font-medium">Energy Isolation is required :</Label>
-                                    <div className="mt-2">
-                                        <RadioGroup value={detailedInfo.energyIsolationRequired} onValueChange={(value) => handleDetailedInfoChange('energyIsolationRequired', value)} className="flex gap-6">
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="Yes" id="energy-yes" />
-                                                <Label htmlFor="energy-yes">Yes</Label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <RadioGroupItem value="No" id="energy-no" />
-                                                <Label htmlFor="energy-no">No</Label>
-                                            </div>
-                                        </RadioGroup>
-                                    </div>
-                                </div>
-                            </div>
                         </CardContent>
                     </Card>
 
                     {/* Check Points */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-orange-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
-                                <CheckCircle className="w-5 h-5" />
-                                Check Points
+                    <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-4">
+                            <CardTitle className="text-lg text-black flex items-center">
+                                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+                                CHECK POINTS
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 bg-white">
                             <div className="space-y-4">
-                                {checkPoints.map((point, index) => (
-                                    <div key={index} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                                        <Checkbox id={`checkpoint-${index}`} checked={point.checked} onCheckedChange={(checked) => handleCheckPointChange(index, checked as boolean)} />
-                                        <Label htmlFor={`checkpoint-${index}`} className="text-sm leading-relaxed">
-                                            {point.description}
-                                        </Label>
+                                {checkPoints.length > 0 ? (
+                                    checkPoints.map((point, index) => (
+                                        <div key={index} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                                            <Checkbox id={`checkpoint-${index}`} checked={point.checked} onCheckedChange={(checked) => handleCheckPointChange(index, checked as boolean)} />
+                                            <Label htmlFor={`checkpoint-${index}`} className="text-sm leading-relaxed">
+                                                {point.description}
+                                            </Label>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center text-gray-500 py-8">
+                                        <p>Loading checkpoints...</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Persons Information */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-orange-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
-                                <User className="w-5 h-5" />
-                                Persons Information
+                    <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-4">
+                            <CardTitle className="text-lg text-black flex items-center">
+                                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">4</span>
+                                PERSONS INFORMATION
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 bg-white">
                             <div className="space-y-6">
                                 {/* Permit Initiator Row */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -714,14 +1135,14 @@ export const VendorPermitForm = () => {
                     </Card>
 
                     {/* Add Manpower Details */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-orange-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
-                                <Users className="w-5 h-5" />
-                                Add Manpower Details
+                    <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-4">
+                            <CardTitle className="text-lg text-black flex items-center">
+                                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">5</span>
+                                ADD MANPOWER DETAILS
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 bg-white">
                             <div className="space-y-4">
                                 {manpowerDetails.map((detail) => (
                                     <div key={detail.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
@@ -755,40 +1176,46 @@ export const VendorPermitForm = () => {
                     </Card>
 
                     {/* Declaration */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-orange-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
-                                <AlertTriangle className="w-5 h-5" />
-                                Declaration
+                    <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-4">
+                            <CardTitle className="text-lg text-black flex items-center">
+                                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">6</span>
+                                DECLARATION
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 bg-white">
                             <p className="text-sm text-gray-700 mb-4">
                                 Declaration - I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analysis JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally & physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Haven Infinite & Norms.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <Label>Contractor Supervisor</Label>
-                                    <Input placeholder="Name & Signature" />
+                                    <Input placeholder="Contractor Supervisor" disabled />
+                                </div>
+                                <div>
+                                    <Label>Permit Initiator</Label>
+                                    <Input placeholder="Permit Initiator" disabled />
                                 </div>
                                 <div>
                                     <Label>Permit Issuer</Label>
-                                    <Input placeholder="Name & Signature" />
+                                    <Input placeholder="Permit Issuer" disabled />
                                 </div>
                             </div>
+
+
                         </CardContent>
                     </Card>
 
                     {/* Daily Extension Sheet */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-orange-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2 justify-center">
-                                <Calendar className="w-5 h-5" />
+                    <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-4">
+                            <CardTitle className="text-lg text-black flex items-center justify-center">
+                                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">7</span>
                                 DAILY EXTENSION SHEET
                             </CardTitle>
                             <p className="text-center text-sm text-gray-600 mt-2">(Permit Issuer require if there is extension in working time)</p>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 bg-white">
                             <div className="overflow-x-auto">
                                 <table className="w-full border-collapse border border-gray-300">
                                     <thead>
@@ -811,9 +1238,9 @@ export const VendorPermitForm = () => {
                                             <td className="border border-gray-300 p-4 text-center">&nbsp;</td>
                                             <td className="border border-gray-300 p-4 text-center">&nbsp;</td>
                                             <td className="border border-gray-300 p-4 text-center">&nbsp;</td>
-                                            <td className="border border-gray-300 p-4 text-center">{personsInfo.permitInitiatorName || 'Abdul Ghaffar'}</td>
-                                            <td className="border border-gray-300 p-4 text-center">{personsInfo.permitIssuerName || 'Not Assigned'}</td>
-                                            <td className="border border-gray-300 p-4 text-center">{personsInfo.safetyOfficerName || 'Not Assigned'}</td>
+                                            <td className="border border-gray-300 p-4 text-center">{personsInfo.permitInitiatorName || ''}</td>
+                                            <td className="border border-gray-300 p-4 text-center">{personsInfo.permitIssuerName || ''}</td>
+                                            <td className="border border-gray-300 p-4 text-center">{personsInfo.safetyOfficerName || ''}</td>
                                             <td className="border border-gray-300 p-4 text-center">&nbsp;</td>
                                         </tr>
                                     </tbody>
@@ -823,15 +1250,15 @@ export const VendorPermitForm = () => {
                     </Card>
 
                     {/* Work Permit Closure Format */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-orange-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2 justify-center">
-                                <Clock className="w-5 h-5" />
+                    <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-4">
+                            <CardTitle className="text-lg text-black flex items-center justify-center">
+                                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">8</span>
                                 WORK PERMIT CLOSURE FORMAT
                             </CardTitle>
                             <p className="text-center text-sm text-gray-600 mt-2">This Format is to be Filled by the persons who had raised the Work Permit.All the below mentioned points must be checked & completed by him after the work is completed</p>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 bg-white">
                             <div className="overflow-x-auto">
                                 <table className="w-full border-collapse border border-gray-300">
                                     <thead>
@@ -865,8 +1292,8 @@ export const VendorPermitForm = () => {
                                         </tr>
                                         <tr>
                                             <td className="border border-gray-300 p-3 font-medium bg-gray-50">Name and Signature</td>
-                                            <td className="border border-gray-300 p-4 text-center">{personsInfo.permitInitiatorName || 'Abdul Ghaffar'}</td>
-                                            <td className="border border-gray-300 p-4 text-center">{personsInfo.permitIssuerName || 'Not Assigned'}</td>
+                                            <td className="border border-gray-300 p-4 text-center">{personsInfo.permitInitiatorName || ''}</td>
+                                            <td className="border border-gray-300 p-4 text-center">{personsInfo.permitIssuerName || ''}</td>
                                             <td className="border border-gray-300 p-4 text-center">&nbsp;</td>
                                         </tr>
                                         <tr>
@@ -882,14 +1309,14 @@ export const VendorPermitForm = () => {
                     </Card>
 
                     {/* Documents to be Enclosed Here */}
-                    <Card className="shadow-sm border border-gray-200">
-                        <CardHeader className="pb-4 bg-orange-50 rounded-t-lg">
-                            <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
-                                <Upload className="w-5 h-5" />
+                    <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-4">
+                            <CardTitle className="text-lg text-black flex items-center">
+                                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">9</span>
                                 DOCUMENTS TO BE ENCLOSED HERE
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 bg-white">
                             <div className="space-y-4">
                                 {attachments.map((attachment) => (
                                     <div key={attachment.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-4 bg-gray-50 rounded-lg">
@@ -924,7 +1351,7 @@ export const VendorPermitForm = () => {
                     </div>
                 </form>
             </div>
-        </div>
+        </div >
     );
 };
 

@@ -81,7 +81,7 @@ export const PermitPendingApprovalsDashboard = () => {
     return resourceType.split('::').pop() || resourceType;
   };
 
-  const handleViewPermit = (permitId: number, levelId: number) => {
+  const handleViewPermit = (permitId: number, levelId: number, resourceType: string) => {
     const userId = localStorage.getItem('user_id') || localStorage.getItem('userId') || '';
 
     // Add null/undefined checks before converting to string
@@ -89,7 +89,9 @@ export const PermitPendingApprovalsDashboard = () => {
       level_id: (levelId ?? '').toString(),
       user_id: userId,
       approve: 'true',
-      type: 'approval'
+      type: 'approval',
+      resource_type: resourceType === "Pms::PermitExtend" ? 'permit_extend' : resourceType === "Pms::Permit" ? 'permit' : resourceType === "Pms::PermitClosure" ? 'permit_closure' : "",
+
     });
 
     navigate(`/safety/permit/details/${permitId}?${queryParams.toString()}`);
@@ -146,8 +148,9 @@ export const PermitPendingApprovalsDashboard = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleViewPermit(
-                        approval.resource_id || 0,
-                        approval.level_id || 0
+                        approval.permit_id || 0,
+                        approval.level_id || 0,
+                        approval.resource_type || ''
                       )}
                     >
                       <Eye className="h-4 w-4" />
@@ -159,7 +162,7 @@ export const PermitPendingApprovalsDashboard = () => {
                       Pending
                     </span>
                   </TableCell>
-                  <TableCell>{approval.resource_id}</TableCell>
+                  <TableCell>{approval.permit_id}</TableCell>
                   <TableCell>{approval.site_name}</TableCell>
                   <TableCell>{approval.level_id || 'N/A'}</TableCell>
                 </TableRow>

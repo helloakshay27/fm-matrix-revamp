@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
+import { getPeriodLabels } from '@/lib/periodLabel';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Label } from 'recharts';
 
 type Props = {
   data: any;
+  dateRange?: { startDate: Date; endDate: Date };
 };
 
-const ConsumableInventoryQuarterlyComparisonCard: React.FC<Props> = ({ data }) => {
+const ConsumableInventoryQuarterlyComparisonCard: React.FC<Props> = ({ data, dateRange }) => {
   const rows = useMemo(() => {
     const root = data?.data?.consumable_inventory_comparison
       ?? data?.consumable_inventory_comparison
@@ -42,9 +44,14 @@ const ConsumableInventoryQuarterlyComparisonCard: React.FC<Props> = ({ data }) =
     return `${scaled.toFixed(1)}k`;
   };
 
+  const { periodUnit, lastLabel, currentLabel } = getPeriodLabels(
+    dateRange?.startDate ?? new Date(),
+    dateRange?.endDate ?? new Date()
+  );
+
   return (
     <div className="bg-white border rounded-lg shadow p-4">
-      <h3 className="text-lg font-semibold mb-3">Consumable Inventory Value – Quarterly Comparison</h3>
+      <h3 className="text-lg font-semibold mb-3">Consumable Inventory Value – {periodUnit}ly Comparison</h3>
       {rows.length === 0 ? (
         <div className="text-sm text-gray-500">No consumable comparison data available.</div>
       ) : (
@@ -77,14 +84,14 @@ const ConsumableInventoryQuarterlyComparisonCard: React.FC<Props> = ({ data }) =
               <Bar
                 dataKey="lastQuarter"
                 fill="#D6BBAF"
-                name="Last Quarter"
+                name={lastLabel}
                 barSize={40}
                 label={{ position: 'top', formatter: (val: any) => formatToK(val), fill: '#444' }}
               />
               <Bar
                 dataKey="currentQuarter"
                 fill="#D3D6D4"
-                name="Current Quarter"
+                name={currentLabel}
                 barSize={40}
                 label={{ position: 'top', formatter: (val: any) => formatToK(val), fill: '#444' }}
               />

@@ -1305,10 +1305,16 @@ export const SurveyResponseDetailPage = () => {
             );
 
             if (answerForQuestion) {
-              rowData[columnKey] =
-                answerForQuestion.option_name ||
-                answerForQuestion.ans_descr ||
-                "-";
+              // Show only the selected option name in the table body
+              const selectedOption = answerForQuestion.option_name || answerForQuestion.ans_descr || "No option";
+              
+              // Add comments if available and not empty
+              let finalResponse = selectedOption;
+              if (answerForQuestion.comments && answerForQuestion.comments.trim() !== "") {
+                finalResponse += ` - ${answerForQuestion.comments.trim()}`;
+              }
+              
+              rowData[columnKey] = finalResponse;
             } else {
               rowData[columnKey] = "-";
             }
@@ -1409,9 +1415,14 @@ export const SurveyResponseDetailPage = () => {
       );
 
       allUniqueQuestions.forEach(([questionId, questionName]) => {
+        // Truncate question name if too long for column header
+        const truncatedQuestionName = questionName.length > 30 
+          ? questionName.substring(0, 30) + "..." 
+          : questionName;
+        
         baseColumns.push({
           key: `question_${questionId}`,
-          label: questionName,
+          label: `${truncatedQuestionName} - Comments`,
           defaultVisible: true,
           sortable: true,
         });

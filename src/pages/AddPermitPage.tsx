@@ -360,7 +360,9 @@ export const AddPermitPage = () => {
   const fetchSuppliers = async () => {
     try {
       setLoadingSuppliers(true);
-      const url = getFullUrl('/pms/suppliers/get_suppliers.json');
+      // const url = getFullUrl('/pms/suppliers/get_suppliers.json');
+      const url = getFullUrl('/pms/suppliers/vendor_with_user_name.json');
+
       const options = getAuthenticatedFetchOptions('GET');
       const response = await fetch(url, options);
 

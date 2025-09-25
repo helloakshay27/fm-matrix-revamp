@@ -55,8 +55,8 @@ export const ITEM_DISPLAY_NAMES: Record<string, string> = {
   revenueGenerationOverview: 'Revenue Generation Overview',
   centerWisePerformanceOverview: 'Center Wise Performance Overview',
   centerWiseMeetingRoomUtilization: 'Center Wise Meeting Room Utilization',
-  responseTatPerformanceQuarterly: 'Response TAT Performance Quarterly',
-  resolutionTatPerformanceQuarterly: 'Resolution TAT Performance Quarterly',
+  responseTatPerformanceQuarterly: 'Response TAT Performance',
+  resolutionTatPerformanceQuarterly: 'Resolution TAT Performance',
 
   // Community Programs
   communityEngagementMetrics: 'Community Engagement Metrics',
@@ -83,7 +83,7 @@ export const ITEM_DISPLAY_NAMES: Record<string, string> = {
 
   // Consumables Overview
   topConsumablesCentreWiseOverview: 'Top Consumables Centre Wise Overview',
-  consumableInventoryValueQuarterlyComparison: 'Consumable Inventory Value Quarterly Comparison',
+  consumableInventoryValueQuarterlyComparison: 'Consumable Inventory Value Comparison',
 
   // Parking Management
   parkingAllocationOverviewPaidFreeAndVacant: 'Parking Allocation Overview Paid Free And Vacant',
@@ -92,7 +92,7 @@ export const ITEM_DISPLAY_NAMES: Record<string, string> = {
   visitorTrendAnalysis: 'Visitor Trend Analysis',
 
   // Checklist Management
-  cmProgressQuarterly: 'Checklist Progress Quarterly',
+  cmProgressQuarterly: 'Checklist Progress',
   cmOverdueCenterwise: 'Overdue Checklists Center-wise',
 };
 

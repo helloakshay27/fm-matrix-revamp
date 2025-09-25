@@ -12,9 +12,11 @@ interface MaterialDatePickerProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
-export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date", className }: MaterialDatePickerProps) => {
+export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date", className, minDate, maxDate }: MaterialDatePickerProps) => {
   const parseDate = (dateString: string): Date | undefined => {
     if (!dateString) return undefined;
     
@@ -69,6 +71,10 @@ export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date
           mode="single"
           selected={date}
           onSelect={handleDateSelect}
+          disabled={[
+            ...(minDate ? [{ before: minDate }] : []),
+            ...(maxDate ? [{ after: maxDate }] : []),
+          ]}
           initialFocus
         />
       </PopoverContent>
