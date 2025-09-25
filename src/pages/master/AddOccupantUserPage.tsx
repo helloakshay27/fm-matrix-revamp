@@ -179,12 +179,18 @@ export const AddOccupantUserPage: React.FC = () => {
       };
 
       const url = `https://${baseUrl}/pms/users.json`;
-      await axios.post(url, payload, {
+      const response = await axios.post(url, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
+
+      if (response.data.error || (response.data.errors && response.data.errors.length > 0)) {
+        toast.error(response.data?.error || response.data?.errors[0]);
+        return;
+      }
+
       toast.success('Occupant user added successfully');
       navigate('/master/user/occupant-users');
     } catch (error: any) {

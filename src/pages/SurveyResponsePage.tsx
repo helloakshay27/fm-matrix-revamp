@@ -779,14 +779,13 @@ export const SurveyResponsePage = () => {
           survey_status_type: typeof item.survey_status 
         });
         return (
-          <div className="flex items-center justify-center" >
-            <Switch
-              checked={item.survey_status === 1}
-              onCheckedChange={() => handleStatusToggle(item)}
-              className="data-[state=checked]:bg-green-500"
-            />
-            {/* <span className="ml-2 text-xs">{item.survey_status === 1 ? 'Active' : 'Inactive'}</span> */}
-          </div>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            item.survey_status === 1 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {item.survey_status === 1 ? 'Active' : 'Inactive'}
+          </span>
         );
       case 'answer_type':
         return (
