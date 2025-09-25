@@ -18,7 +18,6 @@ import {
   Eye,
   List,
   LogOut,
-  MoreHorizontal,
   Plus,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -104,6 +103,27 @@ const columns: ColumnConfig[] = [
   },
 ];
 
+const transformedProjects = (projects: any) => {
+  return projects.map((project: any) => {
+    return {
+      id: project.id,
+      title: project.title,
+      status: project.status,
+      type: project.project_type_name,
+      manager: project.project_owner_name,
+      milestones: project.total_milestone_count,
+      milestonesCompleted: project.completed_milestone_count,
+      tasks: project.total_task_management_count,
+      tasksCompleted: project.completed_task_management_count,
+      issues: project.total_issues_count,
+      resolvedIssues: project.completed_issues_count,
+      start_date: project.start_date,
+      end_date: project.end_date,
+      priority: project.priority,
+    };
+  });
+};
+
 export const ProjectsDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -131,7 +151,7 @@ export const ProjectsDashboard = () => {
         const response = await dispatch(
           fetchProjects({ token, baseUrl })
         ).unwrap();
-        setProjects(response);
+        setProjects(transformedProjects(response));
       } catch (error) {
         console.log(error);
       }
