@@ -1,285 +1,593 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/slices/fmUserSlice';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, User, Mail, Phone, Building2, Shield, ChevronDown, ChevronUp } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Edit2 } from 'lucide-react';
+import { useAppSelector } from '@/store/hooks';
+import { fetchAllowedSites } from '@/store/slices/siteSlice';
+import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
+import { fetchDepartmentData } from '@/store/slices/departmentSlice';
+import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
 
-interface LockUserPermission {
-    id?: number;
-    status?: string;
-    active?: boolean;
-    access_level?: string;
-    access_to?: string[];
-    access_to_names?: string[];
-    designation?: string;
-    department_name?: string;
-    employee_id?: string;
-    department?: {
-        id?: number;
-        department_name?: string;
-    };
-    role_name?: string;
-    base_unit_name?: string;
-    ownership?: string;
-    is_internal?: boolean;
-    internal_external?: string; // sometimes text
-    last_working_day?: string;
-    sites_with_entities?: string[];
+interface FormData {
+    firstname: string;
+    lastname: string;
+    gender: string;
+    mobile: string;
+    email: string;
+    company_name: string;
+    entity_id: string;
+    designation: string;
+    employee_id: string;
+    user_type: string;
+    face_added: boolean;
+    app_downloaded: string;
+    access_level: string;
+    daily_helpdesk_report: boolean;
+    site: string;
+    base_unit: string;
+    system_user_type: string;
+    department: string;
+    role: string;
+    vendor_company: string;
+    company_cluster: string;
+    last_working_day: string;
+    email_preference: string;
+    access: string[]
 }
 
-interface OccupantUserDetail {
-    id: number;
-    firstname?: string;
-    lastname?: string;
-    email?: string;
-    mobile?: string;
-    gender?: string;
-    company_name?: string;
-    entity_name?: string;
-    birth_date?: string;
-    created_at?: string;
-    user_type?: string;
-    site_name?: string;
-    cluster_name?: string; // company cluster
-    source_type?: string;
-    daily_helpdesk_report_email?: boolean;
-    lock_user_permission?: LockUserPermission;
-}
+export const ViewOccupantUserPage = () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
 
-export const ViewOccupantUserPage: React.FC = () => {
-    const { id } = useParams();
     const navigate = useNavigate();
-    const [user, setUser] = useState<OccupantUserDetail | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { id } = useParams();
+    const dispatch = useDispatch<AppDispatch>();
+    const { data: entitiesData, loading: entitiesLoading } = useAppSelector((state) => state.entities);
+    const { data: suppliers, loading: suppliersLoading } = useAppSelector((state) => state.fetchSuppliers);
+    const { data: units, loading: unitsLoading } = useAppSelector((state) => state.fetchUnits);
+    const { data: department, loading: departmentLoading } = useAppSelector((state) => state.department);
+    const { data: roles, loading: roleLoading } = useAppSelector((state) => state.fetchRoles);
+    const { sites } = useAppSelector((state) => state.site);
 
-    const [basicExpanded, setBasicExpanded] = useState(true);
-    const [contactExpanded, setContactExpanded] = useState(true);
-    const [accessExpanded, setAccessExpanded] = useState(true);
+    const [formData, setFormData] = useState<FormData>({
+        firstname: '',
+        lastname: '',
+        gender: '',
+        mobile: '',
+        email: '',
+        company_name: '',
+        entity_id: '',
+        designation: '',
+        employee_id: '',
+        user_type: '',
+        face_added: false,
+        app_downloaded: 'No',
+        access_level: '',
+        daily_helpdesk_report: false,
+        site: '',
+        base_unit: '',
+        system_user_type: 'admin',
+        department: '',
+        role: 'admin',
+        vendor_company: '',
+        company_cluster: '',
+        last_working_day: '',
+        email_preference: '',
+        access: []
+    });
+
+    const userId = JSON.parse(localStorage.getItem('user'))?.id;
+
+    useEffect(() => {
+        dispatch(fetchEntities());
+        dispatch(fetchSuppliers({ baseUrl, token }));
+        dispatch(fetchUnits({ baseUrl, token }));
+        dispatch(fetchDepartmentData());
+        dispatch(fetchRoles({ baseUrl, token }));
+        dispatch(fetchAllowedSites(userId));
+        dispatch(fetchAllowedCompanies());
+    }, [dispatch, baseUrl, token, userId]);
+
+    const [userData, setUserData] = useState({
+        firstname: '',
+        lastname: '',
+        gender: '',
+        mobile: '',
+        email: '',
+        company_name: '',
+        entity_id: '',
+        user_type: '',
+        face_added: false,
+        app_downloaded: 'No',
+        access_level: '',
+        daily_helpdesk_report: false,
+        site: '',
+        base_unit: '',
+        system_user_type: 'admin',
+        department: '',
+        role: 'admin',
+        vendor_company: '',
+        company_cluster: '',
+        last_working_day: '',
+        site_id: '',
+        unit_id: '',
+        department_id: '',
+        supplier_id: '',
+        access_to_array: [],
+        urgency_email_enabled: false,
+        lock_user_permission: {
+            designation: '',
+            employee_id: '',
+            access_level: '',
+            daily_pms_report: false,
+            lock_role_id: '',
+            last_working_date: '',
+        }
+    })
 
     useEffect(() => {
         const fetchUser = async () => {
-            if (!id) return;
             try {
-                setLoading(true);
-                setError(null);
-                const baseUrl = localStorage.getItem('baseUrl') || 'app.gophygital.work';
-                const token = localStorage.getItem('token') || '';
-                const url = `https://${baseUrl}/pms/users/${id}/user_show.json`;
-                const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-                const data = resp.data?.user || resp.data;
-                setUser(data as OccupantUserDetail);
-            } catch (e) {
-                console.error('Error loading occupant user', e);
-                setError('Failed to load occupant user');
-            } finally {
-                setLoading(false);
+                const response = await dispatch(getUserDetails({ baseUrl, token, id: Number(id) })).unwrap()
+                setUserData(response)
+            } catch (error) {
+                console.log(error)
             }
-        };
+        }
         fetchUser();
-    }, [id]);
+    }, []);
 
-    const CollapsibleSection: React.FC<{ title: string; icon: any; isExpanded: boolean; onToggle: () => void; hasData?: boolean; children: React.ReactNode; }> = ({
-        title,
-        icon: Icon,
-        isExpanded,
-        onToggle,
-        hasData = true,
-        children,
-    }) => (
-        <Card className="mb-6 border border-[#D9D9D9]">
-            <CardHeader onClick={onToggle} className="cursor-pointer bg-[#F6F4EE] border-b border-[#D9D9D9]">
-                <CardTitle className="flex items-center justify-between text-lg">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center">
-                            <Icon className="h-4 w-4" />
-                        </div>
-                        <span className="text-[#1A1A1A] font-semibold uppercase">{title}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {!hasData && (
-                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">No data</span>
-                        )}
-                        {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-600" /> : <ChevronDown className="w-5 h-5 text-gray-600" />}
-                    </div>
-                </CardTitle>
-            </CardHeader>
-            {isExpanded && <CardContent className="p-6 bg-[#F6F7F7]">{children}</CardContent>}
-        </Card>
-    );
+    useEffect(() => {
+        if (userData) {
+            setFormData({
+                firstname: userData.firstname || '',
+                lastname: userData.lastname || '',
+                gender: userData.gender || '',
+                mobile: userData.mobile || '',
+                email: userData.email || '',
+                company_name: userData.company_name || '',
+                entity_id: userData.entity_id || '',
+                designation: userData.lock_user_permission?.designation || '',
+                employee_id: userData.lock_user_permission?.employee_id || '',
+                user_type: userData.user_type || '',
+                face_added: userData.face_added || false,
+                app_downloaded: userData.app_downloaded || 'No',
+                access_level: userData.lock_user_permission?.access_level || 'Site',
+                daily_helpdesk_report: userData.lock_user_permission?.daily_pms_report,
+                site: userData.site_id || '',
+                base_unit: userData.unit_id,
+                system_user_type: userData.user_type,
+                department: userData.department_id,
+                role: userData.lock_user_permission?.lock_role_id,
+                vendor_company: userData.supplier_id,
+                company_cluster: '',
+                last_working_day: userData.lock_user_permission?.last_working_date,
+                email_preference: userData.urgency_email_enabled?.toString(),
+                access: userData.access_to_array || []
+            });
+        } else {
+            console.log('userData not found for id:', id);
+        }
+    }, [userData, id]);
 
-    if (loading) {
+    const handleInputChange = <K extends keyof FormData>(field: K, value: FormData[K]) => {
+        console.log(`Updating ${field} to:`, value);
+        setFormData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    if (entitiesLoading || suppliersLoading || unitsLoading || departmentLoading || roleLoading) {
         return (
-            <div className="p-6 bg-white min-h-screen">
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="flex items-center gap-3">
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                        <span>Loading occupant user...</span>
-                    </div>
+            <div className="w-full p-6 space-y-6">
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-lg">Loading user details...</div>
                 </div>
             </div>
         );
     }
-
-    if (error || !user) {
-        return (
-            <div className="p-6 bg-white min-h-screen">
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="text-center">
-                        <p className="text-red-600 mb-4">{error || 'Occupant user not found'}</p>
-                        <Button variant="outline" onClick={() => navigate('/master/user/occupant-users')}>Back to List</Button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    const fullName = `${user.firstname || ''} ${user.lastname || ''}`.trim();
-    const accessNames = user.lock_user_permission?.access_to_names || [];
-    const accessList = (accessNames.length ? accessNames : (user.lock_user_permission?.access_to || []));
-    const sitesWithEntities = user.lock_user_permission?.sites_with_entities || (user as any)?.sites_with_entities || [];
-    const internalExternal = typeof user.lock_user_permission?.is_internal === 'boolean'
-        ? (user.lock_user_permission?.is_internal ? 'Internal' : 'External')
-        : (user.lock_user_permission?.internal_external || '-');
 
     return (
-        <div className="p-6 bg-white min-h-screen">
+        <div className="w-full p-6 space-y-6 bg-gray-50 min-h-screen">
             {/* Header */}
-            <div className="mb-6">
-                <nav className="flex items-center text-sm text-gray-600 mb-4">
-                    <span>Master</span>
-                    <span className="mx-2">{'>'}</span>
-                    <span>Occupant Users</span>
-                    <span className="mx-2">{'>'}</span>
-                    <span>Details</span>
-                </nav>
-                <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                    <div>
-                        {/* <h1 className="text-2xl font-bold text-[#1a1a1a]">{fullName || `User #${user.id}`}</h1>
-                        <p className="text-sm text-gray-500">ID: {user.id}</p> */}
-                    </div>
-                    <div className="flex gap-3">
-                        <Button onClick={() => navigate(`/master/user/occupant-users/edit/${user.id}`)} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">Edit</Button>
-                        <Button variant="outline" onClick={() => navigate('/master/user/occupant-users')}>Back to List</Button>
-                    </div>
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <button onClick={() => navigate(-1)} className='flex items-center gap-2'>
+                        <ArrowLeft className="w-4 h-4" />
+                        Back
+                    </button>
                 </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2 border-gray-300"
+                    onClick={() => navigate(`/master/user/occupant-users/edit/${id}`)}
+                >
+                    <Edit2 className="w-4 h-4" />
+                </Button>
             </div>
 
-            {/* Sections */}
-            <CollapsibleSection title="BASIC DETAILS" icon={User} isExpanded={basicExpanded} onToggle={() => setBasicExpanded(!basicExpanded)}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <div><span className="text-sm text-gray-600">Name</span><p className="font-medium">: {fullName || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">User Type</span><p className="font-medium">: {user.user_type || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Designation</span><p className="font-medium">: {user.lock_user_permission?.designation || '-'}</p></div>
-                    </div>
-                    <div className="space-y-4">
-                        <div><span className="text-sm text-gray-600">Department</span><p className="font-medium">: {user.lock_user_permission?.department_name || user.lock_user_permission?.department?.department_name || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Employee ID</span><p className="font-medium">: {user.lock_user_permission?.employee_id || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Status</span><p className="font-medium">: {user.lock_user_permission?.status || '-'}</p></div>
-                    </div>
-                </div>
-            </CollapsibleSection>
-
-            <CollapsibleSection title="CONTACT" icon={Phone} isExpanded={contactExpanded} onToggle={() => setContactExpanded(!contactExpanded)}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <div><span className="text-sm text-gray-600">Email</span><p className="font-medium break-all">: {user.email || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Mobile</span><p className="font-medium">: {user.mobile || '-'}</p></div>
-                    </div>
-                    <div className="space-y-4">
-                        <div><span className="text-sm text-gray-600">Gender</span><p className="font-medium">: {user.gender || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Birth Date</span><p className="font-medium">: {user.birth_date || '-'}</p></div>
-                    </div>
-                </div>
-            </CollapsibleSection>
-
-            <CollapsibleSection title="ORGANIZATION" icon={Building2} isExpanded={true} onToggle={() => {}}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <div><span className="text-sm text-gray-600">Site</span><p className="font-medium">: {user.site_name || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Entity</span><p className="font-medium">: {user.entity_name || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Base Unit</span><p className="font-medium">: {user.lock_user_permission?.base_unit_name || '-'}</p></div>
-                    </div>
-                    <div className="space-y-4">
-                        <div><span className="text-sm text-gray-600">Company Cluster</span><p className="font-medium">: {user.cluster_name || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Ownership</span><p className="font-medium">: {user.lock_user_permission?.ownership || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Role</span><p className="font-medium">: {user.lock_user_permission?.role_name || '-'}</p></div>
-                    </div>
-                </div>
-            </CollapsibleSection>
-
-            <CollapsibleSection title="EMPLOYMENT" icon={User} isExpanded={true} onToggle={() => {}}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <div><span className="text-sm text-gray-600">Type</span><p className="font-medium">: {internalExternal}</p></div>
-                        <div><span className="text-sm text-gray-600">Last Working Day</span><p className="font-medium">: {user.lock_user_permission?.last_working_day || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Source Type</span><p className="font-medium">: {user.source_type || '-'}</p></div>
-                    </div>
-                    <div className="space-y-4">
-                        <div><span className="text-sm text-gray-600">Company</span><p className="font-medium">: {user.company_name || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Designation</span><p className="font-medium">: {user.lock_user_permission?.designation || '-'}</p></div>
-                        <div><span className="text-sm text-gray-600">Department</span><p className="font-medium">: {user.lock_user_permission?.department_name || user.lock_user_permission?.department?.department_name || '-'}</p></div>
-                    </div>
-                </div>
-            </CollapsibleSection>
-
-            <CollapsibleSection title="ACCESS" icon={Shield} isExpanded={accessExpanded} onToggle={() => setAccessExpanded(!accessExpanded)} hasData>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <div><span className="text-sm text-gray-600">Access Level</span><p className="font-medium">: {user.lock_user_permission?.access_level || '-'}</p></div>
-                        <div>
-                            <span className="text-sm text-gray-600">Access</span>
-                            <div className="mt-1 flex flex-wrap gap-2">
-                                {accessList.length > 0 ? (
-                                    accessList.map((a, idx) => (
-                                        <span key={idx} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">{a}</span>
-                                    ))
-                                ) : (
-                                    <span className="font-medium">: -</span>
-                                )}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Profile Section */}
+                <div className="lg:col-span-4">
+                    <Card className="border-0 shadow-sm">
+                        <CardContent className="p-6 space-y-6">
+                            {/* Profile Picture */}
+                            <div className="text-center">
+                                <div className="w-40 h-40 mx-auto mb-4 relative">
+                                    <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                                        <div className="w-32 h-32 bg-amber-100 rounded-full flex items-center justify-center">
+                                            <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center">
+                                                <svg className="w-16 h-16 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div className="space-y-4">
-                        <div>
-                            <span className="text-sm text-gray-600">Access To</span>
-                            <div className="mt-1 flex flex-wrap gap-2">
-                                {accessList.length > 0 ? (
-                                    accessList.map((a, idx) => (
-                                        <span key={idx} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">{a}</span>
-                                    ))
-                                ) : (
-                                    <span className="font-medium">: -</span>
-                                )}
-                            </div>
-                        </div>
-                        <div>
-                            <span className="text-sm text-gray-600">Sites with Entities</span>
-                            <div className="mt-1 flex flex-wrap gap-2">
-                                {Array.isArray(sitesWithEntities) && sitesWithEntities.length > 0 ? (
-                                    sitesWithEntities.map((swe: any, idx: number) => (
-                                        <span key={idx} className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">{String(swe)}</span>
-                                    ))
-                                ) : (
-                                    <span className="font-medium">: -</span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </CollapsibleSection>
 
-            <CollapsibleSection title="PREFERENCES" icon={Mail} isExpanded={true} onToggle={() => {}}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <div><span className="text-sm text-gray-600">Daily Helpdesk Report Email</span><p className="font-medium">: {user.daily_helpdesk_report_email ? 'Yes' : 'No'}</p></div>
-                    </div>
+                            {/* Left Side Form Controls */}
+                            <div className="space-y-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Site</Label>
+                                    <Select value={formData.site} onValueChange={(value) => handleInputChange('site', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Site" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {sites?.length > 0 ? (
+                                                sites.map((site) => (
+                                                    <SelectItem key={site.id} value={site.id?.toString()}>
+                                                        {site.name}
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <div className="px-2 py-1 text-sm text-gray-500">
+                                                    No sites available
+                                                </div>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Base Unit</Label>
+                                    <Select value={formData.base_unit} onValueChange={(value) => handleInputChange('base_unit', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Base Unit" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Array.isArray(units) && units?.length > 0 ? (
+                                                units.map((unit) => (
+                                                    <SelectItem key={unit.id} value={unit.id}>
+                                                        {unit?.building?.name} - {unit.unit_name}
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <div className="px-2 py-1 text-sm text-gray-500">
+                                                    No units available
+                                                </div>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">User Type</Label>
+                                    <Select value={formData.system_user_type} onValueChange={(value) => handleInputChange('system_user_type', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select User Type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="pms_admin">Admin (Web & App)</SelectItem>
+                                            <SelectItem value="pms_technician">Technician (App)</SelectItem>
+                                            <SelectItem value="pms_hse">Head Site Engineer</SelectItem>
+                                            <SelectItem value="pms_se">Site Engineer</SelectItem>
+                                            <SelectItem value="pms_occupant_admin">Customer Admin</SelectItem>
+                                            <SelectItem value="pms_accounts">Accounts</SelectItem>
+                                            <SelectItem value="pms_po">Purchase Officer</SelectItem>
+                                            <SelectItem value="pms_qc">Quality Control</SelectItem>
+                                            <SelectItem value="pms_security">Security</SelectItem>
+                                            <SelectItem value="pms_security_supervisor">Security Supervisor</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Entity Name</Label>
+                                    <Select value={formData.entity_id} onValueChange={(value) => handleInputChange('entity_id', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Entity" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {entitiesData?.entities?.length > 0 ? (
+                                                entitiesData.entities.map((entity: Entity) => (
+                                                    <SelectItem key={entity.id} value={entity.id?.toString()}>
+                                                        {entity.name}
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <div className="px-2 py-1 text-sm text-gray-500">
+                                                    No entities available
+                                                </div>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Email Preference</Label>
+                                    <Select value={formData.email_preference} onValueChange={(value) => handleInputChange('email_preference', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Email Preference" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="0">All Emails</SelectItem>
+                                            <SelectItem value="1">Critical Emails Only</SelectItem>
+                                            <SelectItem value="2">No Emails</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
-            </CollapsibleSection>
+
+                {/* Main Form Section */}
+                <div className="lg:col-span-8">
+                    <Card className="border-0 shadow-sm">
+                        <CardContent className="p-6 space-y-6">
+                            {/* Name Fields */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">First Name</Label>
+                                    <Input
+                                        value={formData.firstname}
+                                        onChange={(e) => handleInputChange('firstname', e.target.value)}
+                                        className="w-full"
+                                        disabled
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Last Name</Label>
+                                    <Input
+                                        value={formData.lastname}
+                                        onChange={(e) => handleInputChange('lastname', e.target.value)}
+                                        className="w-full"
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Gender and Company Cluster */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Gender</Label>
+                                    <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Gender" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Male">Male</SelectItem>
+                                            <SelectItem value="Female">Female</SelectItem>
+                                            <SelectItem value="Other">Other</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Company Cluster</Label>
+                                    <Select value={formData.company_cluster} onValueChange={(value) => handleInputChange('company_cluster', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Cluster" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Select Cluster" disabled>Select Cluster</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {/* Mobile and Email */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Mobile</Label>
+                                    <Input
+                                        value={formData.mobile}
+                                        onChange={(e) => handleInputChange('mobile', e.target.value)}
+                                        className="w-full"
+                                        disabled
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Email</Label>
+                                    <Input
+                                        value={formData.email}
+                                        onChange={(e) => handleInputChange('email', e.target.value)}
+                                        className="w-full"
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+
+                            {/* User Type Radio Buttons */}
+                            <div className="space-y-2">
+                                <RadioGroup
+                                    value={formData.user_type}
+                                    onValueChange={(value) => handleInputChange('user_type', value)}
+                                    className="flex gap-6"
+                                    disabled
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="internal" id="internal" />
+                                        <Label htmlFor="internal" className="text-sm">Internal</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="external" id="external" />
+                                        <Label htmlFor="external" className="text-sm">External</Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+
+                            {/* Employee and Last Working Day */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Employee</Label>
+                                    <Input
+                                        value={formData.employee_id}
+                                        onChange={(e) => handleInputChange('employee_id', e.target.value)}
+                                        placeholder="Employee ID"
+                                        className="w-full"
+                                        disabled
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Last Working Day</Label>
+                                    <Input
+                                        value={formData.last_working_day}
+                                        onChange={(e) => handleInputChange('last_working_day', e.target.value)}
+                                        placeholder="Last Working Day"
+                                        className="w-full"
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Department and Designation */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Department</Label>
+                                    <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Department" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Array.isArray(department) && department?.length > 0 ? (
+                                                department.map((dept) => (
+                                                    <SelectItem key={dept.id} value={dept.id}>
+                                                        {dept.department_name}
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <div className="px-2 py-1 text-sm text-gray-500">
+                                                    No departments available
+                                                </div>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Designation</Label>
+                                    <Input
+                                        value={formData.designation}
+                                        onChange={(e) => handleInputChange('designation', e.target.value)}
+                                        className="w-full"
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Role and Vendor Company */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Role</Label>
+                                    <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Role" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Array.isArray(roles) && roles?.length > 0 ? (
+                                                roles.map((role) => (
+                                                    <SelectItem key={role.id} value={role.id}>
+                                                        {role.name}
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <div className="px-2 py-1 text-sm text-gray-500">
+                                                    No roles available
+                                                </div>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Vendor Company Name</Label>
+                                    <Select value={formData.vendor_company} onValueChange={(value) => handleInputChange('vendor_company', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Vendor Company" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Array.isArray(suppliers) && suppliers?.length > 0 ? (
+                                                suppliers.map((supplier) => (
+                                                    <SelectItem key={supplier.id} value={supplier.id}>
+                                                        {supplier.name}
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <div className="px-2 py-1 text-sm text-gray-500">
+                                                    No vendors available
+                                                </div>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {/* Access Level and Access */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Access Level</Label>
+                                    <Select value={formData.access_level} onValueChange={(value) => handleInputChange('access_level', value)} disabled>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Access Level" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Company">Company</SelectItem>
+                                            <SelectItem value="Site">Site</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Access</Label>
+                                    <div className="mt-2 flex items-center gap-1 flex-wrap">
+                                        {
+                                            formData.access.map((access, index) => (
+                                                <Badge key={index} variant="secondary" className="bg-red-100 text-red-800 border-red-200">
+                                                    {access}
+                                                </Badge>
+                                            ))
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Daily Helpdesk Report Checkbox */}
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="daily-helpdesk"
+                                    checked={formData.daily_helpdesk_report}
+                                    onCheckedChange={(checked) => handleInputChange('daily_helpdesk_report', Boolean(checked))}
+                                    disabled
+                                />
+                                <Label htmlFor="daily-helpdesk" className="text-sm text-gray-700">
+                                    Daily Helpdesk Report Email
+                                </Label>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
         </div>
     );
 };
-
-export default ViewOccupantUserPage;

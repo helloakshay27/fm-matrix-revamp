@@ -704,7 +704,6 @@ import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
 import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
 import EditInventorySubTypePage from "./pages/master/EditInventorySubTypePage";
 import AddOccupantUserPage from "./pages/master/AddOccupantUserPage";
-import ViewOccupantUserPage from "./pages/master/ViewOccupantUserPage";
 import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
 import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 import CheckHierarchy from "./components/CheckHierarchy";
@@ -728,6 +727,7 @@ import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
 import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
 import BannerDetailsPage from "./pages/BannerDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
+import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 
 const queryClient = new QueryClient();
 
