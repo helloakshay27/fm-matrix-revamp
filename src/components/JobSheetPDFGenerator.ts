@@ -3,6 +3,7 @@ import html2canvas from "html2canvas";
 import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
 import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
 import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
+import { renderToStaticMarkup } from "react-dom/server";
 
 export class JobSheetPDFGenerator {
   private pdf: jsPDF;
@@ -217,7 +218,7 @@ export class JobSheetPDFGenerator {
         <div class="left-logo">
           ${logoHtml}
         </div>
-      
+    
       </div>
     `;
   }
@@ -231,11 +232,11 @@ export class JobSheetPDFGenerator {
     const isViSite = hostname.includes("vi-web.gophygital.work");
 
     if (isOmanSite) {
-      return OIG_LOGO_CODE;
+      return renderToStaticMarkup(OIG_LOGO_CODE());
     } else if (isViSite) {
-      return VI_LOGO_CODE;
+      return renderToStaticMarkup(VI_LOGO_CODE());
     } else {
-      return DEFAULT_LOGO_CODE;
+      return renderToStaticMarkup(DEFAULT_LOGO_CODE());
     }
   }
 
