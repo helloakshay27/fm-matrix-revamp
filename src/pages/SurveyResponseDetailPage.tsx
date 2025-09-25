@@ -2112,8 +2112,17 @@ export const SurveyResponseDetailPage = () => {
                       <p className="text-sm text-gray-600">
                         {Object.keys(summaryCurrentFilters).length > 0 ? "Filtered Responses" : "Survey Status"}
                       </p>
-                      <p className="text-xl font-semibold text-green-600">
-                        {Object.keys(summaryCurrentFilters).length > 0 ? `${getSummaryFilteredResponseData().length} Records` : "Active"}
+                      <p className={`text-xl font-semibold ${
+                        Object.keys(summaryCurrentFilters).length > 0 
+                          ? "text-blue-600" 
+                          : surveyData?.status === 1 || surveyData?.status === true || surveyData?.is_active === 1 || surveyData?.is_active === true
+                            ? "text-green-600" 
+                            : "text-red-600"
+                      }`}>
+                        {Object.keys(summaryCurrentFilters).length > 0 
+                          ? `${getSummaryFilteredResponseData().length} Records` 
+                          : (surveyData?.status === 1 || surveyData?.status === true || surveyData?.is_active === 1 || surveyData?.is_active === true ? "Active" : "Inactive")
+                        }
                       </p>
                       {Object.keys(summaryCurrentFilters).length > 0 && (
                         <p className="text-xs text-gray-500">Matching criteria</p>

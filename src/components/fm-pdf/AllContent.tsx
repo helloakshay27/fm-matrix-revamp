@@ -1281,6 +1281,10 @@ const AllContent = () => {
         return null;
     };
 
+    // Unified section container styling for equal padding and consistent left/right alignment
+    // Applies to major section boxes across pages
+    const sectionBox = "bg-white border border-gray-300 w-[95%] mx-auto p-5 mb-10 print:w-[95%] print:mx-auto print:p-2 print:mb-4 no-break";
+
 
     // removed unused CustomResolutionDots and sample Bardata
 
@@ -1880,7 +1884,7 @@ const AllContent = () => {
 
                             <h3 className="font-semibold mt-2">2- Community Programs Dashboard</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
-                                <li>Community Health and Engagement Summary</li>
+                                {/* <li>Community Health and Engagement Summary</li> */}
                                 <li>Site Wise Adoption Rate</li>
                             </ul>
                         </div>
@@ -1957,104 +1961,96 @@ const AllContent = () => {
                     Meeting Room
                 </h1>
 
-                <div className="border p-6 bg-white text-black shadow print:text-black print:bg-white print:p-6 print:border print:shadow-none print:w-[95%] print:mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 print:text-2xl print:font-bold">
-                        Revenue Generation Overview
-                    </h2>
+                {/* Unified section container */}
+                <div className={sectionBox}>
+                    <div className="border p-6 bg-white text-black shadow print:text-black print:bg-white print:p-6 print:border print:shadow-none">
+                        <h2 className="text-2xl font-bold mb-4 print:text-2xl print:font-bold">
+                            Revenue Generation Overview
+                        </h2>
 
-                    <hr className="mb-6 border-gray-400 print:border-gray-400" />
+                        <hr className="mb-6 border-gray-400 print:border-gray-400" />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-4">
-                        <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
-                            <p className="italic text-lg mb-1 print:italic print:text-lg">
-                                Total Revenue from
-                            </p>
-                            <div className="flex justify-between items-center print:flex print:justify-between">
-                                <p className="text-2xl font-bold print:text-1xl print:font-bold">
-                                    {localStorage.getItem('selectedCompany')}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-4">
+                            <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
+                                <p className="italic text-lg mb-1 print:italic print:text-lg">
+                                    Total Revenue from
                                 </p>
-                                <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
-                                    {meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? '-'}
-                                </p>
+                                <div className="flex justify-between items-center print:flex print:justify-between">
+                                    <p className="text-2xl font-bold print:text-1xl print:font-bold">
+                                        {localStorage.getItem('selectedCompany')}
+                                    </p>
+                                    <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
+                                        {meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? '-'}
+                                    </p>
+                                </div>
                             </div>
+                            {/* Optional second card removed for now */}
                         </div>
-
-                        {/* <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
-              <p className="italic text-lg mb-1 print:italic print:text-lg">
-                Total Revenue from
-              </p>
-              <div className="flex justify-between items-center print:flex print:justify-between">
-                <p className="text-2xl font-bold print:text-1xl print:font-bold">
-                  My HQ
-                </p>
-                <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
-                  ₹60,000
-                </p>
-              </div>
-            </div> */}
                     </div>
-                </div>
 
-                <div className="bg-white p-4 mt-4 avoid-break">
-                    <h2 className="text-lg font-semibold text-red-600 mb-4">
-                        Center Wise - Meeting Room Performance Overview
-                    </h2>
-                    <div className="overflow-x-auto print:overflow-visible">
-                        <table className="min-w-full border text-sm text-center print:text-xs print:w-full print:table-fixed">
-                            <thead className="bg-[#ded9cd] text-[#b62527] font-semibold text-sm">
-                                <tr>
-                                    <th className="border border-black p-3 text-left align-middle" rowSpan={2}>
-                                        Site Name
-                                    </th>
-                                    <th className="border border-black p-3 text-center" colSpan={3}>
-                                        Meeting Room
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <th className="border border-black p-2 text-center">Utilization<br />Rate (in %)</th>
-                                    <th className="border border-black p-2 text-center">Cancellation<br />Rate (in %)</th>
-                                    <th className="border border-black p-2 text-center">Revenue<br />(in ₹)</th>
-                                </tr>
-                            </thead>
+                    {/* Center-wise Meeting Room Performance */}
+                    <div className="bg-white p-4 mt-4 avoid-break">
+                        <h2 className="text-lg font-semibold text-black-600 mb-4">
+                            Center Wise - Meeting Room Performance Overview
+                        </h2>
+                        <div className="overflow-x-auto print:overflow-visible">
+                            <table className="min-w-full border text-sm text-center print:text-xs print:w-full print:table-fixed">
+                                <thead className="bg-[#ded9cd] text-[#b62527] font-semibold text-sm">
+                                    <tr>
+                                        <th className="border border-black p-3 text-left align-middle" rowSpan={2}>
+                                            Site Name
+                                        </th>
+                                        <th className="border border-black p-3 text-center" colSpan={3}>
+                                            Meeting Room
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th className="border border-black p-2 text-center">Utilization<br />Rate (in %)</th>
+                                        <th className="border border-black p-2 text-center">Cancellation<br />Rate (in %)</th>
+                                        <th className="border border-black p-2 text-center">Revenue<br />(in ₹)</th>
+                                    </tr>
+                                </thead>
 
-                            <tbody>
-                                {centerRows.map((row: any, idx: number) => {
-                                    const meeting = row.meeting_room || row.meeting || {};
-                                    const utilTrend = meeting.utilization_trend || meeting.utilization_trend === undefined ? meeting.utilization_trend : null;
-                                    const cancelTrend = meeting.cancellation_trend || null;
-                                    const revenueTrend = meeting.revenue_trend || null;
+                                <tbody>
+                                    {centerRows.map((row: any, idx: number) => {
+                                        const meeting = row.meeting_room || row.meeting || {};
+                                        const utilTrend = meeting.utilization_trend || meeting.utilization_trend === undefined ? meeting.utilization_trend : null;
+                                        const cancelTrend = meeting.cancellation_trend || null;
+                                        const revenueTrend = meeting.revenue_trend || null;
 
-                                    return (
-                                        <tr key={idx} className="border-t">
-                                            <td className="p-2 border font-medium text-left print:p-1">{row.site_name || row.site || '-'}</td>
-                                            <td className="p-2 border print:p-1">
-                                                {meeting.utilization_rate ?? '-'}{' '}
-                                                <Arrow up={utilTrend === '↑'} />
-                                            </td>
-                                            <td className="p-2 border print:p-1">
-                                                {meeting.cancellation_rate ?? '-'}{' '}
-                                                <Arrow up={cancelTrend === '↑'} />
-                                            </td>
-                                            <td className="p-2 border print:p-1">
-                                                {meeting.revenue ?? '-'}{' '}
-                                                <Arrow up={revenueTrend === '↑'} />
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                        <p className="text-xs text-gray-500 mt-2 print:text-[10px]">
-                            <strong>Note:</strong> This table illustrates meeting room utilization, cancellations, and revenue generation,
-                            along with directional arrows indicating growth, decline or neutral trend compared to the previous period.
-                        </p>
+                                        return (
+                                            <tr key={idx} className="border-t">
+                                                <td className="p-2 border font-medium text-left print:p-1">{row.site_name || row.site || '-'}</td>
+                                                <td className="p-2 border print:p-1">
+                                                    {meeting.utilization_rate ?? '-'}{' '}
+                                                    <Arrow up={utilTrend === '↑'} />
+                                                </td>
+                                                <td className="p-2 border print:p-1">
+                                                    {meeting.cancellation_rate ?? '-'}{' '}
+                                                    <Arrow up={cancelTrend === '↑'} />
+                                                </td>
+                                                <td className="p-2 border print:p-1">
+                                                    {meeting.revenue ?? '-'}{' '}
+                                                    <Arrow up={revenueTrend === '↑'} />
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                            <p className="text-xs text-gray-500 mt-2 print:text-[10px]">
+                                <strong>Note:</strong> This table illustrates meeting room utilization, cancellations, and revenue generation,
+                                along with directional arrows indicating growth, decline or neutral trend compared to the previous period.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Second Section: Center Wise - Meeting Room Utilization */}
-            <div className="mt-4 bg-white break-before-page print:p-2 print:bg-white print:overflow-visible print:origin-top-left meeting-room-utilization min-h-[800px] print:min-h-[300px]">
-                <div className="border border-gray-400 p-4 w-full print:w-[95%] print:max-w-none print:mx-auto">
+            <div className="print-page break-before-page">
+                <div className={sectionBox}>
+                    <div className="border border-gray-400 p-4 w-full print:max-w-none print:mx-auto">
                     {/* Title */}
                     <h1 className="text-lg text-left font-bold mb-6 print:text-xl">
                         Center Wise - Meeting Room Utilization
@@ -2135,6 +2131,7 @@ const AllContent = () => {
                         <span className="font-semibold">Note :</span> This table presents meeting room-wise utilization along with
                         corresponding utilization percentages, providing a center-wise comparison to identify performance variations
                         across locations.
+                    </div>
                     </div>
                 </div>
             </div>
@@ -2276,7 +2273,7 @@ const AllContent = () => {
                 <h1 className="report-title text-3xl bg-[#F6F4EE] py-5 font-bold text-center text-gray-800 mb-6 print:text-black print:text-xl print:py-2 print:mb-1">
                     Community Programs Dashboard
                 </h1>
-                <div className="bg-white p-8 border print:border print:border-gray-300 print:p-2 print:w-[95%] print:mx-auto no-break">
+                <div className={sectionBox}>
                     <h2 className="text-lg font-semibold text-gray-700 mb-4 print:text-black print:text-sm ">Community Engagement Metrics</h2>
 
                     <div className="grid grid-cols-2 gap-4 mb-8 print:gap-1 print:mb-2">
@@ -2393,15 +2390,29 @@ const AllContent = () => {
                                     { color: "bg-green-600", underline: "border-green-600", label: "70–100%" },
                                 ];
                             }
-                            return legendArr.map(({ color, underline, label }, idx) => (
-                                <div key={idx} className="flex flex-col items-center gap-1 print:gap-[2px]">
-                                    <div className="flex items-center gap-1">
-                                        <span className={`w-4 h-4 rounded-full ${color} inline-block print:w-3 print:h-3`} />
-                                        <span className="text-sm font-bold text-black print:text-black print:text-[8.8px]">{label}</span>
+                            // Ensure consistent ascending order based on the starting number (e.g., 0, 40, 70)
+                            const sortedLegend = [...legendArr].sort((a: any, b: any) => {
+                                const pa = parseInt(String(a?.label ?? ''), 10);
+                                const pb = parseInt(String(b?.label ?? ''), 10);
+                                return (isNaN(pa) ? 0 : pa) - (isNaN(pb) ? 0 : pb);
+                            });
+
+                            return sortedLegend.map(({ color, underline, label }, idx) => {
+                                const lbl = String(label ?? '').trim();
+                                const displayLabel = lbl.startsWith('>') ? lbl : `> ${lbl}`;
+                                return (
+                                    <div key={idx} className="flex flex-col items-start gap-1 print:gap-[2px]">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-4 h-4 rounded-full ${color} inline-block print:w-3 print:h-3`} />
+                                            <span className="text-sm font-bold text-black print:text-black print:text-[8.8px] inline-block">
+                                                {displayLabel}
+                                                {/* underline exactly under the label text width */}
+                                                <span className={`block border-b-2 ${underline} rounded-full mt-1 print:mt-[2px]`}></span>
+                                            </span>
+                                        </div>
                                     </div>
-                                    <span className={`border-b-1 ${underline} w-full rounded-full`}></span>
-                                </div>
-                            ));
+                                );
+                            });
                         })()}
                     </div>
 
@@ -2487,43 +2498,43 @@ const AllContent = () => {
                 <h1 className="report-title text-3xl font-bold text-center mb-6 bg-[#F6F4EE] py-5 text-gray-800 print:text-black print:text-xl print:mb-5 print:py-2">
                     Helpdesk Management
                 </h1>
-                <div className="bg-white  p-8 py-0   print:p-2 print:w-[95%] print:mx-auto no-break">
+                <div className={sectionBox}>
                     {/* Snapshot Section */}
-                    <div className="mb-10 print:mb-5 border border-gray-300  print:px-2 ">
+                    <div className="mb-10 print:mb-5 border border-gray-300 px-6 py-5 print:px-2 print:py-2">
                         <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-sm print:mb-1 print:pb-1">Snapshot</h2>
-                        <div className="grid grid-cols-3 gap-6 print:gap-3">
+                        <div className="grid grid-cols-3 gap-8 print:gap-3">
                             {/* Total Tickets */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.count ?? 0}</div>
-                                <div className="text-sm font-medium print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.percentage ?? '-'} %</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.label ?? 'Total Tickets'}</div>
+                                <div className="text-sm font-medium text-gray-500 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.percentage ?? '-'} %</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.label ?? 'Total Tickets'}</div>
                             </div>
                             {/* Closed Tickets */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold text-green-600 print:text-xl print:text-green-600">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.count ?? 0}</div>
-                                <div className="text-sm font-medium print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.percentage ?? '-'} %</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.label ?? 'Closed Tickets'}</div>
+                                <div className="text-sm font-medium text-gray-500 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.percentage ?? '-'} %</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.label ?? 'Closed Tickets'}</div>
                             </div>
                             {/* Open Tickets */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold text-red-600 print:text-xl print:text-red-600">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.count ?? 0}</div>
-                                <div className="text-sm font-medium print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.percentage ?? '-'} %</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.label ?? 'Open Tickets'}</div>
+                                <div className="text-sm font-medium text-gray-500 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.percentage ?? '-'} %</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.label ?? 'Open Tickets'}</div>
                             </div>
                             {/* Customer Tickets */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.snapshot?.customer_tickets?.count ?? 0}</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.customer_tickets?.label ?? 'Customer Tickets'}</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.customer_tickets?.label ?? 'Customer Tickets'}</div>
                             </div>
                             {/* FM Tickets */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.snapshot?.fm_tickets?.count ?? 0}</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.fm_tickets?.label ?? 'FM Tickets'}</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.fm_tickets?.label ?? 'FM Tickets'}</div>
                             </div>
                             {/* Total Average Customer Rating */}
-                            <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
+                            <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
                                 <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.average_customer_rating?.rating ?? 0}</div>
-                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.average_customer_rating?.label ?? 'Total Average Customer Rating'}</div>
+                                <div className="text-sm font-semibold text-gray-800 print:text-[10px]">{helpdeskSnapshotData?.data?.average_customer_rating?.label ?? 'Total Average Customer Rating'}</div>
                             </div>
                         </div>
                     </div>
@@ -2811,7 +2822,7 @@ const AllContent = () => {
 
 
             <div className="print-page break-before-page">
-                <div className="max-w-9xl  bg-white rounded-lg mb-10 flex flex-col print:pb-0">
+                <div className={sectionBox}>
 
                     {/* Title */}
                     <h1 className="text-2xl font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
@@ -3002,7 +3013,7 @@ const AllContent = () => {
             </div>
 
             <div className="print-page break-before-page">
-                <div className="max-w-9xl bg-white mb-10 rounded-lg flex flex-col print:pb-0">
+                <div className={sectionBox}>
 
                     <div className="flex p-4 flex-col print:p-4 mb-8">
                         <h2 className="text-lg font-semibold mb-2">Resolution Achieved (TAT in Percentage)</h2>
@@ -3175,7 +3186,7 @@ const AllContent = () => {
                 </h1>
 
                 {/* Main Container */}
-                <div className="bg-white border print:w-[95%] w-[95%] m-auto p-4 print:border-black print:p-2  print:mx-auto no-break">
+                <div className={sectionBox}>
 
                     {/* Company Wise Overview */}
                     <div className="bg-white border border-gray-300 p-4 mb-10 print:p-2 print:mb-2 no-break">
@@ -3304,12 +3315,13 @@ const AllContent = () => {
 
             {/*  Active AMC Contracts + 90 Days Expiry (kept together) */}
             <div className="print-page break-before-page print:w-[95%] print:m-auto print-keep-together">
-                <div className="bg-white p-2 amc-summary no-break print:px-2 print:py-2 mt-1 print:mt-2 border border-gray-300 print-keep-together print-avoid-after print-tight">
-                    <h2 className="text-lg font-semibold px-4 py-3 border-gray-400 print:text-[15px] print:py-2">
+                {/* AMC Contract Summary - standardized section box */}
+                <div className={sectionBox}>
+                    <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-[15px] print:mb-2 print:pb-1">
                         AMC Contract Summary
                     </h2>
 
-                    <div className="grid grid-cols-3  border py-4 text-center bg-[#f2f0eb] text-black font-semibold print:py-2">
+                    <div className="grid grid-cols-3 border py-4 text-center bg-[#f2f0eb] text-black font-semibold print:py-2">
                         <div className="border-r border-gray-300 px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
                             Active AMC Contracts<br />
                             <span className="text-4xl text-[#C72030] font-bold print:text-xl">
@@ -3331,8 +3343,9 @@ const AllContent = () => {
                     </div>
                 </div>
 
-                <div className="border print:border py-3 px-3 mb-6 print:mb-2 break-inside-avoid print:break-inside-avoid print-avoid-before print-keep-together print-tight">
-                    <h2 className="bg-white text-lg font-bold print:text-2xl p-3 border-b border-gray-300 print:text-[13px] print:p-1 print:leading-relaxed">
+                {/* AMC Contract Summary – Expiry in 90 Days - standardized section box */}
+                <div className={sectionBox}>
+                    <h2 className="text-lg font-bold mb-4 border-b border-gray-300 pb-2 print:text-[13px] print:mb-2 print:pb-1">
                         AMC Contract Summary – Expiry in 90 Days
                     </h2>
                     <div className="overflow-x-auto">
@@ -3373,14 +3386,13 @@ const AllContent = () => {
                                 )}
                             </tbody>
                         </table>
-
-
                     </div>
                     <p className="p-3 text-xs text-gray-600 italic border-t border-gray-300 print:p-1 print:text-[8px] print:leading-relaxed print:mt-2">
                         <strong>Note:</strong> This table provides a site-wise summary of AMC contracts that are set to expire within the next 90 days, supporting proactive renewal planning and vendor coordination.
                     </p>
                 </div>
-                <div className="border py-3 px-3 shadow print:shadow-none print:border break-inside-avoid print:break-inside-avoid">
+                <div className={sectionBox}>
+<div className="border py-3 px-3  print:shadow-none print:border break-inside-avoid print:break-inside-avoid">
                     <h2 className="bg-white font-bold text-lg p-3 border-b border-gray-300 print:text-[13px] print:p-1 print:leading-relaxed">
                         AMC Contract Summary – Expired
                     </h2>
@@ -3429,6 +3441,8 @@ const AllContent = () => {
                         <strong>Note:</strong> This table provides a site-wise summary of AMC contracts that has been expired, supporting proactive renewal planning and vendor coordination.
                     </p>
                 </div>
+                </div>
+                
 
 
             </div>
@@ -3484,12 +3498,16 @@ const AllContent = () => {
                                             }
                                         `}</style>
 
+                    {/* Tables block: stretch to fill one print page */}
+                    <div className={sectionBox}>
+                    <div className="print:flex print:flex-col print:gap-2 print:h-[calc(100vh-180px)]">
                     {/* Table 1: Checklist Progress Status */}
-                    <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px]">
+                    <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
                         <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
                             Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
                         </div>
-                        <table className="w-full border print:table-fixed print:w-full print:text-[10px] ">
+                        <div className="print:flex-1">
+                        <table className="w-full border print:table-fixed print:w-full print:text-[10px] print:h-full">
                             <thead>
                                 <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
                                     <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Site Name</th>
@@ -3569,17 +3587,19 @@ const AllContent = () => {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
                             <strong>Note :</strong> This table shows checklist progress by status across centers, comparing the current period with the previous period. The "Change in Closed" column highlights the shift in closed checklists since the prior period.
                         </div>
                     </div>
 
                     {/* Table 2: Top 10 Overdue Checklists */}
-                    <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px]">
+                    <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
                         <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
                             Top 10 Overdue Checklists – Center-wise Contribution Comparison
                         </div>
-                        <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] ">
+                        <div className="print:flex-1">
+                        <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
                             <thead>
                                 <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
                                     <th className="py-4 px-4 site-col print:py-2 print:px-2 print:w-[18%]">Site Name</th>
@@ -3628,10 +3648,13 @@ const AllContent = () => {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
                             <strong>Note :</strong> The table displays the top 10 most overdue checklists, with a center-wise
                             breakdown of their contribution to the overall overdue count, helping identify key areas of concern.
                         </div>
+                    </div>
+                    </div>
                     </div>
 
                 </div>
@@ -3642,7 +3665,7 @@ const AllContent = () => {
                 <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-0">
                     Inventory Management
                 </h1>
-                <div className="bg-white p-6 print:p-2 print:mb-2 print:w-[95%] print:mx-auto  no-break">
+                <div className={sectionBox}>
 
                     <div className="border border-gray-300 p-3">
                         <h2 className="text-lg font-semibold mb-4 print:text-[12px] print:mb-1 print:py-0">
@@ -3669,8 +3692,8 @@ const AllContent = () => {
                         </div>
                     </div>
 
-                    {/* OverstockGridExact Component */}
-                    <div className=" mt-3 print:p-0  border border-gray-300 p-2">
+                                        {/* OverstockGridExact Component */}
+                                        <div className=" mt-3 print:p-0  border border-gray-300 p-2">
                         <style>{`
                 /* Screen view styles only, scoped to overstock-table class */
                 .overstock-table {
@@ -3726,8 +3749,8 @@ const AllContent = () => {
                                             {itemss.map((item, rowIdx) => (
                                                 <tr key={rowIdx}>
                                                     <td
-                                                        className="p-2  text-xs text-end font-semibold bg-white w-[150px] mx-0 my-0 
-                                    print:text-[10px] print:font-semibold print:bg-white print:w-[150px] print:text-left print:mx-2 print:my-1"
+                                                        className="p-2 text-xs text-left font-semibold bg-white w-[180px] align-top whitespace-normal break-words leading-tight mx-0 my-0 
+                                    print:text-[9px] print:font-semibold print:bg-white print:w-[160px] print:text-left print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
                                                     >
                                                         {item.name}
                                                     </td>
@@ -3745,14 +3768,14 @@ const AllContent = () => {
                                         <tfoot>
                                             <tr>
                                                 <th
-                                                    className="w-[150px] bg-white mx-0 my-0 
-                                print:w-[150px] print:bg-white print:mx-1 print:my-1"
+                                                    className="w-[180px] bg-white mx-0 my-0 
+                                print:w-[160px] print:bg-white print:mx-0 print:my-1"
                                                 ></th>
                                                 {sitesk.map((site, idx) => (
                                                     <th
                                                         key={idx}
-                                                        className="p-2   text-[10px] font-medium text-center bg-white w-28 mx-0 my-0 
-                                    print:text-[8px] print:font-medium print:text-center print:bg-white print:w-20 print:mx-1 print:my-1"
+                                                        className="p-2 text-[10px] font-medium text-center bg-white w-28 mx-0 my-0 whitespace-normal break-words leading-tight 
+                                    print:text-[8px] print:font-medium print:text-center print:bg-white print:w-24 print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
                                                     >
                                                         {site}
                                                     </th>
@@ -3777,7 +3800,7 @@ const AllContent = () => {
                 <h1 className="report-title text-2xl font-bold mb-0 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-2">
                     Consumables Overview
                 </h1>
-                <div className="bg-white p-6 no-break print:p-4 print:w-[99%] print:mx-auto">
+                <div className={sectionBox}>
 
 
                     {/* Top Consumables – Centre-wise Overview */}
@@ -3910,10 +3933,10 @@ const AllContent = () => {
 
             {/* Parking and vistor Management */}
             <div className="print-page break-before-page">
-                <div className="max-w-9xl bg-white rounded-lg flex flex-col print:pb-0">
-                    <div>
-                        <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
-                            Parking Management            </h1>
+                <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
+                    Parking Management
+                </h1>
+                <div className={sectionBox}>
                         <div className="flex flex-col print:p-4 mb-8">
                             <h2 className="text-lg  p-4  font-semibold mb-2">Parking Allocation Overview – Paid, Free & Vacant</h2>
                             <div className="border-b border-gray-300 w-full" />
@@ -3934,8 +3957,6 @@ const AllContent = () => {
                                 <span>Vacant</span>
                             </div>
                         </div>
-
-                    </div>
 
                     {/* Chart: Desktop responsive + Print/Mobile fixed */}
                     <div className="w-full">
@@ -4026,29 +4047,26 @@ const AllContent = () => {
             </div>
             <div className='print-page break-before-page'>
                 {/* Visitor Management */}
-                <div className="max-w-9xl bg-white rounded-lg flex flex-col ">
+                <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
+                    Visitor Management
+                </h1>
+                <div className={sectionBox}>
                     {/* Header and legend */}
-                    <div>
-                        <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
-                            Visitor Management
-                        </h1>
-                        <div className="flex  p-4  flex-col print:p-4 mb-8">
-                            <h2 className="text-lg font-semibold mb-2">Visitor Trend Analysis</h2>
-                            <div className="border-b border-gray-300 w-full" />
-                        </div>
+                    <div className="flex p-4 flex-col print:p-4 mb-8">
+                        <h2 className="text-lg font-semibold mb-2">Visitor Trend Analysis</h2>
+                        <div className="border-b border-gray-300 w-full" />
+                    </div>
 
-                        {/* Print-only mini legend for Visitor section */}
-                        <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
-                            <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
-                                <span>{lastLabel}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
-                                <span>{currentLabel}</span>
-                            </div>
+                    {/* Print-only mini legend for Visitor section */}
+                    <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
+                            <span>{lastLabel}</span>
                         </div>
-
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
+                            <span>{currentLabel}</span>
+                        </div>
                     </div>
 
                     {/* Chart: Desktop responsive + Print/Mobile fixed */}
@@ -4119,7 +4137,6 @@ const AllContent = () => {
                         )}
                     </div>
 
-
                     {/* Note */}
                     <p className="text-sm text-gray-500 p-4 mt-4 print:mt-4">
                         <strong>Note:</strong> This graph shows the total visitor count compared to the previous period,
@@ -4127,7 +4144,6 @@ const AllContent = () => {
                     </p>
                 </div>
             </div>
-
         </>
     );
 };

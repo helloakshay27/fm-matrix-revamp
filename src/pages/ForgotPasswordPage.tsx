@@ -16,7 +16,7 @@ export const ForgotPasswordPage = () => {
   // Site detection
   const hostname = window.location.hostname;
   const isOmanSite = hostname.includes("oig.gophygital.work");
-  const isViSite = hostname.includes("vi-web.gophygital.work");
+  const isViSite = hostname.includes("vi-web.gophygital.work ") || hostname.includes("vi.gophygital.work");
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();

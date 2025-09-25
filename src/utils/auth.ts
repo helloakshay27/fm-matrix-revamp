@@ -319,7 +319,7 @@ export const sendForgotPasswordOTP = async (
   };
 
   if (isEmail) {
-    requestBody.email = emailOrMobile;
+    requestBody.mobile = emailOrMobile;
     // Store temp email for password reset
     localStorage.setItem(AUTH_KEYS.TEMP_EMAIL, emailOrMobile);
   } else {
@@ -378,7 +378,7 @@ export const verifyForgotPasswordOTPAndResetPassword = async (
   };
 
   if (isEmail) {
-    requestBody.email = emailOrMobile;
+    requestBody.mobile = emailOrMobile;
   } else {
     requestBody.mobile = emailOrMobile;
   }
