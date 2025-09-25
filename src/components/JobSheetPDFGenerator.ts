@@ -1,5 +1,8 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
+import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
+import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
 
 export class JobSheetPDFGenerator {
   private pdf: jsPDF;
@@ -21,7 +24,7 @@ export class JobSheetPDFGenerator {
     try {
       const jobSheet = jobSheetData?.job_sheet;
       const checklistResponses = jobSheet?.checklist_responses || [];
-      const needsPageBreak = checklistResponses.length > 9;
+      const needsPageBreak = checklistResponses.length > 8;
 
       if (needsPageBreak) {
         // Generate two separate pages when checklist is long
@@ -158,7 +161,10 @@ export class JobSheetPDFGenerator {
     }
   }
 
-  private async renderAndSavePDF(htmlContent: string, taskDetails: any): Promise<void> {
+  private async renderAndSavePDF(
+    htmlContent: string,
+    taskDetails: any
+  ): Promise<void> {
     const container = document.createElement("div");
     container.innerHTML = htmlContent;
     container.style.cssText =
@@ -204,29 +210,33 @@ export class JobSheetPDFGenerator {
   }
 
   private generateHeader(data: any): string {
+    const logoHtml = this.getLogoForSite();
+
     return `
       <div class="header">
         <div class="left-logo">
-          <div class="oig-logo">
-            <h1>OIG</h1>
-            <p class="arabic-text">شركة المجموعة الدولية العمانية ش.م.م</p>
-            <p class="english-text">OMAN INTERNATIONAL GROUP SAOC</p>
-          </div>
+          ${logoHtml}
         </div>
-        <div class="right-logo">
-          <div class="color-squares">
-            <span class="square blue"></span>
-            <span class="square gray"></span>
-            <span class="square green"></span>
-            <span class="square orange"></span>
-            <span class="square yellow"></span>
-            <span class="square purple"></span>
-          </div>
-          <p class="arabic-text">إدارة المرافق والخدمات اللوجستية</p>
-          <p class="english-text">FACILITIES MANAGEMENT SERVICES</p>
-        </div>
+      
       </div>
     `;
+  }
+
+  private getLogoForSite(): string {
+    const hostname = window.location.hostname;
+
+    // Check if it's Oman site
+    const isOmanSite = hostname.includes("oig.gophygital.work");
+    // Check if it's VI site
+    const isViSite = hostname.includes("vi-web.gophygital.work");
+
+    if (isOmanSite) {
+      return OIG_LOGO_CODE;
+    } else if (isViSite) {
+      return VI_LOGO_CODE;
+    } else {
+      return DEFAULT_LOGO_CODE;
+    }
   }
 
   private generateClientInfo(taskDetails: any, jobSheetData: any): string {
@@ -234,12 +244,16 @@ export class JobSheetPDFGenerator {
     const siteName = jobSheet?.task_details?.site?.name || "NIZWA GRAND MALL";
     const frequency = jobSheet?.basic_info?.frequency || "3 months";
     const jobCode = jobSheet?.basic_info?.job_card_no || "HFM16938";
-    const taskName = jobSheet?.task_details?.task_name || "Preventive Maintenance";
-    const date = jobSheet?.basic_info?.created_date || new Date().toLocaleDateString();
-    const location = jobSheet?.task_details?.asset?.location ||
+    const taskName =
+      jobSheet?.task_details?.task_name || "Preventive Maintenance";
+    const date =
+      jobSheet?.basic_info?.created_date || new Date().toLocaleDateString();
+    const location =
+      jobSheet?.task_details?.asset?.location ||
       taskDetails?.task_details?.location?.full_location ||
       "Pump Room";
-    const assetCode = jobSheet?.task_details?.asset?.code ||
+    const assetCode =
+      jobSheet?.task_details?.asset?.code ||
       taskDetails?.task_details?.asset_service_code ||
       "";
 
@@ -418,7 +432,7 @@ export class JobSheetPDFGenerator {
   private generateRemarksSection(comments: string, jobSheetData: any): string {
     const remarksText =
       comments || jobSheetData?.job_sheet?.task_details?.task_comments || "";
-    
+
     return `
       <div class="remarks-section">
         <h3>Remarks:</h3>
@@ -520,7 +534,6 @@ export class JobSheetPDFGenerator {
           padding: 15px;
           width: 100%;
           height: auto;
-          border: 2px solid #000000;
           background: #ffffff;
         }
 
@@ -528,15 +541,16 @@ export class JobSheetPDFGenerator {
           width: 50%;
           padding-right: 20px;
           height: auto;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
         }
 
-        .oig-logo h1 {
-          color: #2563eb;
-          margin: 0 0 5px 0;
-          font-size: 24px;
-          font-weight: 900;
-          text-align: left;
-          letter-spacing: 2px;
+        .left-logo svg {
+          height: auto;
+          max-height: 60px;
+          width: auto;
+          max-width: 100%;
         }
 
         .arabic-text {
