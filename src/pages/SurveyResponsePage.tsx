@@ -88,7 +88,7 @@ interface Complaint {
 interface SurveyResponse {
   survey_id: number;
   survey_name: string;
-  survey_status: number;
+  active: boolean; // Changed from survey_status to active boolean parameter
   question_count: number;
   mapping_id: number;
   site_id: number;
@@ -142,7 +142,7 @@ interface TransformedSurveyResponse {
   latest_response_date: string;
   answer_type: string;
   responded_by: string;
-  survey_status: number;
+  active: boolean; // Changed from survey_status to active boolean parameter
 }
 
 export const SurveyResponsePage = () => {
@@ -408,14 +408,14 @@ export const SurveyResponsePage = () => {
         latest_response_date: latestResponseDate,
         answer_type: answerType,
         responded_by: respondedBy,
-        survey_status: response.survey_status || 0
+        active: response.active ?? false // Use active boolean parameter with fallback to false
       });
       
-      // Debug logging for survey_status
+      // Debug logging for active status
       console.log('🔍 Survey response data:', {
         survey_name: response.survey_name,
-        survey_status: response.survey_status,
-        survey_status_type: typeof response.survey_status,
+        active: response.active,
+        active_type: typeof response.active,
         mapping_id: response.mapping_id
       });
     });
@@ -578,23 +578,23 @@ export const SurveyResponsePage = () => {
   };
 
   const handleStatusToggle = (item: TransformedSurveyResponse) => {
-    const newStatus = item.survey_status === 1 ? 0 : 1;
+    const newActiveStatus = !item.active; // Toggle the active boolean status
     
     // Update the local state
     setResponseData(prev => prev.map(response => 
       response.id === item.id 
-        ? { ...response, survey_status: newStatus }
+        ? { ...response, active: newActiveStatus }
         : response
     ));
     
     // Show success message
     toast.success(
-      `Survey status ${newStatus === 1 ? 'activated' : 'deactivated'} successfully`
+      `Survey status ${newActiveStatus ? 'activated' : 'deactivated'} successfully`
     );
     
     // Here you would typically make an API call to update the server
     // Example:
-    // await updateSurveyStatus(item.survey_id, newStatus);
+    // await updateSurveyStatus(item.survey_id, newActiveStatus);
   };
 
   const handleFilterClick = () => {
@@ -775,16 +775,16 @@ export const SurveyResponsePage = () => {
       case 'status':
         console.log('🔍 Rendering status cell for item:', { 
           survey_name: item.survey_name, 
-          survey_status: item.survey_status,
-          survey_status_type: typeof item.survey_status 
+          active: item.active,
+          active_type: typeof item.active 
         });
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            item.survey_status === 1 
+            item.active 
               ? 'bg-green-100 text-green-800' 
               : 'bg-red-100 text-red-800'
           }`}>
-            {item.survey_status === 1 ? 'Active' : 'Inactive'}
+            {item.active ? 'Active' : 'Inactive'}
           </span>
         );
       case 'answer_type':
@@ -1034,7 +1034,7 @@ export const SurveyResponsePage = () => {
                     <div><strong>Debug Info:</strong></div>
                     <div>Status column visible: {isColumnVisible('status') ? 'Yes' : 'No'}</div>
                     <div>Enhanced table columns: {enhancedTableColumns.map(col => col.key).join(', ')}</div>
-                    <div>Sample data survey_status: {filteredResponses[0]?.survey_status ?? 'No data'}</div>
+                    <div>Sample data active status: {filteredResponses[0]?.active ?? 'No data'}</div>
                   </div>
                 )} */}
                 
