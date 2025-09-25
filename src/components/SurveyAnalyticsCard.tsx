@@ -52,10 +52,21 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
               return `${name}: ${(percent * 100).toFixed(1)}%`;
             }}
             labelLine={false}
+            stroke="none"
+            strokeWidth={0}
+            isAnimationActive={false}
           >
             {data.map((entry, index) => {
               console.log(`🎯 Creating cell ${index}:`, entry);
-              return <Cell key={`cell-${index}`} fill={entry.color} />;
+              return (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.color} 
+                  stroke="none" 
+                  strokeWidth={0}
+                  style={{ outline: 'none', border: 'none' }}
+                />
+              );
             })}
           </Pie>
           <Tooltip 
