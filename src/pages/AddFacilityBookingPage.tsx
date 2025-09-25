@@ -305,6 +305,7 @@ export const AddFacilityBookingPage = () => {
                 label="Client"
                 value={selectedCompany}
                 onChange={(e) => setSelectedCompany(e.target.value)}
+                SelectProps={{ displayEmpty: true }}
                 variant="outlined"
                 fullWidth
                 InputLabelProps={{ shrink: true }}
@@ -313,6 +314,11 @@ export const AddFacilityBookingPage = () => {
                 helperText={entitiesError ? "Error loading companies" : ""}
                 error={!!entitiesError}
               >
+                <MenuItem value="" disabled>
+                  <em>
+                    Select Client
+                  </em>
+                </MenuItem>
                 {entitiesLoading && (
                   <MenuItem value="" disabled>
                     Loading companies...
@@ -342,6 +348,7 @@ export const AddFacilityBookingPage = () => {
               onChange={(e) => setSelectedUser(e.target.value)}
               variant="outlined"
               fullWidth
+              SelectProps={{ displayEmpty: true }}
               InputLabelProps={{
                 classes: {
                   asterisk: "text-red-500", // Tailwind class for red color
@@ -353,6 +360,11 @@ export const AddFacilityBookingPage = () => {
               helperText={userType === 'occupant' ? (occupantUsersError ? "Error loading users" : "") : (fmUsersError ? "Error loading users" : "")}
               error={userType === 'occupant' ? !!occupantUsersError : !!fmUsersError}
             >
+              <MenuItem value="" disabled>
+                <em>
+                  Select User
+                </em>
+              </MenuItem>
               {userType === 'occupant' && occupantUsersLoading && (
                 <MenuItem value="" disabled>
                   Loading users...
@@ -397,6 +409,7 @@ export const AddFacilityBookingPage = () => {
               onChange={(e) => handleFacilityChange(e.target.value)}
               variant="outlined"
               fullWidth
+              SelectProps={{ displayEmpty: true }}
               InputLabelProps={{
                 classes: {
                   asterisk: "text-red-500", // Tailwind class for red color
@@ -408,6 +421,11 @@ export const AddFacilityBookingPage = () => {
               helperText={facilitySetupsError ? "Error loading facilities" : ""}
               error={!!facilitySetupsError}
             >
+              <MenuItem value="" disabled>
+                <em>
+                  Select Facility
+                </em>
+              </MenuItem>
               {facilitySetupsLoading && (
                 <MenuItem value="" disabled>
                   Loading facilities...
