@@ -48,11 +48,13 @@ interface SurveyMapping {
   floor_name: string;
   area_name: string;
   room_name: string | null;
+  active?: boolean;
+  status?: string;
   snag_checklist: {
     id: number;
     name: string;
     questions_count: number;
-    checklist_image_url?: string;
+    snag_attach?: string;
     snag_questions: SurveyQuestion[];
   };
 }
@@ -153,6 +155,9 @@ export const MobileSurveyLanding: React.FC = () => {
           `survey_mappings/${mappingId}/survey.json`
         );
         const data = response.data;
+        console.log("Survey data fetched:", data);
+        console.log("Survey status:", data.status);
+        console.log("Survey active:", data.active);
         setSurveyData(data);
       } catch (error) {
         console.error("Failed to fetch survey data:", error);
@@ -223,7 +228,7 @@ export const MobileSurveyLanding: React.FC = () => {
   // Auto-progress based on selection (positive/negative)
   const handleOptionSelect = (option: SurveyOption) => {
     setSelectedOptions([option]);
-    
+
     // Auto-progress after selection
     setTimeout(() => {
       const currentQuestion = getCurrentQuestion();
@@ -249,13 +254,13 @@ export const MobileSurveyLanding: React.FC = () => {
           qtype: currentQuestion.qtype,
           value: option.qname,
           selectedOptions: [option],
-          comments: ""
+          comments: "",
         };
-        
+
         // Update answers object
-        setAnswers(prev => ({
+        setAnswers((prev) => ({
           ...prev,
-          [currentQuestion.id]: tempAnswerData
+          [currentQuestion.id]: tempAnswerData,
         }));
 
         if (isSingleQuestion) {
@@ -270,12 +275,10 @@ export const MobileSurveyLanding: React.FC = () => {
     }, 300); // Small delay for visual feedback
   };
 
-
-
   // Handle rating selection
   const handleRatingSelect = (rating: number) => {
     setSelectedRating(rating);
-    
+
     // Auto-progress after selection
     setTimeout(() => {
       const currentQuestion = getCurrentQuestion();
@@ -310,7 +313,6 @@ export const MobileSurveyLanding: React.FC = () => {
   };
 
   // Handle next for rating (with negative flow)
-
 
   // Handle emoji/smiley selection
   const handleEmojiSelect = (rating: number, emoji: string, label: string) => {
@@ -549,12 +551,12 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.ans_descr = `${currentAnswer.rating} star${
             currentAnswer.rating > 1 ? "s" : ""
           }`;
-          
+
           // Add option_id mapping for rating questions (similar to emoji)
           if (currentAnswer.rating !== undefined) {
             const ratingOptionMapping = [
               { rating: 1, option_id: 1 }, // 1 star
-              { rating: 2, option_id: 2 }, // 2 stars  
+              { rating: 2, option_id: 2 }, // 2 stars
               { rating: 3, option_id: 3 }, // 3 stars
               { rating: 4, option_id: 4 }, // 4 stars
               { rating: 5, option_id: 5 }, // 5 stars
@@ -997,12 +999,12 @@ export const MobileSurveyLanding: React.FC = () => {
             surveyResponseItem.ans_descr = `${answer.rating} star${
               answer.rating > 1 ? "s" : ""
             }`;
-            
+
             // Add option_id mapping for rating questions (similar to emoji)
             if (answer.rating !== undefined) {
               const ratingOptionMapping = [
                 { rating: 1, option_id: 1 }, // 1 star
-                { rating: 2, option_id: 2 }, // 2 stars  
+                { rating: 2, option_id: 2 }, // 2 stars
                 { rating: 3, option_id: 3 }, // 3 stars
                 { rating: 4, option_id: 4 }, // 4 stars
                 { rating: 5, option_id: 5 }, // 5 stars
@@ -1091,6 +1093,39 @@ export const MobileSurveyLanding: React.FC = () => {
     { rating: 1, emoji: "😠", label: "Terrible" },
   ];
 
+  // Check if survey is active
+  const isSurveyActive = (): boolean => {
+    if (!surveyData) return false;
+
+    // Check if status field exists and is "Active" or if active field is true
+    if (surveyData.status !== undefined) {
+      return surveyData.status.toLowerCase() === "active";
+    }
+
+    if (surveyData.active !== undefined) {
+      return surveyData.active === true;
+    }
+
+    // If neither field exists, assume active (backward compatibility)
+    return true;
+  };
+
+  // Format location for display
+  const getFormattedLocation = (): string => {
+    if (!surveyData) return "";
+
+    const locationParts = [
+      surveyData.site_name,
+      surveyData.building_name,
+      surveyData.wing_name,
+      surveyData.floor_name,
+      surveyData.area_name,
+      surveyData.room_name,
+    ].filter((part) => part && part.trim() !== "");
+
+    return locationParts.join(" / ");
+  };
+
   // Render loading state
   if (isLoading) {
     return (
@@ -1108,6 +1143,100 @@ export const MobileSurveyLanding: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Survey not found.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if survey is inactive and show appropriate message
+  if (!isSurveyActive()) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        {/* Header with Logo */}
+        <div className="bg-gray-50 py-4 px-4 text-center">
+          <div className="flex justify-center items-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+              {window.location.origin === "https://oig.gophygital.work" ? (
+                <img
+                  src="/Without bkg.svg"
+                  alt="OIG Logo"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <img
+                  src="/gophygital-logo-min.jpg"
+                  alt="Gophygital Logo"
+                  className="bg-white rounded"
+                  style={{
+                    backgroundColor: "#fff",
+                    maxWidth: "200%",
+                    height: "auto",
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
+          <div className="flex flex-col items-center justify-center max-w-md mx-auto w-full min-h-full">
+            <div className="text-center mb-6">
+              <img
+                src="/9019830 1.png"
+                alt="Survey Illustration"
+                className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto mb-6"
+              />
+            </div>
+
+            <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-black mb-4 text-center leading-tight">
+              {surveyData.survey_title}
+            </h1>
+
+            <div className="w-full space-y-4 text-center">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                <div className="flex items-center justify-center mb-4">
+                  <svg
+                    className="w-12 h-12 text-orange-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+
+                <h3 className="text-lg font-semibold text-orange-800 mb-2">
+                  Not Active Survey
+                </h3>
+
+                <p className="text-sm text-orange-700 mb-4">
+                  This survey is currently inactive and not accepting responses.
+                </p>
+
+                <div className="bg-white rounded-lg p-4 border border-orange-100">
+                  <p className="text-xs text-gray-600 font-medium mb-1">
+                    Location:
+                  </p>
+                  <p className="text-sm text-gray-800 break-words">
+                    {getFormattedLocation()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-white border-t border-gray-200 py-3 px-4 text-center">
+          <div className="text-xs sm:text-sm text-gray-500">
+            Please contact the administrator if you believe this is an error
+          </div>
         </div>
       </div>
     );
@@ -1135,17 +1264,16 @@ export const MobileSurveyLanding: React.FC = () => {
                 src="/gophygital-logo-min.jpg"
                 alt="Gophygital Logo"
                 className="bg-white rounded"
-                style={{ 
+                style={{
                   backgroundColor: "#fff",
                   maxWidth: "200%",
-                  height: "auto"
+                  height: "auto",
                 }}
               />
             )}
           </div>
         </div>
       </div>
-  
 
       {/* Progress Bar for Multi-Question Surveys */}
       {isMultiQuestion && (
@@ -1212,7 +1340,9 @@ export const MobileSurveyLanding: React.FC = () => {
           {!showGenericTags && (
             <div className="text-center mb-6">
               <img
-                src={surveyData?.snag_checklist?.checklist_image_url || "/9019830 1.png"}
+                src={
+                  surveyData?.snag_checklist?.snag_attach || "/9019830 1.png"
+                }
                 alt="Survey Illustration"
                 className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto"
               />
