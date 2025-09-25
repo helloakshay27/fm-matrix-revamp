@@ -50,6 +50,8 @@ interface SurveyMapping {
   room_name: string | null;
   active?: boolean;
   status?: string;
+  message?: string;
+  location?: string;
   snag_checklist: {
     id: number;
     name: string;
@@ -1216,7 +1218,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 </h3>
 
                 <p className="text-sm text-orange-700 mb-4">
-                  This survey is currently inactive and not accepting responses.
+                  {surveyData.message || "This survey is currently inactive and not accepting responses."}
                 </p>
 
                 <div className="bg-white rounded-lg p-4 border border-orange-100">
@@ -1224,7 +1226,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     Location:
                   </p>
                   <p className="text-sm text-gray-800 break-words">
-                    {getFormattedLocation()}
+                    {surveyData.location || getFormattedLocation()}
                   </p>
                 </div>
               </div>
