@@ -147,6 +147,8 @@ export const ViewOccupantUserPage = () => {
         fetchUser();
     }, []);
 
+    console.log(formData)
+
     useEffect(() => {
         if (userData) {
             setFormData({
@@ -249,7 +251,7 @@ export const ViewOccupantUserPage = () => {
                                         <SelectContent>
                                             {sites?.length > 0 ? (
                                                 sites.map((site) => (
-                                                    <SelectItem key={site.id} value={site.id?.toString()}>
+                                                    <SelectItem key={site.id} value={site.id}>
                                                         {site.name}
                                                     </SelectItem>
                                                 ))
@@ -314,7 +316,7 @@ export const ViewOccupantUserPage = () => {
                                         <SelectContent>
                                             {entitiesData?.entities?.length > 0 ? (
                                                 entitiesData.entities.map((entity: Entity) => (
-                                                    <SelectItem key={entity.id} value={entity.id?.toString()}>
+                                                    <SelectItem key={entity.id} value={entity.id}>
                                                         {entity.name}
                                                     </SelectItem>
                                                 ))
