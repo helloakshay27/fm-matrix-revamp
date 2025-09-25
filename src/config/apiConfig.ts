@@ -244,7 +244,7 @@ export const API_CONFIG = {
     RECENT_SURVEYS: '/survey_mappings/response_list.json?&recent=true',
     // Visitor history export endpoint
     VISITOR_HISTORY_EXPORT: '/pms/admin/visitors/visitors_history.xlsx',
-
+    ASSET_TYPES: '/pms/custom_forms/get_asset_type',
   },
 } as const
 

@@ -789,6 +789,7 @@ export const ScheduleListDashboard = () => {
             searchPlaceholder="Search schedules..."
             leftActions={renderCustomActions()}
             onFilterClick={() => setShowFilterDialog(true)}
+            onExport={handleScheduleExport}
             loading={isLoading}
           />
 
@@ -885,32 +886,51 @@ export const ScheduleListDashboard = () => {
   // Custom export handler for schedules
   const handleScheduleExport = async () => {
     try {
-      // const url = `https://fm-uat-api.lockated.com/pms/custom_forms/export_checklist.xlsx?access_token=ojrsRqfNo0GLUT2roCu7O8z9eRt2OdyVrsF0AtsECGg`;
       const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/export_checklist.xlsx`;
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
         },
       });
+      
       if (!response.ok) throw new Error('Failed to export schedule data');
+      
       const blob = await response.blob();
-      // Use file-saver or fallback
-      if ((window.navigator as any)?.msSaveOrOpenBlob) {
-        (window.navigator as any).msSaveOrOpenBlob(blob, 'schedules.xlsx');
-      } else {
-        const link = document.createElement('a');
-        const url = window.URL.createObjectURL(blob);
-        link.href = url;
-        link.download = 'schedules.xlsx';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        }, 100);
-      }
+      
+      // Create download link
+      const link = document.createElement('a');
+      const downloadUrl = window.URL.createObjectURL(blob);
+      link.href = downloadUrl;
+      link.download = 'schedules.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      }, 100);
+      
+      toast.success('Schedules exported successfully!', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#fff',
+          color: 'black',
+          border: 'none',
+        },
+      });
     } catch (error) {
-      toast.error('Failed to export schedules.');
+      console.error('Export error:', error);
+      toast.error('Failed to export schedules. Please try again.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
     }
   };
 
