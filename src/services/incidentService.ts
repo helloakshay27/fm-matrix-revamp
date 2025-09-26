@@ -34,6 +34,15 @@ export interface IncidentDetail {
   name_and_address_treatment_facility?: string;
   name_and_address_attending_physician?: string;
 }
+export interface IncidentLog {
+  id: number;
+  comment: string;
+  priority: string | null;
+  current_status: string;
+  created_at: string;
+  log_by: string;
+  attachments: any[];
+}
 
 export interface Incident {
   id: number;
@@ -108,7 +117,7 @@ export interface Incident {
   show_approve_btn: boolean;
   attachments: IncidentAttachment[];
   injuries: any[];
-  logs: any[];
+  logs: IncidentLog[];
   incident_witnesses?: IncidentWitness[];
   incident_investigations?: IncidentInvestigation[];
   probability?: number;
@@ -126,7 +135,7 @@ export interface IncidentResponse {
 
 // Real API service
 export const incidentService = {
-  async getIncidents(): Promise<IncidentResponse> {
+  async getIncidents(query?: string): Promise<IncidentResponse> {
     // Get baseUrl and token from localStorage
     let baseUrl = localStorage.getItem('baseUrl') || '';
     const token = localStorage.getItem('token') || '';
@@ -135,7 +144,8 @@ export const incidentService = {
       baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
     }
 
-    const response = await fetch(`${baseUrl}/pms/incidents.json`, {
+    const url = `${baseUrl}/pms/incidents.json${query ? `?${query}` : ''}`;
+    const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${token}`
       }

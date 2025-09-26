@@ -15,7 +15,11 @@ import {
   Paperclip,
   Loader2,
   Users,
-  Settings
+  Settings,
+  FileText,
+  FileSpreadsheet,
+  File,
+  Eye
 } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { UpdateIncidentModal } from '@/components/UpdateIncidentModal';
@@ -61,6 +65,7 @@ export const IncidentDetailsPage = () => {
   const [costExpanded, setCostExpanded] = useState(true);
   const [injuriesExpanded, setInjuriesExpanded] = useState(true);
   const [attachmentsExpanded, setAttachmentsExpanded] = useState(true);
+  const [updateStatusExpanded, setUpdateStatusExpanded] = useState(true);
 
   // Determine if we're in Safety or Maintenance context
   const isSafetyContext = location.pathname.startsWith('/safety');
@@ -338,6 +343,24 @@ export const IncidentDetailsPage = () => {
               label="Primary Category"
               value={incident.category_name || '-'}
             />
+            {incident.sub_category_name && (
+              <Field
+                label="Sub Category"
+                value={incident.sub_category_name}
+              />
+            )}
+            {incident.sub_sub_category_name && (
+              <Field
+                label="Sub Sub Category"
+                value={incident.sub_sub_category_name}
+              />
+            )}
+            {incident.assigned_to_user_name && (
+              <Field
+                label="Assigned To"
+                value={incident.assigned_to_user_name}
+              />
+            )}
             <Field
               label="First Aid provided by Employees?"
               value={incident.first_aid_provided}
@@ -359,7 +382,7 @@ export const IncidentDetailsPage = () => {
             value={incident.description}
             fullWidth={true}
           />
-          {incident.sub_category_name && (
+          {/* {incident.sub_category_name && (
             <Field
               label="Sub Category"
               value={incident.sub_category_name}
@@ -376,7 +399,7 @@ export const IncidentDetailsPage = () => {
               label="Assigned To"
               value={incident.assigned_to_user_name}
             />
-          )}
+          )} */}
         </div>
       </CollapsibleSection>
 
@@ -520,33 +543,118 @@ export const IncidentDetailsPage = () => {
         hasData={incident.attachments && incident.attachments.length > 0}
       >
         {incident.attachments && incident.attachments.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {incident.attachments.map((attachment) => (
-              <div key={attachment.id} className="bg-white border rounded p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 truncate">
-                    {attachment.doctype || 'File'}
+          <div className="flex items-center flex-wrap gap-4">
+            {incident.attachments.map((attachment) => {
+              const attachmentUrl = attachment.url;
+              const attachmentName = attachment.doctype || `Document_${attachment.id}`;
+              const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '') || attachment.doctype?.startsWith('image/');
+              const isPdf = /\.pdf$/i.test(attachmentUrl || '') || attachment.doctype === 'application/pdf';
+              const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '') || attachment.doctype?.includes('spreadsheet');
+              const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '') || attachment.doctype?.includes('document');
+              const isDownloadable = isPdf || isExcel || isWord;
+
+              return (
+                <div
+                  key={attachment.id}
+                  className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                >
+                  {isImage ? (
+                    <>
+                      <img
+                        src={attachmentUrl}
+                        alt={attachmentName}
+                        className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                        onClick={() => window.open(attachmentUrl, '_blank')}
+                      />
+                    </>
+                  ) : isPdf ? (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                  ) : isExcel ? (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                      <FileSpreadsheet className="w-6 h-6" />
+                    </div>
+                  ) : isWord ? (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                  ) : (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                      <File className="w-6 h-6" />
+                    </div>
+                  )}
+                  <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                    {attachmentName}
                   </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(attachment.url, '_blank')}
-                  >
-                    View
-                  </Button>
+                  {(isDownloadable || isImage) && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                      onClick={() => {
+                        if (isImage) {
+                          window.open(attachmentUrl, '_blank');
+                        } else if (attachmentUrl) {
+                          window.open(attachmentUrl, '_blank');
+                        }
+                      }}
+                    >
+                      {isImage ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                    </Button>
+                  )}
                 </div>
-                {attachment.doctype?.startsWith('image/') && (
-                  <img
-                    src={attachment.url}
-                    alt="Attachment"
-                    className="mt-2 w-full h-32 object-cover rounded"
-                  />
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <p className="text-gray-600">No attachments available.</p>
+        )}
+      </CollapsibleSection>
+
+      {/* Update Status Section */}
+      <CollapsibleSection
+        title={`UPDATE STATUS - ${incident.logs?.length || 0}`}
+        icon={Settings}
+        isExpanded={updateStatusExpanded}
+        onToggle={() => setUpdateStatusExpanded(!updateStatusExpanded)}
+        hasData={incident.logs && incident.logs.length > 0}
+      >
+        {incident.logs && incident.logs.length > 0 ? (
+          <div className="bg-white rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Updated By</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Comment</TableHead>
+                  <TableHead>Date & Time</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {incident.logs.map((log, index) => (
+                  <TableRow key={log.id || index}>
+                    <TableCell className="font-medium">
+                      {log.log_by || '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {log.current_status || '-'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {log.comment || '-'}
+                    </TableCell>
+                    <TableCell>
+                      {log.created_at ? new Date(log.created_at).toLocaleString() : '-'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <p className="text-gray-600">No status updates available for this incident.</p>
         )}
       </CollapsibleSection>
 

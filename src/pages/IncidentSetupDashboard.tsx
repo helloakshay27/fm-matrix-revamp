@@ -1897,6 +1897,31 @@ export const IncidentSetupDashboard = () => {
     });
   };
 
+  // Special function for escalation deletion using GET method
+  const handleDeleteEscalation = async (escalation) => {
+    if (window.confirm(`Are you sure you want to delete this escalation?`)) {
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${escalation.id}/escalation_destroy.json`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          // await fetchEscalations();
+          fetchEscalationMatrix();
+          toast.success('Escalation deleted successfully');
+        } else {
+          toast.error('Failed to delete escalation. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error deleting escalation:', error);
+        toast.error('An error occurred while deleting escalation.');
+      }
+    }
+  };
+
   const handleDelete = async (item, type) => {
     if (window.confirm(`Are you sure you want to delete this ${type.toLowerCase()}?`)) {
       let url = `${baseUrl}/pms/incidence_tags/${item.id}.json`;
@@ -1920,34 +1945,13 @@ export const IncidentSetupDashboard = () => {
       if (fetchFn) {
         try {
           let response;
-          // Special handling for escalations which might need a different delete endpoint
-          if (type === 'Escalations') {
-            // Try special escalation delete endpoint first
-            try {
-              response = await fetch(`${baseUrl}/pms/escalations/${item.id}.json`, {
-                method: 'DELETE',
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              });
-            } catch (error) {
-              // If special endpoint fails, fall back to standard endpoint
-              response = await fetch(`${baseUrl}/pms/incidence_tags/${item.id}.json`, {
-                method: 'DELETE',
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              });
+          // Standard delete for all types except escalations (escalations have their own handler)
+          response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
             }
-          } else {
-            // Standard delete for all other types
-            response = await fetch(url, {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-          }
+          });
 
           if (response.ok) {
             await fetchFn();
@@ -2951,7 +2955,7 @@ export const IncidentSetupDashboard = () => {
                                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(escalation, 'Escalations')}>
                                   <Edit className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(escalation, 'Escalations')}>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDeleteEscalation(escalation)}>
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>

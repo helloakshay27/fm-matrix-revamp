@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { FormControl, InputLabel, Select, MenuItem, TextField } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, TextField, Dialog, DialogContent } from '@mui/material';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -202,10 +201,10 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onClose={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle>Update Status</DialogTitle>
+        <div className="flex flex-row items-center justify-between">
+          <h1>Update Status</h1>
           <Button
             variant="ghost"
             size="sm"
@@ -214,7 +213,7 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
           >
             <X className="h-4 w-4" />
           </Button>
-        </DialogHeader>
+        </div>
 
         <div className="space-y-4 pt-4">
           <div className="space-y-2">
