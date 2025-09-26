@@ -448,15 +448,15 @@ export const MobileRestaurantDetails: React.FC<
 
       {/* Show Items Button - Only show if ordering is allowed */}
       {isOrderingAllowed() && getTotalItems() > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2 shadow-lg z-20">
+        <div className="fixed bottom-0 left-0 right-0 border-gray-200 p-4 shadow-2xl z-20">
           <Button
             onClick={handleShowItems}
-            className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl text-lg font-semibold shadow-md flex items-center justify-center"
+            className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-700 text-white rounded-2xl py-4 text-lg font-bold shadow-xl transition-all duration-200 hover:shadow-2xl flex items-center justify-center gap-3"
           >
-            <span>Proceed</span>
-            <span className="ml-2 bg-red-700 text-white px-2 py-1 rounded-full text-sm">
+            <span className="text-white">Proceed</span>
+            <div className="bg-white text-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-bold min-w-[28px] text-center">
               {getTotalItems()}
-            </span>
+            </div>
           </Button>
         </div>
       )}

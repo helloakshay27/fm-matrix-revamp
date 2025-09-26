@@ -97,86 +97,6 @@ interface ApiOrderData {
 }
 
 export const MobileOrderReview: React.FC = () => {
-  // const navigate = useNavigate();
-  // const location = useLocation();
-  // const [searchParams] = useSearchParams();
-
-  // const {
-  //   items,
-  //   restaurant,
-  //   note,
-  //   isExistingOrder,
-  //   isExternalScan: passedExternalScan,
-  //   orderData,
-  //   totalPrice,
-  //   totalItems
-  // } = location.state as {
-  //   items: MenuItem[];
-  //   restaurant: Restaurant;
-  //   note?: string;
-  //   isExistingOrder?: boolean;
-  //   isExternalScan?: boolean;
-  //   orderData?: { id?: string; [key: string]: unknown };
-  //   totalPrice?: number;
-  //   totalItems?: number;
-  // };
-
-  // // Use passed external scan flag or check URL params
-  // const isExternalScan = passedExternalScan || searchParams.get('source') === 'external';
-
-  // const [showSuccess, setShowSuccess] = useState(isExistingOrder || false);
-
-  // const handleBack = () => {
-  //   navigate(-1);
-  // };
-
-  // const handleViewOrderDetails = () => {
-  //   if (isExternalScan) {
-  //     // External users stay on order review page
-  //     navigate('/mobile/restaurant/order-history');
-  //   } else {
-  //     // App users go to my orders list page
-  //     navigate('/mobile/orders');
-  //   }
-  // };
-
-  // const getTotalItems = () => {
-  //   return totalItems || items.reduce((total, item) => total + item.quantity, 0);
-  // };
-
-  // const getTotalPrice = () => {
-  //   return totalPrice || items.reduce((total, item) => total + (item.price * item.quantity), 0);
-  // };
-
-  // const handleConfirmOrder = () => {
-  //   setShowSuccess(true);
-
-  //   // Show success for 5 seconds
-  //   setTimeout(() => {
-  //     if (!isExternalScan) {
-  //       // App user goes to My Orders
-  //       navigate('/mobile/orders');
-  //     }
-  //     // External scan users stay on success page
-  //   }, 5000);
-  // };
-
-  // // Auto-redirect based on user type after 5 seconds when order is placed
-  // useEffect(() => {
-  //   if (showSuccess) {
-  //     const timer = setTimeout(() => {
-  //       if (isExternalScan) {
-  //         // External scan users: show order review details
-  //         setShowSuccess(false); // Show order review details
-  //       } else {
-  //         // App users: go to My Orders
-  //         navigate('/mobile/orders');
-  //       }
-  //     }, 5000);
-
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [showSuccess, isExternalScan, navigate]);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -317,13 +237,11 @@ export const MobileOrderReview: React.FC = () => {
       }
       return total;
     }, 0);
-    
+
     return calculatedPrice;
   };
 
-  // Get user details from API response, contact details, or localStorage
   const getUserDetails = () => {
-    // Priority 1: For external users, use contact details from the form
     if (contactDetails) {
       return {
         customer_name: contactDetails.customer_name || "",
@@ -333,11 +251,9 @@ export const MobileOrderReview: React.FC = () => {
       };
     }
 
-    // Priority 2: Use API response data if available (for existing orders)
     if (orderData && typeof orderData === 'object') {
       const apiOrder = orderData as ApiOrderData;
       
-      // Build delivery location from available fields
       let deliveryLocation = "";
       if (apiOrder.flat) {
         deliveryLocation = apiOrder.flat;
@@ -361,7 +277,6 @@ export const MobileOrderReview: React.FC = () => {
       };
     }
 
-    // Priority 3: For internal users, get from localStorage as fallback
     const storedUser = localStorage.getItem("user");
     const user = storedUser ? JSON.parse(storedUser) : null;
     
@@ -375,7 +290,6 @@ export const MobileOrderReview: React.FC = () => {
 
   const userDetails = getUserDetails();
 
-  // Debug: Log status and color values
   console.log("🎨 STATUS DEBUG:", {
     order_status: orderData?.order_status,
     order_status_color: orderData?.order_status_color,
@@ -388,7 +302,6 @@ export const MobileOrderReview: React.FC = () => {
     setShowSuccess(true);
   };
 
-  // Auto-redirect after 5 seconds when success is shown
   useEffect(() => {
     if (showSuccess) {
       console.log("⏰ AUTO-REDIRECT TIMER STARTED:");
@@ -400,11 +313,9 @@ export const MobileOrderReview: React.FC = () => {
           console.log(
             "🎯 EXTERNAL USER: Hiding success, showing order details"
           );
-          // External scan users: show order review details (hide success)
           setShowSuccess(false);
         } else {
           console.log("🏠 INTERNAL USER: Redirecting to My Orders");
-          // App users: go to My Orders
           navigate("/mobile/orders");
         }
       }, 5000);
@@ -416,7 +327,6 @@ export const MobileOrderReview: React.FC = () => {
     }
   }, [showSuccess, isExternalScan, navigate]);
 
-  // Guard clause: Handle missing essential data
   if (!restaurant && !orderData?.restaurant_name) {
     console.log("❌ GUARD CLAUSE: No restaurant data and no orderData restaurant_name");
     return (
@@ -475,15 +385,7 @@ export const MobileOrderReview: React.FC = () => {
               Order Placed Successfully
             </h2>
 
-            {/* Order ID if available
-            {orderData?.id && (
-              <div className="bg-white rounded-lg p-3 mt-4 mb-4">
-                <p className="text-sm text-gray-600">Order ID</p>
-                <p className="font-semibold text-gray-900">#{orderData.id}</p>
-              </div>
-            )} */}
-
-            {/* Auto redirect message for external scan users */}
+           
             {isExternalScan && (
               <p className="text-sm text-gray-500 mt-4">
                 Showing order details in 5 seconds...
@@ -530,21 +432,6 @@ export const MobileOrderReview: React.FC = () => {
               Order Placed Successfully
             </h2>
 
-            {/* Order ID if available */}
-            {/* {orderData?.id && (
-              <div className="bg-white rounded-lg p-3 mt-4 mb-4">
-                <p className="text-sm text-gray-600">Order ID</p>
-                <p className="font-semibold text-gray-900">#{orderData.id}</p>
-              </div>
-            )} */}
-
-            {/* Auto redirect message */}
-            {/* <p className="text-sm text-gray-500 mt-4">
-              {isExternalScan 
-                ? "Redirecting to order details in 5 seconds..." 
-                : "Redirecting to My Orders in 5 seconds..."
-              }
-            </p> */}
           </div>
         </div>
 
@@ -562,80 +449,6 @@ export const MobileOrderReview: React.FC = () => {
     );
   }
 
-  // return (
-  //   <div className="min-h-screen bg-gray-50">
-  //     {/* Header */}
-  //     <div className="bg-white border-b border-gray-200 px-4 py-4">
-  //       <div className="flex items-center">
-  //         <button onClick={handleBack} className="mr-4">
-  //           <ArrowLeft className="w-6 h-6 text-gray-600" />
-  //         </button>
-  //         <h1 className="text-lg font-semibold text-gray-900">Order Review</h1>
-  //       </div>
-  //     </div>
-
-  //     {/* Order Summary */}
-  //     <div className="bg-[#E8E2D3] mx-4 mt-4 rounded-lg p-4">
-  //       <div className="flex justify-between items-center mb-4">
-  //         <h2 className="text-lg font-semibold text-gray-900">Order Summary</h2>
-  //         <span className="bg-gray-400 text-white px-3 py-1 rounded text-sm">Pending</span>
-  //       </div>
-
-  //       <div className="border-t border-gray-400 border-dashed pt-4 mb-4">
-  //         <div className="flex justify-between items-center mb-3">
-  //           <span className="font-semibold text-gray-900">Order ID</span>
-  //           <span className="font-semibold text-gray-900">#32416</span>
-  //         </div>
-
-  //         <div className="flex justify-between items-center mb-4">
-  //           <span className="font-semibold text-gray-900">{restaurant.name}</span>
-  //           <span className="text-gray-600">Total Items - {getTotalItems()}</span>
-  //         </div>
-
-  //         {/* Items List */}
-  //         {items.map((item) => (
-  //           <div key={item.id} className="flex justify-between items-center mb-2">
-  //             <span className="text-gray-900">{item.name}</span>
-  //             <span className="text-gray-900 font-medium">0{item.quantity}</span>
-  //           </div>
-  //         ))}
-  //       </div>
-
-  //       <div className="border-t border-gray-400 border-dashed pt-4">
-  //         <h3 className="font-semibold text-gray-900 mb-3">Details</h3>
-  //         <div className="border-t border-gray-400 border-dashed pt-3 space-y-2">
-  //           <div className="flex justify-between">
-  //             <span className="text-gray-900">Customer Name</span>
-  //             <span className="text-gray-900">Abdul Ghaffar</span>
-  //           </div>
-  //           <div className="flex justify-between">
-  //             <span className="text-gray-900">Contact Number</span>
-  //             <span className="text-gray-900">9876567891</span>
-  //           </div>
-  //           <div className="flex justify-between">
-  //             <span className="text-gray-900">Delivery Location</span>
-  //             <div className="text-right">
-  //               <div className="text-gray-900">Room no-402, Floor 2</div>
-  //               <div className="text-gray-900">Worli (W), 400028</div>
-  //             </div>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-
-  //     {/* Confirm Order Button - Only show for new orders */}
-  //     {!isExistingOrder && (
-  //       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-  //         <Button
-  //           onClick={handleConfirmOrder}
-  //           className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-lg font-semibold"
-  //         >
-  //           Confirm Order
-  //         </Button>
-  //       </div>
-  //     )}
-  //   </div>
-  // );
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
