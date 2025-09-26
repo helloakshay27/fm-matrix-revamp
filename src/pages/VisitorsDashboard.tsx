@@ -1111,7 +1111,7 @@ export const VisitorsDashboard = () => {
       toast.info('Processing checkout...');
 
       // Construct the API URL using the visitor ID
-      const url = getFullUrl(`/pms/visitors/${visitorId}.json`);
+      const url = getFullUrl(`/pms/admin/visitors/marked_out_visitors.json`);
       const options = getAuthenticatedFetchOptions();
 
       // Create request body for checkout with current timestamp
@@ -1119,7 +1119,8 @@ export const VisitorsDashboard = () => {
         gatekeeper: {
           guest_exit_time: new Date().toISOString().slice(0, 19) + "+05:30", // Format: 2025-08-22T19:07:37+05:30
           exit_gate_id: "",
-          status: "checked_out"
+          status: "checked_out",
+          gatekeeper_ids: visitorId
         }
       };
 

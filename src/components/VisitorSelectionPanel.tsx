@@ -129,7 +129,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
           console.log('🔐 Verifying OTP for visitor ID:', visitorId);
           
           // Construct the API URL for OTP verification
-          const url = getFullUrl('/pms/admin/visitors/verify_otp.json');
+          const url = getFullUrl('/pms/visitors/verify_otp.json');
           const urlWithParams = new URL(url);
           
           // Add query parameters
@@ -144,7 +144,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
           console.log('🚀 Calling OTP verification API:', urlWithParams.toString());
           
           const response = await fetch(urlWithParams.toString(), {
-            method: 'POST',
+            method: 'GET',
             headers: {
               'Authorization': getAuthHeader(),
               'Content-Type': 'application/json',
