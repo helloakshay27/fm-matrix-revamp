@@ -146,7 +146,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
         )
       );
 
-      toast.success(`Order ${orderId} status updated to ${newStatus}`);
+      toast.success(`Order ${orderId} status updated to ${newStatus.name}`);
     } catch (error) {
       console.error('Error updating order status:', error);
       toast.error('Failed to update order status');

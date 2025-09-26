@@ -65,14 +65,33 @@ const menuProps = {
 };
 
 
+// Helper function to get current date/time values as strings
+const getCurrentDateTime = () => {
+  const now = new Date();
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  return {
+    year: now.getFullYear().toString(),
+    month: monthNames[now.getMonth()],
+    day: now.getDate().toString(),
+    hour: now.getHours().toString(),
+    minute: now.getMinutes().toString()
+  };
+};
+
 export const AddIncidentPage = () => {
   const navigate = useNavigate();
+  const currentDateTime = getCurrentDateTime();
+
   const [incidentData, setIncidentData] = useState({
-    year: '',
-    month: '',
-    day: '',
-    hour: '',
-    minute: '',
+    year: currentDateTime.year,
+    month: currentDateTime.month,
+    day: currentDateTime.day,
+    hour: currentDateTime.hour,
+    minute: currentDateTime.minute,
     building: '',
     // Primary hierarchy
     categoryForIncident: '',
@@ -312,37 +331,91 @@ export const AddIncidentPage = () => {
   };
 
   const handleSubmit = async () => {
-    // Basic validation
-    if (!incidentData.factsCorrect) {
-      toast.error('Please confirm the disclaimer');
+    // Enhanced validation for all required fields
+
+    // Time validation
+    if (!incidentData.hour || !incidentData.minute) {
+      toast.error('Please select both hour and minute');
       return;
     }
+
+    // Date validation
+    if (!incidentData.day || !incidentData.month || !incidentData.year) {
+      toast.error('Please select complete date (day, month, year)');
+      return;
+    }
+
     if (!incidentData.building) {
       toast.error('Please select a building');
       return;
     }
+
     if (!incidentData.categoryForIncident) {
       toast.error('Please select primary category');
       return;
     }
+
     if (!incidentData.primaryCategory) {
       toast.error('Please select sub category');
       return;
     }
+
     if (!incidentData.subCategory) {
       toast.error('Please select sub sub category');
       return;
     }
+
     if (!incidentData.subSubCategory) {
       toast.error('Please select sub sub sub category');
       return;
     }
-    if (!incidentData.severity || !incidentData.probability) {
-      toast.error('Please select severity and probability');
+
+    if (!incidentData.severity) {
+      toast.error('Please select severity');
       return;
     }
+
+    if (!incidentData.probability) {
+      toast.error('Please select probability');
+      return;
+    }
+
+    if (!incidentData.incidentLevel) {
+      toast.error('Please select incident level');
+      return;
+    }
+
     if (!incidentData.description || incidentData.description.trim() === '') {
       toast.error('Please enter a description');
+      return;
+    }
+
+    // Secondary category hierarchy validation - all levels are now mandatory
+    if (!incidentData.secondaryCategory) {
+      toast.error('Please select secondary category');
+      return;
+    }
+
+    if (!incidentData.secondarySubCategory) {
+      toast.error('Please select secondary sub category');
+      return;
+    }
+
+    if (!incidentData.secondarySubSubCategory) {
+      toast.error('Please select secondary sub sub category');
+      return;
+    }
+
+    if (!incidentData.secondarySubSubSubCategory) {
+      toast.error('Please select secondary sub sub sub category');
+      return;
+    }
+
+    // Support validation - this field is optional, no validation needed
+
+    // Disclaimer validation (must be checked)
+    if (!incidentData.factsCorrect) {
+      toast.error('Please confirm the disclaimer');
       return;
     }
 
@@ -451,12 +524,12 @@ export const AddIncidentPage = () => {
         <CardContent className="p-6 bg-white">
           {/* Time & Date Section */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium mb-3">Time & Date *</h3>
+            <h3 className="text-sm font-medium mb-3">Time & Date <span style={{ color: '#C72030' }}>*</span></h3>
             <div className="grid grid-cols-5 gap-2">
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Year</InputLabel>
+                <InputLabel shrink>Year <span style={{ color: '#C72030' }}>*</span></InputLabel>
                 <MuiSelect
-                  label="Year"
+                  label="Year *"
                   value={incidentData.year}
                   onChange={e => handleInputChange('year', e.target.value)}
                   displayEmpty
@@ -476,9 +549,9 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Month</InputLabel>
+                <InputLabel shrink>Month <span style={{ color: '#C72030' }}>*</span></InputLabel>
                 <MuiSelect
-                  label="Month"
+                  label="Month *"
                   value={incidentData.month}
                   onChange={e => handleInputChange('month', e.target.value)}
                   displayEmpty
@@ -502,9 +575,9 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Day</InputLabel>
+                <InputLabel shrink>Day <span style={{ color: '#C72030' }}>*</span></InputLabel>
                 <MuiSelect
-                  label="Day"
+                  label="Day *"
                   value={incidentData.day}
                   onChange={e => handleInputChange('day', e.target.value)}
                   displayEmpty
@@ -519,9 +592,9 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Hour</InputLabel>
+                <InputLabel shrink>Hour <span style={{ color: '#C72030' }}>*</span></InputLabel>
                 <MuiSelect
-                  label="Hour"
+                  label="Hour *"
                   value={incidentData.hour}
                   onChange={e => handleInputChange('hour', e.target.value)}
                   displayEmpty
@@ -536,9 +609,9 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Minute</InputLabel>
+                <InputLabel shrink>Minute <span style={{ color: '#C72030' }}>*</span></InputLabel>
                 <MuiSelect
-                  label="Minute"
+                  label="Minute *"
                   value={incidentData.minute}
                   onChange={e => handleInputChange('minute', e.target.value)}
                   displayEmpty
@@ -559,7 +632,7 @@ export const AddIncidentPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {/* Building Dropdown */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Building *</InputLabel>
+              <InputLabel shrink>Building <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
                 label="Building *"
                 value={incidentData.building}
@@ -578,7 +651,7 @@ export const AddIncidentPage = () => {
             {/* PRIMARY CATEGORY HIERARCHY */}
             {/* Level 1: Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Primary Category *</InputLabel>
+              <InputLabel shrink>Primary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
                 label="Primary Category *"
                 value={incidentData.categoryForIncident}
@@ -596,9 +669,9 @@ export const AddIncidentPage = () => {
 
             {/* Level 2: Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.categoryForIncident}>
-              <InputLabel shrink>Sub Category</InputLabel>
+              <InputLabel shrink>Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
-                label="Sub Category"
+                label="Sub Category *"
                 value={incidentData.primaryCategory}
                 onChange={e => handleInputChange('primaryCategory', e.target.value)}
                 displayEmpty
@@ -614,9 +687,9 @@ export const AddIncidentPage = () => {
 
             {/* Level 3: Sub Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.primaryCategory}>
-              <InputLabel shrink>Sub Sub Category</InputLabel>
+              <InputLabel shrink>Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
-                label="Sub Sub Category"
+                label="Sub Sub Category *"
                 value={incidentData.subCategory}
                 onChange={e => handleInputChange('subCategory', e.target.value)}
                 displayEmpty
@@ -632,9 +705,9 @@ export const AddIncidentPage = () => {
 
             {/* Level 4: Sub Sub Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.subCategory}>
-              <InputLabel shrink>Sub Sub Sub Category</InputLabel>
+              <InputLabel shrink>Sub Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
-                label="Sub Sub Sub Category"
+                label="Sub Sub Sub Category *"
                 value={incidentData.subSubCategory}
                 onChange={e => handleInputChange('subSubCategory', e.target.value)}
                 displayEmpty
@@ -651,9 +724,9 @@ export const AddIncidentPage = () => {
             {/* SECONDARY CATEGORY HIERARCHY */}
             {/* Level 1: Secondary Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Secondary Category</InputLabel>
+              <InputLabel shrink>Secondary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
-                label="Secondary Category"
+                label="Secondary Category *"
                 value={incidentData.secondaryCategory}
                 onChange={e => handleInputChange('secondaryCategory', e.target.value)}
                 displayEmpty
@@ -669,9 +742,9 @@ export const AddIncidentPage = () => {
 
             {/* Level 2: Secondary Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.secondaryCategory}>
-              <InputLabel shrink>Secondary Sub Category</InputLabel>
+              <InputLabel shrink>Secondary Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
-                label="Secondary Sub Category"
+                label="Secondary Sub Category *"
                 value={incidentData.secondarySubCategory}
                 onChange={e => handleInputChange('secondarySubCategory', e.target.value)}
                 displayEmpty
@@ -687,9 +760,9 @@ export const AddIncidentPage = () => {
 
             {/* Level 3: Secondary Sub Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.secondarySubCategory}>
-              <InputLabel shrink>Secondary Sub Sub Category</InputLabel>
+              <InputLabel shrink>Secondary Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
-                label="Secondary Sub Sub Category"
+                label="Secondary Sub Sub Category *"
                 value={incidentData.secondarySubSubCategory}
                 onChange={e => handleInputChange('secondarySubSubCategory', e.target.value)}
                 displayEmpty
@@ -705,9 +778,9 @@ export const AddIncidentPage = () => {
 
             {/* Level 4: Secondary Sub Sub Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.secondarySubSubCategory}>
-              <InputLabel shrink>Secondary Sub Sub Sub Category</InputLabel>
+              <InputLabel shrink>Secondary Sub Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
-                label="Secondary Sub Sub Sub Category"
+                label="Secondary Sub Sub Sub Category *"
                 value={incidentData.secondarySubSubSubCategory}
                 onChange={e => handleInputChange('secondarySubSubSubCategory', e.target.value)}
                 displayEmpty
@@ -722,7 +795,7 @@ export const AddIncidentPage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Severity *</InputLabel>
+              <InputLabel shrink>Severity <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
                 label="Severity *"
                 value={incidentData.severity}
@@ -741,7 +814,7 @@ export const AddIncidentPage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Probability *</InputLabel>
+              <InputLabel shrink>Probability <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
                 label="Probability *"
                 value={incidentData.probability}
@@ -760,7 +833,7 @@ export const AddIncidentPage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Incident level *</InputLabel>
+              <InputLabel shrink>Incident level <span style={{ color: '#C72030' }}>*</span></InputLabel>
               <MuiSelect
                 label="Incident level *"
                 value={incidentData.incidentLevel}
@@ -792,7 +865,7 @@ export const AddIncidentPage = () => {
           {/* Description */}
           <div className="mt-6">
             <TextField
-              label="Description*"
+              label={<>Description<span style={{ color: '#C72030' }}>*</span></>}
               value={incidentData.description}
               onChange={e => handleInputChange('description', e.target.value)}
               fullWidth
@@ -838,7 +911,7 @@ export const AddIncidentPage = () => {
             </div>
 
             <div>
-              <h3 className="text-lg font-medium mb-3">Disclaimer</h3>
+              <h3 className="text-lg font-medium mb-3">Disclaimer <span style={{ color: '#C72030' }}>*</span></h3>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -852,7 +925,7 @@ export const AddIncidentPage = () => {
                     }}
                   />
                 }
-                label="I have correctly stated all the facts related to the incident."
+                label={<>I have correctly stated all the facts related to the incident. <span style={{ color: '#C72030' }}>*</span></>}
               />
             </div>
           </div>

@@ -133,10 +133,46 @@ export const AddRestaurantPage = () => {
     }));
   };
 
+  const timeToMinutes = (time: string): number => {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  const validateScheduleItem = (item: Schedule, index: number) => {
+    if (!item.enabled) return true; // Skip validation for disabled days
+
+    const start = timeToMinutes(item.startTime);
+    const end = timeToMinutes(item.endTime);
+    const bStart = timeToMinutes(item.breakStartTime);
+    const bEnd = timeToMinutes(item.breakEndTime);
+
+    if (end < start) {
+      toast.error(`${item.day} end time cannot be less than start time`);
+      return false;
+    }
+    if (bStart < start || bStart > end) {
+      toast.error(`${item.day} break start time must be between start and end time`);
+      return false;
+    }
+    if (bEnd < bStart || bEnd > end) {
+      toast.error(`${item.day} break end time must be greater than or equal to break start time and within operating hours`);
+      return false;
+    }
+    return true;
+  };
+
   const updateSchedule = (index: number, field: keyof Schedule, value: any) => {
-    setSchedule(prev => prev.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
-    ));
+    setSchedule(prev => {
+      const newSchedule = prev.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      );
+
+      if (['endTime', 'breakStartTime', 'breakEndTime'].includes(field)) {
+        validateScheduleItem({ ...newSchedule[index], [field]: value }, index);
+      }
+
+      return newSchedule;
+    });
   };
 
   const addBlockedDay = () => {
@@ -149,7 +185,6 @@ export const AddRestaurantPage = () => {
 
   const updateBlockedDay = (index: number, field: keyof BlockedDay, value: any) => {
     if (field === 'date') {
-      // Check if the date is already selected
       const isDuplicate = blockedDays.some((day, i) => i !== index && day.date === value);
       if (isDuplicate) {
         toast.error('This date is already blocked. Please select a different date.');
@@ -159,11 +194,6 @@ export const AddRestaurantPage = () => {
     setBlockedDays(prev => prev.map((item, i) =>
       i === index ? { ...item, [field]: value } : item
     ));
-  };
-
-  const timeToMinutes = (time: string): number => {
-    const [h, m] = time.split(':').map(Number);
-    return h * 60 + m;
   };
 
   const validateForm = () => {
@@ -211,27 +241,12 @@ export const AddRestaurantPage = () => {
       return false;
     }
 
-    // Validate schedules
-    for (const item of schedule.filter(s => s.enabled)) {
-      const start = timeToMinutes(item.startTime);
-      const end = timeToMinutes(item.endTime);
-      if (end < start) {
-        toast.error(`${item.day} end time cannot be less than start time`);
-        return false;
-      }
-      const bStart = timeToMinutes(item.breakStartTime);
-      const bEnd = timeToMinutes(item.breakEndTime);
-      if (bStart < start || bStart > end) {
-        toast.error(`${item.day} break start time must be between start and end time`);
-        return false;
-      }
-      if (bEnd < bStart || bEnd > end) {
-        toast.error(`${item.day} break end time must be greater than or equal to break start time and within operating hours`);
+    for (const [index, item] of schedule.filter(s => s.enabled).entries()) {
+      if (!validateScheduleItem(item, index)) {
         return false;
       }
     }
 
-    // Validate blocked days
     for (const day of blockedDays) {
       if (!day.date) {
         toast.error('Please select a date for all blocked days');
@@ -248,7 +263,6 @@ export const AddRestaurantPage = () => {
     try {
       const dataToSubmit = new FormData();
 
-      // Append restaurant details
       dataToSubmit.append('restaurant[name]', formData.restaurantName);
       dataToSubmit.append('restaurant[cost_for_two]', formData.costForTwo);
       dataToSubmit.append('restaurant[contact1]', formData.mobileNumber);
@@ -272,8 +286,8 @@ export const AddRestaurantPage = () => {
       dataToSubmit.append('restaurant[delivery_charge]', orderConfig.deliveryCharge);
       dataToSubmit.append('restaurant[min_amount]', orderConfig.minimumOrder);
       dataToSubmit.append('restaurant[order_not_allowed]', orderConfig.orderNotAllowedText);
+      dataToSubmit.append('restaurant[can_order]', "1");
 
-      // Attach files
       coverImages.forEach((file) => {
         dataToSubmit.append('restaurant[cover_images][]', file);
       });
@@ -284,9 +298,7 @@ export const AddRestaurantPage = () => {
         dataToSubmit.append('restaurant[main_images][]', file);
       });
 
-      // Append only enabled schedules
       schedule
-        .filter((item) => item.enabled)
         .forEach((item, index) => {
           const [startHour, startMin] = item.startTime.split(':');
           const [endHour, endMin] = item.endTime.split(':');
@@ -294,7 +306,7 @@ export const AddRestaurantPage = () => {
           const [breakEndHour, breakEndMin] = item.breakEndTime.split(':');
           const [lastHour, lastMin] = item.lastBookingTime.split(':');
 
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][is_open]`, '1');
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][is_open]`, item.enabled ? '1' : '0');
           dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][dayofweek]`, item.day.toLowerCase());
           dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_hour]`, startHour);
           dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_min]`, startMin);
@@ -310,11 +322,10 @@ export const AddRestaurantPage = () => {
           dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][last_min]`, lastMin);
         });
 
-      // Append blocked days
       blockedDays.forEach((day, index) => {
         dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][ondate]`, day.date);
-        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][order_allowed]`, day.orderBlocked ? '0' : '1');
-        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`, day.bookingBlocked ? '0' : '1');
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][order_allowed]`, day.orderBlocked ? '1' : '0');
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`, day.bookingBlocked ? '1' : '0');
       });
 
       await dispatch(createRestaurant({ baseUrl, token, data: dataToSubmit })).unwrap();
@@ -350,7 +361,6 @@ export const AddRestaurantPage = () => {
 
   return (
     <div className="p-4 sm:p-6 bg-white min-h-screen">
-      {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <button
@@ -366,7 +376,6 @@ export const AddRestaurantPage = () => {
       </div>
 
       <div className="space-y-4">
-        {/* Basic Details */}
         {renderSectionHeader('BASIC DETAILS', 'basicDetails', Store)}
         {expandedSections.basicDetails && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
@@ -765,7 +774,6 @@ export const AddRestaurantPage = () => {
           </div>
         )}
 
-        {/* Restaurant Schedule */}
         {renderSectionHeader('RESTAURANT SCHEDULE', 'schedule', Clock)}
         {expandedSections.schedule && (
           <div className="p-4 border border-gray-200 rounded-lg">
@@ -956,7 +964,6 @@ export const AddRestaurantPage = () => {
           </div>
         )}
 
-        {/* Blocked Days */}
         {renderSectionHeader('BLOCKED DAYS', 'blockedDays', Ban)}
         {expandedSections.blockedDays && (
           <div className="p-4 border border-gray-200 rounded-lg">
@@ -971,11 +978,10 @@ export const AddRestaurantPage = () => {
                     InputLabelProps={{ shrink: true }}
                     InputProps={{
                       inputProps: {
-                        // Disable already selected dates, excluding the current index
                         disabledDates: blockedDays
                           .filter((_, i) => i !== index)
                           .map(d => d.date)
-                          .filter(d => d), // Filter out empty dates
+                          .filter(d => d),
                       }
                     }}
                   />
@@ -1020,7 +1026,6 @@ export const AddRestaurantPage = () => {
           </div>
         )}
 
-        {/* Table Booking Configuration */}
         {renderSectionHeader('TABLE BOOKING CONFIGURATION', 'tableBooking', Users)}
         {expandedSections.tableBooking && (
           <div className="p-4 border border-gray-200 rounded-lg">
@@ -1107,7 +1112,6 @@ export const AddRestaurantPage = () => {
           </div>
         )}
 
-        {/* Order Configuration */}
         {renderSectionHeader('ORDER CONFIGURATION', 'orderConfig', ShoppingCart)}
         {expandedSections.orderConfig && (
           <div className="p-4 border border-gray-200 rounded-lg">
@@ -1182,7 +1186,6 @@ export const AddRestaurantPage = () => {
           </div>
         )}
 
-        {/* Attachments */}
         {renderSectionHeader('ATTACHMENTS', 'attachments', Paperclip)}
         {expandedSections.attachments && (
           <div className="p-4 border border-gray-200 rounded-lg space-y-8">
@@ -1222,7 +1225,6 @@ export const AddRestaurantPage = () => {
         )}
       </div>
 
-      {/* Action Buttons */}
       <div className="flex justify-end gap-4 mt-6">
         <Button
           disabled={loadingSubmit}
