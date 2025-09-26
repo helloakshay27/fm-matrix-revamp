@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
@@ -87,6 +88,7 @@ interface Complaint {
 interface SurveyResponse {
   survey_id: number;
   survey_name: string;
+  active: boolean; // Changed from survey_status to active boolean parameter
   question_count: number;
   mapping_id: number;
   site_id: number;
@@ -140,6 +142,7 @@ interface TransformedSurveyResponse {
   latest_response_date: string;
   answer_type: string;
   responded_by: string;
+  active: boolean; // Changed from survey_status to active boolean parameter
 }
 
 export const SurveyResponsePage = () => {
@@ -192,6 +195,7 @@ export const SurveyResponsePage = () => {
     { key: 'total_responses', label: 'Total Responses', visible: true },
     { key: 'total_complaints', label: 'Total Complaints', visible: true },
     { key: 'latest_response_date', label: 'Latest Response', visible: true },
+    { key: 'status', label: 'Status', visible: true }, // Force status column to be visible
     // { key: 'answer_type', label: 'Answer Type', visible: true },
     { key: 'responded_by', label: 'Responded By', visible: true }
   ]);
@@ -403,7 +407,16 @@ export const SurveyResponsePage = () => {
         total_complaints: response.complaint_count,
         latest_response_date: latestResponseDate,
         answer_type: answerType,
-        responded_by: respondedBy
+        responded_by: respondedBy,
+        active: response.active ?? false // Use active boolean parameter with fallback to false
+      });
+      
+      // Debug logging for active status
+      console.log('🔍 Survey response data:', {
+        survey_name: response.survey_name,
+        active: response.active,
+        active_type: typeof response.active,
+        mapping_id: response.mapping_id
       });
     });
     
@@ -564,6 +577,26 @@ export const SurveyResponsePage = () => {
     });
   };
 
+  const handleStatusToggle = (item: TransformedSurveyResponse) => {
+    const newActiveStatus = !item.active; // Toggle the active boolean status
+    
+    // Update the local state
+    setResponseData(prev => prev.map(response => 
+      response.id === item.id 
+        ? { ...response, active: newActiveStatus }
+        : response
+    ));
+    
+    // Show success message
+    toast.success(
+      `Survey status ${newActiveStatus ? 'activated' : 'deactivated'} successfully`
+    );
+    
+    // Here you would typically make an API call to update the server
+    // Example:
+    // await updateSurveyStatus(item.survey_id, newActiveStatus);
+  };
+
   const handleFilterClick = () => {
     setIsFilterModalOpen(true);
   };
@@ -631,7 +664,20 @@ export const SurveyResponsePage = () => {
   };
 
   const isColumnVisible = React.useCallback((columnKey: string) => {
-    return columns.find(col => col.key === columnKey)?.visible ?? true;
+    const column = columns.find(col => col.key === columnKey);
+    const visible = column?.visible ?? true;
+    
+    // Debug logging for status column
+    if (columnKey === 'status') {
+      console.log('🔍 isColumnVisible called for status:', {
+        columnKey,
+        column,
+        visible,
+        allColumns: columns
+      });
+    }
+    
+    return visible;
   }, [columns]);
 
   const handleResetColumns = () => {
@@ -655,12 +701,21 @@ export const SurveyResponsePage = () => {
       { key: 'total_responses', label: 'Total Responses', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('total_responses'), hideable: true },
       { key: 'total_complaints', label: 'Total Complaints', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('total_complaints'), hideable: true },
       { key: 'latest_response_date', label: 'Latest Response', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('latest_response_date'), hideable: true },
+      { key: 'status', label: 'Status', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('status'), hideable: true },
       // { key: 'answer_type', label: 'Answer Type', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('answer_type'), hideable: true },
       { key: 'responded_by', label: 'Responded By', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('responded_by'), hideable: true }
     ];
     
+    // Debug logging for status column
+    const statusColumn = allColumns.find(col => col.key === 'status');
+    console.log('🔍 Status column configuration:', statusColumn);
+    console.log('🔍 Status column visible:', isColumnVisible('status'));
+    console.log('🔍 All visible columns:', allColumns.filter(col => col.visible).map(col => col.key));
+    
     // Filter to only show visible columns
-    return allColumns.filter(col => col.visible);
+    const visibleColumns = allColumns.filter(col => col.visible);
+    console.log('🔍 Final enhanced table columns:', visibleColumns.map(col => ({ key: col.key, label: col.label, visible: col.visible })));
+    return visibleColumns;
   }, [isColumnVisible]);
 
   // Transform columns for the dropdown (only hideable columns with simplified structure)
@@ -717,6 +772,21 @@ export const SurveyResponsePage = () => {
         );
       case 'latest_response_date':
         return item.latest_response_date || 'No Responses';
+      case 'status':
+        console.log('🔍 Rendering status cell for item:', { 
+          survey_name: item.survey_name, 
+          active: item.active,
+          active_type: typeof item.active 
+        });
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            item.active 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {item.active ? 'Active' : 'Inactive'}
+          </span>
+        );
       case 'answer_type':
         return (
           <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -957,6 +1027,16 @@ export const SurveyResponsePage = () => {
                   }
                   onFilterClick={handleFilterClick}
                 />
+                
+                {/* Debug info for status column */}
+                {/* {process.env.NODE_ENV === 'development' && (
+                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                    <div><strong>Debug Info:</strong></div>
+                    <div>Status column visible: {isColumnVisible('status') ? 'Yes' : 'No'}</div>
+                    <div>Enhanced table columns: {enhancedTableColumns.map(col => col.key).join(', ')}</div>
+                    <div>Sample data active status: {filteredResponses[0]?.active ?? 'No data'}</div>
+                  </div>
+                )} */}
                 
                 {/* Server-side Pagination Controls */}
                 {pagination.total_pages > 1 && (

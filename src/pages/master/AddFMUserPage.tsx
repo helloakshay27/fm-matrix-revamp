@@ -185,9 +185,9 @@ export const AddFMUserPage = () => {
       },
     };
     try {
-      const response = await dispatch(createFmUser({ data: payload, baseUrl, token })).unwrap(); s
-      if (response?.error && Array.isArray(response?.error)) {
-        toast.error(response?.error[0]);
+      const response = await dispatch(createFmUser({ data: payload, baseUrl, token })).unwrap();
+      if (response.error || (response.errors && response.errors.length > 0)) {
+        toast.error(response?.error || response?.errors[0]);
         return;
       }
       toast.success('User added successfully');

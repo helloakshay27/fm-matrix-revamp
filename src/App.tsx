@@ -704,7 +704,6 @@ import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
 import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
 import EditInventorySubTypePage from "./pages/master/EditInventorySubTypePage";
 import AddOccupantUserPage from "./pages/master/AddOccupantUserPage";
-import ViewOccupantUserPage from "./pages/master/ViewOccupantUserPage";
 import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
 import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 import CheckHierarchy from "./components/CheckHierarchy";
@@ -728,6 +727,8 @@ import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
 import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
 import BannerDetailsPage from "./pages/BannerDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
+import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
+import WeeklyReport from "./components/WeeklyReport";
 
 const queryClient = new QueryClient();
 
@@ -787,6 +788,8 @@ function App() {
                 <Routes>
                   {/* Login Route */}
                   <Route path="/thepdf" element={<AllContent />} />
+                  <Route path="/weeklypdf" element={<WeeklyReport />} />
+
 
                   <Route
                     path="/login"
@@ -1028,7 +1031,7 @@ function App() {
                       path="/settings/account/roster/create"
                       element={<RosterCreatePage />}
                     />
-             
+
                     <Route
                       path="/settings/account/roster/detail/:id"
                       element={<RosterDetailPage />}
@@ -1078,27 +1081,33 @@ function App() {
                       element={<ChecklistGroupsPage />}
                     />
 
-                    {/* Settings Masters Routes */}
                     <Route
-                      path="/settings/masters/checklist"
+                      path="/master/checklist"
+                      element={<ChecklistListPage />}
+                    />
+                    <Route
+                      path="/master/checklist-master"
                       element={<ChecklistMasterDashboard />}
                     />
                     <Route
-                      path="/settings/masters/checklist-master"
-                      element={<ChecklistMasterDashboard />}
+                      path="/master/checklist-master/add"
+                      element={<ChecklistMasterPage />}
                     />
                     <Route
-                      path="/settings/masters/checklist-master/add"
-                      element={<AddChecklistMasterPage />}
-                    />
-                    <Route
-                      path="/settings/masters/checklist-master/edit/:id"
+                      path="/master/checklist-master/edit/:id"
                       element={<EditChecklistMasterPage />}
                     />
                     <Route
-                      path="/settings/masters/checklist-master/view/:id"
+                      path="/master/checklist-master/view/:id"
                       element={<ViewChecklistMasterPage />}
                     />
+                    <Route
+                      path="/master/checklist/create"
+                      element={<ChecklistMasterPage />}
+                    />
+                    <Route
+                      path="/master/checklist/edit/:id"
+                      element={<ChecklistMasterPage />} />
                     <Route
                       path="/settings/masters/unit"
                       element={<UnitMasterPage />}

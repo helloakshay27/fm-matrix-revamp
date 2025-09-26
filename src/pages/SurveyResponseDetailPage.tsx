@@ -169,6 +169,9 @@ interface TicketData {
   heading: string;
   category: string;
   assignee: string;
+  status: string;
+  updated_by: string;
+  created_by: string;
   created_at: string;
   location: string;
 }
@@ -1297,26 +1300,37 @@ export const SurveyResponseDetailPage = () => {
                 : "-",
           };
 
-          // Add question data for this specific timestamp
-          allUniqueQuestions.forEach(([questionId, questionName]) => {
-            const columnKey = `question_${questionId}`;
+          // Add question data for this specific timestamp with interleaved pattern
+          allUniqueQuestions.forEach(([questionId, questionName], index) => {
+            const questionColumnKey = `question_${questionId}`;
+            const iconCategoryColumnKey = `icon_category_${index}`;
+            const commentColumnKey = `comment_${index}`;
+            
             const answerForQuestion = answersAtTime.find(
               (a) => a.question_id === questionId
             );
 
             if (answerForQuestion) {
-              // Show only the selected option name in the table body
+              // Populate question column with selected option
               const selectedOption = answerForQuestion.option_name || answerForQuestion.ans_descr || "No option";
+              rowData[questionColumnKey] = selectedOption;
               
-              // Add comments if available and not empty
-              let finalResponse = selectedOption;
-              if (answerForQuestion.comments && answerForQuestion.comments.trim() !== "") {
-                finalResponse += ` - ${answerForQuestion.comments.trim()}`;
-              }
+              // Populate icon category column (same for all questions in this response)
+              rowData[iconCategoryColumnKey] = response.complaints && response.complaints.length > 0
+                ? response.complaints[0].heading
+                : "-";
               
-              rowData[columnKey] = finalResponse;
+              // Populate comment column with question-specific comment or general comment
+              const questionComment = answerForQuestion.comments && answerForQuestion.comments.trim() !== ""
+                ? answerForQuestion.comments.trim()
+                : (response.final_comment || "-");
+              rowData[commentColumnKey] = questionComment;
             } else {
-              rowData[columnKey] = "-";
+              rowData[questionColumnKey] = "-";
+              rowData[iconCategoryColumnKey] = response.complaints && response.complaints.length > 0
+                ? response.complaints[0].heading
+                : "-";
+              rowData[commentColumnKey] = response.final_comment || "-";
             }
           });
 
@@ -1353,8 +1367,11 @@ export const SurveyResponseDetailPage = () => {
           complaint_id: complaint.complaint_id,
           ticket_number: complaint.ticket_number,
           heading: complaint.heading,
-          category: complaint.category,
-          assignee: complaint.assignee,
+          category: complaint.category || "-",
+          assignee: complaint.assignee || "-",
+          status: complaint.status || "-",
+          updated_by: complaint.updated_by || "-",
+          created_by: "-", // This field is not available in the API response
           created_at: new Date(complaint.created_at).toLocaleDateString(
             "en-GB",
             {
@@ -1385,7 +1402,7 @@ export const SurveyResponseDetailPage = () => {
       },
       {
         key: "date_time",
-        label: "Date & Time",
+        label: "Time",
         defaultVisible: true,
         sortable: true,
       },
@@ -1399,12 +1416,10 @@ export const SurveyResponseDetailPage = () => {
       { key: "area", label: "Area", defaultVisible: true, sortable: true },
       { key: "floor", label: "Floor", defaultVisible: true, sortable: true },
       { key: "room", label: "Room", defaultVisible: true, sortable: true },
-
-      // { key: 'category', label: 'Answer Type', defaultVisible: true, sortable: true },
-      // { key: 'rating', label: 'Rating', defaultVisible: true, sortable: true },
+      { key: "rating", label: "Rating", defaultVisible: true, sortable: true },
     ];
 
-    // Add dynamic question columns
+    // Add dynamic question columns with interleaved pattern: question -> icon category -> comment
     if (responseListData?.responses) {
       const allUniqueQuestions = Array.from(
         new Map(
@@ -1414,46 +1429,59 @@ export const SurveyResponseDetailPage = () => {
         ).entries()
       );
 
-      allUniqueQuestions.forEach(([questionId, questionName]) => {
+      allUniqueQuestions.forEach(([questionId, questionName], index) => {
         // Truncate question name if too long for column header
-        const truncatedQuestionName = questionName.length > 30 
-          ? questionName.substring(0, 30) + "..." 
-          : questionName;
+        const safeQuestionName = questionName || `Question ${questionId}`;
+        const truncatedQuestionName = safeQuestionName.length > 25 
+          ? safeQuestionName.substring(0, 25) + "..." 
+          : safeQuestionName;
         
+        // Add question column
         baseColumns.push({
           key: `question_${questionId}`,
-          label: `${truncatedQuestionName} - Comments`,
+          label: truncatedQuestionName,
+          defaultVisible: true,
+          sortable: true,
+        });
+
+        // Add icon category column after each question
+        baseColumns.push({
+          key: `icon_category_${index}`,
+          label: "Icon Category",
+          defaultVisible: true,
+          sortable: true,
+        });
+
+        // Add comment column after icon category
+        baseColumns.push({
+          key: `comment_${index}`,
+          label: "Comment",
           defaultVisible: true,
           sortable: true,
         });
       });
     }
 
-    baseColumns.push(
-      {
-        key: "final_comment",
-        label: "Final Comment",
-        defaultVisible: true,
-        sortable: true,
-      },
-      {
-        key: "icon_category",
-        label: "Icon Category",
-        defaultVisible: true,
-        sortable: true,
-      },
-      {
-        key: "ticket_id",
-        label: "Ticket Id",
-        defaultVisible: true,
-        sortable: true,
-      }
-    );
+    // Add final comments column before ticket id
+    baseColumns.push({
+      key: "final_comment",
+      label: "Final Comments",
+      defaultVisible: true,
+      sortable: true,
+    });
+
+    // Add final ticket id column at the end
+    baseColumns.push({
+      key: "ticket_id",
+      label: "Ticket Id",
+      defaultVisible: true,
+      sortable: true,
+    });
 
     console.log("🔍 Generated columns:", baseColumns);
     console.log(
-      "🔍 Icon Category column included:",
-      baseColumns.find((col) => col.key === "icon_category")
+      "🔍 Icon Category columns included:",
+      baseColumns.filter((col) => col.key.startsWith("icon_category"))
     );
     return baseColumns;
   };
@@ -1468,11 +1496,11 @@ export const SurveyResponseDetailPage = () => {
     // },
     {
       key: "ticket_number",
-      label: "Ticket Number",
+      label: "ID",
       defaultVisible: true,
       sortable: true,
     },
-    { key: "heading", label: "Heading", defaultVisible: true, sortable: true },
+    { key: "heading", label: "Title", defaultVisible: true, sortable: true },
     {
       key: "category",
       label: "Category",
@@ -1485,11 +1513,28 @@ export const SurveyResponseDetailPage = () => {
       defaultVisible: true,
       sortable: true,
     },
+    {
+      key: "status",
+      label: "Status",
+      defaultVisible: true,
+      sortable: true,
+    },
+    {
+      key: "updated_by",
+      label: "Updated By",
+      defaultVisible: true,
+      sortable: true,
+    },
+    // {
+    //   key: "created_by",
+    //   label: "Created By",
+    //   defaultVisible: true,
+    //   sortable: true,
+    // },
     // { key: 'priority', label: 'Priority', defaultVisible: true, sortable: true },
-    // { key: 'status', label: 'Status', defaultVisible: true, sortable: true },
     {
       key: "created_at",
-      label: "Created Date",
+      label: "Created By",
       defaultVisible: true,
       sortable: true,
     },
@@ -2112,8 +2157,17 @@ export const SurveyResponseDetailPage = () => {
                       <p className="text-sm text-gray-600">
                         {Object.keys(summaryCurrentFilters).length > 0 ? "Filtered Responses" : "Survey Status"}
                       </p>
-                      <p className="text-xl font-semibold text-green-600">
-                        {Object.keys(summaryCurrentFilters).length > 0 ? `${getSummaryFilteredResponseData().length} Records` : "Active"}
+                      <p className={`text-xl font-semibold ${
+                        Object.keys(summaryCurrentFilters).length > 0 
+                          ? "text-blue-600" 
+                          : surveyData?.survey_status === 1 || surveyData?.survey_status === true || surveyData?.is_active === 1 || surveyData?.is_active === true
+                            ? "text-green-600" 
+                            : "text-red-600"
+                      }`}>
+                        {Object.keys(summaryCurrentFilters).length > 0 
+                          ? `${getSummaryFilteredResponseData().length} Records` 
+                          : (surveyData?.survey_status === 1 || surveyData?.survey_status === true || surveyData?.is_active === 1 || surveyData?.is_active === true ? "Active" : "Inactive")
+                        }
                       </p>
                       {Object.keys(summaryCurrentFilters).length > 0 && (
                         <p className="text-xs text-gray-500">Matching criteria</p>
@@ -2333,21 +2387,21 @@ export const SurveyResponseDetailPage = () => {
                     if (columnKey === "ticket_number") {
                       return (
                         <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                          {item.ticket_number}
+                          {item.ticket_number || "-"}
                         </span>
                       );
                     }
                     if (columnKey === "category") {
                       return (
                         <span className="px-2 py-1 rounded-full text-xs font-medium ">
-                          {item.category}
+                          {item.category || "-"}
                         </span>
                       );
                     }
                     if (columnKey === "assignee") {
                       return (
                         <span className="px-2 py-1 rounded-full text-xs font-medium">
-                          {item.assignee}
+                          {item.assignee || "-"}
                         </span>
                       );
                     }

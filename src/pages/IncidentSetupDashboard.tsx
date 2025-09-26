@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Edit, Trash2 } from 'lucide-react';
 import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel, Chip, OutlinedInput, Box } from '@mui/material';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 export const IncidentSetupDashboard = () => {
   // Get baseUrl and token from localStorage, ensure baseUrl starts with https://
@@ -64,7 +65,8 @@ export const IncidentSetupDashboard = () => {
     name: '',
     level: '',
     escalateInDays: '',
-    users: ''
+    users: '',
+    id: ''
   });
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
@@ -1210,16 +1212,16 @@ export const IncidentSetupDashboard = () => {
       type
     });
     if (type === 'Escalations') {
+      console.log(item)
       // Extract user IDs from escalate_to_users array for the form
       const userIds = item.escalate_to_users ? item.escalate_to_users.map(user => String(user[2])) : [];
+      console.log(userIds)
       setEditFormData({
-        category: '',
-        subCategory: '',
-        subSubCategory: '',
-        name: item.name || '',
+        ...editFormData,
         level: item.name || '',
         escalateInDays: String(item.after_days) || '',
-        users: userIds.join(', ')
+        users: userIds, // Join as comma-separated string for display
+        id: item.id || ''
       });
       // Also set the form states for escalations
       setSelectedEscalationLevel(item.name || '');
@@ -1233,7 +1235,8 @@ export const IncidentSetupDashboard = () => {
         name: item.secondarySubSubCategory || '',
         level: '',
         escalateInDays: '',
-        users: ''
+        users: '',
+        id: ""
       });
     } else if (type === 'Secondary Sub Sub Sub Category') {
       setEditFormData({
@@ -1243,7 +1246,8 @@ export const IncidentSetupDashboard = () => {
         name: item.secondarySubSubSubCategory || '',
         level: '',
         escalateInDays: '',
-        users: ''
+        users: '',
+        id: ""
       });
     } else if (type === 'Who got injured' || type === 'Property Damage Category' || type === 'RCA Category' || type === 'Category') {
       setEditFormData({
@@ -1253,7 +1257,8 @@ export const IncidentSetupDashboard = () => {
         name: item.name || '',
         level: '',
         escalateInDays: '',
-        users: ''
+        users: '',
+        id: ""
       });
     } else if (type === 'Sub Sub Category') {
       setEditFormData({
@@ -1263,7 +1268,8 @@ export const IncidentSetupDashboard = () => {
         name: item.subSubCategory || '',
         level: '',
         escalateInDays: '',
-        users: ''
+        users: '',
+        id: ""
       });
     } else if (type === 'Sub Category') {
       setEditFormData({
@@ -1273,7 +1279,8 @@ export const IncidentSetupDashboard = () => {
         name: item.subCategory || '',
         level: '',
         escalateInDays: '',
-        users: ''
+        users: '',
+        id: ""
       });
     } else if (type === 'Sub Sub Sub Category') {
       setEditFormData({
@@ -1283,7 +1290,8 @@ export const IncidentSetupDashboard = () => {
         name: item.subSubSubCategory || '',
         level: '',
         escalateInDays: '',
-        users: ''
+        users: '',
+        id: ""
       });
     } else {
       setEditFormData({
@@ -1293,11 +1301,41 @@ export const IncidentSetupDashboard = () => {
         name: item.name || item.subCategory || item.subSubCategory || item.secondarySubCategory || item.secondarySubSubCategory || '',
         level: '',
         escalateInDays: '',
-        users: ''
+        users: '',
+        id: ""
       });
     }
     setIsEditing(true);
   };
+
+  console.log(editFormData)
+
+  const handleEditEsclation = async () => {
+    try {
+      const payload = {
+        escalation_matrix: {
+          id: editFormData.id,
+          name: editFormData.level,
+          after_days: Number(editFormData.escalateInDays),
+          escalate_to_users: editFormData.users // Convert back to array
+        }
+      }
+
+      console.log(payload)
+
+      await axios.put(`${baseUrl}/pms/update_escalation.json`, payload, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        }
+      })
+
+      handleEditBack();
+      fetchEscalationMatrix();
+      toast.success("Escalation updated successfully!");
+    } catch (error) {
+      console.log("error");
+    }
+  }
 
   const handleEditSubmit = async () => {
     console.log('Updating item:', editFormData);
@@ -1839,7 +1877,8 @@ export const IncidentSetupDashboard = () => {
       name: '',
       level: '',
       escalateInDays: '',
-      users: ''
+      users: '',
+      id: ""
     });
   };
 
@@ -1853,7 +1892,8 @@ export const IncidentSetupDashboard = () => {
       name: '',
       level: '',
       escalateInDays: '',
-      users: ''
+      users: '',
+      id: ""
     });
   };
 
@@ -1871,7 +1911,7 @@ export const IncidentSetupDashboard = () => {
       else if (type === 'Secondary Sub Category') fetchFn = fetchSecondarySubCategories;
       else if (type === 'Secondary Sub Sub Category') fetchFn = fetchSecondarySubSubCategories;
       else if (type === 'Secondary Sub Sub Sub Category') fetchFn = fetchSecondarySubSubSubCategories;
-      else if (type === 'Escalations') fetchFn = fetchEscalations;
+      // else if (type === 'Escalations') fetchFn = fetchEscalations;
       else if (type === 'Who got injured') fetchFn = fetchWhoGotInjured;
       else if (type === 'Property Damage Category') fetchFn = fetchPropertyDamageCategories;
       else if (type === 'RCA Category') fetchFn = fetchRCACategories;
@@ -1923,6 +1963,7 @@ export const IncidentSetupDashboard = () => {
       }
     }
   };
+
 
   return (
     <div className="flex-1 p-6 bg-white min-h-screen">
@@ -2008,7 +2049,7 @@ export const IncidentSetupDashboard = () => {
                             const user = escalateToUsersList.find(u => String(u.id) === String(userId));
                             return user ? user.full_name : userId;
                           }).join(', ');
-                          setEditFormData({ ...editFormData, users: userNames });
+                          setEditFormData({ ...editFormData, users: value });
                         }}
                         input={<OutlinedInput label="Escalate To Users" />}
                         renderValue={(selected) => {
@@ -2081,7 +2122,7 @@ export const IncidentSetupDashboard = () => {
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <Button onClick={handleEditSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2">
+                    <Button onClick={handleEditEsclation} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2">
                       Submit
                     </Button>
                     <Button onClick={handleEditBack} variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2">

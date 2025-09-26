@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download, Loader2 } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
@@ -49,7 +49,7 @@ const getCurrentSiteId = (): number => {
 
 
 // API Service using apiConfig
-const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string) => {
+const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.UNEXPECTED_VISITORS);
     const options = getAuthenticatedFetchOptions();
@@ -66,6 +66,12 @@ const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: 
       console.log('✅ Added person to meet filter:', personToMeetId);
     } else {
       console.log('❌ No person to meet filter applied. PersonToMeetId:', personToMeetId);
+    }
+
+    // Add dynamic search filter if provided
+    if (searchTerm && searchTerm.trim() !== '') {
+      urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
+      console.log('✅ Added search filter:', searchTerm);
     }
 
     console.log('🚀 Final URL for unexpected visitors:', urlWithParams.toString());
@@ -86,7 +92,7 @@ const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: 
   }
 };
 
-const getVisitorHistory = async (siteId: number, page: number = 1, perPage: number = 20) => {
+const getVisitorHistory = async (siteId: number, page: number = 1, perPage: number = 20, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.VISITOR_HISTORY);
     const options = getAuthenticatedFetchOptions();
@@ -96,6 +102,12 @@ const getVisitorHistory = async (siteId: number, page: number = 1, perPage: numb
     urlWithParams.searchParams.append('site_id', siteId.toString());
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
+
+    // Add dynamic search filter if provided
+    if (searchTerm && searchTerm.trim() !== '') {
+      urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
+      console.log('✅ Added search filter to visitor history:', searchTerm);
+    }
 
     console.log('🚀 Fetching visitor history from:', urlWithParams.toString());
 
@@ -114,7 +126,7 @@ const getVisitorHistory = async (siteId: number, page: number = 1, perPage: numb
   }
 };
 
-const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string) => {
+const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.EXPECTED_VISITORS);
     const options = getAuthenticatedFetchOptions();
@@ -128,6 +140,12 @@ const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: nu
     // Add person to meet filter if provided
     if (personToMeetId && personToMeetId !== 'all') {
       urlWithParams.searchParams.append('q[person_to_meet_id_or_visitor_hosts_user_id_eq]', personToMeetId);
+    }
+
+    // Add dynamic search filter if provided
+    if (searchTerm && searchTerm.trim() !== '') {
+      urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
+      console.log('✅ Added search filter to expected visitors:', searchTerm);
     }
 
     console.log('🚀 Final URL for expected visitors:', urlWithParams.toString());
@@ -149,7 +167,7 @@ const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: nu
 };
 import { VisitorAnalyticsContent } from '@/components/VisitorAnalyticsContent';
 
-const getVisitorsOut = async (siteId: number, page: number = 1, perPage: number = 20) => {
+const getVisitorsOut = async (siteId: number, page: number = 1, perPage: number = 20, searchTerm?: string) => {
   try {
     const url = getFullUrl('/pms/admin/visitors/visitors_out.json');
     const options = getAuthenticatedFetchOptions();
@@ -159,6 +177,12 @@ const getVisitorsOut = async (siteId: number, page: number = 1, perPage: number 
     urlWithParams.searchParams.append('site_id', siteId.toString());
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
+
+    // Add dynamic search filter if provided
+    if (searchTerm && searchTerm.trim() !== '') {
+      urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
+      console.log('✅ Added search filter to visitors out:', searchTerm);
+    }
 
     console.log('🚀 Fetching visitors out from:', urlWithParams.toString());
 
@@ -191,7 +215,6 @@ export const VisitorsDashboard = () => {
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
-  const [isExportLoading, setIsExportLoading] = useState(false);
   const navigate = useNavigate();
 
   // API State
@@ -244,6 +267,7 @@ export const VisitorsDashboard = () => {
     visitor_type: true,
     status: true,
     check_in_time: true,
+    check_out_time: true,
   });
 
   // Mock visitor data for expected visitors
@@ -283,15 +307,16 @@ export const VisitorsDashboard = () => {
   ];
 
   // Fetch unexpected visitors
-  const fetchUnexpectedVisitors = async (page: number = 1) => {
+  const fetchUnexpectedVisitors = useCallback(async (page: number = 1, searchTerm?: string) => {
     setLoading(true);
     try {
       const siteId = getCurrentSiteId();
       const personToMeetId = unexpectedFilters.personToMeet;
       console.log('🔍 Unexpected visitor filters:', unexpectedFilters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      console.log('🔍 SearchTerm being passed:', searchTerm);
       console.log('🔍 Using site ID:', siteId);
-      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId);
+      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -304,18 +329,19 @@ export const VisitorsDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [unexpectedFilters]);
 
   // Fetch unexpected visitors with explicit filters
-  const fetchUnexpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters) => {
+  const fetchUnexpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters, searchTerm?: string) => {
     setLoading(true);
     try {
       const siteId = getCurrentSiteId();
       const personToMeetId = filters?.personToMeet;
       console.log('🔍 Applying filters directly:', filters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      console.log('🔍 SearchTerm being passed:', searchTerm);
       console.log('🔍 Using site ID:', siteId);
-      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId);
+      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -331,15 +357,16 @@ export const VisitorsDashboard = () => {
   };
 
   // Fetch expected visitors
-  const fetchExpectedVisitors = async (page: number = 1) => {
+  const fetchExpectedVisitors = useCallback(async (page: number = 1, searchTerm?: string) => {
     setExpectedLoading(true);
     try {
       const siteId = getCurrentSiteId();
       const personToMeetId = expectedFilters.personToMeet;
       console.log('🔍 Expected visitor filters:', expectedFilters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      console.log('🔍 SearchTerm being passed:', searchTerm);
       console.log('🔍 Using site ID:', siteId);
-      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId);
+      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -352,18 +379,19 @@ export const VisitorsDashboard = () => {
     } finally {
       setExpectedLoading(false);
     }
-  };
+  }, [expectedFilters]);
 
   // Fetch expected visitors with explicit filters
-  const fetchExpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters) => {
+  const fetchExpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters, searchTerm?: string) => {
     setExpectedLoading(true);
     try {
       const siteId = getCurrentSiteId();
       const personToMeetId = filters?.personToMeet;
       console.log('🔍 Applying filters to expected visitors:', filters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      console.log('🔍 SearchTerm being passed:', searchTerm);
       console.log('🔍 Using site ID:', siteId);
-      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId);
+      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -379,12 +407,13 @@ export const VisitorsDashboard = () => {
   };
 
   // Fetch visitor history
-  const fetchVisitorHistory = async (page: number = 1) => {
+  const fetchVisitorHistory = useCallback(async (page: number = 1, searchTerm?: string) => {
     setHistoryLoading(true);
     try {
       const siteId = getCurrentSiteId();
       console.log('🔍 Using site ID for visitor history:', siteId);
-      const data = await getVisitorHistory(siteId, page);
+      console.log('🔍 SearchTerm being passed to visitor history:', searchTerm);
+      const data = await getVisitorHistory(siteId, page, 20, searchTerm);
       setVisitorHistoryData(data.visitors);
       setHistoryPagination({
         currentPage: data.pagination?.current_page || 1,
@@ -397,15 +426,16 @@ export const VisitorsDashboard = () => {
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, []);
 
   // Fetch visitors out
-  const fetchVisitorsOut = async (page: number = 1) => {
+  const fetchVisitorsOut = useCallback(async (page: number = 1, searchTerm?: string) => {
     setVisitorsOutLoading(true);
     try {
       const siteId = getCurrentSiteId();
       console.log('🔍 Using site ID for visitors out:', siteId);
-      const data = await getVisitorsOut(siteId, page);
+      console.log('🔍 SearchTerm being passed to visitors out:', searchTerm);
+      const data = await getVisitorsOut(siteId, page, 20, searchTerm);
       // Flatten checked_in_at to checked_in_at.formatted for table display
       const mapped = (data.visitors || []).map((v: any) => ({
         ...v,
@@ -423,7 +453,7 @@ export const VisitorsDashboard = () => {
     } finally {
       setVisitorsOutLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Load visitor history when visitor tab is selected
@@ -441,7 +471,7 @@ export const VisitorsDashboard = () => {
     } else if (visitorSubTab === 'history') {
       fetchVisitorHistory();
     }
-  }, [visitorSubTab, activeVisitorType, mainTab]);
+  }, [visitorSubTab, activeVisitorType, mainTab, fetchExpectedVisitors, fetchUnexpectedVisitors, fetchVisitorHistory, fetchVisitorsOut]);
 
   // Filter handlers
   const handleFilterOpen = () => {
@@ -559,6 +589,7 @@ export const VisitorsDashboard = () => {
     { key: 'visitor_type', label: 'Visitor Type', sortable: true, hideable: true, draggable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
     { key: 'check_in_time', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
+    { key: 'check_out_time', label: 'Check-Out Time', sortable: true, hideable: true, draggable: true },
 
     // { key: 'pass_number', label: 'Pass Number', sortable: true, hideable: true, draggable: true }
   ];
@@ -951,14 +982,71 @@ export const VisitorsDashboard = () => {
     // Handle number update logic here
   };
 
+  // Debounced search effect - this triggers API calls when search term changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      console.log('🔍 Debounced search triggered with term:', searchTerm);
+      
+      if (mainTab === 'visitor') {
+        if (visitorSubTab === 'history') {
+          console.log('📞 Calling fetchVisitorHistory with search term:', searchTerm);
+          fetchVisitorHistory(1, searchTerm);
+        } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+          console.log('📞 Calling fetchUnexpectedVisitors with search term:', searchTerm);
+          fetchUnexpectedVisitors(1, searchTerm);
+        } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
+          console.log('📞 Calling fetchExpectedVisitors with search term:', searchTerm);
+          fetchExpectedVisitors(1, searchTerm);
+        } else if (visitorSubTab === 'visitor-out') {
+          console.log('📞 Calling fetchVisitorsOut with search term:', searchTerm);
+          fetchVisitorsOut(1, searchTerm);
+        }
+      }
+    }, 300); // Reduced to 300ms for faster response
+
+    return () => {
+      console.log('🔍 Clearing search timeout');
+      clearTimeout(timeoutId);
+    };
+  }, [searchTerm, mainTab, visitorSubTab, activeVisitorType, fetchExpectedVisitors, fetchUnexpectedVisitors, fetchVisitorHistory, fetchVisitorsOut]);
+
   const handleSearch = () => {
-    console.log('Searching for:', searchTerm);
-    // Handle search logic here
+    console.log('🔍 Manual search triggered for:', searchTerm);
+    console.log('📍 Current tab state - mainTab:', mainTab, 'visitorSubTab:', visitorSubTab, 'activeVisitorType:', activeVisitorType);
+    
+    // Trigger immediate search
+    if (mainTab === 'visitor') {
+      if (visitorSubTab === 'history') {
+        console.log('📞 Manual call to fetchVisitorHistory');
+        fetchVisitorHistory(1, searchTerm);
+      } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+        console.log('📞 Manual call to fetchUnexpectedVisitors');
+        fetchUnexpectedVisitors(1, searchTerm);
+      } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
+        console.log('📞 Manual call to fetchExpectedVisitors');
+        fetchExpectedVisitors(1, searchTerm);
+      } else if (visitorSubTab === 'visitor-out') {
+        console.log('📞 Manual call to fetchVisitorsOut');
+        fetchVisitorsOut(1, searchTerm);
+      }
+    }
   };
 
   const handleReset = () => {
     setSearchTerm('');
     console.log('Search reset');
+    // Trigger search with empty term
+    if (mainTab === 'visitor') {
+      if (visitorSubTab === 'history') {
+        fetchVisitorHistory(1, '');
+      } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+        fetchUnexpectedVisitors(1, '');
+      } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
+        fetchExpectedVisitors(1, '');
+      } else if (visitorSubTab === 'visitor-out') {
+        fetchVisitorsOut(1, '');
+      }
+    }
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -1291,7 +1379,10 @@ export const VisitorsDashboard = () => {
   const handleExport = async () => {
     console.log('VisitorsDashboard - Export clicked');
     
-    setIsExportLoading(true);
+    // Show loading toast with infinite duration
+    const loadingToastId = toast.loading("Preparing export file...", {
+      duration: Infinity, // Keep it visible until we dismiss it
+    });
     
     try {
       console.log('📥 Exporting visitor history data');
@@ -1342,10 +1433,16 @@ export const VisitorsDashboard = () => {
       window.URL.revokeObjectURL(downloadUrl);
       
       console.log('✅ Export completed successfully');
-      toast.success('Visitor history exported successfully.');
+      
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToastId);
+      toast.success('Visitor history exported successfully!');
       
     } catch (error) {
       console.error('❌ Export failed:', error);
+      
+      // Dismiss loading toast and show error
+      toast.dismiss(loadingToastId);
       
       // Handle authentication errors specifically
       if (error instanceof Error && error.message.includes('Authentication failed')) {
@@ -1354,8 +1451,6 @@ export const VisitorsDashboard = () => {
       }
       
       toast.error(`Failed to export visitor history: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsExportLoading(false);
     }
   };
 
@@ -1512,7 +1607,17 @@ export const VisitorsDashboard = () => {
   };
 
   const handlePageChange = (page: number) => {
-    fetchVisitorHistory(page);
+    if (mainTab === 'visitor') {
+      if (visitorSubTab === 'history') {
+        fetchVisitorHistory(page, searchTerm);
+      } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+        fetchUnexpectedVisitors(page, searchTerm);
+      } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
+        fetchExpectedVisitors(page, searchTerm);
+      } else if (visitorSubTab === 'visitor-out') {
+        fetchVisitorsOut(page, searchTerm);
+      }
+    }
   };
 
   return (
@@ -1723,6 +1828,11 @@ export const VisitorsDashboard = () => {
               selectable={true}
               renderCell={renderVisitorHistoryCell}
               enableSearch={true}
+              enableGlobalSearch={true}
+              onGlobalSearch={(searchTerm: string) => {
+                console.log('🔍 EnhancedTable search triggered with:', searchTerm);
+                setSearchTerm(searchTerm);
+              }}
               enableSelection={true}
               selectedItems={selectedVisitors.map(id => id.toString())}
               onSelectItem={(visitorIdString: string, checked: boolean) => 
@@ -1731,11 +1841,12 @@ export const VisitorsDashboard = () => {
               onSelectAll={handleSelectAll}
               getItemId={visitor => visitor.id.toString()}
               // enableExport={true}
+              handleExport={handleExport}
               exportFileName="visitor-history"
               pagination={false}
               storageKey="visitor-history-table"
               emptyMessage="No visitor history available"
-              searchPlaceholder="Search..."
+              searchPlaceholder="Search visitors..."
               hideColumnsButton={true}
               onFilterClick={handleFilterOpen}
               leftActions={
@@ -1754,22 +1865,11 @@ export const VisitorsDashboard = () => {
                   {/* Export Button */}
                   <Button
                     onClick={handleExport}
-                    disabled={isExportLoading}
                     variant="outline"
                     size="sm"
                     className="h-9 px-3 bg-white hover:bg-gray-50 border-gray-300"
                   >
-                    {isExportLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Exporting...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 " />
-                        
-                      </>
-                    )}
+                    <Download className="w-4 h-4 " />
                   </Button>
                   <ColumnVisibilityMenu
                     columns={visitorHistoryColumns}

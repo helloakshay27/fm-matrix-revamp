@@ -90,11 +90,6 @@ export const SubCategoriesSetupTable = () => {
     setIsEditModalOpen(true);
   };
 
-  const openDeleteDialog = (subCategory: SubCategory) => {
-    setSelectedSubCategory(subCategory);
-    setIsDeleteDialogOpen(true);
-  };
-
   const renderRow = (item: SubCategory) => ({
     category: item.category_name,
     subCategory: item.name,
@@ -117,33 +112,14 @@ export const SubCategoriesSetupTable = () => {
         >
           <Pencil className="w-4 h-4" />
         </Button>
-        {/* <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => openDeleteDialog(item)}
-          className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button> */}
       </div>
     )
   });
 
   return (
     <div className="space-y-4">
-      {/* <div className="flex justify-start">
-        <Button
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </Button>
-      </div> */}
-
       {showActionPanel && (
         <SelectionPanel
-          // actions={selectionActions}
           onAdd={() => setIsAddModalOpen(true)}
           onClearSelection={() => setShowActionPanel(false)}
         />

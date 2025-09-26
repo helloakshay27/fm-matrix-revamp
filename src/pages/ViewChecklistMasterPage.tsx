@@ -11,8 +11,12 @@ import {
   Radio,
   FormControlLabel,
   Autocomplete,
+  Box,
+  Typography,
 } from '@mui/material';
 import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { useQuery } from '@tanstack/react-query';
+import { fetchAssetTypes } from '@/services/assetTypesAPI';
 
 const fieldStyles = {
   height: { xs: 36, sm: 40, md: 44 },
@@ -29,6 +33,16 @@ export const ViewChecklistMasterPage = () => {
   const [checklistData, setChecklistData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Fetch asset types data from API
+  const {
+    data: assetTypes,
+    isLoading: isLoadingAssetTypes,
+    error: assetTypesError
+  } = useQuery({
+    queryKey: ['asset-types'],
+    queryFn: fetchAssetTypes
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -54,7 +68,7 @@ export const ViewChecklistMasterPage = () => {
   }, [id]);
 
   const handleEditDetails = () => {
-    navigate(`/settings/masters/checklist-master/edit/${id}`);
+    navigate(`/master/checklist-master/edit/${id}`);
   };
 
   if (!checklistData) {
@@ -73,19 +87,43 @@ export const ViewChecklistMasterPage = () => {
     );
   }
 
+  // Get asset type name from ID
+  const getAssetTypeName = (assetTypeId: number) => {
+    if (!assetTypes || !assetTypeId) return '';
+    const assetType = assetTypes.find(type => type.id === assetTypeId);
+    return assetType ? assetType.name : '';
+  };
+
+  // Parse schedule for from checklist_for
+  const getScheduleFor = (checklistFor: string) => {
+    if (!checklistFor) return '';
+    const parts = checklistFor.split('::');
+    if (parts.length > 1) {
+      const scheduleForPart = parts[1].toLowerCase();
+      if (scheduleForPart.includes('asset')) {
+        return 'Asset';
+      } else if (scheduleForPart.includes('service')) {
+        return 'Service';
+      } else if (scheduleForPart.includes('vendor')) {
+        return 'Vendor';
+      }
+    }
+    return '';
+  };
+
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-screen-xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Button 
-            onClick={() => navigate('/settings/masters/checklist-master')}
+          <Button
+            onClick={() => navigate('/master/checklist')}
             variant="outline"
           >
             ← Back to List
           </Button>
         </div>
 
-        <Button 
+        <Button
           onClick={handleEditDetails}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:opacity-90"
@@ -96,18 +134,10 @@ export const ViewChecklistMasterPage = () => {
 
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center space-x-2">
-          <Checkbox 
-            checked={!!checklistData.create_ticket} 
+          <Checkbox
+            checked={!!checklistData.weightage_enabled}
             disabled
-            id="createTicket" 
-          />
-          <Label htmlFor="createTicket">Create Ticket</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            checked={!!checklistData.weightage_enabled} 
-            disabled
-            id="weightage" 
+            id="weightage"
           />
           <Label htmlFor="weightage">Weightage</Label>
         </div>
@@ -149,7 +179,7 @@ export const ViewChecklistMasterPage = () => {
             <div>
               <Label className="mb-2 block text-sm font-medium">Schedule For</Label>
               <RadioGroup
-                value={checklistData.checklist_for?.split('::')[1] || ''}
+                value={getScheduleFor(checklistData.checklist_for)}
                 row
                 sx={{
                   '& .MuiFormControlLabel-root .MuiRadio-root': {
@@ -177,7 +207,7 @@ export const ViewChecklistMasterPage = () => {
               value={checklistData.form_name || ''}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ 
+              InputProps={{
                 sx: fieldStyles,
                 readOnly: true
               }}
@@ -187,16 +217,30 @@ export const ViewChecklistMasterPage = () => {
             <TextField
               fullWidth
               label="Description"
-              // placeholder="Description"
               value={checklistData.description || ''}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ 
+              InputProps={{
                 sx: fieldStyles,
                 readOnly: true
               }}
               disabled={true}
             />
+
+            {getScheduleFor(checklistData.checklist_for) === 'Asset' && checklistData.asset_meter_type_id && (
+              <TextField
+                fullWidth
+                label="Asset Type"
+                value={getAssetTypeName(checklistData.asset_meter_type_id)}
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  sx: fieldStyles,
+                  readOnly: true
+                }}
+                disabled={true}
+              />
+            )}
           </div>
         </div>
 
@@ -222,7 +266,7 @@ export const ViewChecklistMasterPage = () => {
                   value={task.label || ''}
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ 
+                  InputProps={{
                     sx: fieldStyles,
                     readOnly: true
                   }}
@@ -241,12 +285,12 @@ export const ViewChecklistMasterPage = () => {
                     ]}
                     value={
                       task.type === 'radio-group' ? 'Radio Button'
-                      : task.type === 'text' ? 'Text'
-                      : task.type === 'checkbox-group' ? 'Checkbox'
-                      : task.type === 'select' ? 'Dropdown'
-                      : task.type === 'number' ? 'Number'
-                      : task.type === 'date' ? 'Date'
-                      : task.type
+                        : task.type === 'text' ? 'Text'
+                          : task.type === 'checkbox-group' ? 'Checkbox'
+                            : task.type === 'select' ? 'Dropdown'
+                              : task.type === 'number' ? 'Number'
+                                : task.type === 'date' ? 'Date'
+                                  : task.type
                     }
                     renderInput={(params) => (
                       <TextField
@@ -306,51 +350,80 @@ export const ViewChecklistMasterPage = () => {
 
                 {Array.isArray(task.values) && task.values.length > 0 && (
                   <div className="md:col-span-2 mt-4">
-                    <div className="mb-2">
-                      <Label className="text-sm font-medium">Selected Enter Value</Label>
-                    </div>
-                    <div className="space-y-2 border rounded p-3">
-                      <div className="grid grid-cols-12 gap-2 items-center font-medium text-sm text-gray-600 mb-2">
-                        <div className="col-span-1">Selected</div>
-                        <div className="col-span-5">Enter Value</div>
-                        <div className="col-span-6">P</div>
-                      </div>
+                    <Box sx={{
+                      backgroundColor: '#F5F5F5',
+                      border: '1px solid #E0E0E0',
+                      borderRadius: 0,
+                      padding: 2
+                    }}>
+                      {task.type === 'select' ? (
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
+                          Enter Value
+                        </Typography>
+                      ) : (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                            Selected
+                          </Typography>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                            Enter Value
+                          </Typography>
+                        </Box>
+                      )}
+                      
                       {task.values.map((option, optionIndex) => (
-                        <div key={optionIndex} className="grid grid-cols-12 gap-2 items-center">
-                          <div className="col-span-1">
-                            <input
-                              type="radio"
-                              name={`option-${task.name}`}
-                              className="accent-[#C72030]"
-                              disabled
-                              checked={optionIndex === 0}
-                            />
-                          </div>
-                          <div className="col-span-5">
-                            <TextField
-                              fullWidth
-                              size="small"
-                              value={option.label || ''}
-                              InputProps={{ 
-                                sx: { height: 32 },
-                                readOnly: true
-                              }}
-                            />
-                          </div>
-                          <div className="col-span-6">
-                            <TextField
-                              fullWidth
-                              size="small"
-                              value={option.type || ''}
-                              InputProps={{ 
-                                sx: { height: 32 },
-                                readOnly: true
-                              }}
-                            />
-                          </div>
-                        </div>
+                        <Box key={optionIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                          {task.type === 'select' ? null : (
+                            task.type === 'checkbox-group' ? (
+                              <MuiCheckbox
+                                checked={optionIndex === 0}
+                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                disabled
+                              />
+                            ) : (
+                              <Radio
+                                checked={optionIndex === 0}
+                                name={`option-${task.name}`}
+                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                disabled
+                              />
+                            )
+                          )}
+                          
+                          <TextField
+                            fullWidth
+                            size="small"
+                            value={option.label || ''}
+                            InputProps={{
+                              sx: { 
+                                height: 32,
+                                '& .MuiOutlinedInput-root': {
+                                  backgroundColor: 'white'
+                                }
+                              },
+                              readOnly: true
+                            }}
+                            disabled
+                          />
+                          
+                          <TextField
+                            size="small"
+                            value={option.type.toLowerCase() === 'positive' ?  'P' : option.type.toLowerCase() === 'negative' ? 'N' : '' }
+                            InputProps={{
+                              sx: { 
+                                height: 32, 
+                                width: 80,
+                                '& .MuiOutlinedInput-root': {
+                                  backgroundColor: 'white'
+                                }
+                              },
+                              readOnly: true
+                            }}
+                            disabled
+                          />
+                        </Box>
                       ))}
-                    </div>
+                    </Box>
                   </div>
                 )}
               </div>

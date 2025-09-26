@@ -18,10 +18,35 @@ import {
 } from "@/components/ui/pagination";
 import { BulkUploadModal } from "@/components/BulkUploadModal";
 import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useNavigate } from "react-router-dom";
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999, // High z-index to ensure dropdown appears above other elements
+    },
+  },
+  // Prevent focus conflicts with Dialog
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 // Define the data structure based on the actual API response
 interface ParkingBookingUser {
@@ -147,6 +172,7 @@ interface ApiFilterParams {
 interface ParkingBookingSite {
   id: number;
   employee_name: string;
+  employee_email: string;
   schedule_date: string;
   booking_schedule: string;
   category: string;
@@ -215,6 +241,7 @@ const ParkingBookingListSiteWise = () => {
     return parkingBookings.map((booking, index) => ({
       id: booking.id,
       employee_name: booking.user.full_name,
+      employee_email: booking.user.email,
       schedule_date: booking.booking_date,
       booking_schedule: booking.booking_schedule,
       category: booking.parking_configuration.parking_category.name,
@@ -304,6 +331,7 @@ const ParkingBookingListSiteWise = () => {
     { key: 'sr_no', label: 'Sr No.', visible: true },
     // { key: 'id', label: 'ID', visible: true },
     { key: 'employee_name', label: 'Employee Name', visible: true },
+    { key: 'employee_email', label: 'Employee Email ID', visible: true },
     { key: 'schedule_date', label: 'Schedule Date', visible: true },
     { key: 'booking_schedule', label: 'Booking Time', visible: true },
     { key: 'category', label: 'Category', visible: true },
@@ -573,11 +601,11 @@ const ParkingBookingListSiteWise = () => {
     if (!cards) {
       return [
         // First row - Car parking stats
-        { title: "Total Parking for Car", count: 0, icon: Car },
+        { title: "Total Parking for 4 Wheeler", count: 0, icon: Car },
         { title: "Total Booked Parking", count: 0, icon: CheckCircle },
         { title: "Total Vacant Parking", count: 0, icon: AlertTriangle },
         // Second row - Bike parking stats
-        { title: "Total Parking for Bikes", count: 0, icon: Bike },
+        { title: "Total Parking for 2 Wheeler", count: 0, icon: Bike },
         { title: "Total Booked Parking", count: 0, icon: CheckCircle },
         { title: "Total Vacant Parking", count: 0, icon: AlertTriangle }
       ];
@@ -585,11 +613,11 @@ const ParkingBookingListSiteWise = () => {
 
     return [
       // First row - Car parking stats
-      { title: "Total Parking for Car", count: cards.total_four_wheeler, icon: Car },
+      { title: "Total Parking for 4 Wheeler", count: cards.total_four_wheeler, icon: Car },
       { title: "Total Booked Parking", count: Math.abs(cards.total_four_wheeler - cards.vacant_four_wheeler), icon: CheckCircle },
       { title: "Total Vacant Parking", count: cards.vacant_four_wheeler, icon: AlertTriangle },
       // Second row - Bike parking stats
-      { title: "Total Parking for Bikes", count: cards.total_two_wheeler, icon: Bike },
+      { title: "Total Parking for 2 Wheeler", count: cards.total_two_wheeler, icon: Bike },
       { title: "Total Booked Parking", count: Math.abs(cards.total_two_wheeler - cards.vacant_two_wheeler), icon: CheckCircle },
       { title: "Total Vacant Parking", count: cards.vacant_two_wheeler, icon: AlertTriangle }
     ];
@@ -839,6 +867,7 @@ const ParkingBookingListSiteWise = () => {
     const filtered = bookingData.filter(booking => {
       const searchableFields = [
         booking.employee_name,
+        booking.employee_email,
         booking.designation,
         booking.department,
         booking.category,
@@ -1147,6 +1176,7 @@ const ParkingBookingListSiteWise = () => {
               {isColumnVisible('sr_no') && <TableHead className="font-semibold">Sr No.</TableHead>}
               {/* {isColumnVisible('id') && <TableHead className="font-semibold">ID</TableHead>} */}
               {isColumnVisible('employee_name') && <TableHead className="font-semibold">Employee Name</TableHead>}
+              {isColumnVisible('employee_email') && <TableHead className="font-semibold">Employee Email ID</TableHead>}
               {isColumnVisible('schedule_date') && <TableHead className="font-semibold">Schedule Date</TableHead>}
               {isColumnVisible('booking_schedule') && <TableHead className="font-semibold">Booking Time</TableHead>}
               {isColumnVisible('category') && <TableHead className="font-semibold">Category</TableHead>}
@@ -1191,12 +1221,15 @@ const ParkingBookingListSiteWise = () => {
                   {isColumnVisible('employee_name') && (
                     <TableCell>{row.employee_name}</TableCell>
                   )}
+                  {isColumnVisible('employee_email') && (
+                    <TableCell>{row.employee_email}</TableCell>
+                  )}
                   {isColumnVisible('schedule_date') && <TableCell>{row.schedule_date}</TableCell>}
                   {isColumnVisible('booking_schedule') && <TableCell>{row.booking_schedule}</TableCell>}
                   {isColumnVisible('category') && (
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {row.category === 'Two Wheeler' ? <Bike className="w-4 h-4" /> : <Car className="w-4 h-4" />}
+                        {/* {row.category === 'Two Wheeler' ? <Bike className="w-4 h-4" /> : <Car className="w-4 h-4" />} */}
                         {row.category}
                       </div>
                     </TableCell>
@@ -1247,10 +1280,10 @@ const ParkingBookingListSiteWise = () => {
       {totalPages > 1 && (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="text-sm text-gray-700">
+            {/* <div className="text-sm text-gray-700">
               Showing page {apiPagination.current_page} of {apiPagination.total_pages} 
               ({apiPagination.total_count} total items)
-            </div>
+            </div> */}
           </div>
           <Pagination>
             <PaginationContent>
@@ -1406,142 +1439,172 @@ const ParkingBookingListSiteWise = () => {
       )}
 
       {/* Filters Modal */}
-      <Dialog open={showFiltersModal} onOpenChange={setShowFiltersModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white">
-          <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-            <DialogTitle className="text-xl font-bold text-[hsl(var(--analytics-text))]">FILTER BY</DialogTitle>
-            <Button variant="ghost" size="sm" onClick={() => setShowFiltersModal(false)}>
-              <X className="w-4 h-4" />
+      <Dialog open={showFiltersModal} onOpenChange={setShowFiltersModal} modal={false}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white" aria-describedby="parking-filter-dialog-description">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <DialogTitle className="text-lg font-semibold text-gray-900">FILTER BY</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFiltersModal(false)}
+              className="h-6 w-6 p-0 hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
             </Button>
+            <div id="parking-filter-dialog-description" className="sr-only">
+              Filter parking bookings by category, user, parking slot, status, and date ranges
+            </div>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
             {/* Filter Options Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-[hsl(var(--analytics-text))]">Filter Options</h3>
-              <div className="grid grid-cols-3 gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">Filter Options</h3>
+              <div className="grid grid-cols-2 gap-6">
                 {/* Category */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Category</Label>
-                  <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
-                    <SelectTrigger className="h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {parkingCategories.map(category => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="category-label" shrink>Category</InputLabel>
+                  <MuiSelect
+                    labelId="category-label"
+                    label="Category"
+                    value={filters.category}
+                    onChange={(e) => handleFilterChange('category', e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="all"><em>All Categories</em></MenuItem>
+                    {parkingCategories.map(category => (
+                      <MenuItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
 
                 {/* User */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">User</Label>
-                  <Select value={filters.user} onValueChange={(value) => handleFilterChange('user', value)}>
-                    <SelectTrigger className="h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white">
-                      <SelectValue placeholder="Select User" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
-                      <SelectItem value="all">All Users</SelectItem>
-                      {users.map(user => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.full_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="user-label" shrink>User</InputLabel>
+                  <MuiSelect
+                    labelId="user-label"
+                    label="User"
+                    value={filters.user}
+                    onChange={(e) => handleFilterChange('user', e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="all"><em>All Users</em></MenuItem>
+                    {users.map(user => (
+                      <MenuItem key={user.id} value={user.id.toString()}>
+                        {user.full_name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
 
                 {/* Parking Slot */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Parking Slot</Label>
-                  <Input
-                    placeholder="Enter parking slot"
-                    value={filters.parking_slot}
-                    onChange={(e) => handleFilterChange('parking_slot', e.target.value)}
-                    className="h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white"
-                  />
-                </div>
-
+                <TextField
+                  label="Parking Slot"
+                  placeholder="Enter parking slot"
+                  value={filters.parking_slot}
+                  onChange={(e) => handleFilterChange('parking_slot', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="status-label" shrink>Status</InputLabel>
+                  <MuiSelect
+                    labelId="status-label"
+                    label="Status"
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="all"><em>All Statuses</em></MenuItem>
+                    {getUniqueValues('status').map(status => (
+                      <MenuItem key={status} value={status}>
+                        {status}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-6 mt-4">
                 {/* Status */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Status</Label>
-                  <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-                    <SelectTrigger className="h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white">
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-[hsl(var(--analytics-border))] max-h-60">
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      {getUniqueValues('status').map(status => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              </div>
+            </div>
 
+            {/* Date Filters Section */}
+            <div>
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">Date Filters</h3>
+              <div className="grid grid-cols-2 gap-6">
                 {/* Scheduled On */}
-                <div className="space-y-2 col-span-2">
-                  <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Scheduled On</Label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">From Date</Label>
-                      <Input
-                        type="date"
-                        placeholder="Select from date"
-                        value={filters.scheduled_on_from}
-                        onChange={(e) => handleFilterChange('scheduled_on_from', e.target.value)}
-                        className="h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white cursor-pointer w-full"
-                        max="9999-12-31"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">To Date</Label>
-                      <Input
-                        type="date"
-                        placeholder="Select to date"
-                        value={filters.scheduled_on_to}
-                        onChange={(e) => handleFilterChange('scheduled_on_to', e.target.value)}
-                        className="h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white cursor-pointer w-full"
-                        min={filters.scheduled_on_from || undefined}
-                        max="9999-12-31"
-                      />
-                    </div>
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium text-gray-700">Scheduled On</Label>
+                  <div className="grid grid-cols-1 gap-3">
+                    <TextField
+                      label="From Date"
+                      type="date"
+                      value={filters.scheduled_on_from}
+                      onChange={(e) => handleFilterChange('scheduled_on_from', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ max: "9999-12-31" }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
+                    <TextField
+                      label="To Date"
+                      type="date"
+                      value={filters.scheduled_on_to}
+                      onChange={(e) => handleFilterChange('scheduled_on_to', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ 
+                        min: filters.scheduled_on_from || undefined,
+                        max: "9999-12-31"
+                      }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
                   </div>
                 </div>
 
                 {/* Booked On */}
-                <div className="space-y-2 col-span-2">
-                  <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Booked On</Label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">From Date</Label>
-                      <Input
-                        type="date"
-                        placeholder="Select from date"
-                        value={filters.booked_on_from}
-                        onChange={(e) => handleFilterChange('booked_on_from', e.target.value)}
-                        className="h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white cursor-pointer w-full"
-                        max="9999-12-31"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-gray-500">To Date</Label>
-                      <Input
-                        type="date"
-                        placeholder="Select to date"
-                        value={filters.booked_on_to}
-                        onChange={(e) => handleFilterChange('booked_on_to', e.target.value)}
-                        className="h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white cursor-pointer w-full"
-                        min={filters.booked_on_from || undefined}
-                        max="9999-12-31"
-                      />
-                    </div>
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium text-gray-700">Booked On</Label>
+                  <div className="grid grid-cols-1 gap-3">
+                    <TextField
+                      label="From Date"
+                      type="date"
+                      value={filters.booked_on_from}
+                      onChange={(e) => handleFilterChange('booked_on_from', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ max: "9999-12-31" }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
+                    <TextField
+                      label="To Date"
+                      type="date"
+                      value={filters.booked_on_to}
+                      onChange={(e) => handleFilterChange('booked_on_to', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ 
+                        min: filters.booked_on_from || undefined,
+                        max: "9999-12-31"
+                      }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
                   </div>
                 </div>
               </div>
@@ -1550,10 +1613,10 @@ const ParkingBookingListSiteWise = () => {
             {/* Active Filters Display */}
             {(filters.category !== 'all' || filters.user !== 'all' || filters.parking_slot.trim() || filters.status !== 'all' || filters.scheduled_on_from.trim() || filters.scheduled_on_to.trim() || filters.booked_on_from.trim() || filters.booked_on_to.trim()) && (
               <div className="border-t pt-4">
-                <h4 className="text-sm font-medium text-[hsl(var(--analytics-text))] mb-2">Active Filters:</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Active Filters:</h4>
                 <div className="flex flex-wrap gap-2">
                   {filters.category !== 'all' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[hsl(var(--analytics-primary))] text-white text-xs rounded-full">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
                       Category: {parkingCategories.find(cat => cat.id.toString() === filters.category)?.name || filters.category}
                       <button onClick={() => handleFilterChange('category', 'all')}>
                         <X className="w-3 h-3" />
@@ -1561,15 +1624,15 @@ const ParkingBookingListSiteWise = () => {
                     </span>
                   )}
                   {filters.user !== 'all' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[hsl(var(--analytics-primary))] text-white text-xs rounded-full">
-                      User: {filters.user}
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      User: {users.find(u => u.id.toString() === filters.user)?.full_name || filters.user}
                       <button onClick={() => handleFilterChange('user', 'all')}>
                         <X className="w-3 h-3" />
                       </button>
                     </span>
                   )}
                   {filters.parking_slot.trim() && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[hsl(var(--analytics-primary))] text-white text-xs rounded-full">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
                       Parking Slot: {filters.parking_slot}
                       <button onClick={() => handleFilterChange('parking_slot', '')}>
                         <X className="w-3 h-3" />
@@ -1577,7 +1640,7 @@ const ParkingBookingListSiteWise = () => {
                     </span>
                   )}
                   {filters.status !== 'all' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[hsl(var(--analytics-primary))] text-white text-xs rounded-full">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
                       Status: {filters.status}
                       <button onClick={() => handleFilterChange('status', 'all')}>
                         <X className="w-3 h-3" />
@@ -1585,7 +1648,7 @@ const ParkingBookingListSiteWise = () => {
                     </span>
                   )}
                   {(filters.scheduled_on_from.trim() || filters.scheduled_on_to.trim()) && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[hsl(var(--analytics-primary))] text-white text-xs rounded-full">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
                       Scheduled On: {filters.scheduled_on_from && filters.scheduled_on_to ? `${filters.scheduled_on_from} to ${filters.scheduled_on_to}` : filters.scheduled_on_from || filters.scheduled_on_to}
                       <button onClick={() => {
                         handleFilterChange('scheduled_on_from', '');
@@ -1596,7 +1659,7 @@ const ParkingBookingListSiteWise = () => {
                     </span>
                   )}
                   {(filters.booked_on_from.trim() || filters.booked_on_to.trim()) && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[hsl(var(--analytics-primary))] text-white text-xs rounded-full">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
                       Booked On: {filters.booked_on_from && filters.booked_on_to ? `${filters.booked_on_from} to ${filters.booked_on_to}` : filters.booked_on_from || filters.booked_on_to}
                       <button onClick={() => {
                         handleFilterChange('booked_on_from', '');
@@ -1611,19 +1674,20 @@ const ParkingBookingListSiteWise = () => {
             )}
 
             {/* Action Buttons */}
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+              <Button 
+                variant="secondary" 
+                onClick={() => setShowFiltersModal(false)}
+                className="flex-1 h-11"
+              >
+                Apply
+              </Button>
               <Button 
                 variant="outline" 
                 onClick={handleClearFilters}
-                className="text-[hsl(var(--analytics-text))] border-[hsl(var(--analytics-border))]"
+                className="flex-1 h-11"
               >
-                Clear All Filters
-              </Button>
-              <Button 
-                onClick={() => setShowFiltersModal(false)}
-                className="bg-[hsl(var(--analytics-primary))] hover:bg-[hsl(var(--analytics-primary))]/90 text-white"
-              >
-                Apply Filters
+                Reset
               </Button>
             </div>
           </div>

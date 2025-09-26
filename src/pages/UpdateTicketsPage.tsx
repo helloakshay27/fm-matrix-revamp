@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Upload, X, Download, User, Ticket, Settings, FileText, Users, AlertTriangle, Building, DollarSign } from "lucide-react";
@@ -479,41 +479,8 @@ const UpdateTicketsPage: React.FC = () => {
     complaintStatuses,
   ]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const [statusResponse, usersResponse, complaintModesResponse] =
-          await Promise.all([
-            apiClient.get("/pms/admin/complaint_statuses.json"),
-            apiClient.get("/pms/users/get_escalate_to_users.json"),
-            apiClient.get("/pms/admin/complaint_modes.json"),
-          ]);
-
-        setComplaintStatuses(statusResponse.data || []);
-        setFmUsers(usersResponse.data.users || []);
-        setComplaintModes(complaintModesResponse.data || []);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load form data.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-    dispatch(fetchHelpdeskCategories());
-  }, [toast, dispatch]);
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const fetchAssets = async () => {
+  // Define fetchAssets and fetchServices before useEffect hooks to avoid hoisting issues
+  const fetchAssets = useCallback(async (shouldSetSelectedValue = true) => {
     if (isLoadingAssets) return;
 
     setIsLoadingAssets(true);
@@ -529,8 +496,9 @@ const UpdateTicketsPage: React.FC = () => {
 
       setAssetOptions(assets);
 
-      // If we have ticket data with asset_or_service_id, match it after setting the options
+      // Only set the selected value if we should (during initial load) and we have ticket data
       if (
+        shouldSetSelectedValue &&
         ticketApiData?.asset_service === "Asset" &&
         ticketApiData?.asset_or_service_id
       ) {
@@ -584,9 +552,9 @@ const UpdateTicketsPage: React.FC = () => {
     } finally {
       setIsLoadingAssets(false);
     }
-  };
+  }, [isLoadingAssets, ticketApiData, toast]);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async (shouldSetSelectedValue = true) => {
     if (isLoadingServices) return;
 
     setIsLoadingServices(true);
@@ -597,13 +565,14 @@ const UpdateTicketsPage: React.FC = () => {
       console.log("📦 Services received:", services.length, "items");
       console.log(
         "📦 Sample services:",
-        services.slice(0, 3).map((s) => ({ id: s.id, name: s.name }))
+        services.slice(0, 3).map((s) => ({ id: s.id, name: s.service_name || s.name }))
       );
 
       setServiceOptions(services);
 
-      // If we have ticket data with asset_or_service_id, match it after setting the options
+      // Only set the selected value if we should (during initial load) and we have ticket data
       if (
+        shouldSetSelectedValue &&
         ticketApiData?.asset_service === "Service" &&
         ticketApiData?.asset_or_service_id
       ) {
@@ -635,7 +604,7 @@ const UpdateTicketsPage: React.FC = () => {
             "📦 Setting selectedService to ID:",
             matchingService.id,
             "Name:",
-            matchingService.name
+            matchingService.service_name || matchingService.name
           );
           setFormData((prev) => ({
             ...prev,
@@ -660,6 +629,175 @@ const UpdateTicketsPage: React.FC = () => {
     } finally {
       setIsLoadingServices(false);
     }
+  }, [isLoadingServices, ticketApiData, toast]);
+
+  // Handle asset/service loading when associatedTo changes
+  useEffect(() => {
+    console.log("🔄 AssociatedTo change detected:", formData.associatedTo);
+    
+    // Fetch assets when asset checkbox is checked and we don't have asset options yet
+    if (formData.associatedTo.asset && assetOptions.length === 0 && !isLoadingAssets) {
+      console.log("🔄 Fetching assets due to checkbox change");
+      fetchAssets(false); // Don't auto-select during manual changes
+    }
+    
+    // Fetch services when service checkbox is checked and we don't have service options yet
+    if (formData.associatedTo.service && serviceOptions.length === 0 && !isLoadingServices) {
+      console.log("🔄 Fetching services due to checkbox change");
+      fetchServices(false); // Don't auto-select during manual changes
+    }
+  }, [
+    formData.associatedTo, 
+    assetOptions.length, 
+    serviceOptions.length, 
+    isLoadingAssets, 
+    isLoadingServices, 
+    fetchAssets, 
+    fetchServices
+  ]);
+
+  // Synchronize asset/service selection when options become available
+  useEffect(() => {
+    console.log("🔄 Asset/Service options synchronization check");
+    console.log("🔄 ticketApiData available:", !!ticketApiData);
+    console.log("🔄 Asset service type:", ticketApiData?.asset_service);
+    console.log("🔄 Asset options length:", assetOptions.length);
+    console.log("🔄 Service options length:", serviceOptions.length);
+    console.log("🔄 Current form selections:", {
+      selectedAsset: formData.selectedAsset,
+      selectedService: formData.selectedService,
+      associatedTo: formData.associatedTo
+    });
+
+    // If we have ticket data with asset/service info but haven't set the selection yet
+    if (ticketApiData && ticketApiData.asset_or_service_id) {
+      const targetId = ticketApiData.asset_or_service_id.toString();
+      
+      // Handle asset synchronization
+      if (ticketApiData.asset_service === "Asset" && 
+          assetOptions.length > 0 && 
+          (!formData.selectedAsset || !formData.associatedTo.asset)) {
+        
+        console.log("🔄 Attempting asset synchronization with ID:", targetId);
+        const matchingAsset = assetOptions.find(asset => 
+          asset.id.toString() === targetId
+        );
+        
+        if (matchingAsset) {
+          console.log("✅ Synchronizing asset selection:", matchingAsset.name);
+          setFormData(prev => ({
+            ...prev,
+            selectedAsset: matchingAsset.id.toString(),
+            associatedTo: {
+              ...prev.associatedTo,
+              asset: true,
+              service: false
+            }
+          }));
+        } else {
+          console.log("❌ Asset not found in options for ID:", targetId);
+        }
+      }
+      
+      // Handle service synchronization
+      if (ticketApiData.asset_service === "Service" && 
+          serviceOptions.length > 0 && 
+          (!formData.selectedService || !formData.associatedTo.service)) {
+        
+        console.log("🔄 Attempting service synchronization with ID:", targetId);
+        const matchingService = serviceOptions.find(service => 
+          service.id.toString() === targetId
+        );
+        
+        if (matchingService) {
+          console.log("✅ Synchronizing service selection:", matchingService.service_name);
+          setFormData(prev => ({
+            ...prev,
+            selectedService: matchingService.id.toString(),
+            associatedTo: {
+              ...prev.associatedTo,
+              asset: false,
+              service: true
+            }
+          }));
+        } else {
+          console.log("❌ Service not found in options for ID:", targetId);
+        }
+      }
+    }
+  }, [ticketApiData, assetOptions, serviceOptions, formData.selectedAsset, formData.selectedService, formData.associatedTo]);
+
+  // Debug useEffect to monitor asset/service state
+  useEffect(() => {
+    console.log("🔍 Debug - Current form state:", {
+      associatedTo: formData.associatedTo,
+      selectedAsset: formData.selectedAsset,
+      selectedService: formData.selectedService,
+      assetOptionsLength: assetOptions.length,
+      serviceOptionsLength: serviceOptions.length,
+    });
+
+    // Check if selected asset exists in options
+    if (formData.associatedTo.asset && formData.selectedAsset) {
+      const assetExists = assetOptions.some(
+        (asset) => asset.id.toString() === formData.selectedAsset
+      );
+      console.log("🔍 Selected asset exists in options:", assetExists);
+      if (!assetExists && assetOptions.length > 0) {
+        console.log("❌ Selected asset not found in options:", {
+          selectedAsset: formData.selectedAsset,
+          availableAssets: assetOptions.map((a) => ({ id: a.id, name: a.name })),
+        });
+      }
+    }
+
+    // Check if selected service exists in options
+    if (formData.associatedTo.service && formData.selectedService) {
+      const serviceExists = serviceOptions.some(
+        (service) => service.id.toString() === formData.selectedService
+      );
+      console.log("🔍 Selected service exists in options:", serviceExists);
+      if (!serviceExists && serviceOptions.length > 0) {
+        console.log("❌ Selected service not found in options:", {
+          selectedService: formData.selectedService,
+          availableServices: serviceOptions.map((s) => ({ id: s.id, name: s.service_name })),
+        });
+      }
+    }
+  }, [formData.associatedTo, formData.selectedAsset, formData.selectedService, assetOptions, serviceOptions]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [statusResponse, usersResponse, complaintModesResponse] =
+          await Promise.all([
+            apiClient.get("/pms/admin/complaint_statuses.json"),
+            apiClient.get("/pms/users/get_escalate_to_users.json"),
+            apiClient.get("/pms/admin/complaint_modes.json"),
+          ]);
+
+        setComplaintStatuses(statusResponse.data || []);
+        setFmUsers(usersResponse.data.users || []);
+        setComplaintModes(complaintModesResponse.data || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load form data.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+    dispatch(fetchHelpdeskCategories());
+  }, [toast, dispatch]);
+
+  const handleBack = () => {
+    navigate(-1);
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -764,34 +902,42 @@ const UpdateTicketsPage: React.FC = () => {
     field: string,
     checked: boolean
   ) => {
-    if (group === "associatedTo") {
-      setFormData((prev) => ({
-        ...prev,
-        associatedTo: {
-          asset: field === "asset" ? checked : false,
-          service: field === "service" ? checked : false,
-        },
-        selectedAsset: field === "asset" && checked ? prev.selectedAsset : "", // Keep asset if asset is selected, reset otherwise
-        selectedService:
-          field === "service" && checked ? prev.selectedService : "", // Keep service if service is selected, reset otherwise
-      }));
+    console.log("📋 Checkbox change:", { group, field, checked });
+    
+    setFormData((prev) => ({
+      ...prev,
+      [group]: {
+        ...(prev[group as keyof typeof prev] as Record<string, any>),
+        [field]: checked,
+      },
+    }));
 
-      // Fetch data based on selection
-      if (checked) {
-        if (field === "asset") {
-          fetchAssets();
-        } else if (field === "service") {
-          fetchServices();
+    // Handle asset/service loading immediately when checkbox changes
+    if (group === 'associatedTo') {
+      if (field === 'asset' && checked) {
+        console.log("🔄 Asset checkbox checked - fetching assets immediately");
+        // Clear service selection when asset is selected
+        setFormData(prev => ({ ...prev, selectedService: "", associatedTo: { ...prev.associatedTo, service: false } }));
+        // Fetch assets if we don't have them yet
+        if (assetOptions.length === 0) {
+          fetchAssets(false);
+        }
+      } else if (field === 'service' && checked) {
+        console.log("🔄 Service checkbox checked - fetching services immediately");
+        // Clear asset selection when service is selected
+        setFormData(prev => ({ ...prev, selectedAsset: "", associatedTo: { ...prev.associatedTo, asset: false } }));
+        // Fetch services if we don't have them yet
+        if (serviceOptions.length === 0) {
+          fetchServices(false);
+        }
+      } else if (!checked) {
+        // Clear selections when unchecked
+        if (field === 'asset') {
+          setFormData(prev => ({ ...prev, selectedAsset: "" }));
+        } else if (field === 'service') {
+          setFormData(prev => ({ ...prev, selectedService: "" }));
         }
       }
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [group]: {
-          ...(prev[group as keyof typeof prev] as any),
-          [field]: checked,
-        },
-      }));
     }
   };
 
@@ -1433,11 +1579,11 @@ const UpdateTicketsPage: React.FC = () => {
                       disabled={helpdeskLoading}
                       sx={{ '& .MuiInputBase-root': fieldStyles }}
                     >
-                      <InputLabel shrink>Category Type*</InputLabel>
+                      <InputLabel shrink>Category Type</InputLabel>
                       <MuiSelect
                         value={formData.categoryType}
                         onChange={(e) => handleInputChange("categoryType", e.target.value)}
-                        label="Category Type*"
+                        label="Category Type"
                         notched
                         displayEmpty
                       >
@@ -1893,13 +2039,16 @@ const UpdateTicketsPage: React.FC = () => {
                         name="associatedTo"
                         value="asset"
                         checked={formData.associatedTo.asset}
-                        onChange={(e) =>
-                          handleCheckboxChange(
-                            "associatedTo",
-                            "asset",
-                            e.target.checked
-                          )
-                        }
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              associatedTo: { asset: true, service: false },
+                              selectedService: "", // Reset service selection
+                            }));
+                            fetchAssets(false); // Don't auto-select when manually changing
+                          }
+                        }}
                         style={{
                           accentColor: "#C72030",
                           width: "16px",
@@ -1915,13 +2064,16 @@ const UpdateTicketsPage: React.FC = () => {
                         name="associatedTo"
                         value="service"
                         checked={formData.associatedTo.service}
-                        onChange={(e) =>
-                          handleCheckboxChange(
-                            "associatedTo",
-                            "service",
-                            e.target.checked
-                          )
-                        }
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              associatedTo: { asset: false, service: true },
+                              selectedAsset: "", // Reset asset selection
+                            }));
+                            fetchServices(false); // Don't auto-select when manually changing
+                          }
+                        }}
                         style={{
                           accentColor: "#C72030",
                           width: "16px",
@@ -1960,13 +2112,13 @@ const UpdateTicketsPage: React.FC = () => {
                         <MenuItem value="">
                           <span className="text-gray-500">{isLoadingAssets || isLoadingServices ? "Loading..." : `Select ${formData.associatedTo.asset ? "Asset" : "Service"}`}</span>
                         </MenuItem>
-                        {formData.associatedTo.asset &&
+                        {formData.associatedTo.asset && assetOptions.length > 0 &&
                           assetOptions.map((asset) => (
                             <MenuItem key={asset.id} value={asset.id.toString()}>
                               {asset.name}
                             </MenuItem>
                           ))}
-                        {formData.associatedTo.service &&
+                        {formData.associatedTo.service && serviceOptions.length > 0 &&
                           serviceOptions.map((service) => (
                             <MenuItem key={service.id} value={service.id.toString()}>
                               {service.service_name}

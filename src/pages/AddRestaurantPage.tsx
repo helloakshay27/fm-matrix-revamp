@@ -147,6 +147,11 @@ export const AddRestaurantPage = () => {
     setBlockedDays(prev => prev.filter((_, i) => i !== index));
   };
 
+  const timeToMinutes = (time: string): number => {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+  };
+
   const validateForm = () => {
     if (!formData.restaurantName) {
       toast.error('Please enter Restaurant Name');
@@ -191,6 +196,27 @@ export const AddRestaurantPage = () => {
       toast.error('Please enter Closing Message');
       return false;
     }
+
+    // Validate schedules
+    for (const item of schedule.filter(s => s.enabled)) {
+      const start = timeToMinutes(item.startTime);
+      const end = timeToMinutes(item.endTime);
+      if (end < start) {
+        toast.error(`${item.day} end time cannot be less than start time`);
+        return false;
+      }
+      const bStart = timeToMinutes(item.breakStartTime);
+      const bEnd = timeToMinutes(item.breakEndTime);
+      if (bStart < start || bStart > end) {
+        toast.error(`${item.day} break start time must be between start and end time`);
+        return false;
+      }
+      if (bEnd < bStart || bEnd > end) {
+        toast.error(`${item.day} break end time must be greater than or equal to break start time and within operating hours`);
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -564,34 +590,66 @@ export const AddRestaurantPage = () => {
             </div>
             <div className="md:col-span-3">
               <TextField
-                label="Address"
-                required
+                label="Address*"
                 value={formData.address}
                 onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                 fullWidth
                 variant="outlined"
                 multiline
                 rows={3}
-                sx={fieldStyles}
-                InputLabelProps={{
-                  classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                sx={{
+                  "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                    margin: "0 !important",
                   },
-                  shrink: true,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
                 }}
               />
             </div>
             <div>
               <TextField
-                label="T&C"
-                required
+                label="T&C*"
                 value={formData.tAndC}
                 onChange={(e) => setFormData(prev => ({ ...prev, tAndC: e.target.value }))}
                 fullWidth
                 variant="outlined"
                 multiline
                 rows={3}
-                sx={fieldStyles}
+                sx={{
+                  "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                    margin: "0 !important",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 InputLabelProps={{
                   classes: {
                     asterisk: "text-red-500", // Tailwind class for red color
@@ -602,15 +660,34 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <TextField
-                label="Disclaimer"
-                required
+                label="Disclaimer*"
                 value={formData.disclaimer}
                 onChange={(e) => setFormData(prev => ({ ...prev, disclaimer: e.target.value }))}
                 fullWidth
                 variant="outlined"
                 multiline
                 rows={3}
-                sx={fieldStyles}
+                sx={{
+                  "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                    margin: "0 !important",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 InputLabelProps={{
                   classes: {
                     asterisk: "text-red-500", // Tailwind class for red color
@@ -621,15 +698,34 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <TextField
-                label="Closing Message"
-                required
+                label="Closing Message*"
                 value={formData.closingMessage}
                 onChange={(e) => setFormData(prev => ({ ...prev, closingMessage: e.target.value }))}
                 fullWidth
                 variant="outlined"
                 multiline
                 rows={3}
-                sx={fieldStyles}
+                sx={{
+                  "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                    margin: "0 !important",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 InputLabelProps={{
                   classes: {
                     asterisk: "text-red-500", // Tailwind class for red color
@@ -952,7 +1048,27 @@ export const AddRestaurantPage = () => {
                   variant="outlined"
                   multiline
                   rows={3}
-                  sx={fieldStyles}
+                  sx={{
+                    "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                      margin: "0 !important",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
                   InputLabelProps={{ shrink: true }}
                 />
               </div>
@@ -1007,7 +1123,27 @@ export const AddRestaurantPage = () => {
                   variant="outlined"
                   multiline
                   rows={3}
-                  sx={fieldStyles}
+                  sx={{
+                    "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                      margin: "0 !important",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
                   InputLabelProps={{ shrink: true }}
                 />
               </div>

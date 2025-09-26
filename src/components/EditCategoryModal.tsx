@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAppDispatch } from '@/store/hooks';
 import { editCategory } from '@/store/slices/f&bSlice';
 import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface Category {
   id: number;
@@ -55,7 +56,20 @@ export const EditCategoryModal = ({
     }
   }, [category]);
 
+  const validateForm = () => {
+    if (!formData.category) {
+      toast.error('Please enter Category Name');
+      return false;
+    }
+    else if (!formData.timing) {
+      toast.error('Please enter timings');
+      return false;
+    }
+    return true;
+  }
+
   const handleSubmit = async () => {
+    if (!validateForm()) return;
     const payload = {
       spree_manage_restaurant_category: {
         name: formData.category,
