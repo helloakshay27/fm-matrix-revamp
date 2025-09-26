@@ -28,7 +28,6 @@ interface Image {
 }
 
 export const ProductEditPage = ({ mid, isOpen, onClose, fetchMenuItems }) => {
-  console.log(mid)
   const dispatch = useAppDispatch();
   const { id } = useParams();
   const navigate = useNavigate();
@@ -101,13 +100,13 @@ export const ProductEditPage = ({ mid, isOpen, onClose, fetchMenuItems }) => {
           sgstAmount: response.sgst_amt.toString(),
           cgstRate: response.cgst_rate.toString(),
           cgstAmount: response.cgst_amt.toString(),
-          igstRate: response.igst_rate.toString(),
-          igstAmount: response.igst_amt.toString(),
+          igstRate: response.igst_rate || "",
+          igstAmount: response.igst_amt || "",
           description: response.description
         });
         setAttachments(response.images.map((img: any) => ({
           id: img.id,
-          document: img.document
+          document: img?.document
         })));
       } catch (error) {
         console.error('Error fetching menu items:', error);
@@ -234,10 +233,6 @@ export const ProductEditPage = ({ mid, isOpen, onClose, fetchMenuItems }) => {
     toast.success('Image removed successfully');
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   const fieldStyles = {
     '& .MuiInputBase-root': {
       height: { xs: '36px', sm: '45px' },
@@ -355,7 +350,7 @@ export const ProductEditPage = ({ mid, isOpen, onClose, fetchMenuItems }) => {
             EDIT PRODUCT
           </DialogTitle>
           <button
-            onClick={handleBack}
+            onClick={onClose}
             className="p-1 rounded-md transition-colors"
           >
             <X size={20} className="text-gray-500" />
