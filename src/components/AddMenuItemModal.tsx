@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { X } from "lucide-react";
 import { useAppDispatch } from '@/store/hooks';
 import { fetchRestaurantCategory, fetchSubcategory } from '@/store/slices/f&bSlice';
 import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface AddMenuItemModalProps {
   isOpen: boolean;
@@ -36,13 +36,16 @@ export const AddMenuItemModal = ({
     sgstRate: "",
     cgstRate: "",
     cgstAmount: "",
+    igstRate: "",
+    igstAmount: "",
     description: "",
     masterPrice: "",
   });
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [categories, setCategories] = useState([])
-  const [subCategories, setSubCategories] = useState([])
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -52,7 +55,7 @@ export const AddMenuItemModal = ({
       } catch (error) {
         console.log(error);
       }
-    }
+    };
 
     const fetchSubCategories = async () => {
       try {
@@ -61,13 +64,69 @@ export const AddMenuItemModal = ({
       } catch (error) {
         console.log(error);
       }
-    }
+    };
 
-    fetchCategories()
-    fetchSubCategories()
-  }, [])
+    fetchCategories();
+    fetchSubCategories();
+  }, [dispatch, baseUrl, token, id]);
+
+  useEffect(() => {
+    const calculateTaxAmounts = () => {
+      const displayPrice = parseFloat(formData.displayPrice) || 0;
+      const sgstRate = parseFloat(formData.sgstRate) || 0;
+      const cgstRate = parseFloat(formData.cgstRate) || 0;
+      const igstRate = parseFloat(formData.igstRate) || 0;
+
+      const sgstAmount = (displayPrice * sgstRate) / 100;
+      const cgstAmount = (displayPrice * cgstRate) / 100;
+      const igstAmount = (displayPrice * igstRate) / 100;
+
+      setFormData({
+        ...formData,
+        sgstAmount: sgstAmount.toFixed(2),
+        cgstAmount: cgstAmount.toFixed(2),
+        igstAmount: igstAmount.toFixed(2),
+      });
+    };
+
+    calculateTaxAmounts();
+  }, [formData.displayPrice, formData.sgstRate, formData.cgstRate, formData.igstRate]);
+
+  useEffect(() => {
+    if (selectedFile) {
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [selectedFile]);
+
+  const validateForm = () => {
+    if (!formData.productName) {
+      toast.error('Please enter Product Name');
+      return false;
+    } else if (!formData.sku) {
+      toast.error('Please enter SKU');
+      return false;
+    } else if (!formData.masterPrice) {
+      toast.error('Please enter Master Price');
+      return false;
+    } else if (!formData.stock) {
+      toast.error('Please enter Stock');
+      return false;
+    } else if (!formData.category) {
+      toast.error('Please select Category');
+      return false;
+    } else if (!formData.subCategory) {
+      toast.error('Please select Sub Category');
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = () => {
+    if (!validateForm()) return;
     if (formData.productName.trim() && formData.sku.trim()) {
       onSubmit(formData, selectedFile);
       setFormData({
@@ -81,17 +140,30 @@ export const AddMenuItemModal = ({
         sgstRate: "",
         cgstRate: "",
         cgstAmount: "",
+        igstRate: "",
+        igstAmount: "",
         description: "",
         masterPrice: "",
       });
       setSelectedFile(null);
+      setPreviewUrl(null);
       onClose();
     }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    setSelectedFile(file || null);
+    if (file) {
+      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+        toast.error('Please upload a valid image file (JPEG, PNG, JPG)');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size exceeds 5MB limit');
+        return;
+      }
+      setSelectedFile(file);
+    }
   };
 
   const fieldStyles = {
@@ -251,11 +323,17 @@ export const AddMenuItemModal = ({
               placeholder="Master Price"
               type="number"
               value={formData.masterPrice}
-              onChange={(e) => setFormData(prev => ({ ...prev, masterPrice: e.target.value }))}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0)) {
+                  setFormData(prev => ({ ...prev, masterPrice: value }));
+                }
+              }}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
+              inputProps={{ min: 0 }}
             />
           </div>
 
@@ -265,17 +343,23 @@ export const AddMenuItemModal = ({
               placeholder="Display Price"
               type="number"
               value={formData.displayPrice}
-              onChange={(e) => setFormData(prev => ({ ...prev, displayPrice: e.target.value }))}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0)) {
+                  setFormData(prev => ({ ...prev, displayPrice: value }));
+                }
+              }}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
+              inputProps={{ min: 0 }}
             />
           </div>
 
           <div className="space-y-2">
             <TextField
-              label="Stock"
+              label="Stock*"
               placeholder="Stock"
               value={formData.stock}
               onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
@@ -285,21 +369,6 @@ export const AddMenuItemModal = ({
               sx={fieldStyles}
             />
           </div>
-
-          {/* <div className="space-y-2">
-            <FormControl fullWidth variant="outlined" sx={selectFieldStyles}>
-              <InputLabel shrink>Active</InputLabel>
-              <MuiSelect
-                value={formData.active}
-                onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.value }))}
-                label="Active"
-                notched
-              >
-                <MenuItem value="1">Yes</MenuItem>
-                <MenuItem value="0">No</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div> */}
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" sx={selectFieldStyles}>
@@ -348,19 +417,6 @@ export const AddMenuItemModal = ({
 
           <div className="space-y-2">
             <TextField
-              label="CGST Rate"
-              placeholder="CGST Rate"
-              value={formData.cgstRate}
-              onChange={(e) => setFormData(prev => ({ ...prev, cgstRate: e.target.value }))}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <TextField
               label="SGST Amount"
               placeholder="SGST Amount"
               value={formData.sgstAmount}
@@ -374,10 +430,49 @@ export const AddMenuItemModal = ({
 
           <div className="space-y-2">
             <TextField
+              label="CGST Rate"
+              placeholder="CGST Rate"
+              value={formData.cgstRate}
+              onChange={(e) => setFormData(prev => ({ ...prev, cgstRate: e.target.value }))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <TextField
               label="CGST Amount"
               placeholder="CGST Amount"
               value={formData.cgstAmount}
               onChange={(e) => setFormData(prev => ({ ...prev, cgstAmount: e.target.value }))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <TextField
+              label="IGST Rate"
+              placeholder="IGST Rate"
+              value={formData.igstRate}
+              onChange={(e) => setFormData(prev => ({ ...prev, igstRate: e.target.value }))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <TextField
+              label="IGST Amount"
+              placeholder="IGST Amount"
+              value={formData.igstAmount}
+              onChange={(e) => setFormData(prev => ({ ...prev, igstAmount: e.target.value }))}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -398,21 +493,39 @@ export const AddMenuItemModal = ({
               multiline
               rows={3}
               InputLabelProps={{ shrink: true }}
-              sx={textareaFieldStyles}
+              sx={{
+                "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                  margin: "0 !important",
+                },
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
+                },
+              }}
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm">
-              Manuals Upload
-            </Label>
+            <Label className="text-sm">Image Upload</Label>
             <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-orange-50">
               <input
                 type="file"
                 onChange={handleFileChange}
                 className="hidden"
                 id="file-upload"
-                accept="image/*,.pdf,.doc,.docx"
+                accept="image/jpeg,image/png,image/jpg"
               />
               <label
                 htmlFor="file-upload"
@@ -429,6 +542,29 @@ export const AddMenuItemModal = ({
                 </div>
               </label>
             </div>
+            {previewUrl && (
+              <div className="mt-4">
+                <div className="relative w-[200px]">
+                  <img
+                    src={previewUrl}
+                    alt="Selected preview"
+                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setPreviewUrl(null);
+                      toast.success('Selected image removed');
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

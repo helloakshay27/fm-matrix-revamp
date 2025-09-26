@@ -330,6 +330,7 @@ export const PermitDetails = () => {
     const { id } = useParams<{ id: string }>();
     const [searchParams] = useSearchParams();
     const [permitData, setPermitData] = useState<PermitDetailsResponse | null>(null);
+    console.log(permitData)
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState("details");
@@ -339,6 +340,7 @@ export const PermitDetails = () => {
     const [isRejecting, setIsRejecting] = useState(false);
     const [openRejectDialog, setOpenRejectDialog] = useState(false);
     const [rejectComment, setRejectComment] = useState("");
+    const [extensionId, setExtensionId] = useState<string>("");
 
     // Extend permit form states
     const [isExtending, setIsExtending] = useState(false);
@@ -588,7 +590,7 @@ export const PermitDetails = () => {
     };
 
     // Handle reject permit extension
-    const handleRejectExtension = async (extensionId: string) => {
+    const handleRejectExtension = async () => {
         if (!extensionId) {
             toast.error('Extension ID is required for rejection');
             return;
@@ -614,7 +616,7 @@ export const PermitDetails = () => {
                 baseUrl = `https://${baseUrl}`;
             }
 
-            const response = await fetch(`${baseUrl}/pms/permit_extends/${extensionId}/status_confirmation.json?approve=false&user_id=${userId}&level_id=${levelId}`, {
+            const response = await fetch(`${baseUrl}/pms/permit_extends/${extensionId}/status_confirmation.json?approve=false&user_id=${userId}&level_id=${levelId}&rejection_reason=${rejectComment.trim()}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -706,14 +708,10 @@ export const PermitDetails = () => {
     };
 
     // Handle reject permit closure
-    const handleRejectClosure = async (closureId: string) => {
-        console.log('=== REJECT CLOSURE DEBUG ===');
-        console.log('Closure ID passed:', closureId);
-        console.log('Permit closure data:', permitData?.permit_closure);
-        console.log('Level ID:', levelId);
-        console.log('User ID:', userId);
+    const handleRejectClosure = async () => {
+        const closerId = permitData?.permit_closure?.id?.toString();
 
-        if (!closureId) {
+        if (!closerId) {
             console.error('No closure ID provided');
             toast.error('Closure ID is required for rejection');
             return;
@@ -740,7 +738,7 @@ export const PermitDetails = () => {
                 baseUrl = `https://${baseUrl}`;
             }
 
-            const response = await fetch(`${baseUrl}/pms/permit_closures/${closureId}/status_confirmation.json?approve=false&user_id=${userId}&level_id=${levelId}`, {
+            const response = await fetch(`${baseUrl}/pms/permit_closures/${closerId}/status_confirmation.json?approve=false&user_id=${userId}&level_id=${levelId}&rejection_reason=${rejectComment.trim()}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -1042,6 +1040,7 @@ export const PermitDetails = () => {
             try {
                 setLoading(true);
                 const response = await fetchPermitDetails(id);
+                console.log(response)
                 setPermitData(response);
                 setError(null);
             } catch (err) {
@@ -1630,7 +1629,10 @@ export const PermitDetails = () => {
                                                     )}
                                                 </Button>
                                                 <Button
-                                                    onClick={() => handleRejectExtension(extension.id.toString())}
+                                                    onClick={() => {
+                                                        handleReject()
+                                                        setExtensionId(extension.id.toString())
+                                                    }}
                                                     disabled={isApproving || isRejecting}
                                                     className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
                                                 >
@@ -2562,15 +2564,7 @@ export const PermitDetails = () => {
                                         )}
                                     </Button>
                                     <Button
-                                        onClick={() => {
-                                            const actualClosureId = permitData.permit_closure?.id?.toString();
-                                            console.log('Using closure ID for rejection:', actualClosureId);
-                                            if (actualClosureId) {
-                                                handleRejectClosure(actualClosureId);
-                                            } else {
-                                                toast.error('Closure ID not found in permit data');
-                                            }
-                                        }}
+                                        onClick={handleReject}
                                         disabled={isApproving || isRejecting}
                                         className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
                                     >
@@ -3013,7 +3007,9 @@ export const PermitDetails = () => {
                             Cancel
                         </Button>
                         <Button
-                            onClick={handleRejectConfirm}
+                            // onClick={handleRejectConfirm}
+                            onClick={permitClosure ? handleRejectClosure : permitExtension ? handleRejectExtension : handleRejectConfirm}
+
                             disabled={isRejecting}
                             className="bg-[#C72030] hover:bg-[#a61b27] text-white"
                         >

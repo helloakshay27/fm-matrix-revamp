@@ -48,7 +48,7 @@ export const TicketDetailsPage = () => {
         ticketDetails: hasData(ticketData.heading) || hasData(ticketData.issue_status) || hasData(ticketData.ticket_number) || hasData(ticketData.sub_category_type) || hasData(ticketData.created_by_name) || hasData(ticketData.created_date) || hasData(ticketData.created_time) || hasData(ticketData.category_type) || hasData(ticketData.updated_by) || hasData(ticketData.complaint_mode) || hasData(ticketData.priority) || hasData(ticketData.external_priority) || hasData(ticketData.priority_status) || hasData(ticketData.effective_priority) || hasData(ticketData.assigned_to),
         creatorInfo: hasData(ticketData.posted_by) || hasData(ticketData.id_society),
         locationInfo: hasData(ticketData.region) || hasData(ticketData.building_name) || hasData(ticketData.city) || hasData(ticketData.floor_name) || hasData(ticketData.flat_number) || hasData(ticketData.unit_name) || hasData(ticketData.zone) || hasData(ticketData.district) || hasData(ticketData.room_name) || hasData(ticketData.area_name) || hasData(ticketData.site_name) || hasData(ticketData.state) || hasData(ticketData.address) || hasData(ticketData.wing_name),
-        surveyInfo: hasData(ticketData.survey_id) || hasData(ticketData.survey_name) || hasData(ticketData.survey_location),
+        surveyInfo: ticketData.survey && (hasData(ticketData.survey.survey?.id) || hasData(ticketData.survey.survey?.name) || hasData(ticketData.survey.site_name) || hasData(ticketData.survey.building_name) || hasData(ticketData.survey.wing_name) || hasData(ticketData.survey.area_name) || hasData(ticketData.survey.floor_name) || hasData(ticketData.survey.room_name)),
         additionalInfo: hasData(ticketData.corrective_action) || hasData(ticketData.preventive_action) || hasData(ticketData.root_cause) || hasData(ticketData.response_tat) || hasData(ticketData.ticket_urgency) || hasData(ticketData.responsible_person) || hasData(ticketData.asset_service) || hasData(ticketData.resolution_tat) || hasData(ticketData.task_id) || hasData(ticketData.asset_service_location) || hasData(ticketData.resolution_time) || hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name),
         attachments: ticketData.documents && ticketData.documents.length > 0,
         costApproval: ticketData.cost_approval_enabled && ticketData.requests && ticketData.requests.length > 0,
@@ -495,42 +495,51 @@ export const TicketDetailsPage = () => {
       </ExpandableSection>
 
       {/* Section 4: Survey Information */}
-      {/* <ExpandableSection
+      <ExpandableSection
         title="SURVEY INFORMATION"
         icon={FileSearch}
         number="4"
         isExpanded={expandedSections.surveyInfo}
         onToggle={() => toggleSection('surveyInfo')}
-        hasData={hasData(ticketData.survey_id) || hasData(ticketData.survey_name) || hasData(ticketData.survey_location)}
+        hasData={ticketData.survey && (hasData(ticketData.survey.survey?.id) || hasData(ticketData.survey.survey?.name) || hasData(ticketData.survey.site_name))}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
           <div className="space-y-4">
-            {hasData(ticketData.survey_id) && (
+            {hasData(ticketData.survey?.survey?.id) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Survey ID</span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{ticketData.survey_id}</span>
+                <span className="text-gray-900 font-semibold flex-1">{ticketData.survey.survey.id}</span>
               </div>
             )}
-            {hasData(ticketData.survey_name) && (
+            {hasData(ticketData.survey?.survey?.name) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Survey Name</span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{ticketData.survey_name}</span>
+                <span className="text-gray-900 font-semibold flex-1 break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{ticketData.survey.survey.name}</span>
               </div>
             )}
           </div>
           <div className="space-y-4">
-            {hasData(ticketData.survey_location) && (
+            {(hasData(ticketData.survey?.site_name) || hasData(ticketData.survey?.building_name) || hasData(ticketData.survey?.wing_name) || hasData(ticketData.survey?.area_name) || hasData(ticketData.survey?.floor_name) || hasData(ticketData.survey?.room_name)) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Survey Location</span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{ticketData.survey_location}</span>
+                <span className="text-gray-900 font-semibold flex-1 break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                  {[
+                    ticketData.survey.site_name,
+                    ticketData.survey.building_name,
+                    ticketData.survey.wing_name,
+                    ticketData.survey.area_name,
+                    ticketData.survey.floor_name,
+                    ticketData.survey.room_name
+                  ].filter(Boolean).join('/')}
+                </span>
               </div>
             )}
           </div>
         </div>
-      </ExpandableSection> */}
+      </ExpandableSection>
 
       {/* Section 5: Additional Information */}
       <ExpandableSection

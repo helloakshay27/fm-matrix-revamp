@@ -24,7 +24,7 @@ import {
   UserOption,
 } from "@/services/ticketManagementAPI";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 interface Building {
   id: number;
@@ -70,6 +70,7 @@ export const VisitorFormPage = () => {
   const [formData, setFormData] = useState({
     visitorType: "guest",
     frequency: "once",
+    visitorVisit: "expected",
     host: undefined,
     tower: undefined,
     visitPurpose: undefined,
@@ -80,7 +81,7 @@ export const VisitorFormPage = () => {
     mobileNumber: initialMobileNumber,
     visitorComingFrom: "",
     remarks: "",
-    expected_at: "",
+    expected_at: new Date().toISOString().slice(0, 16), 
     skipHostApproval: false,
     goodsInwards: false,
     passValidFrom: "",
@@ -227,23 +228,27 @@ export const VisitorFormPage = () => {
     try {
       // Request camera permissions and get device list
       await navigator.mediaDevices.getUserMedia({ video: true });
-      
+
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(
         (device) => device.kind === "videoinput"
       );
       setCameras(videoDevices);
-      
+
       if (videoDevices.length > 0) {
         const defaultCamera = videoDevices[0].deviceId;
         setSelectedCamera(defaultCamera);
         await startCamera(defaultCamera);
       } else {
-        toast.error("No camera devices found. Please connect a camera and try again.");
+        toast.error(
+          "No camera devices found. Please connect a camera and try again."
+        );
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
-      toast.error("Camera permission denied or no camera available. Please allow camera access and try again.");
+      toast.error(
+        "Camera permission denied or no camera available. Please allow camera access and try again."
+      );
     }
   };
 
@@ -252,18 +257,18 @@ export const VisitorFormPage = () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
-      
+
       const constraints = {
         video: deviceId ? { deviceId: { exact: deviceId } } : true,
-        audio: false
+        audio: false,
       };
-      
+
       const newStream = await navigator.mediaDevices.getUserMedia(constraints);
       setStream(newStream);
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = newStream;
-        
+
         // Wait for video to load metadata
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
@@ -273,7 +278,9 @@ export const VisitorFormPage = () => {
       }
     } catch (error) {
       console.error("Error starting camera:", error);
-      toast.error("Failed to access camera. Please check permissions and try again.");
+      toast.error(
+        "Failed to access camera. Please check permissions and try again."
+      );
     }
   };
 
@@ -286,6 +293,15 @@ export const VisitorFormPage = () => {
         newData.supportCategory =
           value === "guest" ? undefined : prev.supportCategory;
         if (value === "support") fetchSupportCategories();
+      }
+      if (field === "visitorVisit") {
+        if (value === "unexpected") {
+          newData.expected_at = ""; 
+        } else if (value === "expected") {
+          if (!newData.expected_at) {
+            newData.expected_at = new Date().toISOString().slice(0, 16);
+          }
+        }
       }
       if (field === "frequency" && value === "once") {
         newData.passValidFrom = "";
@@ -318,35 +334,33 @@ export const VisitorFormPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-     if (!formData.host) {
-      toast.error('Please select a host');
+    if (!formData.host) {
+      toast.error("Please select a host");
       return;
     }
 
-    
     if (formData.host && !formData.tower) {
-      toast.error('Please select a tower');
+      toast.error("Please select a tower");
       return;
     }
 
-    // Field-by-field validation with toast messages
     if (!formData.visitorName.trim()) {
-      toast.error('Please enter visitor name');
+      toast.error("Please enter visitor name");
       return;
     }
 
     if (!formData.mobileNumber.trim()) {
-      toast.error('Please enter mobile number');
+      toast.error("Please enter mobile number");
       return;
     }
 
     if (formData.mobileNumber.length !== 10) {
-      toast.error('Mobile number must be 10 digits');
+      toast.error("Mobile number must be 10 digits");
       return;
     }
 
-     if (!formData.passNumber.trim()) {
-      toast.error('Please enter Pass number');
+    if (!formData.passNumber.trim()) {
+      toast.error("Please enter Pass number");
       return;
     }
 
@@ -355,68 +369,73 @@ export const VisitorFormPage = () => {
     //   return;
     // }
 
-     if (!formData.vehicleNumber.trim()) {
-      toast.error('Please enter Vehicle number');
+    if (!formData.vehicleNumber.trim()) {
+      toast.error("Please enter Vehicle number");
       return;
     }
 
-   
-
-
-    if (formData.visitorType === 'support' && !formData.supportCategory) {
-      toast.error('Please select support category');
+    if (formData.visitorType === "support" && !formData.supportCategory) {
+      toast.error("Please select support category");
       return;
     }
 
-    if (formData.visitorType === 'guest' && !formData.visitPurpose) {
-      toast.error('Please select visit purpose');
+    if (formData.visitorType === "guest" && !formData.visitPurpose) {
+      toast.error("Please select visit purpose");
       return;
     }
 
-    if (formData.frequency === 'frequently') {
+    if (formData.frequency === "frequently") {
       if (!formData.passValidFrom) {
-        toast.error('Please select pass valid from date');
+        toast.error("Please select pass valid from date");
         return;
       }
       if (!formData.passValidTo) {
-        toast.error('Please select pass valid to date');
+        toast.error("Please select pass valid to date");
         return;
       }
-      const hasSelectedDay = Object.values(formData.daysPermitted).some(day => day);
+      const hasSelectedDay = Object.values(formData.daysPermitted).some(
+        (day) => day
+      );
       if (!hasSelectedDay) {
-        toast.error('Please select at least one day for frequent visits');
+        toast.error("Please select at least one day for frequent visits");
         return;
       }
     }
 
     if (formData.goodsInwards && showGoodsForm) {
       if (!goodsData.selectType) {
-        toast.error('Please select movement type for goods');
+        toast.error("Please select movement type for goods");
         return;
       }
       if (!goodsData.category) {
-        toast.error('Please select category for goods');
+        toast.error("Please select category for goods");
         return;
       }
-      const hasValidItem = items.some(item => item.selectItem && item.quantity);
+      const hasValidItem = items.some(
+        (item) => item.selectItem && item.quantity
+      );
       if (!hasValidItem) {
-        toast.error('Please add at least one item with quantity');
+        toast.error("Please add at least one item with quantity");
         return;
       }
     }
 
     // Check additional visitors validation
-    const invalidAdditionalVisitor = additionalVisitors.find(visitor => 
-      (visitor.name && !visitor.mobile) || (!visitor.name && visitor.mobile)
+    const invalidAdditionalVisitor = additionalVisitors.find(
+      (visitor) =>
+        (visitor.name && !visitor.mobile) || (!visitor.name && visitor.mobile)
     );
     if (invalidAdditionalVisitor) {
-      toast.error('Please complete all additional visitor details or remove incomplete entries');
+      toast.error(
+        "Please complete all additional visitor details or remove incomplete entries"
+      );
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const visitorApiData = {
+      // Prepare base visitor data
+      const baseVisitorData = {
         ...formData,
         capturedPhoto,
         additionalVisitors: additionalVisitors.filter(
@@ -427,13 +446,26 @@ export const VisitorFormPage = () => {
           ? items.filter((i) => i.selectItem && i.quantity)
           : undefined,
       };
+
+      // For unexpected visitors, remove expected_at completely
+      let visitorApiData;
+      if (formData.visitorVisit === "unexpected") {
+        const { expected_at, ...dataWithoutExpectedAt } = baseVisitorData;
+        visitorApiData = dataWithoutExpectedAt;
+      } else {
+        visitorApiData = baseVisitorData;
+      }
+
       console.log("📤 Sending visitor data:", visitorApiData);
+      console.log("📋 Visitor visit type:", formData.visitorVisit);
+      console.log("� Expected_at field present:", 'expected_at' in visitorApiData);
+      
       await ticketManagementAPI.createVisitor(visitorApiData);
-      toast.success('Visitor created successfully!');
+      toast.success("Visitor created successfully!");
       navigate("/security/visitor");
     } catch (error) {
       console.error("❌ Error creating visitor:", error);
-      toast.error('Failed to create visitor. Please try again.');
+      toast.error("Failed to create visitor. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -523,16 +555,16 @@ export const VisitorFormPage = () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
-      
+
       if (ctx && video.videoWidth > 0 && video.videoHeight > 0) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = canvas.toDataURL("image/jpeg", 0.8);
         setCapturedPhoto(imageData);
-        
+
         // Stop the camera stream
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
         setStream(null);
         setShowCameraModal(false);
       }
@@ -544,16 +576,16 @@ export const VisitorFormPage = () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
-      
+
       if (ctx && video.videoWidth > 0 && video.videoHeight > 0) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = canvas.toDataURL("image/jpeg", 0.8);
         setCapturedPhoto(imageData);
-        
+
         // Stop the camera stream
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
         setStream(null);
         setShowCameraModal(false);
       }
@@ -575,21 +607,21 @@ export const VisitorFormPage = () => {
               onClick={() => {
                 setShowCameraModal(false);
                 if (stream) {
-                  stream.getTracks().forEach(track => track.stop());
+                  stream.getTracks().forEach((track) => track.stop());
                 }
               }}
               className="h-6 w-6 p-0 hover:bg-gray-100"
             >
               <X className="h-4 w-4" />
-            </Button> 
+            </Button>
           </div>
 
           {/* Camera permissions checkbox */}
           <div className="mb-4">
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
-                id="useCamera" 
+              <input
+                type="checkbox"
+                id="useCamera"
                 checked={false}
                 readOnly
                 className="w-4 h-4"
@@ -618,25 +650,29 @@ export const VisitorFormPage = () => {
 
           {/* Camera Selection Dropdown */}
           <div className="mb-4">
-            <FormControl
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-            >
+            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
               <InputLabel shrink>Select Camera</InputLabel>
               <MuiSelect
-                value={selectedCamera || ''}
+                value={selectedCamera || ""}
                 onChange={(e) => handleCameraChange(e.target.value)}
                 label="Select Camera"
                 notched
                 displayEmpty
               >
                 <MenuItem value="">Select Camera</MenuItem>
-                {cameras.filter(camera => camera.deviceId && camera.deviceId.trim() !== '').map((camera) => (
-                  <MenuItem key={camera.deviceId} value={camera.deviceId}>
-                    {camera.label || `USB2.0 HD UVC WebCam (${camera.deviceId.slice(0, 4)}:...)`}
-                  </MenuItem>
-                ))}
+                {cameras
+                  .filter(
+                    (camera) => camera.deviceId && camera.deviceId.trim() !== ""
+                  )
+                  .map((camera) => (
+                    <MenuItem key={camera.deviceId} value={camera.deviceId}>
+                      {camera.label ||
+                        `USB2.0 HD UVC WebCam (${camera.deviceId.slice(
+                          0,
+                          4
+                        )}:...)`}
+                    </MenuItem>
+                  ))}
               </MuiSelect>
             </FormControl>
           </div>
@@ -662,7 +698,7 @@ export const VisitorFormPage = () => {
               onClick={() => {
                 setShowCameraModal(false);
                 if (stream) {
-                  stream.getTracks().forEach(track => track.stop());
+                  stream.getTracks().forEach((track) => track.stop());
                 }
               }}
               className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full border-none"
@@ -749,7 +785,26 @@ export const VisitorFormPage = () => {
             </h2>
           </div>
           <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Visitor Visit
+                </label>
+                <RadioGroup
+                  value={formData.visitorVisit}
+                  onValueChange={(v) => handleInputChange("visitorVisit", v)}
+                  className="flex gap-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="expected" id="expected" />
+                    <label htmlFor="expected">Expected</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="unexpected" id="unexpected" />
+                    <label htmlFor="unexpected">UnExpected</label>
+                  </div>
+                </RadioGroup>
+              </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">
                   Visitor Type
@@ -973,17 +1028,22 @@ export const VisitorFormPage = () => {
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
               />
-              <TextField
-                label="Expected At"
-                type="datetime-local"
-                value={formData.expected_at}
-                onChange={(e) => handleInputChange("expected_at", e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
-                // helperText="Expected arrival date and time"
-              />
+              {/* Expected At field - only show for expected visitors */}
+              {formData.visitorVisit === "expected" && (
+                <TextField
+                  label="Expected At"
+                  type="datetime-local"
+                  value={formData.expected_at}
+                  onChange={(e) =>
+                    handleInputChange("expected_at", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={fieldStyles}
+                  // helperText="Expected arrival date and time"
+                />
+              )}
             </div>
             <div className="flex items-center space-x-8 pt-4">
               <div className="flex items-center space-x-2">
@@ -1084,11 +1144,7 @@ export const VisitorFormPage = () => {
                         <MenuItem value="Pms::Supplier">Vendor</MenuItem>
                       </MuiSelect>
                     </FormControl>
-                    <FormControl
-                      fullWidth
-                      variant="outlined"
-                      sx={fieldStyles}
-                    >
+                    <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                       <InputLabel shrink>Mode of Transport</InputLabel>
                       <MuiSelect
                         value={goodsData.modeOfTransport}

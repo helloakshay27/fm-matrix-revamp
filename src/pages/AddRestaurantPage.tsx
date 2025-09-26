@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip, ArrowLeft, Loader } from 'lucide-react';
@@ -110,7 +110,7 @@ export const AddRestaurantPage = () => {
     orderNotAllowedText: ''
   });
 
-  const [loadingSubmit, setLoadingSubmit] = useState(false)
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
 
   // File states
   const [coverImages, setCoverImages] = useState<File[]>([]);
@@ -145,6 +145,25 @@ export const AddRestaurantPage = () => {
 
   const removeBlockedDay = (index: number) => {
     setBlockedDays(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateBlockedDay = (index: number, field: keyof BlockedDay, value: any) => {
+    if (field === 'date') {
+      // Check if the date is already selected
+      const isDuplicate = blockedDays.some((day, i) => i !== index && day.date === value);
+      if (isDuplicate) {
+        toast.error('This date is already blocked. Please select a different date.');
+        return;
+      }
+    }
+    setBlockedDays(prev => prev.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const timeToMinutes = (time: string): number => {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
   };
 
   const validateForm = () => {
@@ -191,12 +210,41 @@ export const AddRestaurantPage = () => {
       toast.error('Please enter Closing Message');
       return false;
     }
+
+    // Validate schedules
+    for (const item of schedule.filter(s => s.enabled)) {
+      const start = timeToMinutes(item.startTime);
+      const end = timeToMinutes(item.endTime);
+      if (end < start) {
+        toast.error(`${item.day} end time cannot be less than start time`);
+        return false;
+      }
+      const bStart = timeToMinutes(item.breakStartTime);
+      const bEnd = timeToMinutes(item.breakEndTime);
+      if (bStart < start || bStart > end) {
+        toast.error(`${item.day} break start time must be between start and end time`);
+        return false;
+      }
+      if (bEnd < bStart || bEnd > end) {
+        toast.error(`${item.day} break end time must be greater than or equal to break start time and within operating hours`);
+        return false;
+      }
+    }
+
+    // Validate blocked days
+    for (const day of blockedDays) {
+      if (!day.date) {
+        toast.error('Please select a date for all blocked days');
+        return false;
+      }
+    }
+
     return true;
-  }
+  };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    setLoadingSubmit(true)
+    setLoadingSubmit(true);
     try {
       const dataToSubmit = new FormData();
 
@@ -238,7 +286,7 @@ export const AddRestaurantPage = () => {
 
       // Append only enabled schedules
       schedule
-        .filter((item) => item.enabled) // Only include enabled days
+        .filter((item) => item.enabled)
         .forEach((item, index) => {
           const [startHour, startMin] = item.startTime.split(':');
           const [endHour, endMin] = item.endTime.split(':');
@@ -265,15 +313,15 @@ export const AddRestaurantPage = () => {
       // Append blocked days
       blockedDays.forEach((day, index) => {
         dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][ondate]`, day.date);
-        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][order_allowed]`, day.orderBlocked);
-        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`, day.bookingBlocked);
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][order_allowed]`, day.orderBlocked ? '0' : '1');
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`, day.bookingBlocked ? '0' : '1');
       });
 
       await dispatch(createRestaurant({ baseUrl, token, data: dataToSubmit })).unwrap();
       toast.success('Restaurant added successfully');
       navigate('/settings/vas/fnb/setup');
     } catch (error) {
-      console.log(error)
+      console.log(error);
     } finally {
       setLoadingSubmit(false);
     }
@@ -333,7 +381,7 @@ export const AddRestaurantPage = () => {
                 sx={fieldStyles}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true
                 }}
@@ -362,7 +410,7 @@ export const AddRestaurantPage = () => {
                 sx={fieldStyles}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true
                 }}
@@ -395,7 +443,7 @@ export const AddRestaurantPage = () => {
                 sx={fieldStyles}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true
                 }}
@@ -455,7 +503,7 @@ export const AddRestaurantPage = () => {
                 sx={fieldStyles}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true
                 }}
@@ -463,7 +511,7 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <TextField
-                label="Delivery Time"
+                label="Delivery Time (Minutes)"
                 required
                 placeholder="Mins"
                 type="text"
@@ -486,7 +534,7 @@ export const AddRestaurantPage = () => {
                 sx={fieldStyles}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true
                 }}
@@ -564,18 +612,37 @@ export const AddRestaurantPage = () => {
             </div>
             <div className="md:col-span-3">
               <TextField
-                label="Address"
-                required
+                label="Address*"
                 value={formData.address}
                 onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                 fullWidth
                 variant="outlined"
                 multiline
                 rows={3}
-                sx={fieldStyles}
+                sx={{
+                  "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                    margin: "0 !important",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true,
                 }}
@@ -583,18 +650,37 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <TextField
-                label="T&C"
-                required
+                label="T&C*"
                 value={formData.tAndC}
                 onChange={(e) => setFormData(prev => ({ ...prev, tAndC: e.target.value }))}
                 fullWidth
                 variant="outlined"
                 multiline
                 rows={3}
-                sx={fieldStyles}
+                sx={{
+                  "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                    margin: "0 !important",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true,
                 }}
@@ -602,18 +688,37 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <TextField
-                label="Disclaimer"
-                required
+                label="Disclaimer*"
                 value={formData.disclaimer}
                 onChange={(e) => setFormData(prev => ({ ...prev, disclaimer: e.target.value }))}
                 fullWidth
                 variant="outlined"
                 multiline
                 rows={3}
-                sx={fieldStyles}
+                sx={{
+                  "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                    margin: "0 !important",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true,
                 }}
@@ -621,18 +726,37 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <TextField
-                label="Closing Message"
-                required
+                label="Closing Message*"
                 value={formData.closingMessage}
                 onChange={(e) => setFormData(prev => ({ ...prev, closingMessage: e.target.value }))}
                 fullWidth
                 variant="outlined"
                 multiline
                 rows={3}
-                sx={fieldStyles}
+                sx={{
+                  "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                    margin: "0 !important",
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true,
                 }}
@@ -842,19 +966,24 @@ export const AddRestaurantPage = () => {
                   <TextField
                     type="date"
                     value={day.date}
-                    onChange={(e) => setBlockedDays(prev => prev.map((item, i) =>
-                      i === index ? { ...item, date: e.target.value } : item
-                    ))}
+                    onChange={(e) => updateBlockedDay(index, 'date', e.target.value)}
                     sx={fieldStyles}
                     InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      inputProps: {
+                        // Disable already selected dates, excluding the current index
+                        disabledDates: blockedDays
+                          .filter((_, i) => i !== index)
+                          .map(d => d.date)
+                          .filter(d => d), // Filter out empty dates
+                      }
+                    }}
                   />
                   <FormControlLabel
                     control={
                       <MuiCheckbox
                         checked={day.orderBlocked}
-                        onChange={(e) => setBlockedDays(prev => prev.map((item, i) =>
-                          i === index ? { ...item, orderBlocked: e.target.checked } : item
-                        ))}
+                        onChange={(e) => updateBlockedDay(index, 'orderBlocked', e.target.checked)}
                         sx={checkboxStyles}
                       />
                     }
@@ -864,9 +993,7 @@ export const AddRestaurantPage = () => {
                     control={
                       <MuiCheckbox
                         checked={day.bookingBlocked}
-                        onChange={(e) => setBlockedDays(prev => prev.map((item, i) =>
-                          i === index ? { ...item, bookingBlocked: e.target.checked } : item
-                        ))}
+                        onChange={(e) => updateBlockedDay(index, 'bookingBlocked', e.target.checked)}
                         sx={checkboxStyles}
                       />
                     }
@@ -952,7 +1079,27 @@ export const AddRestaurantPage = () => {
                   variant="outlined"
                   multiline
                   rows={3}
-                  sx={fieldStyles}
+                  sx={{
+                    "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                      margin: "0 !important",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
                   InputLabelProps={{ shrink: true }}
                 />
               </div>
@@ -1007,7 +1154,27 @@ export const AddRestaurantPage = () => {
                   variant="outlined"
                   multiline
                   rows={3}
-                  sx={fieldStyles}
+                  sx={{
+                    "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                      margin: "0 !important",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
                   InputLabelProps={{ shrink: true }}
                 />
               </div>

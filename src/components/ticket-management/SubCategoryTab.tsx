@@ -69,8 +69,7 @@ interface CategoryOption {
 
 interface Engineer {
   id: number;
-  firstname: string;
-  lastname: string;
+  full_name: string;
 }
 
 interface LocationOption {
@@ -79,12 +78,9 @@ interface LocationOption {
 }
 
 interface EngineerResponse {
-  fm_users: Array<{
+  users: Array<{
     id: number;
-    firstname: string;
-    lastname: string;
-    email: string;
-    // ... other fields as needed
+    full_name: string;
   }>;
 }
 
@@ -209,11 +205,10 @@ export const SubCategoryTab: React.FC = () => {
         ticketManagementAPI.getSubCategories()
       ]);
 
-      // Process engineers - extract from fm_users array
-      const formattedEngineers = engineersResponse?.fm_users?.map(user => ({
+      // Process engineers - extract from users array
+      const formattedEngineers = engineersResponse?.users?.map(user => ({
         id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname
+        full_name: user.full_name
       })) || [];
       setEngineers(formattedEngineers);
 
@@ -533,24 +528,37 @@ export const SubCategoryTab: React.FC = () => {
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full relative">
                     <SelectValue placeholder={
                       selectedEngineers.length === 0 
                         ? "Select engineers" 
                         : `${selectedEngineers.length} engineer(s) selected`
                     } />
                   </SelectTrigger>
-                  <SelectContent>
-                    {engineers.map((engineer) => (
-                      <SelectItem key={engineer.id} value={engineer.id.toString()}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{engineer.firstname} {engineer.lastname}</span>
-                          {selectedEngineers.includes(engineer.id) && (
-                            <span className="ml-2 text-primary">✓</span>
-                          )}
-                        </div>
+                  <SelectContent 
+                    position="popper" 
+                    side="bottom" 
+                    align="start" 
+                    sideOffset={8}
+                    avoidCollisions={false}
+                    className="z-[9999] min-w-[var(--radix-select-trigger-width)] max-h-[200px] overflow-y-auto"
+                  >
+                    {engineers.length === 0 ? (
+                      <SelectItem value="no-engineers" disabled>
+                        Loading engineers...
                       </SelectItem>
-                    ))}
+                    ) : (
+                      engineers.map((engineer) => (
+                        <SelectItem key={engineer.id} value={engineer.id.toString()}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{engineer.full_name}</span>
+                            {selectedEngineers.includes(engineer.id) && (
+                              <span className="ml-2 text-primary">✓</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 
@@ -561,7 +569,7 @@ export const SubCategoryTab: React.FC = () => {
                       const engineer = engineers.find(e => e.id === engineerId);
                       return engineer ? (
                         <div key={engineerId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
-                          {engineer.firstname} {engineer.lastname}
+                          {engineer.full_name}
                           <X
                             className="h-3 w-3 cursor-pointer"
                             onClick={() => setSelectedEngineers(selectedEngineers.filter(id => id !== engineerId))}

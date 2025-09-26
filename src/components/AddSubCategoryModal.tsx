@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchRestaurantCategory } from '@/store/slices/f&bSlice';
 import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface AddSubCategoryModalProps {
   isOpen: boolean;
@@ -45,7 +46,20 @@ export const AddSubCategoryModal = ({
     fetchCategories()
   }, [])
 
+  const validateForm = () => {
+    if (!formData.category) {
+      toast.error('Please select Category');
+      return false;
+    }
+    else if (!formData.subCategory) {
+      toast.error('Please enter Sub-Category Name');
+      return false;
+    }
+    return true;
+  }
+
   const handleSubmit = () => {
+    if (!validateForm()) return;
     if (formData.category && formData.subCategory.trim()) {
       onSubmit(formData);
       setFormData({ category: "", subCategory: "", description: "" });
@@ -138,7 +152,7 @@ export const AddSubCategoryModal = ({
                 '&.Mui-focused': { color: '#000000' }
               }}
             >
-              Category
+              Category*
             </InputLabel>
             <Select
               labelId="category-label"
@@ -156,7 +170,7 @@ export const AddSubCategoryModal = ({
           <TextField
             fullWidth
             variant="outlined"
-            label="SubCategory"
+            label="SubCategory*"
             placeholder="Enter SubCategory"
             value={formData.subCategory}
             onChange={(e) => setFormData(prev => ({ ...prev, subCategory: e.target.value }))}
@@ -179,29 +193,22 @@ export const AddSubCategoryModal = ({
               shrink: true,
             }}
             sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '6px',
-                '& fieldset': {
-                  borderColor: '#d1d5db',
-                },
-                '&:hover fieldset': {
-                  borderColor: '#9ca3af',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#000000',
-                },
+              "& .MuiOutlinedInput-root": {
+                height: "auto !important",
+                padding: "2px !important",
+                display: "flex",
               },
-              '& .MuiInputLabel-root': {
-                color: '#666',
-                fontSize: '16px',
-                '&.Mui-focused': {
-                  color: '#000000',
-                },
+              "& .MuiInputBase-input[aria-hidden='true']": {
+                flex: 0,
+                width: 0,
+                height: 0,
+                padding: "0 !important",
+                margin: 0,
+                display: "none",
               },
-              '& .MuiInputBase-input': {
-                padding: '8px 14px',
-                fontSize: '14px',
-              }
+              "& .MuiInputBase-input": {
+                resize: "none !important",
+              },
             }}
           />
         </div>

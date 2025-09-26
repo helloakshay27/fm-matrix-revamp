@@ -1090,6 +1090,7 @@ export const ticketManagementAPI = {
   async createVisitor(visitorData: {
     visitorType: string;
     frequency: string;
+    visitorVisit?: string;
     host?: string;
     tower?: string;
     visitPurpose?: string;
@@ -1100,6 +1101,7 @@ export const ticketManagementAPI = {
     mobileNumber: string;
     visitorComingFrom: string;
     remarks: string;
+    expected_at?: string;
     skipHostApproval: boolean;
     goodsInwards: boolean;
     passValidFrom?: string;
@@ -1173,6 +1175,17 @@ export const ticketManagementAPI = {
       formData.append('gatekeeper[guest_from]', visitorData.visitorComingFrom);
       formData.append('gatekeeper[guest_vehicle_number]', visitorData.vehicleNumber || 'FILTERED');
       formData.append('gatekeeper[remarks]', visitorData.remarks);
+      
+      // Expected at - only include for expected visitors
+      if (visitorData.expected_at) {
+        // Convert datetime-local format (YYYY-MM-DDTHH:MM) to the backend expected format
+        const expectedAtDate = new Date(visitorData.expected_at);
+        const formattedExpectedAt = `${expectedAtDate.getDate().toString().padStart(2, '0')}/${(expectedAtDate.getMonth() + 1).toString().padStart(2, '0')}/${expectedAtDate.getFullYear()} ${expectedAtDate.getHours().toString().padStart(2, '0')}:${expectedAtDate.getMinutes().toString().padStart(2, '0')}`;
+        formData.append('gatekeeper[expected_at]', formattedExpectedAt);
+        console.log('📅 Expected at field added:', formattedExpectedAt);
+      } else {
+        console.log('📅 No expected_at field - likely unexpected visitor');
+      }
       
       // Frequency and dates
       if (visitorData.frequency === 'frequently') {

@@ -42,7 +42,32 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClos
     }
   }, [status])
 
+  const validateForm = () => {
+    if (!formData.status) {
+      toast.error('Please enter Status');
+      return false;
+    }
+    else if (!formData.displayName) {
+      toast.error('Please enter Display Name');
+      return false;
+    }
+    else if (!formData.fixedState) {
+      toast.error('Please select Fixed State');
+      return false;
+    }
+    else if (!formData.order) {
+      toast.error('Please enter Order');
+      return false;
+    }
+    else if (!formData.color) {
+      toast.error('Please enter Color');
+      return false;
+    }
+    return true;
+  }
+
   const handleSave = async () => {
+    if (!validateForm()) return;
     const payload = {
       name: formData.status,
       display: formData.displayName,
@@ -51,7 +76,6 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClos
       color_code: formData.color
     }
 
-    console.log(payload)
     try {
       await dispatch(editRestaurantStatus({ baseUrl, token, id: Number(id), statusId: status?.id, data: payload })).unwrap();
       setFormData({ status: '', displayName: '', fixedState: '', order: '', color: '#000000' });

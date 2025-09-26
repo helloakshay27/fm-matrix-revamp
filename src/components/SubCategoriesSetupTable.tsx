@@ -1,8 +1,8 @@
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash } from "lucide-react";
 import { AddSubCategoryModal } from "./AddSubCategoryModal";
 import { EditSubCategoryModal } from "./EditSubCategoryModal";
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
@@ -12,6 +12,8 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { SelectionPanel } from './water-asset-details/PannelTab';
+import { Switch } from './ui/switch';
+import axios from 'axios';
 
 export interface SubCategory {
   id: number;
@@ -26,8 +28,6 @@ const columns: ColumnConfig[] = [
   { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
   { key: 'subCategory', label: 'Sub Category', sortable: true, hideable: true, draggable: true },
   { key: 'description', label: 'Description', sortable: true, hideable: true, draggable: true },
-  { key: 'active', label: 'Active', sortable: true, hideable: true, draggable: true },
-  { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false }
 ];
 
 export const SubCategoriesSetupTable = () => {
@@ -42,6 +42,7 @@ export const SubCategoriesSetupTable = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
   const fetchData = async () => {
     try {
@@ -90,60 +91,74 @@ export const SubCategoriesSetupTable = () => {
     setIsEditModalOpen(true);
   };
 
-  const openDeleteDialog = (subCategory: SubCategory) => {
-    setSelectedSubCategory(subCategory);
-    setIsDeleteDialogOpen(true);
+  const handleCheckboxChange = async (item: any) => {
+    const newStatus = !item.active;
+    const itemId = item.id;
+
+    if (updatingStatus[itemId]) return;
+
+    try {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: true }));
+
+      const payload = {
+        spree_manage_restaurant_sub_category: {
+          active: newStatus
+        },
+        restaurant_id: Number(id)
+      }
+
+      await axios.put(`https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_sub_categories/${item.id}.json`, payload, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      setSubCategories((prevData: any[]) =>
+        prevData.map((row) =>
+          row.id === itemId ? { ...row, active: newStatus } : row
+        )
+      );
+      fetchData();
+      toast.success(`Subcategory deleted successfully`);
+    } catch (error) {
+      console.error("Error updating active status:", error);
+      toast.error(error || "Failed to update active status. Please try again.");
+    } finally {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: false }));
+    }
   };
 
   const renderRow = (item: SubCategory) => ({
     category: item.category_name,
     subCategory: item.name,
     description: item.description,
-    active: (
-      <span className={`px-2 py-1 rounded-full text-xs ${item.active
-        ? 'bg-green-100 text-green-800'
-        : 'bg-red-100 text-red-800'
-        }`}>
-        {item.active ? 'Active' : 'Inactive'}
-      </span>
-    ),
-    actions: (
-      <div className="flex items-center justify-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => openEditModal(item)}
-          className="p-1 h-8 w-8"
-        >
-          <Pencil className="w-4 h-4" />
-        </Button>
-        {/* <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => openDeleteDialog(item)}
-          className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button> */}
-      </div>
-    )
   });
+
+  const renderActions = (item: SubCategory) => (
+    <div className="flex items-center justify-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => openEditModal(item)}
+        className="p-1 h-8 w-8"
+      >
+        <Pencil className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleCheckboxChange(item)}
+        className="p-1 h-8 w-8"
+      >
+        <Trash className="w-4 h-4" />
+      </Button>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
-      {/* <div className="flex justify-start">
-        <Button
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </Button>
-      </div> */}
-
       {showActionPanel && (
         <SelectionPanel
-          // actions={selectionActions}
           onAdd={() => setIsAddModalOpen(true)}
           onClearSelection={() => setShowActionPanel(false)}
         />
@@ -153,9 +168,10 @@ export const SubCategoriesSetupTable = () => {
         data={[...subCategories].reverse()}
         columns={columns}
         renderRow={renderRow}
+        renderActions={renderActions}
         enableSearch={true}
         enableSelection={true}
-        enableExport={true}
+        enableExport={false}
         storageKey="subcategories-table"
         pagination={true}
         pageSize={5}

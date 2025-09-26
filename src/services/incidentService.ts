@@ -126,7 +126,7 @@ export interface IncidentResponse {
 
 // Real API service
 export const incidentService = {
-  async getIncidents(): Promise<IncidentResponse> {
+  async getIncidents(query?: string): Promise<IncidentResponse> {
     // Get baseUrl and token from localStorage
     let baseUrl = localStorage.getItem('baseUrl') || '';
     const token = localStorage.getItem('token') || '';
@@ -135,7 +135,8 @@ export const incidentService = {
       baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
     }
 
-    const response = await fetch(`${baseUrl}/pms/incidents.json`, {
+    const url = `${baseUrl}/pms/incidents.json${query ? `?${query}` : ''}`;
+    const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${token}`
       }

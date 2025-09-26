@@ -745,6 +745,7 @@ import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
 import BannerDetailsPage from "./pages/BannerDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
 import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
+import WeeklyReport from "./components/WeeklyReport";
 
 const queryClient = new QueryClient();
 
@@ -804,6 +805,8 @@ function App() {
                 <Routes>
                   {/* Login Route */}
                   <Route path="/thepdf" element={<AllContent />} />
+                  <Route path="/weeklypdf" element={<WeeklyReport />} />
+
 
                   <Route
                     path="/login"
@@ -2396,7 +2399,7 @@ function App() {
                     {/* Value Added Services Routes */}
                     <Route
                       path="/vas/fnb"
-                      element={<RestaurantOrdersTable />}
+                      element={<RestaurantOrdersTable needPadding={true} />}
                     />
                     {/* <Route path="/vas/fnb/add" element={<AddRestaurantPage />} /> */}
                     <Route
@@ -2406,10 +2409,6 @@ function App() {
                     <Route
                       path="/vas/fnb/details/:id/restaurant-menu/:mid"
                       element={<ProductSetupDetailPage />}
-                    />
-                    <Route
-                      path="/vas/fnb/details/:id/restaurant-menu/edit/:mid"
-                      element={<ProductEditPage />}
                     />
                     <Route
                       path="/vas/fnb/details/:id/restaurant-order/:oid"

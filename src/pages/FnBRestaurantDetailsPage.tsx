@@ -626,7 +626,7 @@ export const FnBRestaurantDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent
-                className="grid grid-cols-1 md:grid-cols-3 gap-6 py-[31px] bg-[#F6F7F7]"
+                className="grid grid-cols-1 md:grid-cols-3 gap-6 py-[31px]"
                 style={{ border: "1px solid #D9D9D9" }}
               >
                 <div>
@@ -858,8 +858,7 @@ export const FnBRestaurantDetailsPage = () => {
                 </div>
                 <div className="md:col-span-3">
                   <TextField
-                    label="Address"
-                    required
+                    label="Address*"
                     value={formData.address}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -871,14 +870,33 @@ export const FnBRestaurantDetailsPage = () => {
                     variant="outlined"
                     multiline
                     rows={3}
-                    sx={fieldStyles}
+                    sx={{
+                      "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                        margin: "0 !important",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
                 <div>
                   <TextField
-                    label="T&C"
-                    required
+                    label="T&C*"
                     value={formData.terms}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -890,14 +908,33 @@ export const FnBRestaurantDetailsPage = () => {
                     variant="outlined"
                     multiline
                     rows={3}
-                    sx={fieldStyles}
+                    sx={{
+                      "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                        margin: "0 !important",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
                 <div>
                   <TextField
-                    label="Disclaimer"
-                    required
+                    label="Disclaimer*"
                     value={formData.disclaimer}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -909,14 +946,33 @@ export const FnBRestaurantDetailsPage = () => {
                     variant="outlined"
                     multiline
                     rows={3}
-                    sx={fieldStyles}
+                    sx={{
+                      "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                        margin: "0 !important",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
                 <div>
                   <TextField
-                    label="Closing Message"
-                    required
+                    label="Closing Message*"
                     value={formData.booking_closed}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -928,7 +984,27 @@ export const FnBRestaurantDetailsPage = () => {
                     variant="outlined"
                     multiline
                     rows={3}
-                    sx={fieldStyles}
+                    sx={{
+                      "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                        margin: "0 !important",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
@@ -949,7 +1025,7 @@ export const FnBRestaurantDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent
-                className="py-[31px] bg-[#F6F7F7]"
+                className="py-[31px]"
                 style={{ border: "1px solid #D9D9D9" }}
               >
                 <div className="overflow-x-auto">
@@ -1263,7 +1339,7 @@ export const FnBRestaurantDetailsPage = () => {
                   BLOCKED DAYS
                 </CardTitle>
               </CardHeader>
-              <CardContent className="py-[31px] bg-[#F6F7F7]" style={{ border: '1px solid #D9D9D9' }}>
+              <CardContent className="py-[31px]" style={{ border: '1px solid #D9D9D9' }}>
                 <div className="space-y-4">
                   {blockedDays.map((day, index) => (
                     <div key={index} className="flex items-center gap-6 p-3 border border-gray-200 rounded">
@@ -1343,7 +1419,7 @@ export const FnBRestaurantDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent
-                className="grid grid-cols-1 md:grid-cols-2 gap-6 py-[31px] bg-[#F6F7F7]"
+                className="grid grid-cols-1 md:grid-cols-2 gap-6 py-[31px]"
                 style={{ border: "1px solid #D9D9D9" }}
               >
                 <div>
@@ -1406,7 +1482,27 @@ export const FnBRestaurantDetailsPage = () => {
                     variant="outlined"
                     multiline
                     rows={3}
-                    sx={fieldStyles}
+                    sx={{
+                      "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                        margin: "0 !important",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
@@ -1427,7 +1523,7 @@ export const FnBRestaurantDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent
-                className="grid grid-cols-1 md:grid-cols-2 gap-6 py-[31px] bg-[#F6F7F7]"
+                className="grid grid-cols-1 md:grid-cols-2 gap-6 py-[31px]"
                 style={{ border: "1px solid #D9D9D9" }}
               >
                 <div>
@@ -1482,7 +1578,27 @@ export const FnBRestaurantDetailsPage = () => {
                     variant="outlined"
                     multiline
                     rows={3}
-                    sx={fieldStyles}
+                    sx={{
+                      "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                        margin: "0 !important",
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
@@ -1503,7 +1619,7 @@ export const FnBRestaurantDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent
-                className="py-[31px] bg-[#F6F7F7]"
+                className="py-[31px]"
                 style={{ border: "1px solid #D9D9D9" }}
               >
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -1562,7 +1678,7 @@ export const FnBRestaurantDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent
-                className="py-[31px] bg-[#F6F7F7]"
+                className="py-[31px]"
                 style={{ border: "1px solid #D9D9D9" }}
               >
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -1622,7 +1738,7 @@ export const FnBRestaurantDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent
-                className="py-[31px] bg-[#F6F7F7]"
+                className="py-[31px]"
                 style={{ border: "1px solid #D9D9D9" }}
               >
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -1724,7 +1840,7 @@ export const FnBRestaurantDetailsPage = () => {
 
         <TabsContent value="restaurant-orders" className="mt-6">
           <div className="space-y-4">
-            <RestaurantOrdersTable />
+            <RestaurantOrdersTable needPadding={false} />
           </div>
         </TabsContent>
       </Tabs>
