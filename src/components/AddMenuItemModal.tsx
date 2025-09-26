@@ -8,6 +8,7 @@ import { X } from "lucide-react";
 import { useAppDispatch } from '@/store/hooks';
 import { fetchRestaurantCategory, fetchSubcategory } from '@/store/slices/f&bSlice';
 import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface AddMenuItemModalProps {
   isOpen: boolean;
@@ -67,7 +68,31 @@ export const AddMenuItemModal = ({
     fetchSubCategories()
   }, [])
 
+  const validateForm = () => {
+    if (!formData.productName) {
+      toast.error('Please enter Product Name');
+      return false;
+    } else if (!formData.sku) {
+      toast.error('Please enter SKU');
+      return false;
+    } else if (!formData.masterPrice) {
+      toast.error('Please enter Display Price');
+      return false;
+    } else if (!formData.stock) {
+      toast.error('Please enter Stock');
+      return false;
+    } else if (!formData.category) {
+      toast.error('Please select Category');
+      return false;
+    } else if (!formData.subCategory) {
+      toast.error('Please select Sub Category');
+      return false;
+    }
+    return true
+  }
+
   const handleSubmit = () => {
+    if (!validateForm()) return;
     if (formData.productName.trim() && formData.sku.trim()) {
       onSubmit(formData, selectedFile);
       setFormData({
@@ -275,7 +300,7 @@ export const AddMenuItemModal = ({
 
           <div className="space-y-2">
             <TextField
-              label="Stock"
+              label="Stock*"
               placeholder="Stock"
               value={formData.stock}
               onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
@@ -398,7 +423,27 @@ export const AddMenuItemModal = ({
               multiline
               rows={3}
               InputLabelProps={{ shrink: true }}
-              sx={textareaFieldStyles}
+              sx={{
+                "&.MuiFormControl-root:has(.MuiInputBase-multiline)": {
+                  margin: "0 !important",
+                },
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
+                },
+              }}
             />
           </div>
 

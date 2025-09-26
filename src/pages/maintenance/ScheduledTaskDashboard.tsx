@@ -132,6 +132,7 @@ interface ApiTaskResponse {
 }
 
 interface ApiTaskOccurrence {
+  scheduled_for: any;
   id: number;
   checklist: string;
   supplier: string | null;
@@ -304,7 +305,7 @@ export const ScheduledTaskDashboard = () => {
       schedule: task.start_date,
       assignTo: task.assigned_to_name,
       status: task.task_status,
-      scheduleFor: 'Service', // Default value as mentioned
+      scheduleFor: task.scheduled_for,
       assetsServices: task.asset,
       site: task.site_name,
       location: task.asset_path,
