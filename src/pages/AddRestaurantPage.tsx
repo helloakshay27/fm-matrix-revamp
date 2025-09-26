@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip, ArrowLeft, Loader } from 'lucide-react';
@@ -110,7 +110,7 @@ export const AddRestaurantPage = () => {
     orderNotAllowedText: ''
   });
 
-  const [loadingSubmit, setLoadingSubmit] = useState(false)
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
 
   // File states
   const [coverImages, setCoverImages] = useState<File[]>([]);
@@ -145,6 +145,20 @@ export const AddRestaurantPage = () => {
 
   const removeBlockedDay = (index: number) => {
     setBlockedDays(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateBlockedDay = (index: number, field: keyof BlockedDay, value: any) => {
+    if (field === 'date') {
+      // Check if the date is already selected
+      const isDuplicate = blockedDays.some((day, i) => i !== index && day.date === value);
+      if (isDuplicate) {
+        toast.error('This date is already blocked. Please select a different date.');
+        return;
+      }
+    }
+    setBlockedDays(prev => prev.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ));
   };
 
   const timeToMinutes = (time: string): number => {
@@ -217,12 +231,20 @@ export const AddRestaurantPage = () => {
       }
     }
 
+    // Validate blocked days
+    for (const day of blockedDays) {
+      if (!day.date) {
+        toast.error('Please select a date for all blocked days');
+        return false;
+      }
+    }
+
     return true;
-  }
+  };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    setLoadingSubmit(true)
+    setLoadingSubmit(true);
     try {
       const dataToSubmit = new FormData();
 
@@ -264,7 +286,7 @@ export const AddRestaurantPage = () => {
 
       // Append only enabled schedules
       schedule
-        .filter((item) => item.enabled) // Only include enabled days
+        .filter((item) => item.enabled)
         .forEach((item, index) => {
           const [startHour, startMin] = item.startTime.split(':');
           const [endHour, endMin] = item.endTime.split(':');
@@ -291,15 +313,15 @@ export const AddRestaurantPage = () => {
       // Append blocked days
       blockedDays.forEach((day, index) => {
         dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][ondate]`, day.date);
-        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][order_allowed]`, day.orderBlocked);
-        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`, day.bookingBlocked);
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][order_allowed]`, day.orderBlocked ? '0' : '1');
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`, day.bookingBlocked ? '0' : '1');
       });
 
       await dispatch(createRestaurant({ baseUrl, token, data: dataToSubmit })).unwrap();
       toast.success('Restaurant added successfully');
       navigate('/settings/vas/fnb/setup');
     } catch (error) {
-      console.log(error)
+      console.log(error);
     } finally {
       setLoadingSubmit(false);
     }
@@ -359,7 +381,7 @@ export const AddRestaurantPage = () => {
                 sx={fieldStyles}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true
                 }}
@@ -388,7 +410,7 @@ export const AddRestaurantPage = () => {
                 sx={fieldStyles}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true
                 }}
@@ -421,7 +443,7 @@ export const AddRestaurantPage = () => {
                 sx={fieldStyles}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true
                 }}
@@ -481,7 +503,7 @@ export const AddRestaurantPage = () => {
                 sx={fieldStyles}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true
                 }}
@@ -489,7 +511,7 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <TextField
-                label="Delivery Time"
+                label="Delivery Time (Minutes)"
                 required
                 placeholder="Mins"
                 type="text"
@@ -512,7 +534,7 @@ export const AddRestaurantPage = () => {
                 sx={fieldStyles}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true
                 }}
@@ -618,6 +640,12 @@ export const AddRestaurantPage = () => {
                     resize: "none !important",
                   },
                 }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500",
+                  },
+                  shrink: true,
+                }}
               />
             </div>
             <div>
@@ -652,7 +680,7 @@ export const AddRestaurantPage = () => {
                 }}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true,
                 }}
@@ -690,7 +718,7 @@ export const AddRestaurantPage = () => {
                 }}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true,
                 }}
@@ -728,7 +756,7 @@ export const AddRestaurantPage = () => {
                 }}
                 InputLabelProps={{
                   classes: {
-                    asterisk: "text-red-500", // Tailwind class for red color
+                    asterisk: "text-red-500",
                   },
                   shrink: true,
                 }}
@@ -938,19 +966,24 @@ export const AddRestaurantPage = () => {
                   <TextField
                     type="date"
                     value={day.date}
-                    onChange={(e) => setBlockedDays(prev => prev.map((item, i) =>
-                      i === index ? { ...item, date: e.target.value } : item
-                    ))}
+                    onChange={(e) => updateBlockedDay(index, 'date', e.target.value)}
                     sx={fieldStyles}
                     InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      inputProps: {
+                        // Disable already selected dates, excluding the current index
+                        disabledDates: blockedDays
+                          .filter((_, i) => i !== index)
+                          .map(d => d.date)
+                          .filter(d => d), // Filter out empty dates
+                      }
+                    }}
                   />
                   <FormControlLabel
                     control={
                       <MuiCheckbox
                         checked={day.orderBlocked}
-                        onChange={(e) => setBlockedDays(prev => prev.map((item, i) =>
-                          i === index ? { ...item, orderBlocked: e.target.checked } : item
-                        ))}
+                        onChange={(e) => updateBlockedDay(index, 'orderBlocked', e.target.checked)}
                         sx={checkboxStyles}
                       />
                     }
@@ -960,9 +993,7 @@ export const AddRestaurantPage = () => {
                     control={
                       <MuiCheckbox
                         checked={day.bookingBlocked}
-                        onChange={(e) => setBlockedDays(prev => prev.map((item, i) =>
-                          i === index ? { ...item, bookingBlocked: e.target.checked } : item
-                        ))}
+                        onChange={(e) => updateBlockedDay(index, 'bookingBlocked', e.target.checked)}
                         sx={checkboxStyles}
                       />
                     }

@@ -529,16 +529,26 @@ export const fetchRestaurantBookings = createAsyncThunk(
 
 export const fetchRestaurantOrders = createAsyncThunk(
     "fetchRestaurantOrders",
-    async ({ baseUrl, token, id, pageSize, currentPage }: { baseUrl: string; token: string; id: number; pageSize: number; currentPage: number }, { rejectWithValue }) => {
+    async ({ baseUrl, token, id, pageSize, currentPage, all }: { baseUrl: string; token: string; id: number; pageSize: number; currentPage: number, all?: boolean }, { rejectWithValue }) => {
         try {
+            const params = new URLSearchParams({
+                page: String(currentPage),
+                per_page: String(pageSize),
+            });
+
+            if (all) {
+                params.append("all", "true");
+            }
+
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.json?all=true&page=${currentPage}&per_page=${pageSize}`,
+                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.json?${params.toString()}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 }
             );
+
             return response.data;
         } catch (error) {
             const message =
