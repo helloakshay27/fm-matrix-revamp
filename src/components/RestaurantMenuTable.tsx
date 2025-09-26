@@ -12,6 +12,7 @@ import { createMenu, fetchMenu, updateMenu } from '@/store/slices/f&bSlice';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
 import { SelectionPanel } from './water-asset-details/PannelTab';
+import { ProductEditPage } from '@/pages/ProductEditPage';
 
 interface MenuItem {
   id: number;
@@ -51,7 +52,10 @@ export const RestaurantMenuTable = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  console.log(selectedMenuItem)
 
   const fetchMenuItems = async () => {
     setLoading(true)
@@ -119,7 +123,8 @@ export const RestaurantMenuTable = () => {
   };
 
   const handleEditProduct = (menuItem: MenuItem) => {
-    navigate(`/vas/fnb/details/${id}/restaurant-menu/edit/${menuItem.id}`);
+    setSelectedMenuItem(menuItem);
+    setIsEditModalOpen(true);
   };
 
   const toggleActive = async (mid: number, active: number) => {
@@ -301,6 +306,13 @@ export const RestaurantMenuTable = () => {
       <ImportDataModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+      />
+
+      <ProductEditPage
+        mid={selectedMenuItem?.id}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        fetchMenuItems={fetchMenuItems}
       />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

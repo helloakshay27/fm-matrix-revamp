@@ -324,12 +324,28 @@ export const ResponseEscalationTab: React.FC = () => {
         return;
       }
 
-      // Check if at least one escalation level has users
-      const hasUsers = Object.values(data.escalationLevels).some(users => users.length > 0);
-      if (!hasUsers) {
-        toast.error('Please assign users to at least one escalation level!');
+      // Check if any selected category already has an escalation rule
+      const existingCategories = data.categoryIds.filter(categoryId => {
+        const categoryExists = escalationRules.some(rule => rule.category_id === categoryId);
+        console.log(`Checking category ${categoryId} (${getCategoryName(categoryId)}):`, categoryExists);
+        return categoryExists;
+      });
+      
+      console.log('Existing categories found:', existingCategories);
+      console.log('All escalation rules:', escalationRules);
+      
+      if (existingCategories.length > 0) {
+        const categoryNames = existingCategories.map(id => getCategoryName(id)).join(', ');
+        toast.error('Category name already exists. Please choose a different name!');
         return;
       }
+
+      // Check if at least one escalation level has users
+      // const hasUsers = Object.values(data.escalationLevels).some(users => users.length > 0);
+      // if (!hasUsers) {
+      //   toast.error('Please assign users to at least one escalation level!');
+      //   return;
+      // }
 
       // Ensure user account is loaded to get site_id
       if (!userAccount?.site_id) {
@@ -478,7 +494,27 @@ export const ResponseEscalationTab: React.FC = () => {
                 isMulti
                 options={categoryOptions}
                 onChange={(selected) => {
-                  const newCategories = selected ? selected.map(s => s.value) : [];
+                  if (!selected) {
+                    setSelectedCategories([]);
+                    form.setValue('categoryIds', []);
+                    return;
+                  }
+
+                  const newCategories = selected.map(s => s.value);
+                  const currentCategories = selectedCategories;
+                  
+                  // Check if a new category is being added (selection length increased)
+                  if (newCategories.length > currentCategories.length) {
+                    // Find the newly added category
+                    const addedCategory = newCategories.find(id => !currentCategories.includes(id));
+                    
+                    // Check if this category already exists in current selection
+                    if (addedCategory && currentCategories.includes(addedCategory)) {
+                      toast.error('Category already exists in the selection!');
+                      return;
+                    }
+                  }
+                  
                   setSelectedCategories(newCategories);
                   form.setValue('categoryIds', newCategories);
                 }}
@@ -487,6 +523,7 @@ export const ResponseEscalationTab: React.FC = () => {
                 placeholder="Select up to 15 categories..."
                 isLoading={categoriesLoading}
                 isDisabled={categoriesLoading}
+                noOptionsMessage={() => "No more categories available"}
                 styles={{
                   control: (base) => ({
                     ...base,

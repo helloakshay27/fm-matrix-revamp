@@ -1840,7 +1840,7 @@ export const FnBRestaurantDetailsPage = () => {
 
         <TabsContent value="restaurant-orders" className="mt-6">
           <div className="space-y-4">
-            <RestaurantOrdersTable />
+            <RestaurantOrdersTable needPadding={false} />
           </div>
         </TabsContent>
       </Tabs>

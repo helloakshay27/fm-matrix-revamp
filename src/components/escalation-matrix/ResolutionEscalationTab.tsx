@@ -235,12 +235,12 @@ export const ResolutionEscalationTab: React.FC = () => {
       dispatch(clearState());
       dispatch(fetchResolutionEscalations());
     }
-    if (error) {
-      // Ensure error is a string for toast display
-      const errorMessage = typeof error === 'string' ? error : 'An error occurred while processing your request';
-      toast.error(errorMessage + '!');
-      dispatch(clearState());
-    }
+    // if (error) {
+    //   // Ensure error is a string for toast display
+    //   const errorMessage = typeof error === 'string' ? error : 'An error occurred while processing your request';
+    //   toast.error(errorMessage + '!');
+    //   dispatch(clearState());
+    // }
   }, [success, error, reset, dispatch]);
 
   // Filter rules based on selected category
