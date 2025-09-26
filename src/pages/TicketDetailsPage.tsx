@@ -733,97 +733,78 @@ export const TicketDetailsPage = () => {
                       variant="ghost"
                       className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
                       onClick={async () => {
-                        // Use the correct field from API response
-                        const documentUrl = document.document || document.document_url || document.url || document.attachment_url;
-                        const documentName = `document_${document.id}.${fileExtension || 'file'}`;
-
-                        console.log('📎 Download attempt:', {
+                        console.log('📎 Download attempt using new API:', {
                           id: document.id,
-                          documentUrl,
-                          documentName,
                           doctype: document.doctype,
                           document
                         });
 
-                        if (!documentUrl) {
-                          console.error('No document URL found', document);
-                          toast.error('Unable to download: No file URL found');
+                        if (!document.id) {
+                          console.error('No document ID found', document);
+                          toast.error('Unable to download: No document ID found');
                           return;
                         }
 
                         try {
-                          console.log('🔗 Starting download from URL:', documentUrl);
-
-                          // For S3 URLs, we can try direct download first
-                          if (documentUrl.includes('s3.') || documentUrl.includes('amazonaws.com')) {
-                            console.log('📥 Direct S3 download attempt...');
-
-                            try {
-                              const response = await fetch(documentUrl, {
-                                method: 'GET',
-                                mode: 'cors',
-                              });
-
-                              if (response.ok) {
-                                const blob = await response.blob();
-                                const url = window.URL.createObjectURL(blob);
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = documentName;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                window.URL.revokeObjectURL(url);
-                                toast.success('File downloaded successfully');
-                                return;
-                              }
-                            } catch (directError) {
-                              console.log('❌ Direct download failed, trying with authentication...');
-                            }
+                          // Check if we're in a browser environment
+                          if (typeof window === 'undefined' || !window.document) {
+                            throw new Error('Download not supported in this environment');
                           }
 
-                          // Try with authentication
+                          // Import API_CONFIG to get the base URL
+                          const { API_CONFIG } = await import('@/config/apiConfig');
+                          const baseUrl = API_CONFIG.BASE_URL;
                           const token = localStorage.getItem('token');
-                          if (token) {
-                            console.log('� Trying authenticated download...');
-                            const response = await fetch(documentUrl, {
-                              method: 'GET',
-                              headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Accept': '*/*',
-                              },
-                              mode: 'cors',
-                            });
+                          
+                          // Clean up base URL - ensure it doesn't have protocol and has no trailing slash
+                          const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+                          const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${document.id}?show_file=true`;
+                          
+                          console.log('🔗 New API download URL:', downloadUrl);
 
-                            if (response.ok) {
-                              const blob = await response.blob();
-                              const url = window.URL.createObjectURL(blob);
-                              const link = document.createElement('a');
-                              link.href = url;
-                              link.download = documentName;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
+                          // Try authenticated download
+                          const response = await fetch(downloadUrl, {
+                            method: 'GET',
+                            headers: {
+                              'Authorization': `Bearer ${token}`,
+                              'Accept': '*/*',
+                            },
+                            mode: 'cors',
+                          });
+
+                          if (response.ok) {
+                            const blob = await response.blob();
+                            
+                            // Get file extension from doctype or original URL
+                            const fileExtension = document.doctype?.split('/').pop() || 
+                              document.document?.split('.').pop()?.toLowerCase() || 'file';
+                            const documentName = `document_${document.id}.${fileExtension}`;
+                            
+                            // Create download link using window.document
+                            const url = window.URL.createObjectURL(blob);
+                            const link = window.document.createElement('a');
+                            link.href = url;
+                            link.download = documentName;
+                            link.style.display = 'none';
+                            window.document.body.appendChild(link);
+                            link.click();
+                            
+                            // Cleanup
+                            setTimeout(() => {
+                              window.document.body.removeChild(link);
                               window.URL.revokeObjectURL(url);
-                              toast.success('File downloaded successfully');
-                              return;
-                            }
+                            }, 100);
+                            
+                            toast.success('File downloaded successfully');
+                            return;
+                          } else {
+                            console.error('Download failed with status:', response.status);
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                           }
-
-                          // Last resort: open in new tab
-                          console.log('🌐 Opening in new tab as fallback...');
-                          window.open(documentUrl, '_blank');
-                          // toast.success('File opened in new tab for download');
 
                         } catch (error) {
                           console.error('Error downloading file:', error);
-                          // Fallback: open URL in new tab
-                          try {
-                            window.open(documentUrl, '_blank');
-                            // toast.success('File opened in new tab for download');
-                          } catch (fallbackError) {
-                            toast.error(`Failed to download file: ${error.message}`);
-                          }
+                          toast.error(`Failed to download file: ${error.message}`);
                         }
                       }}
                     >
@@ -872,96 +853,79 @@ export const TicketDetailsPage = () => {
                   variant="outline"
                   size="sm"
                   onClick={async () => {
-                    // Reuse the download logic for the preview modal
+                    // Reuse the download logic for the preview modal with new API
                     const document = previewImage.document;
-                    const documentUrl = document.document || document.document_url || document.url || document.attachment_url;
-                    const fileExtension = documentUrl?.split('.').pop()?.toLowerCase() ||
-                      document.doctype?.split('/').pop()?.toLowerCase() || '';
-                    const documentName = `document_${document.id}.${fileExtension || 'file'}`;
-
-                    console.log('📎 Modal download attempt:', {
+                    
+                    console.log('📎 Modal download attempt using new API:', {
                       id: document.id,
-                      documentUrl,
-                      documentName,
                       doctype: document.doctype
                     });
 
-                    if (!documentUrl) {
-                      toast.error('Unable to download: No file URL found');
+                    if (!document.id) {
+                      toast.error('Unable to download: No document ID found');
                       return;
                     }
 
                     try {
-                      // For S3 URLs, try direct download first
-                      if (documentUrl.includes('s3.') || documentUrl.includes('amazonaws.com')) {
-                        console.log('📥 Direct S3 download attempt...');
-
-                        try {
-                          const response = await fetch(documentUrl, {
-                            method: 'GET',
-                            mode: 'cors',
-                          });
-
-                          if (response.ok) {
-                            const blob = await response.blob();
-                            const url = window.URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.download = documentName;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            window.URL.revokeObjectURL(url);
-                            toast.success('File downloaded successfully');
-                            return;
-                          }
-                        } catch (directError) {
-                          console.log('❌ Direct download failed, trying with authentication...');
-                        }
+                      // Check if we're in a browser environment
+                      if (typeof window === 'undefined' || !window.document) {
+                        throw new Error('Download not supported in this environment');
                       }
 
-                      // Try with authentication
+                      // Import API_CONFIG to get the base URL
+                      const { API_CONFIG } = await import('@/config/apiConfig');
+                      const baseUrl = API_CONFIG.BASE_URL;
                       const token = localStorage.getItem('token');
-                      if (token) {
-                        console.log('🔐 Trying authenticated download...');
-                        const response = await fetch(documentUrl, {
-                          method: 'GET',
-                          headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Accept': '*/*',
-                          },
-                          mode: 'cors',
-                        });
+                      
+                      // Clean up base URL - ensure it doesn't have protocol and has no trailing slash
+                      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+                      const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${document.id}?show_file=true`;
+                      
+                      console.log('🔗 Modal download URL:', downloadUrl);
 
-                        if (response.ok) {
-                          const blob = await response.blob();
-                          const url = window.URL.createObjectURL(blob);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = documentName;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
+                      // Try authenticated download
+                      const response = await fetch(downloadUrl, {
+                        method: 'GET',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Accept': '*/*',
+                        },
+                        mode: 'cors',
+                      });
+
+                      if (response.ok) {
+                        const blob = await response.blob();
+                        
+                        // Get file extension from doctype or original URL
+                        const fileExtension = document.doctype?.split('/').pop() || 
+                          document.document?.split('.').pop()?.toLowerCase() || 'file';
+                        const documentName = `document_${document.id}.${fileExtension}`;
+                        
+                        // Create download link using window.document
+                        const url = window.URL.createObjectURL(blob);
+                        const link = window.document.createElement('a');
+                        link.href = url;
+                        link.download = documentName;
+                        link.style.display = 'none';
+                        window.document.body.appendChild(link);
+                        link.click();
+                        
+                        // Cleanup
+                        setTimeout(() => {
+                          window.document.body.removeChild(link);
                           window.URL.revokeObjectURL(url);
-                          toast.success('File downloaded successfully');
-                          return;
-                        }
+                        }, 100);
+                        
+                        toast.success('File downloaded successfully');
+                        return;
+                      } else {
+                        console.error('Modal download failed with status:', response.status);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                       }
-
-                      // Last resort: open in new tab
-                      console.log('🌐 Opening in new tab as fallback...');
-                      window.open(documentUrl, '_blank');
-                      // toast.success('File opened in new tab for download');
 
                     } catch (error) {
                       console.error('Error downloading file:', error);
-                      // Fallback: open URL in new tab
-                      try {
-                        window.open(documentUrl, '_blank');
-                        // toast.success('File opened in new tab for download');
-                      } catch (fallbackError) {
-                        toast.error(`Failed to download: ${error.message}`);
-                      }
+                      toast.error(`Failed to download: ${error.message}`);
                     }
                   }}
                 >

@@ -298,7 +298,6 @@ export const AddRestaurantPage = () => {
       });
 
       schedule
-        .filter((item) => item.enabled)
         .forEach((item, index) => {
           const [startHour, startMin] = item.startTime.split(':');
           const [endHour, endMin] = item.endTime.split(':');
@@ -306,7 +305,7 @@ export const AddRestaurantPage = () => {
           const [breakEndHour, breakEndMin] = item.breakEndTime.split(':');
           const [lastHour, lastMin] = item.lastBookingTime.split(':');
 
-          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][is_open]`, '1');
+          dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][is_open]`, item.enabled ? '1' : '0');
           dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][dayofweek]`, item.day.toLowerCase());
           dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_hour]`, startHour);
           dataToSubmit.append(`restaurant[restaurant_operations_attributes][${index}][start_min]`, startMin);
