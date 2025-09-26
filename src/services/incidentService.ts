@@ -34,6 +34,15 @@ export interface IncidentDetail {
   name_and_address_treatment_facility?: string;
   name_and_address_attending_physician?: string;
 }
+export interface IncidentLog {
+  id: number;
+  comment: string;
+  priority: string | null;
+  current_status: string;
+  created_at: string;
+  log_by: string;
+  attachments: any[];
+}
 
 export interface Incident {
   id: number;
@@ -108,7 +117,7 @@ export interface Incident {
   show_approve_btn: boolean;
   attachments: IncidentAttachment[];
   injuries: any[];
-  logs: any[];
+  logs: IncidentLog[];
   incident_witnesses?: IncidentWitness[];
   incident_investigations?: IncidentInvestigation[];
   probability?: number;
