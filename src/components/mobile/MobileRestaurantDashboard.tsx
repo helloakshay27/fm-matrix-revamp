@@ -9,30 +9,9 @@ import {
   Package,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { restaurantApi, FoodOrder } from "@/services/restaurantApi";
+import { restaurantApi, FoodOrder, Restaurant } from "@/services/restaurantApi";
 import { DeliveryDining, DeliveryDiningOutlined } from "@mui/icons-material";
-
-interface Restaurant {
-  id: number;
-  name: string;
-  address?: string;
-  cuisines?: string;
-  cost_for_two?: number;
-  contact1?: string;
-  contact2?: string;
-  contact3?: string;
-  terms?: string;
-  disclaimer?: string;
-  booking_allowed?: number;
-  booking_closed?: string;
-  status: number;
-  // Optional properties for UI display
-  location?: string;
-  rating?: number;
-  timeRange?: string;
-  discount?: string;
-  image?: string;
-}
+import { boolean } from "zod";
 
 interface MobileRestaurantDashboardProps {
   restaurants: Restaurant[];
@@ -146,6 +125,7 @@ export const MobileRestaurantDashboard: React.FC<
       rating: 4.1,
       timeRange: "",
       discount: "",
+      status: "",
       image: order.restaurant_cover_images?.[0]?.document || "",
     };
 
@@ -158,12 +138,12 @@ export const MobileRestaurantDashboard: React.FC<
       restaurant: mockRestaurant,
       note: order.requests || "Previous order details",
       isExistingOrder: true,
-      showSuccessImmediately: false, // Don't show success for existing orders
+      showSuccessImmediately: false, 
       totalPrice: order.total_amount,
       totalItems:
         order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
-      sourceParam: currentSource, // Preserve source
-      isExternalScan: isExternalScan, // Preserve external scan flag
+      sourceParam: currentSource, 
+      isExternalScan: isExternalScan, 
       orderData: {
         ...order,
         facility_id: order.facility_id || "",
@@ -257,13 +237,21 @@ export const MobileRestaurantDashboard: React.FC<
     }
   };
 
-  // Filter out restaurants with status 0 (inactive restaurants)
-  const activeRestaurants = restaurants.filter(restaurant => restaurant.status !== 0);
-  
-  console.log("🍽️ RESTAURANT FILTERING:");
-  console.log("  - Total restaurants:", restaurants.length);
-  console.log("  - Active restaurants (status !== 0):", activeRestaurants.length);
-  console.log("  - Filtered restaurants:", restaurants.filter(r => r.status === 0).length);
+
+  console.log("STATUS", restaurants[0]?.status)
+  console.log("Restaurant", restaurants[0])
+
+  // Filter restaurants - show only restaurants with active status (true or 1)
+  const activeRestaurants = restaurants.filter(restaurant => {
+    const status = restaurant.status as boolean | number | string | undefined;
+    // Show only restaurants where status is explicitly true (boolean) or 1 (number)
+    // Handle both boolean and number/string types
+    const isActive = status === true || status === 1 || status === "1";
+    console.log(`Restaurant ${restaurant.name}: status=${status}, isActive=${isActive}`);
+    return isActive;
+  });
+
+  console.log(`Total restaurants: ${restaurants.length}, Active restaurants: ${activeRestaurants.length}`);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -370,7 +358,6 @@ export const MobileRestaurantDashboard: React.FC<
                           <MapPin className="w-4 h-4 mr-1" />
                           <span>
                             {restaurant.location ||
-                              restaurant.address ||
                               "Location not specified"}
                           </span>
                         </div>
@@ -381,12 +368,6 @@ export const MobileRestaurantDashboard: React.FC<
                             <span>{restaurant.cuisines}</span>
                           </div>
                         )} */}
-
-                        {restaurant.cost_for_two > 0 && (
-                          <div className="flex items-center text-gray-500 text-sm mb-3">
-                            <span>₹{restaurant.cost_for_two} for two</span>
-                          </div>
-                        )}
 
                         {restaurant.timeRange && (
                           <div className="flex items-center text-gray-500 text-sm mb-3">
