@@ -49,6 +49,7 @@ export const IncidentDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [originalIncidents, setOriginalIncidents] = useState<Incident[]>([]);
+  const [countStats, setCountStats] = useState<{ total_incidents: number; open: number; under_investigation: number; closed: number; pending: number; support_required: number } | null>(null);
 
   // Define columns for the EnhancedTable
   const columns: ColumnConfig[] = [
@@ -74,13 +75,6 @@ export const IncidentDashboard = () => {
       draggable: true,
     },
     {
-      key: "building_name",
-      label: "Site",
-      sortable: true,
-      defaultVisible: true,
-      draggable: true,
-    },
-    {
       key: "region",
       label: "Region",
       sortable: false,
@@ -88,7 +82,21 @@ export const IncidentDashboard = () => {
       draggable: true,
     },
     {
-      key: "tower_name",
+      key: "site_name",
+      label: "Site",
+      sortable: true,
+      defaultVisible: true,
+      draggable: false, // Make it non-draggable to test
+    },
+    {
+      key: "test_site",
+      label: "Test Site",
+      sortable: false,
+      defaultVisible: true,
+      draggable: false,
+    },
+    {
+      key: "building_name",
       label: "Tower",
       sortable: true,
       defaultVisible: true,
@@ -119,7 +127,7 @@ export const IncidentDashboard = () => {
       key: "sub_category_name",
       label: "Sub Category",
       sortable: true,
-      defaultVisible: false,
+      defaultVisible: true,
       draggable: true,
     },
     {
@@ -187,8 +195,17 @@ export const IncidentDashboard = () => {
     },
   ];
 
+  // Debug: Log columns configuration
+  console.log("Columns configuration:", columns);
+
   useEffect(() => {
+    // Clear old table settings to force refresh
+    localStorage.removeItem('incidents-table');
+    localStorage.removeItem('incidents-table-columns');
+    localStorage.removeItem('incidents-table-visibility');
+    
     fetchIncidents();
+    fetchCounts();
   }, []);
 
   const fetchIncidents = async () => {
@@ -196,6 +213,7 @@ export const IncidentDashboard = () => {
       setLoading(true);
       setError(null);
       const response = await incidentService.getIncidents();
+      console.log("API Response - First incident:", response.data.incidents[0]); // Debug log
       setIncidents(response.data.incidents);
       setOriginalIncidents(response.data.incidents);
     } catch (err) {
@@ -203,6 +221,15 @@ export const IncidentDashboard = () => {
       console.error("Error fetching incidents:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCounts = async () => {
+    try {
+      const counts = await incidentService.getIncidentCounts();
+      setCountStats(counts);
+    } catch (err) {
+      console.error('Failed to fetch incident counts:', err);
     }
   };
 
@@ -217,12 +244,15 @@ export const IncidentDashboard = () => {
         return <span className="font-medium">{item.id}</span>;
       case "description":
         return <div className="w-[15rem] overflow-hidden text-ellipsis text-center">{item.description}</div>;
-      case "building_name":
-        return <span>{item.building_name || "-"}</span>;
+      case "site_name":
+        console.log("Rendering site_name:", item.site_name, "building_name:", item.building_name);
+        return <span>{item.site_name || item.building_name || "-"}</span>;
+      case "test_site":
+        return <span style={{color: 'red', fontWeight: 'bold'}}>TEST SITE</span>;
       case "region":
         return <span>-</span>;
-      case "tower_name":
-        return <span>{item.tower_name || "-"}</span>;
+      case "building_name":
+        return <span>{item.building_name || "-"}</span>;
       case "inc_time":
         return (
           <span>
@@ -294,6 +324,29 @@ export const IncidentDashboard = () => {
     navigate("/safety/incident/add");
   };
 
+  const handleCardClick = async (type: 'total' | 'open' | 'closed' | 'pending' | 'under_investigation' | 'support_required') => {
+    try {
+      setLoading(true);
+      setError(null);
+      let query = '';
+      if (type === 'open') query = 'q[current_status_eq]=Open';
+      else if (type === 'closed') query = 'q[current_status_eq]=Closed';
+      else if (type === 'pending') query = 'q[current_status_eq]=Pending';
+      else if (type === 'under_investigation') query = 'q[current_status_eq]=Under%20Investigation';
+      else if (type === 'support_required') query = 'q[support_required_eq]=1';
+      // total => no query
+
+      const response = await incidentService.getIncidents(query);
+      setIncidents(response.data.incidents);
+      setOriginalIncidents(response.data.incidents);
+    } catch (err) {
+      setError('Failed to fetch incidents');
+      console.error('Error fetching incidents by card:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleViewIncident = (incidentId: string) => {
     navigate(`/safety/incident/${incidentId}`);
   };
@@ -323,6 +376,9 @@ export const IncidentDashboard = () => {
                   break;
                 case 'support_required':
                   value = incident.support_required ? 'Yes' : 'No';
+                  break;
+                case 'site_name':
+                  value = incident.site_name || incident.building_name || '-';
                   break;
                 default:
                   const fieldValue = incident[col.key as keyof Incident];
@@ -387,15 +443,28 @@ export const IncidentDashboard = () => {
             Analytics
           </TabsTrigger>
         </TabsList>
-
+ 
         <TabsContent value="list" className="mt-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-            <StatCard icon={<AlertTriangle />} label="Total Incidents" value={stats.total} />
-            <StatCard icon={<Clock />} label="Open" value={stats.open} />
-            <StatCard icon={<Search />} label="Under Observation" value={stats.underObservation} />
-            <StatCard icon={<CheckCircle />} label="Closed" value={stats.closed} />
-            <StatCard icon={<CheckCircle />} label="Support Required" value={stats.closed} />
+            <div onClick={() => handleCardClick('total')} className="cursor-pointer">
+              <StatCard icon={<AlertTriangle />} label="Total Incidents" value={countStats ? countStats.total_incidents : stats.total} />
+            </div>
+            <div onClick={() => handleCardClick('open')} className="cursor-pointer">
+              <StatCard icon={<Clock />} label="Open" value={countStats ? countStats.open : stats.open} />
+            </div>
+            <div onClick={() => handleCardClick('under_investigation')} className="cursor-pointer">
+              <StatCard icon={<Search />} label="Under Investigation" value={countStats ? countStats.under_investigation : stats.underObservation} />
+            </div>
+            <div onClick={() => handleCardClick('closed')} className="cursor-pointer">
+              <StatCard icon={<CheckCircle />} label="Closed" value={countStats ? countStats.closed : stats.closed} />
+            </div>
+            <div onClick={() => handleCardClick('pending')} className="cursor-pointer">
+              <StatCard icon={<CheckCircle />} label="Pending" value={countStats ? countStats.pending : 0} />
+            </div>
+            <div onClick={() => handleCardClick('support_required')} className="cursor-pointer">
+              <StatCard icon={<CheckCircle />} label="Support Required" value={countStats ? countStats.support_required : 0} />
+            </div>
             {/* <StatCard icon={<XCircle />} label="High Risk" value={stats.highRisk} />
             <StatCard icon={<AlertTriangle />} label="Medium Risk" value={stats.mediumRisk} />
             <StatCard icon={<CheckCircle />} label="Low Risk" value={stats.lowRisk} /> */}
@@ -415,7 +484,7 @@ export const IncidentDashboard = () => {
             enableExport={true}
             onExport={handleExport}
             exportFileName="incidents"
-            storageKey="incidents-table"
+            storageKey="incidents-dashboard-new"
             className="min-w-full"
             pagination={true}
             pageSize={10}
