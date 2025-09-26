@@ -71,10 +71,10 @@ export const ForgotPasswordOTPPage = () => {
         confirmPassword
       );
 
-      if (response && response.code === 200) {
+      if (response.code === 200) {
         toast.success(response.message || "Password reset successful!");
         navigate('/login');
-      } else if (response && response.code === 401) {
+      } else if (response.code === 401) {
         toast.error(response.message || "Invalid OTP for mobile/email.");
       } else {
         toast.error(response?.message || "Failed to reset password. Please try again.");
