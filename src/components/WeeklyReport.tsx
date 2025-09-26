@@ -28,7 +28,7 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached }) =>
         <div className="w-full">
             <h3 className="text-black font-semibold text-base sm:text-lg mb-2">{title}</h3>
             <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-5 sm:py-6">
-                <div className="w-full h-[300px] sm:h-[360px]">
+                <div className="w-full h-[300px] sm:h-[360px] print:h-[250px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart margin={{ top: 8, right: 40, bottom: 8, left: 40 }}>
                             <Pie data={data} dataKey="value" nameKey="name" innerRadius={0} outerRadius={110} stroke="#FFFFFF" paddingAngle={0}>
@@ -169,20 +169,15 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             </section>
 
             {/* TAT Achievement (Response & Resolution) */}
-                    {/* Average Resolution Time */}
-                    <section className={sectionBox}>
-                        <div className="px-1 sm:px-2">
-                            <StatCard value="3.71 Days" label="Average Time Taken To Resolve A Ticket" />
-                        </div>
-                    </section>
-
-                    {/* TAT Achievement (Response & Resolution) */}
             <section className={sectionBox}>
                 <div className="px-1 sm:px-2">
                     <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">TAT Achievement (Response & Resolution)</h2>
                     <div className="border-t border-dashed border-gray-300 my-3" />
+                    <div className="mb-6 print:mb-3">
+                        <StatCard value="3.71 Days" label="Average Time Taken To Resolve A Ticket" />
+                    </div>
                     <TATPieCard title="Response TAT Overall" achieved={51953} breached={93041} />
-                    <div className="border-t border-gray-200 my-5" />
+                    <div className="border-t border-gray-200 my-5 print:my-4" />
                     <TATPieCard title="Resolution TAT Overall" achieved={110043} breached={34951} />
                 </div>
             </section>
@@ -257,37 +252,45 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                     <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">Customer Feedback</h2>
                     <div className="border-t border-dashed border-gray-300 my-3" />
                     {(() => {
-                        const totalTicketData = [{ name: 'Mon', value: 120 }, { name: 'Tue', value: 140 }, { name: 'Wed', value: 110 }, { name: 'Thu', value: 150 }, { name: 'Fri', value: 170 }];
-                        const totalFeedbackData = [{ name: 'Mon', value: 12 }, { name: 'Tue', value: 18 }, { name: 'Wed', value: 10 }, { name: 'Thu', value: 16 }, { name: 'Fri', value: 20 }];
+                        // Weekly stacked distribution of feedback sentiment (placeholder demo data)
+                        const weeklyTrendData = [
+                            { day: 'Mon', Excellent: 12, Good: 4, Average: 3, Bad: 2, Poor: 1 },
+                            { day: 'Tue', Excellent: 10, Good: 6, Average: 2, Bad: 1, Poor: 1 },
+                            { day: 'Wed', Excellent: 9, Good: 5, Average: 3, Bad: 2, Poor: 1 },
+                            { day: 'Thu', Excellent: 13, Good: 4, Average: 2, Bad: 1, Poor: 0 },
+                            { day: 'Fri', Excellent: 12, Good: 6, Average: 4, Bad: 2, Poor: 1 }
+                        ];
+                        const palette: Record<string, string> = {
+                            Excellent: '#EDE7DB',
+                            Good: '#D9D3C4',
+                            Average: '#C4B89D',
+                            Bad: '#C1A593',
+                            Poor: '#D5DBDB'
+                        };
+                        const categories = Object.keys(palette);
                         return (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                <div className="bg-[#F6F4EE] rounded-sm p-6 sm:p-8">
-                                    <h3 className="text-black font-semibold text-base sm:text-lg mb-4">Total Ticket</h3>
-                                    <div className="w-full h-64">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={totalTicketData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-                                                <CartesianGrid stroke="#DDD" strokeDasharray="3 3" />
-                                                <XAxis dataKey="name" stroke="#000" fontSize={12} />
-                                                <YAxis stroke="#000" fontSize={12} />
-                                                <Tooltip cursor={{ fill: '#00000008' }} wrapperStyle={{ fontSize: '12px' }} />
-                                                <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="#D9D3C4" />
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
+                            <div className="bg-[#F6F4EE] rounded-sm p-6 sm:p-8">
+                                <h3 className="text-black font-semibold text-base sm:text-lg mb-4">Weekly Trend</h3>
+                                <div className="w-full h-72 sm:h-80 print:h-64">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={weeklyTrendData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                                            <CartesianGrid stroke="#DDD" strokeDasharray="3 3" />
+                                            <XAxis dataKey="day" stroke="#000" fontSize={12} />
+                                            <YAxis stroke="#000" fontSize={12} />
+                                            <Tooltip cursor={{ fill: '#00000008' }} wrapperStyle={{ fontSize: '12px' }} />
+                                            {categories.map(cat => (
+                                                <Bar key={cat} dataKey={cat} stackId="fb" fill={palette[cat]} radius={[4,4,0,0]} />
+                                            ))}
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 </div>
-                                <div className="bg-[#F6F4EE] rounded-sm p-6 sm:p-8">
-                                    <h3 className="text-black font-semibold text-base sm:text-lg mb-4">Total Feedback Received</h3>
-                                    <div className="w-full h-64">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={totalFeedbackData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-                                                <CartesianGrid stroke="#DDD" strokeDasharray="3 3" />
-                                                <XAxis dataKey="name" stroke="#000" fontSize={12} />
-                                                <YAxis stroke="#000" fontSize={12} />
-                                                <Tooltip cursor={{ fill: '#00000008' }} wrapperStyle={{ fontSize: '12px' }} />
-                                                <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="#C4B89D" />
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
+                                <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs sm:text-sm print:text-[10px]">
+                                    {categories.map(cat => (
+                                        <div key={cat} className="flex items-center gap-2">
+                                            <span className="inline-block h-3 w-3 rounded-sm" style={{ background: palette[cat] }} />
+                                            <span className="text-black font-medium">{cat}</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         );

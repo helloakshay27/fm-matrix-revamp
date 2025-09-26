@@ -1497,14 +1497,14 @@ const AllContent = () => {
             const site = row.center_name || row.site_name || row.site || '';
 
             // Support both legacy flat percentages and new nested structure
-            const lastNested = row.last_quarter?.response_tat?.achieved_percentage;
-            const currentNested = row.current_quarter?.response_tat?.achieved_percentage;
+            const lastNested = row.previous_period?.response_tat?.achieved_percentage;
+            const currentNested = row.current_period?.response_tat?.achieved_percentage;
 
             const responseLast = Number(
-                lastNested ?? row.last_quarter?.response_achieved_percentage ?? 0
+                lastNested ?? row.previous_period?.response_achieved_percentage ?? 0
             );
             const responseCurrent = Number(
-                currentNested ?? row.current_quarter?.response_achieved_percentage ?? 0
+                currentNested ?? row.current_period?.response_achieved_percentage ?? 0
             );
 
             return { site, responseLast, responseCurrent };
@@ -1523,14 +1523,14 @@ const AllContent = () => {
         return perf.map((row: any) => {
             const site = row.center_name || row.site_name || row.site || '';
 
-            const lastNested = row.last_quarter?.resolution_tat?.achieved_percentage;
-            const currentNested = row.current_quarter?.resolution_tat?.achieved_percentage;
+            const lastNested = row.previous_period?.resolution_tat?.achieved_percentage;
+            const currentNested = row.current_period?.resolution_tat?.achieved_percentage;
 
             const resolutionLast = Number(
-                lastNested ?? row.last_quarter?.resolution_achieved_percentage ?? 0
+                lastNested ?? row.previous_period?.resolution_achieved_percentage ?? 0
             );
             const resolutionCurrent = Number(
-                currentNested ?? row.current_quarter?.resolution_achieved_percentage ?? 0
+                currentNested ?? row.current_period?.resolution_achieved_percentage ?? 0
             );
 
             return { site, resolutionLast, resolutionCurrent };
