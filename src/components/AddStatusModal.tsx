@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select, MenuItem, Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AddStatusModalProps {
   isOpen: boolean;
@@ -19,7 +20,32 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
     color: '#000000'
   });
 
+  const validateForm = () => {
+    if (!formData.status) {
+      toast.error('Please enter Status');
+      return false;
+    }
+    else if (!formData.displayName) {
+      toast.error('Please enter Display Name');
+      return false;
+    }
+    else if (!formData.fixedState) {
+      toast.error('Please select Fixed State');
+      return false;
+    }
+    else if (!formData.order) {
+      toast.error('Please enter Order');
+      return false;
+    }
+    else if (!formData.color) {
+      toast.error('Please enter Color');
+      return false;
+    }
+    return true;
+  }
+
   const handleSave = () => {
+    if (!validateForm()) return;
     onSave(formData);
     setFormData({ status: '', displayName: '', fixedState: '', order: '', color: '#000000' });
     onClose();

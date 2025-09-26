@@ -58,7 +58,20 @@ export const EditSubCategoryModal = ({
     }
   }, [subCategory]);
 
+  const validateForm = () => {
+    if (!formData.category) {
+      toast.error('Please select Category');
+      return false;
+    }
+    else if (!formData.subCategory) {
+      toast.error('Please enter Sub-Category Name');
+      return false;
+    }
+    return true;
+  }
+
   const handleSubmit = async () => {
+    if (!validateForm()) return;
     const payload = {
       spree_manage_restaurant_sub_category: {
         category_id: Number(formData.category),
@@ -234,7 +247,24 @@ export const EditSubCategoryModal = ({
               InputLabelProps={{
                 shrink: true,
               }}
-              sx={textAreaStyles}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
+                },
+              }}
             />
           </div>
 

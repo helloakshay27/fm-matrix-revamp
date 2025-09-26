@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TextField } from '@mui/material';
 import { X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface AddCategoryModalProps {
   isOpen: boolean;
@@ -27,7 +27,20 @@ export const AddCategoryModal = ({
     // amount: ""
   });
 
+  const validateForm = () => {
+    if (!formData.category) {
+      toast.error('Please enter Category Name');
+      return false;
+    }
+    else if (!formData.timings) {
+      toast.error('Please enter timings');
+      return false;
+    }
+    return true;
+  }
+
   const handleSubmit = () => {
+    if (!validateForm()) return;
     if (formData.category.trim()) {
       onSubmit(formData);
       setFormData({ category: "", timings: "" });
@@ -54,7 +67,7 @@ export const AddCategoryModal = ({
           <TextField
             fullWidth
             variant="outlined"
-            label="Category Name"
+            label="Category Name*"
             placeholder="Enter Category Name"
             value={formData.category}
             onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
@@ -96,7 +109,7 @@ export const AddCategoryModal = ({
             <TextField
               fullWidth
               variant="outlined"
-              label="Timings"
+              label="Timings*"
               placeholder="Enter Timings"
               value={formData.timings}
               onChange={(e) => setFormData(prev => ({ ...prev, timings: e.target.value }))}
