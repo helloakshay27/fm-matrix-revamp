@@ -286,6 +286,7 @@ export const AddRestaurantPage = () => {
       dataToSubmit.append('restaurant[delivery_charge]', orderConfig.deliveryCharge);
       dataToSubmit.append('restaurant[min_amount]', orderConfig.minimumOrder);
       dataToSubmit.append('restaurant[order_not_allowed]', orderConfig.orderNotAllowedText);
+      dataToSubmit.append('restaurant[can_order]', "1");
 
       coverImages.forEach((file) => {
         dataToSubmit.append('restaurant[cover_images][]', file);
@@ -323,8 +324,8 @@ export const AddRestaurantPage = () => {
 
       blockedDays.forEach((day, index) => {
         dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][ondate]`, day.date);
-        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][order_allowed]`, day.orderBlocked ? '0' : '1');
-        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`, day.bookingBlocked ? '0' : '1');
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][order_allowed]`, day.orderBlocked ? '1' : '0');
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`, day.bookingBlocked ? '1' : '0');
       });
 
       await dispatch(createRestaurant({ baseUrl, token, data: dataToSubmit })).unwrap();

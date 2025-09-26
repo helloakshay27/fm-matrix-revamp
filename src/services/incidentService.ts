@@ -34,15 +34,6 @@ export interface IncidentDetail {
   name_and_address_treatment_facility?: string;
   name_and_address_attending_physician?: string;
 }
-export interface IncidentLog {
-  id: number;
-  comment: string;
-  priority: string | null;
-  current_status: string;
-  created_at: string;
-  log_by: string;
-  attachments: any[];
-}
 
 export interface Incident {
   id: number;
@@ -90,6 +81,7 @@ export interface Incident {
   current_status: string;
   tower_name: string | null;
   building_name: string;
+  site_name: string | null;
   created_by: string;
   inc_level_name: string;
   inc_type_name: string | null;
@@ -117,7 +109,7 @@ export interface Incident {
   show_approve_btn: boolean;
   attachments: IncidentAttachment[];
   injuries: any[];
-  logs: IncidentLog[];
+  logs: any[];
   incident_witnesses?: IncidentWitness[];
   incident_investigations?: IncidentInvestigation[];
   probability?: number;
@@ -133,6 +125,15 @@ export interface IncidentResponse {
   };
 }
 
+export interface IncidentCountsResponse {
+  total_incidents: number;
+  open: number;
+  under_investigation: number;
+  closed: number;
+  pending: number;
+  support_required: number;
+}
+
 // Real API service
 export const incidentService = {
   async getIncidents(query?: string): Promise<IncidentResponse> {
@@ -146,6 +147,28 @@ export const incidentService = {
 
     const url = `${baseUrl}/pms/incidents.json${query ? `?${query}` : ''}`;
     const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  },
+
+  async getIncidentCounts(): Promise<IncidentCountsResponse> {
+    // Get baseUrl and token from localStorage
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+
+    const response = await fetch(`${baseUrl}/pms/incidents/counts.json`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
