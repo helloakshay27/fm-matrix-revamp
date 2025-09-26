@@ -89,13 +89,13 @@ export const ProductSetupDetailPage = () => {
             <ArrowLeft className="w-4 h-4" />
             <span>Back</span>
           </button>
-          <Button
+          {/* <Button
             onClick={handleEdit}
             className="bg-transparent border-0 text-gray-600 hover:text-gray-800"
             variant="ghost"
           >
             <Pencil className="w-5 h-5" />
-          </Button>
+          </Button> */}
         </div>
 
         <Card className="mb-6">
