@@ -25,7 +25,7 @@ export class JobSheetPDFGenerator {
     try {
       const jobSheet = jobSheetData?.job_sheet;
       const checklistResponses = jobSheet?.checklist_responses || [];
-      const needsPageBreak = checklistResponses.length > 8;
+      const needsPageBreak = checklistResponses.length > 10;
 
       if (needsPageBreak) {
         // Generate two separate pages when checklist is long
@@ -81,18 +81,6 @@ export class JobSheetPDFGenerator {
           ${this.generateClientInfo(taskDetails, jobSheetData)}
           ${this.generateChecklistSection(jobSheetData)}
           ${this.generateRemarksSection(comments, jobSheetData)}
-        </body>
-      </html>
-    `;
-
-    // Page 2: Signature Section
-    const page2Content = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          ${this.getPageStyles()}
-        </head>
-        <body style="padding-top: 50px;">
           ${this.generateSignatureSection(jobSheetData)}
         </body>
       </html>
@@ -124,39 +112,12 @@ export class JobSheetPDFGenerator {
       // Add first page
       this.pdf.addImage(imgData1, "JPEG", 0, 0, imgWidth, imgHeight1);
 
-      // Render Page 2
-      const container2 = document.createElement("div");
-      container2.innerHTML = page2Content;
-      container2.style.cssText = container1.style.cssText;
-
-      document.body.appendChild(container2);
-
-      try {
-        const canvas2 = await html2canvas(container2, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: "#ffffff",
-          width: container2.offsetWidth,
-          height: container2.scrollHeight,
-        });
-
-        const imgData2 = canvas2.toDataURL("image/jpeg", 0.7);
-        const imgHeight2 = (canvas2.height * imgWidth) / canvas2.width;
-
-        // Add second page
-        this.pdf.addPage();
-        this.pdf.addImage(imgData2, "JPEG", 0, 0, imgWidth, imgHeight2);
-
-        // Save the PDF
-        this.pdf.save(
-          `JobSheet_${taskDetails.task_details?.id || "Unknown"}_${new Date()
-            .toISOString()
-            .slice(0, 10)}.pdf`
-        );
-      } finally {
-        document.body.removeChild(container2);
-      }
+      // Save the PDF
+      this.pdf.save(
+        `JobSheet_${taskDetails.task_details?.id || "Unknown"}_${new Date()
+          .toISOString()
+          .slice(0, 10)}.pdf`
+      );
     } finally {
       document.body.removeChild(container1);
     }
@@ -236,7 +197,7 @@ export class JobSheetPDFGenerator {
     } else if (isViSite) {
       return renderToStaticMarkup(VI_LOGO_CODE());
     } else {
-      return renderToStaticMarkup(DEFAULT_LOGO_CODE());
+      return renderToStaticMarkup(OIG_LOGO_CODE());
     }
   }
 
@@ -302,35 +263,40 @@ export class JobSheetPDFGenerator {
 
     const checklistHtml = checklistResponses
       .map((item: any, index: number) => {
-        const isSatisfactory =
-          item.input_value === "Yes" ||
-          item.status === "Completed" ||
-          item.rating > 0;
-        const isNotSatisfactory =
-          item.input_value === "No" || item.status === "Failed";
+        // Map input_value to satisfactory/not satisfactory
+        const inputValue = item.input_value;
+        const isSatisfactory = 
+          inputValue === "Yes" ||
+          inputValue === "true" ||
+          inputValue === true ||
+          inputValue === "1" ||
+          inputValue === 1 ||
+          (typeof inputValue === "string" && inputValue.toLowerCase() === "yes") ||
+          (typeof inputValue === "string" && inputValue.toLowerCase() === "true") ||
+          (typeof inputValue === "string" && inputValue.toLowerCase() === "satisfactory") ||
+          (typeof inputValue === "string" && inputValue.toLowerCase() === "s");
+          
+        const isNotSatisfactory = 
+          inputValue === "No" ||
+          inputValue === "false" ||
+          inputValue === false ||
+          inputValue === "0" ||
+          inputValue === 0 ||
+          (typeof inputValue === "string" && inputValue.toLowerCase() === "no") ||
+          (typeof inputValue === "string" && inputValue.toLowerCase() === "false") ||
+          (typeof inputValue === "string" && inputValue.toLowerCase() === "not satisfactory") ||
+          (typeof inputValue === "string" && inputValue.toLowerCase() === "ns");
+          
         const comments = item.comments || "";
         const serialNumber = item.index || index + 1;
-        const activity = item.activity || "N/A";
+        const activity = item.activity || item.question || item.description || "N/A";
 
         return `
           <tr>
             <td class="sl-no">${serialNumber}</td>
             <td class="inspection-point">${activity}</td>
             <td class="result-cell">
-              <div class="checkbox-row">
-                <div class="checkbox-pair">
-                  <div class="checkbox ${isSatisfactory ? "checked" : ""}">
-                    ${isSatisfactory ? "✓" : ""}
-                  </div>
-                  <div class="checkbox ${isNotSatisfactory ? "checked" : ""}">
-                    ${isNotSatisfactory ? "✓" : ""}
-                  </div>
-                </div>
-                <div class="result-labels">
-                  <span>S</span>
-                  <span>NS</span>
-                </div>
-              </div>
+              ${inputValue || "N/A"}
             </td>
             <td class="remarks">${comments}</td>
           </tr>
@@ -346,7 +312,7 @@ export class JobSheetPDFGenerator {
             <tr>
               <th class="sl-header">SL<br>NO</th>
               <th class="inspection-header">INSPECTION POINT</th>
-              <th class="result-header">RESULT<br>(✓)<br>S&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NS</th>
+              <th class="result-header">RESULT</th>
               <th class="remarks-header">REMARKS</th>
             </tr>
           </thead>
@@ -461,10 +427,7 @@ export class JobSheetPDFGenerator {
                   <span class="signature-label">Name:</span>
                   <span class="signature-value">${performedByName}</span>
                 </div>
-                <div class="signature-line">
-                  <span class="signature-label">Signature:</span>
-                  <span class="signature-underline"></span>
-                </div>
+               
                 <div class="signature-line">
                   <span class="signature-label">Date:</span>
                   <span class="signature-underline"></span>
@@ -480,10 +443,7 @@ export class JobSheetPDFGenerator {
                   <span class="signature-label">Name:</span>
                   <span class="signature-underline"></span>
                 </div>
-                <div class="signature-line">
-                  <span class="signature-label">Signature:</span>
-                  <span class="signature-underline"></span>
-                </div>
+               
                 <div class="signature-line">
                   <span class="signature-label">Date:</span>
                   <span class="signature-underline"></span>
@@ -531,7 +491,7 @@ export class JobSheetPDFGenerator {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          margin-bottom: 20px;
+          margin-bottom: 15px;
           padding: 15px;
           width: 100%;
           height: auto;
@@ -630,10 +590,10 @@ export class JobSheetPDFGenerator {
 
         .info-table td {
           border: 1px solid #000000;
-          padding: 8px 12px;
+          padding: 12px 16px;
           vertical-align: middle;
           height: auto;
-          min-height: 30px;
+          min-height: 35px;
           background: #ffffff;
           font-weight: normal;
         }
@@ -673,12 +633,12 @@ export class JobSheetPDFGenerator {
         .checklist-table th {
           background: #ffffff;
           border: 1px solid #000000;
-          padding: 8px 6px;
+          padding: 12px 8px;
           font-weight: 700;
           text-align: center;
           vertical-align: middle;
           height: auto;
-          min-height: 35px;
+          min-height: 40px;
           color: #000000;
           font-size: 10px;
         }
@@ -690,10 +650,10 @@ export class JobSheetPDFGenerator {
 
         .checklist-table td {
           border: 1px solid #000000;
-          padding: 8px 10px;
+          padding: 12px 12px;
           vertical-align: top;
           height: auto;
-          min-height: 28px;
+          min-height: 32px;
           background: #ffffff;
           font-size: 9px;
         }
@@ -708,7 +668,7 @@ export class JobSheetPDFGenerator {
         .inspection-point {
           text-align: left;
           font-size: 9px;
-          padding-left: 8px;
+          padding-left: 12px;
           color: #000000;
           line-height: 1.3;
           font-weight: normal;
@@ -716,7 +676,7 @@ export class JobSheetPDFGenerator {
 
         .result-cell {
           text-align: center;
-          padding: 8px;
+          padding: 12px;
         }
 
         .checkbox-row {
@@ -767,7 +727,7 @@ export class JobSheetPDFGenerator {
           background: #ffffff;
           border: none;
           min-height: 20px;
-          padding: 2px;
+          padding: 6px;
         }
 
         .note {
