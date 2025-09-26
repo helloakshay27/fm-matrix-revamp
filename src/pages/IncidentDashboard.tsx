@@ -2,21 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Plus,
-  Eye,
-  Filter,
-  AlertTriangle,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Download,
-  RefreshCw,
-  Settings,
-  Search,
-  Loader2,
-} from "lucide-react";
+import { Plus, Eye, AlertTriangle, Clock, CheckCircle, XCircle, Download, Settings, Search, Filter as FilterIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import IncidentFilterModal from "@/components/IncidentFilterModal";
 import { incidentService, type Incident } from "@/services/incidentService";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -59,6 +47,8 @@ export const IncidentDashboard = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [originalIncidents, setOriginalIncidents] = useState<Incident[]>([]);
 
   // Define columns for the EnhancedTable
   const columns: ColumnConfig[] = [
@@ -133,6 +123,48 @@ export const IncidentDashboard = () => {
       draggable: true,
     },
     {
+      key: "sub_sub_category_name",
+      label: "Sub Sub Category",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "sub_sub_sub_category_name",
+      label: "Sub Sub Sub Category",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "sec_category_name",
+      label: "Secondary Category",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "sec_sub_category_name",
+      label: "Secondary Sub Category",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "sec_sub_sub_category_name",
+      label: "Secondary Sub Sub Category",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "sec_sub_sub_sub_category_name",
+      label: "Secondary Sub Sub Sub Category",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
       key: "support_required",
       label: "Support Required",
       sortable: true,
@@ -148,7 +180,7 @@ export const IncidentDashboard = () => {
     },
     {
       key: "current_status",
-      label: "Current Status",
+      label: "Status",
       sortable: true,
       defaultVisible: true,
       draggable: true,
@@ -165,6 +197,7 @@ export const IncidentDashboard = () => {
       setError(null);
       const response = await incidentService.getIncidents();
       setIncidents(response.data.incidents);
+      setOriginalIncidents(response.data.incidents);
     } catch (err) {
       setError("Failed to fetch incidents");
       console.error("Error fetching incidents:", err);
@@ -206,6 +239,18 @@ export const IncidentDashboard = () => {
         return <span>{item.category_name || "-"}</span>;
       case "sub_category_name":
         return <span>{item.sub_category_name || "-"}</span>;
+      case "sub_sub_category_name":
+        return <span>{item.sub_sub_category_name || "-"}</span>;
+      case "sub_sub_sub_category_name":
+        return <span>{item.sub_sub_sub_category_name || "-"}</span>;
+      case "sec_category_name":
+        return <span>{item.sec_category_name || "-"}</span>;
+      case "sec_sub_category_name":
+        return <span>{item.sec_sub_category_name || "-"}</span>;
+      case "sec_sub_sub_category_name":
+        return <span>{item.sec_sub_sub_category_name || "-"}</span>;
+      case "sec_sub_sub_sub_category_name":
+        return <span>{item.sec_sub_sub_sub_category_name || "-"}</span>;
       case "support_required":
         return (
           <Badge className={item.support_required ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
@@ -222,7 +267,10 @@ export const IncidentDashboard = () => {
         );
       default:
         const value = item[columnKey as keyof Incident];
-        return <span>{String(value) || "-"}</span>;
+        if (value === null || value === undefined) {
+          return <span>-</span>;
+        }
+        return <span>{String(value)}</span>;
     }
   };
 
@@ -347,6 +395,7 @@ export const IncidentDashboard = () => {
             <StatCard icon={<Clock />} label="Open" value={stats.open} />
             <StatCard icon={<Search />} label="Under Observation" value={stats.underObservation} />
             <StatCard icon={<CheckCircle />} label="Closed" value={stats.closed} />
+            <StatCard icon={<CheckCircle />} label="Support Required" value={stats.closed} />
             {/* <StatCard icon={<XCircle />} label="High Risk" value={stats.highRisk} />
             <StatCard icon={<AlertTriangle />} label="Medium Risk" value={stats.mediumRisk} />
             <StatCard icon={<CheckCircle />} label="Low Risk" value={stats.lowRisk} /> */}
@@ -383,8 +432,8 @@ export const IncidentDashboard = () => {
             }
             rightActions={
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={fetchIncidents} disabled={loading} title="Refresh">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                <Button variant="outline" size="icon" onClick={() => setIsFilterModalOpen(true)} title="Filter">
+                  <FilterIcon className="w-4 h-4" />
                 </Button>
               </div>
             }
@@ -431,6 +480,13 @@ export const IncidentDashboard = () => {
           </div>
         </TabsContent>
       </Tabs>
+      <IncidentFilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        incidents={originalIncidents}
+        onApply={(filtered) => setIncidents(filtered)}
+        onReset={() => setIncidents(originalIncidents)}
+      />
     </div>
   );
 };
