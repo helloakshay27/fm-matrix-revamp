@@ -19,12 +19,10 @@ export const AddCategoryModal = ({
   onClose,
   onSubmit,
   showTimings = true,
-  showAmount = false
 }: AddCategoryModalProps) => {
   const [formData, setFormData] = useState({
     category: "",
     timings: "",
-    // amount: ""
   });
 
   const validateForm = () => {

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Download, Eye, Loader2 } from "lucide-react";
@@ -10,7 +10,7 @@ import { EnhancedTable } from './enhanced-table/EnhancedTable';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import axios from 'axios';
+import axios, { all } from 'axios';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './ui/pagination';
 
@@ -46,17 +46,17 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
-export const RestaurantOrdersTable = () => {
+export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }) => {
+  const { id } = useParams()
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
-  const { loading } = useAppSelector(state => state.fetchRestaurantOrders)
-
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
   const [restoId, setRestoId] = useState<number | undefined>();
   const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false)
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
@@ -65,12 +65,19 @@ export const RestaurantOrdersTable = () => {
 
   useEffect(() => {
     const fetchRestaurant = async () => {
-      try {
-        const response = await dispatch(fetchRestaurants({ baseUrl, token })).unwrap();
-        setRestoId(response[0]?.id);
-      } catch (error) {
-        console.error('Error fetching restaurants:', error);
-        toast.error('Failed to fetch restaurants');
+      if (needPadding) {
+        setLoading(true);
+        try {
+          const response = await dispatch(fetchRestaurants({ baseUrl, token })).unwrap();
+          setRestoId(response[0]?.id);
+        } catch (error) {
+          console.error('Error fetching restaurants:', error);
+          toast.error('Failed to fetch restaurants');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setRestoId(id ? Number(id) : undefined);
       }
     };
 
@@ -81,7 +88,23 @@ export const RestaurantOrdersTable = () => {
     const fetchOrders = async () => {
       if (restoId) {
         try {
-          const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(restoId), pageSize: 10, currentPage: pagination.current_page })).unwrap();
+          const params = needPadding
+            ? {
+              baseUrl,
+              token,
+              id: Number(restoId),
+              pageSize: 10,
+              currentPage: pagination.current_page,
+              all: true,
+            }
+            : {
+              baseUrl,
+              token,
+              id: Number(restoId),
+              pageSize: 10,
+              currentPage: pagination.current_page,
+            };
+          const response = await dispatch(fetchRestaurantOrders(params)).unwrap();
           setOrders(response.food_orders);
           setPagination({
             current_page: response.current_page,
@@ -484,7 +507,7 @@ export const RestaurantOrdersTable = () => {
   );
 
   return (
-    <div className="p-[30px]">
+    <div className={`${needPadding && 'p-6'}`}>
       <EnhancedTable
         data={orders}
         columns={columns}
