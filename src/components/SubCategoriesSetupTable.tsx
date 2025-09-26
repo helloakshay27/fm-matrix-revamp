@@ -171,7 +171,7 @@ export const SubCategoriesSetupTable = () => {
         renderActions={renderActions}
         enableSearch={true}
         enableSelection={true}
-        enableExport={true}
+        enableExport={false}
         storageKey="subcategories-table"
         pagination={true}
         pageSize={5}
