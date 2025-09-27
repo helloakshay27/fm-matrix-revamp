@@ -16,7 +16,7 @@ import { SelectionPanel } from './water-asset-details/PannelTab';
 
 export interface StatusItem {
   id: number;
-  position: number;
+  position: string;
   name: string;
   display: string;
   fixed_state: string;

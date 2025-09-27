@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { TextField, FormControl, InputLabel, Select, MenuItem, Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { Button } from '@/components/ui/button';
@@ -36,7 +35,7 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClos
         status: status.name,
         displayName: status.display,
         fixedState: status.fixed_state,
-        order: status.position.toString(),
+        order: status.position,
         color: status.color_code
       });
     }
