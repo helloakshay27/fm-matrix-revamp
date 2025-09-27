@@ -33,7 +33,7 @@ const AllContent = () => {
     const auto = params.get('auto') === '1';
 
     const dateQuery = `?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
-        const dateRangeLabel = useMemo(() => {
+    const dateRangeLabel = useMemo(() => {
         if (!startDate || !endDate) return '';
         try {
             const s = new Date(startDate);
@@ -49,11 +49,11 @@ const AllContent = () => {
         }
     }, [startDate, endDate]);
 
-        // Compute dynamic period labels (Weekly/Monthly/Quarterly/Yearly) from selected dates
-        const { periodLabel, periodUnit, lastLabel, currentLabel } = useMemo(
-            () => getPeriodLabels(startDate, endDate),
-            [startDate, endDate]
-        );
+    // Compute dynamic period labels (Weekly/Monthly/Quarterly/Yearly) from selected dates
+    const { periodLabel, periodUnit, lastLabel, currentLabel } = useMemo(
+        () => getPeriodLabels(startDate, endDate),
+        [startDate, endDate]
+    );
 
 
     const [meetingRoomData, setMeetingRoomData] = useState<any>(null);
@@ -488,27 +488,37 @@ const AllContent = () => {
 
     // Visitor Management – derive chart rows from API
     const visitorTrendRows = useMemo(() => {
-        // New shape: { data: { visitor_management: { chart_data, site_wise_analysis, ... } } }
+        // Shape: { data: { visitor_management: { site_wise_analysis:[{ current_period, previous_period }], chart_data?... } } }
         const vm = visitorTrendAnalysisData?.data?.visitor_management
             ?? visitorTrendAnalysisData?.visitor_management
             ?? null;
         if (vm) {
-            // Prefer site_wise_analysis when available: use total_visitors from last/current quarter per site
+            // Preferred: site_wise_analysis with current_period / previous_period
             const swa: any[] = Array.isArray(vm.site_wise_analysis) ? vm.site_wise_analysis : [];
             if (swa.length) {
                 return swa.map((siteRow: any) => ({
                     site: siteRow.site_name || siteRow.site || '-',
-                    last: Number(siteRow?.last_quarter?.total_visitors ?? 0),
-                    current: Number(siteRow?.current_quarter?.total_visitors ?? 0),
+                    last: Number(
+                        siteRow?.previous_period?.total_visitors
+                        ?? siteRow?.previous_period?.total
+                        ?? siteRow?.last_quarter?.total_visitors
+                        ?? 0
+                    ),
+                    current: Number(
+                        siteRow?.current_period?.total_visitors
+                        ?? siteRow?.current_period?.total
+                        ?? siteRow?.current_quarter?.total_visitors
+                        ?? 0
+                    ),
                 }));
             }
 
-            // Fallback: derive totals from chart_data with side-by-side charts (Last vs Current)
+            // Fallback: derive totals from chart_data (side-by-side charts labelled Last vs Current)
             const categories: any[] = vm?.chart_data?.x_axis?.categories ?? [];
             const charts: any[] = Array.isArray(vm?.chart_data?.charts) ? vm.chart_data.charts : [];
             if (Array.isArray(categories) && categories.length && charts.length) {
-                const lastChart = charts.find((c: any) => /last/i.test(String(c?.title)) || c?.position === 'left');
-                const currentChart = charts.find((c: any) => /current/i.test(String(c?.title)) || c?.position === 'right');
+                const lastChart = charts.find((c: any) => /last|prev|previous/i.test(String(c?.title)) || c?.position === 'left');
+                const currentChart = charts.find((c: any) => /current|this/i.test(String(c?.title)) || c?.position === 'right');
 
                 const sumSeriesAt = (chart: any, idx: number) => {
                     const seriesArr: any[] = Array.isArray(chart?.series) ? chart.series : [];
@@ -850,19 +860,20 @@ const AllContent = () => {
 
             if (sites.length > 0 && matrix.length > 0) {
                 const items = matrix.map((row: any) => {
-                    const capital = siteKeys.map((k) => Math.round(parseCapitalBook(row?.[k]?.capital_book ?? 0) / 1000));
-                    const capitalText = siteKeys.map((k) => {
-                        const raw = row?.[k]?.capital_book ?? '';
-                        if (typeof raw === 'string' && /[lk]/i.test(raw)) {
-                            // Preserve API-provided units (L/k). Normalize 'l'->'L'.
-                            return String(raw).trim().replace(/l/g, 'L').replace(/L(?=\w)/g, 'L');
-                        }
-                        const n = parseCapitalBook(raw);
-                        if (!n) return '0';
-                        const kVal = Math.round(n / 1000);
-                        return `${kVal}k`;
+                    const capital = siteKeys.map((k) => {
+                        const raw = row?.[k]?.capital_book ?? row?.[k]?.blocked_value ?? row?.[k]?.capital ?? 0;
+                        const num = parseFloat(String(raw).replace(/[^0-9.\-]/g, ''));
+                        return isNaN(num) ? 0 : num;
                     });
-                    const stock = siteKeys.map((k) => Math.round(parsePercentSimple(row?.[k]?.current_stock ?? 0)));
+                    const capitalText = siteKeys.map((k) => {
+                        const raw = row?.[k]?.capital_book ?? row?.[k]?.blocked_value ?? row?.[k]?.capital ?? '';
+                        return String(raw).trim(); // show as provided (e.g., '4', '12k', '1L')
+                    });
+                    const stock = siteKeys.map((k) => {
+                        const raw = row?.[k]?.current_stock ?? 0;
+                        const num = parseFloat(String(raw).replace(/[^0-9.\-]/g, ''));
+                        return isNaN(num) ? 0 : num;
+                    });
                     return { name: row?.item_name ?? '-', capital, capitalText, stock };
                 });
                 try {
@@ -893,19 +904,21 @@ const AllContent = () => {
             const capitalsRaw = sites.map((siteName) => {
                 const site = overstockTopItems.find((s: any) => s?.site_name === siteName);
                 const it = (site?.items || []).find((x: any) => x?.item_name === name);
-                return Number(it?.capital_book ?? 0);
+                return it?.capital_book ?? 0;
             });
             const stocksRaw = sites.map((siteName) => {
                 const site = overstockTopItems.find((s: any) => s?.site_name === siteName);
                 const it = (site?.items || []).find((x: any) => x?.item_name === name);
-                return Number(it?.current_stock ?? 0);
+                return it?.current_stock ?? 0;
             });
-            const capital = capitalsRaw.map((v) => Math.round(v / 1000));
-            const capitalText = capitalsRaw.map((v) => `${Math.round((Number(v) || 0) / 1000)}k`);
+            const capital = capitalsRaw.map((v) => {
+                const num = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+                return isNaN(num) ? 0 : num;
+            });
+            const capitalText = capitalsRaw.map((v) => String(v).trim());
             const stock = stocksRaw.map((v) => {
-                const n = Number(v) || 0;
-                if (n > 0 && n <= 1) return Math.round(n * 100);
-                return Math.round(n);
+                const num = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+                return isNaN(num) ? 0 : num;
             });
             return { name, capital, capitalText, stock };
         });
@@ -1293,27 +1306,58 @@ const AllContent = () => {
 
     const itemss = useMemo(() => overstockTopGrid.items, [overstockTopGrid]);
 
-    const Block = ({ capital, capitalText, stock }) => (
-        <td className="border border-black w-20 h-14 p-1">
-            <div className="relative w-full h-full bg-white">
-                <svg
-                    className="absolute top-0 left-0 w-full h-full"
-                    viewBox="0,0 100,100"
-                    preserveAspectRatio="none"
-                    style={{ pointerEvents: 'none' }}
-                >
-                    <polygon points="0,0 100,0 100,100" style={{ fill: '#C4B89D' }} />
-                </svg>
+    const Block = ({ capital, capitalText, stock }) => {
+        // Decide which raw value to use first (explicit text if provided, else numeric/string capital)
+        const rawCapital = (capitalText !== undefined && capitalText !== null && capitalText !== '') ? capitalText : capital;
 
-                <div className="absolute top-[2px] right-[4px] text-white font-semibold text-xs print:text-black">
-                    {capitalText ?? `${capital}k`}
+        const formatCapital = (val: any) => {
+            if (val === null || val === undefined) return '-';
+            let str = String(val).trim();
+            if (!str) return '-';
+            // If already has a suffix (k/K, lakh, L, cr, m) leave as-is
+            if (/[kK]$/.test(str) || /(lakh|L|cr|CR|m|M)$/.test(str)) return str; // backend decided format
+            // Pure number (int/float) -> show as-is (do NOT append a forced 'k')
+            if (/^\d+(\.\d+)?$/.test(str)) return str; // just the number
+            // Fallback: return original
+            return str;
+        };
+
+        const formatStock = (val: any) => {
+            if (val === null || val === undefined) return '-';
+            let str = String(val).trim();
+            if (!str) return '-';
+            // Remove duplicate % signs then ensure exactly one at end
+            str = str.replace(/%+$/g, '');
+            if (!str) return '-';
+            // If value already contained a %, we stripped it above—append one back.
+            return `${str}%`;
+        };
+
+        const displayCapital = formatCapital(rawCapital);
+        const displayStock = formatStock(stock);
+
+        return (
+            <td className="border border-black w-20 h-14 p-1">
+                <div className="relative w-full h-full bg-white">
+                    <svg
+                        className="absolute top-0 left-0 w-full h-full"
+                        viewBox="0,0 100,100"
+                        preserveAspectRatio="none"
+                        style={{ pointerEvents: 'none' }}
+                    >
+                        <polygon points="0,0 100,0 100,100" style={{ fill: '#C4B89D' }} />
+                    </svg>
+
+                    <div className="absolute top-[2px] right-[4px] text-white font-semibold text-xs print:text-black">
+                        {displayCapital}
+                    </div>
+                    <div className="absolute bottom-[2px] left-[4px] text-black text-xs print:text-black">
+                        {displayStock}
+                    </div>
                 </div>
-                <div className="absolute bottom-[2px] left-[4px] text-black text-xs print:text-black">
-                    {stock}%
-                </div>
-            </div>
-        </td>
-    );
+            </td>
+        );
+    };
 
 
     // removed old static fallbacks (categories, sites, sample grid)
@@ -1412,43 +1456,42 @@ const AllContent = () => {
         cats.forEach((cat) => {
             const metric = apiMetrics.find((m: any) => (m.category_name ?? m.category) === cat) || {};
             sites.forEach((site) => {
-                const siteObj = Array.isArray(metric.sites) ? metric.sites.find((s: any) => (s.site_name ?? s.site) === site) : undefined;
+                const siteObj = Array.isArray(metric.sites)
+                    ? metric.sites.find((s: any) => (s.site_name ?? s.site) === site)
+                    : undefined;
+
+                // Derive ageing ONLY from this site's distribution (no category-level fallback)
                 let aging = '';
-                const agingObj = siteObj?.aging_distribution ?? metric?.aging_distribution ?? null;
-                if (agingObj && typeof agingObj === 'object' && Object.keys(agingObj).length > 0) {
+                const agingObj = siteObj?.aging_distribution;
+                if (agingObj && typeof agingObj === 'object') {
                     let maxKey = '';
                     let maxVal = -Infinity;
                     Object.entries(agingObj).forEach(([k, v]) => {
-                        const num = typeof v === 'number' ? v : parseFloat(String(v).toString().replace(/[^\d.]/g, '')) || 0;
-                        if (num > maxVal) {
-                            maxVal = num;
-                            maxKey = k;
-                        }
+                        const num = typeof v === 'number' ? v : parseFloat(String(v).replace(/[^\d.]/g, '')) || 0;
+                        if (num > maxVal) { maxVal = num; maxKey = k; }
                     });
                     aging = normalizeAgingBucket(maxKey);
                 }
 
+                const volumeVal = siteObj?.total_ticket_percentage ?? siteObj?.volume_percentage ?? siteObj?.volume ?? '';
+                const closureVal = siteObj?.closed_ticket_percentage ?? siteObj?.closure_rate_percentage ?? '';
+
+                // Color band: choose volume first, then closure; ignore category aggregates
+                const chosenForBand = (() => {
+                    const vNum = parsePercentValue(volumeVal);
+                    if (Number.isFinite(vNum)) return vNum;
+                    const cNum = parsePercentValue(closureVal);
+                    if (Number.isFinite(cNum)) return cNum;
+                    return undefined;
+                })();
+                const agingBand = chosenForBand !== undefined ? percentToAgeBand(chosenForBand) : aging;
+
                 grid.push({
                     category: cat,
                     site,
-                    volume: siteObj?.volume_percentage ?? siteObj?.volume ?? metric?.volume_percentage ?? '',
-                    closure: siteObj?.closure_rate_percentage ?? siteObj?.closure_rate_percentage ?? metric?.closure_rate_percentage ?? '',
-                    // Determine color band from the displayed percentage: use volume % (top-right). Fallback to closure %, then ageing %, else distribution-derived aging.
-                    agingBand: (() => {
-                        const volumeRaw = siteObj?.volume_percentage ?? metric?.volume_percentage;
-                        const closureRaw = siteObj?.closure_rate_percentage ?? metric?.closure_rate_percentage;
-                        const ageingRaw = siteObj?.ageing_percentage ?? siteObj?.aging_percentage ?? metric?.ageing_percentage ?? metric?.aging_percentage;
-                        const volumeNum = parsePercentValue(volumeRaw);
-                        const closureNum = parsePercentValue(closureRaw);
-                        const ageingNum = parsePercentValue(ageingRaw);
-                        const chosen = Number.isFinite(volumeNum)
-                            ? volumeNum
-                            : (Number.isFinite(closureNum)
-                                ? closureNum
-                                : (Number.isFinite(ageingNum) ? ageingNum : undefined));
-                        const band = chosen !== undefined ? percentToAgeBand(chosen) : '';
-                        return band || aging;
-                    })(),
+                    volume: volumeVal,
+                    closure: closureVal,
+                    agingBand,
                     aging,
                 });
             });
@@ -2051,87 +2094,87 @@ const AllContent = () => {
             <div className="print-page break-before-page">
                 <div className={sectionBox}>
                     <div className="border border-gray-400 p-4 w-full print:max-w-none print:mx-auto">
-                    {/* Title */}
-                    <h1 className="text-lg text-left font-bold mb-6 print:text-xl">
-                        Center Wise - Meeting Room Utilization
-                    </h1>
+                        {/* Title */}
+                        <h1 className="text-lg text-left font-bold mb-6 print:text-xl">
+                            Center Wise - Meeting Room Utilization
+                        </h1>
 
-                    <div className="border border-gray-100 mb-3"></div>
+                        <div className="border border-gray-100 mb-3"></div>
 
-                    {/* Legend */}
-                    <div className="flex justify-end items-center gap-6 mb-6 print:gap-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-red-100 border border-gray-400 rounded-full"></div>
-                            <span className="text-base print:text-sm">0-39%</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-yellow-100 border border-gray-400 rounded-full"></div>
-                            <span className="text-base print:text-sm">40-69%</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-green-100 border border-gray-400 rounded-full"></div>
-                            <span className="text-base print:text-sm">70-100%</span>
-                        </div>
-                    </div>
-
-                    {/* Chart Grid */}
-                    <div className="border border-gray-400 no-break">
-                        {/* Data Grid (driven by API when available) */}
-                        {centerList.map((center: any, siteIndex: number) => (
-                            <div key={siteIndex} className="grid grid-cols-9 print:grid-cols-10 border-b border-gray-400">
-                                {/* Site Label (NO left border) */}
-                                <div className="p-3 font-medium text-base text-right border-b border-gray-400 print:p-2 print:text-[10px] print:leading-tight print:whitespace-normal print:break-words print:text-left print:col-span-2">
-                                    {center.center_name || center.site_name || center.name || `Center ${siteIndex + 1}`}
-                                </div>
-
-                                {/* Utilization Range Cells */}
-                                {rangeList.slice(0, 8).map((range: any, rangeIndex: number) => {
-                                    const roomName = getRoomsForRange(center, range);
-                                    const cellColor = getCellColor(range);
-                                    return (
-                                        <div
-                                            key={rangeIndex}
-                                            className={`border-l border-t border-gray-400 p-2 text-sm font-semibold text-center ${cellColor} min-h-[120px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[80px] print:col-span-1`}
-                                        >
-                                            {roomName ? (
-                                                <div className="leading-tight print:whitespace-normal print:break-words print:leading-tight print:text-[10px]">
-                                                    {roomName.includes(",")
-                                                        ? roomName.split(",").map((name: string, i: number) => <div key={i}>{name.trim()}</div>)
-                                                        : roomName}
-                                                </div>
-                                            ) : null}
-                                        </div>
-                                    );
-                                })}
+                        {/* Legend */}
+                        <div className="flex justify-end items-center gap-6 mb-6 print:gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 bg-red-100 border border-gray-400 rounded-full"></div>
+                                <span className="text-base print:text-sm">0-39%</span>
                             </div>
-                        ))}
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 bg-yellow-100 border border-gray-400 rounded-full"></div>
+                                <span className="text-base print:text-sm">40-69%</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 bg-green-100 border border-gray-400 rounded-full"></div>
+                                <span className="text-base print:text-sm">70-100%</span>
+                            </div>
+                        </div>
 
-                        {/* Bottom Header Row: Utilization Rate */}
-                        <div className="grid grid-cols-9 print:grid-cols-10">
-                            <div className="p-3 font-semibold text-center print:p-2 print:text-sm text-base print:col-span-2 border-t border-gray-400"></div>
-                            {rangeList.slice(0, 8).map((range, index) => (
-                                <div
-                                    key={index}
-                                    className="border-t border-l border-gray-400 p-2 text-sm font-semibold text-center min-h-[60px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[40px] print:col-span-1"
-                                >
-                                    {range}
+                        {/* Chart Grid */}
+                        <div className="border border-gray-400 no-break">
+                            {/* Data Grid (driven by API when available) */}
+                            {centerList.map((center: any, siteIndex: number) => (
+                                <div key={siteIndex} className="grid grid-cols-9 print:grid-cols-10 border-b border-gray-400">
+                                    {/* Site Label (NO left border) */}
+                                    <div className="p-3 font-medium text-base text-right border-b border-gray-400 print:p-2 print:text-[10px] print:leading-tight print:whitespace-normal print:break-words print:text-left print:col-span-2">
+                                        {center.center_name || center.site_name || center.name || `Center ${siteIndex + 1}`}
+                                    </div>
+
+                                    {/* Utilization Range Cells */}
+                                    {rangeList.slice(0, 8).map((range: any, rangeIndex: number) => {
+                                        const roomName = getRoomsForRange(center, range);
+                                        const cellColor = getCellColor(range);
+                                        return (
+                                            <div
+                                                key={rangeIndex}
+                                                className={`border-l border-t border-gray-400 p-2 text-sm font-semibold text-center ${cellColor} min-h-[120px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[80px] print:col-span-1`}
+                                            >
+                                                {roomName ? (
+                                                    <div className="leading-tight print:whitespace-normal print:break-words print:leading-tight print:text-[10px]">
+                                                        {roomName.includes(",")
+                                                            ? roomName.split(",").map((name: string, i: number) => <div key={i}>{name.trim()}</div>)
+                                                            : roomName}
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             ))}
+
+                            {/* Bottom Header Row: Utilization Rate */}
+                            <div className="grid grid-cols-9 print:grid-cols-10">
+                                <div className="p-3 font-semibold text-center print:p-2 print:text-sm text-base print:col-span-2 border-t border-gray-400"></div>
+                                {rangeList.slice(0, 8).map((range, index) => (
+                                    <div
+                                        key={index}
+                                        className="border-t border-l border-gray-400 p-2 text-sm font-semibold text-center min-h-[60px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[40px] print:col-span-1"
+                                    >
+                                        {range}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
 
-                    {/* Bottom Label */}
-                    <div className="mt-4 font-semibold w-full text-center centerone text-base print:text-sm">
-                        Utilization Rate
-                    </div>
+                        {/* Bottom Label */}
+                        <div className="mt-4 font-semibold w-full text-center centerone text-base print:text-sm">
+                            Utilization Rate
+                        </div>
 
-                    {/* Note */}
-                    <div className="mt-6 text-base print:text-sm">
-                        <span className="font-semibold">Note :</span> This table presents meeting room-wise utilization along with
-                        corresponding utilization percentages, providing a center-wise comparison to identify performance variations
-                        across locations.
-                    </div>
+                        {/* Note */}
+                        <div className="mt-6 text-base print:text-sm">
+                            <span className="font-semibold">Note :</span> This table presents meeting room-wise utilization along with
+                            corresponding utilization percentages, providing a center-wise comparison to identify performance variations
+                            across locations.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2690,41 +2733,46 @@ const AllContent = () => {
                         {/* Main Grid and Site Row Container */}
                         <div className="flex justify-center mt-10 print:mt-5">
                             <div className="flex">
-                                {/* Left Categories */}
-                                <div className="flex flex-col justify-around gap-[2px]">
-                                    {ticketCategories.map((cat, idx) => (
-                                        <div key={idx} className="h-16 flex items-center justify-end pr-1 text-[10px] font-medium print:text-[8px] print:h-15">
-                                            {cat}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Grid and Site Labels */}
+                                {/* New row-based layout to guarantee proper alignment between category labels and their site cells */}
                                 <div className="flex flex-col">
-                                    {/* Grid Box */}
-                                    <div className="grid grid-cols-10 gap-[10px] border-l border-b p-1 print:gap-[10px]">
-                                        {ticketGridData.map((item, index) => (
-                                            <div key={index} className="relative w-[100px] h-16 print:w-[50px] print:h-15 border border-[#C4AE9D] bg-white">
-                                                <div className={`absolute inset-0 clip-triangle-tr ${agingColors[item.agingBand || item.aging] || 'bg-white'}`}></div>
-                                                <div className="absolute inset-0 clip-triangle-bl bg-white"></div>
-
-                                                <div className={`absolute top-1 right-1 text-xs print:text-[9px] ${getTextColor(item.agingBand || item.aging)} print:rotate-print`}>
-                                                    <span className="font-bold">{displayPercent(item.volume)}</span>
+                                    {ticketCategories.map((cat) => {
+                                        return (
+                                            <div key={cat} className="flex mb-[10px] last:mb-0">
+                                                {/* Category label */}
+                                                <div className="w-[140px] flex items-center justify-end pr-2 text-[10px] font-medium print:text-[8px] print:w-[120px]">
+                                                    {cat}
                                                 </div>
-                                                <div className={`absolute bottom-1 left-2 text-xs print:text-[9px] ${getTextColor(item.agingBand || item.aging)}`}>
-                                                    <span>{displayPercent(item.closure)}</span>
+                                                {/* Cells for each site within this category */}
+                                                <div className="grid grid-cols-10 gap-[10px] print:gap-[6px]">
+                                                    {ticketSites.map((site) => {
+                                                        const item = ticketGridData.find(d => d.category === cat && d.site === site);
+                                                        return (
+                                                            <div key={site + cat} className="relative w-[100px] h-16 print:w-[50px] print:h-15 border border-[#C4AE9D] bg-white">
+                                                                <div className={`absolute inset-0 clip-triangle-tr ${agingColors[item?.agingBand || item?.aging] || 'bg-white'}`}></div>
+                                                                <div className="absolute inset-0 clip-triangle-bl bg-white"></div>
+                                                                <div className={`absolute top-1 right-1 text-xs print:text-[9px] ${getTextColor(item?.agingBand || item?.aging)} print:rotate-print`}>
+                                                                    <span className="font-bold">{item ? displayPercent(item.closure) : ''}</span>
+                                                                </div>
+                                                                <div className={`absolute bottom-1 left-2 text-xs print:text-[9px] ${getTextColor(item?.agingBand || item?.aging)}`}>
+                                                                    <span>{item ? displayPercent(item.volume) : ''}</span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Site Row */}
-                                    <div className="grid grid-cols-10 gap-[2px] print:gap-[2px] mt-2 print:mt-1">
-                                        {ticketSites.map((site, index) => (
-                                            <div key={index} className="text-center text-[10px] font-medium print:text-[8px] w-[100px] print:w-[50px]">
-                                                {site}
-                                            </div>
-                                        ))}
+                                        );
+                                    })}
+                                    {/* Site header row placed after rows for print width consistency */}
+                                    <div className="flex mt-4 print:mt-2">
+                                        <div className="w-[140px] print:w-[120px]" />
+                                        <div className="grid grid-cols-10 gap-[10px] print:gap-[6px]">
+                                            {ticketSites.map((site) => (
+                                                <div key={site} className="text-center text-[10px] font-medium print:text-[8px] w-[100px] print:w-[50px]">
+                                                    {site}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2763,17 +2811,17 @@ const AllContent = () => {
                     <h2 className="text-lg font-bold mb-4 print:text-sm print:mb-2">
                         Site Performance: Customer Rating Overview
                     </h2>
-            <table className="min-w-full text-base text-center border print:table-fixed print:w-full print:text-[10px] print:leading-tight">
+                    <table className="min-w-full text-base text-center border print:table-fixed print:w-full print:text-[10px] print:leading-tight">
                         <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
                             <tr>
-                <th className="border border-gray-200 px-3 py-6 print:px-2 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top">
+                                <th className="border border-gray-200 px-3 py-6 print:px-2 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top">
                                     Site Name
                                 </th>
 
                                 {customerExperienceSiteNames.map((name, index) => (
                                     <th
                                         key={index}
-                    className="border border-gray-200 px-3 py-6 print:px-1 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top"
+                                        className="border border-gray-200 px-3 py-6 print:px-1 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top"
                                     >
                                         {name}
                                     </th>
@@ -3392,57 +3440,57 @@ const AllContent = () => {
                     </p>
                 </div>
                 <div className={sectionBox}>
-<div className="border py-3 px-3  print:shadow-none print:border break-inside-avoid print:break-inside-avoid">
-                    <h2 className="bg-white font-bold text-lg p-3 border-b border-gray-300 print:text-[13px] print:p-1 print:leading-relaxed">
-                        AMC Contract Summary – Expired
-                    </h2>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full border text-base leading-normal print:table-fixed print:w-full print:text-[9px] print:leading-loose">
-                            <thead className="bg-[#DAD6C9] text-[#c72030]">
-                                <tr>
-                                    <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Site Name</th>
-                                    <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">AMC Name</th>
-                                    <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Contract Start Date</th>
-                                    <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Contract End Date</th>
-                                    <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Status</th>
-                                    <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Projected Renewal Cost (₹)</th>
-                                    <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Vendor Contact</th>
-                                </tr>
-                            </thead>
+                    <div className="border py-3 px-3  print:shadow-none print:border break-inside-avoid print:break-inside-avoid">
+                        <h2 className="bg-white font-bold text-lg p-3 border-b border-gray-300 print:text-[13px] print:p-1 print:leading-relaxed">
+                            AMC Contract Summary – Expired
+                        </h2>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full border text-base leading-normal print:table-fixed print:w-full print:text-[9px] print:leading-loose">
+                                <thead className="bg-[#DAD6C9] text-[#c72030]">
+                                    <tr>
+                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Site Name</th>
+                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">AMC Name</th>
+                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Contract Start Date</th>
+                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Contract End Date</th>
+                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Status</th>
+                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Projected Renewal Cost (₹)</th>
+                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Vendor Contact</th>
+                                    </tr>
+                                </thead>
 
 
-                            <tbody className="text-left">
-                                {loadingAmcContractSummary ? (
-                                    <tr>
-                                        <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">Loading...</td>
-                                    </tr>
-                                ) : amcExpiredContracts.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">No data available</td>
-                                    </tr>
-                                ) : (
-                                    amcExpiredContracts.map((row: any, i: number) => (
-                                        <tr key={i} className={"bg-white"}>
-                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 font-semibold text-center print:px-1 print:py-2">{row.status ?? 'Expired'}</td>
-                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
-                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
+                                <tbody className="text-left">
+                                    {loadingAmcContractSummary ? (
+                                        <tr>
+                                            <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">Loading...</td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : amcExpiredContracts.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">No data available</td>
+                                        </tr>
+                                    ) : (
+                                        amcExpiredContracts.map((row: any, i: number) => (
+                                            <tr key={i} className={"bg-white"}>
+                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
+                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
+                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
+                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
+                                                <td className="border px-4 py-3 font-semibold text-center print:px-1 print:py-2">{row.status ?? 'Expired'}</td>
+                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
 
+                        </div>
+                        <p className="p-3 text-xs text-gray-600 italic border-t border-gray-300 print:p-1 print:text-[8px] print:leading-relaxed print:mt-2">
+                            <strong>Note:</strong> This table provides a site-wise summary of AMC contracts that has been expired, supporting proactive renewal planning and vendor coordination.
+                        </p>
                     </div>
-                    <p className="p-3 text-xs text-gray-600 italic border-t border-gray-300 print:p-1 print:text-[8px] print:leading-relaxed print:mt-2">
-                        <strong>Note:</strong> This table provides a site-wise summary of AMC contracts that has been expired, supporting proactive renewal planning and vendor coordination.
-                    </p>
                 </div>
-                </div>
-                
+
 
 
             </div>
@@ -3500,161 +3548,161 @@ const AllContent = () => {
 
                     {/* Tables block: stretch to fill one print page */}
                     <div className={sectionBox}>
-                    <div className="print:flex print:flex-col print:gap-2 print:h-[calc(100vh-180px)]">
-                    {/* Table 1: Checklist Progress Status */}
-                    <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
-                        <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
-                            Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
-                        </div>
-                        <div className="print:flex-1">
-                        <table className="w-full border print:table-fixed print:w-full print:text-[10px] print:h-full">
-                            <thead>
-                                <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
-                                    <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Site Name</th>
-                                    <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Open</th>
-                                    <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">In Progress</th>
-                                    <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Overdue</th>
-                                    <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Partially Closed</th>
-                                    <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Closed</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loadingSiteWiseChecklist ? (
-                                    <tr>
-                                        <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2">
-                                            Loading checklist progress...
-                                        </td>
-                                    </tr>
-                                ) : checklistProgress.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2">
-                                            No checklist progress data available
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    checklistProgress.map((row: any, i: number) => {
-                                        const site = row.site_name ?? row.center_name ?? row.site ?? '-';
-                                        const cur = row.current ?? {};
-                                        const diff = row.difference ?? row.delta ?? {};
-                                        const fmt = (v: any) => {
-                                            const n = typeof v === 'number' ? v : (typeof v === 'string' ? parseFloat(v.replace(/[^0-9.\-]/g, '')) : 0);
-                                            if (!isFinite(n)) return '0%';
-                                            // Show integer percentages if whole; else show 2 decimals
-                                            return Number.isInteger(n) ? `${n}%` : `${n.toFixed(2)}%`;
-                                        };
-                                        const toNum = (v: any) => {
-                                            if (typeof v === 'number') return v;
-                                            if (typeof v === 'string') {
-                                                const s = v.trim().replace('%', '');
-                                                const n = parseFloat(s);
-                                                return isNaN(n) ? 0 : n;
-                                            }
-                                            return 0;
-                                        };
-                                        // Overdue: show current | last with colored arrow (increase = red ▲, decrease = green ▼)
-                                        const curOverNum = toNum(cur.overdue);
-                                        const diffOverNum = toNum(diff.overdue ?? 0);
-                                        const lastOverNum = curOverNum - diffOverNum;
-                                        const overdueArrowUp = diffOverNum > 0;
-                                        const overdueArrowDown = diffOverNum < 0;
-                                        // Closed: show current | last with colored arrow (increase = green ▲, decrease = red ▼)
-                                        const curClosedNum = toNum(cur.closed);
-                                        const diffClosedNum = toNum(diff.closed ?? 0);
-                                        const lastClosedNum = curClosedNum - diffClosedNum;
-                                        const closedArrowUp = diffClosedNum > 0;
-                                        const closedArrowDown = diffClosedNum < 0;
-                                        return (
-                                            <tr key={i} className={i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''}>
-                                                <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site}</td>
-                                                <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.open ?? cur.not_completed)}</td>
-                                                <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.in_progress ?? cur.inProgress)}</td>
-                                                <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                                    {fmt(curOverNum)} | {fmt(lastOverNum)}{' '}
-                                                    {overdueArrowUp && <span className="text-red-600 arrow-print">▲</span>}
-                                                    {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
-                                                    {!overdueArrowUp && !overdueArrowDown && <span className="text-gray-400">—</span>}
-                                                </td>
-                                                <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.partially_closed ?? cur.partiallyClosed ?? cur.partial)}</td>
-                                                <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                                    {fmt(curClosedNum)} | {fmt(lastClosedNum)}{' '}
-                                                    {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
-                                                    {closedArrowDown && <span className="text-red-600 arrow-print">▼</span>}
-                                                    {!closedArrowUp && !closedArrowDown && <span className="text-gray-400">—</span>}
-                                                </td>
+                        <div className="print:flex print:flex-col print:gap-2 print:h-[calc(100vh-180px)]">
+                            {/* Table 1: Checklist Progress Status */}
+                            <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
+                                <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
+                                    Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
+                                </div>
+                                <div className="print:flex-1">
+                                    <table className="w-full border print:table-fixed print:w-full print:text-[10px] print:h-full">
+                                        <thead>
+                                            <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Site Name</th>
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Open</th>
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">In Progress</th>
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Overdue</th>
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Partially Closed</th>
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Closed</th>
                                             </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                        </div>
-                        <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
-                            <strong>Note :</strong> This table shows checklist progress by status across centers, comparing the current period with the previous period. The "Change in Closed" column highlights the shift in closed checklists since the prior period.
-                        </div>
-                    </div>
-
-                    {/* Table 2: Top 10 Overdue Checklists */}
-                    <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
-                        <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
-                            Top 10 Overdue Checklists – Center-wise Contribution Comparison
-                        </div>
-                        <div className="print:flex-1">
-                        <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
-                            <thead>
-                                <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
-                                    <th className="py-4 px-4 site-col print:py-2 print:px-2 print:w-[18%]">Site Name</th>
-                                    {top10Overdue.categories.map((cat, idx) => (
-                                        <th key={idx} className="py-4 px-2 text-center print:py-2 print:px-1">
-                                            {cat}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loadingSiteWiseChecklist ? (
-                                    <tr>
-                                        <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2">
-                                            Loading top overdue checklists...
-                                        </td>
-                                    </tr>
-                                ) : !top10Overdue.categories.length || !top10Overdue.siteRows.length ? (
-                                    <tr>
-                                        <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2">
-                                            No overdue checklist data available
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    top10Overdue.siteRows.map((site, i) => {
-                                        const byCat = new Map<string, number>();
-                                        if (Array.isArray(site.categories)) {
-                                            site.categories.forEach((c: any) => {
-                                                if (c && typeof c.category === 'string') {
-                                                    byCat.set(c.category, Number(c.overdue_percentage ?? 0));
-                                                }
-                                            });
-                                        }
-                                        const fmt = (n: number) => `${Number(n || 0).toFixed(0)}%`;
-                                        return (
-                                            <tr key={i} className={i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''}>
-                                                <td className="py-5 px-4 site-col bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site.site_name ?? '-'}</td>
-                                                {top10Overdue.categories.map((cat, j) => (
-                                                    <td key={j} className="py-5 px-2 text-center print:py-2 print:px-1">
-                                                        {fmt(byCat.get(cat) ?? 0)}
+                                        </thead>
+                                        <tbody>
+                                            {loadingSiteWiseChecklist ? (
+                                                <tr>
+                                                    <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2">
+                                                        Loading checklist progress...
                                                     </td>
+                                                </tr>
+                                            ) : checklistProgress.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2">
+                                                        No checklist progress data available
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                checklistProgress.map((row: any, i: number) => {
+                                                    const site = row.site_name ?? row.center_name ?? row.site ?? '-';
+                                                    const cur = row.current ?? {};
+                                                    const diff = row.difference ?? row.delta ?? {};
+                                                    const fmt = (v: any) => {
+                                                        const n = typeof v === 'number' ? v : (typeof v === 'string' ? parseFloat(v.replace(/[^0-9.\-]/g, '')) : 0);
+                                                        if (!isFinite(n)) return '0%';
+                                                        // Show integer percentages if whole; else show 2 decimals
+                                                        return Number.isInteger(n) ? `${n}%` : `${n.toFixed(2)}%`;
+                                                    };
+                                                    const toNum = (v: any) => {
+                                                        if (typeof v === 'number') return v;
+                                                        if (typeof v === 'string') {
+                                                            const s = v.trim().replace('%', '');
+                                                            const n = parseFloat(s);
+                                                            return isNaN(n) ? 0 : n;
+                                                        }
+                                                        return 0;
+                                                    };
+                                                    // Overdue: show current | last with colored arrow (increase = red ▲, decrease = green ▼)
+                                                    const curOverNum = toNum(cur.overdue);
+                                                    const diffOverNum = toNum(diff.overdue ?? 0);
+                                                    const lastOverNum = curOverNum - diffOverNum;
+                                                    const overdueArrowUp = diffOverNum > 0;
+                                                    const overdueArrowDown = diffOverNum < 0;
+                                                    // Closed: show current | last with colored arrow (increase = green ▲, decrease = red ▼)
+                                                    const curClosedNum = toNum(cur.closed);
+                                                    const diffClosedNum = toNum(diff.closed ?? 0);
+                                                    const lastClosedNum = curClosedNum - diffClosedNum;
+                                                    const closedArrowUp = diffClosedNum > 0;
+                                                    const closedArrowDown = diffClosedNum < 0;
+                                                    return (
+                                                        <tr key={i} className={i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''}>
+                                                            <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site}</td>
+                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.open ?? cur.not_completed)}</td>
+                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.in_progress ?? cur.inProgress)}</td>
+                                                            <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
+                                                                {fmt(curOverNum)} | {fmt(lastOverNum)}{' '}
+                                                                {overdueArrowUp && <span className="text-red-600 arrow-print">▲</span>}
+                                                                {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
+                                                                {!overdueArrowUp && !overdueArrowDown && <span className="text-gray-400">—</span>}
+                                                            </td>
+                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.partially_closed ?? cur.partiallyClosed ?? cur.partial)}</td>
+                                                            <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
+                                                                {fmt(curClosedNum)} | {fmt(lastClosedNum)}{' '}
+                                                                {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
+                                                                {closedArrowDown && <span className="text-red-600 arrow-print">▼</span>}
+                                                                {!closedArrowUp && !closedArrowDown && <span className="text-gray-400">—</span>}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
+                                    <strong>Note :</strong> This table shows checklist progress by status across centers, comparing the current period with the previous period. The "Change in Closed" column highlights the shift in closed checklists since the prior period.
+                                </div>
+                            </div>
+
+                            {/* Table 2: Top 10 Overdue Checklists */}
+                            <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
+                                <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
+                                    Top 10 Overdue Checklists – Center-wise Contribution Comparison
+                                </div>
+                                <div className="print:flex-1">
+                                    <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
+                                        <thead>
+                                            <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
+                                                <th className="py-4 px-4 site-col print:py-2 print:px-2 print:w-[18%]">Site Name</th>
+                                                {top10Overdue.categories.map((cat, idx) => (
+                                                    <th key={idx} className="py-4 px-2 text-center print:py-2 print:px-1">
+                                                        {cat}
+                                                    </th>
                                                 ))}
                                             </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
+                                        </thead>
+                                        <tbody>
+                                            {loadingSiteWiseChecklist ? (
+                                                <tr>
+                                                    <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2">
+                                                        Loading top overdue checklists...
+                                                    </td>
+                                                </tr>
+                                            ) : !top10Overdue.categories.length || !top10Overdue.siteRows.length ? (
+                                                <tr>
+                                                    <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2">
+                                                        No overdue checklist data available
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                top10Overdue.siteRows.map((site, i) => {
+                                                    const byCat = new Map<string, number>();
+                                                    if (Array.isArray(site.categories)) {
+                                                        site.categories.forEach((c: any) => {
+                                                            if (c && typeof c.category === 'string') {
+                                                                byCat.set(c.category, Number(c.overdue_percentage ?? 0));
+                                                            }
+                                                        });
+                                                    }
+                                                    const fmt = (n: number) => `${Number(n || 0).toFixed(0)}%`;
+                                                    return (
+                                                        <tr key={i} className={i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''}>
+                                                            <td className="py-5 px-4 site-col bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site.site_name ?? '-'}</td>
+                                                            {top10Overdue.categories.map((cat, j) => (
+                                                                <td key={j} className="py-5 px-2 text-center print:py-2 print:px-1">
+                                                                    {fmt(byCat.get(cat) ?? 0)}
+                                                                </td>
+                                                            ))}
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
+                                    <strong>Note :</strong> The table displays the top 10 most overdue checklists, with a center-wise
+                                    breakdown of their contribution to the overall overdue count, helping identify key areas of concern.
+                                </div>
+                            </div>
                         </div>
-                        <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
-                            <strong>Note :</strong> The table displays the top 10 most overdue checklists, with a center-wise
-                            breakdown of their contribution to the overall overdue count, helping identify key areas of concern.
-                        </div>
-                    </div>
-                    </div>
                     </div>
 
                 </div>
@@ -3692,8 +3740,8 @@ const AllContent = () => {
                         </div>
                     </div>
 
-                                        {/* OverstockGridExact Component */}
-                                        <div className=" mt-3 print:p-0  border border-gray-300 p-2">
+                    {/* OverstockGridExact Component */}
+                    <div className=" mt-3 print:p-0  border border-gray-300 p-2">
                         <style>{`
                 /* Screen view styles only, scoped to overstock-table class */
                 .overstock-table {
@@ -3937,26 +3985,26 @@ const AllContent = () => {
                     Parking Management
                 </h1>
                 <div className={sectionBox}>
-                        <div className="flex flex-col print:p-4 mb-8">
-                            <h2 className="text-lg  p-4  font-semibold mb-2">Parking Allocation Overview – Paid, Free & Vacant</h2>
-                            <div className="border-b border-gray-300 w-full" />
-                        </div>
+                    <div className="flex flex-col print:p-4 mb-8">
+                        <h2 className="text-lg  p-4  font-semibold mb-2">Parking Allocation Overview – Paid, Free & Vacant</h2>
+                        <div className="border-b border-gray-300 w-full" />
+                    </div>
 
-                        {/* Print-only mini legend for Parking section */}
-                        <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
-                            <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-[#a0b5c1]" />
-                                <span>Free</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
-                                <span>Paid</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
-                                <span>Vacant</span>
-                            </div>
+                    {/* Print-only mini legend for Parking section */}
+                    <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#a0b5c1]" />
+                            <span>Free</span>
                         </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
+                            <span>Paid</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
+                            <span>Vacant</span>
+                        </div>
+                    </div>
 
                     {/* Chart: Desktop responsive + Print/Mobile fixed */}
                     <div className="w-full">

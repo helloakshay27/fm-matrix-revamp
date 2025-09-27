@@ -510,25 +510,25 @@ export const MobileItemsDetails: React.FC = () => {
         </div>
       )}
       {/* Note Section */}
-      <div className="mx-4 mt-4">
-        <div className="bg-white rounded-xl p-4">
+      <div className="mx-4 mt-4 mb-24">
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center mb-3">
-            <div className="w-5 h-5 bg-gray-300 rounded-sm flex items-center justify-center mr-2">
-              <PenBoxIcon className="w-3 h-3 text-red-500" />
+            <div className="w-6 h-6 bg-gray-300 rounded-md flex items-center justify-center mr-3">
+              <PenBoxIcon className="w-4 h-4" />
             </div>
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-gray-900 text-base">
               Additional Request
             </span>
           </div>
           {note && (
-            <div className="text-gray-600 border-b border-dashed border-gray-400 pb-1">
+            <div className="text-gray-700 bg-gray-50 p-3 rounded-lg border-l-4 border-red-500 mt-2">
               {note}
             </div>
           )}
           {!note && (
             <button
               onClick={() => setShowNoteDialog(true)}
-              className="text-gray-500 text-sm"
+              className="text-gray-500 text-sm hover:text-gray-700 transition-colors duration-150 w-full text-left py-2 px-3 rounded-lg hover:bg-gray-50"
             >
               Add a note for the restaurant
             </button>
@@ -537,13 +537,20 @@ export const MobileItemsDetails: React.FC = () => {
       </div>
 
       {/* Place Order Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
+      <div className="fixed bottom-0 left-0 right-0 py-2 border-gray-200 p-4 shadow-2xl">
         <Button
           onClick={handlePlaceOrder}
           disabled={items.length === 0 || isSubmitting}
-          className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-lg font-semibold disabled:opacity-50"
+          className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 text-white py-4 rounded-2xl text-lg font-bold shadow-xl transition-all duration-200 hover:shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? "Placing Order..." : "Place Order"}
+          {isSubmitting ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Placing Order...</span>
+            </div>
+          ) : (
+             <span className="text-white">Place Order</span>
+          )}
         </Button>
       </div>
 

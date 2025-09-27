@@ -283,7 +283,7 @@ export const MobileRestaurantPage: React.FC = () => {
           const convertedRestaurants: Restaurant[] = restaurantsList.map((r) => ({
             id: r.id.toString(),
             name: r.name,
-            location: r.location || r?.address || "Location not specified",
+            location: r.location || "Location not specified",
             rating: r.rating || 4.0,
             timeRange: r.delivery_time || "30-45 mins",
             discount: r.discount || "",
@@ -293,6 +293,8 @@ export const MobileRestaurantPage: React.FC = () => {
               "/placeholder.svg",
             images: r.cover_images?.map((img) => img.document) || [],
             menuItems: [], // Will be loaded if there's only one restaurant
+            can_book_today: r.can_book_today,
+            can_order_today: r.can_order_today,
           }));
           setRestaurants(convertedRestaurants);
           // If there's only one restaurant, load its menu items immediately

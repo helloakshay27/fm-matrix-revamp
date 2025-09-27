@@ -435,13 +435,13 @@ export const AddSurveyPage = () => {
         });
         return;
       }
-      if (!assignTo) {
-        toast.error("Validation Error", {
-          description: "Please select who to assign the ticket to",
-          duration: 3000,
-        });
-        return;
-      }
+      // if (!assignTo) {
+      //   toast.error("Validation Error", {
+      //     description: "Please select who to assign the ticket to",
+      //     duration: 3000,
+      //   });
+      //   return;
+      // }
     }
 
     // Validate questions
@@ -860,7 +860,7 @@ export const AddSurveyPage = () => {
                 </FormControl>
 
                 {/* Assign To Dropdown */}
-                <FormControl
+                {/* <FormControl
                   fullWidth
                   variant="outlined"
                   required
@@ -887,7 +887,7 @@ export const AddSurveyPage = () => {
                       </MenuItem>
                     ))}
                   </MuiSelect>
-                </FormControl>
+                </FormControl> */}
               </div>
             )}
           </div>

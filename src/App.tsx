@@ -16,6 +16,8 @@ import { EnhancedSelectProvider } from "./providers/EnhancedSelectProvider";
 import { initializeGlobalMUISelectSearchEnhancer } from "./utils/globalMUISelectSearchEnhancer";
 import "./styles/enhanced-select.css"; // Global enhanced select styles
 import { Layout } from "./components/Layout";
+import { AdminSidebar } from "./components/AdminSidebar";
+import { AdminLayout } from "./components/AdminLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
 import DashboardConfiguration from "./pages/DashboardConfiguration";
@@ -786,6 +788,89 @@ function App() {
             <LayoutProvider>
               <PermissionsProvider>
                 <Routes>
+                  {/* Admin Routes */}
+                  <Route
+                    path="/ops-console"
+                    element={
+                      <ProtectedRoute>
+                        <AdminLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route
+                      path="master/location/account"
+                      element={<LocationAccountPage />}
+                    />
+                    <Route
+                      path="master/user/fm-users"
+                      element={<FMUserMasterDashboard />}
+                    />
+                    <Route
+                      path="master/user/fm-users/add"
+                      element={<AddFMUserPage />}
+                    />
+                    <Route
+                      path="master/user/fm-users/edit/:id"
+                      element={<EditFMUserPage />}
+                    />
+                    <Route
+                      path="master/user/fm-users/view/:id"
+                      element={<ViewFMUserPage />}
+                    />
+                    <Route
+                      path="settings/roles/role"
+                      element={<RoleDashboard />}
+                    />
+                    <Route
+                      path="settings/roles/role/add"
+                      element={<AddRolePage />}
+                    />
+                    <Route
+                      path="settings/account/lock-module"
+                      element={<LockModuleList />}
+                    />
+                    {/* <Route
+                      path="settings/account/lock-module/view/:id"
+                      element={<LockModuleView />}
+                    />
+                    <Route
+                      path="settings/account/lock-module/edit/:id"
+                      element={<LockModuleEdit />}
+                    /> */}
+                    <Route
+                      path="settings/account/lock-function"
+                      element={<LockFunctionList />}
+                    />
+                    <Route
+                      path="settings/account/lock-function/view/:id"
+                      element={<LockFunctionView />}
+                    />
+                    <Route
+                      path="settings/account/lock-function/edit/:id"
+                      element={<LockFunctionEdit />}
+                    />
+                    {/* <Route
+                      path="settings/account/lock-function/create"
+                      element={<LockFunctionCreate />}
+                    /> */}
+                    <Route
+                      path="settings/account/lock-sub-function"
+                      element={<LockSubFunctionList />}
+                    />
+                    <Route
+                      path="settings/account/lock-sub-function/view/:id"
+                      element={<LockSubFunctionView />}
+                    />
+                    <Route
+                      path="settings/account/lock-sub-function/edit/:id"
+                      element={<LockSubFunctionEdit />}
+                    />
+                    {/* <Route
+                      path="settings/account/lock-sub-function/create"
+                      element={<LockSubFunctionCreate />}
+                    /> */}
+                  </Route>
+
                   {/* Login Route */}
                   <Route path="/thepdf" element={<AllContent />} />
                   <Route path="/weeklypdf" element={<WeeklyReport />} />

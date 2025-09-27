@@ -311,13 +311,13 @@ export const SurveyListDashboard = () => {
         draggable: true,
         defaultVisible: true,
       },
-      {
-        key: "assigned_to",
-        label: "Assigned To",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-      },
+      // {
+      //   key: "assigned_to",
+      //   label: "Assigned To",
+      //   sortable: true,
+      //   draggable: true,
+      //   defaultVisible: true,
+      // },
     ],
     []
   );

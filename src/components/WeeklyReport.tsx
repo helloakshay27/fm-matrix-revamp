@@ -53,6 +53,15 @@ type WeeklyReportProps = { title?: string };
 const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) => {
     const sectionBox = 'bg-white border border-gray-300 w-[95%] mx-auto p-5 mb-10 print:w-[95%] print:mx-auto print:p-2 print:mb-4 no-break';
 
+    // Dynamic 7-day window label (start = today - 6 days, end = today)
+    const weekRangeLabel = React.useMemo(() => {
+        const end = new Date();
+        const start = new Date(end);
+        start.setDate(end.getDate() - 6);
+        const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        return `${fmt(start)} - ${fmt(end)}`;
+    }, []);
+
     // === State: Category Wise Ticket (Top-5) dynamic data ===
     type TopCategory = {
         category_id: number;
@@ -935,6 +944,20 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
 
 
     console.log("Rahul", checklistStatusRows);
+    // --- Global loader: show until ALL individual API loaders have finished (success or error) ---
+    const overallLoading = topCatLoading || weeklySummaryLoading || priorityLoading || ageingLoading || tatLoading || categoryTatLoading || customerFeedbackLoading || weeklyTrendLoading || assetMgmtLoading || checklistStatusLoading;
+
+    if (overallLoading) {
+        return (
+            <div className="w-full min-h-[60vh] flex flex-col items-center justify-center py-16 print:hidden">
+                <div className="flex flex-col items-center">
+                    <div className="h-14 w-14 rounded-full border-4 border-[#C72030]/20 border-t-[#C72030] animate-spin" />
+                    <h1 className="mt-8 text-xl font-extrabold text-black">{title}</h1>
+                    <p className="mt-3 text-sm text-black/70 font-medium">Loading Weekly Report…</p>
+                </div>
+            </div>
+        );
+    }
 
 
     return (
@@ -942,6 +965,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } }`}</style>
             <header className="w-full bg-[#F6F4EE] py-6 sm:py-8 mb-6 print:py-4 print:mb-4">
                 <h1 className="text-center text-black font-extrabold text-3xl sm:text-4xl print:text-2xl">{title}</h1>
+                <p className="mt-2 text-center text-black font-medium text-base sm:text-lg print:text-sm">{weekRangeLabel}</p>
             </header>
 
             {/* 1. Help Desk Management */}

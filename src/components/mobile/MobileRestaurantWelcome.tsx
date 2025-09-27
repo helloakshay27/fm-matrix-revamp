@@ -9,6 +9,7 @@ interface Restaurant {
   rating: number;
   timeRange: string;
   discount: string;
+  status?: boolean;
   image: string;
 }
 
