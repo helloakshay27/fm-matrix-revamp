@@ -441,21 +441,23 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {item.statuses.map((status) => (
-                <SelectItem key={status.id} value={status}>
-                  <Badge
-                    variant={getStatusBadgeVariant(status.name)}
-                    className={cn(
-                      status === 'Completed' && 'bg-[#A4F4E7] hover:bg-[#A4F4E7] text-black',
-                      status === 'Pending' && 'bg-[#F4C790] hover:bg-[#F4C790] text-black',
-                      status === 'Confirmed' && 'bg-[#A3E4DB] hover:bg-[#8CDAD1] text-black',
-                      status === 'Cancelled' && 'bg-[#E4626F] hover:bg-[#E4626F] text-white'
-                    )}
-                  >
-                    {status.name}
-                  </Badge>
-                </SelectItem>
-              ))}
+              {item.statuses
+                .filter(status => status.active)
+                .map((status) => (
+                  <SelectItem key={status.id} value={status}>
+                    <Badge
+                      variant={getStatusBadgeVariant(status.name)}
+                      className={cn(
+                        status === 'Completed' && 'bg-[#A4F4E7] hover:bg-[#A4F4E7] text-black',
+                        status === 'Pending' && 'bg-[#F4C790] hover:bg-[#F4C790] text-black',
+                        status === 'Confirmed' && 'bg-[#A3E4DB] hover:bg-[#8CDAD1] text-black',
+                        status === 'Cancelled' && 'bg-[#E4626F] hover:bg-[#E4626F] text-white'
+                      )}
+                    >
+                      {status.name}
+                    </Badge>
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         );
