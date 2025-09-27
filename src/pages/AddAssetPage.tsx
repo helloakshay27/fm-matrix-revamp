@@ -9129,8 +9129,8 @@ const AddAssetPage = () => {
                                 type="radio"
                                 id="critical-yes"
                                 name="critical"
-                                value="yes"
-                                checked={criticalStatus === "yes"}
+                                value="1"
+                                checked={criticalStatus === "1"}
                                 onChange={(e) => {
                                   setCriticalStatus(e.target.value);
                                   handleFieldChange("critical", e.target.value);
@@ -9149,8 +9149,8 @@ const AddAssetPage = () => {
                                 type="radio"
                                 id="critical-no"
                                 name="critical"
-                                value="no"
-                                checked={criticalStatus === "no"}
+                                value="0"
+                                checked={criticalStatus === "0"}
                                 onChange={(e) => {
                                   setCriticalStatus(e.target.value);
                                   handleFieldChange("critical", e.target.value);
