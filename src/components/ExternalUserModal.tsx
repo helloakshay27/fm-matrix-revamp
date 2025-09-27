@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { createProjectUsers } from '@/store/slices/projectUsersSlice';
 
-const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companies, roles, users, isEditing, record }) => {
+const ExternalUserModal = ({ openDialog, handleCloseDialog, fetchData, companies, roles, organizations, isEditing, record }) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
@@ -26,7 +26,7 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
         password: '',
         company: '',
         role: '',
-        reportsTo: '',
+        organization: '',
     });
     const [showPassword, setShowPassword] = useState(false);
 
@@ -47,7 +47,7 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
                 emailId: record.email,
                 company: record.company_id,
                 role: record.role_id,
-                reportsTo: record.report_to_id,
+                organization: record.organization_id,
             });
         }
     }, [isEditing, record]);
@@ -85,6 +85,11 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
             }
         }
 
+        if (!formData.organization) {
+            toast.error('Please select Organization');
+            return false;
+        }
+
         if (!formData.company) {
             toast.error('Please select Company');
             return false;
@@ -92,11 +97,6 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
 
         if (!formData.role) {
             toast.error('Please select Role');
-            return false;
-        }
-
-        if (!formData.reportsTo) {
-            toast.error('Please select Reports To');
             return false;
         }
 
@@ -120,14 +120,14 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
                     email: formData.emailId,
                     password: formData.password,
                     role_id: formData.role,
-                    user_type: "internal",
-                    report_to_id: formData.reportsTo,
+                    user_type: "external",
+                    organization_id: formData.organization,
                     company_id: formData.company,
                 },
             };
 
             await dispatch(createProjectUsers({ baseUrl, token, data: payload })).unwrap();
-            toast.success("Internal User added successfully");
+            toast.success("External User added successfully");
             fetchData();
             handleCloseDialog();
         } catch (error) {
@@ -138,7 +138,7 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
 
     return (
         <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-            <DialogTitle>Add Internal User</DialogTitle>
+            <DialogTitle>Add External User</DialogTitle>
             <DialogContent>
                 <TextField
                     autoFocus
@@ -215,6 +215,28 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
                 />
                 <TextField
                     margin="dense"
+                    name="organization"
+                    label="Organization"
+                    select
+                    fullWidth
+                    variant="outlined"
+                    value={formData.organization}
+                    onChange={handleChange}
+                    required
+                    InputLabelProps={{ style: { color: '#000000' } }}
+                    InputProps={{
+                        style: { backgroundColor: '#fff', borderRadius: '4px' },
+                    }}
+                >
+                    <MenuItem value="">Select...</MenuItem>
+                    {
+                        organizations.map((org) => (
+                            <MenuItem key={org.id} value={org.id}>{org.name}</MenuItem>
+                        ))
+                    }
+                </TextField>
+                <TextField
+                    margin="dense"
                     name="company"
                     label="Company"
                     select
@@ -257,28 +279,6 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
                         ))
                     }
                 </TextField>
-                <TextField
-                    margin="dense"
-                    name="reportsTo"
-                    label="Reports To"
-                    select
-                    fullWidth
-                    variant="outlined"
-                    value={formData.reportsTo}
-                    onChange={handleChange}
-                    required
-                    InputLabelProps={{ style: { color: '#000000' } }}
-                    InputProps={{
-                        style: { backgroundColor: '#fff', borderRadius: '4px' },
-                    }}
-                >
-                    <MenuItem value="">Select...</MenuItem>
-                    {
-                        users.map((user) => (
-                            <MenuItem key={user.id} value={user.id}>{user.firstname + " " + user.lastname}</MenuItem>
-                        ))
-                    }
-                </TextField>
             </DialogContent>
 
             <div className="flex justify-center gap-3 mb-4">
@@ -301,4 +301,4 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
     );
 };
 
-export default InternalUsersModal;
+export default ExternalUserModal;

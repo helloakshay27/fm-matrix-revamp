@@ -66,8 +66,9 @@ import { createTestimonialReucers, editTestimonialReucers, fetchTestimonialsById
 import { createAmenityReducer, editAmenityReducer, fetchAmenityByIdReducer, fetchAmenityReducer } from './slices/amenitySlice'
 import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPartnersReducer } from './slices/companyPartnerSlice'
 import { createProjectRoleReducer, deleteProjectRoleReducer, fetchProjectRolesReducer, updateProjectRoleReducer } from './slices/projectRoleSlice'
-import { createProjectInternalUsersReducer, fetchProjectInternalUsersReducer, fetchProjectUsersReducer } from './slices/projectUsersSlice'
+import { createProjectUsersReducer, fetchProjectExternalUsersReducer, fetchProjectInternalUsersReducer, fetchProjectUsersReducer } from './slices/projectUsersSlice'
 import { fetchCompaniesReducer } from './slices/projectCompanySlice'
+import { organizationsReducer } from './slices/organizationsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -314,10 +315,14 @@ export const store = configureStore({
     // Project Users
     fetchProjectUsers: fetchProjectUsersReducer,
     fetchProjectInternalUsers: fetchProjectInternalUsersReducer,
-    createProjectInternalUsers: createProjectInternalUsersReducer,
+    createProjectUsers: createProjectUsersReducer,
+    fetchProjectExternalUsers: fetchProjectExternalUsersReducer,
 
     // Project Companies
     fetchCompanies: fetchCompaniesReducer,
+
+    // Project Organizaions
+    organizations: organizationsReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

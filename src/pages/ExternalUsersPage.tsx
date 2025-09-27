@@ -5,18 +5,26 @@ import { Switch } from '@/components/ui/switch';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Edit, Eye, Plus } from 'lucide-react';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchProjectExternalUsers } from '@/store/slices/projectUsersSlice';
+import { toast } from 'sonner';
+import ExternalUserModal from '@/components/ExternalUserModal';
+import { fetchCompanies } from '@/store/slices/projectCompanySlice';
+import { fetchProjectRoles } from '@/store/slices/projectRoleSlice';
+import { fetchOrganizations } from '@/store/slices/organizationsSlice';
 
 interface ExternalUser {
   id: number;
-  userName: string;
-  organisation: string;
-  company: string;
-  mobileNo: string;
-  emailId: string;
-  role: string;
-  invitationStatus: string;
-  created_on: string;
-  created_by: string;
+  firstname: string;
+  lastname: string;
+  organization_name: string;
+  user_company_name: string;
+  mobile: string;
+  email: string;
+  lock_role: {
+    name: string;
+  };
+  invite: string;
   active: boolean;
 }
 
@@ -79,75 +87,88 @@ const columns: ColumnConfig[] = [
   },
 ];
 
+const transformedUser = (data) => {
+  return data.map((item: ExternalUser) => {
+    return {
+      userName: item.firstname + ' ' + item.lastname,
+      organization: item.organization_name,
+      company: item.user_company_name,
+      mobileNo: item.mobile,
+      emailId: item.email,
+      role: item.lock_role.name,
+      invitationStatus: item.invite,
+      active: item.active,
+    };
+  });
+};
+
 export const ExternalUsersPage = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem('baseUrl');
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [record, setRecord] = useState<ExternalUser | {}>({});
   const [externalUsersData, setExternalUsersData] = useState<ExternalUser[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
+  const [organizations, setOrganizations] = useState([])
+  const [companies, setCompanies] = useState([])
+  const [rolesData, setRolesData] = useState([])
+
+  const fetchData = async () => {
+    setLoadingData(true);
+    try {
+      const response = await dispatch(fetchProjectExternalUsers({ baseUrl, token })).unwrap();
+      setExternalUsersData(transformedUser(response));
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const getOrganizations = async () => {
+    try {
+      const response = await dispatch(fetchOrganizations({ baseUrl, token })).unwrap();
+      setOrganizations(response.organizations)
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  const getCompanies = async () => {
+    try {
+      const response = await dispatch(fetchCompanies({ baseUrl, token })).unwrap();
+      setCompanies(response)
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  const getRoles = async () => {
+    try {
+      const response = await dispatch(fetchProjectRoles({ baseUrl, token })).unwrap();
+      setRolesData(response)
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
 
   useEffect(() => {
-
+    fetchData();
+    getOrganizations();
+    getCompanies();
+    getRoles();
   }, [])
 
-  const mockUsersData: ExternalUser[] = [
-    {
-      id: 1,
-      userName: 'Alex Chen',
-      organisation: 'Tech Innovations Inc',
-      company: 'ABC Corp',
-      mobileNo: '+91 9876543213',
-      emailId: 'alex.chen@techinnovations.com',
-      role: 'Consultant',
-      invitationStatus: 'Accepted',
-      created_on: '15/09/2025, 10:30 AM',
-      created_by: 'Admin',
-      active: true,
-    },
-    {
-      id: 2,
-      userName: 'Maria Rodriguez',
-      organisation: 'Global Solutions Ltd',
-      company: 'XYZ Ltd',
-      mobileNo: '+91 9876543214',
-      emailId: 'maria.rodriguez@globalsolutions.com',
-      role: 'External Auditor',
-      invitationStatus: 'Pending',
-      created_on: '14/09/2025, 02:15 PM',
-      created_by: 'Admin',
-      active: true,
-    },
-    {
-      id: 3,
-      userName: 'David Thompson',
-      organisation: 'Expert Systems',
-      company: 'ABC Corp',
-      mobileNo: '+91 9876543215',
-      emailId: 'david.thompson@expertsystems.com',
-      role: 'Technical Advisor',
-      invitationStatus: 'Accepted',
-      created_on: '13/09/2025, 09:45 AM',
-      created_by: 'Admin',
-      active: false,
-    },
-    {
-      id: 4,
-      userName: 'Sophie Williams',
-      organisation: 'Strategic Consulting',
-      company: 'Digital Systems',
-      mobileNo: '+91 9876543216',
-      emailId: 'sophie.williams@strategic.com',
-      role: 'Business Consultant',
-      invitationStatus: 'Declined',
-      created_on: '12/09/2025, 03:20 PM',
-      created_by: 'Admin',
-      active: true,
-    },
-  ];
-
-  const renderCell = (item: ExternalUser, columnKey: string) => {
+  const renderCell = (item, columnKey: string) => {
     switch (columnKey) {
       case 'invitationStatus':
         const statusStyles = {
@@ -157,8 +178,8 @@ export const ExternalUsersPage = () => {
           'Expired': 'bg-gray-100 text-gray-800'
         };
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[item.invitationStatus as keyof typeof statusStyles] || 'bg-gray-100 text-gray-800'}`}>
-            {item.invitationStatus}
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[item.invite as keyof typeof statusStyles] || 'bg-gray-100 text-gray-800'}`}>
+            {item.invite}
           </span>
         );
       case 'active':
@@ -215,7 +236,7 @@ export const ExternalUsersPage = () => {
   return (
     <div className="p-6">
       <EnhancedTable
-        data={[...mockUsersData].reverse()}
+        data={[...externalUsersData].reverse()}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
@@ -223,6 +244,17 @@ export const ExternalUsersPage = () => {
         pagination={true}
         pageSize={10}
         loading={loadingData}
+      />
+
+      <ExternalUserModal
+        openDialog={showAddModal}
+        handleCloseDialog={() => setShowAddModal(false)}
+        isEditing={isEditing}
+        record={record}
+        fetchData={fetchData}
+        companies={companies}
+        roles={rolesData}
+        organizations={organizations}
       />
     </div>
   );

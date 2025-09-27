@@ -1,25 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit, RefreshCw, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+import { Switch } from '@/components/ui/switch';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { AddBannerModal } from '@/components/AddBannerModal';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { Edit, Eye, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
 
@@ -31,37 +17,57 @@ interface ProjectTeam {
   totalMembers: number;
   created_on: string;
   created_by: string;
+  active: boolean;
 }
+
+const columns: ColumnConfig[] = [
+  {
+    key: 'teamName',
+    label: 'Team Name',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'teamLead',
+    label: 'Team Lead',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'teamMembers',
+    label: 'Team Members (TL+Members)',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'active',
+    label: 'Status',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+];
 
 export const ProjectTeamsPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setCurrentSection } = useLayout();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [record, setRecord] = useState<ProjectTeam | {}>({});
   const [projectTeamsData, setProjectTeamsData] = useState<ProjectTeam[]>([]);
-  const [visibleColumns, setVisibleColumns] = useState({
-    sNo: true,
-    actions: true,
-    teamName: true,
-    teamLead: true,
-    teamMembers: true
-  });
+  const [loadingData, setLoadingData] = useState(true);
+  const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
-  const [filteredTeams, setFilteredTeams] = useState<ProjectTeam[]>([]);
-
-  // Load project teams from API (mock implementation)
   const loadProjectTeams = useCallback(async () => {
     try {
-      setIsLoading(true);
-      console.log('Loading project teams...');
-      
+      setLoadingData(true);
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data for demonstration - replace with actual API calls
+
       const mockTeamsData: ProjectTeam[] = [
         {
           id: 1,
@@ -70,7 +76,8 @@ export const ProjectTeamsPage = () => {
           teamMembers: ['John Doe', 'Sarah Wilson', 'Mike Johnson', 'Lisa Davis'],
           totalMembers: 4,
           created_on: '15/09/2025, 10:30 AM',
-          created_by: 'Admin'
+          created_by: 'Admin',
+          active: true,
         },
         {
           id: 2,
@@ -79,7 +86,8 @@ export const ProjectTeamsPage = () => {
           teamMembers: ['Jane Smith', 'David Brown', 'Alex Chen', 'Maria Rodriguez'],
           totalMembers: 4,
           created_on: '14/09/2025, 02:15 PM',
-          created_by: 'Admin'
+          created_by: 'Admin',
+          active: true,
         },
         {
           id: 3,
@@ -88,7 +96,8 @@ export const ProjectTeamsPage = () => {
           teamMembers: ['Robert Wilson', 'Emma Johnson', 'Tom Anderson'],
           totalMembers: 3,
           created_on: '13/09/2025, 09:45 AM',
-          created_by: 'Admin'
+          created_by: 'Admin',
+          active: false,
         },
         {
           id: 4,
@@ -97,12 +106,12 @@ export const ProjectTeamsPage = () => {
           teamMembers: ['Sophie Williams', 'David Thompson'],
           totalMembers: 2,
           created_on: '12/09/2025, 03:20 PM',
-          created_by: 'Admin'
-        }
+          created_by: 'Admin',
+          active: true,
+        },
       ];
-      
+
       setProjectTeamsData(mockTeamsData);
-      setFilteredTeams(mockTeamsData);
     } catch (error) {
       console.error('Failed to load project teams:', error);
       toast({
@@ -111,251 +120,148 @@ export const ProjectTeamsPage = () => {
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setLoadingData(false);
     }
   }, [toast]);
 
-  // Pagination calculations
-  const totalRecords = filteredTeams.length;
-  const totalPages = Math.ceil(totalRecords / perPage);
-  const startIndex = (currentPage - 1) * perPage;
-  const endIndex = startIndex + perPage;
-  const currentPageData = filteredTeams.slice(startIndex, endIndex);
-
   useEffect(() => {
     setCurrentSection('Settings');
-  }, [setCurrentSection]);
-
-  useEffect(() => {
     loadProjectTeams();
-  }, [loadProjectTeams]);
+  }, [setCurrentSection, loadProjectTeams]);
 
-  useEffect(() => {
-    const filtered = projectTeamsData.filter(team =>
-      team.teamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      team.teamLead.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      team.teamMembers.some(member => 
-        member.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-    setFilteredTeams(filtered);
-    setCurrentPage(1); // Reset to first page when filtering
-  }, [searchTerm, projectTeamsData]);
+  const handleCheckboxChange = async (item: ProjectTeam) => {
+    const newStatus = !item.active;
+    const itemId = item.id;
 
-  const handleAdd = () => {
-    navigate('/settings/manage-users/project-teams/add');
-  };
+    if (updatingStatus[itemId]) return;
 
-  const handleEdit = (team: ProjectTeam) => {
-    navigate(`/settings/manage-users/project-teams/edit/${team.id}`);
-  };
+    try {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: true }));
 
-  const handleRefresh = async () => {
-    setSearchTerm('');
-    setCurrentPage(1);
-    await loadProjectTeams();
-    toast({
-      title: "Refreshed",
-      description: "Data has been refreshed successfully",
-    });
-  };
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-  const handleColumnToggle = (columnKey: string, visible: boolean) => {
-    setVisibleColumns(prev => ({
-      ...prev,
-      [columnKey]: visible
-    }));
-  };
+      setProjectTeamsData((prevData) =>
+        prevData.map((row) =>
+          row.id === itemId ? { ...row, active: newStatus } : row
+        )
+      );
 
-  // Column definitions for visibility control
-  const columns = [
-    { key: 'sNo', label: 'S.No.', visible: visibleColumns.sNo },
-    { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
-    { key: 'teamName', label: 'Team Name', visible: visibleColumns.teamName },
-    { key: 'teamLead', label: 'Team Lead', visible: visibleColumns.teamLead },
-    { key: 'teamMembers', label: 'Team Members (TL+Members)', visible: visibleColumns.teamMembers }
-  ];
-
-  const formatTeamMembers = (members: string[]) => {
-    if (members.length <= 3) {
-      return members.join(', ');
+      toast({
+        title: "Success",
+        description: `Team ${newStatus ? "activated" : "deactivated"} successfully`,
+      });
+    } catch (error) {
+      console.error("Error updating active status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update active status. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: false }));
     }
-    return `${members.slice(0, 2).join(', ')} +${members.length - 2} more`;
+  };
+
+  const renderCell = (item: ProjectTeam, columnKey: string) => {
+    switch (columnKey) {
+      case 'teamMembers':
+        const formatTeamMembers = (members: string[]) => {
+          if (members.length <= 3) {
+            return members.join(', ');
+          }
+          return `${members.slice(0, 2).join(', ')} +${members.length - 2} more`;
+        };
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-600">
+              {formatTeamMembers(item.teamMembers)}
+            </span>
+            <span className="text-xs text-gray-400">
+              Total: {item.totalMembers} members
+            </span>
+          </div>
+        );
+      case 'active':
+        return (
+          <Switch
+            checked={item.active}
+            onCheckedChange={() => handleCheckboxChange(item)}
+            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            disabled={updatingStatus[item.id]}
+          />
+        );
+      default:
+        return item[columnKey as keyof ProjectTeam] || '-';
+    }
+  };
+
+  const renderActions = (item: ProjectTeam) => {
+    return (
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => navigate(`/settings/manage-users/project-teams/${item.id}`)}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => {
+            setIsEditing(true);
+            setShowAddModal(true);
+            setRecord(item);
+          }}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      </div>
+    );
+  };
+
+  const leftActions = (
+    <Button
+      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+      onClick={() => setShowAddModal(true)}
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add
+    </Button>
+  );
+
+  const handleAddEditSubmit = async () => {
+    // This would be implemented in AddBannerModal
+    await loadProjectTeams();
   };
 
   return (
-    <>
-      <div className="p-6 min-h-screen">
-      {/* Action Bar */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Button 
-            onClick={handleAdd}
-            className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-        </div>
+    <div className="p-6">
+      <EnhancedTable
+        data={[...projectTeamsData].reverse()}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        leftActions={leftActions}
+        pagination={true}
+        pageSize={10}
+        loading={loadingData}
+      />
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-80"
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8"
-            onClick={handleRefresh}
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#f6f4ee]">
-              {visibleColumns.sNo && <TableHead className="w-20">S.No.</TableHead>}
-              {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
-              {visibleColumns.teamName && <TableHead className="w-48">Team Name</TableHead>}
-              {visibleColumns.teamLead && <TableHead className="w-40">Team Lead</TableHead>}
-              {visibleColumns.teamMembers && <TableHead className="w-64">Team Members (TL+Members)</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
-                  <div className="flex items-center justify-center">
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Loading project teams...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : currentPageData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                  {searchTerm ? `No project teams found matching "${searchTerm}"` : 'No project teams found'}
-                  <br />
-                  <span className="text-sm">Click "Add" to create your first project team</span>
-                </TableCell>
-              </TableRow>
-            ) : (
-              currentPageData.map((team, index) => (
-                <TableRow key={team.id} className="hover:bg-gray-50">
-                  {visibleColumns.sNo && (
-                    <TableCell className="font-medium">
-                      {startIndex + index + 1}
-                    </TableCell>
-                  )}
-                  {visibleColumns.actions && (
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(team)}
-                          className="h-8 w-8"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
-                  {visibleColumns.teamName && (
-                    <TableCell className="font-medium">
-                      {team.teamName}
-                    </TableCell>
-                  )}
-                  {visibleColumns.teamLead && <TableCell>{team.teamLead}</TableCell>}
-                  {visibleColumns.teamMembers && (
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-600">
-                          {formatTeamMembers(team.teamMembers)}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          Total: {team.totalMembers} members
-                        </span>
-                      </div>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => {
-                    if (currentPage > 1) {
-                      setCurrentPage(currentPage - 1);
-                    }
-                  }}
-                  className={
-                    currentPage === 1
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
-                />
-              </PaginationItem>
-
-              {Array.from(
-                { length: Math.min(totalPages, 10) },
-                (_, i) => i + 1
-              ).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page)}
-                    isActive={currentPage === page}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-
-              {totalPages > 10 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => {
-                    if (currentPage < totalPages) {
-                      setCurrentPage(currentPage + 1);
-                    }
-                  }}
-                  className={
-                    currentPage === totalPages
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
-
-      </div>
-    </>
+      <AddBannerModal
+        isOpen={showAddModal}
+        onClose={() => {
+          setShowAddModal(false);
+          setIsEditing(false);
+          setRecord({});
+        }}
+        fetchData={handleAddEditSubmit}
+        isEditing={isEditing}
+        record={record}
+      />
+    </div>
   );
 };
