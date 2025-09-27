@@ -6,19 +6,25 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { useToast } from "@/hooks/use-toast";
-import { verifyOTP, saveUser, saveToken } from "@/utils/auth";
+import { toast } from "sonner";
+import {
+  verifyOTP,
+  saveUser,
+  saveToken,
+  saveBaseUrl,
+  getBaseUrl,
+} from "@/utils/auth";
 import { ArrowLeft } from "lucide-react";
 
 export const OTPVerificationPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [email, setEmail] = useState("");
+  const [attemptCount, setAttemptCount] = useState(0);
 
   const hostname = window.location.hostname;
   // Check if it's Oman site
@@ -48,34 +54,45 @@ export const OTPVerificationPage = () => {
 
   const handleVerifyOTP = async () => {
     if (otp.length !== 5) {
-      toast({
-        variant: "destructive",
-        title: "Invalid OTP",
-        description: "Please enter a valid 5-digit OTP.",
-      });
+      toast.error("Please enter a complete 5-digit OTP.");
+      return;
+    }
+
+    // Check if maximum attempts reached
+    if (attemptCount >= 3) {
+      toast.error("Too many attempts. Please login again.");
       return;
     }
 
     setIsLoading(true);
 
     try {
+      console.log(`OTP Verification Attempt ${attemptCount + 1}:`, { otp, email });
       const response = await verifyOTP(otp);
 
+      // If we reach here, verification was successful
       // Update user data with verification status
-      const existingUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+      const baseUrl = getBaseUrl();
       saveUser({
-        ...existingUser,
         id: response.id,
         email: response.email,
         firstname: response.firstname,
         lastname: response.lastname,
         mobile: response.mobile,
+        latitude: response.latitude,
+        longitude: response.longitude,
+        country_code: response.country_code,
+        spree_api_key: response.spree_api_key,
+        lock_role: response.lock_role,
       });
+      saveToken(response.access_token);
+      if (baseUrl) {
+        saveBaseUrl(baseUrl);
+      }
+      localStorage.setItem("userId", response.id.toString());
 
-      toast({
-        title: "Phone Number Verified",
-        description: "Successfully verified! Redirecting to dashboard...",
-      });
+      toast.success(`Welcome back, ${response.firstname}!`);
 
       // Check the hostname to determine redirect
       const hostname = window.location.hostname;
@@ -86,16 +103,38 @@ export const OTPVerificationPage = () => {
         navigate(
           isViSite ? "/maintenance/m-safe/internal" : "/maintenance/asset"
         );
-      }, 500);
+      }, 1000);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Verification Failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Invalid OTP. Please try again.",
-      });
+      const newAttemptCount = attemptCount + 1;
+      setAttemptCount(newAttemptCount);
+      
+      if (newAttemptCount >= 3) {
+        toast.error("Too many incorrect attempts. Redirecting to login...");
+        // Clear temporary data
+        localStorage.removeItem("temp_email");
+        localStorage.removeItem("temp_token");
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      } else {
+        const remainingAttempts = 3 - newAttemptCount;
+        
+        // Show clean, user-friendly error messages
+        if (error instanceof Error && error.message.includes("Session expired")) {
+          toast.error("Session expired. Please login again.");
+          // Redirect to login immediately for session expired
+          setTimeout(() => {
+            navigate("/login");
+          }, 1500);
+        } else {
+          toast.error(`Invalid OTP. ${remainingAttempts} attempt${remainingAttempts > 1 ? 's' : ''} remaining.`);
+        }
+      }
+      
+      // Clear OTP input for retry but don't prevent further API calls
+      setOtp("");
     } finally {
       setIsLoading(false);
     }
@@ -103,11 +142,7 @@ export const OTPVerificationPage = () => {
 
   const handleResendOTP = async () => {
     if (!email) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Email not found. Please login again.",
-      });
+      toast.error("Session expired. Please login again.");
       navigate("/login");
       return;
     }
@@ -118,16 +153,13 @@ export const OTPVerificationPage = () => {
     try {
       // Call resend OTP API - this would need to be implemented
       // For now, just show success message
-      toast({
-        title: "OTP Resent",
-        description: "A new OTP has been sent to your email address.",
-      });
+      toast.success("New OTP sent to your email.");
+
+      // Clear the current OTP input and reset attempt counter
+      setOtp("");
+      setAttemptCount(0);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Failed to Resend",
-        description: "Could not resend OTP. Please try again.",
-      });
+      toast.error("Failed to send OTP. Please try again.");
       setCanResend(true);
       setTimeLeft(0);
     }
@@ -309,15 +341,30 @@ export const OTPVerificationPage = () => {
                 index={4}
                 className="w-12 h-14 text-lg border-2 border-gray-300 rounded-lg"
               />
-             
             </InputOTPGroup>
           </InputOTP>
         </div>
 
+        {/* Attempt Counter */}
+        {attemptCount > 0 && (
+          <div className="mb-4 text-center">
+            <p className={`text-sm font-medium ${
+              attemptCount >= 3 
+                ? "text-red-600 font-bold" 
+                : "text-orange-600"
+            }`}>
+              {attemptCount >= 3 
+                ? "Maximum attempts reached - Please login again"
+                : `${attemptCount} incorrect attempt${attemptCount > 1 ? 's' : ''} • ${3 - attemptCount} remaining`
+              }
+            </p>
+          </div>
+        )}
+
         {/* Verify Button */}
         <Button
           onClick={handleVerifyOTP}
-          disabled={isLoading || otp.length !== 5}
+          disabled={isLoading || otp.length !== 5 || attemptCount >= 3}
           className="w-full h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-base mt-8"
         >
           {isLoading ? (
@@ -325,6 +372,8 @@ export const OTPVerificationPage = () => {
               <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2" />
               Verifying...
             </div>
+          ) : attemptCount >= 3 ? (
+            "Maximum Attempts Exceeded"
           ) : (
             "Verify OTP"
           )}

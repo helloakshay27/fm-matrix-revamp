@@ -1382,7 +1382,6 @@ const AddAssetPage = () => {
       setShowWaterSourceOptions(false);
       setShowWaterDistributionOptions(false);
     } else if (value === "renewable") {
-      sp
       setShowRenewableOptions(true);
       setShowBoardRatioOptions(false);
       setShowFreshWaterOptions(false);
@@ -9130,8 +9129,8 @@ const AddAssetPage = () => {
                                 type="radio"
                                 id="critical-yes"
                                 name="critical"
-                                value="yes"
-                                checked={criticalStatus === "yes"}
+                                value="1"
+                                checked={criticalStatus === "1"}
                                 onChange={(e) => {
                                   setCriticalStatus(e.target.value);
                                   handleFieldChange("critical", e.target.value);
@@ -9150,8 +9149,8 @@ const AddAssetPage = () => {
                                 type="radio"
                                 id="critical-no"
                                 name="critical"
-                                value="no"
-                                checked={criticalStatus === "no"}
+                                value="0"
+                                checked={criticalStatus === "0"}
                                 onChange={(e) => {
                                   setCriticalStatus(e.target.value);
                                   handleFieldChange("critical", e.target.value);
@@ -9378,10 +9377,10 @@ const AddAssetPage = () => {
                           </MenuItem>
                           {wings.map((wing) => (
                             <MenuItem
-                              key={wing.wings.id}
-                              value={wing.wings.id.toString()}
+                              key={wing.id}
+                              value={wing.id.toString()}
                             >
-                              {wing.wings.name}
+                              {wing.name}
                             </MenuItem>
                           ))}
                         </MuiSelect>
@@ -9479,10 +9478,10 @@ const AddAssetPage = () => {
                           </MenuItem>
                           {rooms.map((room) => (
                             <MenuItem
-                              key={room.rooms.id}
-                              value={room.rooms.id.toString()}
+                              key={room.id}
+                              value={room.id.toString()}
                             >
-                              {room.rooms.name}
+                              {room.name}
                             </MenuItem>
                           ))}
                         </MuiSelect>

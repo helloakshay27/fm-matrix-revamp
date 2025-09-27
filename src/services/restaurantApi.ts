@@ -7,9 +7,13 @@ export interface Restaurant {
   rating: number;
   timeRange: string;
   discount: string;
+  status?: boolean;
   image: string;
-  images?: string[]; // Array of images for carousel
+  images?: string[]; 
   menuItems?: MenuItem[];
+  can_book_today?: boolean;
+  can_order_today?: boolean;
+  menu_images?: MenuImage[];
 }
 
 export interface MenuItem {
@@ -19,6 +23,14 @@ export interface MenuItem {
   price: number;
   image: string;
   quantity?: number;
+  stock?: number | null;
+}
+
+export interface MenuImage {
+  id: number;
+  relation: string;
+  relation_id: number;
+  document: string;
 }
 
 // New interfaces for facility and site-based APIs
@@ -48,6 +60,8 @@ export interface RestaurantBysite {
     relation_id: number;
     document: string;
   }>;
+  can_book_today?: boolean;
+  can_order_today?: boolean;
 }
 
 export interface RestaurantsBySiteResponse {
@@ -77,6 +91,7 @@ export interface RestaurantTokenResponse {
   rating?: number;
   delivery_time?: string;
   discount?: string;
+  status?: boolean;
   cover_image?: string;
   cover_images?: CoverImage[];
 }
@@ -208,7 +223,7 @@ export const restaurantApi = {
         `/pms/admin/restaurants/${restaurantId}.json?skp_dr=true`
       );
       const restaurant = response.data;
-      console.log("restaurant respo:", restaurant)
+      // console.log("restaurant respo:", restaurant)
 
       let menuItems: MenuItem[] = [];
 
@@ -227,6 +242,7 @@ export const restaurantApi = {
               ? item.images[0].document || item.images[0]
               : "/placeholder.svg",
           quantity: 0,
+          stock: item.stock || null,
           categoryName: "General", // If you want, extract category_name if available
         }));
       }
@@ -261,9 +277,12 @@ export const restaurantApi = {
         rating: restaurant.rating || 4.0,
         timeRange: restaurant.delivery_time || "30-40 mins",
         discount: restaurant.discount || "",
+        status: restaurant?.status,
         image: coverImage,
-        images: coverImages, // Add array of images for carousel
+        images: coverImages, 
         menuItems,
+        can_book_today: restaurant.can_book_today,
+        can_order_today: restaurant.can_order_today,
       };
     } catch (error) {
       console.error("Error fetching restaurant details:", error);
@@ -286,6 +305,7 @@ export const restaurantApi = {
         price: parseFloat(item.price) || 0,
         image: item.image_url || item.image || "/placeholder.svg",
         quantity: 0,
+        stock: item.stock || null,
       }));
     } catch (error) {
       console.error("Error fetching menu items:", error);
@@ -313,7 +333,7 @@ export const restaurantApi = {
     };
   }): Promise<{ success: boolean; data?: unknown; message?: string }> {
     try {
-      console.log("Sending order data to API:", orderData);
+      // console.log("Sending order data to API:", orderData);
       
       // Get token from localStorage/sessionStorage
       const token = sessionStorage.getItem("app_token") || sessionStorage.getItem("token") || localStorage.getItem("app_token") || localStorage.getItem("token");
@@ -325,7 +345,7 @@ export const restaurantApi = {
         params: token ? { token } : {},
       });
       
-      console.log("API Response:", response);
+      // console.log("API Response:", response);
 
       // Check if response indicates success
       if (response.status === 200 || response.status === 201) {
@@ -422,7 +442,7 @@ export const restaurantApi = {
     message?: string;
   }> {
     try {
-      console.log("🔑 FETCHING RESTAURANTS BY TOKEN:", token);
+      // console.log("🔑 FETCHING RESTAURANTS BY TOKEN:", token);
       
       const response = await baseClient.get(
         `/pms/admin/restaurants/get_restaurants_by_site_mobile.json`,
@@ -434,7 +454,7 @@ export const restaurantApi = {
         }
       );
       
-      console.log("🔑 TOKEN RESPONSE:", response.data);
+      // console.log("🔑 TOKEN RESPONSE:", response.data);
       
       if (response.data && response.data.restaurants) {
         // Convert API restaurants to local Restaurant format
@@ -445,6 +465,7 @@ export const restaurantApi = {
           rating: r.rating || 4.0,
           timeRange: r.delivery_time || "30-45 mins",
           discount: r.discount || "",
+          status: r?.status,
           image: r.cover_image || r.cover_images?.[0]?.document || "/placeholder.svg",
           images: r.cover_images?.map((img: CoverImage) => img.document) || [],
           menuItems: [], // Will be loaded when restaurant is selected
@@ -508,14 +529,14 @@ export const restaurantApi = {
     message?: string;
   }> {
     try {
-      console.log("📡 CREATING QR ORDER:", orderData);
+      // console.log("📡 CREATING QR ORDER:", orderData);
       
       const response = await baseClient.post(
         `/pms/admin/restaurants/api_create_qr_order.json?skp_dr=true`,
         orderData
       );
       
-      console.log("📡 QR ORDER RESPONSE:", response.data);
+      // console.log("📡 QR ORDER RESPONSE:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error creating QR order:", error);
@@ -560,7 +581,7 @@ export const restaurantApi = {
     message?: string;
   }> {
     try {
-      console.log("📡 CREATING TOKEN ORDER:", orderData);
+      // console.log("📡 CREATING TOKEN ORDER:", orderData);
 
       // Get facility_id from sessionStorage if available
       const facilityId = sessionStorage.getItem("facility_id");
@@ -579,7 +600,7 @@ export const restaurantApi = {
         }
       );
 
-      console.log("📡 TOKEN ORDER RESPONSE:", response.data);
+      // console.log("📡 TOKEN ORDER RESPONSE:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error creating token order:", error);

@@ -81,61 +81,48 @@ export const MobileRestaurantPage: React.FC = () => {
   const storedFacilityId = sessionStorage.getItem("facility_id");
   const effectiveFacilityId = urlFacilityId || queryFacilityId || storedFacilityId;
 
-  console.log("🔍 FACILITY ID RESOLUTION:");
-  console.log("  - URL facilityId (from path):", urlFacilityId);
-  console.log("  - Query facilityId (from params):", queryFacilityId);
-  console.log("  - Stored facilityId:", storedFacilityId);
-  console.log("  - Effective facilityId:", effectiveFacilityId);
+  // console.log("🔍 FACILITY ID RESOLUTION:");
+  // console.log("  - URL facilityId (from path):", urlFacilityId);
+  // console.log("  - Query facilityId (from params):", queryFacilityId);
+  // console.log("  - Stored facilityId:", storedFacilityId);
+  // console.log("  - Effective facilityId:", effectiveFacilityId);
 
   // Auto-add source based on URL type
   useEffect(() => {
     const currentSource = searchParams.get("source");
-    console.log("🔍 AUTO-ADD SOURCE CHECK:");
-    console.log("  - Current source:", currentSource);
-    console.log("  - Token:", !!token);
-    console.log("  - Action:", action);
-    console.log("  - EffectiveFacilityId:", effectiveFacilityId);
-    console.log("  - OrgId:", orgId);
+    // console.log("🔍 AUTO-ADD SOURCE CHECK:");
+    // console.log("  - Current source:", currentSource);
+    // console.log("  - Token:", !!token);
+    // console.log("  - Action:", action);
+    // console.log("  - EffectiveFacilityId:", effectiveFacilityId);
+    // console.log("  - OrgId:", orgId);
     
     if (!currentSource) {
       const newParams = new URLSearchParams(searchParams);
       
       if (token) {
         // Token present - set source as "app"
-        console.log("🔗 AUTO-ADDING SOURCE=APP for token-based URL");
+        // console.log("🔗 AUTO-ADDING SOURCE=APP for token-based URL");
         newParams.set("source", "app");
         setSearchParams(newParams, { replace: true });
       } else if (effectiveFacilityId && orgId && !action) {
         // QR scan URLs (mr/facilityId/orgId format) - set source as "external"
-        console.log("🔗 AUTO-ADDING SOURCE=EXTERNAL for QR scan URL");
+        // console.log("🔗 AUTO-ADDING SOURCE=EXTERNAL for QR scan URL");
         newParams.set("source", "external");
         setSearchParams(newParams, { replace: true });
       } else if (effectiveFacilityId && !urlFacilityId && !action) {
         // Only set external for main restaurant pages, not for action pages like order-review
         // Has facility_id in sessionStorage but not in URL - set source as "external"
-        console.log("🔗 AUTO-ADDING SOURCE=EXTERNAL for sessionStorage facility_id");
+        // console.log("🔗 AUTO-ADDING SOURCE=EXTERNAL for sessionStorage facility_id");
         newParams.set("source", "external");
         setSearchParams(newParams, { replace: true });
       }
     } else {
-      console.log("🔗 SOURCE ALREADY EXISTS, NOT OVERRIDING:", currentSource);
+      // console.log("🔗 SOURCE ALREADY EXISTS, NOT OVERRIDING:", currentSource);
     }
   }, [effectiveFacilityId, urlFacilityId, queryFacilityId, orgId, action, token, searchParams, setSearchParams]);
 
   useEffect(() => {
-    console.log("🚀 MOBILE RESTAURANT PAGE PARAMS:");
-    console.log("  - urlFacilityId (from path):", urlFacilityId);
-    console.log("  - queryFacilityId (from params):", queryFacilityId);
-    console.log("  - storedFacilityId:", storedFacilityId);
-    console.log("  - effectiveFacilityId:", effectiveFacilityId);
-    console.log("  - orgId:", orgId);
-    console.log("  - restaurantId:", restaurantId);
-    console.log("  - action:", action);
-    console.log("  - token:", token);
-    console.log(
-      "  - searchParams:",
-      Object.fromEntries(searchParams.entries())
-    );
 
     fetchRestaurants();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -147,13 +134,10 @@ export const MobileRestaurantPage: React.FC = () => {
 
       // Priority 1: Token-based authentication for application users
       if (token) {
-        console.log("🔑 TOKEN-BASED FLOW: authenticating with token:", token);
+        // console.log("🔑 TOKEN-BASED FLOW: authenticating with token:", token);
         
         // IMPORTANT: Store facility_id and org_id if available in URL path (for app users)
         if (effectiveFacilityId) {
-          console.log("💾 STORING FACILITY DATA FOR APP USER:");
-          console.log("  - facility_id:", effectiveFacilityId);
-          console.log("  - org_id:", orgId);
           sessionStorage.setItem("facility_id", effectiveFacilityId);
           if (orgId) {
             sessionStorage.setItem("org_id", orgId);
@@ -162,13 +146,13 @@ export const MobileRestaurantPage: React.FC = () => {
         
         // Check if this is a direct restaurant access with token
         if (restaurantId && action === "details") {
-          console.log("🔑🍽️ TOKEN + DIRECT RESTAURANT ACCESS:", restaurantId);
+          // console.log("🔑🍽️ TOKEN + DIRECT RESTAURANT ACCESS:", restaurantId);
           
           // First authenticate with token, then get specific restaurant
           const tokenResponse = await restaurantApi.getRestaurantsByToken(token);
           
           if (tokenResponse.success) {
-            console.log("🔑 TOKEN SUCCESS: Now fetching specific restaurant:", restaurantId);
+            // console.log("🔑 TOKEN SUCCESS: Now fetching specific restaurant:", restaurantId);
             
             // Store token, user info, and source for order placement
             sessionStorage.setItem("app_token", token);
@@ -201,7 +185,7 @@ export const MobileRestaurantPage: React.FC = () => {
         const tokenResponse = await restaurantApi.getRestaurantsByToken(token);
         
         if (tokenResponse.success && tokenResponse.restaurants) {
-          console.log("🔑 TOKEN SUCCESS: restaurants found:", tokenResponse.restaurants.length);
+          // console.log("🔑 TOKEN SUCCESS: restaurants found:", tokenResponse.restaurants.length);
           setUserInfo(tokenResponse.user_info || null);
           
           // Store token, user info, and source for order placement
@@ -213,7 +197,7 @@ export const MobileRestaurantPage: React.FC = () => {
           
           // If there's only one restaurant, load its menu items immediately
           if (tokenResponse.restaurants.length === 1) {
-            console.log("🔑🍽️ SINGLE RESTAURANT: Loading menu items for", tokenResponse.restaurants[0].id);
+            // console.log("🔑🍽️ SINGLE RESTAURANT: Loading menu items for", tokenResponse.restaurants[0].id);
             try {
               const apiRestaurant = await restaurantApi.getRestaurantById(tokenResponse.restaurants[0].id);
               const restaurantWithMenus = {
@@ -242,14 +226,14 @@ export const MobileRestaurantPage: React.FC = () => {
       }
       // Priority 2: Facility-based flow (QR scan like mr/1340/13)
       if (effectiveFacilityId && orgId) {
-        console.log(
-          "🔍 FACILITY-BASED FLOW: fetching restaurants for facility:",
-          effectiveFacilityId
-        );
+        // console.log(
+        //   "🔍 FACILITY-BASED FLOW: fetching restaurants for facility:",
+        //   effectiveFacilityId
+        // );
         // Always store facility_id, org_id when available (regardless of action)
-        console.log("💾 STORING FACILITY DATA:");
-        console.log("  - facility_id:", effectiveFacilityId);
-        console.log("  - org_id:", orgId);
+        // console.log("💾 STORING FACILITY DATA:");
+        // console.log("  - facility_id:", effectiveFacilityId);
+        // console.log("  - org_id:", orgId);
         sessionStorage.setItem("facility_id", effectiveFacilityId);
         sessionStorage.setItem("org_id", orgId);
         
@@ -264,9 +248,9 @@ export const MobileRestaurantPage: React.FC = () => {
           sessionStorage.setItem("facility_setup", JSON.stringify(facilityResponse.facility_setup));
           const siteId = facilityResponse.facility_setup.site_id;
 
-          console.log("📍 SITE ID:", siteId);
-          console.log("🏢 ORG ID:", orgId);
-          console.log("🏢 FACILITY DATA:", facilityResponse.facility_setup);
+          // console.log("📍 SITE ID:", siteId);
+          // console.log("🏢 ORG ID:", orgId);
+          // console.log("🏢 FACILITY DATA:", facilityResponse.facility_setup);
 
           // Store site_id and facility_setup in sessionStorage for external order API
           sessionStorage.setItem("site_id", siteId.toString());
@@ -277,13 +261,13 @@ export const MobileRestaurantPage: React.FC = () => {
           );
           const restaurantsList = restaurantsResponse.restaurants || [];
 
-          console.log("🍽️ RESTAURANTS FOUND:", restaurantsList.length);
+          // console.log("🍽️ RESTAURANTS FOUND:", restaurantsList.length);
 
           // Convert to Restaurant format and load menu items if there's only one restaurant
           const convertedRestaurants: Restaurant[] = restaurantsList.map((r) => ({
             id: r.id.toString(),
             name: r.name,
-            location: r.location || r?.address || "Location not specified",
+            location: r.location || "Location not specified",
             rating: r.rating || 4.0,
             timeRange: r.delivery_time || "30-45 mins",
             discount: r.discount || "",
@@ -293,14 +277,16 @@ export const MobileRestaurantPage: React.FC = () => {
               "/placeholder.svg",
             images: r.cover_images?.map((img) => img.document) || [],
             menuItems: [], // Will be loaded if there's only one restaurant
+            can_book_today: r.can_book_today,
+            can_order_today: r.can_order_today,
           }));
           setRestaurants(convertedRestaurants);
           // If there's only one restaurant, load its menu items immediately
           if (convertedRestaurants.length === 1) {
-            console.log("🍽️ SINGLE RESTAURANT: Loading menu items for", convertedRestaurants[0].id);
+            // console.log("🍽️ SINGLE RESTAURANT: Loading menu items for", convertedRestaurants[0].id);
             try {
               const apiRestaurant = await restaurantApi.getRestaurantById(convertedRestaurants[0].id);
-              console.log("APIRESP", apiRestaurant);
+              // console.log("APIRESP", apiRestaurant);
               const restaurantWithMenus = {
                 ...convertedRestaurants[0],
                 menuItems: apiRestaurant.menuItems || [],
@@ -313,7 +299,7 @@ export const MobileRestaurantPage: React.FC = () => {
         }
       } else if (restaurantId && action === "details") {
         // Priority 3: Direct restaurant access (existing flow)
-        console.log("🍽️ DIRECT RESTAURANT ACCESS:", restaurantId);
+        // console.log("🍽️ DIRECT RESTAURANT ACCESS:", restaurantId);
         const apiRestaurant = await restaurantApi.getRestaurantById(
           restaurantId
         );
@@ -325,7 +311,7 @@ export const MobileRestaurantPage: React.FC = () => {
         setRestaurants([restaurant]);
       } else if (!effectiveFacilityId && !restaurantId && !token) {
         // Priority 4: App user accessing restaurant list (fallback)
-        console.log("📱 APP USER: using fallback restaurant");
+        // console.log("📱 APP USER: using fallback restaurant");
         // Use restaurant ID 49 from the API URL provided
         const apiRestaurant = await restaurantApi.getRestaurantById("49");
         const restaurant = {
@@ -393,26 +379,26 @@ export const MobileRestaurantPage: React.FC = () => {
       const sourceParam = searchParams.get("source");
       const isAppUser = token || sourceParam === "app";
       
-      console.log("🔍 USER TYPE DETECTION:");
-      console.log("  - token:", !!token);
-      console.log("  - sourceParam:", sourceParam);
-      console.log("  - isAppUser:", isAppUser);
-      console.log("  - restaurants.length:", restaurants.length);
+      // console.log("🔍 USER TYPE DETECTION:");
+      // console.log("  - token:", !!token);
+      // console.log("  - sourceParam:", sourceParam);
+      // console.log("  - isAppUser:", isAppUser);
+      // console.log("  - restaurants.length:", restaurants.length);
 
       // App users always see dashboard (regardless of restaurant count) to access "My Orders" tab
       if (isAppUser) {
-        console.log("📱 APP USER: Always showing dashboard with My Orders tab");
+        // console.log("📱 APP USER: Always showing dashboard with My Orders tab");
         return <MobileRestaurantDashboard restaurants={restaurants} />;
       }
 
       // External users: Direct menu flow - check restaurant count
       if (restaurants.length > 1) {
         // Multiple restaurants - show dashboard list (no My Orders tab)
-        console.log("👤 EXTERNAL USER: Multiple restaurants - showing dashboard");
+        // console.log("👤 EXTERNAL USER: Multiple restaurants - showing dashboard");
         return <MobileRestaurantDashboard restaurants={restaurants} />;
       } else if (restaurants.length === 1) {
         // Single restaurant - show menu directly (no My Orders tab)
-        console.log("👤 EXTERNAL USER: Single restaurant - showing details directly");
+        // console.log("👤 EXTERNAL USER: Single restaurant - showing details directly");
         return <MobileRestaurantDetails restaurant={restaurants[0]} />;
       } else {
         // No restaurants available - show empty state with meal icon

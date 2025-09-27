@@ -712,13 +712,13 @@ export const EditSurveyPage = () => {
         });
         return;
       }
-      if (!assignTo) {
-        toast.error("Validation Error", {
-          description: "Please select who to assign the ticket to",
-          duration: 3000,
-        });
-        return;
-      }
+      // if (!assignTo) {
+      //   toast.error("Validation Error", {
+      //     description: "Please select who to assign the ticket to",
+      //     duration: 3000,
+      //   });
+      //   return;
+      // }
     }
 
     // Validate questions (exclude deleted ones and null/empty ones)
@@ -1142,7 +1142,7 @@ export const EditSurveyPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <FormControl fullWidth required sx={{
+                    {/* <FormControl fullWidth required sx={{
                       ...fieldStyles,
                       "& .MuiInputLabel-asterisk": { color: "#ef4444" }
                     }}>
@@ -1166,7 +1166,7 @@ export const EditSurveyPage = () => {
                           </MenuItem>
                         ))}
                       </MuiSelect>
-                    </FormControl>
+                    </FormControl> */}
                   </div>
                 </div>
               )}

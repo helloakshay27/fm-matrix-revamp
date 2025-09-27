@@ -4,14 +4,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { verifyForgotPasswordOTPAndResetPassword, sendForgotPasswordOTP } from '@/utils/auth';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 export const ForgotPasswordOTPPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
   
   const [emailOrMobile, setEmailOrMobile] = useState(location.state?.emailOrMobile || '');
   const [otp, setOtp] = useState('');
@@ -43,38 +42,22 @@ export const ForgotPasswordOTPPage = () => {
 
   const handleResetPassword = async () => {
     if (otp.length !== 5) {
-      toast({
-        variant: "destructive",
-        title: "Invalid OTP",
-        description: "Please enter a valid 5-digit OTP.",
-      });
+      toast.error("Please enter a valid 5-digit OTP.");
       return;
     }
 
     if (!newPassword || !confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
-        description: "Please fill in all password fields.",
-      });
+      toast.error("Please fill in all password fields.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Password Mismatch",
-        description: "Passwords do not match.",
-      });
+      toast.error("Passwords do not match.");
       return;
     }
 
     if (newPassword.length < 6) {
-      toast({
-        variant: "destructive",
-        title: "Weak Password",
-        description: "Password must be at least 6 characters long.",
-      });
+      toast.error("Password must be at least 6 characters long.");
       return;
     }
 
@@ -87,21 +70,21 @@ export const ForgotPasswordOTPPage = () => {
         newPassword,
         confirmPassword
       );
-      
-      if (response.success) {
-        toast({
-          title: "Password Reset Successful",
-          description: response.message,
-        });
-        
+
+      if (response.code === 200) {
+        toast.success(response.message || "Password reset successful!");
         navigate('/login');
+      } else if (response.code === 401) {
+        toast.error(response.message || "Invalid OTP for mobile/email.");
+      } else {
+        toast.error(response?.message || "Failed to reset password. Please try again.");
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Reset Failed",
-        description: error instanceof Error ? error.message : "Failed to reset password. Please try again.",
-      });
+      toast.error(
+        error instanceof Error 
+          ? error.message 
+          : "Failed to reset password. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -113,16 +96,9 @@ export const ForgotPasswordOTPPage = () => {
     
     try {
       await sendForgotPasswordOTP(emailOrMobile);
-      toast({
-        title: "OTP Resent",
-        description: "A new OTP has been sent to your email or mobile number.",
-      });
+      toast.success("A new OTP has been sent to your email or mobile number.");
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Resend Failed",
-        description: "Failed to resend OTP. Please try again.",
-      });
+      toast.error("Failed to resend OTP. Please try again.");
       setCanResend(true);
       setTimeLeft(0);
     }
