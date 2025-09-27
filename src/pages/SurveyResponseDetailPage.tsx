@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Copy, X, Calendar as CalendarIcon, List, BarChart3, Activity, Table, Ticket, Filter } from "lucide-react";
+import { ArrowLeft, Copy, X, Calendar as CalendarIcon, List, BarChart3, Activity, Table, Ticket, Filter, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -1844,6 +1844,40 @@ export const SurveyResponseDetailPage = () => {
 
   console.log("surveyDetails", surveyDetailsData);
 
+  // Export function for tabular data
+  const handleTabularExport = useCallback(async () => {
+    if (!surveyId) {
+      toast.error("Survey ID is required for export");
+      return;
+    }
+
+    try {
+      // Build the export URL with dynamic parameters
+      const baseUrl = getFullUrl("/survey_mappings/response_list.xlsx");
+      const exportUrl = new URL(baseUrl);
+      
+      // Add required parameters
+      exportUrl.searchParams.append("access_token", "fkLRVExOU3z0SUElnlKtEkNd7fJ4jOUL8hKd190ONrU");
+      exportUrl.searchParams.append("survey_id", surveyId);
+      exportUrl.searchParams.append("export", "true");
+
+      console.log("🚀 Exporting tabular data from:", exportUrl.toString());
+      
+      // Create a temporary link element and trigger download
+      const link = document.createElement('a');
+      link.href = exportUrl.toString();
+      link.download = `survey_responses_${surveyId}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success("Export initiated successfully");
+    } catch (error) {
+      console.error("❌ Error exporting tabular data:", error);
+      toast.error("Failed to export survey data");
+    }
+  }, [surveyId]);
+
   const handleApplyFilters = useCallback(async () => {
     if (activeFilterTab === 'summary') {
       setSummaryCurrentFilters(summaryFormFilters);
@@ -2389,6 +2423,17 @@ export const SurveyResponseDetailPage = () => {
                   className="border border-gray-200 rounded-lg"
                   loading={isLoading}
                   onFilterClick={handleFilterClick}
+                  rightActions={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTabularExport}
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export
+                    </Button>
+                  }
                   getItemId={(item: TabularResponseData) => item.id}
                   renderCell={(item: TabularResponseData, columnKey: string) => {
                     const cellValue =
