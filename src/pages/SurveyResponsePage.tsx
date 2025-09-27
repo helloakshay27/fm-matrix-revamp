@@ -107,6 +107,15 @@ interface SurveyResponse {
   complaint_count: number;
   complaints: Complaint[];
   answers: Answer[];
+  responded_time?: string; // Add responded_time property
+  location?: {
+    site_name?: string;
+    building_name?: string;
+    wing_name?: string;
+    floor_name?: string;
+    area_name?: string;
+    room_name?: string;
+  };
 }
 
 interface NewSurveyResponseApiResponse {
@@ -142,16 +151,16 @@ interface TransformedSurveyResponse {
   latest_response_date: string;
   answer_type: string;
   responded_by: string;
-  active: boolean; // Changed from survey_status to active boolean parameter
+  active: boolean; 
 }
 
 export const SurveyResponsePage = () => {
-  console.log('SurveyResponsePage component loaded successfully with EnhancedTable');
+  // console.log('SurveyResponsePage component loaded successfully with EnhancedTable');
   const navigate = useNavigate();
   const location = useLocation();
   
   // Note: survey_id filtering has been removed as requested
-  console.log('🔍 Fetching all survey responses without survey_id filter');
+  // console.log('🔍 Fetching all survey responses without survey_id filter');
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -227,27 +236,27 @@ export const SurveyResponsePage = () => {
       urlWithParams.searchParams.append('page', page.toString());
       
       // Add per_page parameter
-      urlWithParams.searchParams.append('per_page', '10');
+      urlWithParams.searchParams.append('per_page', '15');
       
       // Add access_token parameter if available
       if (API_CONFIG.TOKEN) {
         urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
-        console.log('🔑 Adding access_token to request');
+        // console.log('🔑 Adding access_token to request');
       }
       
       // Add search query if provided
       if (searchQuery && searchQuery.trim()) {
         urlWithParams.searchParams.append('q[name_cont]', searchQuery.trim());
-        console.log('🔍 Adding search query:', searchQuery);
+        // console.log('🔍 Adding search query:', searchQuery);
       }
       
       // Add survey title filter if provided
       if (filters?.surveyTitle && filters.surveyTitle.trim()) {
         urlWithParams.searchParams.append('q[name_cont]', filters.surveyTitle.trim());
-        console.log('🔍 Adding survey title filter:', filters.surveyTitle);
+        // console.log('🔍 Adding survey title filter:', filters.surveyTitle);
       }
       
-      console.log('🚀 Calling survey response list API:', urlWithParams.toString());
+      // console.log('🚀 Calling survey response list API:', urlWithParams.toString());
       
       const response = await fetch(urlWithParams.toString(), options);
       
@@ -267,9 +276,23 @@ export const SurveyResponsePage = () => {
       }
       
       const data: NewSurveyResponseApiResponse = await response.json();
-      console.log('✅ Survey response list fetched successfully:', data);
-      console.log('📊 API Summary data:', data.summary);
-      console.log('📄 API Pagination data:', data.pagination);
+      // console.log('✅ Survey response list fetched successfully:', data);
+      // console.log('📊 API Summary data:', data.summary);
+      // console.log('📄 API Pagination data:', data.pagination);
+      // console.log('🏢 API Response data (first few items):', data.responses?.slice(0, 2));
+      
+      // Debug location data in responses
+      if (data.responses && data.responses.length > 0) {
+        // console.log('🏢 First response location data:', {
+        //   survey_name: data.responses[0].survey_name,
+        //   site_name: data.responses[0].site_name,
+        //   building_name: data.responses[0].building_name,
+        //   wing_name: data.responses[0].wing_name,
+        //   floor_name: data.responses[0].floor_name,
+        //   area_name: data.responses[0].area_name,
+        //   room_name: data.responses[0].room_name
+        // });
+      }
       
       return data;
     } catch (error) {
@@ -282,7 +305,7 @@ export const SurveyResponsePage = () => {
   const handleSurveyResponseExport = async () => {
     try {
       setIsExporting(true);
-      console.log('📤 Exporting survey response data with current filters:', appliedFilters);
+      // console.log('📤 Exporting survey response data with current filters:', appliedFilters);
       
       const url = getFullUrl('/survey_mappings/response_list.json');
       const urlWithParams = new URL(url);
@@ -293,33 +316,33 @@ export const SurveyResponsePage = () => {
       // Add access_token parameter if available
       if (API_CONFIG.TOKEN) {
         urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
-        console.log('🔑 Adding access_token to export request');
+        // console.log('🔑 Adding access_token to export request');
       }
       
       // Add current filters to export
       if (appliedFilters.surveyTitle && appliedFilters.surveyTitle.trim()) {
         urlWithParams.searchParams.append('q[name_cont]', appliedFilters.surveyTitle.trim());
-        console.log('🔍 Adding survey title filter to export:', appliedFilters.surveyTitle);
+        // console.log('🔍 Adding survey title filter to export:', appliedFilters.surveyTitle);
       }
       
       // Add survey type filter if provided
       if (appliedFilters.surveyType && appliedFilters.surveyType.trim()) {
         urlWithParams.searchParams.append('q[survey_type_eq]', appliedFilters.surveyType.trim());
-        console.log('🔍 Adding survey type filter to export:', appliedFilters.surveyType);
+        // console.log('🔍 Adding survey type filter to export:', appliedFilters.surveyType);
       }
       
       // Add date range filters if provided
       if (appliedFilters.startDate) {
         urlWithParams.searchParams.append('q[created_at_gteq]', appliedFilters.startDate.toISOString());
-        console.log('🔍 Adding start date filter to export:', appliedFilters.startDate);
+        // console.log('🔍 Adding start date filter to export:', appliedFilters.startDate);
       }
       
       if (appliedFilters.endDate) {
         urlWithParams.searchParams.append('q[created_at_lteq]', appliedFilters.endDate.toISOString());
-        console.log('🔍 Adding end date filter to export:', appliedFilters.endDate);
+        // console.log('🔍 Adding end date filter to export:', appliedFilters.endDate);
       }
       
-      console.log('🚀 Calling export API:', urlWithParams.toString());
+      // console.log('🚀 Calling export API:', urlWithParams.toString());
       
       const options = getAuthenticatedFetchOptions();
       const response = await fetch(urlWithParams.toString(), options);
@@ -354,7 +377,7 @@ export const SurveyResponsePage = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
       
-      console.log('✅ Survey response data exported successfully!');
+      // console.log('✅ Survey response data exported successfully!');
       toast.success('Survey response data exported successfully!');
       
     } catch (error) {
@@ -369,18 +392,27 @@ export const SurveyResponsePage = () => {
   const transformSurveyData = (responses: SurveyResponse[]): TransformedSurveyResponse[] => {
     const transformedData: TransformedSurveyResponse[] = [];
     
+    // Check if responses is defined and is an array
+    if (!responses || !Array.isArray(responses)) {
+      console.warn('⚠️ No responses data or invalid format:', responses);
+      return transformedData; // Return empty array if no valid data
+    }
+    
     responses.forEach(response => {
       // Get the latest response date from answers
-      const latestResponseDate = response.answers.length > 0 
-        ? new Date(Math.max(...response.answers.map(a => new Date(a.created_at).getTime())))
-            .toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: 'short', 
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })
-        : 'No Responses';
+      // Get the latest response date from answers or responded_time
+      let latestResponseDate = 'No Responses';
+      if (response.responded_time) {
+        // responded_time is a single value, not an array
+        const dateObj = new Date(response.responded_time);
+        latestResponseDate = dateObj.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
       
       // Get answer type from the first answer (or use the most common one)
       const answerType = response.answers.length > 0 && response.answers[0].answer_type 
@@ -392,19 +424,31 @@ export const SurveyResponsePage = () => {
         ? response.answers[0].responded_by 
         : 'Anonymous';
       
+      // Debug location data
+      // console.log('🏢 Location data for survey:', response.survey_name, {
+      //   site_name: response.site_name,
+      //   building_name: response.building_name,
+      //   wing_name: response.wing_name,
+      //   floor_name: response.floor_name,
+      //   area_name: response.area_name,
+      //   room_name: response.room_name
+      // });
+      
+      // Use response.location if available, otherwise fallback to top-level fields
+      const location = response.location || {};
       transformedData.push({
         id: response.mapping_id,
         survey_name: response.survey_name,
         survey_id: response.survey_id,
         mapping_id: response.mapping_id,
-        site_name: response.site_name || 'N/A',
-        building_name: response.building_name || 'N/A',
-        wing_name: response.wing_name || 'N/A',
-        floor_name: response.floor_name || 'N/A',
-        area_name: response.area_name || 'N/A',
-        room_name: response.room_name || 'N/A',
-        total_responses: response.answers.length,
-        total_complaints: response.complaint_count,
+        site_name: (location.site_name || response.site_name) && (location.site_name || response.site_name).trim() !== '' ? (location.site_name || response.site_name) : 'N/A',
+        building_name: (location.building_name || response.building_name) && (location.building_name || response.building_name).trim() !== '' ? (location.building_name || response.building_name) : 'N/A',
+        wing_name: (location.wing_name || response.wing_name) && (location.wing_name || response.wing_name).trim() !== '' ? (location.wing_name || response.wing_name) : 'N/A',
+        floor_name: (location.floor_name || response.floor_name) && (location.floor_name || response.floor_name).trim() !== '' ? (location.floor_name || response.floor_name) : 'N/A',
+        area_name: (location.area_name || response.area_name) && (location.area_name || response.area_name).trim() !== '' ? (location.area_name || response.area_name) : 'N/A',
+        room_name: (location.room_name || response.room_name) && (location.room_name || response.room_name).trim() !== '' ? (location.room_name || response.room_name) : 'N/A',
+        total_responses: response.answers?.length ?? 0,
+        total_complaints: response.complaints?.length ?? 0,
         latest_response_date: latestResponseDate,
         answer_type: answerType,
         responded_by: respondedBy,
@@ -412,35 +456,44 @@ export const SurveyResponsePage = () => {
       });
       
       // Debug logging for active status
-      console.log('🔍 Survey response data:', {
-        survey_name: response.survey_name,
-        active: response.active,
-        active_type: typeof response.active,
-        mapping_id: response.mapping_id
-      });
+      // console.log('🔍 Survey response data:', {
+      //   survey_name: response.survey_name,
+      //   active: response.active,
+      //   active_type: typeof response.active,
+      //   mapping_id: response.mapping_id
+      // });
     });
     
     return transformedData;
   };
 
+  // console.log("resp data", responseData);
   const fetchSurveyResponses = useCallback(async (filters?: FilterState, searchQuery?: string) => {
     setIsLoading(true);
     try {
-      console.log('📡 Fetching survey responses for page:', currentPage);
-      console.log('🔍 Applied filters:', filters);
-      console.log('🔍 Search query:', searchQuery);
+      // console.log('📡 Fetching survey responses for page:', currentPage);
+      // console.log('🔍 Applied filters:', filters);
+      // console.log('🔍 Search query:', searchQuery);
       
       const data = await fetchSurveyResponseList(currentPage, filters, searchQuery);
+      
+      // Check if data and data.responses exist before transforming
+      if (!data || !data.responses) {
+        console.warn('⚠️ API response missing data or responses:', data);
+        setResponseData([]);
+        return;
+      }
+      
       const transformedData = transformSurveyData(data.responses);
       
-      console.log('Fetched and transformed survey responses:', transformedData);
-      console.log('Summary data from API:', data.summary);
+      // console.log('Fetched and transformed survey responses:', transformedData);
+      // console.log('Summary data from API:', data.summary);
       
       setResponseData(transformedData);
       
       // Update pagination with real API data
       if (data.pagination) {
-        console.log('📄 Using API pagination data:', data.pagination);
+        // console.log('📄 Using API pagination data:', data.pagination);
         setPagination({
           current_page: data.pagination.current_page,
           per_page: data.pagination.per_page,
@@ -448,7 +501,7 @@ export const SurveyResponsePage = () => {
           total_pages: data.pagination.total_pages
         });
       } else {
-        console.log('⚠️ No pagination data in API response, using fallback');
+        // console.log('⚠️ No pagination data in API response, using fallback');
         // Fallback pagination when API doesn't provide pagination info
         setPagination({
           current_page: 1,
@@ -460,7 +513,7 @@ export const SurveyResponsePage = () => {
       
       // Update summary stats from the API summary data
       if (data.summary) {
-        console.log('📊 Using API summary data:', data.summary);
+        // console.log('📊 Using API summary data:', data.summary);
         const newStats = {
           total_active_surveys: data.summary.active_surveys,
           total_feedback_count: data.summary.total_responses,
@@ -470,7 +523,7 @@ export const SurveyResponsePage = () => {
         console.log('🔄 Setting summary stats:', newStats);
         setSummaryStats(newStats);
       } else {
-        console.log('⚠️ No summary data in API response, calculating from response data');
+        // console.log('⚠️ No summary data in API response, calculating from response data');
         
         // Calculate values from the response data
         const totalSurveys = data.responses ? data.responses.length : 0;
@@ -488,12 +541,12 @@ export const SurveyResponsePage = () => {
           });
         }
         
-        console.log('📊 Calculated values:', {
-          totalSurveys,
-          activeSurveys,
-          totalResponsesFromData,
-          responsesData: data.responses
-        });
+        // console.log('📊 Calculated values:', {
+        //   totalSurveys,
+        //   activeSurveys,
+        //   totalResponsesFromData,
+        //   responsesData: data.responses
+        // });
         
         const newStats = {
           total_active_surveys: activeSurveys,
@@ -501,7 +554,7 @@ export const SurveyResponsePage = () => {
           total_survey_count: totalSurveys,
           total_responses: totalResponsesFromData,
         };
-        console.log('🔄 Setting calculated summary stats:', newStats);
+        // console.log('🔄 Setting calculated summary stats:', newStats);
         setSummaryStats(newStats);
       }
       
@@ -530,10 +583,10 @@ export const SurveyResponsePage = () => {
       // Add access_token parameter first
       if (API_CONFIG.TOKEN) {
         urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
-        console.log('🔑 Adding access_token to filtered request');
+        // console.log('🔑 Adding access_token to filtered request');
       }
       
-      console.log('🔍 Filtering responses without survey_id restriction');
+      // console.log('🔍 Filtering responses without survey_id restriction');
       
       if (filters.surveyTitle) {
         urlWithParams.searchParams.append('q[survey_mapping_survey_name_cont]', filters.surveyTitle);
@@ -551,7 +604,7 @@ export const SurveyResponsePage = () => {
         urlWithParams.searchParams.append('q[created_at_lteq]', filters.endDate.toISOString());
       }
       
-      console.log('🚀 Calling filtered survey responses API:', urlWithParams.toString());
+      // console.log('🚀 Calling filtered survey responses API:', urlWithParams.toString());
       
       const options = getAuthenticatedFetchOptions();
       const response = await fetch(urlWithParams.toString(), options);
@@ -569,9 +622,9 @@ export const SurveyResponsePage = () => {
   };
 
   const handleViewDetails = (item: TransformedSurveyResponse) => {
-    console.log('Eye button clicked - item data:', JSON.stringify(item, null, 2));
+    // console.log('Eye button clicked - item data:', JSON.stringify(item, null, 2));
     console.log('🔍 Navigating to survey details with survey_id:', item.survey_id);
-    console.log('🔍 Using survey_id instead of mapping_id (item.id):', item.id);
+    // console.log('🔍 Using survey_id instead of mapping_id (item.id):', item.id);
     navigate(`/maintenance/survey/response/details/${item.survey_id}`, {
       state: { surveyData: item }
     });
@@ -606,7 +659,7 @@ export const SurveyResponsePage = () => {
   };
 
   const handleApplyFilters = (filters: FilterState) => {
-    console.log('Applied filters:', filters);
+    // console.log('Applied filters:', filters);
     setAppliedFilters(filters);
     // Reset to page 1 when filters are applied
     setCurrentPage(1);
@@ -653,12 +706,12 @@ export const SurveyResponsePage = () => {
 
   // Column visibility handlers - matching SurveyMappingDashboard implementation
   const handleColumnToggle = (columnKey: string, visible: boolean) => {
-    console.log('Column toggle called:', { columnKey, visible });
+    // console.log('Column toggle called:', { columnKey, visible });
     setColumns(prev => {
       const updated = prev.map(col => 
         col.key === columnKey ? { ...col, visible } : col
       );
-      console.log('Updated columns:', updated);
+      // console.log('Updated columns:', updated);
       return updated;
     });
   };
@@ -669,12 +722,12 @@ export const SurveyResponsePage = () => {
     
     // Debug logging for status column
     if (columnKey === 'status') {
-      console.log('🔍 isColumnVisible called for status:', {
-        columnKey,
-        column,
-        visible,
-        allColumns: columns
-      });
+      // console.log('🔍 isColumnVisible called for status:', {
+      //   columnKey,
+      //   column,
+      //   visible,
+      //   allColumns: columns
+      // });
     }
     
     return visible;
@@ -708,13 +761,13 @@ export const SurveyResponsePage = () => {
     
     // Debug logging for status column
     const statusColumn = allColumns.find(col => col.key === 'status');
-    console.log('🔍 Status column configuration:', statusColumn);
-    console.log('🔍 Status column visible:', isColumnVisible('status'));
-    console.log('🔍 All visible columns:', allColumns.filter(col => col.visible).map(col => col.key));
+    // console.log('🔍 Status column configuration:', statusColumn);
+    // console.log('🔍 Status column visible:', isColumnVisible('status'));
+    // console.log('🔍 All visible columns:', allColumns.filter(col => col.visible).map(col => col.key));
     
     // Filter to only show visible columns
     const visibleColumns = allColumns.filter(col => col.visible);
-    console.log('🔍 Final enhanced table columns:', visibleColumns.map(col => ({ key: col.key, label: col.label, visible: col.visible })));
+    // console.log('🔍 Final enhanced table columns:', visibleColumns.map(col => ({ key: col.key, label: col.label, visible: col.visible })));
     return visibleColumns;
   }, [isColumnVisible]);
 
@@ -773,11 +826,11 @@ export const SurveyResponsePage = () => {
       case 'latest_response_date':
         return item.latest_response_date || 'No Responses';
       case 'status':
-        console.log('🔍 Rendering status cell for item:', { 
-          survey_name: item.survey_name, 
-          active: item.active,
-          active_type: typeof item.active 
-        });
+        // console.log('🔍 Rendering status cell for item:', { 
+        //   survey_name: item.survey_name, 
+        //   active: item.active,
+        //   active_type: typeof item.active 
+        // });
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
             item.active 
@@ -814,7 +867,7 @@ export const SurveyResponsePage = () => {
 
   // Handle page change
   const handlePageChange = (page: number) => {
-    console.log('📄 Page changed to:', page);
+    // console.log('📄 Page changed to:', page);
     setCurrentPage(page);
     // Note: fetchSurveyResponses will be called automatically when currentPage changes due to the useCallback dependency
   };
@@ -822,31 +875,31 @@ export const SurveyResponsePage = () => {
   // Get dynamic counts from summary stats
   const getTotalActiveCount = () => {
     const count = summaryStats.total_active_surveys;
-    console.log('🎯 Active Surveys count from state:', count);
+    // console.log('🎯 Active Surveys count from state:', count);
     return count;
   };
 
   const getFeedbackCount = () => {
     const count = summaryStats.total_feedback_count;
-    console.log('📝 Feedback count from state:', count);
+    // console.log('📝 Feedback count from state:', count);
     return count;
   };
 
   const getSurveyCount = () => {
     const count = summaryStats.total_survey_count;
-    console.log('📊 Total Surveys count from state:', count);
+    // console.log('📊 Total Surveys count from state:', count);
     return count;
   };
 
   const getTotalResponsesCount = () => {
     const count = summaryStats.total_responses;
-    console.log('👍 Total Responses count from state:', count);
+    // console.log('👍 Total Responses count from state:', count);
     return count;
   };
 
   // Fetch survey responses when component mounts, page changes, or filters change
   useEffect(() => {
-    console.log('🔄 Data fetch triggered - page:', currentPage, 'filters:', appliedFilters, 'search:', debouncedSearchTerm);
+    // console.log('🔄 Data fetch triggered - page:', currentPage, 'filters:', appliedFilters, 'search:', debouncedSearchTerm);
     fetchSurveyResponses(appliedFilters, debouncedSearchTerm); // Fetch with current filters, search term, and page
   }, [currentPage, appliedFilters, debouncedSearchTerm, fetchSurveyResponses]); // Trigger when currentPage, filters, or debounced search term change
 

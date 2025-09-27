@@ -39,34 +39,30 @@ interface ResponseAnswer {
   answer_id: number;
   quest_map_id: number;
   question_id: number;
-  question_index: number;
   question_name: string;
   answer_type: string;
-  created_at: string;
-  level_id: number | null;
-  comments: string;
-  responded_by: string;
-  complaints: ResponseComplaint[];
+  ans_descr?: string;
   option_id?: number;
   option_name?: string;
-  option_type?: string;
-  ans_descr?: string;
+  responded_by: string;
+  complaints: ResponseComplaint[];
+  comments?: string; // Add comments field for question-specific comments
 }
 
 interface FinalComment {
   comment_id: number;
-  commentable_id: number;
-  commentable_type: string;
   body: string;
   created_at: string;
-  question_id: number | null;
-  question_index: number | null;
 }
 
-interface AnswerSet {
-  set_index: number;
-  answers_for_questions: ResponseAnswer[][];
-  final_comments: FinalComment[];
+interface ResponseLocation {
+  site_name: string;
+  building_name: string;
+  wing_name: string;
+  floor_name: string;
+  area_name: string;
+  room_name: string;
+  status: boolean;
 }
 
 interface ResponseComplaint {
@@ -84,27 +80,18 @@ interface ResponseComplaint {
 }
 
 interface SurveyResponse {
+  response_id: number;
+  responded_time: string;
+  mapping_id: number;
   survey_id: number;
   survey_name: string;
   survey_status: number;
-  question_count: number;
-  mapping_id: number;
-  site_id: number;
-  building_id: number;
-  wing_id: number;
-  floor_id: number;
-  area_id: number;
-  room_id: number;
-  site_name: string;
-  building_name: string;
-  wing_name: string;
-  floor_name: string;
-  area_name: string;
-  room_name: string;
-  active: boolean;
-  complaint_count: number;
-  complaints?: ResponseComplaint[];
-  answers: AnswerSet[];
+  answers_count: number;
+  questions_count: number;
+  complaints_count: number;
+  location: ResponseLocation;
+  answers: ResponseAnswer[];
+  final_comments: FinalComment[];
 }
 
 interface ResponseListData {
@@ -176,11 +163,15 @@ interface TabularResponseData {
   area: string;
   floor: string;
   room: string;
+  question_type: string;
+  question_name: string;
+  answer: string;
+  final_comment: string;
+  ticket_id: string;
+  // Legacy fields for backward compatibility
   icon_category: string;
   rating: string;
   category: string;
-  final_comment: string;
-  ticket_id: string;
   [key: string]: string | number | undefined; // For dynamic question columns
 }
 
@@ -266,7 +257,6 @@ export const SurveyResponseDetailPage = () => {
         </span>
       );
     }
-    
     return <span className={className}>{text}</span>;
   };
 
@@ -278,7 +268,7 @@ export const SurveyResponseDetailPage = () => {
 
       // Add the required query parameter with dynamic survey ID
       if (surveyId) {
-        url.searchParams.append("q[id_eq]", surveyId);
+        url.searchParams.append("survey_id", surveyId);
       }
 
       // Add token parameter instead of Authorization header
@@ -302,6 +292,7 @@ export const SurveyResponseDetailPage = () => {
 
       const data = await response.json();
       console.log("✅ Response list data received:", data);
+      console.log("✅ Number of responses:", data?.responses?.length || 0);
       setResponseListData(data);
     } catch (error) {
       console.error("Error fetching response list data:", error);
@@ -342,8 +333,8 @@ export const SurveyResponseDetailPage = () => {
         urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
       }
 
-      console.log("🚀 Fetching survey details from:", urlWithParams.toString());
-      console.log("🔍 Survey ID being requested:", surveyId);
+      // console.log("🚀 Fetching survey details from:", urlWithParams.toString());
+      // console.log("🔍 Survey ID being requested:", surveyId);
 
       const response = await fetch(urlWithParams.toString(), {
         method: "GET",
@@ -370,11 +361,11 @@ export const SurveyResponseDetailPage = () => {
       }
 
       const data = await response.json();
-      console.log("✅ Survey details response received:", data);
-      console.log(
-        "🔍 Survey array length:",
-        data?.survey_details?.surveys?.length || 0
-      );
+      // console.log("✅ Survey details response received:", data);
+      // console.log(
+      //   "🔍 Survey array length:",
+      //   data?.survey_details?.surveys?.length || 0
+      // );
 
       return data;
     } catch (error) {
@@ -395,11 +386,11 @@ export const SurveyResponseDetailPage = () => {
       let surveyDetailsResponse = null;
 
       try {
-        console.log("Fetching survey details for survey ID:", surveyId);
+        // console.log("Fetching survey details for survey ID:", surveyId);
 
         // Fetch survey details using the new API endpoint
         surveyDetailsResponse = await fetchSurveyDetails(surveyId);
-        console.log("Fetched survey details:", surveyDetailsResponse);
+        // console.log("Fetched survey details:", surveyDetailsResponse);
         setSurveyDetailsData(surveyDetailsResponse);
 
         // Extract survey data from the new API response
@@ -408,7 +399,7 @@ export const SurveyResponseDetailPage = () => {
 
           // Set the survey data directly from the API response
           setSurveyData(surveyDetail);
-          console.log("Survey data set:", surveyDetail);
+          // console.log("Survey data set:", surveyDetail);
         } else {
           console.error("No survey data found for survey ID:", surveyId);
           console.error("API Response:", surveyDetailsResponse);
@@ -484,7 +475,7 @@ export const SurveyResponseDetailPage = () => {
       const textToCopy = `${question.question}\n${responses.join("\n")}`;
       try {
         await navigator.clipboard.writeText(textToCopy);
-        console.log("Question responses copied to clipboard");
+        // console.log("Question responses copied to clipboard");
       } catch (err) {
         console.error("Failed to copy to clipboard:", err);
       }
@@ -525,30 +516,24 @@ export const SurveyResponseDetailPage = () => {
     }
 
     return responseListData.responses.filter((response: SurveyResponse) => {
-      // Check if any answer in this response falls within the date range
-      const answersInRange = response.answers?.some((answerSet: AnswerSet) => 
-        answerSet.answers_for_questions?.some(questionAnswers =>
-          questionAnswers.some((answer: ResponseAnswer) => {
-            const answerDate = new Date(answer.created_at);
-            
-            if (summaryCurrentFilters.dateRange?.from) {
-              const fromDate = new Date(summaryCurrentFilters.dateRange.from);
-              fromDate.setHours(0, 0, 0, 0);
-              if (answerDate < fromDate) return false;
-            }
-            
-            if (summaryCurrentFilters.dateRange?.to) {
-              const toDate = new Date(summaryCurrentFilters.dateRange.to);
-              toDate.setHours(23, 59, 59, 999);
-              if (answerDate > toDate) return false;
-            }
-            
-            return true;
-          })
-        )
-      );
+      // Check if this response falls within the date range using response timestamp
+      if (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to) {
+        const responseDate = new Date(response.responded_time);
+        
+        if (summaryCurrentFilters.dateRange?.from) {
+          const fromDate = new Date(summaryCurrentFilters.dateRange.from);
+          fromDate.setHours(0, 0, 0, 0);
+          if (responseDate < fromDate) return false;
+        }
+        
+        if (summaryCurrentFilters.dateRange?.to) {
+          const toDate = new Date(summaryCurrentFilters.dateRange.to);
+          toDate.setHours(23, 59, 59, 999);
+          if (responseDate > toDate) return false;
+        }
+      }
 
-      return answersInRange;
+      return true;
     });
   }, [responseListData, summaryCurrentFilters.dateRange]);
 
@@ -562,47 +547,41 @@ export const SurveyResponseDetailPage = () => {
     }
 
     return responseListData.responses.filter((response: SurveyResponse) => {
-      // Check if any answer in this response falls within the date range
-      const answersInRange = response.answers?.some((answerSet: AnswerSet) =>
-        answerSet.answers_for_questions?.some(questionAnswers =>
-          questionAnswers.some((answer: ResponseAnswer) => {
-            const answerDate = new Date(answer.created_at);
-            
-            if (tabularCurrentFilters.dateRange?.from) {
-              const fromDate = new Date(tabularCurrentFilters.dateRange.from);
-              fromDate.setHours(0, 0, 0, 0);
-              if (answerDate < fromDate) return false;
-            }
-            
-            if (tabularCurrentFilters.dateRange?.to) {
-              const toDate = new Date(tabularCurrentFilters.dateRange.to);
-              toDate.setHours(23, 59, 59, 999);
-              if (answerDate > toDate) return false;
-            }
-            
-            return true;
-          })
-        )
-      );
+      // Check if this response falls within the date range using response timestamp
+      if (tabularCurrentFilters.dateRange?.from || tabularCurrentFilters.dateRange?.to) {
+        const responseDate = new Date(response.responded_time);
+        
+        if (tabularCurrentFilters.dateRange?.from) {
+          const fromDate = new Date(tabularCurrentFilters.dateRange.from);
+          fromDate.setHours(0, 0, 0, 0);
+          if (responseDate < fromDate) return false;
+        }
+        
+        if (tabularCurrentFilters.dateRange?.to) {
+          const toDate = new Date(tabularCurrentFilters.dateRange.to);
+          toDate.setHours(23, 59, 59, 999);
+          if (responseDate > toDate) return false;
+        }
+      }
 
-      return answersInRange;
+      return true;
     });
   }, [responseListData, tabularCurrentFilters.dateRange]);
 
   // Prepare pie chart data for response distribution across all questions
   const getResponseDistributionData = () => {
-    console.log("🔍 Getting response distribution data for all questions");
-    console.log("🔍 Survey details data:", surveyDetailsData);
-    console.log("🔍 Survey data:", surveyData);
+    // console.log("🔍 Getting response distribution data for all questions");
+    // console.log("🔍 Survey details data:", surveyDetailsData);
+    // console.log("🔍 Survey data:", surveyData);
 
     // Get filtered response data based on summary filters
     const filteredResponses = getSummaryFilteredResponseData();
-    console.log("🔍 Filtered responses count:", filteredResponses.length);
+    // console.log("🔍 Filtered responses count:", filteredResponses.length);
 
     // Use the survey details data which has the most accurate and complete information
     if (surveyDetailsData?.survey_details?.surveys?.[0]?.questions) {
       const questions = surveyDetailsData.survey_details.surveys[0].questions;
-      console.log("🔍 Found questions in survey details:", questions.length);
+      // console.log("🔍 Found questions in survey details:", questions.length);
 
       const responseDistribution = questions.map(
         (question: SurveyQuestion, index: number) => {
@@ -612,14 +591,10 @@ export const SurveyResponseDetailPage = () => {
           if (filteredResponses.length > 0 && (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to)) {
             // Count responses from filtered data
             filteredResponses.forEach((response: SurveyResponse) => {
-              response.answers?.forEach((answerSet: AnswerSet) => {
-                answerSet.answers_for_questions?.forEach(questionAnswers => {
-                  questionAnswers.forEach((answer: ResponseAnswer) => {
-                    if (answer.question_id === question.question_id) {
-                      totalResponses += 1;
-                    }
-                  });
-                });
+              response.answers?.forEach((answer: ResponseAnswer) => {
+                if (answer.question_id === question.question_id) {
+                  totalResponses += 1;
+                }
               });
             });
           } else {
@@ -638,11 +613,11 @@ export const SurveyResponseDetailPage = () => {
             questionName = questionName.substring(0, 25) + "...";
           }
 
-          console.log(
-            `🔍 Question ${index + 1}: "${
-              question.question
-            }" - ${totalResponses} total responses (filtered)`
-          );
+          // console.log(
+          //   `🔍 Question ${index + 1}: "${
+          //     question.question
+          //   }" - ${totalResponses} total responses (filtered)`
+          // );
 
           return {
             name: questionName,
@@ -666,22 +641,22 @@ export const SurveyResponseDetailPage = () => {
         (item) => item.value > 0
       );
 
-      console.log(
-        "🔍 All questions with response counts:",
-        responseDistribution
-      );
-      console.log(
-        "🔍 Filtered questions (only with responses):",
-        filteredDistribution
-      );
-      console.log(
-        "🔍 Number of questions with responses:",
-        filteredDistribution.length
-      );
+      // console.log(
+      //   "🔍 All questions with response counts:",
+      //   responseDistribution
+      // );
+      // console.log(
+      //   "🔍 Filtered questions (only with responses):",
+      //   filteredDistribution
+      // );
+      // console.log(
+      //   "🔍 Number of questions with responses:",
+      //   filteredDistribution.length
+      // );
 
       // If no questions have responses, show a placeholder
       if (filteredDistribution.length === 0) {
-        console.log("⚠️ No questions have responses, showing placeholder");
+        // console.log("⚠️ No questions have responses, showing placeholder");
         return [
           {
             name: "No responses yet",
@@ -691,11 +666,11 @@ export const SurveyResponseDetailPage = () => {
         ];
       }
 
-      console.log(
-        "✅ Returning filtered distribution with",
-        filteredDistribution.length,
-        "questions"
-      );
+      // console.log(
+      //   "✅ Returning filtered distribution with",
+      //   filteredDistribution.length,
+      //   "questions"
+      // );
       return filteredDistribution;
     }
 
@@ -737,14 +712,14 @@ export const SurveyResponseDetailPage = () => {
         (item) => item.value > 0
       );
 
-      console.log(
-        "🔍 Fallback - All questions with response counts:",
-        responseDistribution
-      );
-      console.log(
-        "🔍 Fallback - Filtered questions (only with responses):",
-        filteredDistribution
-      );
+      // console.log(
+      //   "🔍 Fallback - All questions with response counts:",
+      //   responseDistribution
+      // );
+      // console.log(
+      //   "🔍 Fallback - Filtered questions (only with responses):",
+      //   filteredDistribution
+      // );
 
       if (filteredDistribution.length === 0) {
         return [
@@ -768,7 +743,7 @@ export const SurveyResponseDetailPage = () => {
       },
     ];
 
-    console.log("🔍 Using ultimate fallback:", fallbackData);
+    // console.log("🔍 Using ultimate fallback:", fallbackData);
     return fallbackData;
   };
 
@@ -883,16 +858,16 @@ export const SurveyResponseDetailPage = () => {
 
   // Prepare pie chart data for individual question showing option distribution
   const getQuestionOptionsData = (questionId: number) => {
-    console.log(
-      "🔍 Getting question options data for question ID:",
-      questionId
-    );
-    console.log("🔍 Survey details data:", surveyDetailsData);
-    console.log("🔍 Survey data questions:", surveyData?.questions);
+    // console.log(
+    //   "🔍 Getting question options data for question ID:",
+    //   questionId
+    // // );
+    // console.log("🔍 Survey details data:", surveyDetailsData);
+    // console.log("🔍 Survey data questions:", surveyData?.questions);
 
     // Get filtered response data for summary
     const filteredResponses = getSummaryFilteredResponseData();
-    console.log("🔍 Using filtered responses:", filteredResponses.length);
+    // console.log("🔍 Using filtered responses:", filteredResponses.length);
 
     // Check if this is a rating/emoji question to determine color scheme
     const isRatingQuestion = shouldUseBarChart(questionId);
@@ -904,7 +879,7 @@ export const SurveyResponseDetailPage = () => {
         (q) => q.question_id === questionId
       );
 
-      console.log("🔍 Found question from survey details:", question);
+      // console.log("🔍 Found question from survey details:", question);
 
       // Handle questions with options (could be empty array)
       if (question?.options && Array.isArray(question.options)) {
@@ -930,15 +905,11 @@ export const SurveyResponseDetailPage = () => {
 
           // Count responses from filtered data
           filteredResponses.forEach((response: SurveyResponse) => {
-            response.answers?.forEach((answerSet: AnswerSet) => {
-              answerSet.answers_for_questions?.forEach(questionAnswers => {
-                questionAnswers.forEach((answer: ResponseAnswer) => {
-                  if (answer.question_id === questionId && answer.option_id) {
-                    const currentCount = optionCounts.get(answer.option_id) || 0;
-                    optionCounts.set(answer.option_id, currentCount + 1);
-                  }
-                });
-              });
+            response.answers?.forEach((answer: ResponseAnswer) => {
+              if (answer.question_id === questionId && answer.option_id) {
+                const currentCount = optionCounts.get(answer.option_id) || 0;
+                optionCounts.set(answer.option_id, currentCount + 1);
+              }
             });
           });
 
@@ -973,7 +944,7 @@ export const SurveyResponseDetailPage = () => {
           const questionType = getQuestionType(question.options);
 
           if (questionType === "rating") {
-            console.log(`🎯 Using standardized rating options for filtered question ${questionId}`);
+            // console.log(`🎯 Using standardized rating options for filtered question ${questionId}`);
             return getStandardizedRatingOptions(filteredOptionsData.map(item => ({
               option_id: 0,
               option: item.name,
@@ -981,7 +952,7 @@ export const SurveyResponseDetailPage = () => {
               type: 'rating'
             })));
           } else if (questionType === "emoji") {
-            console.log(`🎯 Using standardized emoji options for filtered question ${questionId}`);
+            // console.log(`🎯 Using standardized emoji options for filtered question ${questionId}`);
             return getStandardizedEmojiOptions(filteredOptionsData.map(item => ({
               option_id: 0,
               option: item.name,
@@ -998,14 +969,14 @@ export const SurveyResponseDetailPage = () => {
         const questionType = getQuestionType(question.options);
 
         if (questionType === "rating") {
-          console.log(
-            `🎯 Using standardized rating options for question ${questionId}`
-          );
+          // console.log(
+          //   `🎯 Using standardized rating options for question ${questionId}`
+          // );
           return getStandardizedRatingOptions(question.options);
         } else if (questionType === "emoji") {
-          console.log(
-            `🎯 Using standardized emoji options for question ${questionId}`
-          );
+          // console.log(
+          //   `🎯 Using standardized emoji options for question ${questionId}`
+          // );
           return getStandardizedEmojiOptions(question.options);
         }
 
@@ -1037,8 +1008,8 @@ export const SurveyResponseDetailPage = () => {
           }
         );
 
-        console.log("🔍 Options data from survey details:", optionsData);
-        console.log(`🔍 Question ${questionId} type: ${questionType}`);
+        // console.log("🔍 Options data from survey details:", optionsData);
+        // console.log(`🔍 Question ${questionId} type: ${questionType}`);
 
         // For regular multiple choice questions, show all options in pie chart
         // This ensures pie chart displays all available options, even those with 0 responses
@@ -1047,7 +1018,7 @@ export const SurveyResponseDetailPage = () => {
     }
 
     // Fallback: Show no data message
-    console.log("🔍 No data found, returning empty array");
+    // console.log("🔍 No data found, returning empty array");
     return [
       {
         name: "No responses yet",
@@ -1071,9 +1042,9 @@ export const SurveyResponseDetailPage = () => {
           questionType === "rating" || questionType === "emoji";
 
         if (useBarChart) {
-          console.log(
-            `🎯 Found ${questionType} question ${questionId}: "${question.question}"`
-          );
+          // console.log(
+          //   `🎯 Found ${questionType} question ${questionId}: "${question.question}"`
+          // );
         }
 
         return useBarChart;
@@ -1097,21 +1068,21 @@ export const SurveyResponseDetailPage = () => {
     );
     const questionText = question?.question || "Unknown";
 
-    console.log(
-      `🔍 Chart type for question ${questionId} ("${questionText.substring(
-        0,
-        50
-      )}..."): ${chartType} (useBarChart: ${useBarChart})`
-    );
+    // console.log(
+    //   `🔍 Chart type for question ${questionId} ("${questionText.substring(
+    //     0,
+    //     50
+    //   )}..."): ${chartType} (useBarChart: ${useBarChart})`
+    // );
 
     return chartType;
   };
 
   // Prepare pie chart data for survey summary statistics
   const getSurveyTypeDistributionData = () => {
-    console.log("🔍 Getting survey type distribution data");
-    console.log("🔍 Survey data for type distribution:", surveyData);
-    console.log("🔍 Survey details data:", surveyDetailsData);
+    // console.log("🔍 Getting survey type distribution data");
+    // console.log("🔍 Survey data for type distribution:", surveyData);
+    // console.log("🔍 Survey details data:", surveyDetailsData);
 
     if (!surveyData) {
       return [
@@ -1228,17 +1199,17 @@ export const SurveyResponseDetailPage = () => {
       });
     }
 
-    console.log("🔍 Generated type distribution:", typeDistribution);
+    // console.log("🔍 Generated type distribution:", typeDistribution);
     return typeDistribution;
   };
 
   const handleDownloadResponseChart = () => {
-    console.log("Download response distribution chart");
+    // console.log("Download response distribution chart");
     toast.success("Chart download initiated");
   };
 
   const handleDownloadTypeChart = () => {
-    console.log("Download survey type distribution chart");
+    // console.log("Download survey type distribution chart");
     toast.success("Survey type chart download initiated");
   };
 
@@ -1274,258 +1245,162 @@ export const SurveyResponseDetailPage = () => {
 
   // Memoized data functions
   const getTabularData = useCallback((): TabularResponseData[] => {
+    console.log("🔍 getTabularData called");
+    console.log("🔍 responseListData:", responseListData);
+    
     if (!responseListData?.responses) {
-      console.log("❌ No response data available");
+      console.log("🚫 No response data available - responseListData:", responseListData);
       return [];
     }
 
-    console.log(
-      "🔍 Transforming response data for table:",
-      responseListData.responses
-    );
+    console.log("🔍 Found responses:", responseListData.responses.length);
+    console.log("🔍 First response:", responseListData.responses[0]);
 
     const transformedData: TabularResponseData[] = [];
 
-    // Get all unique questions across all responses for consistent columns
-    const allUniqueQuestions = Array.from(
-      new Map(
-        responseListData.responses
-          .flatMap((response) => 
-            response.answers?.flatMap(answerSet => 
-              answerSet.answers_for_questions?.flatMap(questionAnswers => 
-                questionAnswers.map(answer => [answer.question_id, answer.question_name])
-              ) || []
-            ) || []
-          )
-      ).entries()
-    );
-
     responseListData.responses.forEach((response: SurveyResponse) => {
-      const answerSets = response.answers || [];
-      console.log(
-        `🔍 Processing response ${response.mapping_id} with ${answerSets.length} answer sets`
-      );
+      console.log("🔍 Processing response:", response.response_id);
+      console.log("🔍 Response answers:", response.answers);
+      
+      // Create one row per response (not per answer)
+      const rowData: TabularResponseData = {
+        id: response.response_id.toString(),
+        response_id: response.response_id.toString(),
+        date_time: response.responded_time ? new Date(response.responded_time).toLocaleString("en-GB", {
+          day: "2-digit",
+          month: "2-digit", 
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }) : '',
+        building: response.location?.building_name || '',
+        wing: response.location?.wing_name || '',
+        area: response.location?.area_name || '',
+        floor: response.location?.floor_name || '',
+        room: response.location?.room_name || '',
+        question_type: '',
+        question_name: '',
+        answer: '',
+        final_comment: '',
+        ticket_id: '',
+        // Legacy fields for backward compatibility
+        icon_category: '',
+        rating: '',
+        category: '',
+      };
 
-      answerSets.forEach((answerSet: AnswerSet) => {
-        const answersForQuestions = answerSet.answers_for_questions || [];
-        const finalComments = answerSet.final_comments || [];
-
-        // Group all answers by timestamp to identify individual response sessions
-        const allAnswers: ResponseAnswer[] = [];
-        answersForQuestions.forEach(questionAnswers => {
-          allAnswers.push(...questionAnswers);
+      // Create a map to organize answers by question_id for easier lookup
+      const answersByQuestionId = new Map<number, ResponseAnswer>();
+      if (response.answers && response.answers.length > 0) {
+        response.answers.forEach((answer: ResponseAnswer) => {
+          answersByQuestionId.set(answer.question_id, answer);
         });
+      }
 
-        // Group answers by created_at timestamp to identify individual response sessions
-        const answersByTimestamp: { [key: string]: ResponseAnswer[] } = {};
-        
-        allAnswers.forEach((answer) => {
-          const timestamp = answer.created_at;
-          if (!answersByTimestamp[timestamp]) {
-            answersByTimestamp[timestamp] = [];
-          }
-          answersByTimestamp[timestamp].push(answer);
-        });
-
-        // Create a row for each timestamp (individual response submission)
-        Object.entries(answersByTimestamp).forEach(([timestamp, answersAtTime]) => {
-          // Get rating/emoji answer from this timestamp
-          const ratingAnswer = answersAtTime.find(
-            (a) => a.answer_type === "emoji" || a.answer_type === "rating"
-          );
-
-          // Use the first answer's answer_id for this timestamp
-          const sessionAnswerId = answersAtTime[0]?.answer_id || response.mapping_id;
-
-          // Find final comment for this timestamp
-          const finalComment = finalComments.find(comment => 
-            comment.created_at === timestamp || 
-            Math.abs(new Date(comment.created_at).getTime() - new Date(timestamp).getTime()) < 2000 // Within 2 seconds
-          );
-
-          // Get icon category and complaint ID from any answer's complaints or response-level complaints
-          let iconCategory = "-";
-          let complaintId = "-";
-
-          // First check complaints from answers at this timestamp
-          const answerWithComplaints = answersAtTime.find(answer => 
-            answer.complaints && answer.complaints.length > 0
-          );
+      // Populate dynamic question columns with detailed structure
+      if (surveyData?.questions && surveyData.questions.length > 0) {
+        surveyData.questions.forEach((question: SurveyQuestion, index: number) => {
+          const questionNumber = index + 1;
+          const answer = answersByQuestionId.get(question.question_id);
           
-          if (answerWithComplaints && answerWithComplaints.complaints.length > 0) {
-            // Get all unique icon categories from all complaints
-            const allIconCategories = answerWithComplaints.complaints
-              .map(complaint => complaint.icon_category || complaint.heading)
-              .filter(category => category && category !== "-")
-              .filter((category, index, array) => array.indexOf(category) === index); // Remove duplicates
+          // Initialize all columns for this question
+          const typeKey = `q${questionNumber}_type`;
+          const answerKey = `q${questionNumber}_answer`;
+          const questionNameKey = `q${questionNumber}_question_name`;
+          const iconKey = `q${questionNumber}_icon`;
+          const commentKey = `q${questionNumber}_comment`;
+          
+          if (answer) {
+            // Question Type - use answer.answer_type with first letter capitalized
+            const questionType = answer.answer_type || '-';
+            rowData[typeKey] = questionType === '-' ? '-' : questionType.charAt(0).toUpperCase() + questionType.slice(1);
             
-            iconCategory = allIconCategories.length > 0 ? allIconCategories.join(", ") : "-";
-            
-            // Get all complaint IDs
-            const allComplaintIds = answerWithComplaints.complaints
-              .map(complaint => complaint.complaint_id?.toString())
-              .filter(id => id)
-              .filter((id, index, array) => array.indexOf(id) === index); // Remove duplicates
-            
-            complaintId = allComplaintIds.length > 0 ? allComplaintIds.join(", ") : "-";
-          } else if (response.complaints && response.complaints.length > 0) {
-            // Fallback to response-level complaints - handle multiple complaints here too
-            const allIconCategories = response.complaints
-              .map(complaint => complaint.icon_category || complaint.heading)
-              .filter(category => category && category !== "-")
-              .filter((category, index, array) => array.indexOf(category) === index); // Remove duplicates
-            
-            iconCategory = allIconCategories.length > 0 ? allIconCategories.join(", ") : "-";
-            
-            const allComplaintIds = response.complaints
-              .map(complaint => complaint.complaint_id?.toString())
-              .filter(id => id)
-              .filter((id, index, array) => array.indexOf(id) === index); // Remove duplicates
-            
-            complaintId = allComplaintIds.length > 0 ? allComplaintIds.join(", ") : "-";
-          }
-
-          // For testing: Add sample data if no real data exists
-          if (iconCategory === "-" && answersAtTime.length > 0) {
-            // Create test icon categories based on rating or answers
-            const ratingAnswer = answersAtTime.find(a => a.answer_type === "emoji" || a.answer_type === "rating");
-            if (ratingAnswer) {
-              const testCategories = ["Soggy Food", "Smelly Room", "Broken Equipment", "Poor Service", "Dirty Area"];
-              const randomIndex = Math.floor(Math.random() * testCategories.length);
-              iconCategory = testCategories[randomIndex];
-              
-              // Also create a test complaint ID
-              const testIds = ["657520", "657521", "657522", "657523", "657524"];
-              complaintId = testIds[randomIndex] || "657520";
-            }
-          }
-
-          // Create row data for this response session
-          const rowData: TabularResponseData = {
-            id: `response-${response.mapping_id}-${sessionAnswerId}`,
-            response_id: sessionAnswerId.toString(),
-            date_time: new Date(timestamp).toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            }),
-            building: response.building_name || "-",
-            wing: response.wing_name || "-",
-            area: response.area_name || "-",
-            floor: response.floor_name || "-",
-            room: response.room_name || "-",
-            rating:
-              ratingAnswer?.ans_descr ||
-              ratingAnswer?.level_id?.toString() ||
-              "-",
-            category: answersAtTime[0]?.answer_type || "-",
-            icon_category: iconCategory,
-            final_comment:
-              finalComment?.body && finalComment.body.trim() !== "" ? finalComment.body.trim() :
-              answersAtTime.find((a) => a.comments && a.comments.trim() !== "")?.comments ||
-              "-",
-            ticket_id: complaintId,
-          };
-
-          // Add question data for this specific timestamp with interleaved pattern
-          allUniqueQuestions.forEach(([questionId, questionName], index) => {
-            const questionColumnKey = `question_${questionId}`;
-            const iconCategoryColumnKey = `icon_category_${index}`;
-            const commentColumnKey = `comment_${index}`;
-            
-            const answerForQuestion = answersAtTime.find(
-              (a) => a.question_id === questionId
-            );
-
-            if (answerForQuestion) {
-              // Populate question column with selected option
-              const selectedOption = answerForQuestion.option_name || answerForQuestion.ans_descr || "No option";
-              rowData[questionColumnKey] = selectedOption;
-              
-              // Populate icon category column using the same logic as the main icon_category field
-              let questionIconCategory = "-";
-              
-              // Check if this answer has complaints with icon_category
-              if (answerForQuestion.complaints && answerForQuestion.complaints.length > 0) {
-                // Get all unique icon categories from all complaints for this specific question
-                const allIconCategories = answerForQuestion.complaints
-                  .map(complaint => complaint.icon_category || complaint.heading)
-                  .filter(category => category && category !== "-")
-                  .filter((category, index, array) => array.indexOf(category) === index); // Remove duplicates
-                
-                questionIconCategory = allIconCategories.length > 0 ? allIconCategories.join(", ") : "-";
-              } else if (response.complaints && response.complaints.length > 0) {
-                // Fallback to response-level complaints
-                const allIconCategories = response.complaints
-                  .map(complaint => complaint.icon_category || complaint.heading)
-                  .filter(category => category && category !== "-")
-                  .filter((category, index, array) => array.indexOf(category) === index); // Remove duplicates
-                
-                questionIconCategory = allIconCategories.length > 0 ? allIconCategories.join(", ") : "-";
-              }
-              
-              // For testing: Add sample data if no real data exists
-              if (questionIconCategory === "-") {
-                const testCategories = ["Soggy Food", "Smelly Room", "Broken Equipment", "Poor Service", "Dirty Area"];
-                const randomIndex = Math.floor(Math.random() * testCategories.length);
-                questionIconCategory = testCategories[randomIndex];
-              }
-              
-              rowData[iconCategoryColumnKey] = questionIconCategory;
-              
-              // Populate comment column with question-specific comment only, show "-" if empty
-              const questionComment = answerForQuestion.comments && answerForQuestion.comments.trim() !== ""
-                ? answerForQuestion.comments.trim()
-                : "-";
-              rowData[commentColumnKey] = questionComment;
+            // Question Dynamic - use ans_descr for emoji/smiley/rating, option_name for multiple
+            let answerValue = '-';
+            if (answer.answer_type === 'rating' || answer.answer_type === 'emoji' || answer.answer_type === 'smiley') {
+              answerValue = answer.ans_descr || '-';
+            } else if (answer.answer_type === 'multiple') {
+              answerValue = answer.option_name || '-';
             } else {
-              rowData[questionColumnKey] = "-";
-              
-              // Use the same icon category logic for missing answers
-              let missingAnswerIconCategory = "-";
-              if (response.complaints && response.complaints.length > 0) {
-                // Handle multiple complaints for missing answers too
-                const allIconCategories = response.complaints
-                  .map(complaint => complaint.icon_category || complaint.heading)
-                  .filter(category => category && category !== "-")
-                  .filter((category, index, array) => array.indexOf(category) === index); // Remove duplicates
-                
-                missingAnswerIconCategory = allIconCategories.length > 0 ? allIconCategories.join(", ") : "-";
-              }
-              
-              // For testing: Add sample data if no real data exists
-              if (missingAnswerIconCategory === "-") {
-                const testCategories = ["Soggy Food", "Smelly Room", "Broken Equipment", "Poor Service", "Dirty Area"];
-                const randomIndex = Math.floor(Math.random() * testCategories.length);
-                missingAnswerIconCategory = testCategories[randomIndex];
-              }
-              rowData[iconCategoryColumnKey] = missingAnswerIconCategory;
-              
-              rowData[commentColumnKey] = "-";
+              answerValue = answer.ans_descr || answer.option_name || '-';
             }
-          });
-
-          transformedData.push(rowData);
-          console.log(
-            `🔍 Transformed row data for session ${timestamp}:`,
-            rowData
-          );
-          console.log(`🔍 Icon category value: "${rowData.icon_category}"`);
+            rowData[answerKey] = answerValue;
+            
+            // Question Name - use answer.question_name
+            rowData[questionNameKey] = answer.question_name || question.question || '-';
+            
+            // Issue Icon - complaints icon_category (comma-separated if multiple)
+            if (answer.complaints && answer.complaints.length > 0) {
+              const iconCategories = answer.complaints
+                .map(complaint => complaint.icon_category)
+                .filter(Boolean);
+              rowData[iconKey] = iconCategories.length > 0 ? iconCategories.join(', ') : '-';
+            } else {
+              rowData[iconKey] = '-';
+            }
+            
+            // Comment - answers.comments
+            rowData[commentKey] = answer.comments || '-';
+            
+          } else {
+            // No answer for this question
+            rowData[typeKey] = '-';
+            rowData[answerKey] = '-';
+            rowData[questionNameKey] = question.question || '-';
+            rowData[iconKey] = '-';
+            rowData[commentKey] = '-';
+          }
         });
-      });
+      }
+
+      // Add final comments from the response
+      if (response.final_comments && response.final_comments.length > 0) {
+        rowData.final_comment = response.final_comments
+          .map(comment => comment.body)
+          .join('; ');
+      } else {
+        rowData.final_comment = '-';
+      }
+
+      // Handle complaints/tickets - collect ticket numbers from all answers
+      const allTicketNumbers: string[] = [];
+      const categories: string[] = [];
+      
+      if (response.answers && response.answers.length > 0) {
+        response.answers.forEach((answer: ResponseAnswer) => {
+          if (answer.complaints && answer.complaints.length > 0) {
+            const ticketNumbers = answer.complaints
+              .map(complaint => complaint.ticket_number)
+              .filter(Boolean);
+            allTicketNumbers.push(...ticketNumbers);
+            
+            const answerCategories = answer.complaints
+              .map(complaint => complaint.category)
+              .filter(Boolean);
+            categories.push(...answerCategories);
+          }
+        });
+      }
+      
+      const ticketIdValue = allTicketNumbers.length > 0 ? allTicketNumbers.join(', ') : '-';
+      rowData.ticket_id = ticketIdValue;
+      rowData.category = categories.join(', ');
+
+      console.log("🎯 Ticket IDs for response", response.response_id, ":", ticketIdValue);
+      console.log("🔍 Created row data:", rowData);
+      transformedData.push(rowData);
     });
 
-    // Sort by answer_id (most recent first)
+    // Sort by response_id (most recent first)
     transformedData.sort(
       (a, b) => parseInt(b.response_id) - parseInt(a.response_id)
     );
 
     console.log("🎯 Final transformed data for table:", transformedData);
+    console.log("🎯 Number of rows:", transformedData.length);
     return transformedData;
-  }, [responseListData]);
+  }, [responseListData, surveyData]);
 
   // Transform ticket data for tickets EnhancedTable
   const getTicketData = useCallback((): TicketData[] => {
@@ -1534,72 +1409,38 @@ export const SurveyResponseDetailPage = () => {
     const ticketData: TicketData[] = [];
 
     responseListData.responses.forEach((response: SurveyResponse) => {
-      // Check if complaints exist at response level
-      if (response.complaints && response.complaints.length > 0) {
-        response.complaints.forEach((complaint: ResponseComplaint) => {
-          ticketData.push({
-            id: `ticket-${response.mapping_id}-${complaint.complaint_id}`,
-            complaint_id: complaint.complaint_id,
-            ticket_number: complaint.ticket_number,
-            heading: complaint.icon_category || complaint.heading, // Use icon_category if available, fallback to heading
-            category: complaint.category || "-",
-            assignee: complaint.assignee || "-",
-            status: complaint.status || "Pending", // Use status from complaint or default to "Pending"
-            updated_by: complaint.updated_by || "-", // Use updated_by from complaint or default
-            created_by: "-", // This field is not available in the API response
-            created_at: new Date(complaint.created_at).toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "2-digit", 
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            }),
-            location:
-              response.site_name && response.building_name
-                ? `${response.site_name}, ${response.building_name}`
-                : response.site_name || "-",
-          });
+      // Check complaints within individual answers
+      if (response.answers && response.answers.length > 0) {
+        response.answers.forEach((answer: ResponseAnswer) => {
+          if (answer.complaints && answer.complaints.length > 0) {
+            answer.complaints.forEach((complaint: ResponseComplaint) => {
+              // Only add if we have the required complaint data
+              if (complaint.complaint_id && complaint.ticket_number) {
+                ticketData.push({
+                  id: `ticket-${response.mapping_id}-${complaint.complaint_id}`,
+                  complaint_id: complaint.complaint_id,
+                  ticket_number: complaint.ticket_number,
+                  heading: complaint.heading || "Survey Response Issue",
+                  category: complaint.category || "-",
+                  assignee: complaint.assignee || "-",
+                  status: complaint.status || "Pending",
+                  updated_by: complaint.updated_by || "-",
+                  created_by: "-",
+                  created_at: new Date(complaint.created_at).toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit", 
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  }),
+                  location: `${response.location?.building_name || ''}, ${response.location?.wing_name || ''}`,
+                });
+              }
+            });
+          }
         });
       }
-
-      // Also check complaints within individual answers
-      response.answers?.forEach((answerSet: AnswerSet) => {
-        answerSet.answers_for_questions?.forEach(questionAnswers => {
-          questionAnswers.forEach(answer => {
-            if (answer.complaints && answer.complaints.length > 0) {
-              answer.complaints.forEach((complaint: ResponseComplaint) => {
-                // Only add if we have the required complaint data
-                if (complaint.complaint_id && complaint.ticket_number) {
-                  ticketData.push({
-                    id: `ticket-${response.mapping_id}-${complaint.complaint_id}`,
-                    complaint_id: complaint.complaint_id,
-                    ticket_number: complaint.ticket_number,
-                    heading: complaint.icon_category || complaint.heading || "Survey Response Issue", // Use icon_category if available
-                    category: complaint.category || "-",
-                    assignee: complaint.assignee || "-",
-                    status: complaint.status || "Pending",
-                    updated_by: complaint.updated_by || "-",
-                    created_by: "-",
-                    created_at: new Date(complaint.created_at || answer.created_at).toLocaleString("en-GB", {
-                      day: "2-digit",
-                      month: "2-digit", 
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    }),
-                    location:
-                      response.site_name && response.building_name
-                        ? `${response.site_name}, ${response.building_name}`
-                        : response.site_name || "-",
-                  });
-                }
-              });
-            }
-          });
-        });
-      });
     });
 
     return ticketData;
@@ -1630,79 +1471,74 @@ export const SurveyResponseDetailPage = () => {
       { key: "area", label: "Area", defaultVisible: true, sortable: true },
       { key: "floor", label: "Floor", defaultVisible: true, sortable: true },
       { key: "room", label: "Room", defaultVisible: true, sortable: true },
-      { key: "rating", label: "Rating", defaultVisible: true, sortable: true },
     ];
 
-    // Add dynamic question columns with interleaved pattern: question -> icon category -> comment
-    if (responseListData?.responses) {
-      const allUniqueQuestions = Array.from(
-        new Map(
-          responseListData.responses
-            .flatMap((response) => 
-              response.answers?.flatMap(answerSet => 
-                answerSet.answers_for_questions?.flatMap(questionAnswers => 
-                  questionAnswers.map(answer => [answer.question_id, answer.question_name])
-                ) || []
-              ) || []
-            )
-        ).entries()
-      );
-
-      allUniqueQuestions.forEach(([questionId, questionName], index) => {
-        // Truncate question name if too long for column header
-        const safeQuestionName = questionName || `Question ${questionId}`;
-        const truncatedQuestionName = safeQuestionName.length > 25 
-          ? safeQuestionName.substring(0, 25) + "..." 
-          : safeQuestionName;
+    // Add dynamic question columns with detailed structure
+    const questionColumns: Array<{key: string; label: string; defaultVisible: boolean; sortable: boolean}> = [];
+    if (surveyData?.questions && surveyData.questions.length > 0) {
+      surveyData.questions.forEach((question: SurveyQuestion, index: number) => {
+        // For each question, add 4 columns: Question Type, Question Dynamic, Issue Icon, Comment
+        const questionNumber = index + 1;
         
-        // Add question column
-        baseColumns.push({
-          key: `question_${questionId}`,
-          label: truncatedQuestionName,
+        // Question Type column
+        questionColumns.push({
+          key: `q${questionNumber}_type`,
+          label: `Question Type`,
           defaultVisible: true,
           sortable: true,
         });
-
-        // Add icon category column after each question
-        baseColumns.push({
-          key: `icon_category_${index}`,
-          label: "Icon Category",
+        
+        // Question Dynamic column (shows the actual answer)
+        questionColumns.push({
+          key: `q${questionNumber}_answer`,
+          label: question.question.length > 50 
+            ? `${question.question.substring(0, 50)}...` 
+            : question.question,
           defaultVisible: true,
           sortable: true,
         });
+        
+        // Issue Icon column (complaints icon_category)
+        questionColumns.push({
+          key: `q${questionNumber}_icon`,
+          // label: `Q${questionNumber} Issue Icon`,
+          label: `Issue Icon`,
 
-        // Add comment column after icon category
-        baseColumns.push({
-          key: `comment_${index}`,
-          label: "Comment",
+          defaultVisible: true,
+          sortable: true,
+        });
+        
+        // Comment column (answers.comments)
+        questionColumns.push({
+          key: `q${questionNumber}_comment`,
+          // label: `Q${questionNumber} Comment`,
+          label: `Comment`,
           defaultVisible: true,
           sortable: true,
         });
       });
     }
 
-    // Add final comments column before ticket id
-    baseColumns.push({
-      key: "final_comment",
-      label: "Final Comments",
-      defaultVisible: true,
-      sortable: true,
-    });
+    const endColumns = [
+      {
+        key: "final_comment",
+        label: "Final Comments",
+        defaultVisible: true,
+        sortable: true,
+        width: 200, // Set width for final comments
+        minWidth: 150,
+      },
+      {
+        key: "ticket_id",
+        label: "Ticket Id",
+        defaultVisible: true,
+        sortable: true,
+        width: 200, // Set specific width to accommodate full ticket numbers
+        minWidth: 150, // Minimum width to prevent over-compression
+      },
+    ];
 
-    // Add final ticket id column at the end
-    baseColumns.push({
-      key: "ticket_id",
-      label: "Ticket Id",
-      defaultVisible: true,
-      sortable: true,
-    });
-
-    console.log("🔍 Generated columns:", baseColumns);
-    console.log(
-      "🔍 Icon Category columns included:",
-      baseColumns.filter((col) => col.key.startsWith("icon_category"))
-    );
-    return baseColumns;
+    return [...baseColumns, ...questionColumns, ...endColumns];
   };
 
   // Static columns for ticket data
@@ -1980,13 +1816,12 @@ export const SurveyResponseDetailPage = () => {
 
     try {
       setIsLoading(true);
-      console.log("🔄 Refetching survey details with filters:", filters);
+      // console.log("🔄 Refetching survey details with filters:", filters);
 
       const fromDate = filters.dateRange?.from;
       const toDate = filters.dateRange?.to;
 
       const surveyDetailsResponse = await fetchSurveyDetails(surveyId, fromDate, toDate);
-      console.log("✅ Filtered survey details received:", surveyDetailsResponse);
       
       setSurveyDetailsData(surveyDetailsResponse);
 
@@ -1994,7 +1829,7 @@ export const SurveyResponseDetailPage = () => {
       if (surveyDetailsResponse?.survey_details?.surveys?.length > 0) {
         const surveyDetail = surveyDetailsResponse.survey_details.surveys[0];
         setSurveyData(surveyDetail);
-        console.log("📊 Survey data updated with filters:", surveyDetail);
+        // console.log("📊 Survey data updated with filters:", surveyDetail);
       } else {
         console.warn("⚠️ No survey data found for the applied filters");
         toast.info("No data found for the selected date range");
@@ -2006,6 +1841,8 @@ export const SurveyResponseDetailPage = () => {
       setIsLoading(false);
     }
   }, [surveyId, fetchSurveyDetails]);
+
+  console.log("surveyDetails", surveyDetailsData);
 
   const handleApplyFilters = useCallback(async () => {
     if (activeFilterTab === 'summary') {
@@ -2069,10 +1906,19 @@ export const SurveyResponseDetailPage = () => {
 
   // Get data to display (filtered or original) - for tabular tab
   const getDisplayTabularData = useCallback(() => {
+    // console.log("🔍 getDisplayTabularData called");
+    // console.log("🔍 tabularCurrentFilters:", tabularCurrentFilters);
+    // console.log("🔍 Object.keys(tabularCurrentFilters).length:", Object.keys(tabularCurrentFilters).length);
+    // console.log("🔍 filteredTabularData.length:", filteredTabularData.length);
+    
     if (Object.keys(tabularCurrentFilters).length > 0) {
+      console.log("🔍 Using filtered data:", filteredTabularData.length);
       return filteredTabularData;
     }
-    return getTabularData();
+    
+    const rawData = getTabularData();
+    console.log("🔍 Using raw tabular data:", rawData.length);
+    return rawData;
   }, [tabularCurrentFilters, filteredTabularData, getTabularData]);
 
   const getDisplayTicketData = useCallback(() => {
@@ -2495,9 +2341,9 @@ export const SurveyResponseDetailPage = () => {
                               endDate: new Date(),
                             }}
                             onDownload={() => {
-                              console.log(
-                                `Download chart for question ${question.question_id}`
-                              );
+                              // console.log(
+                              //   `Download chart for question ${question.question_id}`
+                              // );
                               toast.success(
                                 `Chart for question ${question.question_id} download initiated`
                               );
@@ -2572,18 +2418,25 @@ export const SurveyResponseDetailPage = () => {
                       );
                     }
 
-                    // Special handling for Ticket ID with truncation and hover
+                    // Special handling for Ticket ID - show full value with proper wrapping
                     if (columnKey === "ticket_id") {
                       const ticketValue = cellValue as string;
                       if (!ticketValue || ticketValue === "-") {
                         return <span className="text-gray-400">-</span>;
                       }
                       return (
-                        <TruncatedText 
-                          text={ticketValue} 
-                          maxLength={10}
-                          className="text-black-600 font-medium"
-                        />
+                        <div 
+                          className="text-black-600 font-medium break-words text-xs leading-tight overflow-hidden"
+                          style={{ 
+                            maxWidth: '180px', 
+                            minWidth: '140px',
+                            wordBreak: 'break-all',
+                            whiteSpace: 'normal',
+                            lineHeight: '1.2'
+                          }}
+                        >
+                          {ticketValue}
+                        </div>
                       );
                     }
 
