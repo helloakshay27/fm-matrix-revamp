@@ -47,7 +47,7 @@ const PDFDownloadPage: React.FC = () => {
       setError('Popup blocked. Please allow popups for this site and try again.');
       return;
     }
-    try { w.focus(); } catch {}
+    try { w.focus(); } catch { }
   };
 
   return (
@@ -88,6 +88,17 @@ const PDFDownloadPage: React.FC = () => {
             <span>Download PDF</span>
           </button>
         </div>
+      </div>
+      <h1 className="text-xl font-semibold mt-5">Weekly Report PDF</h1>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button
+          onClick={() => navigate('/weeklypdf')}
+          type="button"
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap h-10 px-4 text-sm font-medium bg-[#F6F4EE] text-[#C72030] border border-[#C72030] rounded-md shadow-sm"
+        >
+          <Eye className="w-4 h-4" />
+          <span>View Weekly Report</span>
+        </button>
       </div>
       {error ? <p className="text-red-600 text-sm mt-3">{error}</p> : null}
       <p className="text-gray-500 text-sm mt-6">Use the date range above, then click View PDF to open the full report. The report will load all sections before displaying.</p>
