@@ -1388,12 +1388,24 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                                     </tr>
                                     <tr className="border-b border-gray-200">
                                         <td className="p-4 print:p-2 text-black font-medium">%</td>
-                                        <td className="p-4 print:p-2 text-center text-black">100%</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{assetMgmtData.critical_assets.in_use.percentage.toFixed(2)}%</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{assetMgmtData.critical_assets.breakdown.percentage.toFixed(2)}%</td>
-                                        <td className="p-4 print:p-2 text-center text-black">100%</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{assetMgmtData.non_critical_assets.in_use.percentage.toFixed(2)}%</td>
-                                        <td className="p-4 print:p-2 text-center text-black">{assetMgmtData.non_critical_assets.breakdown.percentage.toFixed(2)}%</td>
+                                        {(() => {
+                                            const critInUse = Number(assetMgmtData.critical_assets.in_use.percentage || 0);
+                                            const critBreakdown = Number(assetMgmtData.critical_assets.breakdown.percentage || 0);
+                                            const nonCritInUse = Number(assetMgmtData.non_critical_assets.in_use.percentage || 0);
+                                            const nonCritBreakdown = Number(assetMgmtData.non_critical_assets.breakdown.percentage || 0);
+                                            const critTotal = (critInUse + critBreakdown).toFixed(2);
+                                            const nonCritTotal = (nonCritInUse + nonCritBreakdown).toFixed(2);
+                                            return (
+                                                <>
+                                                    <td className="p-4 print:p-2 text-center text-black">{critTotal}%</td>
+                                                    <td className="p-4 print:p-2 text-center text-black">{critInUse.toFixed(2)}%</td>
+                                                    <td className="p-4 print:p-2 text-center text-black">{critBreakdown.toFixed(2)}%</td>
+                                                    <td className="p-4 print:p-2 text-center text-black">{nonCritTotal}%</td>
+                                                    <td className="p-4 print:p-2 text-center text-black">{nonCritInUse.toFixed(2)}%</td>
+                                                    <td className="p-4 print:p-2 text-center text-black">{nonCritBreakdown.toFixed(2)}%</td>
+                                                </>
+                                            );
+                                        })()}
                                     </tr>
 
                                 </tbody>
