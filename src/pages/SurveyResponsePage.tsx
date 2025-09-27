@@ -447,12 +447,12 @@ export const SurveyResponsePage = () => {
         floor_name: (location.floor_name || response.floor_name) && (location.floor_name || response.floor_name).trim() !== '' ? (location.floor_name || response.floor_name) : 'N/A',
         area_name: (location.area_name || response.area_name) && (location.area_name || response.area_name).trim() !== '' ? (location.area_name || response.area_name) : 'N/A',
         room_name: (location.room_name || response.room_name) && (location.room_name || response.room_name).trim() !== '' ? (location.room_name || response.room_name) : 'N/A',
-        total_responses: response.answers?.length ?? 0,
-        total_complaints: response.complaints?.length ?? 0,
+        total_responses: response?.answers_count || 0,
+        total_complaints: response?.complaints_count || 0,
         latest_response_date: latestResponseDate,
         answer_type: answerType,
         responded_by: respondedBy,
-        active: response.active ?? false // Use active boolean parameter with fallback to false
+        active: response.survey_status ?? false // Use active boolean parameter with fallback to false
       });
       
       // Debug logging for active status

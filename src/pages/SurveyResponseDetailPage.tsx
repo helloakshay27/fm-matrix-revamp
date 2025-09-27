@@ -1,6 +1,24 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Copy, X, Calendar as CalendarIcon, List, BarChart3, Activity, Table, Ticket, Filter, Download } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  X,
+  Calendar as CalendarIcon,
+  List,
+  BarChart3,
+  Activity,
+  Table,
+  Ticket,
+  Filter,
+  Download,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -221,16 +239,22 @@ export const SurveyResponseDetailPage = () => {
 
   // Filter states - separate for each tab
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [activeFilterTab, setActiveFilterTab] = useState<'summary' | 'tabular'>('summary');
-  
+  const [activeFilterTab, setActiveFilterTab] = useState<"summary" | "tabular">(
+    "summary"
+  );
+
   // Summary tab filters
-  const [summaryCurrentFilters, setSummaryCurrentFilters] = useState<SurveyResponseFilters>({});
-  const [summaryFormFilters, setSummaryFormFilters] = useState<SurveyResponseFilters>({});
-  
+  const [summaryCurrentFilters, setSummaryCurrentFilters] =
+    useState<SurveyResponseFilters>({});
+  const [summaryFormFilters, setSummaryFormFilters] =
+    useState<SurveyResponseFilters>({});
+
   // Tabular tab filters
-  const [tabularCurrentFilters, setTabularCurrentFilters] = useState<SurveyResponseFilters>({});
-  const [tabularFormFilters, setTabularFormFilters] = useState<SurveyResponseFilters>({});
-  
+  const [tabularCurrentFilters, setTabularCurrentFilters] =
+    useState<SurveyResponseFilters>({});
+  const [tabularFormFilters, setTabularFormFilters] =
+    useState<SurveyResponseFilters>({});
+
   const [filteredTabularData, setFilteredTabularData] = useState<
     TabularResponseData[]
   >([]);
@@ -238,21 +262,29 @@ export const SurveyResponseDetailPage = () => {
     []
   );
 
+  // Export modal states
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportFromDate, setExportFromDate] = useState("");
+  const [exportToDate, setExportToDate] = useState("");
+
   // Helper component for truncated text with tooltip
-  const TruncatedText = ({ text, maxLength = 20, className = "" }: { 
-    text: string; 
-    maxLength?: number; 
-    className?: string; 
+  const TruncatedText = ({
+    text,
+    maxLength = 20,
+    className = "",
+  }: {
+    text: string;
+    maxLength?: number;
+    className?: string;
   }) => {
     const shouldTruncate = text && text.length > maxLength;
-    const displayText = shouldTruncate ? `${text.substring(0, maxLength)}...` : text;
-    
+    const displayText = shouldTruncate
+      ? `${text.substring(0, maxLength)}...`
+      : text;
+
     if (shouldTruncate) {
       return (
-        <span 
-          className={className}
-          title={text}
-        >
+        <span className={className} title={text}>
           {displayText}
         </span>
       );
@@ -301,78 +333,83 @@ export const SurveyResponseDetailPage = () => {
   }, [surveyId]);
 
   // API function to fetch survey details using the new endpoint
-  const fetchSurveyDetails = useCallback(async (surveyId: string, fromDate?: Date, toDate?: Date) => {
-    try {
-      // Validate survey ID
-      if (!surveyId || surveyId.trim() === "") {
-        throw new Error("Invalid survey ID provided");
-      }
-
-      // Build the URL with proper parameters
-      const baseUrl = getFullUrl(
-        "/pms/admin/snag_checklists/survey_details.json"
-      );
-      const urlWithParams = new URL(baseUrl);
-
-      // Add survey_id parameter
-      urlWithParams.searchParams.append("survey_id", surveyId.trim());
-
-      // Add date filters if provided
-      if (fromDate) {
-        const fromDateStr = fromDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-        urlWithParams.searchParams.append("from_date", fromDateStr);
-      }
-
-      if (toDate) {
-        const toDateStr = toDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-        urlWithParams.searchParams.append("to_date", toDateStr);
-      }
-
-      // Add access_token from API_CONFIG if available
-      if (API_CONFIG.TOKEN) {
-        urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
-      }
-
-      // console.log("🚀 Fetching survey details from:", urlWithParams.toString());
-      // console.log("🔍 Survey ID being requested:", surveyId);
-
-      const response = await fetch(urlWithParams.toString(), {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Survey Details API Error Response:", errorText);
-
-        if (response.status === 404) {
-          throw new Error(`Survey with ID ${surveyId} not found`);
-        } else if (response.status === 401) {
-          throw new Error("Authentication failed. Please login again.");
-        } else if (response.status === 403) {
-          throw new Error("You do not have permission to access this survey.");
-        } else {
-          throw new Error(
-            `Failed to fetch survey details: ${response.status} ${response.statusText}`
-          );
+  const fetchSurveyDetails = useCallback(
+    async (surveyId: string, fromDate?: Date, toDate?: Date) => {
+      try {
+        // Validate survey ID
+        if (!surveyId || surveyId.trim() === "") {
+          throw new Error("Invalid survey ID provided");
         }
+
+        // Build the URL with proper parameters
+        const baseUrl = getFullUrl(
+          "/pms/admin/snag_checklists/survey_details.json"
+        );
+        const urlWithParams = new URL(baseUrl);
+
+        // Add survey_id parameter
+        urlWithParams.searchParams.append("survey_id", surveyId.trim());
+
+        // Add date filters if provided
+        if (fromDate) {
+          const fromDateStr = fromDate.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+          urlWithParams.searchParams.append("from_date", fromDateStr);
+        }
+
+        if (toDate) {
+          const toDateStr = toDate.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+          urlWithParams.searchParams.append("to_date", toDateStr);
+        }
+
+        // Add access_token from API_CONFIG if available
+        if (API_CONFIG.TOKEN) {
+          urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
+        }
+
+        // console.log("🚀 Fetching survey details from:", urlWithParams.toString());
+        // console.log("🔍 Survey ID being requested:", surveyId);
+
+        const response = await fetch(urlWithParams.toString(), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Survey Details API Error Response:", errorText);
+
+          if (response.status === 404) {
+            throw new Error(`Survey with ID ${surveyId} not found`);
+          } else if (response.status === 401) {
+            throw new Error("Authentication failed. Please login again.");
+          } else if (response.status === 403) {
+            throw new Error(
+              "You do not have permission to access this survey."
+            );
+          } else {
+            throw new Error(
+              `Failed to fetch survey details: ${response.status} ${response.statusText}`
+            );
+          }
+        }
+
+        const data = await response.json();
+        // console.log("✅ Survey details response received:", data);
+        // console.log(
+        //   "🔍 Survey array length:",
+        //   data?.survey_details?.surveys?.length || 0
+        // );
+
+        return data;
+      } catch (error) {
+        console.error("❌ Error fetching survey details:", error);
+        throw error;
       }
-
-      const data = await response.json();
-      // console.log("✅ Survey details response received:", data);
-      // console.log(
-      //   "🔍 Survey array length:",
-      //   data?.survey_details?.surveys?.length || 0
-      // );
-
-      return data;
-    } catch (error) {
-      console.error("❌ Error fetching survey details:", error);
-      throw error;
-    }
-  }, []); // Empty dependency array since it only uses external utilities
+    },
+    []
+  ); // Empty dependency array since it only uses external utilities
 
   useEffect(() => {
     const fetchSurveyData = async () => {
@@ -509,23 +546,29 @@ export const SurveyResponseDetailPage = () => {
   // Helper function to filter responses by date range for summary analytics
   const getSummaryFilteredResponseData = useCallback(() => {
     if (!responseListData?.responses) return [];
-    
+
     // If no date filters are applied, return all responses
-    if (!summaryCurrentFilters.dateRange?.from && !summaryCurrentFilters.dateRange?.to) {
+    if (
+      !summaryCurrentFilters.dateRange?.from &&
+      !summaryCurrentFilters.dateRange?.to
+    ) {
       return responseListData.responses;
     }
 
     return responseListData.responses.filter((response: SurveyResponse) => {
       // Check if this response falls within the date range using response timestamp
-      if (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to) {
+      if (
+        summaryCurrentFilters.dateRange?.from ||
+        summaryCurrentFilters.dateRange?.to
+      ) {
         const responseDate = new Date(response.responded_time);
-        
+
         if (summaryCurrentFilters.dateRange?.from) {
           const fromDate = new Date(summaryCurrentFilters.dateRange.from);
           fromDate.setHours(0, 0, 0, 0);
           if (responseDate < fromDate) return false;
         }
-        
+
         if (summaryCurrentFilters.dateRange?.to) {
           const toDate = new Date(summaryCurrentFilters.dateRange.to);
           toDate.setHours(23, 59, 59, 999);
@@ -540,23 +583,29 @@ export const SurveyResponseDetailPage = () => {
   // Helper function to filter responses by date range for tabular data
   const getTabularFilteredResponseData = useCallback(() => {
     if (!responseListData?.responses) return [];
-    
+
     // If no date filters are applied, return all responses
-    if (!tabularCurrentFilters.dateRange?.from && !tabularCurrentFilters.dateRange?.to) {
+    if (
+      !tabularCurrentFilters.dateRange?.from &&
+      !tabularCurrentFilters.dateRange?.to
+    ) {
       return responseListData.responses;
     }
 
     return responseListData.responses.filter((response: SurveyResponse) => {
       // Check if this response falls within the date range using response timestamp
-      if (tabularCurrentFilters.dateRange?.from || tabularCurrentFilters.dateRange?.to) {
+      if (
+        tabularCurrentFilters.dateRange?.from ||
+        tabularCurrentFilters.dateRange?.to
+      ) {
         const responseDate = new Date(response.responded_time);
-        
+
         if (tabularCurrentFilters.dateRange?.from) {
           const fromDate = new Date(tabularCurrentFilters.dateRange.from);
           fromDate.setHours(0, 0, 0, 0);
           if (responseDate < fromDate) return false;
         }
-        
+
         if (tabularCurrentFilters.dateRange?.to) {
           const toDate = new Date(tabularCurrentFilters.dateRange.to);
           toDate.setHours(23, 59, 59, 999);
@@ -587,8 +636,12 @@ export const SurveyResponseDetailPage = () => {
         (question: SurveyQuestion, index: number) => {
           // Calculate total responses for this question from filtered data
           let totalResponses = 0;
-          
-          if (filteredResponses.length > 0 && (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to)) {
+
+          if (
+            filteredResponses.length > 0 &&
+            (summaryCurrentFilters.dateRange?.from ||
+              summaryCurrentFilters.dateRange?.to)
+          ) {
             // Count responses from filtered data
             filteredResponses.forEach((response: SurveyResponse) => {
               response.answers?.forEach((answer: ResponseAnswer) => {
@@ -599,12 +652,13 @@ export const SurveyResponseDetailPage = () => {
             });
           } else {
             // Fallback to original data if no filters applied
-            totalResponses = question.options && question.options.length > 0
-              ? question.options.reduce(
-                  (sum, opt) => sum + (opt.response_count || 0),
-                  0
-                )
-              : 0;
+            totalResponses =
+              question.options && question.options.length > 0
+                ? question.options.reduce(
+                    (sum, opt) => sum + (opt.response_count || 0),
+                    0
+                  )
+                : 0;
           }
 
           // Create a shorter, more readable question name
@@ -895,9 +949,13 @@ export const SurveyResponseDetailPage = () => {
         }
 
         // If we have filtered data, calculate response counts from filtered responses
-        if (filteredResponses.length > 0 && (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to)) {
+        if (
+          filteredResponses.length > 0 &&
+          (summaryCurrentFilters.dateRange?.from ||
+            summaryCurrentFilters.dateRange?.to)
+        ) {
           const optionCounts = new Map<number, number>();
-          
+
           // Initialize all options with 0 counts
           question.options.forEach((option: SurveyOption) => {
             optionCounts.set(option.option_id, 0);
@@ -914,51 +972,57 @@ export const SurveyResponseDetailPage = () => {
           });
 
           // Create filtered options data
-          const filteredOptionsData = question.options.map((option: SurveyOption, index: number) => {
-            const responseCount = optionCounts.get(option.option_id) || 0;
-            
-            let color: string;
-            if (responseCount > 0) {
-              color = [
-                "#C72030",
-                "#c6b692",
-                "#d8dcdd",
-                "#8B5CF6",
-                "#10B981",
-                "#F59E0B",
-                "#EF4444",
-                "#3B82F6",
-              ][index % 8];
-            } else {
-              color = "#E5E5E5";
-            }
+          const filteredOptionsData = question.options.map(
+            (option: SurveyOption, index: number) => {
+              const responseCount = optionCounts.get(option.option_id) || 0;
 
-            return {
-              name: option.option || `Option ${index + 1}`,
-              value: responseCount,
-              color: color,
-            };
-          });
+              let color: string;
+              if (responseCount > 0) {
+                color = [
+                  "#C72030",
+                  "#c6b692",
+                  "#d8dcdd",
+                  "#8B5CF6",
+                  "#10B981",
+                  "#F59E0B",
+                  "#EF4444",
+                  "#3B82F6",
+                ][index % 8];
+              } else {
+                color = "#E5E5E5";
+              }
+
+              return {
+                name: option.option || `Option ${index + 1}`,
+                value: responseCount,
+                color: color,
+              };
+            }
+          );
 
           // Determine question type and return standardized data if needed
           const questionType = getQuestionType(question.options);
 
           if (questionType === "rating") {
             // console.log(`🎯 Using standardized rating options for filtered question ${questionId}`);
-            return getStandardizedRatingOptions(filteredOptionsData.map(item => ({
-              option_id: 0,
-              option: item.name,
-              response_count: item.value,
-              type: 'rating'
-            })));
+            return getStandardizedRatingOptions(
+              filteredOptionsData.map((item) => ({
+                option_id: 0,
+                option: item.name,
+                response_count: item.value,
+                type: "rating",
+              }))
+            );
           } else if (questionType === "emoji") {
             // console.log(`🎯 Using standardized emoji options for filtered question ${questionId}`);
-            return getStandardizedEmojiOptions(filteredOptionsData.map(item => ({
-              option_id: 0,
-              option: item.name,
-              response_count: item.value,
-              type: 'emoji'
-            })));
+            return getStandardizedEmojiOptions(
+              filteredOptionsData.map((item) => ({
+                option_id: 0,
+                option: item.name,
+                response_count: item.value,
+                type: "emoji",
+              }))
+            );
           }
 
           return filteredOptionsData;
@@ -1247,9 +1311,12 @@ export const SurveyResponseDetailPage = () => {
   const getTabularData = useCallback((): TabularResponseData[] => {
     console.log("🔍 getTabularData called");
     console.log("🔍 responseListData:", responseListData);
-    
+
     if (!responseListData?.responses) {
-      console.log("🚫 No response data available - responseListData:", responseListData);
+      console.log(
+        "🚫 No response data available - responseListData:",
+        responseListData
+      );
       return [];
     }
 
@@ -1261,33 +1328,35 @@ export const SurveyResponseDetailPage = () => {
     responseListData.responses.forEach((response: SurveyResponse) => {
       console.log("🔍 Processing response:", response.response_id);
       console.log("🔍 Response answers:", response.answers);
-      
+
       // Create one row per response (not per answer)
       const rowData: TabularResponseData = {
         id: response.response_id.toString(),
         response_id: response.response_id.toString(),
-        date_time: response.responded_time ? new Date(response.responded_time).toLocaleString("en-GB", {
-          day: "2-digit",
-          month: "2-digit", 
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }) : '',
-        building: response.location?.building_name || '',
-        wing: response.location?.wing_name || '',
-        area: response.location?.area_name || '',
-        floor: response.location?.floor_name || '',
-        room: response.location?.room_name || '',
-        question_type: '',
-        question_name: '',
-        answer: '',
-        final_comment: '',
-        ticket_id: '',
+        date_time: response.responded_time
+          ? new Date(response.responded_time).toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })
+          : "",
+        building: response.location?.building_name || "",
+        wing: response.location?.wing_name || "",
+        area: response.location?.area_name || "",
+        floor: response.location?.floor_name || "",
+        room: response.location?.room_name || "",
+        question_type: "",
+        question_name: "",
+        answer: "",
+        final_comment: "",
+        ticket_id: "",
         // Legacy fields for backward compatibility
-        icon_category: '',
-        rating: '',
-        category: '',
+        icon_category: "",
+        rating: "",
+        category: "",
       };
 
       // Create a map to organize answers by question_id for easier lookup
@@ -1300,94 +1369,111 @@ export const SurveyResponseDetailPage = () => {
 
       // Populate dynamic question columns with detailed structure
       if (surveyData?.questions && surveyData.questions.length > 0) {
-        surveyData.questions.forEach((question: SurveyQuestion, index: number) => {
-          const questionNumber = index + 1;
-          const answer = answersByQuestionId.get(question.question_id);
-          
-          // Initialize all columns for this question
-          const typeKey = `q${questionNumber}_type`;
-          const answerKey = `q${questionNumber}_answer`;
-          const questionNameKey = `q${questionNumber}_question_name`;
-          const iconKey = `q${questionNumber}_icon`;
-          const commentKey = `q${questionNumber}_comment`;
-          
-          if (answer) {
-            // Question Type - use answer.answer_type with first letter capitalized
-            const questionType = answer.answer_type || '-';
-            rowData[typeKey] = questionType === '-' ? '-' : questionType.charAt(0).toUpperCase() + questionType.slice(1);
-            
-            // Question Dynamic - use ans_descr for emoji/smiley/rating, option_name for multiple
-            let answerValue = '-';
-            if (answer.answer_type === 'rating' || answer.answer_type === 'emoji' || answer.answer_type === 'smiley') {
-              answerValue = answer.ans_descr || '-';
-            } else if (answer.answer_type === 'multiple') {
-              answerValue = answer.option_name || '-';
+        surveyData.questions.forEach(
+          (question: SurveyQuestion, index: number) => {
+            const questionNumber = index + 1;
+            const answer = answersByQuestionId.get(question.question_id);
+
+            // Initialize all columns for this question
+            const typeKey = `q${questionNumber}_type`;
+            const answerKey = `q${questionNumber}_answer`;
+            const questionNameKey = `q${questionNumber}_question_name`;
+            const iconKey = `q${questionNumber}_icon`;
+            const commentKey = `q${questionNumber}_comment`;
+
+            if (answer) {
+              // Question Type - use answer.answer_type with first letter capitalized
+              const questionType = answer.answer_type || "-";
+              rowData[typeKey] =
+                questionType === "-"
+                  ? "-"
+                  : questionType.charAt(0).toUpperCase() +
+                    questionType.slice(1);
+
+              // Question Dynamic - use ans_descr for emoji/smiley/rating, option_name for multiple
+              let answerValue = "-";
+              if (
+                answer.answer_type === "rating" ||
+                answer.answer_type === "emoji" ||
+                answer.answer_type === "smiley"
+              ) {
+                answerValue = answer.ans_descr || "-";
+              } else if (answer.answer_type === "multiple") {
+                answerValue = answer.option_name || "-";
+              } else {
+                answerValue = answer.ans_descr || answer.option_name || "-";
+              }
+              rowData[answerKey] = answerValue;
+
+              // Question Name - use answer.question_name
+              rowData[questionNameKey] =
+                answer.question_name || question.question || "-";
+
+              // Issue Icon - complaints icon_category (comma-separated if multiple)
+              if (answer.complaints && answer.complaints.length > 0) {
+                const iconCategories = answer.complaints
+                  .map((complaint) => complaint.icon_category)
+                  .filter(Boolean);
+                rowData[iconKey] =
+                  iconCategories.length > 0 ? iconCategories.join(", ") : "-";
+              } else {
+                rowData[iconKey] = "-";
+              }
+
+              // Comment - answers.comments
+              rowData[commentKey] = answer.comments || "-";
             } else {
-              answerValue = answer.ans_descr || answer.option_name || '-';
+              // No answer for this question
+              rowData[typeKey] = "-";
+              rowData[answerKey] = "-";
+              rowData[questionNameKey] = question.question || "-";
+              rowData[iconKey] = "-";
+              rowData[commentKey] = "-";
             }
-            rowData[answerKey] = answerValue;
-            
-            // Question Name - use answer.question_name
-            rowData[questionNameKey] = answer.question_name || question.question || '-';
-            
-            // Issue Icon - complaints icon_category (comma-separated if multiple)
-            if (answer.complaints && answer.complaints.length > 0) {
-              const iconCategories = answer.complaints
-                .map(complaint => complaint.icon_category)
-                .filter(Boolean);
-              rowData[iconKey] = iconCategories.length > 0 ? iconCategories.join(', ') : '-';
-            } else {
-              rowData[iconKey] = '-';
-            }
-            
-            // Comment - answers.comments
-            rowData[commentKey] = answer.comments || '-';
-            
-          } else {
-            // No answer for this question
-            rowData[typeKey] = '-';
-            rowData[answerKey] = '-';
-            rowData[questionNameKey] = question.question || '-';
-            rowData[iconKey] = '-';
-            rowData[commentKey] = '-';
           }
-        });
+        );
       }
 
       // Add final comments from the response
       if (response.final_comments && response.final_comments.length > 0) {
         rowData.final_comment = response.final_comments
-          .map(comment => comment.body)
-          .join('; ');
+          .map((comment) => comment.body)
+          .join("; ");
       } else {
-        rowData.final_comment = '-';
+        rowData.final_comment = "-";
       }
 
       // Handle complaints/tickets - collect ticket numbers from all answers
       const allTicketNumbers: string[] = [];
       const categories: string[] = [];
-      
+
       if (response.answers && response.answers.length > 0) {
         response.answers.forEach((answer: ResponseAnswer) => {
           if (answer.complaints && answer.complaints.length > 0) {
             const ticketNumbers = answer.complaints
-              .map(complaint => complaint.ticket_number)
+              .map((complaint) => complaint.ticket_number)
               .filter(Boolean);
             allTicketNumbers.push(...ticketNumbers);
-            
+
             const answerCategories = answer.complaints
-              .map(complaint => complaint.category)
+              .map((complaint) => complaint.category)
               .filter(Boolean);
             categories.push(...answerCategories);
           }
         });
       }
-      
-      const ticketIdValue = allTicketNumbers.length > 0 ? allTicketNumbers.join(', ') : '-';
-      rowData.ticket_id = ticketIdValue;
-      rowData.category = categories.join(', ');
 
-      console.log("🎯 Ticket IDs for response", response.response_id, ":", ticketIdValue);
+      const ticketIdValue =
+        allTicketNumbers.length > 0 ? allTicketNumbers.join(", ") : "-";
+      rowData.ticket_id = ticketIdValue;
+      rowData.category = categories.join(", ");
+
+      console.log(
+        "🎯 Ticket IDs for response",
+        response.response_id,
+        ":",
+        ticketIdValue
+      );
       console.log("🔍 Created row data:", rowData);
       transformedData.push(rowData);
     });
@@ -1426,15 +1512,20 @@ export const SurveyResponseDetailPage = () => {
                   status: complaint.status || "Pending",
                   updated_by: complaint.updated_by || "-",
                   created_by: "-",
-                  created_at: new Date(complaint.created_at).toLocaleString("en-GB", {
-                    day: "2-digit",
-                    month: "2-digit", 
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                  }),
-                  location: `${response.location?.building_name || ''}, ${response.location?.wing_name || ''}`,
+                  created_at: new Date(complaint.created_at).toLocaleString(
+                    "en-GB",
+                    {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    }
+                  ),
+                  location: `${response.location?.building_name || ""}, ${
+                    response.location?.wing_name || ""
+                  }`,
                 });
               }
             });
@@ -1474,49 +1565,57 @@ export const SurveyResponseDetailPage = () => {
     ];
 
     // Add dynamic question columns with detailed structure
-    const questionColumns: Array<{key: string; label: string; defaultVisible: boolean; sortable: boolean}> = [];
+    const questionColumns: Array<{
+      key: string;
+      label: string;
+      defaultVisible: boolean;
+      sortable: boolean;
+    }> = [];
     if (surveyData?.questions && surveyData.questions.length > 0) {
-      surveyData.questions.forEach((question: SurveyQuestion, index: number) => {
-        // For each question, add 4 columns: Question Type, Question Dynamic, Issue Icon, Comment
-        const questionNumber = index + 1;
-        
-        // Question Type column
-        questionColumns.push({
-          key: `q${questionNumber}_type`,
-          label: `Question Type`,
-          defaultVisible: true,
-          sortable: true,
-        });
-        
-        // Question Dynamic column (shows the actual answer)
-        questionColumns.push({
-          key: `q${questionNumber}_answer`,
-          label: question.question.length > 50 
-            ? `${question.question.substring(0, 50)}...` 
-            : question.question,
-          defaultVisible: true,
-          sortable: true,
-        });
-        
-        // Issue Icon column (complaints icon_category)
-        questionColumns.push({
-          key: `q${questionNumber}_icon`,
-          // label: `Q${questionNumber} Issue Icon`,
-          label: `Issue Icon`,
+      surveyData.questions.forEach(
+        (question: SurveyQuestion, index: number) => {
+          // For each question, add 4 columns: Question Type, Question Dynamic, Issue Icon, Comment
+          const questionNumber = index + 1;
 
-          defaultVisible: true,
-          sortable: true,
-        });
-        
-        // Comment column (answers.comments)
-        questionColumns.push({
-          key: `q${questionNumber}_comment`,
-          // label: `Q${questionNumber} Comment`,
-          label: `Comment`,
-          defaultVisible: true,
-          sortable: true,
-        });
-      });
+          // Question Type column
+          questionColumns.push({
+            key: `q${questionNumber}_type`,
+            label: `Question Type`,
+            defaultVisible: true,
+            sortable: true,
+          });
+
+          // Question Dynamic column (shows the actual answer)
+          questionColumns.push({
+            key: `q${questionNumber}_answer`,
+            label:
+              question.question.length > 50
+                ? `${question.question.substring(0, 50)}...`
+                : question.question,
+            defaultVisible: true,
+            sortable: true,
+          });
+
+          // Issue Icon column (complaints icon_category)
+          questionColumns.push({
+            key: `q${questionNumber}_icon`,
+            // label: `Q${questionNumber} Issue Icon`,
+            label: `Issue Icon`,
+
+            defaultVisible: true,
+            sortable: true,
+          });
+
+          // Comment column (answers.comments)
+          questionColumns.push({
+            key: `q${questionNumber}_comment`,
+            // label: `Q${questionNumber} Comment`,
+            label: `Comment`,
+            defaultVisible: true,
+            sortable: true,
+          });
+        }
+      );
     }
 
     const endColumns = [
@@ -1728,124 +1827,170 @@ export const SurveyResponseDetailPage = () => {
   // Sync local date state with form filters when modal opens
   useEffect(() => {
     if (showFilterModal) {
-      const activeFormFilters = activeFilterTab === 'summary' ? summaryFormFilters : tabularFormFilters;
-      setLocalFromDate(activeFormFilters.dateRange?.from 
-        ? new Date(activeFormFilters.dateRange.from).toISOString().split("T")[0] 
-        : "");
-      setLocalToDate(activeFormFilters.dateRange?.to 
-        ? new Date(activeFormFilters.dateRange.to).toISOString().split("T")[0] 
-        : "");
+      const activeFormFilters =
+        activeFilterTab === "summary" ? summaryFormFilters : tabularFormFilters;
+      setLocalFromDate(
+        activeFormFilters.dateRange?.from
+          ? new Date(activeFormFilters.dateRange.from)
+              .toISOString()
+              .split("T")[0]
+          : ""
+      );
+      setLocalToDate(
+        activeFormFilters.dateRange?.to
+          ? new Date(activeFormFilters.dateRange.to).toISOString().split("T")[0]
+          : ""
+      );
     }
-  }, [showFilterModal, summaryFormFilters, tabularFormFilters, activeFilterTab]);
+  }, [
+    showFilterModal,
+    summaryFormFilters,
+    tabularFormFilters,
+    activeFilterTab,
+  ]);
 
   // Optimized date handlers using useCallback to prevent unnecessary re-renders
   // Use local state for immediate UI feedback and batch update to form state
-  const handleFromDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const dateValue = e.target.value;
-    setLocalFromDate(dateValue);
-    
-    const date = dateValue ? new Date(dateValue) : undefined;
-    
-    if (activeFilterTab === 'summary') {
-      setSummaryFormFilters(prev => ({
-        ...prev,
-        dateRange: {
-          ...prev.dateRange,
-          from: date,
-        },
-      }));
-    } else {
-      setTabularFormFilters(prev => ({
-        ...prev,
-        dateRange: {
-          ...prev.dateRange,
-          from: date,
-        },
-      }));
-    }
-  }, [activeFilterTab]);
+  const handleFromDateChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const dateValue = e.target.value;
+      setLocalFromDate(dateValue);
 
-  const handleToDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const dateValue = e.target.value;
-    setLocalToDate(dateValue);
-    
-    const date = dateValue ? new Date(dateValue) : undefined;
-    
-    if (activeFilterTab === 'summary') {
-      setSummaryFormFilters(prev => ({
-        ...prev,
-        dateRange: {
-          ...prev.dateRange,
-          to: date,
-        },
-      }));
-    } else {
-      setTabularFormFilters(prev => ({
-        ...prev,
-        dateRange: {
-          ...prev.dateRange,
-          to: date,
-        },
-      }));
-    }
-  }, [activeFilterTab]);
+      const date = dateValue ? new Date(dateValue) : undefined;
+
+      if (activeFilterTab === "summary") {
+        setSummaryFormFilters((prev) => ({
+          ...prev,
+          dateRange: {
+            ...prev.dateRange,
+            from: date,
+          },
+        }));
+      } else {
+        setTabularFormFilters((prev) => ({
+          ...prev,
+          dateRange: {
+            ...prev.dateRange,
+            from: date,
+          },
+        }));
+      }
+    },
+    [activeFilterTab]
+  );
+
+  const handleToDateChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const dateValue = e.target.value;
+      setLocalToDate(dateValue);
+
+      const date = dateValue ? new Date(dateValue) : undefined;
+
+      if (activeFilterTab === "summary") {
+        setSummaryFormFilters((prev) => ({
+          ...prev,
+          dateRange: {
+            ...prev.dateRange,
+            to: date,
+          },
+        }));
+      } else {
+        setTabularFormFilters((prev) => ({
+          ...prev,
+          dateRange: {
+            ...prev.dateRange,
+            to: date,
+          },
+        }));
+      }
+    },
+    [activeFilterTab]
+  );
 
   // Filter handlers
   const handleSummaryFilterClick = useCallback(() => {
-    setActiveFilterTab('summary');
+    setActiveFilterTab("summary");
     setSummaryFormFilters(summaryCurrentFilters); // Initialize form with current applied filters
     setShowFilterModal(true);
   }, [summaryCurrentFilters]);
 
   const handleTabularFilterClick = useCallback(() => {
-    setActiveFilterTab('tabular');
+    setActiveFilterTab("tabular");
     setTabularFormFilters(tabularCurrentFilters); // Initialize form with current applied filters
     setShowFilterModal(true);
   }, [tabularCurrentFilters]);
 
   // Legacy filter click handler for backwards compatibility
   const handleFilterClick = useCallback(() => {
-    setActiveFilterTab('tabular');
+    setActiveFilterTab("tabular");
     setTabularFormFilters(tabularCurrentFilters); // Initialize form with current applied filters
     setShowFilterModal(true);
   }, [tabularCurrentFilters]);
 
   // Function to refetch survey details with current summary filters
-  const refetchSurveyDetailsWithFilters = useCallback(async (filters: SurveyResponseFilters) => {
-    if (!surveyId) return;
+  const refetchSurveyDetailsWithFilters = useCallback(
+    async (filters: SurveyResponseFilters) => {
+      if (!surveyId) return;
 
-    try {
-      setIsLoading(true);
-      // console.log("🔄 Refetching survey details with filters:", filters);
+      try {
+        setIsLoading(true);
+        // console.log("🔄 Refetching survey details with filters:", filters);
 
-      const fromDate = filters.dateRange?.from;
-      const toDate = filters.dateRange?.to;
+        const fromDate = filters.dateRange?.from;
+        const toDate = filters.dateRange?.to;
 
-      const surveyDetailsResponse = await fetchSurveyDetails(surveyId, fromDate, toDate);
-      
-      setSurveyDetailsData(surveyDetailsResponse);
+        const surveyDetailsResponse = await fetchSurveyDetails(
+          surveyId,
+          fromDate,
+          toDate
+        );
 
-      // Extract survey data from the filtered API response
-      if (surveyDetailsResponse?.survey_details?.surveys?.length > 0) {
-        const surveyDetail = surveyDetailsResponse.survey_details.surveys[0];
-        setSurveyData(surveyDetail);
-        // console.log("📊 Survey data updated with filters:", surveyDetail);
-      } else {
-        console.warn("⚠️ No survey data found for the applied filters");
-        toast.info("No data found for the selected date range");
+        setSurveyDetailsData(surveyDetailsResponse);
+
+        // Extract survey data from the filtered API response
+        if (surveyDetailsResponse?.survey_details?.surveys?.length > 0) {
+          const surveyDetail = surveyDetailsResponse.survey_details.surveys[0];
+          setSurveyData(surveyDetail);
+          // console.log("📊 Survey data updated with filters:", surveyDetail);
+        } else {
+          console.warn("⚠️ No survey data found for the applied filters");
+          toast.info("No data found for the selected date range");
+        }
+      } catch (error) {
+        console.error(
+          "❌ Error refetching survey details with filters:",
+          error
+        );
+        toast.error("Failed to apply date filters to survey data");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("❌ Error refetching survey details with filters:", error);
-      toast.error("Failed to apply date filters to survey data");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [surveyId, fetchSurveyDetails]);
+    },
+    [surveyId, fetchSurveyDetails]
+  );
 
   console.log("surveyDetails", surveyDetailsData);
 
-  // Export function for tabular data
-  const handleTabularExport = useCallback(async () => {
+  // Export function for tabular data - opens modal
+  const handleTabularExport = useCallback(() => {
+    if (!surveyId) {
+      toast.error("Survey ID is required for export");
+      return;
+    }
+
+    // Initialize export dates with current tabular filters or empty
+    setExportFromDate(tabularCurrentFilters.dateRange?.from 
+      ? new Date(tabularCurrentFilters.dateRange.from).toISOString().split("T")[0] 
+      : "");
+    setExportToDate(tabularCurrentFilters.dateRange?.to 
+      ? new Date(tabularCurrentFilters.dateRange.to).toISOString().split("T")[0] 
+      : "");
+    
+    setShowExportModal(true);
+  }, [surveyId, tabularCurrentFilters]);
+
+  // Actual export function after date selection
+  const handleConfirmExport = useCallback(async () => {
     if (!surveyId) {
       toast.error("Survey ID is required for export");
       return;
@@ -1855,33 +2000,79 @@ export const SurveyResponseDetailPage = () => {
       // Build the export URL with dynamic parameters
       const baseUrl = getFullUrl("/survey_mappings/response_list.xlsx");
       const exportUrl = new URL(baseUrl);
-      
+
       // Add required parameters
-      exportUrl.searchParams.append("access_token", "fkLRVExOU3z0SUElnlKtEkNd7fJ4jOUL8hKd190ONrU");
+      exportUrl.searchParams.append(
+        "access_token",
+        "fkLRVExOU3z0SUElnlKtEkNd7fJ4jOUL8hKd190ONrU"
+      );
       exportUrl.searchParams.append("survey_id", surveyId);
       exportUrl.searchParams.append("export", "true");
 
+      // Add date filters if they are provided
+      if (exportFromDate) {
+        const fromDate = new Date(exportFromDate);
+        const fromDateStr = fromDate.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }).replace(/\//g, '/'); // Format: DD/MM/YYYY
+        exportUrl.searchParams.append("from_date", fromDateStr);
+      }
+
+      if (exportToDate) {
+        const toDate = new Date(exportToDate);
+        const toDateStr = toDate.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }).replace(/\//g, '/'); // Format: DD/MM/YYYY
+        exportUrl.searchParams.append("to_date", toDateStr);
+      }
+
       console.log("🚀 Exporting tabular data from:", exportUrl.toString());
-      
+
       // Create a temporary link element and trigger download
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = exportUrl.toString();
-      link.download = `survey_responses_${surveyId}.xlsx`;
+      
+      // Create a more descriptive filename with date range if filters are applied
+      let filename = `survey_responses_${surveyId}`;
+      if (exportFromDate || exportToDate) {
+        const fromStr = exportFromDate 
+          ? new Date(exportFromDate).toLocaleDateString('en-GB').replace(/\//g, '-')
+          : 'start';
+        const toStr = exportToDate
+          ? new Date(exportToDate).toLocaleDateString('en-GB').replace(/\//g, '-')
+          : 'end';
+        filename += `_${fromStr}_to_${toStr}`;
+      } else {
+        filename += '_all_data';
+      }
+      filename += '.xlsx';
+      
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      const dateRangeText = (exportFromDate || exportToDate) 
+        ? ' for selected date range' 
+        : ' (all data)';
+      toast.success(`Export initiated successfully${dateRangeText}`);
       
-      toast.success("Export initiated successfully");
+      // Close the modal
+      setShowExportModal(false);
     } catch (error) {
       console.error("❌ Error exporting tabular data:", error);
       toast.error("Failed to export survey data");
     }
-  }, [surveyId]);
+  }, [surveyId, exportFromDate, exportToDate]);
 
   const handleApplyFilters = useCallback(async () => {
-    if (activeFilterTab === 'summary') {
+    if (activeFilterTab === "summary") {
       setSummaryCurrentFilters(summaryFormFilters);
-      
+
       // Refetch survey details with the new date filters for summary tab
       await refetchSurveyDetailsWithFilters(summaryFormFilters);
     } else {
@@ -1891,18 +2082,29 @@ export const SurveyResponseDetailPage = () => {
       const baseTabularData = getTabularData();
       const baseTicketData = getTicketData();
 
-      setFilteredTabularData(applyFiltersToTabularData(baseTabularData, tabularFormFilters));
-      setFilteredTicketData(applyFiltersToTicketData(baseTicketData, tabularFormFilters));
+      setFilteredTabularData(
+        applyFiltersToTabularData(baseTabularData, tabularFormFilters)
+      );
+      setFilteredTicketData(
+        applyFiltersToTicketData(baseTicketData, tabularFormFilters)
+      );
     }
 
     setShowFilterModal(false);
-  }, [activeFilterTab, summaryFormFilters, tabularFormFilters, getTabularData, getTicketData, refetchSurveyDetailsWithFilters]);
+  }, [
+    activeFilterTab,
+    summaryFormFilters,
+    tabularFormFilters,
+    getTabularData,
+    getTicketData,
+    refetchSurveyDetailsWithFilters,
+  ]);
 
   const handleClearFilters = useCallback(async () => {
-    if (activeFilterTab === 'summary') {
+    if (activeFilterTab === "summary") {
       setSummaryCurrentFilters({});
       setSummaryFormFilters({});
-      
+
       // Refetch survey details without any date filters for summary tab
       await refetchSurveyDetailsWithFilters({});
     } else {
@@ -1915,7 +2117,10 @@ export const SurveyResponseDetailPage = () => {
   }, [activeFilterTab, refetchSurveyDetailsWithFilters]);
 
   const getActiveFiltersCount = useCallback(() => {
-    const filters = activeFilterTab === 'summary' ? summaryCurrentFilters : tabularCurrentFilters;
+    const filters =
+      activeFilterTab === "summary"
+        ? summaryCurrentFilters
+        : tabularCurrentFilters;
     let count = 0;
     if (filters.dateRange?.from || filters.dateRange?.to) count++;
     if (filters.building) count++;
@@ -1931,7 +2136,10 @@ export const SurveyResponseDetailPage = () => {
     return count;
   }, [activeFilterTab, summaryCurrentFilters, tabularCurrentFilters]);
 
-  const hasActiveFilters = useCallback(() => getActiveFiltersCount() > 0, [getActiveFiltersCount]);
+  const hasActiveFilters = useCallback(
+    () => getActiveFiltersCount() > 0,
+    [getActiveFiltersCount]
+  );
 
   // Memoized date values to prevent unnecessary re-computation
   const minDateValue = useMemo(() => {
@@ -1944,12 +2152,12 @@ export const SurveyResponseDetailPage = () => {
     // console.log("🔍 tabularCurrentFilters:", tabularCurrentFilters);
     // console.log("🔍 Object.keys(tabularCurrentFilters).length:", Object.keys(tabularCurrentFilters).length);
     // console.log("🔍 filteredTabularData.length:", filteredTabularData.length);
-    
+
     if (Object.keys(tabularCurrentFilters).length > 0) {
       console.log("🔍 Using filtered data:", filteredTabularData.length);
       return filteredTabularData;
     }
-    
+
     const rawData = getTabularData();
     console.log("🔍 Using raw tabular data:", rawData.length);
     return rawData;
@@ -1962,89 +2170,186 @@ export const SurveyResponseDetailPage = () => {
     return getTicketData();
   }, [tabularCurrentFilters, filteredTicketData, getTicketData]);
 
-  // Filter Modal Component - Memoized to prevent unnecessary re-renders
-  const FilterModal = useMemo(() => (
-    <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
-      <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
+  // Export Modal Component
+  const ExportModal = useMemo(() => (
+    <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+      <DialogContent className="max-w-md bg-white">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-gray-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              Filter Survey Responses
-              {hasActiveFilters() && (
-                <span className="bg-[#C72030] text-white text-xs px-2 py-1 rounded-full">
-                  {getActiveFiltersCount()}
-                </span>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowFilterModal(false)}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <DialogTitle className="text-lg font-semibold text-gray-800 flex items-center">
+            <Download className="w-5 h-5 mr-2 text-[#C72030]" />
+            Export Survey Data
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Date Range Filter */}
+        <div className="space-y-4 py-4">
+          <div className="text-sm text-gray-600 mb-4">
+            <span className="text-red-700 text-xl">* </span>Select date to export range responses, or leave empty to export all data.
+          </div>
+
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-700">
-                {activeFilterTab === 'summary' ? 'Filter Summary Data' : 'Filter Tabular Data'}
-              </h3>
-              <span className="text-xs text-gray-500">
-                {activeFilterTab === 'summary' 
-                  ? 'Apply date filters to survey analytics' 
-                  : 'Filter response records'}
-              </span>
+            <div>
+              <Label htmlFor="export-from-date" className="text-sm font-medium text-gray-700">
+                From Date
+              </Label>
+              <Input
+                id="export-from-date"
+                type="date"
+                value={exportFromDate}
+                onChange={(e) => setExportFromDate(e.target.value)}
+                className="mt-1"
+              />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-500">From Date</Label>
-                <Input
-                  type="date"
-                  value={localFromDate}
-                  onChange={handleFromDateChange}
-                  className="w-full"
-                  placeholder="Select start date"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-500">To Date</Label>
-                <Input
-                  type="date"
-                  value={localToDate}
-                  min={minDateValue}
-                  onChange={handleToDateChange}
-                  className="w-full"
-                  placeholder="Select end date"
-                />
-              </div>
+
+            <div>
+              <Label htmlFor="export-to-date" className="text-sm font-medium text-gray-700">
+                To Date
+              </Label>
+              <Input
+                id="export-to-date"
+                type="date"
+                value={exportToDate}
+                onChange={(e) => setExportToDate(e.target.value)}
+                min={exportFromDate || undefined}
+                className="mt-1"
+              />
             </div>
           </div>
+
+          {(exportFromDate || exportToDate) && (
+            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+              <strong>Export range:</strong> {' '}
+              {exportFromDate ? new Date(exportFromDate).toLocaleDateString('en-GB') : 'Start'} to {' '}
+              {exportToDate ? new Date(exportToDate).toLocaleDateString('en-GB') : 'End'}
+            </div>
+          )}
+
+          {/* {!exportFromDate && !exportToDate && (
+            <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+              <strong>All data will be exported</strong> - No date filters applied
+            </div>
+          )} */}
         </div>
 
-        {/* Action Buttons */}
         <div className="flex items-center justify-end gap-3 pt-4 border-t">
           <Button
             variant="outline"
-            onClick={handleClearFilters}
+            onClick={() => setShowExportModal(false)}
             className="px-6"
           >
-            Clear All
+            Cancel
           </Button>
           <Button
-            onClick={handleApplyFilters}
-            className="px-6 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+            onClick={handleConfirmExport}
+            className="px-6 bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
           >
-            Apply Filters
+            <Download className="w-4 h-4" />
+            Export
           </Button>
         </div>
       </DialogContent>
     </Dialog>
-  ), [showFilterModal, hasActiveFilters, getActiveFiltersCount, minDateValue, handleFromDateChange, handleToDateChange, handleClearFilters, handleApplyFilters, localFromDate, localToDate, activeFilterTab]);
+  ), [showExportModal, exportFromDate, exportToDate, handleConfirmExport]);
+
+  // Filter Modal Component - Memoized to prevent unnecessary re-renders
+  const FilterModal = useMemo(
+    () => (
+      <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+        <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                Filter Survey Responses
+                {hasActiveFilters() && (
+                  <span className="bg-[#C72030] text-white text-xs px-2 py-1 rounded-full">
+                    {getActiveFiltersCount()}
+                  </span>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFilterModal(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Date Range Filter */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-700">
+                  {activeFilterTab === "summary"
+                    ? "Filter Summary Data"
+                    : "Filter Tabular Data"}
+                </h3>
+                <span className="text-xs text-gray-500">
+                  {activeFilterTab === "summary"
+                    ? "Apply date filters to survey analytics"
+                    : "Filter response records"}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-500">From Date</Label>
+                  <Input
+                    type="date"
+                    value={localFromDate}
+                    onChange={handleFromDateChange}
+                    className="w-full"
+                    placeholder="Select start date"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-500">To Date</Label>
+                  <Input
+                    type="date"
+                    value={localToDate}
+                    min={minDateValue}
+                    onChange={handleToDateChange}
+                    className="w-full"
+                    placeholder="Select end date"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={handleClearFilters}
+              className="px-6"
+            >
+              Clear All
+            </Button>
+            <Button
+              onClick={handleApplyFilters}
+              className="px-6 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+            >
+              Apply Filters
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    ),
+    [
+      showFilterModal,
+      hasActiveFilters,
+      getActiveFiltersCount,
+      minDateValue,
+      handleFromDateChange,
+      handleToDateChange,
+      handleClearFilters,
+      handleApplyFilters,
+      localFromDate,
+      localToDate,
+      activeFilterTab,
+    ]
+  );
 
   if (isLoading) {
     return (
@@ -2109,17 +2414,24 @@ export const SurveyResponseDetailPage = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Response List
         </Button>
-        
+
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">
             Survey Response Details - {surveyData.survey_name}
           </h1>
           <div className="flex gap-2">
             <div className="text-sm text-gray-600">
-              Total Responses: <span className="text-[#C72030] font-medium">
+              Total Responses:{" "}
+              <span className="text-[#C72030] font-medium">
                 {surveyData.questions?.reduce((sum, q) => {
                   if (q.options && q.options.length > 0) {
-                    return sum + (q.options.reduce((optSum, opt) => optSum + opt.response_count, 0) || 0);
+                    return (
+                      sum +
+                      (q.options.reduce(
+                        (optSum, opt) => optSum + opt.response_count,
+                        0
+                      ) || 0)
+                    );
                   }
                   return sum;
                 }, 0) || 0}
@@ -2149,26 +2461,39 @@ export const SurveyResponseDetailPage = () => {
           <TabsContent value="summary" className="p-3 sm:p-6">
             {/* Summary Tab Header with Filter */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-800">Survey Analytics Summary</h2>
+              <h2 className="text-lg font-semibold text-gray-800">
+                Survey Analytics Summary
+              </h2>
               <div className="flex items-center gap-3">
                 {Object.keys(summaryCurrentFilters).length > 0 && (
                   <span className="text-sm text-gray-600">
                     {(() => {
                       let count = 0;
-                      if (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to) count++;
+                      if (
+                        summaryCurrentFilters.dateRange?.from ||
+                        summaryCurrentFilters.dateRange?.to
+                      )
+                        count++;
                       return count;
-                    })()} filter{(() => {
+                    })()}{" "}
+                    filter
+                    {(() => {
                       let count = 0;
-                      if (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to) count++;
-                      return count !== 1 ? 's' : '';
-                    })()} active
+                      if (
+                        summaryCurrentFilters.dateRange?.from ||
+                        summaryCurrentFilters.dateRange?.to
+                      )
+                        count++;
+                      return count !== 1 ? "s" : "";
+                    })()}{" "}
+                    active
                   </span>
                 )}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setActiveFilterTab('summary');
+                    setActiveFilterTab("summary");
                     setSummaryFormFilters(summaryCurrentFilters);
                     setShowFilterModal(true);
                   }}
@@ -2180,7 +2505,11 @@ export const SurveyResponseDetailPage = () => {
                     <span className="ml-1 px-1.5 py-0.5 text-xs bg-[#C72030] text-white rounded-full">
                       {(() => {
                         let count = 0;
-                        if (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to) count++;
+                        if (
+                          summaryCurrentFilters.dateRange?.from ||
+                          summaryCurrentFilters.dateRange?.to
+                        )
+                          count++;
                         return count;
                       })()}
                     </span>
@@ -2203,7 +2532,9 @@ export const SurveyResponseDetailPage = () => {
                         {surveyData.questions?.length || 0}
                       </p>
                       {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">All questions shown</p>
+                        <p className="text-xs text-gray-500">
+                          All questions shown
+                        </p>
                       )}
                     </div>
                   </div>
@@ -2218,28 +2549,48 @@ export const SurveyResponseDetailPage = () => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">
-                        {Object.keys(summaryCurrentFilters).length > 0 ? "Filtered Responses" : "Total Responses"}
+                        {Object.keys(summaryCurrentFilters).length > 0
+                          ? "Filtered Responses"
+                          : "Total Responses"}
                       </p>
                       <p className="text-xl font-semibold">
                         {(() => {
-                          const filteredResponses = getSummaryFilteredResponseData();
-                          if (Object.keys(summaryCurrentFilters).length > 0 && filteredResponses.length > 0) {
+                          const filteredResponses =
+                            getSummaryFilteredResponseData();
+                          if (
+                            Object.keys(summaryCurrentFilters).length > 0 &&
+                            filteredResponses.length > 0
+                          ) {
                             // Count total answers from filtered responses
-                            return filteredResponses.reduce((total, response) => {
-                              return total + (response.answers?.length || 0);
-                            }, 0);
+                            return filteredResponses.reduce(
+                              (total, response) => {
+                                return total + (response.answers?.length || 0);
+                              },
+                              0
+                            );
                           }
                           // Original count
-                          return surveyData.questions?.reduce((sum, q) => {
-                            if (q.options && q.options.length > 0) {
-                              return sum + (q.options.reduce((optSum, opt) => optSum + opt.response_count, 0) || 0);
-                            }
-                            return sum;
-                          }, 0) || 0;
+                          return (
+                            surveyData.questions?.reduce((sum, q) => {
+                              if (q.options && q.options.length > 0) {
+                                return (
+                                  sum +
+                                  (q.options.reduce(
+                                    (optSum, opt) =>
+                                      optSum + opt.response_count,
+                                    0
+                                  ) || 0)
+                                );
+                              }
+                              return sum;
+                            }, 0) || 0
+                          );
                         })()}
                       </p>
                       {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">Based on date filter</p>
+                        <p className="text-xs text-gray-500">
+                          Based on date filter
+                        </p>
                       )}
                     </div>
                   </div>
@@ -2254,22 +2605,35 @@ export const SurveyResponseDetailPage = () => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">
-                        {Object.keys(summaryCurrentFilters).length > 0 ? "Filtered Responses" : "Survey Status"}
+                        {Object.keys(summaryCurrentFilters).length > 0
+                          ? "Filtered Responses"
+                          : "Survey Status"}
                       </p>
-                      <p className={`text-xl font-semibold ${
-                        Object.keys(summaryCurrentFilters).length > 0 
-                          ? "text-blue-600" 
-                          : surveyData?.survey_status === 1 || surveyData?.survey_status === true || surveyData?.is_active === 1 || surveyData?.is_active === true
-                            ? "text-green-600" 
+                      <p
+                        className={`text-xl font-semibold ${
+                          Object.keys(summaryCurrentFilters).length > 0
+                            ? "text-blue-600"
+                            : surveyData?.survey_status === 1 ||
+                              surveyData?.survey_status === true ||
+                              surveyData?.is_active === 1 ||
+                              surveyData?.is_active === true
+                            ? "text-green-600"
                             : "text-red-600"
-                      }`}>
-                        {Object.keys(summaryCurrentFilters).length > 0 
-                          ? `${getSummaryFilteredResponseData().length} Records` 
-                          : (surveyData?.survey_status === 1 || surveyData?.survey_status === true || surveyData?.is_active === 1 || surveyData?.is_active === true ? "Active" : "Inactive")
-                        }
+                        }`}
+                      >
+                        {Object.keys(summaryCurrentFilters).length > 0
+                          ? `${getSummaryFilteredResponseData().length} Records`
+                          : surveyData?.survey_status === 1 ||
+                            surveyData?.survey_status === true ||
+                            surveyData?.is_active === 1 ||
+                            surveyData?.is_active === true
+                          ? "Active"
+                          : "Inactive"}
                       </p>
                       {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">Matching criteria</p>
+                        <p className="text-xs text-gray-500">
+                          Matching criteria
+                        </p>
                       )}
                     </div>
                   </div>
@@ -2299,7 +2663,7 @@ export const SurveyResponseDetailPage = () => {
                   onDownload={handleDownloadResponseChart}
                 />
               </CardContent>
-            </Card>  
+            </Card>
 
             {/* Questions Response Details */}
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
@@ -2308,7 +2672,8 @@ export const SurveyResponseDetailPage = () => {
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <List className="h-4 w-4" />
                   </div>
-                  QUESTION RESPONSE DETAILS ({surveyData.questions?.length || 0})
+                  QUESTION RESPONSE DETAILS ({surveyData.questions?.length || 0}
+                  )
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -2323,7 +2688,8 @@ export const SurveyResponseDetailPage = () => {
                       question.options
                         ?.filter((opt) => opt.response_count > 0)
                         .map(
-                          (opt) => `${opt.option} (${opt.response_count} responses)`
+                          (opt) =>
+                            `${opt.option} (${opt.response_count} responses)`
                         ) || [];
 
                     // Check if question has any options configured
@@ -2363,7 +2729,9 @@ export const SurveyResponseDetailPage = () => {
                                 return `Response Distribution: ${question.question.substring(
                                   0,
                                   50
-                                )}${question.question.length > 50 ? "..." : ""}`;
+                                )}${
+                                  question.question.length > 50 ? "..." : ""
+                                }`;
                               }
                             })()}
                             type={getChartType(question.question_id)}
@@ -2390,9 +2758,8 @@ export const SurveyResponseDetailPage = () => {
                 </div>
               </CardContent>
             </Card>
-
           </TabsContent>
-          
+
           <TabsContent value="tabular" className="p-3 sm:p-6">
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
@@ -2435,7 +2802,10 @@ export const SurveyResponseDetailPage = () => {
                     </Button>
                   }
                   getItemId={(item: TabularResponseData) => item.id}
-                  renderCell={(item: TabularResponseData, columnKey: string) => {
+                  renderCell={(
+                    item: TabularResponseData,
+                    columnKey: string
+                  ) => {
                     const cellValue =
                       item[columnKey as keyof TabularResponseData];
 
@@ -2449,14 +2819,17 @@ export const SurveyResponseDetailPage = () => {
                     }
 
                     // Special handling for Icon Category with truncation and hover
-                    if (columnKey === "icon_category" || columnKey.startsWith("icon_category_")) {
+                    if (
+                      columnKey === "icon_category" ||
+                      columnKey.startsWith("icon_category_")
+                    ) {
                       const iconCategoryValue = cellValue as string;
                       if (!iconCategoryValue || iconCategoryValue === "-") {
                         return <span className="text-gray-400">-</span>;
                       }
                       return (
-                        <TruncatedText 
-                          text={iconCategoryValue} 
+                        <TruncatedText
+                          text={iconCategoryValue}
                           maxLength={15}
                           className="text-gray-900 font-medium"
                         />
@@ -2470,14 +2843,14 @@ export const SurveyResponseDetailPage = () => {
                         return <span className="text-gray-400">-</span>;
                       }
                       return (
-                        <div 
+                        <div
                           className="text-black-600 font-medium break-words text-xs leading-tight overflow-hidden"
-                          style={{ 
-                            maxWidth: '180px', 
-                            minWidth: '140px',
-                            wordBreak: 'break-all',
-                            whiteSpace: 'normal',
-                            lineHeight: '1.2'
+                          style={{
+                            maxWidth: "180px",
+                            minWidth: "140px",
+                            wordBreak: "break-all",
+                            whiteSpace: "normal",
+                            lineHeight: "1.2",
                           }}
                         >
                           {ticketValue}
@@ -2526,10 +2899,7 @@ export const SurveyResponseDetailPage = () => {
                       const ticketNumber = item.ticket_number || "-";
                       return (
                         <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                          <TruncatedText 
-                            text={ticketNumber} 
-                            maxLength={12}
-                          />
+                          <TruncatedText text={ticketNumber} maxLength={12} />
                         </span>
                       );
                     }
@@ -2537,10 +2907,7 @@ export const SurveyResponseDetailPage = () => {
                       const category = item.category || "-";
                       return (
                         <span className="px-2 py-1 rounded-full text-xs font-medium">
-                          <TruncatedText 
-                            text={category} 
-                            maxLength={15}
-                          />
+                          <TruncatedText text={category} maxLength={15} />
                         </span>
                       );
                     }
@@ -2548,8 +2915,8 @@ export const SurveyResponseDetailPage = () => {
                       // For the title/heading column, apply truncation with hover
                       const heading = item.heading || "-";
                       return (
-                        <TruncatedText 
-                          text={heading} 
+                        <TruncatedText
+                          text={heading}
                           maxLength={20}
                           className="text-gray-900 font-medium"
                         />
@@ -2559,10 +2926,7 @@ export const SurveyResponseDetailPage = () => {
                       const assignee = item.assignee || "-";
                       return (
                         <span className="px-2 py-1 rounded-full text-xs font-medium">
-                          <TruncatedText 
-                            text={assignee} 
-                            maxLength={15}
-                          />
+                          <TruncatedText text={assignee} maxLength={15} />
                         </span>
                       );
                     }
@@ -2574,6 +2938,9 @@ export const SurveyResponseDetailPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Export Modal */}
+      {ExportModal}
 
       {/* Filter Modal */}
       {FilterModal}
