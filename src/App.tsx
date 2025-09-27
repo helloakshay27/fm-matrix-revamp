@@ -156,7 +156,6 @@ import { EscalationMatrixManagePage } from "./pages/EscalationMatrixPage";
 import { AddEscalationMatrixPage } from "./pages/AddEscalationMatrixPage";
 import { EditEscalationMatrixPage } from "./pages/EditEscalationMatrixPage";
 import { InternalUsersPage } from "./pages/InternalUsersPage";
-import { AddInternalUserPage } from "./pages/AddInternalUserPage";
 import { EditInternalUserPage } from "./pages/EditInternalUserPage";
 import { ExternalUsersPage } from "./pages/ExternalUsersPage";
 import { AddExternalUserPage } from "./pages/AddExternalUserPage";
@@ -999,10 +998,6 @@ function App() {
                     <Route
                       path="/settings/manage-users/internal-users"
                       element={<InternalUsersPage />}
-                    />
-                    <Route
-                      path="/settings/manage-users/internal-users/add"
-                      element={<AddInternalUserPage />}
                     />
                     <Route
                       path="/settings/manage-users/internal-users/edit/:id"
