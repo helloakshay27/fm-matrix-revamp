@@ -1,17 +1,24 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { sendForgotPasswordOTP } from "@/utils/auth";
 import { ArrowLeft } from "lucide-react";
 
 export const ForgotPasswordPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const location = useLocation();
 
   const [emailOrMobile, setEmailOrMobile] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get email from navigation state if available
+  useEffect(() => {
+    if (location.state?.email) {
+      setEmailOrMobile(location.state.email);
+    }
+  }, [location.state]);
 
   // Site detection
   const hostname = window.location.hostname;
@@ -22,11 +29,7 @@ export const ForgotPasswordPage = () => {
     e.preventDefault();
 
     if (!emailOrMobile) {
-      toast({
-        variant: "destructive",
-        title: "Missing Information",
-        description: "Please enter your email or mobile number.",
-      });
+      toast.error("Please enter your email or mobile number.");
       return;
     }
 
@@ -35,11 +38,7 @@ export const ForgotPasswordPage = () => {
     const isMobile = /^\d{10,}$/.test(emailOrMobile.replace(/\D/g, ""));
 
     if (!isEmail && !isMobile) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Input",
-        description: "Please enter a valid email address or mobile number.",
-      });
+      toast.error("Please enter a valid email address or mobile number.");
       return;
     }
 
@@ -49,23 +48,17 @@ export const ForgotPasswordPage = () => {
       const response = await sendForgotPasswordOTP(emailOrMobile);
 
       if (response.success) {
-        toast({
-          title: "OTP Sent",
-          description: response.message,
-        });
+        toast.success(response.message || "OTP sent successfully!");
 
         // Pass email or mobile to OTP page
         navigate("/forgot-password-otp", { state: { emailOrMobile } });
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to send OTP. Please try again.",
-      });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to send OTP. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }

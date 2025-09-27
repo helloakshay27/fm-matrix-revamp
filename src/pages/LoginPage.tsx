@@ -71,17 +71,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
   const handleEmailSubmit = async () => {
     if (!email) {
-      toast.error("Email Required", {
-        description: "Please enter your email address."
-      });
+      toast.error("Please enter your email address.");
       return;
     }
 
 
     if (!validateEmail(email)) {
-      toast.error("Invalid Email", {
-        description: "Please enter a valid email address."
-      });
+      toast.error("Please enter a valid email address.");
       return;
     }
 
@@ -91,23 +87,17 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       setOrganizations(orgs);
       setCurrentStep(2);
       if (orgs.length === 0) {
-        toast.error("No Organizations Found", {
-          description: "No organizations found for this email address."
-        });
+        toast.error("No organizations found for this email address.");
       }
     } catch (error) {
-      toast.error("Error", {
-        description: "Failed to fetch organizations. Please try again."
-      });
+      toast.error("Failed to fetch organizations. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
   const handlePhoneSubmit = async () => {
     if (!phone) {
-      toast.error("Phone Number Required", {
-        description: "Please enter your phone number."
-      });
+      toast.error("Please enter your phone number.");
       return;
     }
 
@@ -117,14 +107,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       setOrganizations(orgs);
       setCurrentStep(2);
       if (orgs.length === 0) {
-        toast.error("No Organizations Found", {
-          description: "No organizations found for this phone number."
-        });
+        toast.error("No organizations found for this phone number.");
       }
     } catch (error) {
-      toast.error("Error", {
-        description: "Failed to fetch organizations. Please try again."
-      });
+      toast.error("Failed to fetch organizations. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -143,16 +129,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
   const handleLogin = async () => {
     if (!email || !password || !selectedOrganization) {
-      toast.error("Missing Information", {
-        description: "Please enter all required information."
-      });
+      toast.error("Please enter all required information.");
       return;
     }
 
     if (password.length < 6) {
-      toast.error("Invalid Password", {
-        description: "Password must be at least 6 characters long."
-      });
+      toast.error("Password must be at least 6 characters long.");
       return;
     }
 
@@ -165,7 +147,39 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         throw new Error("Invalid response received from server");
       }
 
-      // Save user data and token to localStorage
+      // Check if number is verified first
+      if (response.number_verified === 0 && isViSite) {
+        // Store email temporarily for OTP verification
+        localStorage.setItem("temp_email", email);
+        localStorage.setItem("temp_token", response.access_token);
+
+         saveUser({
+        id: response.id,
+        email: response.email,
+        firstname: response.firstname,
+        lastname: response.lastname,
+        mobile: response.mobile,
+        latitude: response.latitude,
+        longitude: response.longitude,
+        country_code: response.country_code,
+        // spree_api_key: response.spree_api_key,
+        lock_role: response.lock_role
+      });
+
+       saveBaseUrl(baseUrl);
+      localStorage.setItem("userId", response.id.toString());
+      localStorage.setItem("userType", response.user_type.toString());
+
+        toast.success("OTP sent successfully! Please verify your phone number to continue.");
+
+        // Redirect to OTP verification page
+        setTimeout(() => {
+          navigate('/otp-verification');
+        }, 500);
+        return; // Exit early, don't save user data yet
+      }
+
+      // Save user data and token to localStorage (only for verified users)
       saveUser({
         id: response.id,
         email: response.email,
@@ -186,36 +200,15 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       const from = (location.state as { from?: Location })?.from?.pathname + (location.state as { from?: Location })?.from?.search || "/maintenance/asset";
 
+      toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 
-      // Check if number is verified
-      if (response.number_verified === 0 && isViSite) {
-        // Store email temporarily for OTP verification
-        localStorage.setItem("temp_email", email);
-
-        toast.success("Login Successful", {
-          description: "Please verify your phone number to continue."
-        });
-
-        // Redirect to OTP verification page
-        setTimeout(() => {
-          navigate('/otp-verification');
-        });
-      } else {
-        toast.success("Login Successful", {
-          description: `Welcome back, ${response.firstname}!`
-        });
-
-        // Add a slight delay for better UX, then redirect to dashboard
-        setTimeout(() => {
-          isViSite ? navigate('/maintenance/m-safe/internal') : navigate(from, { replace: true });
-          // navigate(isViSite ? '/maintenance/m-safe/internal' : '/maintenance/asset');
-        });
-      }
+      // Add a slight delay for better UX, then redirect to dashboard
+      setTimeout(() => {
+        isViSite ? navigate('/maintenance/m-safe/internal') : navigate(from, { replace: true });
+      }, 500);
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Login Failed", {
-        description: "Invalid email or password. Please try again."
-      });
+      toast.error("Invalid email or password. Please try again.");
     } finally {
       setLoginLoading(false);
     }
@@ -454,7 +447,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       {/* Forgot Password */}
       <div className="text-center mt-6">
-        <button className="text-[#C72030] hover:text-[#a81c29] text-sm font-medium transition-colors" onClick={() => navigate('/forgot-password')}>
+        <button className="text-[#C72030] hover:text-[#a81c29] text-sm font-medium transition-colors" onClick={() => navigate('/forgot-password', { state: { email } })}>
           Forgot your password?
         </button>
       </div>

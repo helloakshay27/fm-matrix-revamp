@@ -258,11 +258,15 @@ export const loginWithPhone = async (
 // Verify OTP after phone login
 export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
   const email = localStorage.getItem("temp_email");
+  const otptoken = localStorage.getItem("temp_token");
   const baseUrl = getBaseUrl();
-  const token = getToken();
+  // const token = getToken();
+
+
+
 
   if (!email) {
-    throw new Error("Email not found. Please login again.");
+    throw new Error("Session expired. Please login again to receive a new OTP.");
   }
 
   if (!baseUrl) {
@@ -274,8 +278,8 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
   };
 
   // Add Bearer token if available
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  if (otptoken) {
+    headers["Authorization"] = `Bearer ${otptoken}`;
   }
 
   const response = await fetch(
@@ -296,8 +300,12 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
 
   const data = await response.json();
 
-  // Clear temp email after successful verification
-  localStorage.removeItem("temp_email");
+  // Only clear temp email after successful verification
+  // Check if the response indicates success (you might need to adjust this based on your API response structure)
+  if (data && (data.access_token || data.id)) {
+    localStorage.removeItem("temp_email");
+    localStorage.removeItem("temp_token");
+  }
 
   return data;
 };

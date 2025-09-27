@@ -7,9 +7,13 @@ export interface Restaurant {
   rating: number;
   timeRange: string;
   discount: string;
+  status?: boolean;
   image: string;
-  images?: string[]; // Array of images for carousel
+  images?: string[]; 
   menuItems?: MenuItem[];
+  can_book_today?: boolean;
+  can_order_today?: boolean;
+  menu_images?: MenuImage[];
 }
 
 export interface MenuItem {
@@ -19,6 +23,13 @@ export interface MenuItem {
   price: number;
   image: string;
   quantity?: number;
+}
+
+export interface MenuImage {
+  id: number;
+  relation: string;
+  relation_id: number;
+  document: string;
 }
 
 // New interfaces for facility and site-based APIs
@@ -48,6 +59,8 @@ export interface RestaurantBysite {
     relation_id: number;
     document: string;
   }>;
+  can_book_today?: boolean;
+  can_order_today?: boolean;
 }
 
 export interface RestaurantsBySiteResponse {
@@ -77,6 +90,7 @@ export interface RestaurantTokenResponse {
   rating?: number;
   delivery_time?: string;
   discount?: string;
+  status?: boolean;
   cover_image?: string;
   cover_images?: CoverImage[];
 }
@@ -261,9 +275,12 @@ export const restaurantApi = {
         rating: restaurant.rating || 4.0,
         timeRange: restaurant.delivery_time || "30-40 mins",
         discount: restaurant.discount || "",
+        status: restaurant?.status,
         image: coverImage,
-        images: coverImages, // Add array of images for carousel
+        images: coverImages, 
         menuItems,
+        can_book_today: restaurant.can_book_today,
+        can_order_today: restaurant.can_order_today,
       };
     } catch (error) {
       console.error("Error fetching restaurant details:", error);
@@ -445,6 +462,7 @@ export const restaurantApi = {
           rating: r.rating || 4.0,
           timeRange: r.delivery_time || "30-45 mins",
           discount: r.discount || "",
+          status: r?.status,
           image: r.cover_image || r.cover_images?.[0]?.document || "/placeholder.svg",
           images: r.cover_images?.map((img: CoverImage) => img.document) || [],
           menuItems: [], // Will be loaded when restaurant is selected
