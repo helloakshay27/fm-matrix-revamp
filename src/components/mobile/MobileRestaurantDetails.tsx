@@ -25,6 +25,7 @@ interface MenuItem {
   price: number;
   image: string;
   quantity?: number;
+  stock?: number | null;
 }
 
 interface MenuImage {
@@ -51,10 +52,10 @@ export const MobileRestaurantDetails: React.FC<
 
   // 🔍 Debug logging for external detection in Restaurant Details
   useEffect(() => {
-    console.log("🏪 RESTAURANT DETAILS - EXTERNAL DETECTION:");
-    console.log("  - URL source param:", sourceParam);
-    console.log("  - isExternalScan:", isExternalScan);
-    console.log("  - Current URL:", window.location.href);
+    // console.log("🏪 RESTAURANT DETAILS - EXTERNAL DETECTION:");
+    // console.log("  - URL source param:", sourceParam);
+    // console.log("  - isExternalScan:", isExternalScan);
+    // console.log("  - Current URL:", window.location.href);
   }, [searchParams, sourceParam, isExternalScan]);
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>(
@@ -67,6 +68,9 @@ export const MobileRestaurantDetails: React.FC<
     null
   );
 
+
+  console.log("Hello:- Akshay Mugale")
+
   // Restore preserved cart when coming back from items details
   useEffect(() => {
     // Get preserved cart from navigation state (when coming back from items details)
@@ -74,7 +78,7 @@ export const MobileRestaurantDetails: React.FC<
       (location.state as { preservedCart?: MenuItem[] })?.preservedCart || [];
 
     if (preservedCart.length > 0) {
-      console.log("🔄 RESTORING PRESERVED CART:", preservedCart);
+      // console.log("🔄 RESTORING PRESERVED CART:", preservedCart);
 
       // Create a map of preserved items for quick lookup
       const preservedItemsMap = new Map(
@@ -160,8 +164,20 @@ export const MobileRestaurantDetails: React.FC<
     setMenuItems((prev) =>
       prev.map((item) => {
         if (item.id === itemId) {
-          const newQuantity = Math.max(0, (item.quantity || 0) + change);
-          return { ...item, quantity: newQuantity };
+          const currentQuantity = item.quantity || 0;
+          const maxStock = item.stock || 0;
+          
+          // If adding items, check stock limit
+          if (change > 0 && currentQuantity >= maxStock) {
+            // Don't allow adding more if we've reached stock limit
+            return item;
+          }
+          
+          const newQuantity = Math.max(0, currentQuantity + change);
+          // Ensure we don't exceed stock limit
+          const finalQuantity = Math.min(newQuantity, maxStock);
+          
+          return { ...item, quantity: finalQuantity };
         }
         return item;
       })
@@ -180,6 +196,25 @@ export const MobileRestaurantDetails: React.FC<
     return menuItems.reduce((total, item) => total + (item.quantity || 0), 0);
   };
 
+  // Helper functions for stock management
+  const isOutOfStock = (item: MenuItem) => {
+    return item.stock === 0 || item.stock === null;
+  };
+
+  const canAddMore = (item: MenuItem) => {
+    if (isOutOfStock(item)) return false;
+    const currentQuantity = item.quantity || 0;
+    const maxStock = item.stock || 0;
+    return currentQuantity < maxStock;
+  };
+
+  const getStockMessage = (item: MenuItem) => {
+    if (isOutOfStock(item)) return "Out of Stock";
+    const remaining = (item.stock || 0) - (item.quantity || 0);
+    if (remaining <= 5 && remaining > 0) return `Only ${remaining} left`;
+    return null;
+  };
+
   // Check if ordering is allowed today
   const isOrderingAllowed = () => {
     // If both can_book_today and can_order_today are false, don't allow ordering
@@ -193,13 +228,13 @@ export const MobileRestaurantDetails: React.FC<
   const handleShowItems = () => {
     const selectedItems = getSelectedItems();
     if (selectedItems.length > 0) {
-      console.log("🛒 NAVIGATING TO ITEMS:");
-      console.log("  - sourceParam:", sourceParam);
-      console.log("  - isExternalScan:", isExternalScan);
-      console.log(
-        "  - Will navigate with source param:",
-        sourceParam || "none"
-      );
+      // console.log("🛒 NAVIGATING TO ITEMS:");
+      // console.log("  - sourceParam:", sourceParam);
+      // console.log("  - isExternalScan:", isExternalScan);
+      // console.log(
+      //   "  - Will navigate with source param:",
+      //   sourceParam || "none"
+      // );
 
       // Construct URL with source parameter and facility_id if any exists
       const currentParams = new URLSearchParams(window.location.search);
@@ -220,10 +255,10 @@ export const MobileRestaurantDetails: React.FC<
         ? `/mobile/restaurant/${restaurant.id}/items?${queryString}`
         : `/mobile/restaurant/${restaurant.id}/items`;
 
-      console.log("🛒 NAVIGATING TO ITEMS:");
-      console.log("  - URL:", itemsUrl);
-      console.log("  - facility_id preserved:", facilityId);
-      console.log("  - source preserved:", sourceParam);
+      // console.log("🛒 NAVIGATING TO ITEMS:");
+      // console.log("  - URL:", itemsUrl);
+      // console.log("  - facility_id preserved:", facilityId);
+      // console.log("  - source preserved:", sourceParam);
 
       navigate(itemsUrl, {
         state: { selectedItems, restaurant, isExternalScan, sourceParam },
@@ -391,6 +426,28 @@ export const MobileRestaurantDetails: React.FC<
                       </div>
                     </>
                   )}
+                
+                {/* Stock Information */}
+                <div className="mt-2">
+                  {isOutOfStock(item) ? (
+                    <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                      Out of Stock
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {item.stock && item.stock > 0 && (
+                        <span className="text-xs text-gray-500">
+                          Stock: {item.stock}
+                        </span>
+                      )}
+                      {getStockMessage(item) && (
+                        <span className="text-xs font-medium text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
+                          {getStockMessage(item)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Item Image */}
@@ -415,9 +472,14 @@ export const MobileRestaurantDetails: React.FC<
                     {!item.quantity || item.quantity === 0 ? (
                       <Button
                         onClick={() => addItem(item.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium shadow-lg border border-red-700"
+                        disabled={isOutOfStock(item)}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-medium shadow-lg border ${
+                          isOutOfStock(item)
+                            ? "bg-gray-400 hover:bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed"
+                            : "bg-red-600 hover:bg-red-700 text-white border-red-700"
+                        }`}
                       >
-                        Add
+                        {isOutOfStock(item) ? "Out of Stock" : "Add"}
                       </Button>
                     ) : (
                       <div className="flex items-center border-2 border-red-600 rounded-lg bg-white shadow-lg">
@@ -432,7 +494,17 @@ export const MobileRestaurantDetails: React.FC<
                         </span>
                         <button
                           onClick={() => updateQuantity(item.id, 1)}
-                          className="px-2 py-1 text-red-600 hover:bg-red-50 text-lg font-bold"
+                          disabled={!canAddMore(item)}
+                          className={`px-2 py-1 text-lg font-bold ${
+                            canAddMore(item)
+                              ? "text-red-600 hover:bg-red-50"
+                              : "text-gray-400 cursor-not-allowed"
+                          }`}
+                          title={
+                            !canAddMore(item) && !isOutOfStock(item)
+                              ? `Maximum ${item.stock} items available`
+                              : ""
+                          }
                         >
                           +
                         </button>
