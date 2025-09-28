@@ -2007,7 +2007,7 @@ const AllContent = () => {
                 {/* Unified section container */}
                 <div className={sectionBox}>
                     <div className="border p-6 bg-white text-black shadow print:text-black print:bg-white print:p-6 print:border print:shadow-none">
-                        <h2 className="text-2xl font-bold mb-4 print:text-2xl print:font-bold">
+                        <h2 className="text-lg font-bold mb-4 print:text-[15px] print:font-bold">
                             Revenue Generation Overview
                         </h2>
 
@@ -2033,24 +2033,24 @@ const AllContent = () => {
 
                     {/* Center-wise Meeting Room Performance */}
                     <div className="bg-white p-4 mt-4 avoid-break">
-                        <h2 className="text-lg font-semibold text-black-600 mb-4">
+                        <h2 className="text-lg md:text-lg font-bold tracking-wide text-black mb-4 print:text-[15px] print:font-bold">
                             Center Wise - Meeting Room Performance Overview
                         </h2>
                         <div className="overflow-x-auto print:overflow-visible">
                             <table className="min-w-full border text-sm text-center print:text-xs print:w-full print:table-fixed">
-                                <thead className="bg-[#ded9cd] text-[#b62527] font-semibold text-sm">
+                                <thead className="bg-[#ded9cd] text-[#b62527] font-extrabold uppercase tracking-wide text-[13px] md:text-sm print:text-[10px]">
                                     <tr>
-                                        <th className="border border-black p-3 text-left align-middle" rowSpan={2}>
+                                        <th className="border border-black p-3 text-left align-middle text-[13px] md:text-sm print:text-[10px]" rowSpan={2}>
                                             Site Name
                                         </th>
-                                        <th className="border border-black p-3 text-center" colSpan={3}>
+                                        <th className="border border-black p-3 text-center text-[13px] md:text-sm print:text-[10px]" colSpan={3}>
                                             Meeting Room
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th className="border border-black p-2 text-center">Utilization<br />Rate (in %)</th>
-                                        <th className="border border-black p-2 text-center">Cancellation<br />Rate (in %)</th>
-                                        <th className="border border-black p-2 text-center">Revenue<br />(in ₹)</th>
+                                        <th className="border border-black p-2 text-center text-[13px] md:text-sm print:text-[10px]">Utilization<br />Rate (in %)</th>
+                                        <th className="border border-black p-2 text-center text-[13px] md:text-sm print:text-[10px]">Cancellation<br />Rate (in %)</th>
+                                        <th className="border border-black p-2 text-center text-[13px] md:text-sm print:text-[10px]">Revenue<br />(in ₹)</th>
                                     </tr>
                                 </thead>
 
@@ -2095,7 +2095,7 @@ const AllContent = () => {
                 <div className={sectionBox}>
                     <div className="border border-gray-400 p-4 w-full print:max-w-none print:mx-auto">
                         {/* Title */}
-                        <h1 className="text-lg text-left font-bold mb-6 print:text-xl">
+                        <h1 className="text-lg text-left font-bold mb-6 print:text-[14px]">
                             Center Wise - Meeting Room Utilization
                         </h1>
 
@@ -2317,7 +2317,7 @@ const AllContent = () => {
                     Community Programs Dashboard
                 </h1>
                 <div className={sectionBox}>
-                    <h2 className="text-lg font-semibold text-gray-700 mb-4 print:text-black print:text-sm ">Community Engagement Metrics</h2>
+                    <h2 className="text-lg font-bold md:text-lg text-gray-700 mb-4 print:text-black print:text-[15px]">Community Engagement Metrics</h2>
 
                     <div className="grid grid-cols-2 gap-4 mb-8 print:gap-1 print:mb-2">
                         {/* Total Active Users Block */}
@@ -2391,8 +2391,7 @@ const AllContent = () => {
                     */}
 
                     {/* Section Heading & Divider */}
-                    <h2 className="text-lg font-semibold text-gray-700 mb-4 print:text-black print:text-sm ">            Site Wise Adoption Rate
-                    </h2>
+                    <h2 className="text-lg md:text-lg font-bold tracking-wide text-black mb-4 print:text-[15px]">Site Wise Adoption Rate</h2>
                     <hr className="border-t border-gray-400 mb-4 print:border-black " />
 
                     {/* Legend */}
@@ -2464,7 +2463,7 @@ const AllContent = () => {
                     {/* Adoption Table */}
                     <div className="overflow-x-auto print:overflow-visible">
                         <table className="table-auto w-full border border-black print:table-fixed print:w-full print:text-[8.8px]">
-                            <thead className="bg-[#DAD6C9] text-[#C72030] print-bg-red">
+                            <thead className="bg-[#DAD6C9] text-[#C72030] print-bg-red font-extrabold uppercase tracking-wide text-[13px] md:text-sm print:text-[10px]">
                                 <tr>
                                     {[
                                         "Site Name", "Helpdesk", "Assets", "Checklist (Tech)",
@@ -2473,7 +2472,7 @@ const AllContent = () => {
                                     ].map((header, idx) => (
                                         <th
                                             key={idx}
-                                            className="p-2 border border-black print:p-1 print:w-[11%] text-center"
+                                            className="p-2 border border-black print:p-1 print:w-[11%] text-center text-[13px] md:text-sm print:text-[10px]"
                                         >
                                             {header}
                                         </th>
@@ -2544,7 +2543,7 @@ const AllContent = () => {
                 <div className={sectionBox}>
                     {/* Snapshot Section */}
                     <div className="mb-10 print:mb-5 border border-gray-300 px-6 py-5 print:px-2 print:py-2">
-                        <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-sm print:mb-1 print:pb-1">Snapshot</h2>
+                        <h2 className="text-lg font-bold md:text-lg mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-1 print:pb-1">Snapshot</h2>
                         <div className="grid grid-cols-3 gap-8 print:gap-3">
                             {/* Total Tickets */}
                             <div className="bg-[#F6F4EE] p-6 text-center print:bg-[#F6F4EE] print:p-4 min-h-[120px] flex flex-col items-center justify-center gap-1">
@@ -2584,15 +2583,15 @@ const AllContent = () => {
 
                     {/* Table Section 1 */}
                     <div className="table-section w-full overflow-x-auto print:overflow-visible border-gray-300  border py-3 px-3 mb-5 print:p-1 print:mb-5">
-                        <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-sm print:mb-5 print:pb-1">Ticket Ageing, Closure Efficiency & Feedback Overview by Center</h2>
+                        <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-5 print:pb-1">Ticket Ageing, Closure Efficiency & Feedback Overview by Center</h2>
                         <table className="w-full border text-sm text-center break-words print:table-fixed print:w-full print:text-[9px]">
                             <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] font-semibold print-bg-red">
                                 <tr>
-                                    <th className="border border-gray-200 px-2 py-3 text-[10px] print:text-[9px] print:px-1 print:py-1 print-th-site print:min-h-[30px]">Site Name</th>
+                                    <th className="border border-gray-200 px-2 py-3 text-[13px] md:text-sm font-semibold print:text-[10px] print:px-1 print:py-1 print-th-site print:min-h-[30px]">Site Name</th>
                                     {ticketAgingClosureData?.data?.centers?.map((center, idx) => (
                                         <th
                                             key={idx}
-                                            className="border border-gray-200 px-2 py-3 text-[10px] print:text-[8px] print:px-0 print:py-1 print-th-vertical print:min-h-[120px]"
+                                            className="border border-gray-200 px-2 py-3 text-[13px] md:text-sm font-semibold print:text-[10px] print:px-0 print:py-1 print-th-vertical print:min-h-[120px]"
                                         >
                                             <div className="rotate-header-print">{center.center_name ?? '-'}</div>
                                         </th>
@@ -2701,7 +2700,7 @@ const AllContent = () => {
           }
         `}</style>
                         <div className="print:mt-5">
-                            <h1 className="text-lg font-bold mb-2 border-b border-gray-300 pb-2 print:text-sm print:mb-1">
+                            <h1 className="text-lg md:text-lg font-bold mb-2 border-b border-gray-300 pb-2 print:text-[14px] print:mb-1">
                                 Ticket Performance Metrics by Category – Volume, Closure Rate & Ageing
                             </h1>
                             <div className="flex items-center justify-between gap-4 flex-wrap text-sm print:text-xs print:gap-2">
@@ -2790,7 +2789,7 @@ const AllContent = () => {
             <div className="print-page break-before-page   print:m-auto">
                 {/* Customer Experience Feedback */}
                 <div className="border print:w-[95%] w-[95%] m-auto print:mt-10 border-gray-300 p-6 mb-10 no-break print:p-2 print:mb-2">
-                    <h2 className="text-lg font-bold mb-4 border-b border-gray-300 pb-2 print:text-sm print:mb-1 print:pb-1">Customer Experience Feedback</h2>
+                    <h2 className="text-lg md:text-lg font-bold mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-1 print:pb-1">Customer Experience Feedback</h2>
                     <div className="grid grid-cols-5 print:gap-1">
                         {displayCustomerExperienceData.map((item, idx) => (
                             <div
@@ -2808,7 +2807,7 @@ const AllContent = () => {
 
                 {/* Site Performance Table 2 */}
                 <div className="site-performance print:w-[95%] w-[95%] m-auto bg-white border border-gray-300 p-6 overflow-auto no-break print:p-2">
-                    <h2 className="text-lg font-bold mb-4 print:text-sm print:mb-2">
+                    <h2 className="text-lg md:text-lg font-bold mb-4 print:text-[14px] print:mb-2">
                         Site Performance: Customer Rating Overview
                     </h2>
                     <table className="min-w-full text-base text-center border print:table-fixed print:w-full print:text-[10px] print:leading-tight">
@@ -2873,7 +2872,7 @@ const AllContent = () => {
                 <div className={sectionBox}>
 
                     {/* Title */}
-                    <h1 className="text-2xl font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
+                    <h1 className="text-lg md:text-lg font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
                         Response TAT Performance by Center – {periodUnit}ly Comparison
                     </h1>
 
@@ -2911,7 +2910,7 @@ const AllContent = () => {
 
                     {/* Section Header for Chart */}
                     <div className="flex flex-col px-6 print:p-4 mb-6">
-                        <h2 className="text-lg font-semibold mb-2">Response Achieved (TAT in Percentage)</h2>
+                        <h2 className="text-lg print:text-[14px] font-semibold mb-2">Response Achieved (TAT in Percentage)</h2>
                         <div className="border-b border-gray-300 w-full" />
                     </div>
 
@@ -3064,7 +3063,7 @@ const AllContent = () => {
                 <div className={sectionBox}>
 
                     <div className="flex p-4 flex-col print:p-4 mb-8">
-                        <h2 className="text-lg font-semibold mb-2">Resolution Achieved (TAT in Percentage)</h2>
+                        <h2 className="text-lg md:text-lg print:text-[14px] font-bold mb-2">Resolution Achieved (TAT in Percentage)</h2>
                         <div className="border-b border-gray-300 w-full" />
                     </div>
 
@@ -3238,18 +3237,18 @@ const AllContent = () => {
 
                     {/* Company Wise Overview */}
                     <div className="bg-white border border-gray-300 p-4 mb-10 print:p-2 print:mb-2 no-break">
-                        <h2 className="text-lg font-semibold mb-4 border-b border-black py-4 print:text-[15px] print:mb-1 print:py-2.5">
+                        <h2 className="text-lg font-bold md:text-lg mb-4 border-b border-black py-4 print:text-[14px] print:mb-1 print:py-2.5">
                             Company Wise Asset Overview
                         </h2>
-                        <div className="grid grid-cols-3 bg-[#DAD6C9] text-[#C72030] text-center font-semibold overflow-hidden print-bg-red">
-                            <div className="py-4 border-r border-white print:py-2.5 print:text-[12px]">Total Available Asset</div>
-                            <div className="py-4 border-r border-white print:py-2.5 print:text-[12px]">Asset in breakdown</div>
-                            <div className="py-4 print:py-2.5 print:text-[12px]">Average Downtime</div>
+                        <div className="grid grid-cols-3 bg-[#DAD6C9] text-[#C72030] text-center font-bold text-[15px] md:text-[15px] tracking-wide overflow-hidden print-bg-red print:text-[13px]">
+                            <div className="py-4 border-r border-white px-2 leading-snug print:py-2.5 print:px-1">Total Available Asset</div>
+                            <div className="py-4 border-r border-white px-2 leading-snug print:py-2.5 print:px-1">Asset In Breakdown</div>
+                            <div className="py-4 px-2 leading-snug print:py-2.5 print:px-1">Average Downtime</div>
                         </div>
-                        <div className="grid grid-cols-3 bg-[#f2f0eb] text-center font-bold text-2xl py-6 border-t border-black print:text-lg print:py-2.5">
-                            <div className="border-r border-black">{companyAssetOverview?.total_available_asset ?? '-'}</div>
-                            <div className="border-r border-black">{companyAssetOverview?.asset_in_breakdown ?? '-'}</div>
-                            <div>{companyAssetOverview?.average_downtime_days !== undefined ? `${companyAssetOverview?.average_downtime_days} Days` : '-'}</div>
+                        <div className="grid grid-cols-3 bg-[#f2f0eb] font-extrabold text-center  text-4xl md:text-xl py-6 border-t border-black print:text-[11px] print:py-2.5">
+                            <div className="border-r text-3xl print:text-xl border-black px-2 break-words">{companyAssetOverview?.total_available_asset ?? '-'}</div>
+                            <div className="border-r text-3xl print:text-xl border-black px-2 break-words">{companyAssetOverview?.asset_in_breakdown ?? '-'}</div>
+                            <div className="px-2 text-3xl print:text-xl break-words">{companyAssetOverview?.average_downtime_days !== undefined ? `${companyAssetOverview?.average_downtime_days} Days` : '-'}</div>
                         </div>
                     </div>
 
@@ -3257,30 +3256,30 @@ const AllContent = () => {
 
                     {/* Table 1 */}
                     <div className="center-metrics-table border px-3 border-gray-300  overflow-x-auto print:overflow-visible no-break print:p-1 print:mb-1">
-                        <h2 className="text-lg font-semibold py-4 border-b border-black mb-4 print:text-[13px] print:py-1 print:mb-1">
+                        <h2 className="text-lg md:text-lg font-bold py-4 border-b border-black mb-4 tracking-wide print:text-[14px] print:py-1 print:mb-1">
                             Center Wise – Assets And Downtime Metrics
                         </h2>
 
                         <table className="min-w-full border border-black text-sm text-center print:table-fixed print:w-full print:text-[10px] print:leading-tight">
                             <thead>
-                                <tr className="bg-[#DAD6C9] text-[#C72030] font-bold text-[14px] print:text-[10px]">
-                                    <th rowSpan={2} className="border border-black px-2 py-1 print:px-1 print:py-1 w-[20%] text-left">Site Name</th>
-                                    <th rowSpan={2} className="border border-black px-2 py-1 print:px-1 print:py-1">Total No. of Assets</th>
-                                    <th colSpan={2} className="border border-black px-2 py-1 print:px-1 print:py-1">Critical</th>
-                                    <th colSpan={2} className="border border-black px-2 py-1 print:px-1 print:py-1">Non-Critical</th>
+                                <tr className="bg-[#DAD6C9] text-[#C72030] font-extrabold text-[14px] md:text-[14px] uppercase tracking-wide print:text-[11px]">
+                                    <th rowSpan={2} scope="col" className="border border-black px-2 py-2 print:px-1 print:py-1 w-[20%] text-left">Site Name</th>
+                                    <th rowSpan={2} scope="col" className="border border-black px-2 py-2 print:px-1 print:py-1">Total No. of Assets</th>
+                                    <th colSpan={2} scope="colgroup" className="border border-black px-2 py-2 print:px-1 print:py-1">Critical</th>
+                                    <th colSpan={2} scope="colgroup" className="border border-black px-2 py-2 print:px-1 print:py-1">Non-Critical</th>
                                 </tr>
-                                <tr className="bg-[#DAD6C9] text-[#C72030] font-bold text-[13px] print:text-[10px]">
+                                <tr className="bg-[#DAD6C9] text-[#C72030] font-bold text-[13px] md:text-[14px] uppercase tracking-wide print:text-[10px]">
                                     <th className="border border-black px-2 py-1 print:px-1 print:py-1">Total No. of Breakdown</th>
-                                    <th className="border border-black px-2 py-1 print:px-1 print:py-1">Average day</th>
+                                    <th className="border border-black px-2 py-1 print:px-1 print:py-1">Average Day</th>
                                     <th className="border border-black px-2 py-1 print:px-1 print:py-1">Total No. of Breakdown</th>
-                                    <th className="border border-black px-2 py-1 print:px-1 print:py-1">Average day</th>
+                                    <th className="border border-black px-2 py-1 print:px-1 print:py-1">Average Day</th>
                                 </tr>
                             </thead>
 
                             <tbody>
                                 {centerMetrics.length > 0 ? (
                                     centerMetrics.map((row: any, idx: number) => (
-                                        <tr key={idx} className="text-[13px] print:text-[10px]">
+                                        <tr key={idx} className="text-[12px] md:text-[13px] print:text-[10px]">
                                             <td className="border border-black px-2 py-2 text-left bg-[#F3F1EB80] print:px-1 print:py-1">{row.site_name ?? '-'}</td>
                                             <td className="border border-black px-2 py-2 print:px-1 print:py-1">{row.total_assets ?? 0}</td>
                                             <td className="border border-black px-2 py-2 print:px-1 print:py-1">{row.critical?.breakdown ?? 0}</td>
@@ -3304,16 +3303,22 @@ const AllContent = () => {
 
 
                     {/* Table 2 */}
-                    <div className="bg-white border px-3 border-gray-300    mt-4 mb-6 print:mt-2 print:p-1 print:mb-1">
-                        <h2 className="text-lg ml-2 border-b border-gray-300 font-semibold mb-4 print:text-[13px] print:mb-1">
+                    <div className="bg-white border px-3 border-gray-300 mt-4 mb-6 print:mt-2 print:p-1 print:mb-1">
+                        <h2 className="text-lg md:text-lg ml-2 border-b border-gray-300 font-bold mb-4 tracking-wide print:text-[14px] print:mb-1">
                             Assets With Highest Maintenance Spend
                         </h2>
                         <div className="overflow-x-auto print:overflow-visible">
-                            <table className="min-w-full border border-black text-sm text-center print:text-[10px]">
-                                <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] print-bg-red">
-                                    <tr>
-                                        {["Rank", "Asset Name/ID", "Asset Category", "Site name", "Maintenance Cost₹", "Total Maintenance%", "Remark"].map((col) => (
-                                            <th key={col} className="border border-black px-2 py-1 print:px-0.5 print:py-1">{col}</th>
+                            <table className="min-w-full border border-black text-sm text-center align-middle print:text-[10px]">
+                                <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
+                                    <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[10px]">
+                                        {["Rank", "Asset Name/ID", "Asset Category", "Site Name", "Maintenance Cost (₹)", "Total Maintenance %", "Remark"].map((col) => (
+                                            <th
+                                                key={col}
+                                                scope="col"
+                                                className="border border-black px-2 py-2 print:px-1 print:py-1 whitespace-nowrap"
+                                            >
+                                                {col}
+                                            </th>
                                         ))}
                                     </tr>
                                 </thead>
@@ -3329,21 +3334,21 @@ const AllContent = () => {
                                     ) : (
                                         <>
                                             {highestAssets.map((row: any, idx: number) => (
-                                                <tr key={idx} className="bg-white print:bg-white">
-                                                    <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{row.rank ?? ''}</td>
-                                                    <td className="border border-black px-2 py-1.5 text-left print:px-1 print:py-[8px]">{row.asset_name_id ?? ''}</td>
-                                                    <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{row.asset_category ?? '-'}</td>
-                                                    <td className="border border-black px-2 py-1.5 text-left print:px-1 print:py-[8px]">{row.site_name ?? '-'}</td>
-                                                    <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">₹{Number(row.total_maintenance_cost ?? 0).toLocaleString()}</td>
-                                                    <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{Number(row.maintenance_percent ?? 0).toFixed(2)}%</td>
-                                                    <td className="border border-black px-2 py-1.5 text-left print:px-1 print:py-[10px]">{row.remark ?? '-'}</td>
+                                                <tr key={idx} className="bg-white print:bg-white text-[12px] md:text-[13px]">
+                                                    <td className="border border-black px-2 py-2 font-semibold print:px-1 print:py-[8px]">{row.rank ?? ''}</td>
+                                                    <td className="border border-black px-2 py-2 text-left print:px-1 print:py-[8px]">{row.asset_name_id ?? ''}</td>
+                                                    <td className="border border-black px-2 py-2 print:px-1 print:py-[8px]">{row.asset_category ?? '-'}</td>
+                                                    <td className="border border-black px-2 py-2 text-left print:px-1 print:py-[8px]">{row.site_name ?? '-'}</td>
+                                                    <td className="border border-black px-2 py-2 text-right tabular-nums print:px-1 print:py-[8px]">₹{Number(row.total_maintenance_cost ?? 0).toLocaleString()}</td>
+                                                    <td className="border border-black px-2 py-2 font-medium print:px-1 print:py-[8px]">{Number(row.maintenance_percent ?? 0).toFixed(2)}%</td>
+                                                    <td className="border border-black px-2 py-2 text-left print:px-1 print:py-[10px]">{row.remark ?? '-'}</td>
                                                 </tr>
                                             ))}
-                                            <tr className="font-semibold">
-                                                <td colSpan={4} className="border border-black px-2 py-1.5 text-right print:px-1 print:py-[10px]">Total</td>
-                                                <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">₹{highestTotals.total_cost.toLocaleString()}</td>
-                                                <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{highestTotals.total_percent.toFixed(2)}%</td>
-                                                <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]"></td>
+                                            <tr className="font-bold bg-[#F6F4EE]">
+                                                <td colSpan={4} className="border border-black px-2 py-2 text-right print:px-1 print:py-[8px]">Total</td>
+                                                <td className="border border-black px-2 py-2 text-right tabular-nums print:px-1 print:py-[8px]">₹{highestTotals.total_cost.toLocaleString()}</td>
+                                                <td className="border border-black px-2 py-2 font-semibold print:px-1 print:py-[8px]">{highestTotals.total_percent.toFixed(2)}%</td>
+                                                <td className="border border-black px-2 py-2 print:px-1 print:py-[8px]"></td>
                                             </tr>
                                         </>
                                     )}
@@ -3365,26 +3370,25 @@ const AllContent = () => {
             <div className="print-page break-before-page print:w-[95%] print:m-auto print-keep-together">
                 {/* AMC Contract Summary - standardized section box */}
                 <div className={sectionBox}>
-                    <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-[15px] print:mb-2 print:pb-1">
+                    <h2 className="text-lg md:text-lg font-bold tracking-wide mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-2 print:pb-1">
                         AMC Contract Summary
                     </h2>
-
-                    <div className="grid grid-cols-3 border py-4 text-center bg-[#f2f0eb] text-black font-semibold print:py-2">
-                        <div className="border-r border-gray-300 px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
-                            Active AMC Contracts<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-xl">
+                    <div className="grid grid-cols-3 border border-gray-300 bg-[#f2f0eb] text-black font-semibold divide-x divide-gray-300 print:py-2">
+                        <div className="px-4 py-6 flex flex-col items-center justify-center gap-1 print:py-2 print:px-2 print:text-[12px]">
+                            <span className="uppercase tracking-wide text-[13px] font-bold print:text-[12px]">Active AMC Contracts</span>
+                            <span className="text-4xl leading-tight text-[#C72030] font-extrabold tabular-nums print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.active.toLocaleString() : '-')}
                             </span>
                         </div>
-                        <div className="border-r border-gray-300 px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
-                            Contract Expiry in 90 Days<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-xl">
+                        <div className="px-4 py-6 flex flex-col items-center justify-center gap-1 print:py-2 print:px-2 print:text-[12px]">
+                            <span className="uppercase tracking-wide text-[13px] font-bold print:text-[12px] text-center">Contract Expiry in 90 Days</span>
+                            <span className="text-4xl leading-tight text-[#C72030] font-extrabold tabular-nums print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.expiry90.toLocaleString() : '-')}
                             </span>
                         </div>
-                        <div className="px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
-                            Contract Expired<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-xl">
+                        <div className="px-4 py-6 flex flex-col items-center justify-center gap-1 print:py-2 print:px-2 print:text-[12px]">
+                            <span className="uppercase tracking-wide text-[13px] font-bold print:text-[12px]">Contract Expired</span>
+                            <span className="text-4xl leading-tight text-[#C72030] font-extrabold tabular-nums print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.expired.toLocaleString() : '-')}
                             </span>
                         </div>
@@ -3393,42 +3397,39 @@ const AllContent = () => {
 
                 {/* AMC Contract Summary – Expiry in 90 Days - standardized section box */}
                 <div className={sectionBox}>
-                    <h2 className="text-lg font-bold mb-4 border-b border-gray-300 pb-2 print:text-[13px] print:mb-2 print:pb-1">
+                    <h2 className="text-lg md:text-lg font-bold tracking-wide mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-2 print:pb-1">
                         AMC Contract Summary – Expiry in 90 Days
                     </h2>
                     <div className="overflow-x-auto">
-                        <table className="min-w-full text-base border-t border-[#e2e0dc] leading-normal print:text-[9px] print:leading-loose print:table-fixed print:w-full">
+                        <table className="min-w-full border border-black text-sm text-center align-middle print:text-[9px] print:leading-relaxed print:table-fixed print:w-full">
                             <thead className="bg-[#DAD6C9] text-[#c72030]">
-                                <tr>
-                                    <th className="border border-black px-4 py-3 font-semibold text-center  print:px-1 print:py-1.5">Site Name</th>
-                                    <th className="border border-black px-4 py-3 font-semibold text-center print:px-1 print:py-1.5">AMC Name</th>
-                                    <th className="border border-black px-4 py-3 font-semibold text-center print:px-1 print:py-1.5">Contract Start Date</th>
-                                    <th className="border border-black px-4 py-3 font-semibold text-center print:px-1 print:py-1.5">Contract End Date</th>
-                                    <th className="border border-black px-4 py-3 font-semibold text-center print:px-1 print:py-1.5">Renewal Reminder</th>
-                                    <th className="border border-black px-4 py-3 font-semibold text-center print:px-1 print:py-1.5">Projected Renewal Cost (₹)</th>
-                                    <th className="border border-black px-4 py-3 font-semibold text-center print:px-1 print:py-1.5">Vendor Contact</th>
+                                <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[10px]">
+                                    {['Site Name','AMC Name','Contract Start Date','Contract End Date','Renewal Reminder','Projected Renewal Cost (₹)','Vendor Contact'].map(h => (
+                                        <th
+                                            key={h}
+                                            scope="col"
+                                            className="border border-black px-4 py-2 whitespace-nowrap print:whitespace-normal print:break-words print:leading-tight print:px-1 print:py-1.5"
+                                        >
+                                            {h}
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
-
-                            <tbody className="text-left">
+                            <tbody>
                                 {loadingAmcContractSummary ? (
-                                    <tr>
-                                        <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">Loading...</td>
-                                    </tr>
+                                    <tr><td colSpan={7} className="border border-black px-4 py-2 text-center print:px-1 print:py-2">Loading...</td></tr>
                                 ) : amcExpiringContracts.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">No data available</td>
-                                    </tr>
+                                    <tr><td colSpan={7} className="border border-black px-4 py-2 text-center print:px-1 print:py-2">No data available</td></tr>
                                 ) : (
                                     amcExpiringContracts.map((row: any, i: number) => (
-                                        <tr key={i} className="bg-white">
-                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.amc_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.contract_start_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.contract_end_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:border text-center print:border-black print:px-1 print:py-1.5">{row.renewal_reminder ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
-                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.vendor_contact ?? '-'}</td>
+                                        <tr key={i} className="bg-white text-[12px] md:text-[13px] print:text-[9px]">
+                                            <td className="border border-black px-4 py-2 bg-[#F3F1EB] font-semibold print:px-1 print:py-1.5">{row.site_name ?? '-'}</td>
+                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.amc_name ?? '-'}</td>
+                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_start_date ?? '-'}</td>
+                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_end_date ?? '-'}</td>
+                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.renewal_reminder ?? '-'}</td>
+                                            <td className="border border-black px-4 py-2 text-right tabular-nums print:px-1 print:py-1.5">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.vendor_contact ?? '-'}</td>
                                         </tr>
                                     ))
                                 )}
@@ -3436,57 +3437,52 @@ const AllContent = () => {
                         </table>
                     </div>
                     <p className="p-3 text-xs text-gray-600 italic border-t border-gray-300 print:p-1 print:text-[8px] print:leading-relaxed print:mt-2">
-                        <strong>Note:</strong> This table provides a site-wise summary of AMC contracts that are set to expire within the next 90 days, supporting proactive renewal planning and vendor coordination.
+                        <strong>Note:</strong> Expiring within 90 days – aids proactive renewal and budget planning.
                     </p>
                 </div>
                 <div className={sectionBox}>
-                    <div className="border py-3 px-3  print:shadow-none print:border break-inside-avoid print:break-inside-avoid">
-                        <h2 className="bg-white font-bold text-lg p-3 border-b border-gray-300 print:text-[13px] print:p-1 print:leading-relaxed">
+                    <div className="border border-gray-300 py-3 px-3 print:shadow-none break-inside-avoid print:break-inside-avoid">
+                        <h2 className="font-bold text-lg md:text-lg tracking-wide mb-3 pb-2 border-b border-gray-300 print:text-[14px] print:mb-1 print:pb-1">
                             AMC Contract Summary – Expired
                         </h2>
                         <div className="overflow-x-auto">
-                            <table className="min-w-full border text-base leading-normal print:table-fixed print:w-full print:text-[9px] print:leading-loose">
+                            <table className="min-w-full border border-black text-sm text-center align-middle print:table-fixed print:w-full print:text-[9px] print:leading-relaxed">
                                 <thead className="bg-[#DAD6C9] text-[#c72030]">
-                                    <tr>
-                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Site Name</th>
-                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">AMC Name</th>
-                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Contract Start Date</th>
-                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Contract End Date</th>
-                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Status</th>
-                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Projected Renewal Cost (₹)</th>
-                                        <th className="border border-black px-4 py-3 print:px-1 print:py-1.5 text-center">Vendor Contact</th>
+                                    <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[10px]">
+                                        {['Site Name','AMC Name','Contract Start Date','Contract End Date','Status','Projected Renewal Cost (₹)','Vendor Contact'].map(h => (
+                                            <th
+                                                key={h}
+                                                scope="col"
+                                                className="border border-black px-4 py-2 whitespace-nowrap print:whitespace-normal print:break-words print:leading-tight print:px-1 print:py-1.5"
+                                            >
+                                                {h}
+                                            </th>
+                                        ))}
                                     </tr>
                                 </thead>
-
-
-                                <tbody className="text-left">
+                                <tbody>
                                     {loadingAmcContractSummary ? (
-                                        <tr>
-                                            <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">Loading...</td>
-                                        </tr>
+                                        <tr><td colSpan={7} className="border border-black px-4 py-2 text-center print:px-1 print:py-2">Loading...</td></tr>
                                     ) : amcExpiredContracts.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">No data available</td>
-                                        </tr>
+                                        <tr><td colSpan={7} className="border border-black px-4 py-2 text-center print:px-1 print:py-2">No data available</td></tr>
                                     ) : (
                                         amcExpiredContracts.map((row: any, i: number) => (
-                                            <tr key={i} className={"bg-white"}>
-                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
-                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
-                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
-                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
-                                                <td className="border px-4 py-3 font-semibold text-center print:px-1 print:py-2">{row.status ?? 'Expired'}</td>
-                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
-                                                <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
+                                            <tr key={i} className="bg-white text-[12px] md:text-[13px] print:text-[9px]">
+                                                <td className="border border-black px-4 py-2 bg-[#F3F1EB] font-semibold print:px-1 print:py-1.5">{row.site_name ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.amc_name ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_start_date ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_end_date ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 font-semibold print:px-1 print:py-1.5">{row.status ?? 'Expired'}</td>
+                                                <td className="border border-black px-4 py-2 text-right tabular-nums print:px-1 print:py-1.5">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.vendor_contact ?? '-'}</td>
                                             </tr>
                                         ))
                                     )}
                                 </tbody>
                             </table>
-
                         </div>
                         <p className="p-3 text-xs text-gray-600 italic border-t border-gray-300 print:p-1 print:text-[8px] print:leading-relaxed print:mt-2">
-                            <strong>Note:</strong> This table provides a site-wise summary of AMC contracts that has been expired, supporting proactive renewal planning and vendor coordination.
+                            <strong>Note:</strong> Expired contracts – review for renewal decisions and vendor follow‑ups.
                         </p>
                     </div>
                 </div>
@@ -3551,7 +3547,7 @@ const AllContent = () => {
                         <div className="print:flex print:flex-col print:gap-2 print:h-[calc(100vh-180px)]">
                             {/* Table 1: Checklist Progress Status */}
                             <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
-                                <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
+                                <div className="p-4 text-lg md:text-lg font-bold border-b border-gray-300 print:p-2 print:text-[14px] ">
                                     Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
                                 </div>
                                 <div className="print:flex-1">
@@ -3643,7 +3639,7 @@ const AllContent = () => {
 
                             {/* Table 2: Top 10 Overdue Checklists */}
                             <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
-                                <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
+                                <div className="p-4 text-lg font-bold md:text-lg border-b border-gray-300 print:p-2 print:text-[14px] ">
                                     Top 10 Overdue Checklists – Center-wise Contribution Comparison
                                 </div>
                                 <div className="print:flex-1">
@@ -3716,7 +3712,7 @@ const AllContent = () => {
                 <div className={sectionBox}>
 
                     <div className="border border-gray-300 p-3">
-                        <h2 className="text-lg font-semibold mb-4 print:text-[12px] print:mb-1 print:py-0">
+                        <h2 className="text-lg font-bold md:text-lg mb-4 print:text-[14px] print:mb-1 print:py-0">
                             Overview Summary
                         </h2>
                         <hr className="border-t border-gray-300 mb-6 print:mb-2" />
@@ -3766,7 +3762,7 @@ const AllContent = () => {
                 }
             `}</style>
                         <div className="mb-4 print:mb-1 print:mt-4 ">
-                            <h1 className="text-lg font-semibold mb-4 print:text-[12px] print:mb-1 print:py-0">
+                            <h1 className="text-lg font-bold md:text-lg mb-4 print:text-[14px] print:mb-1 print:py-0">
                                 Overstock Analysis – Top 10 Items
                             </h1>
                             <hr className="my-2 border-gray-300 print:border-gray-300" />
@@ -3774,7 +3770,7 @@ const AllContent = () => {
                                 {/* Capital Book */}
                                 <div className="flex items-center space-x-2">
                                     <div className="w-5 h-5 print:w-4 print:h-4 rounded-full bg-[#c8bda3] border border-black"></div>
-                                    <span className="text-md print:text-[10px] font-medium">Capital Book</span>
+                                    <span className="text-md print:text-[10px] font-medium">Capital Block</span>
                                 </div>
 
                                 {/* Current Stock */}
@@ -3852,24 +3848,25 @@ const AllContent = () => {
 
 
                     {/* Top Consumables – Centre-wise Overview */}
-                    <div className="border border-gray-300  comment p-4 mt-0 print:border-gray-300  print:p-4 print:mt-0">
-                        <div className=" py-4 text-lg font-semibold border-b border-gray-300 print:p-3 print:text-[14px] print:border-gray-300">
+                    <div className="border border-gray-300 comment p-4 mt-0 print:border-gray-300 print:p-4 print:mt-0">
+                        <h2 className="text-lg md:text-lg font-bold tracking-wide mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-2 print:pb-1">
                             Top Consumables – Centre-wise Overview
-                        </div>
+                        </h2>
                         <div className="overflow-auto print:overflow-visible">
                             {loadingCenterWiseConsumables ? (
                                 <div className="p-4 text-sm text-gray-600">Loading center-wise consumables…</div>
                             ) : topConsumableHeaders.length === 0 ? (
                                 <div className="p-4 text-sm text-gray-600">No consumables data available.</div>
                             ) : (
-                                <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:leading-relaxed">
-                                    <thead>
-                                        <tr className="bg-[#DAD6C9] text-[#C72030] text-left print:bg-[#DAD6C9] print:text-[#C72030]">
-                                            <th className="py-1 px-4 print:py-1 print:px-2 print:w-[22%] print:whitespace-normal print:break-words print:align-top">Inventory</th>
+                                <table className="min-w-full border border-black text-sm align-middle print:table-fixed print:w-full print:text-[10px] print:leading-relaxed">
+                                    <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
+                                        <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[9px]">
+                                            <th scope="col" className="border border-black py-1 px-4 text-left bg-[#F6F4EE] print:py-1 print:px-2 print:w-[22%] print:whitespace-normal print:break-words print:align-top">Inventory</th>
                                             {topConsumableHeaders.map((header, index) => (
                                                 <th
                                                     key={index}
-                                                    className="py-1 px-2 text-left print:py-1 print:px-1 print:whitespace-normal print:break-words print:align-top print:text-[9px]"
+                                                    scope="col"
+                                                    className="border border-black py-1 px-2 text-right print:py-1 print:px-1 whitespace-nowrap print:whitespace-normal print:break-words print:align-top print:text-[9px]"
                                                 >
                                                     {header}
                                                 </th>
@@ -3878,13 +3875,16 @@ const AllContent = () => {
                                     </thead>
                                     <tbody>
                                         {consumablesTableData.map((row, i) => (
-                                            <tr key={i} className={i % 2 === 0 ? "bg-gray-50 print:bg-gray-50" : ""}>
-                                                <td className="py-1 px-4 bg-[#F6F4EE] font-medium print:py-1 print:px-2 print:bg-[#F6F4EE] print:whitespace-normal print:break-words print:align-top">
+                                            <tr key={i} className={i % 2 === 0 ? "bg-gray-50 print:bg-gray-50" : "bg-white print:bg-white"}>
+                                                <td className="border border-black py-1 px-4 bg-[#F6F4EE] font-semibold text-left print:py-1 print:px-2 print:bg-[#F6F4EE] print:whitespace-normal print:break-words print:align-top">
                                                     {row.inventory}
                                                 </td>
                                                 {row.values.map((value, j) => (
-                                                    <td key={j} className="py-1 px-2 text-center print:py-1 print:px-1 print:whitespace-normal print:break-words print:align-top print:text-[9px]">
-                                                        {value}
+                                                    <td
+                                                        key={j}
+                                                        className="border border-black py-1 px-2 text-right tabular-nums print:py-1 print:px-1 print:whitespace-normal print:break-words print:align-top print:text-[9px]"
+                                                    >
+                                                        {Number(value).toLocaleString()}
                                                     </td>
                                                 ))}
                                             </tr>
@@ -3896,17 +3896,14 @@ const AllContent = () => {
 
 
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[11px] print:mt-0 print:px-3 print:py-2 print:text-black">
-                            <strong>Note :</strong> This table highlights the top 10 consumable rate used across each
-                            centre, helping to monitor usage patterns and manage inventory more effectively.
-                            <br />
-                            {/* <strong>Formula:</strong> Total consumable x( Average Sqft (1000) / Site Sqft ) */}
+                            <strong>Note :</strong> This table highlights the top 10 consumables (highest overall usage) across each centre. Numeric values are right-aligned with tabular spacing for easier comparison.
                         </div>
                     </div>
 
                     {/* Consumable Inventory Value – {periodUnit}ly Comparison */}
                     {/* Consumable Inventory Value – Quarterly Comparison */}
                     <div className="p-8 bg-white border border-gray-300   print-page-break print:p-3 print:border-gray-300   print:mt-2">
-                        <h2 className="text-lg font-bold mb-4 text-gray-900 border-b pb-2 print:text-[14px] print:mb-1 print:pb-1 print:border-gray-300">
+                        <h2 className="text-lg md:text-lg font-bold mb-4 text-gray-900 border-b pb-2 print:text-[14px] print:mb-1 print:pb-1 print:border-gray-300">
                             Consumable Inventory Value – {periodUnit}ly Comparison
                         </h2>
                         <div className="h-[500px] print:h-[300px]">
@@ -3986,7 +3983,7 @@ const AllContent = () => {
                 </h1>
                 <div className={sectionBox}>
                     <div className="flex flex-col print:p-4 mb-8">
-                        <h2 className="text-lg  p-4  font-semibold mb-2">Parking Allocation Overview – Paid, Free & Vacant</h2>
+                        <h2 className="text-lg md:text-xl p-4 print:text-[14px] font-bold mb-2">Parking Allocation Overview – Paid, Free & Vacant</h2>
                         <div className="border-b border-gray-300 w-full" />
                     </div>
 
@@ -4101,7 +4098,7 @@ const AllContent = () => {
                 <div className={sectionBox}>
                     {/* Header and legend */}
                     <div className="flex p-4 flex-col print:p-4 mb-8">
-                        <h2 className="text-lg font-semibold mb-2">Visitor Trend Analysis</h2>
+                        <h2 className="text-lg md:text-lg print:text-[14px] font-bold mb-2">Visitor Trend Analysis</h2>
                         <div className="border-b border-gray-300 w-full" />
                     </div>
 
