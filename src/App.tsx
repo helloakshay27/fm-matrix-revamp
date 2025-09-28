@@ -743,6 +743,9 @@ function App() {
   const hostname = window.location.hostname;
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
+  useRouteLogger();
+
+  
   // Initialize global MUI Select search enhancer
   useEffect(() => {
     console.log(
@@ -757,7 +760,6 @@ function App() {
     };
   }, []);
 
-  useRouteLogger();
 
   // Check authentication and fetch currency on app load
   useEffect(() => {
