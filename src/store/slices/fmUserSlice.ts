@@ -71,6 +71,7 @@ export const getFMUsers = createAsyncThunk(
       lock_user_permission_status_eq = "",
       app_downloaded_eq,
       search_all_fields_cont = "",
+      employee_type = "",
     }: {
       baseUrl: string;
       token: string;
@@ -82,6 +83,7 @@ export const getFMUsers = createAsyncThunk(
       lock_user_permission_status_eq?: string;
       app_downloaded_eq?: boolean;
       search_all_fields_cont?: string;
+      employee_type?: string
     },
     { rejectWithValue }
   ) => {
@@ -94,6 +96,7 @@ export const getFMUsers = createAsyncThunk(
         "q[lastname_cont]": lastname_cont,
         "q[email_cont]": email_cont,
         "q[search_all_fields_cont]": search_all_fields_cont,
+        "q[employee_type_eq]": employee_type
       });
 
       if (app_downloaded_eq !== undefined) {

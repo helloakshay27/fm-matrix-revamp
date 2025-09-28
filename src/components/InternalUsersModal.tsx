@@ -13,8 +13,9 @@ import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { createProjectUsers } from '@/store/slices/projectUsersSlice';
+import { createFmUser } from '@/store/slices/fmUserSlice';
 
-const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companies, roles, users, isEditing, record }) => {
+const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, roles, users, isEditing, record }) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
@@ -85,11 +86,6 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
             }
         }
 
-        if (!formData.company) {
-            toast.error('Please select Company');
-            return false;
-        }
-
         if (!formData.role) {
             toast.error('Please select Role');
             return false;
@@ -120,15 +116,22 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
                     email: formData.emailId,
                     password: formData.password,
                     role_id: formData.role,
-                    user_type: "internal",
+                    employee_type: "internal",
                     report_to_id: formData.reportsTo,
-                    company_id: formData.company,
                 },
             };
 
-            await dispatch(createProjectUsers({ baseUrl, token, data: payload })).unwrap();
+            const response = await dispatch(createFmUser({ baseUrl, token, data: payload })).unwrap();
+
+            if (response.errors && Array.isArray(response.errors)) {
+                toast.error(response.errors[0]);
+                return;
+            }
+
             toast.success("Internal User added successfully");
-            fetchData();
+            fetchData(1, {
+                employee_type: "internal"
+            });
             handleCloseDialog();
         } catch (error) {
             console.log(error)
@@ -213,7 +216,7 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
                         ),
                     }}
                 />
-                <TextField
+                {/* <TextField
                     margin="dense"
                     name="company"
                     label="Company"
@@ -234,7 +237,7 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
                             <MenuItem key={company.id} value={company.id}>{company.name}</MenuItem>
                         ))
                     }
-                </TextField>
+                </TextField> */}
                 <TextField
                     margin="dense"
                     name="role"
@@ -275,7 +278,7 @@ const InternalUsersModal = ({ openDialog, handleCloseDialog, fetchData, companie
                     <MenuItem value="">Select...</MenuItem>
                     {
                         users.map((user) => (
-                            <MenuItem key={user.id} value={user.id}>{user.firstname + " " + user.lastname}</MenuItem>
+                            <MenuItem key={user.id} value={user.id}>{user.full_name}</MenuItem>
                         ))
                     }
                 </TextField>

@@ -126,7 +126,7 @@ export const ViewFMUserPage = () => {
         entity_id: userData.entity_id || '',
         designation: userData.lock_user_permission?.designation || '',
         employee_id: userData.lock_user_permission?.employee_id || '',
-        user_type: userData.user_type === 'pms_admin' ? 'internal' : 'external',
+        user_type: userData.employee_type,
         face_added: userData.face_added || false,
         app_downloaded: userData.app_downloaded || 'No',
         access_level: userData.lock_user_permission?.access_level || 'Site',
