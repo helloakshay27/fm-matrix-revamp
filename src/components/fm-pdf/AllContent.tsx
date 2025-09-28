@@ -3421,17 +3421,35 @@ const AllContent = () => {
                                 ) : amcExpiringContracts.length === 0 ? (
                                     <tr><td colSpan={7} className="border border-black px-4 py-2 text-center print:px-1 print:py-2">No data available</td></tr>
                                 ) : (
-                                    amcExpiringContracts.map((row: any, i: number) => (
-                                        <tr key={i} className="bg-white text-[12px] md:text-[13px] print:text-[9px]">
-                                            <td className="border border-black px-4 py-2 bg-[#F3F1EB] font-semibold print:px-1 print:py-1.5">{row.site_name ?? '-'}</td>
-                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.amc_name ?? '-'}</td>
-                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_start_date ?? '-'}</td>
-                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_end_date ?? '-'}</td>
-                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.renewal_reminder ?? '-'}</td>
-                                            <td className="border border-black px-4 py-2 text-right tabular-nums print:px-1 print:py-1.5">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
-                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.vendor_contact ?? '-'}</td>
-                                        </tr>
-                                    ))
+                                    amcExpiringContracts.map((row: any, i: number) => {
+                                        // Determine if the contract is expiring within 1 month (<=31 days) or the reminder text mentions 1 month
+                                        const daysUntil = (() => {
+                                            const d = row.contract_end_date ? new Date(row.contract_end_date) : null;
+                                            if (!d || isNaN(d.getTime())) return Infinity;
+                                            const today = new Date();
+                                            today.setHours(0,0,0,0);
+                                            d.setHours(0,0,0,0);
+                                            return Math.round((d.getTime() - today.getTime()) / 86400000);
+                                        })();
+                                        const reminderText = String(row.renewal_reminder || '').toLowerCase();
+                                        const highlightRenewal = (
+                                            (daysUntil >= 0 && daysUntil <= 31) ||
+                                            /within\s*1\s*month/.test(reminderText) ||
+                                            /\b1\s*month/.test(reminderText) ||
+                                            /30\s*day/.test(reminderText)
+                                        );
+                                        return (
+                                            <tr key={i} className="bg-white text-[12px] md:text-[13px] print:text-[9px]">
+                                                <td className="border border-black px-4 py-2 bg-[#F3F1EB] font-semibold print:px-1 print:py-1.5">{row.site_name ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.amc_name ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_start_date ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_end_date ?? '-'}</td>
+                                                <td className={`border border-black px-4 py-2 print:px-1 print:py-1.5 ${highlightRenewal ? 'text-[#C72030] font-semibold' : ''}`}>{row.renewal_reminder ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 text-right tabular-nums print:px-1 print:py-1.5">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.vendor_contact ?? '-'}</td>
+                                            </tr>
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
