@@ -2176,7 +2176,7 @@ export const SurveyResponseDetailPage = () => {
       <DialogContent className="max-w-md bg-white">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-gray-800 flex items-center">
-            <Download className="w-5 h-5 mr-2 text-[#C72030]" />
+            {/* <Download className="w-5 h-5 mr-2 text-[#C72030]" /> */}
             Export Survey Data
           </DialogTitle>
         </DialogHeader>
@@ -2798,7 +2798,7 @@ export const SurveyResponseDetailPage = () => {
                       className="flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
-                      Export
+                      {/* Export */}
                     </Button>
                   }
                   getItemId={(item: TabularResponseData) => item.id}
