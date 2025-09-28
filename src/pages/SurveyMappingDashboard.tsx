@@ -489,14 +489,14 @@ export const SurveyMappingDashboard = () => {
           <div className="flex justify-center items-center gap-2">
             <button 
               onClick={() => handleViewClick(item)}
-              className="p-1 text-blue-600 hover:text-blue-800"
+              className="p-1 text-black-600 hover:text-black-800"
               title="View"
             >
               <Eye className="w-4 h-4" />
             </button>
             <button 
               onClick={() => handleEditClick(item)}
-              className="p-1 text-green-600 hover:text-green-800"
+              className="p-1 text-black-600 hover:text-black-800"
               title="Edit"
             >
               <Edit className="w-4 h-4" />
