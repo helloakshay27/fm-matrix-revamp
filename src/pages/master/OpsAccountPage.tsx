@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Upload, X, Edit, File } from 'lucide-react';
+import { Plus, Search, Upload, X, Edit, File, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useApiConfig } from '@/hooks/useApiConfig';
@@ -41,9 +41,17 @@ export const OpsAccountPage = () => {
     region: ''
   });
   const [newRegionData, setNewRegionData] = useState({
-    country: '',
-    regionName: ''
+    name: '',
+    company_id: '',
+    headquarter_id: ''
   });
+  const [editRegionData, setEditRegionData] = useState({
+    id: '',
+    name: '',
+    company_id: '',
+    headquarter_id: ''
+  });
+  const [isEditRegionOpen, setIsEditRegionOpen] = useState(false);
   const [showEntityForm, setShowEntityForm] = useState(false);
   const [newZoneData, setNewZoneData] = useState({
     country: '',
@@ -79,7 +87,9 @@ export const OpsAccountPage = () => {
   const [editingCountry, setEditingCountry] = useState<any>(null);
   const [countryFormData, setCountryFormData] = useState({
     name: '',
-    logo: null as File | null
+    logo: null as File | null,
+    company_setup_id: '',
+    country_id: ''
   });
   const [canEditCountry, setCanEditCountry] = useState(false);
 
@@ -89,6 +99,9 @@ export const OpsAccountPage = () => {
   const [isAddCompanyOpen, setIsAddCompanyOpen] = useState(false);
   const [isEditCompanyOpen, setIsEditCompanyOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<any>(null);
+  const [countriesMap, setCountriesMap] = useState<Map<number, string>>(new Map());
+  const [organizationsMap, setOrganizationsMap] = useState<Map<number, string>>(new Map());
+  const [companiesMap, setCompaniesMap] = useState<Map<number, string>>(new Map());
   const [companyFormData, setCompanyFormData] = useState({
     name: '',
     organization_id: '',
@@ -108,16 +121,16 @@ export const OpsAccountPage = () => {
   const [companySearchTerm, setCompanySearchTerm] = useState('');
   const [companyCurrentPage, setCompanyCurrentPage] = useState(1);
   const companiesPerPage = 10;
+  const [countryCurrentPage, setCountryCurrentPage] = useState(1);
+  const countriesPerPage = 10;
+  const [countrySearchTerm, setCountrySearchTerm] = useState('');
   const [isDeletingCompany, setIsDeletingCompany] = useState(false);
   const [isCreatingCompany, setIsCreatingCompany] = useState(false);
   const [isUpdatingCompany, setIsUpdatingCompany] = useState(false);
 
-  const [regions, setRegions] = useState([
-    { country: 'India', region: 'East', status: true },
-    { country: 'India', region: 'South', status: true },
-    { country: 'India', region: 'North', status: true },
-    { country: 'India', region: 'West', status: true },
-  ]);
+  const [regions, setRegions] = useState<any[]>([]);
+  const [isLoadingRegions, setIsLoadingRegions] = useState(false);
+  const [headquartersMap, setHeadquartersMap] = useState<Map<number, string>>(new Map());
 
   const [zones, setZones] = useState([
     { country: 'India', region: 'West', zone: 'Bali', status: true, icon: '/placeholder.svg' },
@@ -165,6 +178,8 @@ export const OpsAccountPage = () => {
   useEffect(() => {
     if (activeTab === 'country') {
       fetchCountries();
+      fetchCompanies(); // For companiesMap
+      fetchCountriesDropdown(); // For countriesMap
       checkEditPermission();
     }
   }, [activeTab]);
@@ -174,6 +189,16 @@ export const OpsAccountPage = () => {
     if (activeTab === 'organization') {
       fetchOrganizations();
       fetchCountriesDropdown();
+      checkEditPermission();
+    }
+  }, [activeTab]);
+
+  // Fetch regions and related data
+  useEffect(() => {
+    if (activeTab === 'region') {
+      fetchRegions();
+      fetchCompanies(); // For companiesMap
+      fetchCountries(); // For headquarters data
       checkEditPermission();
     }
   }, [activeTab]);
@@ -211,9 +236,20 @@ export const OpsAccountPage = () => {
         // Handle nested response structure: { organizations: [...] }
         if (data && data.organizations && Array.isArray(data.organizations)) {
           setOrganizations(data.organizations);
+          // Create organizations map for company display
+          const orgMap = new Map();
+          data.organizations.forEach((org: any) => {
+            orgMap.set(org.id, org.name);
+          });
+          setOrganizationsMap(orgMap);
         } else if (Array.isArray(data)) {
           // Fallback for direct array response
           setOrganizations(data);
+          const orgMap = new Map();
+          data.forEach((org: any) => {
+            orgMap.set(org.id, org.name);
+          });
+          setOrganizationsMap(orgMap);
         } else {
           console.error('Organizations data format unexpected:', data);
           setOrganizations([]);
@@ -249,6 +285,12 @@ export const OpsAccountPage = () => {
         if (data && data.countries && Array.isArray(data.countries)) {
           const mappedCountries = data.countries.map(([id, name]) => ({ id, name }));
           setCountriesDropdown(mappedCountries);
+          // Create countries map for company display
+          const countryMap = new Map();
+          data.countries.forEach(([id, name]) => {
+            countryMap.set(id, name);
+          });
+          setCountriesMap(countryMap);
         } else if (Array.isArray(data)) {
           // Fallback for direct array response
           const mappedCountries = data.map((item) => {
@@ -258,6 +300,12 @@ export const OpsAccountPage = () => {
             return { id: item.id || item.value, name: item.name || item.label };
           });
           setCountriesDropdown(mappedCountries);
+          // Create countries map for company display
+          const countryMap = new Map();
+          mappedCountries.forEach((country) => {
+            countryMap.set(country.id, country.name);
+          });
+          setCountriesMap(countryMap);
         } else {
           console.error('Countries data format unexpected:', data);
           setCountriesDropdown([]);
@@ -670,25 +718,102 @@ export const OpsAccountPage = () => {
     }
   };
 
-  const handleAddRegion = () => {
-    if (!newRegionData.country || !newRegionData.regionName.trim()) {
-      toast.error('Please select a country and enter a region name');
+  const handleAddRegion = async () => {
+    if (!newRegionData.name.trim() || !newRegionData.company_id || !newRegionData.headquarter_id) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
-    // Add the new region to the regions array
-    const newRegion = {
-      country: newRegionData.country,
-      region: newRegionData.regionName,
-      status: true
-    };
+    try {
+      const response = await fetch(getFullUrl('/pms/regions.json'), {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pms_region: {
+            name: newRegionData.name,
+            company_id: parseInt(newRegionData.company_id),
+            headquarter_id: parseInt(newRegionData.headquarter_id)
+          }
+        }),
+      });
 
-    setRegions([...regions, newRegion]);
-    toast.success(`Region "${newRegionData.regionName}" added successfully`);
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Region created successfully:', result);
+        toast.success(`Region "${newRegionData.name}" added successfully`);
+        
+        // Refresh regions list
+        await fetchRegions();
+        
+        // Reset form and close dialog
+        setNewRegionData({ name: '', company_id: '', headquarter_id: '' });
+        setIsAddRegionOpen(false);
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to create region:', errorData);
+        toast.error('Failed to create region');
+      }
+    } catch (error) {
+      console.error('Error creating region:', error);
+      toast.error('Error creating region');
+    }
+  };
 
-    // Reset form and close dialog
-    setNewRegionData({ country: '', regionName: '' });
-    setIsAddRegionOpen(false);
+  const handleEditRegion = (region: any) => {
+    setEditRegionData({
+      id: region.id,
+      name: region.name || region.region || '',
+      company_id: region.company_id || '',
+      headquarter_id: region.headquarter_id || ''
+    });
+    setIsEditRegionOpen(true);
+  };
+
+  const handleUpdateRegion = async () => {
+    if (!editRegionData.name.trim() || !editRegionData.company_id || !editRegionData.headquarter_id) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      const response = await fetch(getFullUrl(`/pms/regions/${editRegionData.id}.json`), {
+        method: 'PATCH',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pms_region: {
+            name: editRegionData.name,
+            company_id: parseInt(editRegionData.company_id),
+            headquarter_id: parseInt(editRegionData.headquarter_id)
+          }
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Region updated successfully:', result);
+        toast.success(`Region "${editRegionData.name}" updated successfully`);
+        
+        // Refresh regions list
+        await fetchRegions();
+        
+        // Reset form and close dialog
+        setEditRegionData({ id: '', name: '', company_id: '', headquarter_id: '' });
+        setIsEditRegionOpen(false);
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to update region:', errorData);
+        toast.error('Failed to update region');
+      }
+    } catch (error) {
+      console.error('Error updating region:', error);
+      toast.error('Error updating region');
+    }
   };
 
   const handleAddZone = () => {
@@ -730,7 +855,7 @@ export const OpsAccountPage = () => {
   const fetchCountries = async () => {
     setIsLoadingCountries(true);
     try {
-      const response = await fetch(getFullUrl('/pms/countries.json'), {
+      const response = await fetch(getFullUrl('/headquarters.json'), {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
@@ -739,130 +864,203 @@ export const OpsAccountPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Countries API response:', data);
+        console.log('Headquarters API response:', data);
         
-        // Handle response structure
+        // Handle response structure for headquarters
         if (Array.isArray(data)) {
           setCountries(data);
-        } else if (data && data.countries && Array.isArray(data.countries)) {
-          setCountries(data.countries);
+          // Build headquarters map for region lookups
+          const hqMap = new Map();
+          data.forEach((hq: any) => {
+            if (hq.id && hq.country_name) {
+              hqMap.set(hq.id, hq.country_name);
+            }
+          });
+          setHeadquartersMap(hqMap);
+        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
+          setCountries(data.headquarters);
+          // Build headquarters map for region lookups
+          const hqMap = new Map();
+          data.headquarters.forEach((hq: any) => {
+            if (hq.id && hq.country_name) {
+              hqMap.set(hq.id, hq.country_name);
+            }
+          });
+          setHeadquartersMap(hqMap);
+        } else if (data && data.data && Array.isArray(data.data)) {
+          setCountries(data.data);
+          // Build headquarters map for region lookups
+          const hqMap = new Map();
+          data.data.forEach((hq: any) => {
+            if (hq.id && hq.country_name) {
+              hqMap.set(hq.id, hq.country_name);
+            }
+          });
+          setHeadquartersMap(hqMap);
         } else {
-          console.error('Countries data format unexpected:', data);
+          console.error('Headquarters data format unexpected:', data);
           setCountries([]);
-          toast.error('Invalid countries data format');
+          toast.error('Invalid headquarters data format');
         }
       } else {
-        toast.error('Failed to fetch countries');
+        toast.error('Failed to fetch headquarters');
         setCountries([]);
       }
     } catch (error) {
-      console.error('Error fetching countries:', error);
-      toast.error('Error fetching countries');
+      console.error('Error fetching headquarters:', error);
+      toast.error('Error fetching headquarters');
       setCountries([]);
     } finally {
       setIsLoadingCountries(false);
     }
   };
 
+  const fetchRegions = async () => {
+    setIsLoadingRegions(true);
+    try {
+      const response = await fetch(getFullUrl('/pms/regions.json'), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Regions API response:', data);
+        
+        // Handle response structure for regions
+        if (Array.isArray(data)) {
+          setRegions(data);
+        } else if (data && data.regions && Array.isArray(data.regions)) {
+          setRegions(data.regions);
+        } else if (data && data.data && Array.isArray(data.data)) {
+          setRegions(data.data);
+        } else {
+          console.error('Regions data format unexpected:', data);
+          setRegions([]);
+          toast.error('Invalid regions data format');
+        }
+      } else {
+        toast.error('Failed to fetch regions');
+        setRegions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching regions:', error);
+      toast.error('Error fetching regions');
+      setRegions([]);
+    } finally {
+      setIsLoadingRegions(false);
+    }
+  };
+
   const handleCreateCountry = async () => {
-    if (!countryFormData.name.trim()) {
-      toast.error('Please enter country name');
+    if (!countryFormData.company_setup_id || !countryFormData.country_id) {
+      toast.error('Please select both company and country');
       return;
     }
 
     if (!canEditCountry) {
-      toast.error('You do not have permission to create countries');
+      toast.error('You do not have permission to create headquarters');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('pms_country[name]', countryFormData.name);
-    if (countryFormData.logo) {
-      formData.append('pms_country[logo]', countryFormData.logo);
-    }
-
     try {
-      const response = await fetch(getFullUrl('/pms/countries.json'), {
+      const response = await fetch(getFullUrl('/headquarters.json'), {
         method: 'POST',
         headers: {
           'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({
+          pms_headquarter: {
+            company_setup_id: parseInt(countryFormData.company_setup_id),
+            country_id: parseInt(countryFormData.country_id)
+          }
+        }),
       });
 
       if (response.ok) {
-        toast.success('Country created successfully');
+        toast.success('Headquarters created successfully');
         fetchCountries();
         setIsAddCountryOpen(false);
         setCountryFormData({
           name: '',
-          logo: null
+          logo: null,
+          company_setup_id: '',
+          country_id: ''
         });
       } else {
-        toast.error('Failed to create country');
+        const errorData = await response.json();
+        console.error('Failed to create headquarters:', errorData);
+        toast.error('Failed to create headquarters');
       }
     } catch (error) {
-      console.error('Error creating country:', error);
-      toast.error('Error creating country');
+      console.error('Error creating headquarters:', error);
+      toast.error('Error creating headquarters');
     }
   };
 
   const handleUpdateCountry = async () => {
-    if (!editingCountry || !countryFormData.name.trim()) {
-      toast.error('Please enter country name');
+    if (!editingCountry || !countryFormData.company_setup_id || !countryFormData.country_id) {
+      toast.error('Please select both company and country');
       return;
     }
 
     if (!canEditCountry) {
-      toast.error('You do not have permission to edit countries');
+      toast.error('You do not have permission to edit headquarters');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('pms_country[name]', countryFormData.name);
-    if (countryFormData.logo) {
-      formData.append('pms_country[logo]', countryFormData.logo);
-    }
-
     try {
-      const response = await fetch(getFullUrl(`/pms/countries/${editingCountry.id}.json`), {
-        method: 'PUT',
+      const response = await fetch(getFullUrl(`/headquarters/${editingCountry.id}.json`), {
+        method: 'PATCH',
         headers: {
           'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({
+          pms_headquarter: {
+            company_setup_id: parseInt(countryFormData.company_setup_id),
+            country_id: parseInt(countryFormData.country_id)
+          }
+        }),
       });
 
       if (response.ok) {
-        toast.success('Country updated successfully');
+        toast.success('Headquarters updated successfully');
         fetchCountries();
         setIsEditCountryOpen(false);
         setEditingCountry(null);
         setCountryFormData({
           name: '',
-          logo: null
+          logo: null,
+          company_setup_id: '',
+          country_id: ''
         });
       } else {
-        toast.error('Failed to update country');
+        const errorData = await response.json();
+        console.error('Failed to update headquarters:', errorData);
+        toast.error('Failed to update headquarters');
       }
     } catch (error) {
-      console.error('Error updating country:', error);
-      toast.error('Error updating country');
+      console.error('Error updating headquarters:', error);
+      toast.error('Error updating headquarters');
     }
   };
 
   const handleDeleteCountry = async (countryId: number) => {
     if (!canEditCountry) {
-      toast.error('You do not have permission to delete countries');
+      toast.error('You do not have permission to delete headquarters');
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this country?')) {
+    if (!confirm('Are you sure you want to delete this headquarters?')) {
       return;
     }
 
     try {
-      const response = await fetch(getFullUrl(`/pms/countries/${countryId}.json`), {
+      const response = await fetch(getFullUrl(`/headquarters/${countryId}.json`), {
         method: 'DELETE',
         headers: {
           'Authorization': getAuthHeader(),
@@ -870,27 +1068,29 @@ export const OpsAccountPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Country deleted successfully');
+        toast.success('Headquarters deleted successfully');
         fetchCountries();
       } else {
-        toast.error('Failed to delete country');
+        toast.error('Failed to delete headquarters');
       }
     } catch (error) {
-      console.error('Error deleting country:', error);
-      toast.error('Error deleting country');
+      console.error('Error deleting headquarters:', error);
+      toast.error('Error deleting headquarters');
     }
   };
 
-  const handleEditCountry = (country: any) => {
+  const handleEditCountry = (headquarters: any) => {
     if (!canEditCountry) {
-      toast.error('You do not have permission to edit countries');
+      toast.error('You do not have permission to edit headquarters');
       return;
     }
 
-    setEditingCountry(country);
+    setEditingCountry(headquarters);
     setCountryFormData({
-      name: country.name || '',
-      logo: null
+      name: headquarters.name || '',
+      logo: null,
+      company_setup_id: headquarters.company_setup_id?.toString() || '',
+      country_id: headquarters.country_id?.toString() || ''
     });
     setIsEditCountryOpen(true);
   };
@@ -916,17 +1116,38 @@ export const OpsAccountPage = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('Companies API response:', data);
+        const responseData = await response.json();
+        console.log('Companies API response:', responseData);
         
-        // Handle the API response format
-        if (data && Array.isArray(data.companies)) {
-          setCompanies(data.companies);
-        } else if (Array.isArray(data)) {
-          setCompanies(data);
+        // Handle the new API response format with nested data structure
+        if (responseData && responseData.code === 200 && Array.isArray(responseData.data)) {
+          setCompanies(responseData.data);
+          // Create companies map for headquarters display
+          const compMap = new Map();
+          responseData.data.forEach((company: any) => {
+            compMap.set(company.id, company.name);
+          });
+          setCompaniesMap(compMap);
+        } else if (responseData && Array.isArray(responseData.companies)) {
+          // Fallback for old format
+          setCompanies(responseData.companies);
+          const compMap = new Map();
+          responseData.companies.forEach((company: any) => {
+            compMap.set(company.id, company.name);
+          });
+          setCompaniesMap(compMap);
+        } else if (Array.isArray(responseData)) {
+          // Direct array format
+          setCompanies(responseData);
+          const compMap = new Map();
+          responseData.forEach((company: any) => {
+            compMap.set(company.id, company.name);
+          });
+          setCompaniesMap(compMap);
         } else {
-          console.warn('Companies data is not an array:', data);
+          console.warn('Companies data format unexpected:', responseData);
           setCompanies([]);
+          toast.error('Invalid companies data format');
         }
       } else {
         console.error('Failed to fetch companies:', response.statusText);
@@ -951,6 +1172,8 @@ export const OpsAccountPage = () => {
     setIsCreatingCompany(true);
     try {
       const formData = new FormData();
+      
+      // Company setup data
       formData.append('pms_company_setup[name]', companyFormData.name);
       formData.append('pms_company_setup[organization_id]', companyFormData.organization_id);
       formData.append('pms_company_setup[country_id]', companyFormData.country_id);
@@ -959,26 +1182,34 @@ export const OpsAccountPage = () => {
       formData.append('pms_company_setup[live_date]', companyFormData.live_date);
       formData.append('pms_company_setup[remarks]', companyFormData.remarks);
       
-      if (companyFormData.logo) {
-        formData.append('pms_company_setup[logo]', companyFormData.logo);
-      }
-
-      // Address data
-      formData.append('bill_to_address[address]', companyFormData.bill_to_address.address);
-      formData.append('bill_to_address[email]', companyFormData.bill_to_address.email);
-      formData.append('postal_address[address]', companyFormData.postal_address.address);
-      formData.append('postal_address[email]', companyFormData.postal_address.email);
-
-      // SPOC data
-      formData.append('finance_spoc[name]', companyFormData.finance_spoc.name);
-      formData.append('finance_spoc[designation]', companyFormData.finance_spoc.designation);
-      formData.append('finance_spoc[email]', companyFormData.finance_spoc.email);
-      formData.append('finance_spoc[mobile]', companyFormData.finance_spoc.mobile);
+      // Address data with nested attributes structure
+      formData.append('pms_company_setup[bill_to_address_attributes][address]', companyFormData.bill_to_address.address);
+      formData.append('pms_company_setup[bill_to_address_attributes][email]', companyFormData.bill_to_address.email);
+      formData.append('pms_company_setup[bill_to_address_attributes][address_type]', 'BillTo');
       
-      formData.append('operation_spoc[name]', companyFormData.operation_spoc.name);
-      formData.append('operation_spoc[designation]', companyFormData.operation_spoc.designation);
-      formData.append('operation_spoc[email]', companyFormData.operation_spoc.email);
-      formData.append('operation_spoc[mobile]', companyFormData.operation_spoc.mobile);
+      formData.append('pms_company_setup[postal_address_attributes][address]', companyFormData.postal_address.address);
+      formData.append('pms_company_setup[postal_address_attributes][email]', companyFormData.postal_address.email);
+      formData.append('pms_company_setup[postal_address_attributes][address_type]', 'Postal');
+
+      // SPOC data with nested attributes structure
+      formData.append('pms_company_setup[finance_spoc_attributes][name]', companyFormData.finance_spoc.name);
+      formData.append('pms_company_setup[finance_spoc_attributes][designation]', companyFormData.finance_spoc.designation);
+      formData.append('pms_company_setup[finance_spoc_attributes][email]', companyFormData.finance_spoc.email);
+      formData.append('pms_company_setup[finance_spoc_attributes][mobile]', companyFormData.finance_spoc.mobile);
+      formData.append('pms_company_setup[finance_spoc_attributes][spoc_type]', 'Finance');
+      
+      formData.append('pms_company_setup[operation_spoc_attributes][name]', companyFormData.operation_spoc.name);
+      formData.append('pms_company_setup[operation_spoc_attributes][designation]', companyFormData.operation_spoc.designation);
+      formData.append('pms_company_setup[operation_spoc_attributes][email]', companyFormData.operation_spoc.email);
+      formData.append('pms_company_setup[operation_spoc_attributes][mobile]', companyFormData.operation_spoc.mobile);
+      formData.append('pms_company_setup[operation_spoc_attributes][spoc_type]', 'Operation');
+      
+      // Logo
+      if (companyFormData.logo) {
+        formData.append('logo', companyFormData.logo);
+      } else {
+        formData.append('logo', '');
+      }
 
       const response = await fetch(getFullUrl('/pms/company_setups/create_company.json'), {
         method: 'POST',
@@ -994,6 +1225,8 @@ export const OpsAccountPage = () => {
         resetCompanyForm();
         fetchCompanies();
       } else {
+        const errorData = await response.json();
+        console.error('Failed to create company:', errorData);
         toast.error('Failed to create company');
       }
     } catch (error) {
@@ -1013,6 +1246,8 @@ export const OpsAccountPage = () => {
     setIsUpdatingCompany(true);
     try {
       const formData = new FormData();
+      
+      // Company setup data
       formData.append('pms_company_setup[name]', companyFormData.name);
       formData.append('pms_company_setup[organization_id]', companyFormData.organization_id);
       formData.append('pms_company_setup[country_id]', companyFormData.country_id);
@@ -1021,29 +1256,45 @@ export const OpsAccountPage = () => {
       formData.append('pms_company_setup[live_date]', companyFormData.live_date);
       formData.append('pms_company_setup[remarks]', companyFormData.remarks);
       
+      // Address data with nested attributes structure (include IDs for updates)
+      if (selectedCompany.bill_to_address?.id) {
+        formData.append('pms_company_setup[bill_to_address_attributes][id]', selectedCompany.bill_to_address.id.toString());
+      }
+      formData.append('pms_company_setup[bill_to_address_attributes][address]', companyFormData.bill_to_address.address);
+      formData.append('pms_company_setup[bill_to_address_attributes][email]', companyFormData.bill_to_address.email);
+      
+      if (selectedCompany.postal_address?.id) {
+        formData.append('pms_company_setup[postal_address_attributes][id]', selectedCompany.postal_address.id.toString());
+      }
+      formData.append('pms_company_setup[postal_address_attributes][address]', companyFormData.postal_address.address);
+      formData.append('pms_company_setup[postal_address_attributes][email]', companyFormData.postal_address.email);
+
+      // SPOC data with nested attributes structure (include IDs for updates)
+      if (selectedCompany.finance_spoc?.id) {
+        formData.append('pms_company_setup[finance_spoc_attributes][id]', selectedCompany.finance_spoc.id.toString());
+      }
+      formData.append('pms_company_setup[finance_spoc_attributes][name]', companyFormData.finance_spoc.name);
+      formData.append('pms_company_setup[finance_spoc_attributes][designation]', companyFormData.finance_spoc.designation);
+      formData.append('pms_company_setup[finance_spoc_attributes][email]', companyFormData.finance_spoc.email);
+      formData.append('pms_company_setup[finance_spoc_attributes][mobile]', companyFormData.finance_spoc.mobile);
+      
+      if (selectedCompany.operation_spoc?.id) {
+        formData.append('pms_company_setup[operation_spoc_attributes][id]', selectedCompany.operation_spoc.id.toString());
+      }
+      formData.append('pms_company_setup[operation_spoc_attributes][name]', companyFormData.operation_spoc.name);
+      formData.append('pms_company_setup[operation_spoc_attributes][designation]', companyFormData.operation_spoc.designation);
+      formData.append('pms_company_setup[operation_spoc_attributes][email]', companyFormData.operation_spoc.email);
+      formData.append('pms_company_setup[operation_spoc_attributes][mobile]', companyFormData.operation_spoc.mobile);
+      
+      // Logo
       if (companyFormData.logo) {
-        formData.append('pms_company_setup[logo]', companyFormData.logo);
+        formData.append('logo', companyFormData.logo);
+      } else {
+        formData.append('logo', '');
       }
 
-      // Address data
-      formData.append('bill_to_address[address]', companyFormData.bill_to_address.address);
-      formData.append('bill_to_address[email]', companyFormData.bill_to_address.email);
-      formData.append('postal_address[address]', companyFormData.postal_address.address);
-      formData.append('postal_address[email]', companyFormData.postal_address.email);
-
-      // SPOC data
-      formData.append('finance_spoc[name]', companyFormData.finance_spoc.name);
-      formData.append('finance_spoc[designation]', companyFormData.finance_spoc.designation);
-      formData.append('finance_spoc[email]', companyFormData.finance_spoc.email);
-      formData.append('finance_spoc[mobile]', companyFormData.finance_spoc.mobile);
-      
-      formData.append('operation_spoc[name]', companyFormData.operation_spoc.name);
-      formData.append('operation_spoc[designation]', companyFormData.operation_spoc.designation);
-      formData.append('operation_spoc[email]', companyFormData.operation_spoc.email);
-      formData.append('operation_spoc[mobile]', companyFormData.operation_spoc.mobile);
-
       const response = await fetch(getFullUrl(`/pms/company_setups/${selectedCompany.id}/company_update.json`), {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Authorization': getAuthHeader(),
         },
@@ -1056,6 +1307,8 @@ export const OpsAccountPage = () => {
         resetCompanyForm();
         fetchCompanies();
       } else {
+        const errorData = await response.json();
+        console.error('Failed to update company:', errorData);
         toast.error('Failed to update company');
       }
     } catch (error) {
@@ -1749,19 +2002,18 @@ export const OpsAccountPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Company Logo</TableHead>
                       <TableHead>Company Name</TableHead>
                       <TableHead>Organization</TableHead>
                       <TableHead>Country</TableHead>
-                      <TableHead>Billing Rate</TableHead>
-                      <TableHead>Live Date</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {!Array.isArray(companies) || companies.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                        <TableCell colSpan={6} className="text-center text-gray-500 py-8">
                           No companies found
                         </TableCell>
                       </TableRow>
@@ -1773,18 +2025,27 @@ export const OpsAccountPage = () => {
                         .slice((companyCurrentPage - 1) * companiesPerPage, companyCurrentPage * companiesPerPage)
                         .map((company) => (
                           <TableRow key={company.id}>
-                            <TableCell className="font-medium">{company.name}</TableCell>
-                            <TableCell>{company.organization?.name || 'N/A'}</TableCell>
-                            <TableCell>{company.country?.name || 'N/A'}</TableCell>
-                            <TableCell>{company.billing_rate || 'N/A'}</TableCell>
-                            <TableCell>{company.live_date || 'N/A'}</TableCell>
+                            <TableCell className="font-medium">{company.id}</TableCell>
                             <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                company.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                              }`}>
-                                {company.active ? 'Active' : 'Inactive'}
-                              </span>
+                              {company.company_logo_url ? (
+                                <img 
+                                  src={company.company_logo_url} 
+                                  alt={`${company.name} logo`}
+                                  className="w-8 h-8 object-contain rounded"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                                  No Logo
+                                </div>
+                              )}
                             </TableCell>
+                            <TableCell className="font-medium">{company.name}</TableCell>
+                            <TableCell>{organizationsMap.get(company.organization_id) || 'N/A'}</TableCell>
+                            <TableCell>{countriesMap.get(company.country_id) || 'N/A'}</TableCell>
                             <TableCell>
                               <div className="flex space-x-2">
                                 <Button
@@ -1848,36 +2109,47 @@ export const OpsAccountPage = () => {
                   disabled={!canEditCountry}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Country
+                  Add Headquarters
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add Country</DialogTitle>
+                  <DialogTitle>Add Headquarters</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Country Name *
+                      Company *
                     </label>
-                    <input
-                      type="text"
-                      value={countryFormData.name}
-                      onChange={(e) => setCountryFormData({ ...countryFormData, name: e.target.value })}
+                    <select
+                      value={countryFormData.company_setup_id}
+                      onChange={(e) => setCountryFormData({ ...countryFormData, company_setup_id: e.target.value })}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                      placeholder="Enter country name"
-                    />
+                    >
+                      <option value="">Select Company</option>
+                      {Array.isArray(companies) && companies.map((company) => (
+                        <option key={company.id} value={company.id}>
+                          {company.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Country Logo
+                      Country *
                     </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCountryLogoChange}
+                    <select
+                      value={countryFormData.country_id}
+                      onChange={(e) => setCountryFormData({ ...countryFormData, country_id: e.target.value })}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                    />
+                    >
+                      <option value="">Select Country</option>
+                      {Array.isArray(countriesDropdown) && countriesDropdown.map((country) => (
+                        <option key={country.id} value={country.id}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" onClick={() => setIsAddCountryOpen(false)}>
@@ -1887,7 +2159,7 @@ export const OpsAccountPage = () => {
                       className="bg-[#C72030] hover:bg-[#A01020] text-white"
                       onClick={handleCreateCountry}
                     >
-                      Create Country
+                      Create Headquarters
                     </Button>
                   </div>
                 </div>
@@ -1907,9 +2179,9 @@ export const OpsAccountPage = () => {
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search headquarters..."
+                  value={countrySearchTerm}
+                  onChange={(e) => setCountrySearchTerm(e.target.value)}
                   className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                 />
               </div>
@@ -1922,8 +2194,8 @@ export const OpsAccountPage = () => {
                 <TableHeader>
                   <TableRow className="bg-gray-50">
                     <TableHead className="font-semibold">ID</TableHead>
-                    <TableHead className="font-semibold">Country Name</TableHead>
-                    <TableHead className="font-semibold">Logo</TableHead>
+                    <TableHead className="font-semibold">Company</TableHead>
+                    <TableHead className="font-semibold">Country</TableHead>
                     <TableHead className="font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1931,55 +2203,48 @@ export const OpsAccountPage = () => {
                   {isLoadingCountries ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-4">
-                        Loading countries...
+                        Loading headquarters...
                       </TableCell>
                     </TableRow>
                   ) : countries.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-4">
-                        No countries found
+                        No headquarters found
                       </TableCell>
                     </TableRow>
                   ) : (
                     Array.isArray(countries) && countries
-                      .filter(country => 
-                        country.name?.toLowerCase().includes(searchQuery.toLowerCase())
+                      .filter(headquarters => 
+                        headquarters.country_name?.toLowerCase().includes(countrySearchTerm.toLowerCase()) ||
+                        companiesMap.get(headquarters.company_id)?.toLowerCase().includes(countrySearchTerm.toLowerCase())
                       )
-                      .map((country) => (
-                      <TableRow key={country.id}>
-                        <TableCell>{country.id}</TableCell>
-                        <TableCell>{country.name}</TableCell>
+                      .slice((countryCurrentPage - 1) * countriesPerPage, countryCurrentPage * countriesPerPage)
+                      .map((headquarters) => (
+                      <TableRow key={headquarters.id}>
+                        <TableCell>{headquarters.id}</TableCell>
+                        <TableCell>{companiesMap.get(headquarters.company_id) || headquarters.company_name}</TableCell>
+                        <TableCell>{headquarters.country_name}</TableCell>
                         <TableCell>
-                          {country.logo ? (
-                            <img 
-                              src={country.logo} 
-                              alt={country.name} 
-                              className="w-8 h-8 object-cover rounded"
-                            />
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              onClick={() => handleEditCountry(country)}
-                              disabled={!canEditCountry}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            {/* <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
-                              onClick={() => handleDeleteCountry(country.id)}
-                              disabled={!canEditCountry}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button> */}
+                          <div className="flex space-x-2">
+                            {canEditCountry && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditCountry(headquarters)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteCountry(headquarters.id)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1989,6 +2254,29 @@ export const OpsAccountPage = () => {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Pagination for Country */}
+          {Array.isArray(countries) && countries.length > countriesPerPage && (
+            <div className="flex justify-center space-x-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setCountryCurrentPage(Math.max(1, countryCurrentPage - 1))}
+                disabled={countryCurrentPage === 1}
+              >
+                Previous
+              </Button>
+              <span className="flex items-center px-4">
+                Page {countryCurrentPage} of {Math.ceil(countries.length / countriesPerPage)}
+              </span>
+              <Button
+                variant="outline"
+                onClick={() => setCountryCurrentPage(Math.min(Math.ceil(countries.length / countriesPerPage), countryCurrentPage + 1))}
+                disabled={countryCurrentPage === Math.ceil(countries.length / countriesPerPage)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="region" className="space-y-4">
@@ -1996,34 +2284,44 @@ export const OpsAccountPage = () => {
             <Dialog open={isAddRegionOpen} onOpenChange={setIsAddRegionOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Region
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Region</DialogTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-4 top-4"
-                    onClick={() => setIsAddRegionOpen(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Country
+                      Company
                     </label>
                     <select
-                      value={newRegionData.country}
-                      onChange={(e) => setNewRegionData({ ...newRegionData, country: e.target.value })}
+                      value={newRegionData.company_id}
+                      onChange={(e) => setNewRegionData({ ...newRegionData, company_id: e.target.value })}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                     >
-                      <option value="">Select Country</option>
-                      {countries.map((country, index) => (
-                        <option key={index} value={country.name}>{country.name}</option>
+                      <option value="">Select Company</option>
+                      {companies.map((company) => (
+                        <option key={company.id} value={company.id}>{company.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Headquarters
+                    </label>
+                    <select
+                      value={newRegionData.headquarter_id}
+                      onChange={(e) => setNewRegionData({ ...newRegionData, headquarter_id: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    >
+                      <option value="">Select Headquarters</option>
+                      {countries.map((headquarters) => (
+                        <option key={headquarters.id} value={headquarters.id}>
+                          {headquarters.country_name} ({companiesMap.get(headquarters.company_id) || headquarters.company_name})
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -2033,8 +2331,8 @@ export const OpsAccountPage = () => {
                     </label>
                     <input
                       type="text"
-                      value={newRegionData.regionName}
-                      onChange={(e) => setNewRegionData({ ...newRegionData, regionName: e.target.value })}
+                      value={newRegionData.name}
+                      onChange={(e) => setNewRegionData({ ...newRegionData, name: e.target.value })}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                       placeholder="Enter region name"
                     />
@@ -2053,6 +2351,7 @@ export const OpsAccountPage = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            
             <div className="flex items-center gap-4">
               <select
                 value={entriesPerPage}
@@ -2076,30 +2375,155 @@ export const OpsAccountPage = () => {
             </div>
           </div>
 
+            {/* Edit Region Dialog */}
+            <Dialog open={isEditRegionOpen} onOpenChange={setIsEditRegionOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Region</DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-4 top-4"
+                    onClick={() => setIsEditRegionOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Company
+                    </label>
+                    <select
+                      value={editRegionData.company_id}
+                      onChange={(e) => setEditRegionData({ ...editRegionData, company_id: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    >
+                      <option value="">Select Company</option>
+                      {companies.map((company) => (
+                        <option key={company.id} value={company.id}>{company.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Headquarters
+                    </label>
+                    <select
+                      value={editRegionData.headquarter_id}
+                      onChange={(e) => setEditRegionData({ ...editRegionData, headquarter_id: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    >
+                      <option value="">Select Headquarters</option>
+                      {countries.map((headquarters) => (
+                        <option key={headquarters.id} value={headquarters.id}>
+                          {headquarters.country_name} ({companiesMap.get(headquarters.company_id) || headquarters.company_name})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Region Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editRegionData.name}
+                      onChange={(e) => setEditRegionData({ ...editRegionData, name: e.target.value })}
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      placeholder="Enter region name"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setIsEditRegionOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      onClick={handleUpdateRegion}
+                    >
+                      Update Region
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <div className="flex items-center gap-4">
+              <select
+                value={entriesPerPage}
+                onChange={(e) => setEntriesPerPage(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span className="text-sm text-gray-600">entries per page</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                />
+              </div>
+            </div>
+
           <Card>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold">Country</TableHead>
-                    <TableHead className="font-semibold">Region</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">ID</TableHead>
+                    <TableHead className="font-semibold">Region Name</TableHead>
+                    <TableHead className="font-semibold">Company</TableHead>
+                    <TableHead className="font-semibold">Headquarters</TableHead>
+                    <TableHead className="font-semibold">Actions</TableHead>
                   </TableRow>
-                               </TableHeader>
+                </TableHeader>
                 <TableBody>
-                  {regions.map((region, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{region.country}</TableCell>
-                      <TableCell>{region.region}</TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={region.status}
-                          onCheckedChange={(checked) => handleRegionStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
-                        />
+                  {isLoadingRegions ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        Loading regions...
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : regions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        No regions found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    regions
+                      .filter(region => 
+                        region.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        companiesMap.get(region.company_id)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        headquartersMap.get(region.headquarter_id)?.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map((region) => (
+                        <TableRow key={region.id}>
+                          <TableCell>{region.id}</TableCell>
+                          <TableCell>{region.name}</TableCell>
+                          <TableCell>{companiesMap.get(region.company_id) || region.company_name || '-'}</TableCell>
+                          <TableCell>{headquartersMap.get(region.headquarter_id) || region.headquarter_name || '-'}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditRegion(region)}
+                                className="hover:bg-gray-100"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -2138,9 +2562,9 @@ export const OpsAccountPage = () => {
                         className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                       >
                         <option value="">Select Country</option>
-                        {countries.map((country, index) => (
-                          <option key={index} value={country.name}>{country.name}</option>
-                        ))}
+                        <option value="India">India</option>
+                        <option value="USA">USA</option>
+                        <option value="UK">UK</option>
                       </select>
                     </div>
                     <div>
@@ -2153,9 +2577,10 @@ export const OpsAccountPage = () => {
                         className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                       >
                         <option value="">Select Region</option>
-                        {regions.filter(region => !newZoneData.country || region.country === newZoneData.country).map((region, index) => (
-                          <option key={index} value={region.region}>{region.region}</option>
-                        ))}
+                        <option value="North">North</option>
+                        <option value="South">South</option>
+                        <option value="East">East</option>
+                        <option value="West">West</option>
                       </select>
                     </div>
                     <div>
@@ -2184,6 +2609,7 @@ export const OpsAccountPage = () => {
                   </div>
                 </DialogContent>
               </Dialog>
+              
               <Dialog open={isEditZoneOpen} onOpenChange={setIsEditZoneOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
@@ -2231,6 +2657,7 @@ export const OpsAccountPage = () => {
                 </DialogContent>
               </Dialog>
             </div>
+            
             <div className="flex items-center gap-4">
               <select
                 value={entriesPerPage}
@@ -2295,6 +2722,30 @@ export const OpsAccountPage = () => {
         </TabsContent>
 
         <TabsContent value="site" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <select
+                value={entriesPerPage}
+                onChange={(e) => setEntriesPerPage(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span className="text-sm text-gray-600">entries per page</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                />
+              </div>
+            </div>
+          </div>
+          
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -2349,7 +2800,7 @@ export const OpsAccountPage = () => {
               Add Entity
             </Button>
           </div>
-
+          
           {/* Toggle Form Section */}
           {showEntityForm && (
             <Card className="mb-4">
@@ -2460,6 +2911,7 @@ export const OpsAccountPage = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            
             <div className="flex items-center gap-4">
               <select
                 value={entriesPerPage}
@@ -2479,10 +2931,93 @@ export const OpsAccountPage = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="border border-gray-300 rounded px-3 py-1 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                 />
-                <Button size="sm" variant="outline">Search</Button>
               </div>
             </div>
           </div>
+
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">ID</TableHead>
+                    <TableHead className="font-semibold">Name</TableHead>
+                    <TableHead className="font-semibold">Resource Type</TableHead>
+                    <TableHead className="font-semibold">Created At</TableHead>
+                    <TableHead className="font-semibold">Edit</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoadingUserCategories ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        Loading user categories...
+                      </TableCell>
+                    </TableRow>
+                  ) : userCategories.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        No user categories found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    userCategories.map((category, index) => (
+                      <TableRow key={category.id || index}>
+                        <TableCell>{category.id}</TableCell>
+                        <TableCell>{category.name}</TableCell>
+                        <TableCell>{category.resource_type}</TableCell>
+                        <TableCell>{new Date(category.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleEditUserCategory(category)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+          
+          {/* Edit User Category Dialog */}
+          <Dialog open={isEditUserCategoryOpen} onOpenChange={setIsEditUserCategoryOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit User Category</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    User Category Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCategory?.name || ''}
+                    onChange={(e) => setEditingCategory(editingCategory ? { ...editingCategory, name: e.target.value } : null)}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    placeholder="Enter user category name"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsEditUserCategoryOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    onClick={handleUpdateUserCategory}
+                  >
+                    Update User Category
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Card>
             <CardContent className="p-0">
@@ -2570,6 +3105,7 @@ export const OpsAccountPage = () => {
         </TabsContent>
       </Tabs>
 
+      {/* All Edit Dialogs */}
       {/* Edit Country Dialog */}
       <Dialog open={isEditCountryOpen} onOpenChange={setIsEditCountryOpen}>
         <DialogContent className="max-w-xl">
