@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { API_CONFIG } from '@/config/apiConfig';
 import { AttachmentGoodsPreviewModal } from '@/components/AttachmentGoodsPreviewModal';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
-import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export const GatePassOutwardsDetailPage = () => {
   const { id } = useParams();
@@ -171,6 +171,7 @@ export const GatePassOutwardsDetailPage = () => {
   const supplierName = gatePassData.supplier_name || '--';
   const expectedReturnDate = gatePassData.expected_return_date || '--';
   const returnableStatus = gatePassData.returnable ? 'Returnable' : 'Non-Returnable';
+  const status = gatePassData.status || '--';
   const vendorDetails = {
     name: supplierName,
     mobile: mobileNo,
@@ -205,7 +206,22 @@ export const GatePassOutwardsDetailPage = () => {
   ];
 
     // Render cell for EnhancedTable, especially for Updates column
-    const renderCell = (item: any, columnKey: string) => {
+    const getStatusBadgeStyles = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
+    switch (normalizedStatus) {
+      case 'pending':
+        return { backgroundColor: '#f5f2c9', color: '#000' };
+      case 'rejected':
+        return { backgroundColor: '#f5ccc6', color: '#000' };
+      case 'accepted':
+      case 'approved':
+        return { backgroundColor: '#c7ecd9', color: '#000' };
+      default:
+        return { backgroundColor: '#f3f4f6', color: '#000' };
+    }
+  };
+
+  const renderCell = (item: any, columnKey: string) => {
       // Only show receive/handover buttons if returnable
       if (columnKey === "updates" && gatePassData.returnable === true) {
         const idx = item.updates;
@@ -254,9 +270,12 @@ export const GatePassOutwardsDetailPage = () => {
               <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                 Gate Pass Outward - {gatePassData.gate_pass_no || gatePassData.id}
               </h1>
-              <div className="text-base px-4 py-2 bg-blue-100 text-blue-800 rounded-md">
+              {/* <div 
+                className="text-base px-4 py-2 rounded-md"
+                style={getStatusBadgeStyles(status)}
+              >
                 {status}
-              </div>
+              </div> */}
             </div>
 
             <div className="text-sm text-gray-600">
@@ -373,18 +392,73 @@ export const GatePassOutwardsDetailPage = () => {
                 <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
               </div>
               <div className="overflow-x-auto">
-                <EnhancedTable
-                  data={tableData}
-                  columns={columns}
-                  renderCell={renderCell}
-                  storageKey="gate-pass-outwards-details-items"
-                  pagination={true}
-                  pageSize={10}
-                  hideColumnsButton={true}
-                  hideTableExport={true}
-                  hideTableSearch={true}
-                  loading={loading}
-                />
+                <div className="rounded-lg border border-gray-200 overflow-hidden">
+                  <Table className="border-separate">
+                    <TableHeader>
+                      <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Type</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Category</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Name</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Unit</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Quantity</TableHead>
+                        <TableHead className={`font-semibold text-gray-900 py-3 px-4${gatePassData.returnable === true ? ' border-r' : ''}`} style={{ borderColor: '#fff' }}>Description</TableHead>
+                        {gatePassData.returnable === true && (
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Updates</TableHead>
+                        )}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={gatePassData.returnable === true ? 7 : 6} className="text-center py-8 text-gray-500">
+                            Loading...
+                          </TableCell>
+                        </TableRow>
+                      ) : tableData && tableData.length > 0 ? (
+                        tableData.map((item, index) => (
+                          <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="py-3 px-4 font-medium">{item.itemType}</TableCell>
+                            <TableCell className="py-3 px-4">{item.itemCategory}</TableCell>
+                            <TableCell className="py-3 px-4">{item.itemName}</TableCell>
+                            <TableCell className="py-3 px-4">{item.unit}</TableCell>
+                            <TableCell className="py-3 px-4">{item.quantity}</TableCell>
+                            <TableCell className="py-3 px-4">{item.description}</TableCell>
+                            {gatePassData.returnable === true && (
+                              <TableCell className="py-3 px-4">
+                                {handoverView[item.updates] ? (
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                    onClick={() => {
+                                      setSelectedItemIndex(item.updates);
+                                      setIsReceiveModalOpen(true);
+                                    }}
+                                  >
+                                    View Handover
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                    onClick={() => handleReceiveClick(item.updates)}
+                                  >
+                                    Receive
+                                  </Button>
+                                )}
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={gatePassData.returnable === true ? 7 : 6} className="text-center py-8 text-gray-500">
+                            No items found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           </TabsContent>
