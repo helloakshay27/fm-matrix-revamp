@@ -542,8 +542,7 @@ export const TaskDetailsPage = () => {
                           (file: any) => file.relation === `AssetQuestResponse${activity.name}`
                         );
 
-                        const totalScore = taskDetails.activity.total_score;
-                        const score = totalScore ? `${totalScore}` : '-';
+                        const totalScore = taskDetails.activity.total_score?.total_score;
 
                         return (
                           <TableRow key={index}>
@@ -591,7 +590,7 @@ export const TaskDetailsPage = () => {
                               {activity.rating || '-'}
                             </TableCell>
                             <TableCell className="text-sm">
-                              {score}
+                              {totalScore}
                             </TableCell>
                             <TableCell>
                               <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
