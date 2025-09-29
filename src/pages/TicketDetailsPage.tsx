@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, FileText, Paperclip, Download, Eye, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, FileSpreadsheet, X, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, Paperclip, Download, Eye, ChevronDown, ChevronUp, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, FileSpreadsheet, X, Edit } from 'lucide-react';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 
@@ -17,7 +16,199 @@ export const TicketDetailsPage = () => {
   const [error, setError] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
-  const [activeTab, setActiveTab] = useState("ticket-details");
+
+  // Helper function to check if value has data
+  const hasData = (value) => {
+    return value && value !== null && value !== undefined && value !== '';
+  };
+
+  // Helper function to display value or "Not Provided"
+  const displayValue = (value) => {
+    return value && value !== null && value !== undefined && value !== '' ? value : 'Not Provided';
+  };
+
+  // State for expandable sections - will be set dynamically based on data
+  const [expandedSections, setExpandedSections] = useState({
+    ticketDetails: false,
+    creatorInfo: false,
+    locationInfo: false,
+    surveyInfo: false,
+    additionalInfo: false,
+    attachments: false,
+    costApproval: false,
+    actionLogs: false
+  });
+
+  // Update expanded sections based on data availability
+  useEffect(() => {
+    if (ticketData) {
+      const complaintLogs = ticketData.complaint_logs || [];
+
+      setExpandedSections({
+        ticketDetails: hasData(ticketData.heading) || hasData(ticketData.issue_status) || hasData(ticketData.ticket_number) || hasData(ticketData.sub_category_type) || hasData(ticketData.created_by_name) || hasData(ticketData.created_date) || hasData(ticketData.created_time) || hasData(ticketData.category_type) || hasData(ticketData.updated_by) || hasData(ticketData.complaint_mode) || hasData(ticketData.priority) || hasData(ticketData.external_priority) || hasData(ticketData.priority_status) || hasData(ticketData.effective_priority) || hasData(ticketData.assigned_to),
+        creatorInfo: hasData(ticketData.posted_by) || hasData(ticketData.id_society),
+        locationInfo: hasData(ticketData.region) || hasData(ticketData.building_name) || hasData(ticketData.city) || hasData(ticketData.floor_name) || hasData(ticketData.flat_number) || hasData(ticketData.unit_name) || hasData(ticketData.zone) || hasData(ticketData.district) || hasData(ticketData.room_name) || hasData(ticketData.area_name) || hasData(ticketData.site_name) || hasData(ticketData.state) || hasData(ticketData.address) || hasData(ticketData.wing_name),
+        surveyInfo: ticketData.survey && (hasData(ticketData.survey.survey?.id) || hasData(ticketData.survey.survey?.name) || hasData(ticketData.survey.site_name) || hasData(ticketData.survey.building_name) || hasData(ticketData.survey.wing_name) || hasData(ticketData.survey.area_name) || hasData(ticketData.survey.floor_name) || hasData(ticketData.survey.room_name)),
+        additionalInfo: hasData(ticketData.corrective_action) || hasData(ticketData.preventive_action) || hasData(ticketData.root_cause) || hasData(ticketData.response_tat) || hasData(ticketData.ticket_urgency) || hasData(ticketData.responsible_person) || hasData(ticketData.asset_service) || hasData(ticketData.resolution_tat) || hasData(ticketData.task_id) || hasData(ticketData.asset_service_location) || hasData(ticketData.resolution_time) || hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name),
+        attachments: ticketData.documents && ticketData.documents.length > 0,
+        costApproval: ticketData.cost_approval_enabled && ticketData.requests && ticketData.requests.length > 0,
+        actionLogs: complaintLogs.length > 0
+      });
+    }
+  }, [ticketData]);
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  useEffect(() => {
+    const fetchTicketDetails = async () => {
+      if (!id) return;
+
+      try {
+        console.log("🎯 Fetching ticket details for ID:", id);
+        setLoading(true);
+        const data = await ticketManagementAPI.getTicketDetails(id);
+        console.log("📥 Received ticket details:", data);
+        setTicketData(data);
+      } catch (err) {
+        console.error('Error fetching ticket details:', err);
+        setError('Failed to fetch ticket details');
+        toast.error('Failed to fetch ticket details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTicketDetails();
+  }, [id]);
+
+  const handleBackToList = () => {
+    navigate(-1);
+  };
+
+  const handleFeeds = () => {
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("tickets")) {
+      navigate(`/tickets/${id}/feeds`);
+    } else {
+      navigate(`/maintenance/ticket/${id}/feeds`);
+    }
+  };
+
+  const handleTagVendor = () => {
+    navigate(`/maintenance/ticket/${id}/tag-vendor`);
+  };
+
+  const handleCreateTask = async () => {
+    if (!id) {
+      console.error('No ticket ID available');
+      return;
+    }
+
+    try {
+      console.log('Fetching create task data for ticket:', id);
+      const taskData = await ticketManagementAPI.getCreateTaskData(id);
+      console.log('Create task data:', taskData);
+
+      toast.success('Create task data fetched successfully! Check console for details.');
+
+    } catch (error) {
+      console.error('Error fetching create task data:', error);
+      toast.error('Failed to fetch create task data. Please try again.');
+    }
+  };
+
+  const handleUpdate = () => {
+    console.log("🔄 Navigating to update page for ticket ID:", id);
+    
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("tickets")) {
+      navigate(`/tickets/edit/${id}`, {
+        state: {
+          from: 'details',
+          returnTo: `/tickets/details/${id}`
+        }
+      });
+    } else {
+      navigate(`/maintenance/ticket/update/${id}`, {
+        state: {
+          from: 'details',
+          returnTo: `/maintenance/ticket/${id}`
+        }
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading ticket details...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !ticketData) {
+    return (
+      <div className="p-6 bg-white min-h-screen">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-600">{error || 'Ticket not found'}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Process complaint logs for table display
+  const complaintLogs = ticketData?.complaint_logs || [];
+
+  // Expandable Section Component (similar to AMC cards)
+  const ExpandableSection = ({
+    title,
+    icon: Icon,
+    number,
+    isExpanded,
+    onToggle,
+    children,
+    hasData = true
+  }) => (
+    <div className="border-2 rounded-lg mb-6">
+      <div
+        onClick={onToggle}
+        className="flex items-center justify-between cursor-pointer p-6"
+        style={{ backgroundColor: 'rgb(246 244 238)' }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+            <Icon className="w-4 h-4" style={{ color: "#C72030" }} />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+            {title}
+          </h3>
+        </div>
+        <div className="flex items-center gap-2">
+          {!hasData && (
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">No data</span>
+          )}
+          {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-600" /> : <ChevronDown className="w-5 h-5 text-gray-600" />}
+        </div>
+      </div>
+      {isExpanded && (
+        <div
+          className="p-6"
+          style={{ backgroundColor: 'rgb(246 247 247)' }}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
 
   // Helper function to check if value has data
   const hasData = (value) => {
