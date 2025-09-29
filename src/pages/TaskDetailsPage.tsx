@@ -3,7 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, X } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, X, FileText, User, MapPin } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +41,7 @@ export const TaskDetailsPage = () => {
   const [showJobSheetModal, setShowJobSheetModal] = useState(false);
   const [jobSheetData, setJobSheetData] = useState<any>(null);
   const [jobSheetLoading, setJobSheetLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("task-details");
 
   // Submit form state
   const [formData, setFormData] = useState({
@@ -273,328 +276,367 @@ export const TaskDetailsPage = () => {
 
   return (
     <>
-      <div className="p-6 bg-white min-h-screen">
+      <div className="p-4 sm:p-6 min-h-screen">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-            <button
-              onClick={handleBack}
-              className="flex items-center gap-1 hover:text-[#C72030]"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Scheduled Task List</span>
-            </button>
-          </div>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">Task Details</h1>
-            <div className="flex gap-3">
-              {(taskDetails?.actions?.can_view_job_sheet || taskDetails?.task_details?.status?.value?.toLowerCase() === 'closed') && (
-                <Button
-                  onClick={handleJobSheetClick}
-                  style={{
-                    backgroundColor: '#C72030'
-                  }}
-                  className="text-white hover:bg-[#C72030]/90"
-                >
-                  Job Sheet
-                </Button>
-              )}
-              {taskDetails?.actions?.can_submit_task && (
-                <Button
-                  onClick={handleSubmitTask}
-                  style={{
-                    backgroundColor: '#C72030'
-                  }}
-                  className="text-white hover:bg-[#C72030]/90"
-                >
-                  Submit Task
-                </Button>
-              )}
-              {taskDetails?.actions?.can_reschedule && (
-                <Button
-                  onClick={handleTaskReschedule}
-                  style={{
-                    backgroundColor: '#C72030'
-                  }}
-                  className="text-white hover:bg-[#C72030]/90"
-                >
-                  Task Reschedule
-                </Button>
-              )}
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-1 hover:text-gray-800 mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Task List
+          </button>
+
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-4">
+                <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+                      {taskDetails?.task_details?.task_name}
+                </h1>
+              </div>            <div className="text-sm text-gray-600">
+              Task #{taskDetails?.task_details?.id || taskDetails?.id} • Created by{" "}
+              {taskDetails?.task_details?.created_by || "Unknown"} • Last updated{" "}
+              {taskDetails?.task_details?.created_on || "N/A"}
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {(taskDetails?.actions?.can_view_job_sheet || taskDetails?.task_details?.status?.value?.toLowerCase() === 'closed') && (
+              <Button
+                onClick={handleJobSheetClick}
+                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+              >
+                Job Sheet
+              </Button>
+            )}
+            {taskDetails?.actions?.can_submit_task && (
+              <Button
+                onClick={handleSubmitTask}
+                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+              >
+                Submit Task
+              </Button>
+            )}
+            {taskDetails?.actions?.can_reschedule && (
+              <Button
+                onClick={handleTaskReschedule}
+                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+              >
+                Task Reschedule
+              </Button>
+            )}
+          </div>
           </div>
         </div>
 
-        {/* Task Details Section */}
-        <Card className="mb-6">
-          <CardHeader className="border-b bg-white">
-            <CardTitle
-              className="flex items-center gap-2"
-              style={{
-                color: '#C72030'
-              }}
-            >
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm"
-                style={{
-                  backgroundColor: '#C72030'
-                }}
+        {/* Tabs */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <Tabs
+            defaultValue="task-details"
+            className="w-full"
+            onValueChange={setActiveTab}
+          >
+            <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+              <TabsTrigger
+                value="task-details"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
               >
-                T
-              </div>
-              Task Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-600">ID</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.id || taskDetails?.id}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">
-                    Associated With
-                  </label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.associated_with}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">
-                    Asset/Service Code
-                  </label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.asset_service_code}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Schedule on</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.scheduled_on}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">
-                    Task Duration
-                  </label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.task_duration}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Created By</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.created_by}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Status</label>
-                  <Badge className={getStatusColor(taskDetails?.task_details?.status?.value || '')}>
-                    {taskDetails?.task_details?.status?.display_name}
-                  </Badge>
-                </div>
-                {taskDetails?.task_details?.completed_on && (
-                  <div>
-                    <label className="text-sm text-gray-600">Completed on</label>
-                    <p className="font-medium">
-                      {taskDetails.task_details.completed_on}
-                    </p>
-                  </div>
-                )}
-                {taskDetails?.task_details?.start_time && (
-                  <div>
-                    <label className="text-sm text-gray-600">Start time</label>
-                    <p className="font-medium">
-                      {taskDetails.task_details.start_time}
-                    </p>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-600">Task</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.task_name}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">
-                    Asset/Service Name
-                  </label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.asset_service_name}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Supplier</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.supplier || 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Assigned to</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.assigned_to}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Created on</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.created_on}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Location</label>
-                  <p className="font-medium text-sm">
-                    {taskDetails?.task_details?.location?.full_location}
-                  </p>
-                </div>
-                {taskDetails?.task_details?.performed_by && (
-                  <div>
-                    <label className="text-sm text-gray-600">Performed by</label>
-                    <p className="font-medium">
-                      {taskDetails.task_details.performed_by}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                Task Details
+              </TabsTrigger>
 
-        {/* Activity Section */}
-        <Card>
-          <CardHeader className="border-b bg-white">
-            <CardTitle
-              style={{
-                color: '#C72030'
-              }}
-              className="flex items-center gap-2"
-            >
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm"
-                style={{
-                  backgroundColor: '#C72030'
-                }}
+              <TabsTrigger
+                value="location-info"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
               >
-                A
+                Location
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="activity"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              >
+                Activity
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="task-details" className="p-4 sm:p-6">
+              <div className="space-y-6">
+                {/* Task Information Card */}
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                      </div>
+                      <span className="uppercase tracking-wide">Task Information</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">ID</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.id || taskDetails?.id}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Task</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.task_name}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Associated With</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.associated_with}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Asset/Service Name</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.asset_service_name}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Asset/Service Code</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.asset_service_code}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Supplier</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.supplier || 'N/A'}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Schedule On</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.scheduled_on}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Assigned To</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.assigned_to}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Task Duration</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.task_duration}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Created On</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.created_on}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Created By</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.created_by}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Status</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          <Badge className={getStatusColor(taskDetails?.task_details?.status?.value || '')}>
+                            {taskDetails?.task_details?.status?.display_name}
+                          </Badge>
+                        </span>
+                      </div>
+                      {taskDetails?.task_details?.completed_on && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Completed On</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">
+                            {taskDetails.task_details.completed_on}
+                          </span>
+                        </div>
+                      )}
+                      {taskDetails?.task_details?.start_time && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Start Time</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">
+                            {taskDetails.task_details.start_time}
+                          </span>
+                        </div>
+                      )}
+                      {taskDetails?.task_details?.performed_by && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Performed By</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">
+                            {taskDetails.task_details.performed_by}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left bg-gray-50">
-                    <th className="p-3 border-b border-r">Help Text</th>
-                    <th className="p-3 border-b border-r">Activities</th>
-                    <th className="p-3 border-b border-r">Input</th>
-                    <th className="p-3 border-b border-r">Comments</th>
-                    <th className="p-3 border-b border-r">Weightage</th>
-                    <th className="p-3 border-b border-r">Rating</th>
-                    <th className="p-3 border-b border-r">Score</th>
-                    <th className="p-3 border-b border-r">Status</th>
-                    <th className="p-3 border-b">Attachments</th>
-                  </tr>
-                </thead>
-                <tbody>
-                        {taskDetails?.activity?.resp?.length > 0 ? (
-                          taskDetails.activity.resp.map((activity: any, index: number) => {
-                            const files = taskDetails.attachments?.blob_store_files?.filter(
-                              (file: any) => file.relation === `AssetQuestResponse${activity.name}`
-                            );
+            </TabsContent>
 
-                            const totalScore = taskDetails.activity.total_score;
-                            const score = totalScore ? `${totalScore.score}` : '-';
+            {/* Location Info Tab */}
+            <TabsContent value="location-info" className="p-4 sm:p-6">
+              <div className="space-y-6">
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                        <MapPin className="w-6 h-6 text-[#C72030]" />
+                      </div>
+                      <span>LOCATION INFORMATION</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Location</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {taskDetails?.task_details?.location?.full_location || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            {/* Activity Tab */}
+            <TabsContent value="activity" className="p-4 sm:p-6">
+              {taskDetails?.activity?.resp?.length > 0 ? (
+                <div className="bg-white rounded-lg border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Help Text</TableHead>
+                        <TableHead>Activities</TableHead>
+                        <TableHead>Input</TableHead>
+                        <TableHead>Comments</TableHead>
+                        <TableHead>Weightage</TableHead>
+                        <TableHead>Rating</TableHead>
+                        <TableHead>Score</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Attachments</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {taskDetails.activity.resp.map((activity: any, index: number) => {
+                        const files = taskDetails.attachments?.blob_store_files?.filter(
+                          (file: any) => file.relation === `AssetQuestResponse${activity.name}`
+                        );
 
-                            return (
-                              <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
-                                <td className="p-3 border-b border-r">{activity.hint || '-'}</td>
-                                <td className="p-3 border-b border-r">{activity.label || '-'}</td>
-                                <td className="p-3 border-b border-r">
-                                  {activity.userData?.length > 0 ? (
-                                    <div className="flex flex-wrap gap-1">
-                                      {activity.userData.map((userValue: string, idx: number) => {
-                                        const matchingValue = activity.values?.find((val: any) => val.value === userValue);
-                                        const label = matchingValue ? matchingValue.label : userValue;
-                                        const type = matchingValue?.type;
-                                        
-                                        return (
-                                          <span
-                                            key={idx}
-                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                              type === 'positive' 
-                                                ? 'bg-green-100 text-green-800' 
-                                                : type === 'negative' 
-                                                ? 'bg-red-100 text-red-800' 
-                                                : 'bg-gray-100 text-gray-800'
-                                            }`}
-                                          >
-                                            {label}
-                                          </span>
-                                        );
-                                      })}
+                        const totalScore = taskDetails.activity.total_score;
+                        const score = totalScore ? `${totalScore}` : '-';
+
+                        return (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium text-sm">
+                              {activity.hint || '-'}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {activity.label || '-'}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {activity.userData?.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {activity.userData.map((userValue: string, idx: number) => {
+                                    const matchingValue = activity.values?.find((val: any) => val.value === userValue);
+                                    const label = matchingValue ? matchingValue.label : userValue;
+                                    const type = matchingValue?.type;
+                                    
+                                    return (
+                                      <Badge
+                                        key={idx}
+                                        className={`text-xs ${
+                                          type === 'positive' 
+                                            ? 'bg-green-100 text-green-800' 
+                                            : type === 'negative' 
+                                            ? 'bg-red-100 text-red-800' 
+                                            : 'bg-gray-100 text-gray-800'
+                                        }`}
+                                      >
+                                        {label}
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {activity.comment || '-'}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {activity.weightage || '-'}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {activity.rating || '-'}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {score}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
+                                {taskDetails.task_details.status.display_name}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {files?.length > 0 ? (
+                                <div className="space-y-1">
+                                  {files.map((file: any) => (
+                                    <div key={file.id} className="flex items-center gap-2">
+                                      <a
+                                        href={file.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
+                                        title={file.filename}
+                                      >
+                                        <img
+                                          src={file.url}
+                                          alt={file.filename}
+                                          className="w-8 h-8 object-cover rounded"
+                                        />
+                                      </a>
                                     </div>
-                                  ) : (
-                                    <span className="text-gray-500">-</span>
-                                  )}
-                                </td>
-                                <td className="p-3 border-b border-r">{activity.comment || '-'}</td>
-                                <td className="p-3 border-b border-r">{activity.weightage || '-'}</td>
-                                <td className="p-3 border-b border-r">{activity.rating || '-'}</td>
-                                <td className="p-3 border-b border-r">{score}</td>
-                                <td className="p-3 border-b border-r">
-                                  <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
-                                    {taskDetails.task_details.status.display_name}
-                                  </Badge>
-                                </td>
-                                <td className="p-3 border-b">
-                                  {files?.length > 0 ? (
-                                    <div className="space-y-1">
-                                      {files.map((file: any) => (
-                                        <div key={file.id} className="flex items-center gap-2">
-                                          <a
-                                            href={file.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
-                                            title={file.filename}
-                                          >
-                                            <img
-                                              src={file.url}
-                                              alt={file.filename}
-                                              className="w-8 h-8 object-cover rounded"
-                                            />
-                                          </a>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <span className="text-sm text-gray-500">No attachments for this activity</span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })
-                        ) : (
-                          <tr>
-                            <td colSpan={9} className="p-3 text-center text-gray-500">
-                              No activities found for this task.
-                            </td>
-                          </tr>
-                        )}
-
-
-                </tbody>
-
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-gray-500">No attachments</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-8">
+                  No activities found for this task.
+                </p>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
 
       {/* Submit Task Form Dialog */}
