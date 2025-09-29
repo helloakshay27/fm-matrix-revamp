@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { FormControl, InputLabel, Select as MuiSelect, TextField } from '@mui/material';
 import { gatePassTypeService } from '@/services/gatePassTypeService';
@@ -84,25 +85,27 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
   const fieldStyles = {
     width: '100%',
     '& .MuiOutlinedInput-root': {
-      height: { xs: '36px', md: '45px' },
-      borderRadius: '8px',
+      height: '40px',
+      borderRadius: '0px',
       backgroundColor: '#FFFFFF',
+      fontSize: '14px',
       '& fieldset': {
-        borderColor: '#E0E0E0',
+        borderColor: '#D1D5DB',
       },
       '&:hover fieldset': {
-        borderColor: '#1A1A1A',
+        borderColor: '#9CA3AF',
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#C72030',
-        borderWidth: 2,
+        borderColor: '#3B82F6',
+        borderWidth: 1,
       },
     },
     '& .MuiInputLabel-root': {
-      color: '#666666',
+      color: '#6B7280',
       fontSize: '14px',
+      fontWeight: '500',
       '&.Mui-focused': {
-        color: '#C72030',
+        color: '#3B82F6',
       },
       '&.MuiInputLabel-shrink': {
         transform: 'translate(14px, -9px) scale(0.75)',
@@ -111,12 +114,12 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
       },
     },
     '& .MuiOutlinedInput-input, & .MuiSelect-select': {
-      color: '#1A1A1A',
+      color: '#374151',
       fontSize: '14px',
-      padding: { xs: '8px 14px', md: '12px 14px' },
+      padding: '10px 14px',
       height: 'auto',
       '&::placeholder': {
-        color: '#999999',
+        color: '#9CA3AF',
         opacity: 1,
       },
     },
@@ -124,14 +127,24 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg bg-white [&>button]:hidden max-h-[80vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 ">
-          <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
+      <DialogContent className="max-w-4xl bg-white [&>button]:hidden max-h-[80vh] overflow-y-auto p-0 border-l-4 border-l-[#C72030]">
+        <div className="p-6">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b border-gray-200">
+          <DialogTitle className="text-lg font-medium text-gray-600 uppercase tracking-wider">FILTER BY</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-6 w-6 p-0 rounded-none hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
         </DialogHeader>
-        <div>
-          {/* Gate Pass Type */}
-          <div className='py-4'>
-          <FormControl variant="outlined" sx={fieldStyles} className="mb-4">
+        <div className="grid grid-cols-2 gap-4 pt-10">
+                    {/* Gate Pass Type */}
+          <div className="mb-4">
+          <FormControl variant="outlined" sx={fieldStyles}>
             <InputLabel id="gatePassType-label" shrink>Gate Pass Type</InputLabel>
             <MuiSelect
               native
@@ -149,8 +162,8 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
           </FormControl>
           </div>
           {/* Building */}
-          <div className='py-4'>
-          <FormControl variant="outlined" sx={fieldStyles} className="mb-4">
+          <div className="mb-4">
+          <FormControl variant="outlined" sx={fieldStyles}>
             <InputLabel id="building-label" shrink>Building</InputLabel>
             <MuiSelect
               native
@@ -168,7 +181,7 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
           </FormControl>
           </div>
           {/* Gate Pass Date */}
-          <div className='py-4'>
+          <div className="mb-4">
           <TextField
             label="Gate Pass Date"
             type="date"
@@ -178,11 +191,10 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
             onChange={e => handleChange('gatePassDate', e.target.value)}
             InputLabelProps={{ shrink: true }}
             sx={fieldStyles}
-            className="mb-4"
           />
           </div>
           {/* Gate Pass No. */}
-          <div className='py-4'>
+          <div className="mb-4">
           <TextField
             label="Gate Pass No."
             fullWidth
@@ -191,11 +203,10 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
             onChange={e => handleChange('gatePassNo', e.target.value)}
             InputLabelProps={{ shrink: true }}
             sx={fieldStyles}
-            className="mb-4"
           />
           </div>
           {/* Vehicle Number */}
-          <div className='py-4'>
+          <div className="mb-4">
           <TextField
             label="Vehicle Number"
             fullWidth
@@ -204,11 +215,10 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
             onChange={e => handleChange('vehicleNo', e.target.value)}
             InputLabelProps={{ shrink: true }}
             sx={fieldStyles}
-            className="mb-4"
           />
           </div>
           {/* Visitor Name */}
-          <div className='py-4'>
+          <div className="mb-4">
           <TextField
             label="Visitor Name"
             fullWidth
@@ -217,11 +227,10 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
             onChange={e => handleChange('visitorName', e.target.value)}
             InputLabelProps={{ shrink: true }}
             sx={fieldStyles}
-            className="mb-4"
           />
           </div>
           {/* Visitor Contact */}
-          <div className='py-4'>
+          <div className="mb-4">
           <TextField
             label="Visitor Contact"
             fullWidth
@@ -230,11 +239,10 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
             onChange={e => handleChange('visitorContact', e.target.value)}
             InputLabelProps={{ shrink: true }}
             sx={fieldStyles}
-            className="mb-4"
           />
           </div>
           {/* Vendor Company */}
-          <div className='py-4'>
+          <div className="mb-4">
           <TextField
             label="Vendor Company"
             fullWidth
@@ -243,11 +251,10 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
             onChange={e => handleChange('vendorCompany', e.target.value)}
             InputLabelProps={{ shrink: true }}
             sx={fieldStyles}
-            className="mb-4"
           />
           </div>
           {/* Gate Number Input */}
-          <div className='py-4'>
+          <div className="mb-4">
           <TextField
             label="Gate Number"
             placeholder="Enter Gate Number"
@@ -258,11 +265,10 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
               shrink: true,
             }}
             sx={fieldStyles}
-            className="mb-4"
           />
           </div>
           {/* Created By */}
-          <div className='py-4'>
+          <div className="mb-4">
           <TextField
             label="Created By"
             placeholder="Enter Created Person"
@@ -273,12 +279,11 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
               shrink: true,
             }}
             sx={fieldStyles}
-            className="mb-4"
           />
           </div>
           {/* Supplier Name (Vendor Dropdown) */}
-          <div className='py-4'>
-          <FormControl variant="outlined" sx={fieldStyles} className="mb-4">
+          <div className="mb-4">
+          <FormControl variant="outlined" sx={fieldStyles}>
             <InputLabel id="supplierName-label" shrink>Vendor</InputLabel>
             <MuiSelect
               native
@@ -295,19 +300,37 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
             </MuiSelect>
           </FormControl>
           </div>
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4">
+          {/* Building */}
+          
+          <FormControl variant="outlined" sx={fieldStyles} className="mb-4">
+            <InputLabel id="building-label" shrink>Building</InputLabel>
+            <MuiSelect
+              native
+              labelId="building-label"
+              label="Building"
+              displayEmpty
+              value={localFilters.buildingId}
+              onChange={e => handleChange('buildingId', e.target.value)}
+            >
+              <option value="">Select Building</option>
+              {buildings.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </MuiSelect>
+          </FormControl>
+          </div>
+          {/* Action Buttons - span full width */}
+          <div className="col-span-2 flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-none"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 h-10 rounded-md"
             >
               Reset
             </Button>
             <Button
               onClick={handleApply}
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="hover:bg-[#F2EEE9]/90 px-6 py-2 rounded-none"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 h-10 rounded-md"
             >
               Apply
             </Button>
