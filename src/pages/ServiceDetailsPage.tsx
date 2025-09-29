@@ -307,7 +307,7 @@ export const ServiceDetailsPage = () => {
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="location-detail" className="w-full">
           <TabsList
-            className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar rounded-t-lg h-auto p-0 text-base bg-transparent"
+            className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar rounded-t-lg h-auto p-0 text-sm bg-transparent"
           >
             {[
               { label: 'Location Detail', value: 'location-detail' },
@@ -318,7 +318,7 @@ export const ServiceDetailsPage = () => {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap text-base"
+                className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap text-sm"
               >
                 {tab.label}
               </TabsTrigger>
