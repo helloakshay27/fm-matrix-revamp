@@ -29,7 +29,7 @@ export const CustomTabs = ({ tabs, defaultValue, onValueChange, className = "" }
                 ))}
             </TabsList>
             {tabs.map((tab) => (
-                <TabsContent key={tab.value} value={tab.value} className="p-4 sm:p-6">
+                <TabsContent key={tab.value} value={tab.value} className="p-4 sm:p-6 mt-0">
                     {tab.content}
                 </TabsContent>
             ))}
