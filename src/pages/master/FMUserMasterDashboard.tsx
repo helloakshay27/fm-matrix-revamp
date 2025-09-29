@@ -743,35 +743,35 @@ export const FMUserMasterDashboard = () => {
         <StatsCard
           title="Total Users"
           value={totalUsers}
-          icon={<Users className="w-6 h-6" />}
+          icon={<Users className="w-6 h-6 text-[#C72030]" />}
           onClick={() => fetchUsers(pagination.current_page)}
           className="cursor-pointer"
         />
         <StatsCard
           title="Approved Users"
           value={approvedUsers}
-          icon={<Users className="w-6 h-6" />}
+          icon={<Users className="w-6 h-6 text-[#C72030]" />}
           onClick={() => cardFilter({ status: "approved" })}
           className="cursor-pointer"
         />
         <StatsCard
           title="Pending Users"
           value={pendingUsers}
-          icon={<Users className="w-6 h-6" />}
+          icon={<Users className="w-6 h-6 text-[#C72030]" />}
           onClick={() => cardFilter({ status: "pending" })}
           className="cursor-pointer"
         />
         <StatsCard
           title="Rejected Users"
           value={rejectedUsers}
-          icon={<Users className="w-6 h-6" />}
+          icon={<Users className="w-6 h-6 text-[#C72030]" />}
           onClick={() => cardFilter({ status: "rejected" })}
           className="cursor-pointer"
         />
         <StatsCard
           title="App Downloaded"
           value={appDownloaded}
-          icon={<Download className="w-6 h-6" />}
+          icon={<Download className="w-6 h-6 text-[#C72030]" />}
           onClick={() => cardFilter({ downloaded: true })}
           className="cursor-pointer"
         />
