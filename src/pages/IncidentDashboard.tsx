@@ -8,6 +8,15 @@ import IncidentFilterModal from "@/components/IncidentFilterModal";
 import { incidentService, type Incident } from "@/services/incidentService";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // Stats calculation
 const calculateStats = (incidents: any[]) => {
@@ -50,6 +59,9 @@ export const IncidentDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [originalIncidents, setOriginalIncidents] = useState<Incident[]>([]);
   const [countStats, setCountStats] = useState<{ total_incidents: number; open: number; under_investigation: number; closed: number; pending: number; support_required: number } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Define columns for the EnhancedTable
   const columns: ColumnConfig[] = [
@@ -204,18 +216,27 @@ export const IncidentDashboard = () => {
     localStorage.removeItem('incidents-table-columns');
     localStorage.removeItem('incidents-table-visibility');
     
-    fetchIncidents();
+    fetchIncidents(currentPage);
     fetchCounts();
-  }, []);
+  }, [currentPage]);
 
-  const fetchIncidents = async () => {
+  const fetchIncidents = async (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await incidentService.getIncidents();
+      const query = `page=${page}`;
+      const response = await incidentService.getIncidents(query);
       console.log("API Response - First incident:", response.data.incidents[0]); // Debug log
       setIncidents(response.data.incidents);
       setOriginalIncidents(response.data.incidents);
+      if (response.data.pagination) {
+        setCurrentPage(response.data.pagination.current_page || 1);
+        setTotalPages(response.data.pagination.total_pages || 1);
+        setTotalCount(response.data.pagination.total_count || 0);
+      } else {
+        setTotalPages(1);
+        setTotalCount(response.data.total || response.data.incidents.length || 0);
+      }
     } catch (err) {
       setError("Failed to fetch incidents");
       console.error("Error fetching incidents:", err);
@@ -421,13 +442,13 @@ export const IncidentDashboard = () => {
   };
 
   const StatCard = ({ icon, label, value, color }: any) => (
-    <div className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
-      <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
+    <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow">
+      <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
         {React.cloneElement(icon, { className: `w-6 h-6 text-[#C72030]` })}
       </div>
       <div>
-        <div className="text-2xl font-bold text-[#C72030]">{value}</div>
-        <div className="text-sm font-medium text-gray-600">{label}</div>
+        <div className="text-2xl font-semibold text-[#1A1A1A]">{value}</div>
+        <div className="text-sm font-medium text-[#1A1A1A]">{label}</div>
       </div>
     </div>
   );
@@ -494,8 +515,7 @@ export const IncidentDashboard = () => {
             exportFileName="incidents"
             storageKey="incidents-dashboard-new"
             className="min-w-full"
-            pagination={true}
-            pageSize={10}
+            pagination={false}
             leftActions={
               <div className="flex items-center gap-2">
                 <Button
@@ -509,6 +529,84 @@ export const IncidentDashboard = () => {
             }
             onFilterClick={() => setIsFilterModalOpen(true)}
           />
+
+          {/* API-driven Pagination (same as AssetDashboard) */}
+          <div className="mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => {
+                      if (currentPage > 1) {
+                        setCurrentPage(currentPage - 1);
+                      }
+                    }}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(1)}
+                    isActive={currentPage === 1}
+                  >
+                    1
+                  </PaginationLink>
+                </PaginationItem>
+
+                {currentPage > 4 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+
+                {Array.from({ length: 3 }, (_, i) => currentPage - 1 + i)
+                  .filter((page) => page > 1 && page < totalPages)
+                  .map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page)}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                {currentPage < totalPages - 3 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+
+                {totalPages > 1 && (
+                  <PaginationItem>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(totalPages)}
+                      isActive={currentPage === totalPages}
+                    >
+                      {totalPages}
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => {
+                      if (currentPage < totalPages) {
+                        setCurrentPage(currentPage + 1);
+                      }
+                    }}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+
+            <div className="text-center mt-2 text-sm text-gray-600">
+              Showing page {currentPage} of {totalPages} ({totalCount} total incidents)
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="analytics" className="mt-6">
