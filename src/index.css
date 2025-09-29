@@ -779,3 +779,6 @@
   font-size: 14px;
   font-weight: 400;
 }
+.bg-green-500 {
+  background-color: #BF213e !important; /* your red */
+}
