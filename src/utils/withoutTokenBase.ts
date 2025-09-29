@@ -8,32 +8,36 @@ export const baseClient = axios.create({
   },
 })
 
-// Request interceptor to dynamically set baseURL and auth header
 baseClient.interceptors.request.use(
   (config) => {
-    // Get current frontend base URL
-    const baseUrl = window.location.origin + '/';
-    
-    // Dynamically set backend API URL based on frontend URL
-    let backendUrl: string;
-    if (baseUrl === 'https://fm-matrix.lockated.com/') {
-      backendUrl = 'https://fm-uat-api.lockated.com/';
-    } else if (baseUrl === 'https://oig.gophygital.work/') {
-      backendUrl = 'https://oig.gophygital.work/';
-    } else {
-      // Default fallback to OIG API
-      backendUrl = 'https://fm-uat-api.lockated.com/';
+    const { hostname } = window.location;
+    const orgsRaw = localStorage.getItem('baseUrl');
+    console.log("akshay", orgsRaw);
+    let backendUrl = 'https://fm-uat-api.lockated.com/';
+
+    const sessionBaseUrl = sessionStorage.getItem('baseUrl');
+    console.log("baseURl", sessionBaseUrl);
+    if (sessionBaseUrl) {
+      backendUrl = `https://${sessionBaseUrl}/`;
+    } else if (orgsRaw) {
+      try {
+        const organizations = JSON.parse(orgsRaw);
+        const matchedOrg = organizations.find((org: any) => {
+          if (!org.front_domain || !org.front_subdomain) return false;
+          return hostname === `${org.front_subdomain}.${org.front_domain}`;
+        });
+        if (matchedOrg && matchedOrg.domain && matchedOrg.sub_domain) {
+          backendUrl = `https://${matchedOrg.sub_domain}.${matchedOrg.domain}/`;
+        }
+      } catch (e) {
+        // fallback to default
+      }
     }
-    
+
     config.baseURL = backendUrl;
-    // config.baseURL = "https://fm-uat-api.lockated.com"
-    // Dynamically set auth header from localStorage
-    // config.headers.Authorization = getAuthHeader()
-    return config
+    return config;
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
 // Response interceptor for error handling

@@ -119,6 +119,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const handleOrganizationSelect = (org: Organization) => {
     localStorage.setItem("selectedOrg", org.name)
     localStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
+    //Session Storage For App-Level
+    sessionStorage.setItem("selectedOrg", org.name)
+    sessionStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
     setBaseUrl(`${org.sub_domain}.${org.domain}`);
     setSelectedOrganization(org);
     // Save the base URL in the format: sub_domain.domain
@@ -169,6 +172,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
        saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id.toString());
       localStorage.setItem("userType", response.user_type.toString());
+      // Session Storage
+      sessionStorage.setItem("userId", response.id.toString());
+      sessionStorage.setItem("userType", response.user_type.toString());
 
         toast.success("OTP sent successfully! Please verify your phone number to continue.");
 
@@ -197,6 +203,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id.toString());
       localStorage.setItem("userType", response.user_type.toString());
+      // Session storage
+       sessionStorage.setItem("userId", response.id.toString());
+      sessionStorage.setItem("userType", response.user_type.toString());
 
       const from = (location.state as { from?: Location })?.from?.pathname + (location.state as { from?: Location })?.from?.search || "/maintenance/asset";
 
