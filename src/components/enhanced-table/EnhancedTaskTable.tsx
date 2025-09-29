@@ -494,7 +494,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+      <div className=" rounded-lg border border-[#D5DbDB] overflow-hidden">
         <div className="overflow-x-auto">
           <DndContext
             sensors={sensors}

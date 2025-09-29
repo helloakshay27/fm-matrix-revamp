@@ -889,7 +889,7 @@ export const ScheduledTaskDashboard = () => {
           )}
 
           {/* Task Table */}
-          <div className="bg-white rounded-lg">
+          <div className=" rounded-lg">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="text-gray-500">Loading tasks...</div>
