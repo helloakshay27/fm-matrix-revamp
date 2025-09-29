@@ -2872,7 +2872,7 @@ const AllContent = () => {
                 <div className={sectionBox}>
 
                     {/* Title */}
-                    <h1 className="text-lg md:text-lg font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
+                    <h1 className="text-3xl md:text-3xl font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
                         Response TAT Performance by Center – {periodUnit}ly Comparison
                     </h1>
 
