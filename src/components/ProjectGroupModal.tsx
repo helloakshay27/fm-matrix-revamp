@@ -3,8 +3,9 @@ import { Button } from './ui/button'
 import { useEffect, useState } from 'react'
 import { useAppDispatch } from '@/store/hooks';
 import { toast } from 'sonner';
+import { createProjectGroups, updateProjectGroups } from '@/store/slices/projectGroupSlice';
 
-const ProjectGroupModal = ({ openDialog, handleCloseDialog, isEditing, record, fetchData }) => {
+const ProjectGroupModal = ({ openDialog, handleCloseDialog, isEditing, record, fetchData, users }) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
@@ -14,15 +15,14 @@ const ProjectGroupModal = ({ openDialog, handleCloseDialog, isEditing, record, f
         members: [],
     })
 
-    const availableMembers = [
-        { id: '1', name: 'John Doe' },
-        { id: '2', name: 'Jane Smith' },
-        { id: '3', name: 'Alice Johnson' },
-        { id: '4', name: 'Bob Williams' },
-        { id: '5', name: 'Emily Brown' },
-        { id: '6', name: 'Michael Davis' },
-        { id: '7', name: 'Olivia Wilson' },
-    ];
+    useEffect(() => {
+        if (isEditing && record) {
+            setFormData({
+                groupName: record.name,
+                members: record?.project_group_members
+            })
+        }
+    }, [isEditing, record])
 
     const handleChange = (e) => {
         setFormData({
@@ -40,7 +40,48 @@ const ProjectGroupModal = ({ openDialog, handleCloseDialog, isEditing, record, f
     }
 
     const handleSubmit = async () => {
+        if (isEditing) {
+            const payload = {
+                name: formData.groupName,
+                user_ids: formData.members,
+            }
+            try {
+                await dispatch(updateProjectGroups({
+                    baseUrl,
+                    token,
+                    id: record.id,
+                    data: payload
+                })).unwrap();
 
+                toast.success("Group updated successfully")
+                handleClose()
+                fetchData()
+            } catch (error) {
+                console.log(error)
+                toast.error(error)
+            }
+        } else {
+            const payload = {
+                name: formData.groupName,
+                user_ids: formData.members,
+                created_by_id: JSON.parse(localStorage.getItem("user")).id,
+                active: true
+            }
+            try {
+                await dispatch(createProjectGroups({
+                    baseUrl,
+                    token,
+                    data: payload
+                })).unwrap();
+
+                toast.success("Group created successfully")
+                handleClose()
+                fetchData()
+            } catch (error) {
+                console.log(error)
+                toast.error(error)
+            }
+        }
     }
 
     return (
@@ -77,7 +118,7 @@ const ProjectGroupModal = ({ openDialog, handleCloseDialog, isEditing, record, f
                         multiple: true,
                         renderValue: (selected) =>
                             Array.isArray(selected) && selected
-                                .map((id) => availableMembers.find((member) => member.id === id)?.name || '')
+                                .map((id) => users.find((member) => member.id === id)?.full_name || '')
                                 .join(', '),
                     }}
                     InputLabelProps={{ style: { color: '#000000' } }}
@@ -85,9 +126,9 @@ const ProjectGroupModal = ({ openDialog, handleCloseDialog, isEditing, record, f
                         style: { backgroundColor: '#fff', borderRadius: '4px' },
                     }}
                 >
-                    {availableMembers.map((member) => (
+                    {users.map((member) => (
                         <MenuItem key={member.id} value={member.id}>
-                            {member.name}
+                            {member.full_name}
                         </MenuItem>
                     ))}
                 </TextField>
@@ -96,7 +137,7 @@ const ProjectGroupModal = ({ openDialog, handleCloseDialog, isEditing, record, f
             <div className="flex justify-center gap-3 mb-4">
                 <Button
                     variant="outline"
-                    onClick={handleCloseDialog}
+                    onClick={handleClose}
                     className="px-6"
                 >
                     Cancel

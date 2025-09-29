@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { useAppDispatch } from "@/store/hooks";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { fetchProjectGroups, updateProjectGroups } from "@/store/slices/projectGroupSlice";
 import { format } from "date-fns";
 import { Edit, Plus } from "lucide-react";
@@ -45,6 +46,7 @@ const ProjectGroup = () => {
     const [isEditing, setIsEditing] = useState(false)
     const [record, setRecord] = useState({})
     const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
+    const [users, setUsers] = useState([])
 
     const fetchData = async () => {
         setLoading(true)
@@ -58,8 +60,18 @@ const ProjectGroup = () => {
         }
     }
 
+    const fetchUsers = async () => {
+        try {
+            const response = await dispatch(fetchFMUsers()).unwrap();
+            setUsers(response.users);
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     useEffect(() => {
         fetchData();
+        fetchUsers();
     }, []);
 
     const handleCheckboxChange = async (item: any) => {
@@ -88,7 +100,7 @@ const ProjectGroup = () => {
                 )
             );
 
-            toast.success(`Organization ${newStatus ? "activated" : "deactivated"} successfully`);
+            toast.success(`Group ${newStatus ? "activated" : "deactivated"} successfully`);
         } catch (error) {
             console.error("Error updating active status:", error);
             toast.error(error || "Failed to update active status. Please try again.");
@@ -118,10 +130,6 @@ const ProjectGroup = () => {
 
     const renderCell = (item, columnKey: string) => {
         switch (columnKey) {
-            case 'created_at':
-                return (
-                    <span>{format(item.created_at, 'dd/MM/yyyy')}</span>
-                )
             case 'active':
                 return (
                     <Switch
@@ -165,6 +173,7 @@ const ProjectGroup = () => {
                 handleCloseDialog={() => setOpenDialog(false)}
                 isEditing={isEditing}
                 record={record}
+                users={users}
             />
         </div>
     )
