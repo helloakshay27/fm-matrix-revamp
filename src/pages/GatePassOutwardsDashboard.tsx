@@ -137,7 +137,7 @@ export const GatePassOutwardsDashboard = () => {
   const dataWithIndex = outwardData.map((item, index) => {
     const materials = Array.isArray(item.gate_pass_materials) ? item.gate_pass_materials : [];
     console.log('Gate Pass Item:', item);
-    
+
     return {
       sNo: index + 1,
       actions: '', // Placeholder, will be filled by renderRow
@@ -227,8 +227,8 @@ export const GatePassOutwardsDashboard = () => {
     actions: (
       <div className="flex gap-2 justify-center" style={{ maxWidth: '80px' }}>
         <div title="View details">
-          <Eye 
-            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+          <Eye
+            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
             onClick={() => handleViewDetails(entry.id)}
           />
         </div>
@@ -284,14 +284,14 @@ export const GatePassOutwardsDashboard = () => {
     //   <Plus className="w-4 h-4 mr-2" />
     //   Action
     // </Button>
-        <Button
-                    size="sm"
-                    className="mr-2"
-                    onClick={() => setShowActionPanel((prev) => !prev)}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Action
-                  </Button>
+    <Button
+      size="sm"
+      className="mr-2"
+      onClick={() => setShowActionPanel((prev) => !prev)}
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Action
+    </Button>
   );
 
   // Export handler for outward gate pass
@@ -345,7 +345,7 @@ export const GatePassOutwardsDashboard = () => {
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
-      <div style={{overflowX: 'auto'}}>
+      <div style={{ overflowX: 'auto' }}>
         <EnhancedTable
           data={dataWithIndex}
           columns={columns}
@@ -411,7 +411,7 @@ export const GatePassOutwardsDashboard = () => {
           </div>
         </div>
       )}
-      <GatePassOutwardsFilterModal 
+      <GatePassOutwardsFilterModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
         filters={filters}
