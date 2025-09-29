@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info, Download } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info, Download, Star } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { apiClient } from '@/utils/apiClient';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -413,6 +413,162 @@ export const SurveyMappingDetailsPage = () => {
     }
   };
 
+  // Helper function to render options based on question type
+  const renderQuestionOptions = (question: SurveyQuestion) => {
+    if (!question.options || question.options.length === 0) {
+      return <span className="text-gray-400">—</span>;
+    }
+
+    // Check if question type is rating or emoji
+    const questionType = question.qtype.toLowerCase();
+    const isRating = questionType.includes('rating') || 
+                    questionType.includes('star') || 
+                    questionType.includes('scale') ||
+                    question.options.every(opt => /^\d+$/.test(opt.qname.trim()));
+    
+    const isEmoji = questionType.includes('emoji') || 
+                   questionType.includes('smiley') || 
+                   questionType.includes('emotion') ||
+                   question.options.some(opt => /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/u.test(opt.qname));
+
+    if (isRating) {
+      // Render star rating
+      const ratings = question.options
+        .map(opt => parseInt(opt.qname) || 0)
+        .filter(rating => rating > 0);
+      
+      if (ratings.length > 0) {
+        const maxRating = Math.max(...ratings);
+        const minRating = Math.min(...ratings);
+        
+        return (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {Array.from({ length: maxRating }, (_, i) => (
+                <Star 
+                  key={i} 
+                  className={`w-4 h-4 ${
+                    i < minRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-gray-600">
+              {minRating !== maxRating ? `${minRating}-${maxRating}` : `${maxRating}`} 
+              {' '}
+              {maxRating === 1 ? 'star' : 'stars'}
+            </span>
+          </div>
+        );
+      }
+    }
+
+    if (isEmoji) {
+      // Enhanced emoji mapping with more options
+      const emojiMap: { [key: string]: string } = {
+        // Satisfaction levels
+        'very_satisfied': '�',
+        'satisfied': '�',
+        'neutral': '😐',
+        'dissatisfied': '😞',
+        'very_dissatisfied': '😢',
+        
+        // Happiness levels
+        'very_happy': '😍',
+        'happy': '😊',
+        'okay': '😐',
+        'sad': '😞',
+        'very_sad': '😢',
+        
+        // Agreement levels
+        'strongly_agree': '😍',
+        'agree': '😊',
+        'neither': '😐',
+        'disagree': '😞',
+        'strongly_disagree': '�',
+        
+        // Quality levels
+        'excellent': '�😍',
+        'good': '😊',
+        'average': '😐',
+        'poor': '😞',
+        'terrible': '😢',
+        
+        // Other emotions
+        'angry': '😠',
+        'confused': '😕',
+        'excited': '🤩',
+        'disappointed': '😔',
+        'worried': '😰',
+        'relaxed': '😌',
+        'surprised': '�',
+        'thinking': '🤔'
+      };
+
+      return (
+        <div className="flex flex-wrap gap-1">
+          {question.options.map((option, optIndex) => {
+            // Try to map option name to emoji
+            const optionKey = option.qname.toLowerCase().replace(/\s+/g, '_');
+            let emoji = emojiMap[optionKey];
+            
+            // If no direct match, try partial matches
+            if (!emoji) {
+              for (const [key, value] of Object.entries(emojiMap)) {
+                if (optionKey.includes(key) || key.includes(optionKey)) {
+                  emoji = value;
+                  break;
+                }
+              }
+            }
+            
+            // Fallback to default 5-point scale emojis
+            if (!emoji) {
+              const defaultEmojis = ['😢', '😞', '😐', '😊', '😍'];
+              emoji = defaultEmojis[optIndex % 5];
+            }
+            
+            return (
+              <div
+                key={optIndex}
+                className={`flex items-center gap-1 text-xs px-2 py-1 rounded border ${
+                  option.option_type === 'p' 
+                    ? 'bg-green-50 border-green-200 text-green-800' 
+                    : option.option_type === 'n'
+                    ? 'bg-red-50 border-red-200 text-red-800'
+                    : 'bg-yellow-50 border-yellow-200 text-gray-700'
+                }`}
+              >
+                <span className="text-lg">{emoji}</span>
+                <span>{option.qname}</span>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Default rendering for other question types
+    return (
+      <div className="flex flex-wrap gap-1">
+        {question.options.map((option, optIndex) => (
+          <span
+            key={optIndex}
+            className={`text-xs px-2 py-1 rounded ${
+              option.option_type === 'p' 
+                ? 'bg-green-100 text-green-800' 
+                : option.option_type === 'n'
+                ? 'bg-red-100 text-red-800'
+                : 'bg-gray-100 text-gray-800'
+            }`}
+          >
+            {option.qname} 
+          </span>
+        ))}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -687,8 +843,8 @@ export const SurveyMappingDetailsPage = () => {
                         <TableHead>ID</TableHead>
                         <TableHead>Question</TableHead>
                         <TableHead>Type</TableHead>
-                        <TableHead>Question Number</TableHead>
-                        <TableHead>Status</TableHead>
+                        {/* <TableHead>Question Number</TableHead> */}
+                        {/* <TableHead>Status</TableHead> */}
                         <TableHead>Options</TableHead>
                         <TableHead>Created By</TableHead>
                         <TableHead>Created Date</TableHead>
@@ -714,12 +870,12 @@ export const SurveyMappingDetailsPage = () => {
                                 {question.qtype}
                               </Badge>
                             </TableCell>
-                            <TableCell>
+                            {/* <TableCell>
                               <Badge variant="secondary" className="text-xs">
                                 {question.qnumber}
                               </Badge>
-                            </TableCell>
-                            <TableCell>
+                            </TableCell> */}
+                            {/* <TableCell>
                               {question.active ? (
                                 <Badge variant="default" className="text-xs">
                                   Active
@@ -729,28 +885,9 @@ export const SurveyMappingDetailsPage = () => {
                                   Inactive
                                 </Badge>
                               )}
-                            </TableCell>
+                            </TableCell> */}
                             <TableCell>
-                              {question.options && question.options.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {question.options.map((option, optIndex) => (
-                                    <span
-                                      key={optIndex}
-                                      className={`text-xs px-2 py-1 rounded ${
-                                        option.option_type === 'p' 
-                                          ? 'bg-green-100 text-green-800' 
-                                          : option.option_type === 'n'
-                                          ? 'bg-red-100 text-red-800'
-                                          : 'bg-gray-100 text-gray-800'
-                                      }`}
-                                    >
-                                      {option.qname} ({option.option_type})
-                                    </span>
-                                  ))}
-                                </div>
-                              ) : (
-                                <span className="text-gray-400">—</span>
-                              )}
+                              {renderQuestionOptions(question)}
                             </TableCell>
                             <TableCell>{question.created_by || "—"}</TableCell>
                             <TableCell>{formatDate(question.created_at)}</TableCell>

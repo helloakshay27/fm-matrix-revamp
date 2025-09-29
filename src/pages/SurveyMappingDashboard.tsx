@@ -489,14 +489,14 @@ export const SurveyMappingDashboard = () => {
           <div className="flex justify-center items-center gap-2">
             <button 
               onClick={() => handleViewClick(item)}
-              className="p-1 text-black-600 hover:text-black-800"
+              className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
               title="View"
             >
               <Eye className="w-4 h-4" />
             </button>
             <button 
               onClick={() => handleEditClick(item)}
-              className="p-1 text-black-600 hover:text-black-800"
+              className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
               title="Edit"
             >
               <Edit className="w-4 h-4" />
@@ -504,21 +504,21 @@ export const SurveyMappingDashboard = () => {
           </div>
         );
       case 'survey_title':
-        return <span className="font-medium">{item.survey_title || item.survey_name}</span>;
+        return <span className="text-sm font-medium text-gray-900">{item.survey_title || item.survey_name}</span>;
       case 'site_name':
-        return <span>{item.site_name}</span>;
+        return <span className="text-sm text-gray-600">{item.site_name}</span>;
       case 'building_name': {
         // Get all buildings for this survey from the complete data
         const surveyData = allMappingsData.find(s => s.id === item.survey_id);
         const allBuildings = surveyData ? [...new Set(surveyData.mappings.map(m => m.building_name).filter(Boolean))] : [item.building_name];
         
         if (allBuildings.length <= 1) {
-          return <span>{item.building_name}</span>;
+          return <span className="text-sm text-gray-600">{item.building_name}</span>;
         }
         
         return (
           <div className="group relative">
-            <span className="cursor-pointer">
+            <span className="cursor-pointer text-sm text-gray-600">
               {item.building_name}
               {allBuildings.length > 1 && <span className="text-blue-600 ml-1">...</span>}
             </span>
@@ -539,12 +539,12 @@ export const SurveyMappingDashboard = () => {
         const allWings = surveyData ? [...new Set(surveyData.mappings.map(m => m.wing_name).filter(Boolean))] : [item.wing_name].filter(Boolean);
         
         if (allWings.length <= 1) {
-          return <span>{item.wing_name || '-'}</span>;
+          return <span className="text-sm text-gray-600">{item.wing_name || '-'}</span>;
         }
         
         return (
           <div className="group relative">
-            <span className="cursor-pointer">
+            <span className="cursor-pointer text-sm text-gray-600">
               {item.wing_name || '-'}
               {allWings.length > 1 && <span className="text-blue-600 ml-1">...</span>}
             </span>
@@ -565,12 +565,12 @@ export const SurveyMappingDashboard = () => {
         const allFloors = surveyData ? [...new Set(surveyData.mappings.map(m => m.floor_name).filter(Boolean))] : [item.floor_name].filter(Boolean);
         
         if (allFloors.length <= 1) {
-          return <span>{item.floor_name || '-'}</span>;
+          return <span className="text-sm text-gray-600">{item.floor_name || '-'}</span>;
         }
         
         return (
           <div className="group relative">
-            <span className="cursor-pointer">
+            <span className="cursor-pointer text-sm text-gray-600">
               {item.floor_name || '-'}
               {allFloors.length > 1 && <span className="text-blue-600 ml-1">...</span>}
             </span>
@@ -591,12 +591,12 @@ export const SurveyMappingDashboard = () => {
         const allAreas = surveyData ? [...new Set(surveyData.mappings.map(m => m.area_name).filter(Boolean))] : [item.area_name].filter(Boolean);
         
         if (allAreas.length <= 1) {
-          return <span>{item.area_name || '-'}</span>;
+          return <span className="text-sm text-gray-600">{item.area_name || '-'}</span>;
         }
         
         return (
           <div className="group relative">
-            <span className="cursor-pointer">
+            <span className="cursor-pointer text-sm text-gray-600">
               {item.area_name || '-'}
               {allAreas.length > 1 && <span className="text-blue-600 ml-1">...</span>}
             </span>
@@ -617,12 +617,12 @@ export const SurveyMappingDashboard = () => {
         const allRooms = surveyData ? [...new Set(surveyData.mappings.map(m => m.room_name).filter(Boolean))] : [item.room_name].filter(Boolean);
         
         if (allRooms.length <= 1) {
-          return <span>{item.room_name || '-'}</span>;
+          return <span className="text-sm text-gray-600">{item.room_name || '-'}</span>;
         }
         
         return (
           <div className="group relative">
-            <span className="cursor-pointer">
+            <span className="cursor-pointer text-sm text-gray-600">
               {item.room_name || '-'}
               {allRooms.length > 1 && <span className="text-blue-600 ml-1">...</span>}
             </span>
@@ -638,25 +638,25 @@ export const SurveyMappingDashboard = () => {
         );
       }
       case 'check_type':
-        return <span className="capitalize">{item.survey_check_type || '-'}</span>;
+        return <span className="text-sm text-gray-600 capitalize">{item.survey_check_type || '-'}</span>;
       case 'questions_count':
-        return <div className="text-center">{item.survey_questions_count || 0}</div>;
+        return <div className="text-center text-sm text-gray-600">{item.survey_questions_count || 0}</div>;
       case 'associations_count':
         return (
-          <div className="text-center">
+          <div className="text-center text-sm text-gray-600">
             {item.survey_no_of_associations || 0}
           </div>
         );
       case 'ticket_category':
         return (
-          <span>{item.ticket_configs?.category || '-'}</span>
+          <span className="text-sm text-gray-600">{item.ticket_configs?.category || '-'}</span>
         );
       case 'assigned_to':
         return (
-          <span>{item.ticket_configs?.assigned_to || '-'}</span>
+          <span className="text-sm text-gray-600">{item.ticket_configs?.assigned_to || '-'}</span>
         );
       case 'created_by':
-        return <span>{item.created_by}</span>;
+        return <span className="text-sm text-gray-600">{item.created_by}</span>;
       case 'status': {
         // Handle both boolean and number (0/1) status values
         const currentStatus = item.survey_active || item.active;
@@ -680,7 +680,7 @@ export const SurveyMappingDashboard = () => {
         );
       }
       case 'created_at':
-        return item.created_at ? new Date(item.created_at).toLocaleDateString() : '-';
+        return <span className="text-sm text-gray-600">{item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}</span>;
       case 'qr_code':
         return (
           <div className="flex justify-center">
@@ -697,14 +697,14 @@ export const SurveyMappingDashboard = () => {
                 />
               </button>
             ) : (
-              <span>-</span>
+              <span className="text-sm text-gray-600">-</span>
             )}
           </div>
         );
       default: {
         // Fallback for any other columns
         const value = item[columnKey as keyof SurveyMapping];
-        return <span>{value !== null && value !== undefined ? String(value) : '-'}</span>;
+        return <span className="text-sm text-gray-600">{value !== null && value !== undefined ? String(value) : '-'}</span>;
       }
     }
   };
@@ -732,95 +732,153 @@ export const SurveyMappingDashboard = () => {
           <span className="ml-2">Loading survey mappings...</span>
         </div>
       ) : (
-        /* Enhanced Survey Mapping Table */
-        <div>
-          {/* Optional: Show subtle search indicator */}
-          {isSearching && (
-            <div className="mb-2 text-sm text-gray-500 flex items-center">
-              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-              Searching server...
-            </div>
-          )}
+            <div>
+              {/* Optional: Show subtle search indicator */}
+              {isSearching && (
+                <div className="mb-2 text-sm text-gray-500 flex items-center">
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  Searching server...
+                </div>
+              )}
           
-          <EnhancedTable
-            data={mappings}
-            columns={enhancedTableColumns}
-            selectable={false}
-            renderCell={renderCell}
-            storageKey="survey-mapping-table"
-            enableExport={true}
-            handleExport={handleExport}
-            exportFileName="survey-mapping-data"
-            searchTerm={searchTerm}
-            onSearchChange={handleSearchChange}
-            searchPlaceholder="Search survey mappings..."
-            pagination={false} // Disable client-side pagination since we're doing server-side
-            pageSize={perPage}
-            hideColumnsButton={true}
-            leftActions={
-              <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                <Button 
-                  onClick={handleAddMapping}
-                  className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add
-                </Button>
-              </div>
-            }
-            rightActions={
-              <div className="flex items-center gap-2">
-                <ColumnVisibilityDropdown
-                  columns={dropdownColumns}
-                  onColumnToggle={handleColumnToggle}
-                />
-              </div>
-            }
-          />
-          
-          {/* Server-side Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => {
-                        if (currentPage > 1) handlePageChange(currentPage - 1);
-                      }}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+              {/* Survey Mapping Table using EnhancedTable */}
+              <EnhancedTable
+                data={mappings}
+                columns={enhancedTableColumns}
+                selectable={false}
+                renderCell={renderCell}
+                storageKey="survey-mapping-table"
+                enableExport={true}
+                handleExport={handleExport}
+                exportFileName="survey-mapping-data"
+                searchTerm={searchTerm}
+                onSearchChange={handleSearchChange}
+                searchPlaceholder="Search survey mappings..."
+                pagination={false}
+                pageSize={perPage}
+                hideColumnsButton={true}
+                leftActions={
+                  <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                    <Button 
+                      onClick={handleAddMapping}
+                      className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add
+                    </Button>
+                  </div>
+                }
+                rightActions={
+                  <div className="flex items-center gap-2">
+                    <ColumnVisibilityDropdown
+                      columns={dropdownColumns}
+                      onColumnToggle={handleColumnToggle}
                     />
-                  </PaginationItem>
-                  {Array.from(
-                    { length: Math.min(totalPages, 10) },
-                    (_, i) => i + 1
-                  ).map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(page)}
-                        isActive={currentPage === page}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-                  {totalPages > 10 && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => {
-                        if (currentPage < totalPages) handlePageChange(currentPage + 1);
-                      }}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-              <div className="text-center mt-2 text-sm text-gray-600">
-                Showing page {currentPage} of {totalPages} ({totalCount} total survey mappings)
+                  </div>
+                }
+              />
+
+              {/* Server-side Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      {/* Previous Button */}
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => {
+                            if (currentPage > 1) {
+                              handlePageChange(currentPage - 1);
+                            }
+                          }}
+                          className={
+                            currentPage === 1
+                              ? "pointer-events-none opacity-50"
+                              : ""
+                          }
+                        />
+                      </PaginationItem>
+
+                      {/* First Page */}
+                      <PaginationItem>
+                        <PaginationLink
+                          onClick={() => handlePageChange(1)}
+                          isActive={currentPage === 1}
+                        >
+                          1
+                        </PaginationLink>
+                      </PaginationItem>
+
+                      {/* Ellipsis before current range */}
+                      {currentPage > 4 && (
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      )}
+
+                      {/* Dynamic middle pages */}
+                      {Array.from(
+                        { length: 3 },
+                        (_, i) => currentPage - 1 + i
+                      )
+                        .filter(
+                          (page) => page > 1 && page < totalPages
+                        )
+                        .map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => handlePageChange(page)}
+                              isActive={currentPage === page}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+
+                      {/* Ellipsis after current range */}
+                      {currentPage < totalPages - 3 && (
+                        <PaginationItem>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      )}
+
+                      {/* Last Page (if not same as first) */}
+                      {totalPages > 1 && (
+                        <PaginationItem>
+                          <PaginationLink
+                            onClick={() =>
+                              handlePageChange(totalPages)
+                            }
+                            isActive={
+                              currentPage === totalPages
+                            }
+                          >
+                            {totalPages}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )}
+
+                      {/* Next Button */}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => {
+                            if (currentPage < totalPages) {
+                              handlePageChange(currentPage + 1);
+                            }
+                          }}
+                          className={
+                            currentPage === totalPages
+                              ? "pointer-events-none opacity-50"
+                              : ""
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+
+                  <div className="text-center mt-2 text-sm text-gray-600">
+                    Showing page {currentPage} of{" "}
+                    {totalPages} ({totalCount} total survey mappings)
               </div>
             </div>
           )}
