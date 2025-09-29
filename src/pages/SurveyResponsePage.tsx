@@ -139,6 +139,7 @@ interface SurveyResponse {
     floor_name?: string;
     area_name?: string;
     room_name?: string;
+    status?: boolean;
   };
 }
 
@@ -549,7 +550,7 @@ export const SurveyResponsePage = () => {
         latest_response_date: latestResponseDate,
         answer_type: answerType,
         responded_by: respondedBy,
-        active: response.survey_status ?? true,
+        active: location.status ?? response.survey_status ?? true,
       });
 
       // Debug logging for active status

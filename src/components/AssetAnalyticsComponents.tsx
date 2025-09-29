@@ -373,7 +373,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 value: assetStatus?.info?.total_assets_in_breakdown || assetStatistics.assets_in_breakdown || 0,
                 color: '#d8dcdd',
             },
-             {
+            {
                 name: 'In Store',
                 value: assetStatus?.info?.total_assets_in_store || 0,
                 color: '#C72030',
@@ -400,7 +400,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
 
         // If both values are 0, show a placeholder
         const totalDistributionValue = (assetDistributions?.info?.total_it_assets || 0) + (assetDistributions?.info?.total_non_it_assets || 0);
-        const finalChartTypeData = totalDistributionValue === 0 
+        const finalChartTypeData = totalDistributionValue === 0
             ? [{ name: 'No Data Available', value: 1, color: '#e5e7eb' }]
             : chartTypeData;
 
@@ -605,7 +605,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
     return (
         <div>
 
-            <div>
+            <div className='mb-4'>
                 {(showFilter || showSelector) && (
                     <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
                         {showFilter && (
@@ -630,9 +630,10 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
             </div>
 
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-4">
 
-                <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
+
+                <div className="lg:col-span-8">
                     <div className={`space-y-6 ${className}`}>
                         {renderErrorMessages()}
 
@@ -656,7 +657,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 </div>
 
                 {/* Right Sidebar - Recent Assets (1 column) */}
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-4">
                     <RecentAssetsSidebar />
                 </div>
 

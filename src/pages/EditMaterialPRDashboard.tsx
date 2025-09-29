@@ -609,10 +609,16 @@ export const EditMaterialPRDashboard = () => {
                 label="Retention(%)"
                 name="retention"
                 value={supplierDetails.retention}
-                onChange={handleSupplierChange}
+                onChange={(e) => {
+                  let value = e.target.value;
+
+                  if (/^\d*\.?\d{0,2}$/.test(value)) {
+                    handleSupplierChange(e);
+                  }
+                }}
                 placeholder="Enter Number"
                 fullWidth
-                type="number"
+                type="text"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
@@ -622,9 +628,15 @@ export const EditMaterialPRDashboard = () => {
               <TextField
                 label="TDS(%)"
                 name="tds"
-                type="number"
+                type="text"
                 value={supplierDetails.tds}
-                onChange={handleSupplierChange}
+                onChange={(e) => {
+                  let value = e.target.value;
+
+                  if (/^\d*\.?\d{0,2}$/.test(value)) {
+                    handleSupplierChange(e);
+                  }
+                }}
                 placeholder="Enter Number"
                 fullWidth
                 variant="outlined"
@@ -636,9 +648,15 @@ export const EditMaterialPRDashboard = () => {
               <TextField
                 label="QC(%)"
                 name="qc"
-                type="number"
+                type="text"
                 value={supplierDetails.qc}
-                onChange={handleSupplierChange}
+                onChange={(e) => {
+                  let value = e.target.value;
+
+                  if (/^\d*\.?\d{0,2}$/.test(value)) {
+                    handleSupplierChange(e);
+                  }
+                }}
                 placeholder="Enter number"
                 fullWidth
                 variant="outlined"
@@ -664,9 +682,15 @@ export const EditMaterialPRDashboard = () => {
               <TextField
                 label="Advance Amount"
                 name="advanceAmount"
-                type="number"
+                type="text"
                 value={supplierDetails.advanceAmount}
-                onChange={handleSupplierChange}
+                onChange={(e) => {
+                  let value = e.target.value;
+
+                  if (/^\d*\.?\d{0,2}$/.test(value)) {
+                    handleSupplierChange(e);
+                  }
+                }}
                 placeholder="Enter Number"
                 fullWidth
                 variant="outlined"
@@ -858,13 +882,16 @@ export const EditMaterialPRDashboard = () => {
                     <TextField
                       label="Rate"
                       value={item.each}
-                      onChange={(e) =>
-                        handleItemChange(item.id, "each", e.target.value)
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleItemChange(item.id, "each", value);
+                        }
+                      }}
                       placeholder="Enter Number"
                       fullWidth
                       variant="outlined"
-                      type="number"
+                      type="text"
                       InputLabelProps={{ shrink: true }}
                       InputProps={{ sx: fieldStyles }}
                       sx={{ mt: 1 }}
