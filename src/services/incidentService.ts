@@ -23,6 +23,7 @@ export interface IncidentInvestigation {
 }
 
 export interface IncidentDetail {
+  id?: number;
   equipment_property_damaged_cost?: number;
   production_loss?: number;
   treatment_cost?: number;
@@ -49,6 +50,7 @@ export interface Incident {
   inc_level_id: number;
   rca: string | null;
   rca_category: string | null;
+  rca_category_id: number | null;
   loss: string | null;
   assigned_to: number | null;
   control: string | null;
@@ -251,9 +253,21 @@ export const incidentService = {
     if (formData.correctiveAction) body.append('incident[corrective_action]', formData.correctiveAction);
     if (formData.preventiveAction) body.append('incident[preventive_action]', formData.preventiveAction);
     
+    // Damage related fields
+    if (formData.propertyDamageHappened !== undefined && formData.propertyDamageHappened !== '') {
+      body.append('incident[property_damage]', formData.propertyDamageHappened);
+    }
+    if (formData.propertyDamageCategory) body.append('incident[property_damage_id]', formData.propertyDamageCategory);
+    if (formData.damageCoveredInsurance !== undefined && formData.damageCoveredInsurance !== '') {
+      body.append('incident[damage_covered_insurance]', formData.damageCoveredInsurance);
+    }
+    if (formData.damagedRecovered) body.append('incident[damaged_recovered]', formData.damagedRecovered);
+    if (formData.insuredBy) body.append('incident[insured_by]', formData.insuredBy);
+    
     // Witnesses
     if (formData.witnesses && formData.witnesses.length > 0) {
       formData.witnesses.forEach((witness: any, index: number) => {
+        if (witness.id) body.append(`incident[incident_witnesses_attributes][${index}][id]`, witness.id);
         if (witness.name) body.append(`incident[incident_witnesses_attributes][${index}][name]`, witness.name);
         if (witness.mobile) body.append(`incident[incident_witnesses_attributes][${index}][mobile]`, witness.mobile);
         body.append(`incident[incident_witnesses_attributes][${index}][_destroy]`, 'false');
@@ -274,23 +288,29 @@ export const incidentService = {
       formData.attendingPhysician;
 
     if (hasIncidentDetailData) {
-      if (formData.equipmentPropertyDamagedCost) body.append('incident[incident_detail_attributes][equipment_property_damaged_cost]', formData.equipmentPropertyDamagedCost);
-      if (formData.productionLoss) body.append('incident[incident_detail_attributes][production_loss]', formData.productionLoss);
-      if (formData.treatmentCost) body.append('incident[incident_detail_attributes][treatment_cost]', formData.treatmentCost);
-      if (formData.absenteeismCost) body.append('incident[incident_detail_attributes][absenteeism_cost]', formData.absenteeismCost);
-      if (formData.otherCost) body.append('incident[incident_detail_attributes][other_cost]', formData.otherCost);
+      // Include the incident detail ID for updates if it exists - using index-based structure
+      if (formData.incidentDetailId) {
+        body.append(`incident[incident_detail_attributes][id]`, formData.incidentDetailId.toString());
+      }
+      if (formData.equipmentPropertyDamagedCost) body.append(`incident[incident_detail_attributes][equipment_property_damaged_cost]`, formData.equipmentPropertyDamagedCost);
+      if (formData.productionLoss) body.append(`incident[incident_detail_attributes][production_loss]`, formData.productionLoss);
+      if (formData.treatmentCost) body.append(`incident[incident_detail_attributes][treatment_cost]`, formData.treatmentCost);
+      if (formData.absenteeismCost) body.append(`incident[incident_detail_attributes][absenteeism_cost]`, formData.absenteeismCost);
+      if (formData.otherCost) body.append(`incident[incident_detail_attributes][other_cost]`, formData.otherCost);
+      body.append(`incident[incident_detail_attributes][_destroy]`, 'false');
       
       // First aid and medical treatment - only send if we're sending incident_detail_attributes
-      body.append('incident[incident_detail_attributes][first_aid_provided_employees]', formData.firstAidProvided ? '1' : '0');
-      if (formData.firstAidAttendants) body.append('incident[incident_detail_attributes][name_first_aid_attendants]', formData.firstAidAttendants);
-      body.append('incident[incident_detail_attributes][sent_for_medical_treatment]', formData.medicalTreatment ? '1' : '0');
-      if (formData.treatmentFacility) body.append('incident[incident_detail_attributes][name_and_address_treatment_facility]', formData.treatmentFacility);
-      if (formData.attendingPhysician) body.append('incident[incident_detail_attributes][name_and_address_attending_physician]', formData.attendingPhysician);
+      body.append(`incident[incident_detail_attributes][first_aid_provided_employees]`, formData.firstAidProvided ? '1' : '0');
+      if (formData.firstAidAttendants) body.append(`incident[incident_detail_attributes][name_first_aid_attendants]`, formData.firstAidAttendants);
+      body.append(`incident[incident_detail_attributes][sent_for_medical_treatment]`, formData.medicalTreatment ? '1' : '0');
+      if (formData.treatmentFacility) body.append(`incident[incident_detail_attributes][name_and_address_treatment_facility]`, formData.treatmentFacility);
+      if (formData.attendingPhysician) body.append(`incident[incident_detail_attributes][name_and_address_attending_physician]`, formData.attendingPhysician);
     }
     
     // Investigation team
     if (formData.investigationTeam && formData.investigationTeam.length > 0) {
       formData.investigationTeam.forEach((member: any, index: number) => {
+        if (member.id) body.append(`incident[incident_investigations_attributes][${index}][id]`, member.id);
         if (member.name) body.append(`incident[incident_investigations_attributes][${index}][name]`, member.name);
         if (member.mobile) body.append(`incident[incident_investigations_attributes][${index}][mobile]`, member.mobile);
         if (member.designation) body.append(`incident[incident_investigations_attributes][${index}][designation]`, member.designation);
@@ -302,7 +322,7 @@ export const incidentService = {
     body.append('incident[support_required]', formData.supportRequired ? '1' : '0');
     body.append('incident[disclaimer]', formData.factsCorrect ? '1' : '0');
     
-    // Attachments - handle new attachments only (avoid duplication)
+    // Attachments - use noticeboard[files_attached][] for each file (API requirement)
     if (formData.newAttachments && Array.isArray(formData.newAttachments) && formData.newAttachments.length > 0) {
       formData.newAttachments.forEach((file: File) => {
         body.append('noticeboard[files_attached][]', file);
@@ -312,8 +332,8 @@ export const incidentService = {
       body.append('noticeboard[files_attached][]', formData.attachments);
     }
     
-    body.append('noticeboard[document]', '');
-    body.append('noticeboard[expire_time]', '');
+    // Add commit parameter
+    body.append('commit', 'Update Incident');
 
     const response = await fetch(`${baseUrl}/pms/incidents/${id}.json`, {
       method: 'PUT',

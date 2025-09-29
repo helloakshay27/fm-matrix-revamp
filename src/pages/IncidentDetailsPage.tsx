@@ -19,7 +19,9 @@ import {
   FileText,
   FileSpreadsheet,
   File,
-  Eye
+  Eye,
+  Search,
+  ArrowLeft
 } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { UpdateIncidentModal } from '@/components/UpdateIncidentModal';
@@ -62,6 +64,8 @@ export const IncidentDetailsPage = () => {
   const [basicDetailsExpanded, setBasicDetailsExpanded] = useState(true);
   const [descriptionExpanded, setDescriptionExpanded] = useState(true);
   const [witnessesExpanded, setWitnessesExpanded] = useState(true);
+  const [investigationExpanded, setInvestigationExpanded] = useState(true);
+
   const [costExpanded, setCostExpanded] = useState(true);
   const [injuriesExpanded, setInjuriesExpanded] = useState(true);
   const [attachmentsExpanded, setAttachmentsExpanded] = useState(true);
@@ -70,6 +74,16 @@ export const IncidentDetailsPage = () => {
   // Determine if we're in Safety or Maintenance context
   const isSafetyContext = location.pathname.startsWith('/safety');
   const basePath = isSafetyContext ? '/safety' : '/maintenance';
+
+
+  const severityMap = {
+    "1": "Insignificant",
+    "2": "Minor",
+    "3": "Moderate",
+    "4": "Major",
+    "5": "Catastrophic"
+  };
+
 
   useEffect(() => {
     if (id) {
@@ -184,8 +198,8 @@ export const IncidentDetailsPage = () => {
       >
         <CardTitle className="flex items-center justify-between text-lg">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center">
-              <Icon className="h-4 w-4" />
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+              <Icon className="w-6 h-6" style={{ color: '#C72030' }} />
             </div>
             <span className="text-[#1A1A1A] font-semibold uppercase">
               {title}
@@ -240,6 +254,15 @@ export const IncidentDetailsPage = () => {
 
   return (
     <div className="p-6 bg-white min-h-screen">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-2 mb-4"
+        type="button"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span className="text-sm">Back</span>
+      </button>
       {/* Header */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
@@ -257,7 +280,7 @@ export const IncidentDetailsPage = () => {
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:opacity-90"
             >
-              <Edit className="w-4 h-4 mr-2" />
+              <Edit className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               Edit Details
             </Button>
             <Button
@@ -265,6 +288,7 @@ export const IncidentDetailsPage = () => {
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:opacity-90"
             >
+              <Settings className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               Update Status
             </Button>
             <Button
@@ -272,7 +296,7 @@ export const IncidentDetailsPage = () => {
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:opacity-90"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               Add Injury
             </Button>
             <Button
@@ -282,9 +306,9 @@ export const IncidentDetailsPage = () => {
               className="text-white hover:opacity-90"
             >
               {downloadLoading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" style={{ color: '#C72030', background: '#E5E0D3' }} />
               ) : (
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               )}
               {downloadLoading ? 'Downloading...' : 'Download Report'}
             </Button>
@@ -293,7 +317,7 @@ export const IncidentDetailsPage = () => {
       </div>
 
       {/* Basic Details Section */}
-      <CollapsibleSection
+      {/* <CollapsibleSection
         title="BASIC DETAILS"
         icon={AlertTriangle}
         isExpanded={basicDetailsExpanded}
@@ -322,15 +346,25 @@ export const IncidentDetailsPage = () => {
               value={incident.support_required ? 'Yes' : 'No'}
             />
             <Field
+              label="First Aid Attendants"
+              value={incident.incident_detail.name_first_aid_attendants || '-'}
+            />
+
+            <Field
               label="Sent for Medical Treatment"
               value={incident.sent_for_medical_treatment}
             />
+            <Field
+              label="Has Any Property Damage Happened In The Incident"
+              value={incident.property_damage ? "Yes" : "No"}
+            />
+            <Field
+              label="Damage Covered Under Insurance"
+              value={incident.damage_covered_insurance ? "Yes" : "No"}
+            />
           </div>
           <div className="space-y-4">
-            <Field
-              label="Tower"
-              value={incident.tower_name || '-'}
-            />
+            
             <Field
               label="Building"
               value={incident.building_name || '-'}
@@ -361,16 +395,188 @@ export const IncidentDetailsPage = () => {
                 value={incident.assigned_to_user_name}
               />
             )}
+
             <Field
               label="First Aid provided by Employees?"
               value={incident.first_aid_provided}
             />
+            <Field
+              label="Name and Address of Treatment Facility"
+              value={incident.incident_detail.name_and_address_treatment_facility || '-'}
+            />
+
+            <Field
+              label="Name and Address of Attending Physician"
+              value={incident.incident_detail.name_and_address_attending_physician || '-'}
+
+            />
+            <Field
+              label="Property Damage Category
+"
+              value={incident.property_damage_category_name || '-'}
+            />
+
+            <Field
+              label="Insured By"
+              value={incident.insured_by || '-'}
+            />
+
+          </div>
+        </div>
+      </CollapsibleSection> */}
+
+      <CollapsibleSection
+        title="BASIC DETAILS"
+        icon={AlertTriangle}
+        isExpanded={basicDetailsExpanded}
+        onToggle={() => setBasicDetailsExpanded(!basicDetailsExpanded)}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div className="space-y-4">
+            {incident.current_status && (
+              <Field label="Status" value={incident.current_status} />
+            )}
+            {incident.inc_time && (
+              <Field
+                label="Incident Date and Time"
+                value={new Date(incident.inc_time).toLocaleString()}
+              />
+            )}
+            {incident.created_at && (
+              <Field
+                label="Reporting Date and Time"
+                value={new Date(incident.created_at).toLocaleString()}
+              />
+            )}
+            {incident.updated_at && (
+              <Field
+                label="Revision Date and Time"
+                value={new Date(incident.updated_at).toLocaleString()}
+              />
+            )}
+            {incident.inc_level_name && (
+              <Field label="Level" value={incident.inc_level_name} />
+            )}
+            {incident.support_required !== undefined && (
+              <Field
+                label="Support Required"
+                value={incident.support_required ? "Yes" : "No"}
+              />
+            )}
+            {incident.first_aid_provided !== undefined && (
+              <Field
+                label="First Aid Provided by Employees?"
+                value={incident.first_aid_provided}
+              />
+            )}
+            {incident.incident_detail?.name_first_aid_attendants && (
+              <Field
+                label="First Aid Attendants"
+                value={incident.incident_detail.name_first_aid_attendants}
+              />
+            )}
+            {incident.sent_for_medical_treatment !== undefined && (
+              <Field
+                label="Sent for Medical Treatment"
+                value={incident.sent_for_medical_treatment ? "Yes" : "No"}
+              />
+            )}
+            {incident.incident_detail?.name_and_address_treatment_facility && (
+              <Field
+                label="Name and Address of Treatment Facility"
+                value={incident.incident_detail.name_and_address_treatment_facility}
+              />
+            )}
+            {incident.incident_detail?.name_and_address_attending_physician && (
+              <Field
+                label="Name and Address of Attending Physician"
+                value={incident.incident_detail.name_and_address_attending_physician}
+              />
+            )}
+            {/* {incident.rca && <Field label="RCA" value={incident.rca} />}
+      {incident.rca_category_name && (
+        <Field label="RCA Category" value={incident.rca_category_name} />
+      )} */}
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-4">
+            {incident.site_name && <Field label="Site" value={incident.site_name} />}
+            {incident.building_name && (
+              <Field label="Building" value={incident.building_name} />
+            )}
+            {incident.created_by && (
+              <Field label="Reported By" value={incident.created_by} />
+            )}
+            {incident.category_name && (
+              <Field label="Primary Category" value={incident.category_name} />
+            )}
+            {incident.sub_category_name && (
+              <Field label="Sub Category" value={incident.sub_category_name} />
+            )}
+            {incident.sub_sub_category_name && (
+              <Field label="Sub Sub Category" value={incident.sub_sub_category_name} />
+            )}
+            {incident.sub_sub_sub_category_name && (
+              <Field
+                label="Sub Sub Sub Category"
+                value={incident.sub_sub_sub_category_name}
+              />
+            )}
+            {incident.sec_category_name && (
+              <Field label="Secondary Category" value={incident.sec_category_name} />
+            )}
+            {incident.sec_sub_category_name && (
+              <Field
+                label="Secondary Sub Category"
+                value={incident.sec_sub_category_name}
+              />
+            )}
+            {incident.sec_sub_sub_category_name && (
+              <Field
+                label="Secondary Sub Sub Category"
+                value={incident.sec_sub_sub_category_name}
+              />
+            )}
+            {incident.sec_sub_sub_sub_category_name && (
+              <Field
+                label="Secondary Sub Sub Sub Category"
+                value={incident.sec_sub_sub_sub_category_name}
+              />
+            )}
+            {incident.assigned_to_user_name && (
+              <Field label="Assigned To" value={incident.assigned_to_user_name} />
+            )}
+            {incident.property_damage !== undefined && (
+              <Field
+                label="Has Any Property Damage Happened In The Incident"
+                value={incident.property_damage ? "Yes" : "No"}
+              />
+            )}
+            {incident.property_damage_category_name && (
+              <Field
+                label="Property Damage Category"
+                value={incident.property_damage_category_name}
+              />
+            )}
+            {incident.damage_covered_insurance !== undefined && (
+              <Field
+                label="Damage Covered Under Insurance"
+                value={incident.damage_covered_insurance ? "Yes" : "No"}
+              />
+            )}
+            {incident.insured_by && <Field label="Insured By" value={incident.insured_by} />}
+            {incident.damaged_recovered && (
+              <Field label="Damaged Recovered" value={incident.damaged_recovered} />
+            )}
           </div>
         </div>
       </CollapsibleSection>
 
-      {/* Description Details */}
-      <CollapsibleSection
+
+
+      {/* <CollapsibleSection
         title="DESCRIPTION DETAILS"
         icon={Edit}
         isExpanded={descriptionExpanded}
@@ -380,28 +586,63 @@ export const IncidentDetailsPage = () => {
           <Field
             label="Description"
             value={incident.description}
-            fullWidth={true}
           />
-          {/* {incident.sub_category_name && (
-            <Field
-              label="Sub Category"
-              value={incident.sub_category_name}
-            />
+          <Field
+            label="RCA"
+            value={incident.rca}
+          />
+          <Field
+            label="RCA Category"
+            value={incident.rca_category?.name}
+          />
+          <Field
+            label="Corrective Action"
+            value={incident.corrective_action}
+          />
+          <Field
+            label="Preventive Action"
+            value={incident.preventive_action}
+          />
+        </div>
+      </CollapsibleSection> */}
+
+      <CollapsibleSection
+        title="DESCRIPTION DETAILS"
+        icon={Edit}
+        isExpanded={descriptionExpanded}
+        onToggle={() => setDescriptionExpanded(!descriptionExpanded)}
+      >
+        <div className="space-y-4">
+          {incident.description && (
+            <Field label="Description" value={incident.description} />
           )}
-          {incident.sub_sub_category_name && (
-            <Field
-              label="Sub Sub Category"
-              value={incident.sub_sub_category_name}
-            />
+          {incident.rca && <Field label="RCA" value={incident.rca} />}
+          {incident.rca_category_name && (
+            <Field label="RCA Category" value={incident.rca_category_name} />
           )}
-          {incident.assigned_to_user_name && (
-            <Field
-              label="Assigned To"
-              value={incident.assigned_to_user_name}
-            />
-          )} */}
+          {incident.corrective_action && (
+            <Field label="Corrective Action" value={incident.corrective_action} />
+          )}
+          {incident.preventive_action && (
+            <Field label="Preventive Action" value={incident.preventive_action} />
+          )}
+          {incident.loss !== null && <Field label="Loss" value={incident.loss} />}
+          {incident.control && <Field label="Control" value={incident.control} />}
+          {incident.hours_worked !== null && (
+            <Field label="Hours Worked" value={incident.hours_worked} />
+          )}
+          {incident.severity && (
+            <Field label="Severity" value={severityMap[incident.severity]} />
+          )}
+          {incident.severity_brief && (
+            <Field label="Severity Brief" value={incident.severity_brief} />
+          )}
         </div>
       </CollapsibleSection>
+
+
+
+
 
       {/* Witnesses Section */}
       <CollapsibleSection
@@ -438,6 +679,41 @@ export const IncidentDetailsPage = () => {
           <p className="text-gray-600">No witnesses reported for this incident.</p>
         )}
       </CollapsibleSection>
+
+      {/* Investigation Section */}
+      <CollapsibleSection
+        title={`INVESTIGATION - ${incident.incident_investigations?.length || 0}`}
+        icon={Search}
+        isExpanded={investigationExpanded}
+        onToggle={() => setInvestigationExpanded(!investigationExpanded)}
+        hasData={incident.incident_investigations && incident.incident_investigations.length > 0}
+      >
+        {incident.incident_investigations && incident.incident_investigations.length > 0 ? (
+          <div className="bg-white rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Mobile</TableHead>
+                  <TableHead>Designation</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {incident.incident_investigations.map((investigator) => (
+                  <TableRow key={investigator.id}>
+                    <TableCell>{investigator.name || '-'}</TableCell>
+                    <TableCell>{investigator.mobile || '-'}</TableCell>
+                    <TableCell>{investigator.designation || '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <p className="text-gray-600">No investigation details available for this incident.</p>
+        )}
+      </CollapsibleSection>
+
 
       {/* Cost of Incident Section */}
       <CollapsibleSection
@@ -565,23 +841,24 @@ export const IncidentDetailsPage = () => {
                         alt={attachmentName}
                         className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                         onClick={() => window.open(attachmentUrl, '_blank')}
+                        style={{ background: '#E5E0D3' }}
                       />
                     </>
                   ) : isPdf ? (
-                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                      <FileText className="w-6 h-6" />
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md bg-[#E5E0D3] mb-2">
+                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
                     </div>
                   ) : isExcel ? (
-                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                      <FileSpreadsheet className="w-6 h-6" />
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md bg-[#E5E0D3] mb-2">
+                      <FileSpreadsheet className="w-6 h-6" style={{ color: '#C72030' }} />
                     </div>
                   ) : isWord ? (
-                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                      <FileText className="w-6 h-6" />
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md bg-[#E5E0D3] mb-2">
+                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
                     </div>
                   ) : (
-                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                      <File className="w-6 h-6" />
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md bg-[#E5E0D3] mb-2">
+                      <File className="w-6 h-6" style={{ color: '#C72030' }} />
                     </div>
                   )}
                   <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
@@ -600,7 +877,7 @@ export const IncidentDetailsPage = () => {
                         }
                       }}
                     >
-                      {isImage ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                      {isImage ? <Eye className="w-4 h-4" style={{ color: '#C72030', background: '#E5E0D3', borderRadius: '50%' }} /> : <Download className="w-4 h-4" style={{ color: '#C72030', background: '#E5E0D3', borderRadius: '50%' }} />}
                     </Button>
                   )}
                 </div>
@@ -659,7 +936,7 @@ export const IncidentDetailsPage = () => {
       </CollapsibleSection>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 pt-6">
+      {/* <div className="flex gap-3 pt-6">
         <Button
           variant="outline"
           onClick={() => navigate(`${basePath}/incident`)}
@@ -667,7 +944,7 @@ export const IncidentDetailsPage = () => {
         >
           Back to List
         </Button>
-      </div>
+      </div> */}
 
       <UpdateIncidentModal
         isOpen={showUpdateModal}
@@ -686,6 +963,6 @@ export const IncidentDetailsPage = () => {
         }}
         incidentId={incident.id.toString()}
       />
-    </div>
+    </div >
   );
 };

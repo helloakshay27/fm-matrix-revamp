@@ -51,6 +51,7 @@ export const EditIncidentDetailsPage = () => {
     propertyDamageHappened: '',
     propertyDamageCategory: '',
     damageCoveredInsurance: '',
+    damagedRecovered: '',
     insuredBy: '',
     primaryRootCauseCategory: '',
     rca: '',
@@ -86,7 +87,8 @@ export const EditIncidentDetailsPage = () => {
     ],
     supportRequired: false,
     factsCorrect: false,
-    attachments: null
+    attachments: null,
+    incidentDetailId: null
   });
 
   const [formKey, setFormKey] = useState(0);
@@ -112,6 +114,9 @@ export const EditIncidentDetailsPage = () => {
   // Attachments state
   const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
+  // Property Damage Category and RCA Category states
+  const [propertyDamageCategories, setPropertyDamageCategories] = useState<{ id: number; name: string }[]>([]);
+  const [rcaCategories, setRcaCategories] = useState<{ id: number; name: string }[]>([]);
 
   // Debug form data changes
   useEffect(() => {
@@ -133,6 +138,36 @@ export const EditIncidentDetailsPage = () => {
 
     calculateTotalCost();
   }, [formData.equipmentPropertyDamagedCost, formData.productionLoss, formData.treatmentCost, formData.absenteeismCost, formData.otherCost]);
+
+  // Clear property damage related fields when "No" is selected
+  useEffect(() => {
+    if (formData.propertyDamageHappened === 'false') {
+      setFormData(prev => ({
+        ...prev,
+        propertyDamageCategory: '',
+        damageCoveredInsurance: '',
+        damagedRecovered: '',
+        insuredBy: '',
+        equipmentPropertyDamagedCost: '',
+        productionLoss: '',
+        treatmentCost: '',
+        absenteeismCost: '',
+        otherCost: '',
+        totalCost: '0.00'
+      }));
+    }
+  }, [formData.propertyDamageHappened]);
+
+  // Clear insured by field when damage is not covered under insurance
+  useEffect(() => {
+    if (formData.damageCoveredInsurance === 'false') {
+      setFormData(prev => ({
+        ...prev,
+        damagedRecovered: '',
+        insuredBy: ''
+      }));
+    }
+  }, [formData.damageCoveredInsurance]);
 
   // Helper to calculate and set incident level based on risk score (same as AddIncidentPage)
   const calculateAndSetIncidentLevel = (severity: string, probability: string) => {
@@ -223,12 +258,15 @@ export const EditIncidentDetailsPage = () => {
         });
         if (response.ok) {
           const result = await response.json();
-          setBuildings(Array.isArray(result.buildings) ? result.buildings.map((b: any) => ({ id: b.id, name: b.name })) : []);
-          console.log('Loaded buildings:', result.buildings?.length || 0);
+          // Update to use pms_buildings array as per API response structure
+          const buildingsArray = Array.isArray(result.pms_buildings) ? result.pms_buildings : [];
+          setBuildings(buildingsArray.map((b: any) => ({ id: b.id, name: b.name })));
+          console.log('Loaded buildings:', buildingsArray.length);
         } else {
           setBuildings([]);
         }
-      } catch {
+      } catch (error) {
+        console.error('Error fetching buildings:', error);
         setBuildings([]);
       }
 
@@ -310,6 +348,16 @@ export const EditIncidentDetailsPage = () => {
           } else {
             console.log('No probability options found in API, using fallback');
           }
+
+          // Fetch Property Damage Categories
+          const allPropertyDamageCategories = data.filter((item: any) => item.tag_type === 'PropertyDamageCategory');
+          setPropertyDamageCategories(allPropertyDamageCategories.map((item: any) => ({ id: item.id, name: item.name })));
+          console.log('Loaded property damage categories:', allPropertyDamageCategories.length);
+
+          // Fetch RCA Categories
+          const allRcaCategories = data.filter((item: any) => item.tag_type === 'RCACategory');
+          setRcaCategories(allRcaCategories.map((item: any) => ({ id: item.id, name: item.name })));
+          console.log('Loaded RCA categories:', allRcaCategories.length);
         }
       } catch { }
 
@@ -319,12 +367,12 @@ export const EditIncidentDetailsPage = () => {
     fetchAll();
   }, []);
 
-  // Fetch incident details after API data is loaded
+  // Fetch incident details after API data is loaded and buildings are available
   useEffect(() => {
-    if (id && dataLoaded) {
+    if (id && dataLoaded && buildings.length > 0) {
       fetchIncidentDetails();
     }
-  }, [id, dataLoaded]);
+  }, [id, dataLoaded, buildings.length]);
 
   const fetchIncidentDetails = async () => {
     try {
@@ -368,9 +416,13 @@ export const EditIncidentDetailsPage = () => {
     };
 
     // Helper function to find ID by name when ID is missing
-    const getIdByName = (name: string, options: any[]) => {
-      if (!name) return '';
-      const found = options.find(option => option.name.toLowerCase() === name.toLowerCase());
+    const getIdByName = (name: any, options: any[]) => {
+      console.log(name, options);
+      if (!name || typeof name !== 'string') return '';
+      const found = options.find(option => {
+        if (!option.name || typeof option.name !== 'string') return false;
+        return option.name.toLowerCase() === name.toLowerCase();
+      });
       console.log(`Finding ID by name "${name}" in ${options.length} options:`, found ? `Found ID ${found.id}` : 'Not found');
       return found ? found.id.toString() : '';
     };
@@ -406,12 +458,15 @@ export const EditIncidentDetailsPage = () => {
       propertyDamageHappened: incident.property_damage === 'true' || String(incident.property_damage) === 'true' ? 'true' :
         incident.property_damage === 'false' || String(incident.property_damage) === 'false' ? 'false' :
           incident.property_damage === null ? '' : String(incident.property_damage || ''),
-      propertyDamageCategory: incident.property_damage_category_name || '',
+      propertyDamageCategory: getValidOptionValue(incident.property_damage_id, propertyDamageCategories) ||
+        getIdByName(incident.property_damage_category_name || '', propertyDamageCategories),
       damageCoveredInsurance: incident.damage_covered_insurance === 'true' || String(incident.damage_covered_insurance) === 'true' ? 'true' :
         incident.damage_covered_insurance === 'false' || String(incident.damage_covered_insurance) === 'false' ? 'false' :
           incident.damage_covered_insurance === null ? '' : String(incident.damage_covered_insurance || ''),
+      damagedRecovered: incident.damaged_recovered || '',
       insuredBy: incident.insured_by || '',
-      primaryRootCauseCategory: incident.rca_category || '',
+      primaryRootCauseCategory: getValidOptionValue(incident.rca_category_id, rcaCategories) ||
+        getIdByName(incident.rca_category || '', rcaCategories),
       rca: incident.rca || '',
       correctiveAction: incident.corrective_action || '',
       preventiveAction: incident.preventive_action || '',
@@ -440,6 +495,7 @@ export const EditIncidentDetailsPage = () => {
       medicalTreatment: incident.sent_for_medical_treatment === 'Yes',
       treatmentFacility: incident.incident_detail?.name_and_address_treatment_facility || '',
       attendingPhysician: incident.incident_detail?.name_and_address_attending_physician || '',
+      incidentDetailId: incident.incident_detail?.id || null,
       investigationTeam: incident.incident_investigations && incident.incident_investigations.length > 0
         ? incident.incident_investigations.map((inv) => ({
           name: inv.name || '',
@@ -470,7 +526,9 @@ export const EditIncidentDetailsPage = () => {
       secondarySubSubSubCategories: secondarySubSubSubCategories.length,
       incidentLevels: incidentLevels.length,
       severityOptions: severityOptions.length,
-      probabilityOptions: probabilityOptions.length
+      probabilityOptions: probabilityOptions.length,
+      propertyDamageCategories: propertyDamageCategories.length,
+      rcaCategories: rcaCategories.length
     });
 
     console.log('Detailed category options:', {
@@ -883,7 +941,7 @@ export const EditIncidentDetailsPage = () => {
                 </MuiSelect>
               </FormControl>
 
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              {/* <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Severity *</InputLabel>
                 <MuiSelect
                   label="Severity *"
@@ -908,6 +966,24 @@ export const EditIncidentDetailsPage = () => {
                       <MenuItem value="5">Catastrophic</MenuItem>
                     </>
                   )}
+                </MuiSelect>
+              </FormControl> */}
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Severity <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <MuiSelect
+                  label="Severity *"
+                  value={formData.severity}
+                  onChange={e => handleInputChange('severity', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                // MenuProps={menuProps}
+                >
+                  <MenuItem value=""><em>Select Severity</em></MenuItem>
+                  <MenuItem value="1">Insignificant</MenuItem>
+                  <MenuItem value="2">Minor</MenuItem>
+                  <MenuItem value="3">Moderate</MenuItem>
+                  <MenuItem value="4">Major</MenuItem>
+                  <MenuItem value="5">Catastrophic</MenuItem>
                 </MuiSelect>
               </FormControl>
 
@@ -984,16 +1060,44 @@ export const EditIncidentDetailsPage = () => {
                   shrink: true
                 }}
                 sx={{
-                  mt: 1,
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'white'
-                  }
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
                 }}
               />
             </div>
 
-            {/* Additional Fields Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+
+          </CardContent>
+        </Card>
+
+        {/* Damage Block */}
+        <Card className="mb-6 border border-[#D9D9D9]">
+          <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center">
+                <AlertTriangle className="h-4 w-4" />
+              </div>
+              <span className="text-[#1A1A1A] font-semibold uppercase">DAMAGE</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 bg-[#F6F7F7] space-y-4">
+            {/* Damage Fields Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Has Any Property Damage Happened In The Incident */}
               <fieldset className="border border-gray-300 rounded p-3" style={{ minHeight: '72px' }}>
                 <legend className="float-none px-2 text-sm font-medium text-gray-700">
@@ -1029,110 +1133,158 @@ export const EditIncidentDetailsPage = () => {
                 </FormControl>
               </fieldset>
 
-              {/* Property Damage Category */}
-              <fieldset className="border border-gray-300 rounded p-3" style={{ minHeight: '72px' }}>
-                <legend className="float-none px-2 text-sm font-medium text-gray-700">
-                  Property Damage Category
-                </legend>
-                <FormControl fullWidth variant="outlined" sx={{ mt: 0 }}>
-                  <MuiSelect
-                    value={formData.propertyDamageCategory || ''}
-                    onChange={e => handleInputChange('propertyDamageCategory', e.target.value)}
-                    displayEmpty
-                    sx={{
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45
-                      },
-                      '& .MuiInputBase-input, & .MuiSelect-select': {
-                        padding: {
-                          xs: '8px',
-                          sm: '10px',
-                          md: '12px'
+              {/* Property Damage Category - Show only when property damage happened */}
+              {formData.propertyDamageHappened === 'true' && (
+                <fieldset className="border border-gray-300 rounded p-3" style={{ minHeight: '72px' }}>
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Property Damage Category
+                  </legend>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 0 }}>
+                    <MuiSelect
+                      value={formData.propertyDamageCategory || ''}
+                      onChange={e => handleInputChange('propertyDamageCategory', e.target.value)}
+                      displayEmpty
+                      sx={{
+                        height: {
+                          xs: 28,
+                          sm: 36,
+                          md: 45
+                        },
+                        '& .MuiInputBase-input, & .MuiSelect-select': {
+                          padding: {
+                            xs: '8px',
+                            sm: '10px',
+                            md: '12px'
+                          }
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: 'none'
                         }
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        border: 'none'
-                      }
-                    }}
-                  >
-                    <MenuItem value="">Select</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </fieldset>
+                      }}
+                    >
+                      <MenuItem value="">Select</MenuItem>
+                      {propertyDamageCategories.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          {category.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </fieldset>
+              )}
 
-              {/* Damage covered under insurance */}
-              <fieldset className="border border-gray-300 rounded p-3" style={{ minHeight: '72px' }}>
-                <legend className="float-none px-2 text-sm font-medium text-gray-700">
-                  Damage covered under insurance
-                </legend>
-                <FormControl fullWidth variant="outlined" sx={{ mt: 0 }}>
-                  <MuiSelect
-                    value={formData.damageCoveredInsurance || ''}
-                    onChange={e => handleInputChange('damageCoveredInsurance', e.target.value)}
-                    displayEmpty
-                    sx={{
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45
-                      },
-                      '& .MuiInputBase-input, & .MuiSelect-select': {
-                        padding: {
-                          xs: '8px',
-                          sm: '10px',
-                          md: '12px'
+              {/* Damage covered under insurance - Show only when property damage happened */}
+              {formData.propertyDamageHappened === 'true' && (
+                <fieldset className="border border-gray-300 rounded p-3" style={{ minHeight: '72px' }}>
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Damage covered under insurance
+                  </legend>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 0 }}>
+                    <MuiSelect
+                      value={formData.damageCoveredInsurance || ''}
+                      onChange={e => handleInputChange('damageCoveredInsurance', e.target.value)}
+                      displayEmpty
+                      sx={{
+                        height: {
+                          xs: 28,
+                          sm: 36,
+                          md: 45
+                        },
+                        '& .MuiInputBase-input, & .MuiSelect-select': {
+                          padding: {
+                            xs: '8px',
+                            sm: '10px',
+                            md: '12px'
+                          }
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: 'none'
                         }
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        border: 'none'
-                      }
-                    }}
-                  >
-                    <MenuItem value="">select</MenuItem>
-                    <MenuItem value="false">No</MenuItem>
-                    <MenuItem value="true">Yes</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </fieldset>
+                      }}
+                    >
+                      <MenuItem value="">select</MenuItem>
+                      <MenuItem value="false">No</MenuItem>
+                      <MenuItem value="true">Yes</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </fieldset>
+              )}
 
-              {/* Insured by */}
-              <fieldset className="border border-gray-300 rounded p-3" style={{ minHeight: '72px' }}>
-                <legend className="float-none px-2 text-sm font-medium text-gray-700">
-                  Insured by
-                </legend>
-                <FormControl fullWidth variant="outlined" sx={{ mt: 0 }}>
-                  <MuiSelect
-                    value={formData.insuredBy || ''}
-                    onChange={e => handleInputChange('insuredBy', e.target.value)}
-                    displayEmpty
-                    sx={{
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45
-                      },
-                      '& .MuiInputBase-input, & .MuiSelect-select': {
-                        padding: {
-                          xs: '8px',
-                          sm: '10px',
-                          md: '12px'
+              {/* Insured by - Show only when damage is covered under insurance */}
+              {formData.damageCoveredInsurance === 'true' && (
+                <fieldset className="border border-gray-300 rounded p-3" style={{ minHeight: '72px' }}>
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Insured by
+                  </legend>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 0 }}>
+                    <MuiSelect
+                      value={formData.insuredBy || ''}
+                      onChange={e => handleInputChange('insuredBy', e.target.value)}
+                      displayEmpty
+                      sx={{
+                        height: {
+                          xs: 28,
+                          sm: 36,
+                          md: 45
+                        },
+                        '& .MuiInputBase-input, & .MuiSelect-select': {
+                          padding: {
+                            xs: '8px',
+                            sm: '10px',
+                            md: '12px'
+                          }
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: 'none'
                         }
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        border: 'none'
-                      }
-                    }}
-                  >
-                    <MenuItem value="">select</MenuItem>
-                    <MenuItem value="Building insurance">Building insurance</MenuItem>
-                    <MenuItem value="Private/ individual insurance">Private/ individual insurance</MenuItem>
-                    <MenuItem value="Others">Others</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </fieldset>
+                      }}
+                    >
+                      <MenuItem value="">select</MenuItem>
+                      <MenuItem value="Building insurance">Building insurance</MenuItem>
+                      <MenuItem value="Private/ individual insurance">Private/ individual insurance</MenuItem>
+                      <MenuItem value="Others">Others</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </fieldset>
+              )}
+
+              {/* Damaged Recovered - Show only when damage is covered under insurance */}
+              {formData.damageCoveredInsurance === 'true' && (
+                <fieldset className="border border-gray-300 rounded p-3" style={{ minHeight: '72px' }}>
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Damaged Recovered
+                  </legend>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 0 }}>
+                    <MuiSelect
+                      value={formData.damagedRecovered || ''}
+                      onChange={e => handleInputChange('damagedRecovered', e.target.value)}
+                      displayEmpty
+                      sx={{
+                        height: {
+                          xs: 28,
+                          sm: 36,
+                          md: 45
+                        },
+                        '& .MuiInputBase-input, & .MuiSelect-select': {
+                          padding: {
+                            xs: '8px',
+                            sm: '10px',
+                            md: '12px'
+                          }
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: 'none'
+                        }
+                      }}
+                    >
+                      <MenuItem value="">Select</MenuItem>
+                      <MenuItem value="Yes, from the insurance agency">Yes, from the insurance agency</MenuItem>
+                      <MenuItem value="No">No</MenuItem>
+                      <MenuItem value="Partially recovered">Partially recovered</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </fieldset>
+              )}
 
               {/* Primary root cause category */}
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -1145,10 +1297,11 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select</em></MenuItem>
-                  <MenuItem value="human-error">Human Error</MenuItem>
-                  <MenuItem value="equipment-failure">Equipment Failure</MenuItem>
-                  <MenuItem value="process-failure">Process Failure</MenuItem>
-                  <MenuItem value="environmental">Environmental</MenuItem>
+                  {rcaCategories.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>
@@ -1299,95 +1452,97 @@ export const EditIncidentDetailsPage = () => {
           </CardContent>
         </Card>
 
-        {/* Cost of Incident */}
-        <Card className="mb-6 border border-[#D9D9D9]">
-          <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
-            <CardTitle className="flex items-center gap-3 text-lg">
-              <div className="w-8 h-8 bg-[#FF8C42] text-white rounded-full flex items-center justify-center">
-                <Settings className="h-4 w-4" />
-              </div>
-              <span className="text-[#1A1A1A] font-semibold uppercase">COST OF INCIDENT</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 bg-[#F6F7F7] space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Equipment/Property Damaged Cost */}
-              <fieldset className="border border-gray-300 rounded p-3">
-                <legend className="float-none px-2 text-sm font-medium text-gray-700">
-                  Equipment/Property Damaged Cost
-                </legend>
-                <input
-                  className="w-full p-0 border-0 bg-transparent outline-none text-sm"
-                  type="text"
-                  value={formData.equipmentPropertyDamagedCost}
-                  onChange={(e) => handleInputChange('equipmentPropertyDamagedCost', e.target.value)}
-                />
-              </fieldset>
-
-              {/* Production Loss */}
-              <fieldset className="border border-gray-300 rounded p-3">
-                <legend className="float-none px-2 text-sm font-medium text-gray-700">
-                  Production Loss
-                </legend>
-                <input
-                  className="w-full p-0 border-0 bg-transparent outline-none text-sm"
-                  type="text"
-                  value={formData.productionLoss}
-                  onChange={(e) => handleInputChange('productionLoss', e.target.value)}
-                />
-              </fieldset>
-
-              {/* Treatment Cost */}
-              <fieldset className="border border-gray-300 rounded p-3">
-                <legend className="float-none px-2 text-sm font-medium text-gray-700">
-                  Treatment Cost
-                </legend>
-                <input
-                  className="w-full p-0 border-0 bg-transparent outline-none text-sm"
-                  type="text"
-                  value={formData.treatmentCost}
-                  onChange={(e) => handleInputChange('treatmentCost', e.target.value)}
-                />
-              </fieldset>
-
-              {/* Absenteeism Cost */}
-              <fieldset className="border border-gray-300 rounded p-3">
-                <legend className="float-none px-2 text-sm font-medium text-gray-700">
-                  Absenteeism Cost
-                </legend>
-                <input
-                  className="w-full p-0 border-0 bg-transparent outline-none text-sm"
-                  type="text"
-                  value={formData.absenteeismCost}
-                  onChange={(e) => handleInputChange('absenteeismCost', e.target.value)}
-                />
-              </fieldset>
-
-              {/* Other Cost */}
-              <fieldset className="border border-gray-300 rounded p-3">
-                <legend className="float-none px-2 text-sm font-medium text-gray-700">
-                  Other Cost
-                </legend>
-                <input
-                  className="w-full p-0 border-0 bg-transparent outline-none text-sm"
-                  type="text"
-                  value={formData.otherCost}
-                  onChange={(e) => handleInputChange('otherCost', e.target.value)}
-                />
-              </fieldset>
-
-              {/* Total Cost */}
-              <fieldset className="border border-gray-300 rounded p-3">
-                <legend className="float-none px-2 text-sm font-medium text-gray-700">
-                  Total Cost
-                </legend>
-                <div className="text-sm font-medium text-gray-900">
-                  {formData.totalCost}
+        {/* Cost of Incident - Show only when property damage happened */}
+        {formData.propertyDamageHappened === 'true' && (
+          <Card className="mb-6 border border-[#D9D9D9]">
+            <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
+              <CardTitle className="flex items-center gap-3 text-lg">
+                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center">
+                  <Settings className="h-4 w-4" />
                 </div>
-              </fieldset>
-            </div>
-          </CardContent>
-        </Card>
+                <span className="text-[#1A1A1A] font-semibold uppercase">COST OF INCIDENT</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 bg-[#F6F7F7] space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Equipment/Property Damaged Cost */}
+                <fieldset className="border border-gray-300 rounded p-3">
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Equipment/Property Damaged Cost
+                  </legend>
+                  <input
+                    className="w-full p-0 border-0 bg-transparent outline-none text-sm"
+                    type="text"
+                    value={formData.equipmentPropertyDamagedCost}
+                    onChange={(e) => handleInputChange('equipmentPropertyDamagedCost', e.target.value)}
+                  />
+                </fieldset>
+
+                {/* Production Loss */}
+                <fieldset className="border border-gray-300 rounded p-3">
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Production Loss
+                  </legend>
+                  <input
+                    className="w-full p-0 border-0 bg-transparent outline-none text-sm"
+                    type="text"
+                    value={formData.productionLoss}
+                    onChange={(e) => handleInputChange('productionLoss', e.target.value)}
+                  />
+                </fieldset>
+
+                {/* Treatment Cost */}
+                <fieldset className="border border-gray-300 rounded p-3">
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Treatment Cost
+                  </legend>
+                  <input
+                    className="w-full p-0 border-0 bg-transparent outline-none text-sm"
+                    type="text"
+                    value={formData.treatmentCost}
+                    onChange={(e) => handleInputChange('treatmentCost', e.target.value)}
+                  />
+                </fieldset>
+
+                {/* Absenteeism Cost */}
+                <fieldset className="border border-gray-300 rounded p-3">
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Absenteeism Cost
+                  </legend>
+                  <input
+                    className="w-full p-0 border-0 bg-transparent outline-none text-sm"
+                    type="text"
+                    value={formData.absenteeismCost}
+                    onChange={(e) => handleInputChange('absenteeismCost', e.target.value)}
+                  />
+                </fieldset>
+
+                {/* Other Cost */}
+                <fieldset className="border border-gray-300 rounded p-3">
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Other Cost
+                  </legend>
+                  <input
+                    className="w-full p-0 border-0 bg-transparent outline-none text-sm"
+                    type="text"
+                    value={formData.otherCost}
+                    onChange={(e) => handleInputChange('otherCost', e.target.value)}
+                  />
+                </fieldset>
+
+                {/* Total Cost */}
+                <fieldset className="border border-gray-300 rounded p-3">
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Total Cost
+                  </legend>
+                  <div className="text-sm font-medium text-gray-900">
+                    {formData.totalCost}
+                  </div>
+                </fieldset>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* First Aid Provided */}
         <Card className="mb-6 border border-[#D9D9D9]">
