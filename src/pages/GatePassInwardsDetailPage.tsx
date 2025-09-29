@@ -154,7 +154,6 @@ export const GatePassInwardsDetailPage = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Inward List
         </Button>
-        <h1 className="text-2xl font-bold text-gray-900">Gate Pass Inward Details</h1>
       </div>
 
       {/* Top Info Card */}
@@ -162,48 +161,48 @@ export const GatePassInwardsDetailPage = () => {
         {/* Right: Info grid */}
         <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2 text-sm">
           <div>
-            <div className="text-gray-500 text-md">Employer/Visitor Name:</div>
-            <div className="font-medium text-gray-900">{personName}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Employer/Visitor Name:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{personName}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-md">Company:</div>
-            <div className="font-medium text-gray-900">{vendorCompanyName}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Company:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{vendorCompanyName}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-md">Mobile No.:</div>
-            <div className="font-medium text-gray-900">{selectedEntry.contact_person_no || '--'}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Mobile No.:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{selectedEntry.contact_person_no || '--'}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-md">Mode of Transport:</div>
-            <div className="font-medium text-gray-900">{gatePassData.mode_of_transport || '--'}{vehicleNo && ` / ${vehicleNo}`}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Mode of Transport:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.mode_of_transport || '--'}{vehicleNo && ` / ${vehicleNo}`}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-md">Building:</div>
-            <div className="font-medium text-gray-900">{buildingName}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Building:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{buildingName}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-md">Gate Pass Type:</div>
-            <div className="font-medium text-gray-900">{category}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Gate Pass Type:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{category}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-md">Gate Pass No. :</div>
-            <div className="font-medium text-gray-900">{gatePassData.gate_pass_no || '--'}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Gate Pass No. :</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.gate_pass_no || '--'}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-md">Gate No:</div>
-            <div className="font-medium text-gray-900">{gatePassData.gate_number || '--'}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Gate No:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.gate_number || '--'}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-md">Gate Pass Date:</div>
-            <div className="font-medium text-gray-900">{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Gate Pass Date:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-md">Reporting Time:</div>
-            <div className="font-medium text-gray-900">{gatePassData.due_at ? new Date(gatePassData.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Reporting Time:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.due_at ? new Date(gatePassData.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</div>
           </div>
           {gatePassData.remarks && <div>
-            <div className="text-gray-500 text-md">Remarks:</div>
-            <div className="font-medium text-gray-900">{gatePassData.remarks || '--'}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Remarks:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.remarks || '--'}</div>
           </div>}
         </div>
       </div>
@@ -213,12 +212,12 @@ export const GatePassInwardsDetailPage = () => {
         <div className="text-[#C72030] font-semibold text-xl mb-2">Vendor Details</div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div>
-            <div className="text-gray-500 text-md">Vendor Name:</div>
-            <div className="font-medium text-gray-900">{gatePassData.supplier_name || '--'}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Vendor Name:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.supplier_name || '--'}</div>
           </div>
           <div>
-            <div className="text-gray-500 text-md">Mobile No.:</div>
-            <div className="font-medium text-gray-900">{selectedEntry.contact_person_no || '--'}</div>
+            <div className="text-gray-500" style={{ fontSize:'10px'}}>Mobile No.:</div>
+            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{selectedEntry.contact_person_no || '--'}</div>
           </div>
         </div>
       </div>

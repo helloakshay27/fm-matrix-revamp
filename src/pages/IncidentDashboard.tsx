@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Eye, AlertTriangle, Clock, CheckCircle, XCircle, Download, Settings, Search, Filter as FilterIcon } from "lucide-react";
+import { Plus, Eye, AlertTriangle, Clock, CheckCircle, XCircle, Download, Settings, Search, Filter as FilterIcon, PauseCircle, LifeBuoy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import IncidentFilterModal from "@/components/IncidentFilterModal";
 import { incidentService, type Incident } from "@/services/incidentService";
@@ -18,7 +18,7 @@ const calculateStats = (incidents: any[]) => {
     closed: incidents.filter(i => i.current_status === "Closed").length,
     highRisk: incidents.filter(i => i.inc_level_name === "High Risk").length,
     mediumRisk: incidents.filter(i => i.inc_level_name === "Medium Risk").length,
-    lowRisk: incidents.filter(i => i.inc_level_name === "Low Risk").length,
+    lowRisk: incidents.filter(i => i.inc_level_name === "Low Risks").length,
   };
 };
 
@@ -111,7 +111,7 @@ export const IncidentDashboard = () => {
     },
     {
       key: "inc_level_name",
-      label: "Level",
+      label: " Incident Level",
       sortable: true,
       defaultVisible: true,
       draggable: true,
@@ -320,6 +320,14 @@ export const IncidentDashboard = () => {
 
   const stats = calculateStats(incidents);
 
+  // Prefer API counts if available for analytics
+  const totalForAnalytics = countStats ? countStats.total_incidents : stats.total;
+  const openCount = countStats ? countStats.open : stats.open;
+  const underInvestigationCount = countStats ? countStats.under_investigation : stats.underObservation;
+  const closedCount = countStats ? countStats.closed : stats.closed;
+  const pendingCount = countStats ? countStats.pending : 0;
+  const supportRequiredCount = countStats ? countStats.support_required : 0;
+
   const handleAddIncident = () => {
     navigate("/safety/incident/add");
   };
@@ -333,7 +341,7 @@ export const IncidentDashboard = () => {
       else if (type === 'closed') query = 'q[current_status_eq]=Closed';
       else if (type === 'pending') query = 'q[current_status_eq]=Pending';
       else if (type === 'under_investigation') query = 'q[current_status_eq]=Under%20Investigation';
-      else if (type === 'support_required') query = 'q[support_required_eq]=1';
+      else if (type === 'support_required') query = 'q[current_status_eq]=Support%20Required';
       // total => no query
 
       const response = await incidentService.getIncidents(query);
@@ -460,10 +468,10 @@ export const IncidentDashboard = () => {
               <StatCard icon={<CheckCircle />} label="Closed" value={countStats ? countStats.closed : stats.closed} />
             </div>
             <div onClick={() => handleCardClick('pending')} className="cursor-pointer">
-              <StatCard icon={<CheckCircle />} label="Pending" value={countStats ? countStats.pending : 0} />
+              <StatCard icon={<PauseCircle />} label="Pending" value={countStats ? countStats.pending : 0} />
             </div>
             <div onClick={() => handleCardClick('support_required')} className="cursor-pointer">
-              <StatCard icon={<CheckCircle />} label="Support Required" value={countStats ? countStats.support_required : 0} />
+              <StatCard icon={<LifeBuoy />} label="Support Required" value={countStats ? countStats.support_required : 0} />
             </div>
             {/* <StatCard icon={<XCircle />} label="High Risk" value={stats.highRisk} />
             <StatCard icon={<AlertTriangle />} label="Medium Risk" value={stats.mediumRisk} />
@@ -499,13 +507,7 @@ export const IncidentDashboard = () => {
                 </Button>
               </div>
             }
-            rightActions={
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={() => setIsFilterModalOpen(true)} title="Filter">
-                  <FilterIcon className="w-4 h-4" />
-                </Button>
-              </div>
-            }
+            onFilterClick={() => setIsFilterModalOpen(true)}
           />
         </TabsContent>
 
@@ -515,16 +517,24 @@ export const IncidentDashboard = () => {
               <h3 className="text-lg font-semibold mb-4">Incident Status Distribution</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Open: {stats.open}</span>
-                  <span>{stats.total > 0 ? ((stats.open / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>Open: {openCount}</span>
+                  <span>{totalForAnalytics > 0 ? ((openCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Under Observation: {stats.underObservation}</span>
-                  <span>{stats.total > 0 ? ((stats.underObservation / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>Under Investigation: {underInvestigationCount}</span>
+                  <span>{totalForAnalytics > 0 ? ((underInvestigationCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Closed: {stats.closed}</span>
-                  <span>{stats.total > 0 ? ((stats.closed / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>Closed: {closedCount}</span>
+                  <span>{totalForAnalytics > 0 ? ((closedCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Pending: {pendingCount}</span>
+                  <span>{totalForAnalytics > 0 ? ((pendingCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Support Required: {supportRequiredCount}</span>
+                  <span>{totalForAnalytics > 0 ? ((supportRequiredCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
             </div>
@@ -534,15 +544,15 @@ export const IncidentDashboard = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>High Risk: {stats.highRisk}</span>
-                  <span>{stats.total > 0 ? ((stats.highRisk / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>{totalForAnalytics > 0 ? ((stats.highRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Medium Risk: {stats.mediumRisk}</span>
-                  <span>{stats.total > 0 ? ((stats.mediumRisk / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>{totalForAnalytics > 0 ? ((stats.mediumRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Low Risk: {stats.lowRisk}</span>
-                  <span>{stats.total > 0 ? ((stats.lowRisk / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>{totalForAnalytics > 0 ? ((stats.lowRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
             </div>

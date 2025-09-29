@@ -609,7 +609,7 @@ export const AddGatePassInwardPage = () => {
                   <tr key={row.id} className="bg-white border-b">
                     <td className="px-4 py-2 pt-4" style={{ width: '30px' }}>{index + 1}</td>
                     <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      <FormControl fullWidth variant="outlined" size="small" >
+                      <FormControl fullWidth variant="outlined" size="small">
                         <InputLabel shrink>Item Type <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Type"
@@ -684,6 +684,7 @@ export const AddGatePassInwardPage = () => {
                           value={row.otherMaterialName || ''}
                           onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
                           required
+                        
                         />
                       ) : (
                         <FormControl fullWidth variant="outlined" size="small">
@@ -727,6 +728,8 @@ export const AddGatePassInwardPage = () => {
                         size="small"
                         type="number"
                         value={row.quantity}
+                      
+                        placeholder='Quantity'
                         onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
                       />
                     </td>
@@ -734,6 +737,8 @@ export const AddGatePassInwardPage = () => {
                       <TextField
                         variant="outlined"
                         size="small"
+                        placeholder="Unit"
+                      
                         value={row.unit}
                         onChange={e => {
                           const value = e.target.value;
@@ -742,7 +747,7 @@ export const AddGatePassInwardPage = () => {
                         inputProps={{ maxLength: 20, pattern: '[a-zA-Z\s]*' }}
                       />
                     </td>
-                    <td className="px-4 py-2 pt-4"><TextField variant="outlined" size="small" value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
+                    <td className="px-4 py-2 pt-4"><TextField variant="outlined" size="small" placeholder='Enter Description' value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
                     <td className="px-4 py-2 pt-4" style={{ width: '80px' }}>
                       <button type="button" onClick={() => handleDeleteRow(row.id)}>
                         <Trash2 className="w-4 h-4 text-red-600" />

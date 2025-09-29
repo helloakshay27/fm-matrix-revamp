@@ -330,7 +330,6 @@ export const GatePassOutwardsDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Outward List</h1>
       {/* Action Panel overlay */}
       {showActionPanel && (
         <SelectionPanel
@@ -353,7 +352,6 @@ export const GatePassOutwardsDashboard = () => {
           exportFileName="outward-gate-pass-entries"
           leftActions={renderActionButton()}
           loading={loading}
-          selectable={true}
           selectedItems={selectedItems}
           onSelectItem={(id, checked) => setSelectedItems(checked ? [...selectedItems, id] : selectedItems.filter(i => i !== id))}
           onSelectAll={checked => setSelectedItems(checked ? dataWithIndex.map(d => d.id) : [])}

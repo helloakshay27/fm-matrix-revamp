@@ -1229,6 +1229,7 @@ export const InventoryDashboard = () => {
               <StatsCard
                 title="Total Inventories"
                 value={baselineCounts.totalInventories}
+                selected={selectedSummary === 'total'}
                 icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 // selected={selectedSummary === 'total'}
                 onClick={() => {
@@ -1240,6 +1241,7 @@ export const InventoryDashboard = () => {
               <StatsCard
                 title="Active Inventory"
                 value={baselineCounts.activeCount}
+                selected={selectedSummary === 'active'}
                 icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 // selected={selectedSummary === 'active'}
                 onClick={() => {
@@ -1252,6 +1254,7 @@ export const InventoryDashboard = () => {
               <StatsCard
                 title="Inactive"
                 value={baselineCounts.inactiveCount}
+                selected={selectedSummary === 'inactive'}
                 icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 // selected={selectedSummary === 'inactive'}
                 onClick={() => {
@@ -1264,6 +1267,7 @@ export const InventoryDashboard = () => {
               <StatsCard
                 title="Ecofriendly"
                 value={baselineCounts.greenInventories}
+                selected={selectedSummary === 'green'}
                 icon={
                   <img
                     src={bio}

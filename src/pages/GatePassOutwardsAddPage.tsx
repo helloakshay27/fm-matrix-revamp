@@ -729,7 +729,7 @@ export const GatePassOutwardsAddPage = () => {
                   <tr key={row.id} className="bg-white border-b">
                     <td className="px-4 py-4">{index + 1}</td>
                     <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      <FormControl fullWidth variant="outlined" size="small" >
+                      <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
                         <InputLabel shrink>Item Type <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Type"
@@ -746,7 +746,7 @@ export const GatePassOutwardsAddPage = () => {
                       </FormControl>
                     </td>
                     <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      <FormControl fullWidth variant="outlined" size="small" >
+                      <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
                         <InputLabel shrink>Item Category <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Category"
@@ -796,13 +796,14 @@ export const GatePassOutwardsAddPage = () => {
     <TextField
       variant="outlined"
       size="small"
+      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
       placeholder="Enter Item Name"
       value={row.otherMaterialName || ''}
       onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
       required
     />
   ) : (
-    <FormControl fullWidth variant="outlined" size="small" >
+    <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
       <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
       <MuiSelect
         label="Item Name"
@@ -840,10 +841,12 @@ export const GatePassOutwardsAddPage = () => {
 <td className="px-4 py-4">
                       <TextField
                         variant="outlined"
+                        placeholder='Quantity'
                         size="small"
                         type="number"
                         value={row.quantity}
                         onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
                         inputProps={{
                           // Remove max validation to avoid browser tooltip
                           min: 0,
@@ -852,13 +855,13 @@ export const GatePassOutwardsAddPage = () => {
                         // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
                       />
                     </td>
-                    <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.unit} onChange={(e) => {
+                    <td className="px-4 py-4"><TextField variant="outlined" placeholder='Unit' size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} value={row.unit} onChange={(e) => {
                       const value = e.target.value;
                       if (/^[a-zA-Z\s]*$/.test(value)) handleRowChange(row.id, 'unit', value);
                     }}
                       inputProps={{ pattern: "[a-zA-Z\s]*" }}
                     /></td>
-                    <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
+                    <td className="px-4 py-4"><TextField placeholder='Enter Description' variant="outlined" size="small" value={row.description} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
                     <td className="px-4 py-4">
                       <button type="button" onClick={() => handleDeleteRow(row.id)}>
                         <Trash2 className="w-4 h-4 text-red-600" />
