@@ -910,6 +910,9 @@ export const SurveyResponseDetailPage = () => {
     if (hasEmojiText) return "emoji";
 
     // If no type field exists and no special text patterns, treat as regular multiple choice
+    // This includes questions like "How was the security Management" with options like "Perfect", "Good", "Poor"
+    // and "Fire safety equipments placed?" with options like "Yes", "No"
+    console.log(`🔍 Question determined as regular multiple choice. Options: ${options.map(o => o.option).join(', ')}`);
     return "regular";
   };
 
@@ -1032,19 +1035,23 @@ export const SurveyResponseDetailPage = () => {
         }
 
         // Use original data if no filters applied
-        // Determine question type and return standardized data
-        const questionType = getQuestionType(question.options);
-
-        if (questionType === "rating") {
-          // console.log(
-          //   `🎯 Using standardized rating options for question ${questionId}`
-          // );
-          return getStandardizedRatingOptions(question.options);
-        } else if (questionType === "emoji") {
-          // console.log(
-          //   `🎯 Using standardized emoji options for question ${questionId}`
-          // );
-          return getStandardizedEmojiOptions(question.options);
+        // Only use standardized data for questions that actually use bar charts
+        const useBarChart = shouldUseBarChart(questionId);
+        
+        if (useBarChart) {
+          const questionType = getQuestionType(question.options);
+          
+          if (questionType === "rating") {
+            console.log(
+              `🎯 Using standardized rating options for question ${questionId}`
+            );
+            return getStandardizedRatingOptions(question.options);
+          } else if (questionType === "emoji") {
+            console.log(
+              `🎯 Using standardized emoji options for question ${questionId}`
+            );
+            return getStandardizedEmojiOptions(question.options);
+          }
         }
 
         // For regular questions, use the original logic
@@ -1095,8 +1102,84 @@ export const SurveyResponseDetailPage = () => {
     ];
   };
 
+  // Helper function to get axis labels based on question type
+  const getAxisLabels = (questionId: number) => {
+    // First check the actual response data for answer_type
+    const filteredResponses = getSummaryFilteredResponseData();
+    const responseAnswer = filteredResponses
+      .flatMap(response => response.answers || [])
+      .find(answer => answer.question_id === questionId);
+    
+    if (responseAnswer?.answer_type) {
+      if (responseAnswer.answer_type === "emoji") {
+        return {
+          xAxisLabel: "Response Type",
+          yAxisLabel: "Number of Responses"
+        };
+      } else if (responseAnswer.answer_type === "rating") {
+        return {
+          xAxisLabel: "Star Rating", 
+          yAxisLabel: "Number of Responses"
+        };
+      }
+    }
+
+    // Fallback to survey details data
+    if (surveyDetailsData?.survey_details?.surveys?.[0]) {
+      const surveyDetail = surveyDetailsData.survey_details.surveys[0];
+      const question = surveyDetail.questions?.find(
+        (q) => q.question_id === questionId
+      );
+
+      if (question?.options) {
+        const questionType = getQuestionType(question.options);
+        if (questionType === "emoji") {
+          return {
+            xAxisLabel: "Response Type",
+            yAxisLabel: "Number of Responses"
+          };
+        } else if (questionType === "rating") {
+          return {
+            xAxisLabel: "Star Rating",
+            yAxisLabel: "Number of Responses"
+          };
+        }
+      }
+    }
+    
+    // Default labels for non-bar chart questions
+    return {
+      xAxisLabel: undefined,
+      yAxisLabel: undefined
+    };
+  };
+
   // Helper function to determine if question should use bar chart or pie chart
   const shouldUseBarChart = (questionId: number): boolean => {
+    // First check the actual response data for answer_type
+    const filteredResponses = getSummaryFilteredResponseData();
+    const responseAnswer = filteredResponses
+      .flatMap(response => response.answers || [])
+      .find(answer => answer.question_id === questionId);
+    
+    if (responseAnswer?.answer_type) {
+      // Only use bar chart for emoji and rating questions, exclude multiple choice
+      const useBarChart = responseAnswer.answer_type === "emoji" || responseAnswer.answer_type === "rating";
+      
+      if (useBarChart) {
+        console.log(
+          `🎯 Found ${responseAnswer.answer_type} question ${questionId}: "${responseAnswer.question_name}"`
+        );
+      } else {
+        console.log(
+          `🚫 Excluding ${responseAnswer.answer_type} question ${questionId} from bar chart: "${responseAnswer.question_name}"`
+        );
+      }
+      
+      return useBarChart;
+    }
+
+    // Fallback to survey details data
     if (surveyDetailsData?.survey_details?.surveys?.[0]) {
       const surveyDetail = surveyDetailsData.survey_details.surveys[0];
       const question = surveyDetail.questions?.find(
@@ -1108,10 +1191,18 @@ export const SurveyResponseDetailPage = () => {
         const useBarChart =
           questionType === "rating" || questionType === "emoji";
 
+        console.log(
+          `🔍 Question ${questionId} ("${question.question}") type: ${questionType}, useBarChart: ${useBarChart}`
+        );
+
         if (useBarChart) {
-          // console.log(
-          //   `🎯 Found ${questionType} question ${questionId}: "${question.question}"`
-          // );
+          console.log(
+            `🎯 Found ${questionType} question ${questionId}: "${question.question}"`
+          );
+        } else {
+          console.log(
+            `🚫 Excluding ${questionType} question ${questionId} from bar chart: "${question.question}"`
+          );
         }
 
         return useBarChart;
@@ -1676,12 +1767,12 @@ export const SurveyResponseDetailPage = () => {
       defaultVisible: true,
       sortable: true,
     },
-    {
-      key: "updated_by",
-      label: "Updated By",
-      defaultVisible: true,
-      sortable: true,
-    },
+    // {
+    //   key: "updated_by",
+    //   label: "Updated By",
+    //   defaultVisible: true,
+    //   sortable: true,
+    // },
     // {
     //   key: "created_by",
     //   label: "Created By",
@@ -2739,21 +2830,27 @@ export const SurveyResponseDetailPage = () => {
                         <div className="mb-4">
                           <SurveyAnalyticsCard
                             title={(() => {
-                              const questionType = getQuestionType(
-                                question.options || []
-                              );
-                              if (questionType === "rating") {
-                                return "Rating Response";
-                              } else if (questionType === "emoji") {
-                                return "Emoji Responses";
-                              } else {
-                                return `Response Distribution: ${question.question.substring(
-                                  0,
-                                  50
-                                )}${
-                                  question.question.length > 50 ? "..." : ""
-                                }`;
+                              // Only show specific emoji/rating titles if shouldUseBarChart returns true
+                              const useBarChart = shouldUseBarChart(question.question_id);
+                              
+                              if (useBarChart) {
+                                const questionType = getQuestionType(
+                                  question.options || []
+                                );
+                                if (questionType === "rating") {
+                                  return "Rating Response";
+                                } else if (questionType === "emoji") {
+                                  return "Emoji Responses";
+                                }
                               }
+                              
+                              // For all multiple choice questions (not using bar charts), show generic title
+                              return `Response Distribution: ${question.question.substring(
+                                0,
+                                50
+                              )}${
+                                question.question.length > 50 ? "..." : ""
+                              }`;
                             })()}
                             type={getChartType(question.question_id)}
                             data={getQuestionOptionsData(question.question_id)}
@@ -2763,6 +2860,8 @@ export const SurveyResponseDetailPage = () => {
                               ),
                               endDate: new Date(),
                             }}
+                            xAxisLabel={getAxisLabels(question.question_id).xAxisLabel}
+                            yAxisLabel={getAxisLabels(question.question_id).yAxisLabel}
                             onDownload={() => {
                               // console.log(
                               //   `Download chart for question ${question.question_id}`

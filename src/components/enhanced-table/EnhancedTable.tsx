@@ -545,7 +545,11 @@ export function EnhancedTable<T extends Record<string, any>>({
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0" data-actions>Actions</TableHead>
+                      <TableHead className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0" data-actions>
+                        <div className="flex justify-center items-center text-center">
+                          Actions
+                        </div>
+                      </TableHead>
                     )}
                     {selectable && (
                       <TableHead className="bg-[#f6f4ee] w-12 min-w-12 text-center sticky top-0" data-checkbox>
@@ -567,7 +571,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => column.sortable !== false && handleSort(column.key)} // Only call handleSort if sortable
-                        className="bg-[#f6f4ee] text-center text-black min-w-32 sticky top-0"
+                        className="bg-[#f6f4ee] text-left text-black min-w-32 sticky top-0"
                       >
                         {column.label}
                       </SortableColumnHeader>
@@ -623,7 +627,9 @@ export function EnhancedTable<T extends Record<string, any>>({
                     >
                       {renderActions && (
                         <TableCell className="p-4 text-center w-16 min-w-16" data-actions>
-                          {renderActions(item)}
+                          <div className="flex justify-center items-center gap-2">
+                            {renderActions(item)}
+                          </div>
                         </TableCell>
                       )}
                       {selectable && (
@@ -642,7 +648,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="p-4 text-center min-w-32">
+                          <TableCell key={column.key} className="p-4 text-left min-w-32">
                             {cellContent}
                           </TableCell>
                         );

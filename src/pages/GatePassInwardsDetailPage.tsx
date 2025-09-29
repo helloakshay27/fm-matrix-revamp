@@ -5,7 +5,7 @@ import { ArrowLeft, FileText, QrCode, Box, User, Download, Eye, FileSpreadsheet,
 import { API_CONFIG } from '@/config/apiConfig';
 import { AttachmentGoodsPreviewModal } from '@/components/AttachmentGoodsPreviewModal';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
-import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
@@ -140,6 +140,21 @@ export const GatePassInwardsDetailPage = () => {
     { key: "description", label: "Description", sortable: false, defaultVisible: true },
   ];
 
+  const getStatusBadgeStyles = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
+    switch (normalizedStatus) {
+      case 'pending':
+        return { backgroundColor: '#f5f2c9', color: '#000' };
+      case 'rejected':
+        return { backgroundColor: '#f5ccc6', color: '#000' };
+      case 'accepted':
+      case 'approved':
+        return { backgroundColor: '#c7ecd9', color: '#000' };
+      default:
+        return { backgroundColor: '#f3f4f6', color: '#000' };
+    }
+  };
+
   const renderCell = (item: any, columnKey: string) => {
     return item[columnKey] ?? "--";
   };
@@ -162,9 +177,12 @@ export const GatePassInwardsDetailPage = () => {
               <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                 Gate Pass Inward - {gatePassData.gate_pass_no || gatePassData.id}
               </h1>
-              <div className="text-base px-4 py-2 bg-green-100 text-green-800 rounded-md">
+              {/* <div 
+                className="text-base px-4 py-2 rounded-md"
+                style={getStatusBadgeStyles(status)}
+              >
                 {status}
-              </div>
+              </div> */}
             </div>
 
             <div className="text-sm text-gray-600">
@@ -277,18 +295,46 @@ export const GatePassInwardsDetailPage = () => {
                 <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
               </div>
               <div className="overflow-x-auto">
-                <EnhancedTable
-                  data={tableData}
-                  columns={columns}
-                  renderCell={renderCell}
-                  storageKey="gate-pass-inwards-details-items"
-                  pagination={true}
-                  pageSize={10}
-                  hideColumnsButton={true}
-                  hideTableExport={true}
-                  hideTableSearch={true}
-                  loading={loading}
-                />
+                <div className="rounded-lg border border-gray-200 overflow-hidden">
+                  <Table className="border-separate">
+                    <TableHeader>
+                      <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Type</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Category</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Name</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Unit</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Quantity</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Description</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            Loading...
+                          </TableCell>
+                        </TableRow>
+                      ) : tableData && tableData.length > 0 ? (
+                        tableData.map((item, index) => (
+                          <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="py-3 px-4 font-medium">{item.itemType}</TableCell>
+                            <TableCell className="py-3 px-4">{item.itemCategory}</TableCell>
+                            <TableCell className="py-3 px-4">{item.itemName}</TableCell>
+                            <TableCell className="py-3 px-4">{item.unit}</TableCell>
+                            <TableCell className="py-3 px-4">{item.quantity}</TableCell>
+                            <TableCell className="py-3 px-4">{item.description}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                            No items found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           </TabsContent>

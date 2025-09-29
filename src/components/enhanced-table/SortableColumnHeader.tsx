@@ -50,30 +50,21 @@ export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "h-12 px-6 py-4 text-left align-middle font-medium text-gray-700 border-b border-gray-300 whitespace-nowrap relative group bg-[#f5f5dc]",
+        "h-12 px-4 py-4 text-center align-middle font-medium text-gray-700 border-b border-gray-300 whitespace-nowrap relative group bg-[#f5f5dc]",
         sortable && "cursor-pointer hover:bg-[#f0f0d8]",
         isDragging && "opacity-50 z-50",
         className
       )}
       {...attributes}
     >
-      <div className="flex items-center gap-2">
-        {draggable && (
-          <div
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <GripVertical className="w-4 h-4 text-gray-400" />
-          </div>
-        )}
-        
+      <div className="flex items-center justify-left w-full">
         <div 
-          className="flex items-center justify-center gap-1 flex-1 select-none"
+          className="flex items-center gap-1 select-none"
           onClick={handleClick}
         >
           <span>{children}</span>
           {sortable && (
-            <div className="flex flex-col">
+            <div className="flex flex-col ml-1">
               <ChevronUp 
                 className={cn(
                   "w-3 h-3 -mb-1",
@@ -89,6 +80,15 @@ export const SortableColumnHeader: React.FC<SortableColumnHeaderProps> = ({
             </div>
           )}
         </div>
+
+        {draggable && (
+          <div
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <GripVertical className="w-4 h-4 text-gray-400" />
+          </div>
+        )}
       </div>
     </th>
   );
