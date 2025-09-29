@@ -55,9 +55,9 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   return (
     <div
       className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
-      style={{ top: "50%", left: "30%", width: "863px", height: "105px" }}
+      style={{ top: "50%", left: "30%", width: "max-content", height: "105px" }}
     >
-      <div className="flex items-center justify-between w-full h-full pr-6">
+      <div className="flex items-center justify-between h-full pr-6" style={{ width:"max-content"}}>
         <div className="flex items-center gap-2">
           <div className="text-[#C72030] bg-[#C4B89D] rounded-lg w-[44px] h-[105px] flex items-center justify-center text-xs font-bold">
             A
@@ -82,7 +82,8 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
                 size="sm"
                 onClick={action.onClick}
                 disabled={action.loading}
-                className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5 disabled:opacity-50"
+                className="text-gray-600 hover:bg-gray-100 flex flex-col items-end gap-2 h-auto mr-5 disabled:opacity-50"
+                style={{ width: "44px", height: "44px" }}
               >
                 <Icon className="w-6 h-6 mt-4 mb-2" />
                 <span className="text-xs font-medium">{action.label}</span>
