@@ -616,13 +616,44 @@ export const InventoryDetailsPage = () => {
 
         <div className="flex flex-row items-center justify-between">
           <span className="text-2xl font-bold text-[#1a1a1a]">{inventoryData?.name || '—'}</span>
-          <Button
+          {/* <Button
             onClick={handleEdit}
             variant="outline"
             className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 ml-4"
           >
             <Edit className="w-4 h-4 mr-2" />
             Edit
+          </Button> */}
+          <Button
+            onClick={handleEdit}
+            variant="outline"
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+          >
+            <svg
+              width="21"
+              height="21"
+              viewBox="0 0 21 21"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <mask
+                id="mask0_107_2076"
+                style={{ maskType: "alpha" }}
+                maskUnits="userSpaceOnUse"
+                x="0"
+                y="0"
+                width="21"
+                height="21"
+              >
+                <rect width="21" height="21" fill="#C72030" />
+              </mask>
+              <g mask="url(#mask0_107_2076)">
+                <path
+                  d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
+                  fill="#C72030"
+                />
+              </g>
+            </svg>
           </Button>
         </div>
 

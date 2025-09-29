@@ -392,20 +392,29 @@ export const AddGatePassInwardPage = () => {
     }
   };
 
+  const handleGoBack = () => {
+    navigate('/security/gate-pass/inwards');
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="mb-6">
-        <div
-          onClick={() => navigate('/security/gate-pass/inwards')}
-          className="flex items-center gap-2 text-gray-600 cursor-pointer hover:text-gray-800"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Inward List
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button
+            onClick={handleGoBack}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Gate Pass Inward List</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Create New Gate Pass Inward</span>
         </div>
-        <div className="flex justify-between items-center my-4">
-          <h1 className="text-2xl font-bold text-gray-800">Create Gate Pass Inward</h1>
-        </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          NEW GATE PASS INWARD
+        </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8 border border-gray-200 rounded-lg p-10 bg-white" onMouseDown={e => e.stopPropagation()}>

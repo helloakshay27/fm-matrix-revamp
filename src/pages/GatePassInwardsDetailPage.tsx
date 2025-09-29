@@ -146,14 +146,13 @@ export const GatePassInwardsDetailPage = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <Button
-          variant="outline"
+        <button
           onClick={() => navigate('/security/gate-pass/inwards')}
-          className="mb-4"
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-4 h-4" />
           Back to Inward List
-        </Button>
+        </button>
       </div>
 
       {/* Top Info Card */}
