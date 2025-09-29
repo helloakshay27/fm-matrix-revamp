@@ -661,38 +661,30 @@ export const InventoryDetailsPage = () => {
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="inventory-detail" className="w-full">
-          <TabsList className="flex justify-start flex-nowrap overflow-x-auto no-scrollbar bg-transparent rounded-t-lg text-sm">
-            <TabsTrigger
-              value="inventory-detail"
-              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-            >
-              Inventory Detail
-            </TabsTrigger>
-            <TabsTrigger
-              value="qr-code"
-              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-            >
-              Qr Code
-            </TabsTrigger>
-            <TabsTrigger
-              value="asset-information"
-              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-            >
-              Assets Information
-            </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-            >
-              History
-            </TabsTrigger>
+          <TabsList
+            className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar rounded-t-lg h-auto p-0 text-sm bg-transparent"
+          >
+            {[
+              { label: 'Inventory Detail', value: 'inventory-detail' },
+              { label: 'QR Code', value: 'qr-code' },
+              { label: 'Asset Information', value: 'asset-information' },
+              { label: 'History', value: 'history' },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="inventory-detail" className="p-4 sm:p-6">
             <div className="bg-white rounded-lg border">
-              <div className="flex p-4 items-center bg-[#F6F4EE]">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <Box className="w-4 h-4" />
+              <div className="flex p-4 items-center">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                  <Box className="w-6 h-6 text-[#C72030]" />
                 </div>
                 <h2 className="text-lg font-[700]">INVENTORY DETAIL</h2>
               </div>
@@ -805,10 +797,10 @@ export const InventoryDetailsPage = () => {
           </TabsContent>
 
           <TabsContent value="history" className="p-4 sm:p-6">
-            <div className="bg-white rounded-lg border mt-6">
-              <div className="flex p-4 items-center bg-[#F6F4EE]">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <Box className="w-4 h-4" />
+            <div className="bg-white rounded-lg border ">
+              <div className="flex p-4 items-center">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                  <Box className="w-6 h-6 text-[#C72030]" />
                 </div>
                 <h2 className="text-lg font-[700]">HISTORY</h2>
               </div>
@@ -898,9 +890,9 @@ export const InventoryDetailsPage = () => {
 
           <TabsContent value="qr-code" className="p-4 sm:p-6">
             <div className=" border rounded-lg">
-              <div className="flex items-center mb-4 bg-[#F6F4EE] p-4">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <QrCode className="w-4 h-4" />
+              <div className="flex items-center mb-4 p-4">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                  <QrCode className="w-6 h-6 text-[#C72030]" />
                 </div>
                 <h2 className="text-lg font-[700]">QR CODE</h2>
               </div>
@@ -937,10 +929,13 @@ export const InventoryDetailsPage = () => {
 
           <TabsContent value="asset-information" className="p-4 sm:p-6">
             <div className="bg-white rounded-lg border">
-              <div className="flex p-4 items-center bg-[#F6F4EE]">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+              <div className="flex p-4 items-center ">
+                {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                   <Box className="w-4 h-4" />
-                </div>
+                </div> */}
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                                  <Box className="w-6 h-6 text-[#C72030]" />
+                                </div>
                 <h2 className="text-lg font-[700]">ASSET INFORMATION</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2  p-4 gap-6">
