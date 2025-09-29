@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
   Settings,
-  FileText,
   QrCode,
   Box,
   Download,
+  Paperclip,
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AssociateServiceModal } from '@/components/AssociateServiceModal';
@@ -249,19 +249,18 @@ export const ServiceDetailsPage = () => {
       {/* Top Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
-          <Button
-            variant="ghost"
+          <button
             onClick={() => navigate('/maintenance/service')}
-            className="w-max pl-0"
+            className="flex items-center gap-1 hover:text-gray-800 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Service List
-          </Button>
+          </button>
           <div className="mb-3">
             <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">{details.service_name || 'Service Details'}</h1>
           </div>
         </div>
-       <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant="outline"
             onClick={handleEditClick}
@@ -282,24 +281,24 @@ export const ServiceDetailsPage = () => {
       {/* Tab Section */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="location-detail" className="w-full">
-          <TabsList className="flex justify-start flex-nowrap overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg text-sm">
+          <TabsList className="flex justify-start flex-nowrap overflow-x-auto no-scrollbar bg-transparent rounded-t-lg text-sm">
             <TabsTrigger
               value="location-detail"
               className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
             >
-              LOCATION DETAIL
+              Location Detail
             </TabsTrigger>
             <TabsTrigger
               value="documents"
               className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
             >
-              DOCUMENTS
+              Attactment
             </TabsTrigger>
             <TabsTrigger
               value="qr-code"
               className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
             >
-              QR CODE
+              Qr Code
             </TabsTrigger>
             <TabsTrigger
               value="associated-assets"
@@ -318,7 +317,7 @@ export const ServiceDetailsPage = () => {
                 </div>
                 <h2 className="text-lg font-[700]">LOCATION DETAIL</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 border border-[#D9D9D9] bg-[#F6F7F7] p-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2  p-4 gap-6">
                 <div className="space-y-3">
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Site</span>
@@ -364,11 +363,11 @@ export const ServiceDetailsPage = () => {
             <div className="bg-white rounded-lg border">
               <div className="flex items-center bg-[#F6F4EE] p-4">
                 <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <FileText className="w-4 h-4" />
+                  <Paperclip className="w-4 h-4" />
                 </div>
-                <h2 className="text-lg font-[700]">DOCUMENTS</h2>
+                <h2 className="text-lg font-[700]">ATTACHMENTS</h2>
               </div>
-              <div className="border border-[#D9D9D9] bg-[#F6F7F7]">
+              <div>
                 {details?.documents?.length ? (
                   details.documents.map((doc) => (
                     <div
@@ -462,7 +461,7 @@ export const ServiceDetailsPage = () => {
 
           {/* QR CODE */}
           <TabsContent value="qr-code" className="p-4 sm:p-6">
-            <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg">
+            <div className="border border-[#D9D9D9] rounded-lg">
               <div className="flex items-center mb-4 bg-[#F6F4EE] p-4">
                 <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                   <QrCode className="w-4 h-4" />
@@ -538,7 +537,7 @@ export const ServiceDetailsPage = () => {
 
           {/* ASSOCIATED ASSETS */}
           <TabsContent value="associated-assets" className="p-4 sm:p-6">
-            <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg">
+            <div className="border border-[#D9D9D9] rounded-lg">
               <div className="flex items-center mb-2 bg-[#F6F4EE] p-4">
                 <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                   <Box className="w-4 h-4" />

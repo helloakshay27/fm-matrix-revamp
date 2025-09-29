@@ -506,7 +506,7 @@ export const AddSurveyMapping = () => {
         </div>
         <div className="text-sm text-gray-600">
           {surveyMappings.length === 1 
-            ? '1 Location Configuration' 
+            ? '1 Location Configured' 
             : `${surveyMappings.length} Location Configurations`
           }
         </div>
@@ -515,7 +515,7 @@ export const AddSurveyMapping = () => {
       <Section title="Survey Selection" icon={<List className="w-3.5 h-3.5" />}>
         <div className="space-y-6">
           <div className="rounded-md border border-dashed bg-muted/30 p-4">
-            <p className="mb-3 text-sm font-medium text-muted-foreground">Select Survey for All Location Configurations</p>
+            {/* <p className="mb-3 text-sm font-medium text-muted-foreground">Select Survey for All Location Configurations</p> */}
             
             <div className="space-y-4">
               {/* Single Survey Selection */}
@@ -849,7 +849,7 @@ export const AddSurveyMapping = () => {
               className="flex items-center gap-2"
             >
               <Plus className="w-4 h-4" /> 
-              Add Location Configuration
+              Add Location
             </Button>
           </div>
         </div>

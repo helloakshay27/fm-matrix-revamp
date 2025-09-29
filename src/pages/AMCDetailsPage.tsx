@@ -225,14 +225,21 @@ export const AMCDetailsPage = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <Button
+        {/* <Button
           variant="ghost"
           onClick={() => navigate('/maintenance/amc')}
           className="mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to AMC List
-        </Button>
+        </Button> */}
+         <button
+                  onClick={() => navigate('/maintenance/amc')}
+                  className="flex items-center gap-1 hover:text-gray-800 mb-4"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to AMC List
+                </button>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details - {amcDetails.id}</h1>
           <div className="flex gap-2">
@@ -257,9 +264,10 @@ export const AMCDetailsPage = () => {
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="amc-information" className="w-full">
-          <TabsList
-            className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg h-auto p-0 text-sm"
-          >
+         <TabsList
+  className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar rounded-t-lg h-auto p-0 text-sm bg-transparent"
+>
+
             {[
               { label: 'AMC Information', value: 'amc-information' },
               { label: 'Supplier Information', value: 'supplier-information' },
@@ -282,7 +290,7 @@ export const AMCDetailsPage = () => {
 
           {/* AMC Information */}
           <TabsContent value="amc-information" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+            <Card className="mb-6 border border-[#D9D9D9] border-b">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -291,7 +299,7 @@ export const AMCDetailsPage = () => {
                   AMC INFORMATION
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className='bg-white'>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div><strong>ID:</strong> {amcDetails.id}</div>
                   <div><strong>Cost:</strong> {formatCurrency(amcDetails.amc_cost)}</div>
@@ -308,7 +316,7 @@ export const AMCDetailsPage = () => {
 
           {/* Supplier Information */}
           <TabsContent value="supplier-information" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+            <Card className="mb-6 border border-[#D9D9D9]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -331,7 +339,7 @@ export const AMCDetailsPage = () => {
 
           {/* Attachments */}
           <TabsContent value="attachments" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+            <Card className="mb-6 border border-[#D9D9D9]">
               <CardHeader className="bg-[#F6F4EE] mb-4">
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -561,7 +569,7 @@ export const AMCDetailsPage = () => {
 
           {/* AMC Visits */}
           <TabsContent value="amc-visits" className="p-3 sm:p-6">
-            <Card className="border border-[#D9D9D9] bg-[#F6F7F7]">
+            <Card className="border border-[#D9D9D9]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -775,7 +783,7 @@ export const AMCDetailsPage = () => {
 
           {/* Tickets */}
           <TabsContent value="tickets" className="p-3 sm:p-6">
-            <Card className="border border-[#D9D9D9] bg-[#F6F7F7]">
+            <Card className="border border-[#D9D9D9]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -838,7 +846,7 @@ export const AMCDetailsPage = () => {
           {/* Asset Information */}
           {amcDetails.amc_type === 'Asset' && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
-              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <Card className="mb-6 border border-[#D9D9D9]">
                 <CardHeader className="bg-[#F6F4EE] mb-6">
                   <CardTitle className="text-lg flex items-center">
                     <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -909,7 +917,7 @@ export const AMCDetailsPage = () => {
 
           {amcDetails.amc_type === 'Service' && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
-              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <Card className="mb-6 border border-[#D9D9D9]">
                 <CardHeader className="bg-[#F6F4EE] mb-6">
                   <CardTitle className="text-lg flex items-center">
                     <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
