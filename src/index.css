@@ -822,3 +822,7 @@ td div , td span, th div, th span {
   justify-content: flex-start !important;
   text-align: left !important;
 }
+
+td div , td span, th div, td button, td a {
+  padding-left: 2px !important;
+}
