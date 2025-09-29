@@ -217,17 +217,26 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
 
   return (
     <div className="space-y-6">
-      <div className="w-full bg-white rounded-lg shadow-sm border mt-3">
+      <div className="w-full bg-white rounded-lg shadow-sm  mt-3">
         {/* Header */}
-        <div className="flex items-center justify-between bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-6 border border-[#D9D9D9]">
+          {/* <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
               <CreditCard className="w-6 h-6" style={{ color: "#C72030" }} />
             </div>
             <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
               Owner Cost Details
             </h3>
+          </div> */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+              <CreditCard className="w-4 h-4" style={{ color: "#C72030" }} />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+              Owner Cost Details
+            </h3>
           </div>
+
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium">
               {isInUse ? 'IN USE' : 'BREAKDOWN'}
@@ -241,7 +250,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
         </div>
 
         {/* Body */}
-        <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] " >
+        <div className=" border border-t-0  " >
           <Button
             onClick={() => setShowAssetStatusModal(true)}
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2 m-4"
@@ -277,7 +286,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-400">
+                  <TableCell colSpan={8} className="text-center ">
                     No owner cost data available.
                   </TableCell>
                 </TableRow>
@@ -286,7 +295,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
           </Table>
 
           {/* Footer */}
-          <div className="bg-gray-50 p-4 border-t text-right">
+          <div className=" p-4 border-t text-right">
             <span className="text-lg font-semibold text-[#1A1A1A]">
               Total Cost: INR {totalCost.toLocaleString()}
             </span>
