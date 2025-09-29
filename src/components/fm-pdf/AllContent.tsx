@@ -3421,17 +3421,35 @@ const AllContent = () => {
                                 ) : amcExpiringContracts.length === 0 ? (
                                     <tr><td colSpan={7} className="border border-black px-4 py-2 text-center print:px-1 print:py-2">No data available</td></tr>
                                 ) : (
-                                    amcExpiringContracts.map((row: any, i: number) => (
-                                        <tr key={i} className="bg-white text-[12px] md:text-[13px] print:text-[9px]">
-                                            <td className="border border-black px-4 py-2 bg-[#F3F1EB] font-semibold print:px-1 print:py-1.5">{row.site_name ?? '-'}</td>
-                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.amc_name ?? '-'}</td>
-                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_start_date ?? '-'}</td>
-                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_end_date ?? '-'}</td>
-                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.renewal_reminder ?? '-'}</td>
-                                            <td className="border border-black px-4 py-2 text-right tabular-nums print:px-1 print:py-1.5">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
-                                            <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.vendor_contact ?? '-'}</td>
-                                        </tr>
-                                    ))
+                                    amcExpiringContracts.map((row: any, i: number) => {
+                                        // Determine if the contract is expiring within 1 month (<=31 days) or the reminder text mentions 1 month
+                                        const daysUntil = (() => {
+                                            const d = row.contract_end_date ? new Date(row.contract_end_date) : null;
+                                            if (!d || isNaN(d.getTime())) return Infinity;
+                                            const today = new Date();
+                                            today.setHours(0,0,0,0);
+                                            d.setHours(0,0,0,0);
+                                            return Math.round((d.getTime() - today.getTime()) / 86400000);
+                                        })();
+                                        const reminderText = String(row.renewal_reminder || '').toLowerCase();
+                                        const highlightRenewal = (
+                                            (daysUntil >= 0 && daysUntil <= 31) ||
+                                            /within\s*1\s*month/.test(reminderText) ||
+                                            /\b1\s*month/.test(reminderText) ||
+                                            /30\s*day/.test(reminderText)
+                                        );
+                                        return (
+                                            <tr key={i} className="bg-white text-[12px] md:text-[13px] print:text-[9px]">
+                                                <td className="border border-black px-4 py-2 bg-[#F3F1EB] font-semibold print:px-1 print:py-1.5">{row.site_name ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.amc_name ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_start_date ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.contract_end_date ?? '-'}</td>
+                                                <td className={`border border-black px-4 py-2 print:px-1 print:py-1.5 ${highlightRenewal ? 'text-[#C72030] font-semibold' : ''}`}>{row.renewal_reminder ?? '-'}</td>
+                                                <td className="border border-black px-4 py-2 text-right tabular-nums print:px-1 print:py-1.5">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                                <td className="border border-black px-4 py-2 print:px-1 print:py-1.5">{row.vendor_contact ?? '-'}</td>
+                                            </tr>
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
@@ -3551,9 +3569,9 @@ const AllContent = () => {
                                     Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
                                 </div>
                                 <div className="print:flex-1">
-                                    <table className="w-full border print:table-fixed print:w-full print:text-[10px] print:h-full">
+                                    <table className="w-full border-t border-b border-black print:table-fixed print:w-full print:text-[10px] print:h-full">
                                         <thead>
-                                            <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
+                                            <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red border-b border-black">
                                                 <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Site Name</th>
                                                 <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Open</th>
                                                 <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">In Progress</th>
@@ -3565,13 +3583,13 @@ const AllContent = () => {
                                         <tbody>
                                             {loadingSiteWiseChecklist ? (
                                                 <tr>
-                                                    <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2">
+                                                    <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2 border-b border-black">
                                                         Loading checklist progress...
                                                     </td>
                                                 </tr>
                                             ) : checklistProgress.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2">
+                                                    <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2 border-b border-black">
                                                         No checklist progress data available
                                                     </td>
                                                 </tr>
@@ -3608,7 +3626,7 @@ const AllContent = () => {
                                                     const closedArrowUp = diffClosedNum > 0;
                                                     const closedArrowDown = diffClosedNum < 0;
                                                     return (
-                                                        <tr key={i} className={i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''}>
+                                                        <tr key={i} className={`${i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''} border-b border-gray-300 last:border-b-0`}>
                                                             <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site}</td>
                                                             <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.open ?? cur.not_completed)}</td>
                                                             <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.in_progress ?? cur.inProgress)}</td>
@@ -3643,9 +3661,9 @@ const AllContent = () => {
                                     Top 10 Overdue Checklists – Center-wise Contribution Comparison
                                 </div>
                                 <div className="print:flex-1">
-                                    <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
+                                    <table className="w-full border-t border-b border-black text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
                                         <thead>
-                                            <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
+                                            <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red border-b border-black">
                                                 <th className="py-4 px-4 site-col print:py-2 print:px-2 print:w-[18%]">Site Name</th>
                                                 {top10Overdue.categories.map((cat, idx) => (
                                                     <th key={idx} className="py-4 px-2 text-center print:py-2 print:px-1">
@@ -3657,13 +3675,13 @@ const AllContent = () => {
                                         <tbody>
                                             {loadingSiteWiseChecklist ? (
                                                 <tr>
-                                                    <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2">
+                                                    <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2 border-b border-gray-300">
                                                         Loading top overdue checklists...
                                                     </td>
                                                 </tr>
                                             ) : !top10Overdue.categories.length || !top10Overdue.siteRows.length ? (
                                                 <tr>
-                                                    <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2">
+                                                    <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2 border-b border-gray-300">
                                                         No overdue checklist data available
                                                     </td>
                                                 </tr>
@@ -3679,7 +3697,7 @@ const AllContent = () => {
                                                     }
                                                     const fmt = (n: number) => `${Number(n || 0).toFixed(0)}%`;
                                                     return (
-                                                        <tr key={i} className={i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''}>
+                                                        <tr key={i} className={`${i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''} border-b border-gray-300 last:border-b-0`}>
                                                             <td className="py-5 px-4 site-col bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site.site_name ?? '-'}</td>
                                                             {top10Overdue.categories.map((cat, j) => (
                                                                 <td key={j} className="py-5 px-2 text-center print:py-2 print:px-1">
