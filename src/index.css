@@ -816,3 +816,9 @@
 [data-state="checked"][class*="border-green-600"] {
   border-color: transparent !important; /* remove the green border */
 }
+
+
+td div , td span, th div, th span {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
