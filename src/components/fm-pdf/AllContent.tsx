@@ -2872,7 +2872,7 @@ const AllContent = () => {
                 <div className={sectionBox}>
 
                     {/* Title */}
-                    <h1 className="text-lg md:text-lg font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
+                    <h1 className="text-3xl md:text-3xl font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
                         Response TAT Performance by Center – {periodUnit}ly Comparison
                     </h1>
 
@@ -3004,10 +3004,10 @@ const AllContent = () => {
                             layout="vertical"
                             margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
                         >
-                            {/* 1. Add pattern defs for striped fill */}
+                            {/* 1. Add pattern defs for striped fill (unique id for Response) */}
                             <defs>
                                 <pattern
-                                    id="stripedPattern"
+                                    id="stripedPatternResponse"
                                     patternUnits="userSpaceOnUse"
                                     width="6"
                                     height="6"
@@ -3043,7 +3043,7 @@ const AllContent = () => {
                             {/* 3. Apply striped pattern to Last Quarter bar */}
                             <Bar
                                 dataKey="responseLast"
-                                fill="url(#stripedPattern)"
+                                fill="url(#stripedPatternResponse)"
                                 name={lastLabel}
                             />
 
@@ -3149,16 +3149,16 @@ const AllContent = () => {
 
                     <div className="w-full overflow-x-auto block print:block md:hidden">
                         <BarChart
-                            width={780}
+                            width={750}
                             height={700}
                             data={dynamicResolutionAchieved}
                             layout="vertical"
                             margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
                         >
-                            {/* Striped Pattern Def */}
+                            {/* Striped Pattern Def (unique id for Resolution) */}
                             <defs>
                                 <pattern
-                                    id="stripedPattern"
+                                    id="stripedPatternResolution"
                                     patternUnits="userSpaceOnUse"
                                     width="6"
                                     height="6"
@@ -3188,12 +3188,12 @@ const AllContent = () => {
                                 width={140}
                             />
 
-                            <Tooltip content={(props: any) => <CustomTooltip {...props} />} cursor={{ fill: "rgba(0, 0, 0, 0.05)" }} />
+                            <Tooltip content={(props: any) => <CustomTooltip {...props} />} />
 
                             {/* Last Quarter with Stripes */}
                             <Bar
                                 dataKey="resolutionLast"
-                                fill="url(#stripedPattern)"
+                                fill="url(#stripedPatternResolution)"
                                 name={lastLabel}
                             />
 
@@ -3202,20 +3202,6 @@ const AllContent = () => {
                                 dataKey="resolutionCurrent"
                                 fill="#C4AE9D"
                                 name={currentLabel}
-                            />
-
-                            {/* Scatter dots (optional, will still render over bars) */}
-                            <Scatter
-                                data={scatterDataLast}
-                                fill="#000000"
-                                name={`${lastLabel} (Dots)`}
-                                shape="circle"
-                            />
-                            <Scatter
-                                data={scatterDataCurrent}
-                                fill="#FF0000"
-                                name={`${currentLabel} (Dots)`}
-                                shape="circle"
                             />
                         </BarChart>
                     </div>
@@ -4041,7 +4027,7 @@ const AllContent = () => {
                                             <BarChart
                                                 data={parkingChartData}
                                                 layout="vertical"
-                                                margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                                                margin={{ top: 20, right: 70, bottom: 20 }}
                                                 barCategoryGap="10%"
                                                 barGap={3}
                                             >
@@ -4075,7 +4061,7 @@ const AllContent = () => {
                                         height={Math.max(300, parkingChartData.length * 50)}
                                         data={parkingChartData}
                                         layout="vertical"
-                                        margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                                        margin={{ top: 20, right: 60, left: 10, bottom: 20 }}
                                         barCategoryGap="10%"
                                         barGap={3}
                                     >
