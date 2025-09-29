@@ -2,12 +2,21 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Eye, AlertTriangle, Clock, CheckCircle, XCircle, Download, Settings, Search, Filter as FilterIcon } from "lucide-react";
+import { Plus, Eye, AlertTriangle, Clock, CheckCircle, XCircle, Download, Settings, Search, Filter as FilterIcon, PauseCircle, LifeBuoy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import IncidentFilterModal from "@/components/IncidentFilterModal";
 import { incidentService, type Incident } from "@/services/incidentService";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // Stats calculation
 const calculateStats = (incidents: any[]) => {
@@ -18,7 +27,7 @@ const calculateStats = (incidents: any[]) => {
     closed: incidents.filter(i => i.current_status === "Closed").length,
     highRisk: incidents.filter(i => i.inc_level_name === "High Risk").length,
     mediumRisk: incidents.filter(i => i.inc_level_name === "Medium Risk").length,
-    lowRisk: incidents.filter(i => i.inc_level_name === "Low Risk").length,
+    lowRisk: incidents.filter(i => i.inc_level_name === "Low Risks").length,
   };
 };
 
@@ -50,6 +59,9 @@ export const IncidentDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [originalIncidents, setOriginalIncidents] = useState<Incident[]>([]);
   const [countStats, setCountStats] = useState<{ total_incidents: number; open: number; under_investigation: number; closed: number; pending: number; support_required: number } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Define columns for the EnhancedTable
   const columns: ColumnConfig[] = [
@@ -111,7 +123,7 @@ export const IncidentDashboard = () => {
     },
     {
       key: "inc_level_name",
-      label: "Level",
+      label: " Incident Level",
       sortable: true,
       defaultVisible: true,
       draggable: true,
@@ -204,18 +216,27 @@ export const IncidentDashboard = () => {
     localStorage.removeItem('incidents-table-columns');
     localStorage.removeItem('incidents-table-visibility');
     
-    fetchIncidents();
+    fetchIncidents(currentPage);
     fetchCounts();
-  }, []);
+  }, [currentPage]);
 
-  const fetchIncidents = async () => {
+  const fetchIncidents = async (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await incidentService.getIncidents();
+      const query = `page=${page}`;
+      const response = await incidentService.getIncidents(query);
       console.log("API Response - First incident:", response.data.incidents[0]); // Debug log
       setIncidents(response.data.incidents);
       setOriginalIncidents(response.data.incidents);
+      if (response.data.pagination) {
+        setCurrentPage(response.data.pagination.current_page || 1);
+        setTotalPages(response.data.pagination.total_pages || 1);
+        setTotalCount(response.data.pagination.total_count || 0);
+      } else {
+        setTotalPages(1);
+        setTotalCount(response.data.total || response.data.incidents.length || 0);
+      }
     } catch (err) {
       setError("Failed to fetch incidents");
       console.error("Error fetching incidents:", err);
@@ -320,6 +341,14 @@ export const IncidentDashboard = () => {
 
   const stats = calculateStats(incidents);
 
+  // Prefer API counts if available for analytics
+  const totalForAnalytics = countStats ? countStats.total_incidents : stats.total;
+  const openCount = countStats ? countStats.open : stats.open;
+  const underInvestigationCount = countStats ? countStats.under_investigation : stats.underObservation;
+  const closedCount = countStats ? countStats.closed : stats.closed;
+  const pendingCount = countStats ? countStats.pending : 0;
+  const supportRequiredCount = countStats ? countStats.support_required : 0;
+
   const handleAddIncident = () => {
     navigate("/safety/incident/add");
   };
@@ -333,7 +362,7 @@ export const IncidentDashboard = () => {
       else if (type === 'closed') query = 'q[current_status_eq]=Closed';
       else if (type === 'pending') query = 'q[current_status_eq]=Pending';
       else if (type === 'under_investigation') query = 'q[current_status_eq]=Under%20Investigation';
-      else if (type === 'support_required') query = 'q[support_required_eq]=1';
+      else if (type === 'support_required') query = 'q[current_status_eq]=Support%20Required';
       // total => no query
 
       const response = await incidentService.getIncidents(query);
@@ -413,13 +442,13 @@ export const IncidentDashboard = () => {
   };
 
   const StatCard = ({ icon, label, value, color }: any) => (
-    <div className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
-      <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
+    <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow">
+      <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
         {React.cloneElement(icon, { className: `w-6 h-6 text-[#C72030]` })}
       </div>
       <div>
-        <div className="text-2xl font-bold text-[#C72030]">{value}</div>
-        <div className="text-sm font-medium text-gray-600">{label}</div>
+        <div className="text-2xl font-semibold text-[#1A1A1A]">{value}</div>
+        <div className="text-sm font-medium text-[#1A1A1A]">{label}</div>
       </div>
     </div>
   );
@@ -460,10 +489,10 @@ export const IncidentDashboard = () => {
               <StatCard icon={<CheckCircle />} label="Closed" value={countStats ? countStats.closed : stats.closed} />
             </div>
             <div onClick={() => handleCardClick('pending')} className="cursor-pointer">
-              <StatCard icon={<CheckCircle />} label="Pending" value={countStats ? countStats.pending : 0} />
+              <StatCard icon={<PauseCircle />} label="Pending" value={countStats ? countStats.pending : 0} />
             </div>
             <div onClick={() => handleCardClick('support_required')} className="cursor-pointer">
-              <StatCard icon={<CheckCircle />} label="Support Required" value={countStats ? countStats.support_required : 0} />
+              <StatCard icon={<LifeBuoy />} label="Support Required" value={countStats ? countStats.support_required : 0} />
             </div>
             {/* <StatCard icon={<XCircle />} label="High Risk" value={stats.highRisk} />
             <StatCard icon={<AlertTriangle />} label="Medium Risk" value={stats.mediumRisk} />
@@ -486,8 +515,7 @@ export const IncidentDashboard = () => {
             exportFileName="incidents"
             storageKey="incidents-dashboard-new"
             className="min-w-full"
-            pagination={true}
-            pageSize={10}
+            pagination={false}
             leftActions={
               <div className="flex items-center gap-2">
                 <Button
@@ -499,14 +527,86 @@ export const IncidentDashboard = () => {
                 </Button>
               </div>
             }
-            rightActions={
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={() => setIsFilterModalOpen(true)} title="Filter">
-                  <FilterIcon className="w-4 h-4" />
-                </Button>
-              </div>
-            }
+            onFilterClick={() => setIsFilterModalOpen(true)}
           />
+
+          {/* API-driven Pagination (same as AssetDashboard) */}
+          <div className="mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => {
+                      if (currentPage > 1) {
+                        setCurrentPage(currentPage - 1);
+                      }
+                    }}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(1)}
+                    isActive={currentPage === 1}
+                  >
+                    1
+                  </PaginationLink>
+                </PaginationItem>
+
+                {currentPage > 4 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+
+                {Array.from({ length: 3 }, (_, i) => currentPage - 1 + i)
+                  .filter((page) => page > 1 && page < totalPages)
+                  .map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page)}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                {currentPage < totalPages - 3 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+
+                {totalPages > 1 && (
+                  <PaginationItem>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(totalPages)}
+                      isActive={currentPage === totalPages}
+                    >
+                      {totalPages}
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => {
+                      if (currentPage < totalPages) {
+                        setCurrentPage(currentPage + 1);
+                      }
+                    }}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+
+            <div className="text-center mt-2 text-sm text-gray-600">
+              Showing page {currentPage} of {totalPages} ({totalCount} total incidents)
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="analytics" className="mt-6">
@@ -515,16 +615,24 @@ export const IncidentDashboard = () => {
               <h3 className="text-lg font-semibold mb-4">Incident Status Distribution</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Open: {stats.open}</span>
-                  <span>{stats.total > 0 ? ((stats.open / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>Open: {openCount}</span>
+                  <span>{totalForAnalytics > 0 ? ((openCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Under Observation: {stats.underObservation}</span>
-                  <span>{stats.total > 0 ? ((stats.underObservation / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>Under Investigation: {underInvestigationCount}</span>
+                  <span>{totalForAnalytics > 0 ? ((underInvestigationCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Closed: {stats.closed}</span>
-                  <span>{stats.total > 0 ? ((stats.closed / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>Closed: {closedCount}</span>
+                  <span>{totalForAnalytics > 0 ? ((closedCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Pending: {pendingCount}</span>
+                  <span>{totalForAnalytics > 0 ? ((pendingCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Support Required: {supportRequiredCount}</span>
+                  <span>{totalForAnalytics > 0 ? ((supportRequiredCount / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
             </div>
@@ -534,15 +642,15 @@ export const IncidentDashboard = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>High Risk: {stats.highRisk}</span>
-                  <span>{stats.total > 0 ? ((stats.highRisk / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>{totalForAnalytics > 0 ? ((stats.highRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Medium Risk: {stats.mediumRisk}</span>
-                  <span>{stats.total > 0 ? ((stats.mediumRisk / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>{totalForAnalytics > 0 ? ((stats.mediumRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Low Risk: {stats.lowRisk}</span>
-                  <span>{stats.total > 0 ? ((stats.lowRisk / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>{totalForAnalytics > 0 ? ((stats.lowRisk / totalForAnalytics) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
             </div>

@@ -1427,7 +1427,7 @@ export const TicketDashboard = () => {
 
         <TabsContent value="tickets" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Ticket Statistics Cards */}
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 mb-6">
             {[{
               label: 'Total Tickets',
               value: displayTotalTickets,
@@ -1452,18 +1452,17 @@ export const TicketDashboard = () => {
               return (
                 <div
                   key={i}
-                  className={`flex items-center justify-center p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] gap-2 sm:gap-4 transition-all bg-[#f6f4ee] 
-          ${item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""}`}
+                  className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 ${item.clickable ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
                   onClick={() => item.clickable && handleStatusCardClick(item.type)}
                 >
-                  <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
-                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
+                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                    <IconComponent className="w-6 h-6 text-[#C72030]" />
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">
+                  <div>
+                    <div className="text-2xl font-semibold text-[#1A1A1A]">
                       {item.value}
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">
+                    <div className="text-sm font-medium text-[#1A1A1A]">
                       {item.label}
                     </div>
                   </div>

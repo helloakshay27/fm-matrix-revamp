@@ -122,6 +122,11 @@ export interface IncidentResponse {
   data: {
     total: number;
     incidents: Incident[];
+    pagination?: {
+      current_page: number;
+      total_count: number;
+      total_pages: number;
+    };
   };
 }
 

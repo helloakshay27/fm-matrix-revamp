@@ -24,7 +24,7 @@ export function LogsTimeline({ logs }: LogsTimelineProps) {
                         </div>
 
                         <div className="ml-6 flex-1 flex justify-between items-start gap-4">
-                            <p className="text-foreground leading-relaxed flex-1">
+                            <p className="text-foreground leading-relaxed flex-1" style={{ whiteSpace: "pre-line" }}>
                                 {log.description}
                             </p>
                             <span className="text-sm text-muted-foreground whitespace-nowrap ml-4">

@@ -68,6 +68,7 @@ import {
 import bio from "@/assets/bio.png";
 import { InventorySelectionPanel } from "@/components/InventorySelectionPanel";
 import { toast } from "sonner";
+import { StatsCard } from "@/components/StatsCard";
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
@@ -1225,106 +1226,67 @@ export const InventoryDashboard = () => {
           )}
           <div className="overflow-x-auto">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'total' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
-                  onClick={() => {
-                    setActiveFilters({});
-                    setSelectedSummary('total');
-                    setLocalCurrentPage(1);
-                  }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {baselineCounts.totalInventories}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Total Inventories
-                  </div>
-                </div>
-              </div>
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'active' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
-                  onClick={() => {
-                    const nf = { 'q[active_eq]': true as any } as Record<string, string>;
-                    setActiveFilters(nf);
-                    setSelectedSummary('active');
-                    setLocalCurrentPage(1);
-                  }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {baselineCounts.activeCount}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Active Inventory
-                  </div>
-                </div>
-              </div>
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'inactive' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
-                  onClick={() => {
-                    const nf = { 'q[active_eq]': false as any } as Record<string, string>;
-                    setActiveFilters(nf);
-                    setSelectedSummary('inactive');
-                    setLocalCurrentPage(1);
-                  }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {baselineCounts.inactiveCount}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Inactive
-                  </div>
-                </div>
-              </div>
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'green' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
-                  onClick={() => {
-                    const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
-                    setActiveFilters(nf);
-                    setSelectedSummary('green');
-                    setLocalCurrentPage(1);
-                  }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <StatsCard
+                title="Total Inventories"
+                value={baselineCounts.totalInventories}
+                selected={selectedSummary === 'total'}
+                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                // selected={selectedSummary === 'total'}
+                onClick={() => {
+                  setActiveFilters({});
+                  setSelectedSummary('total');
+                  setLocalCurrentPage(1);
+                }}
+              />
+              <StatsCard
+                title="Active Inventory"
+                value={baselineCounts.activeCount}
+                selected={selectedSummary === 'active'}
+                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                // selected={selectedSummary === 'active'}
+                onClick={() => {
+                  const nf = { 'q[active_eq]': true as any } as Record<string, string>;
+                  setActiveFilters(nf);
+                  setSelectedSummary('active');
+                  setLocalCurrentPage(1);
+                }}
+              />
+              <StatsCard
+                title="Inactive"
+                value={baselineCounts.inactiveCount}
+                selected={selectedSummary === 'inactive'}
+                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                // selected={selectedSummary === 'inactive'}
+                onClick={() => {
+                  const nf = { 'q[active_eq]': false as any } as Record<string, string>;
+                  setActiveFilters(nf);
+                  setSelectedSummary('inactive');
+                  setLocalCurrentPage(1);
+                }}
+              />
+              <StatsCard
+                title="Ecofriendly"
+                value={baselineCounts.greenInventories}
+                selected={selectedSummary === 'green'}
+                icon={
                   <img
                     src={bio}
                     alt="Green Product"
-                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    className="w-8 h-8 sm:w-10 sm:h-10"
                     style={{
                       filter:
                         "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
                     }}
                   />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {baselineCounts.greenInventories}
-                  </div>
-                  <div className="text-xs sm:text-sm text-green-600 font-medium leading-tight">
-                    Ecofriendly
-                  </div>
-                </div>
-              </div>
+                }
+                // selected={selectedSummary === 'green'}
+                onClick={() => {
+                  const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
+                  setActiveFilters(nf);
+                  setSelectedSummary('green');
+                  setLocalCurrentPage(1);
+                }}
+              />
             </div>
             {showActionPanel && (
               <InventorySelectionPanel

@@ -305,18 +305,25 @@ export const GatePassInwardsDashboard = () => {
 
   // Render Action button for leftActions
   const renderActionButton = () => (
+    // <Button
+    //   onClick={() => setShowActionPanel((prev) => !prev)}
+    //   className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
+    // >
+    //   <Plus className="w-4 h-4 mr-2" />
+    //   Action
+    // </Button>
     <Button
-      onClick={() => setShowActionPanel((prev) => !prev)}
-      className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
-    >
-      <Plus className="w-4 h-4 mr-2" />
-      Action
-    </Button>
+                size="sm"
+                className="mr-2"
+                onClick={() => setShowActionPanel((prev) => !prev)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Action
+              </Button>
   );
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Inward List</h1>
       {/* Action Panel overlay */}
       {showActionPanel && (
         <SelectionPanel

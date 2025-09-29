@@ -48,6 +48,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { AmcBulkUploadModal } from '@/components/water-asset-details/AmcBulkUploadModal';
 import { useDebounce } from '@/hooks/useDebounce';
+import { StatsCard } from '@/components/StatsCard';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -176,12 +177,12 @@ export const AMCDashboard = () => {
   const [amcServiceStatsData, setAmcServiceStatsData] = useState<AMCServiceStatsData[] | null>(null);
   const [amcCoverageData, setAmcCoverageData] = useState<AMCLocationCoverageNode[] | null>(null);
   // const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'service_tracking', 'coverage_by_location']);
-    const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'coverage_by_location']);
+  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'coverage_by_location']);
 
   const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'coverage_by_location']);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
   // Track which summary tile is selected; null means none selected on initial load
-  const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive' | 'underObservation' | 'expiring'>(null);
+  const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive' | 'underObservation' | 'expiring' | 'totalCost'>(null);
 
   const getDefaultDateRange = () => {
     const today = new Date();
@@ -391,7 +392,7 @@ export const AMCDashboard = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
-  setSelectedSummary(null);
+    setSelectedSummary(null);
   };
 
   useEffect(() => {
@@ -554,11 +555,11 @@ export const AMCDashboard = () => {
       case 'asset_name':
         if (item.amc_type === 'Asset') {
           // Prefer first nested amc_assets entry if present
-            const first = item.amc_assets && item.amc_assets.length > 0 ? item.amc_assets[0] : null;
-            if (first) {
-              return first.asset_name || '-';
-            }
-            return item.asset_name || '-';
+          const first = item.amc_assets && item.amc_assets.length > 0 ? item.amc_assets[0] : null;
+          if (first) {
+            return first.asset_name || '-';
+          }
+          return item.asset_name || '-';
         } else if (item.amc_type === 'Service') {
           return item.service_name || '-';
         } else {
@@ -959,7 +960,7 @@ export const AMCDashboard = () => {
     setIsFilterModalOpen(false);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
-  setSelectedSummary(null);
+    setSelectedSummary(null);
     toast.success('Filters applied');
   };
 
@@ -973,7 +974,7 @@ export const AMCDashboard = () => {
     setFilter(null);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
-  setSelectedSummary(null);
+    setSelectedSummary(null);
     fetchFilteredAMCs(null, 1, undefined, debouncedSearchQuery);
     toast.success('Filters reset');
   };
@@ -1187,86 +1188,70 @@ export const AMCDashboard = () => {
           </TabsContent>
 
           <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4">
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer hover:bg-[#edeae3] ${selectedSummary === 'total' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+
+              <StatsCard
+                title="Total AMCs"
+                value={(apiData as any)?.total_amcs_count || 0}
+                selected={selectedSummary === 'total'}
+                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                // bgColor="#C4B89D54"
+                // isSelected={selectedSummary === 'total'}
                 onClick={() => { setSelectedSummary('total'); handleTotalAMCClick(); }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                </div>
-                <div className="flex flex-col min-w-0 justify-start">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.total_amcs_count || 0}
-                  </div>
-                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                    {`${localStorage.getItem("currency") ?? ''} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
-                  </span>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Total AMC
-                  </div>
-                </div>
-              </div>
+              />
 
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer hover:bg-[#edeae3] ${selectedSummary === 'active' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+              <StatsCard
+                title="Active AMCs"
+                value={(apiData as any)?.active_amcs_count || 0}
+                selected={selectedSummary === 'active'}
+                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                // bgColor="#C4B89D54"
+                // isSelected={selectedSummary === 'active'}
                 onClick={() => { setSelectedSummary('active'); handleActiveAMCClick(); }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                </div>
-                <div className="flex flex-col min-w-0 justify-start">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.active_amcs_count || 0}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active AMC</div>
-                </div>
-              </div>
+              />
 
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer hover:bg-[#edeae3] ${selectedSummary === 'inactive' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+              <StatsCard
+                title="Inactive AMCs"
+                value={(apiData as any)?.inactive_amcs_count || 0}
+                selected={selectedSummary === 'inactive'}
+                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                // bgColor="#C4B89D54"
+                // isSelected={selectedSummary === 'inactive'}
                 onClick={() => { setSelectedSummary('inactive'); handleInactiveAMCClick(); }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                </div>
-                <div className="flex flex-col min-w-0 justify-start">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.inactive_amcs_count || 0}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive AMC</div>
-                </div>
-              </div>
+              />
 
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer hover:bg-[#edeae3] ${selectedSummary === 'underObservation' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+              <StatsCard
+                title="Under Observation"
+                value={(apiData as any)?.under_observation || 0}
+                selected={selectedSummary === 'underObservation'}
+                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                // bgColor="#C4B89D54"
+                // isSelected={selectedSummary === 'underObservation'}
                 onClick={() => { setSelectedSummary('underObservation'); handleFlaggedAMCClick(); }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                </div>
-                <div className="flex flex-col min-w-0 justify-start">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.under_observation || 0}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Under Observation</div>
-                </div>
-              </div>
+              />
 
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer hover:bg-[#edeae3] ${selectedSummary === 'expiring' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
-                onClick={() => { setSelectedSummary('expiring'); handleExpiringIn90DaysClick(); }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                </div>
-                <div className="flex flex-col min-w-0 justify-start">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.expiring_in_fifteen_days || 0}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Expiring in 15 Days</div>
-                </div>
-              </div>
+              <StatsCard
+                title="Expiring Soon (15 days)"
+                value={(apiData as any)?.expiring_in_fifteen_days || 0}
+                selected={selectedSummary === 'expiring'}
+                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                // bgColor="#C4B89D54"
+                // isSelected={selectedSummary === 'expiring'}
+                onClick={() => {
+                  handleExpiringIn90DaysClick(); setSelectedSummary('expiring');
+                }}
+              />
+              <StatsCard
+                title="Total AMC Cost"
+                value={`${localStorage.getItem("currency") ?? ''} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
+                selected={selectedSummary === 'totalCost'}
+                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                // bgColor="#C4B89D54"
+                // isSelected={false}
+                onClick={() => { handleTotalAMCClick(); }}
+              />
+
+
             </div>
 
             <AmcBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
