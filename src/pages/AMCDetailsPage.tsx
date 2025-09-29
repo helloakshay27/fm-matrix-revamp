@@ -225,14 +225,21 @@ export const AMCDetailsPage = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <Button
+        {/* <Button
           variant="ghost"
           onClick={() => navigate('/maintenance/amc')}
           className="mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to AMC List
-        </Button>
+        </Button> */}
+         <button
+                  onClick={() => navigate('/maintenance/amc')}
+                  className="flex items-center gap-1 hover:text-gray-800 mb-4"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to AMC List
+                </button>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details - {amcDetails.id}</h1>
           <div className="flex gap-2">

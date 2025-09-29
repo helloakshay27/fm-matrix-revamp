@@ -249,19 +249,18 @@ export const ServiceDetailsPage = () => {
       {/* Top Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
-          <Button
-            variant="ghost"
+          <button
             onClick={() => navigate('/maintenance/service')}
-            className="w-max pl-0"
+            className="flex items-center gap-1 hover:text-gray-800 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Service List
-          </Button>
+          </button>
           <div className="mb-3">
             <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">{details.service_name || 'Service Details'}</h1>
           </div>
         </div>
-       <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant="outline"
             onClick={handleEditClick}
@@ -293,7 +292,7 @@ export const ServiceDetailsPage = () => {
               value="documents"
               className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
             >
-              Attactment 
+              Attactment
             </TabsTrigger>
             <TabsTrigger
               value="qr-code"
