@@ -506,7 +506,7 @@ export const AddSurveyMapping = () => {
         </div>
         <div className="text-sm text-gray-600">
           {surveyMappings.length === 1 
-            ? '1 Location Configuration' 
+            ? '1 Location Configured' 
             : `${surveyMappings.length} Location Configurations`
           }
         </div>
