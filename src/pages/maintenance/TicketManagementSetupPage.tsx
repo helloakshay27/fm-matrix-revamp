@@ -18,12 +18,41 @@ export const TicketManagementSetupPage: React.FC = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="category-type">Category Type</TabsTrigger>
-          <TabsTrigger value="sub-category">Sub Category</TabsTrigger>
-          <TabsTrigger value="status">Status</TabsTrigger>
-          <TabsTrigger value="operational-days">Operational Days</TabsTrigger>
-          <TabsTrigger value="complaint-mode">Complaint Mode</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5 bg-white border border-gray-200">
+          <TabsTrigger
+            value="category-type"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            Category Type
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="sub-category"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            Sub Category
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="status"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            Status
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="operational-days"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            Operational Days
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="complaint-mode"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            Complaint Mode
+          </TabsTrigger>
           {/* <TabsTrigger value="aging-rule">Aging Rule</TabsTrigger> */}
         </TabsList>
 

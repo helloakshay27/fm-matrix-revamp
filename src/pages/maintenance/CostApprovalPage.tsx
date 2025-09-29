@@ -12,18 +12,53 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Badge } from '@/components/ui/badge';
 import { X, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { apiClient } from '@/utils/apiClient';
+import { API_CONFIG } from '@/config/apiConfig';
+import { TextField, FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { 
   APPROVAL_LEVELS, 
   COST_UNITS, 
   CostApprovalFormData, 
   CostApprovalPayload, 
-  FMUserDropdown,
   CostUnit,
   CostApprovalGetResponse
 } from '@/types/costApproval';
-import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { createCostApproval, fetchCostApprovals, deleteCostApproval } from '@/store/slices/costApprovalSlice';
 import { AppDispatch, RootState } from '@/store/store';
+
+// Interface for the new API response
+interface EscalateToUser {
+  id: number;
+  full_name: string;
+}
+
+interface EscalateToUsersResponse {
+  users: EscalateToUser[];
+}
+
+// Field styles for Material-UI components
+const fieldStyles = {
+  height: '45px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '45px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
 
 const createCostApprovalSchema = (existingRules: CostApprovalGetResponse[], activeTab: string) => 
   z.object({
@@ -80,16 +115,33 @@ export const CostApprovalPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState<'project' | 'fm'>('project');
   const [selectedUsers, setSelectedUsers] = useState<{ [key: string]: number[] }>({});
+  const [escalateToUsers, setEscalateToUsers] = useState<EscalateToUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState<boolean>(false);
 
-  const { data: fmUsersData, loading: fmUsersLoading } = useSelector((state: RootState) => state.fmUsers);
   const { rules, createLoading, fetchLoading, deleteLoading } = useSelector((state: RootState) => state.costApproval);
-
-  const fmUsers: FMUserDropdown[] = fmUsersData?.fm_users || [];
 
   const costApprovalSchema = useMemo(() => 
     createCostApprovalSchema(rules, activeTab), 
     [rules, activeTab]
   )
+
+  // Fetch escalate to users from the new API
+  const fetchEscalateToUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const response = await apiClient.get<EscalateToUsersResponse>(API_CONFIG.ENDPOINTS.FM_USERS);
+      setEscalateToUsers(response.data.users);
+    } catch (error) {
+      console.error('Error fetching escalate to users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch users for approval',
+        variant: 'destructive',
+      });
+    } finally {
+      setUsersLoading(false);
+    }
+  };
 
   const createDefaultApprovalLevels = () => {
     return APPROVAL_LEVELS.map(level => ({
@@ -110,9 +162,9 @@ export const CostApprovalPage: React.FC = () => {
 
   const costUnit = form.watch('costUnit');
 
-  // Fetch FM users and cost approvals on component mount
+  // Fetch users and cost approvals on component mount
   useEffect(() => {
-    dispatch(fetchFMUsers());
+    fetchEscalateToUsers();
     dispatch(fetchCostApprovals());
   }, [dispatch]);
 
@@ -129,7 +181,7 @@ export const CostApprovalPage: React.FC = () => {
       setSelectedUsers(prev => ({ ...prev, [level]: newUsers }));
       
       // Update form data
-      const levelIndex = APPROVAL_LEVELS.indexOf(level as any);
+      const levelIndex = APPROVAL_LEVELS.indexOf(level as typeof APPROVAL_LEVELS[number]);
       const currentLevels = form.getValues('approvalLevels');
       currentLevels[levelIndex].escalateToUsers = newUsers;
       form.setValue('approvalLevels', currentLevels);
@@ -142,15 +194,15 @@ export const CostApprovalPage: React.FC = () => {
     setSelectedUsers(prev => ({ ...prev, [level]: newUsers }));
     
     // Update form data
-    const levelIndex = APPROVAL_LEVELS.indexOf(level as any);
+    const levelIndex = APPROVAL_LEVELS.indexOf(level as typeof APPROVAL_LEVELS[number]);
     const currentLevels = form.getValues('approvalLevels');
     currentLevels[levelIndex].escalateToUsers = newUsers;
     form.setValue('approvalLevels', currentLevels);
   };
 
   const getUserDisplayName = (userId: number): string => {
-    const user = fmUsers.find(u => u.id === userId);
-    return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
+    const user = escalateToUsers.find(u => u.id === userId);
+    return user ? user.full_name : `User ${userId}`;
   };
 
   const handleDelete = async (id: number) => {
@@ -164,10 +216,11 @@ export const CostApprovalPage: React.FC = () => {
 
       // Refresh the cost approvals list
       dispatch(fetchCostApprovals());
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete cost approval rule';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete cost approval rule',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -211,10 +264,11 @@ export const CostApprovalPage: React.FC = () => {
         approvalLevels: createDefaultApprovalLevels(),
       });
       setSelectedUsers({});
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create cost approval rule';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create cost approval rule',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -226,74 +280,68 @@ export const CostApprovalPage: React.FC = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             {/* Cost Unit Selection */}
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="costUnit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cost Unit</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Cost Unit" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {COST_UNITS.map(unit => (
-                          <SelectItem key={unit.value} value={unit.value}>
-                            {unit.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <MuiFormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Cost Unit</InputLabel>
+                <MuiSelect
+                  value={form.watch('costUnit')}
+                  onChange={(e) => form.setValue('costUnit', e.target.value as CostUnit)}
+                  label="Cost Unit"
+                  notched
+                  displayEmpty
+                >
+                  {COST_UNITS.map(unit => (
+                    <MenuItem key={unit.value} value={unit.value}>
+                      {unit.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </MuiFormControl>
               
               {/* Conditional Cost Fields */}
               {costUnit === 'between' && (
-                <FormField
-                  control={form.control}
-                  name="costFrom"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cost From</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          {...field}
-                          onChange={e => field.onChange(parseInt(e.target.value) || undefined)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <TextField
+                  label="Cost From"
+                  placeholder="0"
+                  type="number"
+                  value={form.watch('costFrom') || ''}
+                  onChange={(e) => form.setValue('costFrom', parseInt(e.target.value) || undefined)}
+                  fullWidth
+                  variant="outlined"
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
                 />
               )}
               
-              <FormField
-                control={form.control}
-                name="costTo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {costUnit === 'between' ? 'Cost To' : 
-                       costUnit === 'greater_than' ? 'Greater Than' : 'Greater Than Equal'}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="10000"
-                        {...field}
-                        onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <TextField
+                label={
+                  costUnit === 'between' ? 'Cost To' : 
+                  costUnit === 'greater_than' ? 'Greater Than' : 'Greater Than Equal'
+                }
+                placeholder="10000"
+                type="number"
+                value={form.watch('costTo') || ''}
+                onChange={(e) => form.setValue('costTo', parseInt(e.target.value) || 0)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
             </div>
 
@@ -312,25 +360,29 @@ export const CostApprovalPage: React.FC = () => {
                       <td className="p-3 text-sm font-medium">{level}</td>
                       <td className="p-3">
                         <div className="space-y-2">
-                          <Select 
-                            onValueChange={(value) => handleUserSelect(level, parseInt(value))}
-                            disabled={fmUsersLoading}
+                          <MuiFormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
                           >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder={
-                                fmUsersLoading ? 'Loading users...' : 'Select up to 15 users...'
-                              } />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {fmUsers
+                            <MuiSelect
+                              value=""
+                              onChange={(e) => handleUserSelect(level, parseInt(e.target.value))}
+                              displayEmpty
+                              disabled={usersLoading}
+                            >
+                              <MenuItem value="">
+                                {usersLoading ? "Loading..." : "Select up to 15 users..."}
+                              </MenuItem>
+                              {escalateToUsers
                                 .filter(user => !(selectedUsers[level] || []).includes(user.id))
                                 .map(user => (
-                                  <SelectItem key={user.id} value={user.id.toString()}>
-                                    {user.firstname} {user.lastname}
-                                  </SelectItem>
+                                  <MenuItem key={user.id} value={user.id.toString()}>
+                                    {user.full_name}
+                                  </MenuItem>
                                 ))}
-                            </SelectContent>
-                          </Select>
+                            </MuiSelect>
+                          </MuiFormControl>
                           
                           {selectedUsers[level] && selectedUsers[level].length > 0 && (
                             <div className="flex flex-wrap gap-1">
@@ -359,7 +411,7 @@ export const CostApprovalPage: React.FC = () => {
             <div className="flex justify-center">
               <Button 
                 type="submit" 
-                className="px-8"
+                className="px-8 bg-[#C72030] hover:bg-[#C72030]/90"
                 disabled={createLoading}
               >
                 {createLoading ? 'Creating...' : 'Submit'}
@@ -378,9 +430,19 @@ export const CostApprovalPage: React.FC = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'project' | 'fm')} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="project">Project</TabsTrigger>
-          <TabsTrigger value="fm">FM</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+          <TabsTrigger
+            value="project"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            Project
+          </TabsTrigger>
+          <TabsTrigger
+            value="fm"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            FM
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="project" className="space-y-6">

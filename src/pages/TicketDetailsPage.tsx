@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, FileText, Paperclip, Download, Eye, ChevronDown, ChevronUp, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, FileSpreadsheet, X, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, Paperclip, Download, Eye, ChevronDown, ChevronUp, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, FileSpreadsheet, X, Edit, FileIcon } from 'lucide-react';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 
@@ -21,12 +21,51 @@ export const TicketDetailsPage = () => {
 
   // Helper function to check if value has data
   const hasData = (value) => {
-    return value && value !== null && value !== undefined && value !== '';
+    return value && value !== null && value !== undefined && value !== "";
   };
 
   // Helper function to display value or "Not Provided"
   const displayValue = (value) => {
-    return value && value !== null && value !== undefined && value !== '' ? value : 'Not Provided';
+    return value && value !== null && value !== undefined && value !== ""
+      ? value
+      : "Not Provided";
+  };
+
+  // State for expandable sections - will be set dynamically based on data
+  const [expandedSections, setExpandedSections] = useState({
+    ticketDetails: false,
+    creatorInfo: false,
+    locationInfo: false,
+    surveyInfo: false,
+    additionalInfo: false,
+    attachments: false,
+    costApproval: false,
+    actionLogs: false
+  });
+
+  // Update expanded sections based on data availability
+  useEffect(() => {
+    if (ticketData) {
+      const complaintLogs = ticketData.complaint_logs || [];
+
+      setExpandedSections({
+        ticketDetails: hasData(ticketData.heading) || hasData(ticketData.issue_status) || hasData(ticketData.ticket_number) || hasData(ticketData.sub_category_type) || hasData(ticketData.created_by_name) || hasData(ticketData.created_date) || hasData(ticketData.created_time) || hasData(ticketData.category_type) || hasData(ticketData.updated_by) || hasData(ticketData.complaint_mode) || hasData(ticketData.priority) || hasData(ticketData.external_priority) || hasData(ticketData.priority_status) || hasData(ticketData.effective_priority) || hasData(ticketData.assigned_to),
+        creatorInfo: hasData(ticketData.posted_by) || hasData(ticketData.id_society),
+        locationInfo: hasData(ticketData.region) || hasData(ticketData.building_name) || hasData(ticketData.city) || hasData(ticketData.floor_name) || hasData(ticketData.flat_number) || hasData(ticketData.unit_name) || hasData(ticketData.zone) || hasData(ticketData.district) || hasData(ticketData.room_name) || hasData(ticketData.area_name) || hasData(ticketData.site_name) || hasData(ticketData.state) || hasData(ticketData.address) || hasData(ticketData.wing_name),
+        surveyInfo: ticketData.survey && (hasData(ticketData.survey.survey?.id) || hasData(ticketData.survey.survey?.name) || hasData(ticketData.survey.site_name) || hasData(ticketData.survey.building_name) || hasData(ticketData.survey.wing_name) || hasData(ticketData.survey.area_name) || hasData(ticketData.survey.floor_name) || hasData(ticketData.survey.room_name)),
+        additionalInfo: hasData(ticketData.corrective_action) || hasData(ticketData.preventive_action) || hasData(ticketData.root_cause) || hasData(ticketData.response_tat) || hasData(ticketData.ticket_urgency) || hasData(ticketData.responsible_person) || hasData(ticketData.asset_service) || hasData(ticketData.resolution_tat) || hasData(ticketData.task_id) || hasData(ticketData.asset_service_location) || hasData(ticketData.resolution_time) || hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name),
+        attachments: ticketData.documents && ticketData.documents.length > 0,
+        costApproval: ticketData.cost_approval_enabled && ticketData.requests && ticketData.requests.length > 0,
+        actionLogs: complaintLogs.length > 0
+      });
+    }
+  }, [ticketData]);
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
   };
 
   useEffect(() => {
@@ -38,8 +77,9 @@ export const TicketDetailsPage = () => {
         const data = await ticketManagementAPI.getTicketDetails(id);
         setTicketData(data);
       } catch (err) {
-        setError('Failed to fetch ticket details');
         console.error('Error fetching ticket details:', err);
+        setError('Failed to fetch ticket details');
+        toast.error('Failed to fetch ticket details');
       } finally {
         setLoading(false);
       }
@@ -69,44 +109,41 @@ export const TicketDetailsPage = () => {
 
   const handleCreateTask = async () => {
     if (!id) {
-      console.error('No ticket ID available');
+      console.error("No ticket ID available");
       return;
     }
 
     try {
-      console.log('Fetching create task data for ticket:', id);
+      console.log("Fetching create task data for ticket:", id);
       const taskData = await ticketManagementAPI.getCreateTaskData(id);
-      console.log('Create task data:', taskData);
+      console.log("Create task data:", taskData);
 
-      // You can handle the response data here
-      // For example, navigate to a create task page with the data
-      // or open a modal with the task creation form
-
-      // Placeholder for now - you can customize this based on your requirements
       toast.success('Create task data fetched successfully! Check console for details.');
 
     } catch (error) {
-      console.error('Error fetching create task data:', error);
-      toast.error('Failed to fetch create task data. Please try again.');
+      console.error("Error fetching create task data:", error);
+      toast.error("Failed to fetch create task data. Please try again.");
     }
   };
 
   const handleUpdate = () => {
+    console.log("🔄 Navigating to update page for ticket ID:", id);
+    
     const currentPath = window.location.pathname;
 
     if (currentPath.includes("tickets")) {
       navigate(`/tickets/edit/${id}`, {
         state: {
-          from: 'details',
-          returnTo: `/tickets/details/${id}`
-        }
+          from: "details",
+          returnTo: `/tickets/details/${id}`,
+        },
       });
     } else {
       navigate(`/maintenance/ticket/update/${id}`, {
         state: {
-          from: 'details',
-          returnTo: `/maintenance/ticket/${id}`
-        }
+          from: "details",
+          returnTo: `/maintenance/ticket/${id}`,
+        },
       });
     }
 
@@ -132,6 +169,18 @@ export const TicketDetailsPage = () => {
     return (
       <div className="p-6 bg-white min-h-screen">
         <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-600">
+            {error || "Ticket not found"}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !ticketData) {
+    return (
+      <div className="p-6 bg-white min-h-screen">
+        <div className="flex items-center justify-center h-64">
           <div className="text-lg text-red-600">{error || 'Ticket not found'}</div>
         </div>
       </div>
@@ -140,45 +189,6 @@ export const TicketDetailsPage = () => {
 
   // Process complaint logs for table display
   const complaintLogs = ticketData?.complaint_logs || [];
-
-  // Expandable Section Component (similar to AssetDetailsPage AMC cards)
-  const ExpandableSection = ({
-    title,
-    icon: Icon,
-    number,
-    isExpanded,
-    onToggle,
-    children,
-    hasData = true
-  }) => (
-    <div className="border border-gray-200 rounded-lg mb-4 shadow-sm">
-      <div
-        onClick={onToggle}
-        className="flex items-center justify-between cursor-pointer p-4 hover:bg-gray-50 transition-colors"
-        style={{ backgroundColor: hasData ? 'rgb(246 244 238)' : 'rgb(249 250 251)' }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-            <Icon className="w-4 h-4" style={{ color: "#C72030" }} />
-          </div>
-          <h3 className="text-base font-semibold uppercase text-[#1A1A1A]">
-            {title}
-          </h3>
-        </div>
-        <div className="flex items-center gap-2">
-          {!hasData && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">No data</span>
-          )}
-          {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-600" /> : <ChevronDown className="w-5 h-5 text-gray-600" />}
-        </div>
-      </div>
-      {isExpanded && (
-        <div className="p-4 bg-white border-t border-gray-100">
-          {children}
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
@@ -201,9 +211,9 @@ export const TicketDetailsPage = () => {
             </div>
 
             <div className="text-sm text-gray-600">
-              Ticket #{ticketData.ticket_number || 'N/A'} • Created by{" "}
-              {ticketData.created_by_name || 'Unknown'} • Last updated{" "}
-              {ticketData.updated_at || 'N/A'}
+              Ticket #{ticketData.ticket_number || "N/A"} • Created by{" "}
+              {ticketData.created_by_name || "Unknown"} • Last updated{" "}
+              {ticketData.updated_at || "N/A"}
             </div>
           </div>
 
@@ -215,14 +225,14 @@ export const TicketDetailsPage = () => {
               >
                 Logs
               </Button>
-              
+
               <Button
                 onClick={handleCreateTask}
                 className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
               >
                 Create Task
               </Button>
-              
+
               <Button
                 onClick={handleUpdate}
                 variant="outline"
@@ -237,7 +247,11 @@ export const TicketDetailsPage = () => {
 
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <Tabs defaultValue="ticket-details" className="w-full" onValueChange={setActiveTab}>
+        <Tabs
+          defaultValue="ticket-details"
+          className="w-full"
+          onValueChange={setActiveTab}
+        >
           <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             <TabsTrigger
               value="ticket-details"
@@ -299,132 +313,128 @@ export const TicketDetailsPage = () => {
           <TabsContent value="ticket-details" className="p-4 sm:p-6">
             <div className="space-y-6">
               {/* Check if there's any ticket data to display */}
-              {(hasData(ticketData.heading) || hasData(ticketData.issue_status) || hasData(ticketData.sub_category_type) || 
-                hasData(ticketData.created_by_name) || hasData(ticketData.created_date) || hasData(ticketData.created_time) || 
-                hasData(ticketData.created_at) || hasData(ticketData.category_type) || hasData(ticketData.ticket_number) || 
-                hasData(ticketData.updated_by) || hasData(ticketData.complaint_mode) || hasData(ticketData.priority) || 
-                hasData(ticketData.external_priority) || hasData(ticketData.priority_status) || hasData(ticketData.effective_priority) || 
-                hasData(ticketData.assigned_to)) ? (
+              {hasData(ticketData.heading) ||
+              hasData(ticketData.issue_status) ||
+              hasData(ticketData.sub_category_type) ||
+              hasData(ticketData.created_by_name) ||
+              hasData(ticketData.created_date) ||
+              hasData(ticketData.created_time) ||
+              hasData(ticketData.created_at) ||
+              hasData(ticketData.category_type) ||
+              hasData(ticketData.ticket_number) ||
+              hasData(ticketData.updated_by) ||
+              hasData(ticketData.complaint_mode) ||
+              hasData(ticketData.priority) ||
+              hasData(ticketData.external_priority) ||
+              hasData(ticketData.priority_status) ||
+              hasData(ticketData.effective_priority) ||
+              hasData(ticketData.assigned_to) ? (
                 /* Ticket Information Card */
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileText className="w-8 h-8" style={{ color: "#C72030" }} />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Ticket Information
-                    </h3>
-                  </div>
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-sm">
-                      <div className="space-y-3">
-                        {hasData(ticketData.heading) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Title</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1 break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }} title={ticketData.heading}>
-                              {ticketData.heading}
-                            </span>
-                          </div>
-                        )}
-                        {hasData(ticketData.issue_status) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Status</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <div className="flex-1">
-                              <Badge className="bg-yellow-100 text-yellow-700">{ticketData.issue_status}</Badge>
-                            </div>
-                          </div>
-                        )}
-                        {hasData(ticketData.sub_category_type) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">SubCategory</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.sub_category_type}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.created_by_name) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Created By</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.created_by_name}</span>
-                          </div>
-                        )}
-                        {(hasData(ticketData.created_date) || hasData(ticketData.created_time) || hasData(ticketData.created_at)) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Created On</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">
-                              {ticketData.created_at
-                                ? new Date(ticketData.created_at).toLocaleString()
-                                : `${ticketData.created_date || ''} ${ticketData.created_time || ''}`.trim()
-                              }
-                            </span>
-                          </div>
-                        )}
-                        {hasData(ticketData.category_type) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Category</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.category_type}</span>
-                          </div>
-                        )}
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                        <FileText className="w-6 h-6 text-[#C72030]" />
                       </div>
-
-                      <div className="space-y-3">
-                        {hasData(ticketData.ticket_number) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Ticket Number</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.ticket_number}</span>
+                      <span>TICKET INFORMATION</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                      {hasData(ticketData.ticket_number) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Ticket Number</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.ticket_number}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.heading) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Title</label>
+                          <div className="font-semibold text-base lg:text-lg break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }} title={ticketData.heading}>
+                            {ticketData.heading}
                           </div>
-                        )}
-                        {hasData(ticketData.updated_by) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Updated By</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.updated_by}</span>
+                        </div>
+                      )}
+                      {hasData(ticketData.category_type) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Category</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.category_type}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.sub_category_type) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">SubCategory</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.sub_category_type}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.issue_status) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Status</label>
+                          <div className="font-semibold text-base lg:text-lg">
+                            <Badge className="bg-yellow-100 text-yellow-700">{ticketData.issue_status}</Badge>
                           </div>
-                        )}
-                        {hasData(ticketData.complaint_mode) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Complaint Mode</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.complaint_mode}</span>
+                        </div>
+                      )}
+                      {hasData(ticketData.created_by_name) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Created By</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.created_by_name}</div>
+                        </div>
+                      )}
+                      {(hasData(ticketData.created_date) || hasData(ticketData.created_time) || hasData(ticketData.created_at)) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Created On</label>
+                          <div className="font-semibold text-base lg:text-lg">
+                            {ticketData.created_at
+                              ? new Date(ticketData.created_at).toLocaleString()
+                              : `${ticketData.created_date || ''} ${ticketData.created_time || ''}`.trim()
+                            }
                           </div>
-                        )}
-                        {hasData(ticketData.priority || ticketData.external_priority) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Priority</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.priority || ticketData.external_priority}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.priority_status || ticketData.effective_priority) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Admin Priority</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.priority_status || ticketData.effective_priority}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.assigned_to) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Assigned To</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.assigned_to}</span>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                      {hasData(ticketData.updated_by) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Updated By</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.updated_by}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.complaint_mode) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Complaint Mode</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.complaint_mode}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.priority || ticketData.external_priority) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Priority</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.priority || ticketData.external_priority}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.priority_status || ticketData.effective_priority) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Admin Priority</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.priority_status || ticketData.effective_priority}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.assigned_to) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Assigned To</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.assigned_to}</div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ) : (
                 /* No Data Available Message */
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <FileText className="w-16 h-16 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-500 mb-2">No Data Available</h3>
+                  <h3 className="text-lg font-medium text-gray-500 mb-2">
+                    No Data Available
+                  </h3>
                   <p className="text-gray-400 max-w-sm">
-                    There is no ticket information available to display at this time.
+                    There is no ticket information available to display at this
+                    time.
                   </p>
                 </div>
               )}
@@ -435,47 +445,45 @@ export const TicketDetailsPage = () => {
           <TabsContent value="creator-info" className="p-4 sm:p-6">
             <div className="space-y-6">
               {/* Check if there's any creator data to display */}
-              {(hasData(ticketData.posted_by) || hasData(ticketData.id_society)) ? (
+              {hasData(ticketData.posted_by) ||
+              hasData(ticketData.id_society) ? (
                 /* Creator Information Card */
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <User className="w-8 h-8" style={{ color: "#C72030" }} />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Creator Information
-                    </h3>
-                  </div>
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-sm">
-                      <div className="space-y-3">
-                        {hasData(ticketData.posted_by) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Posted By</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.posted_by}</span>
-                          </div>
-                        )}
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                        <User className="w-6 h-6 text-[#C72030]" />
                       </div>
-                      <div className="space-y-3">
-                        {hasData(ticketData.id_society) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Society</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.id_society}</span>
-                          </div>
-                        )}
-                      </div>
+                      <span>CREATOR INFORMATION</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                      {hasData(ticketData.posted_by) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Posted By</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.posted_by}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.id_society) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Society</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.id_society}</div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ) : (
                 /* No Data Available Message */
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <User className="w-16 h-16 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-500 mb-2">No Creator Information Available</h3>
+                  <h3 className="text-lg font-medium text-gray-500 mb-2">
+                    No Creator Information Available
+                  </h3>
                   <p className="text-gray-400 max-w-sm">
-                    There is no creator information available to display at this time.
+                    There is no creator information available to display at this
+                    time.
                   </p>
                 </div>
               )}
@@ -486,122 +494,117 @@ export const TicketDetailsPage = () => {
           <TabsContent value="location-info" className="p-4 sm:p-6">
             <div className="space-y-6">
               {/* Check if there's any location data to display */}
-              {(hasData(ticketData.region) || hasData(ticketData.building_name) || hasData(ticketData.floor_name) || 
-                hasData(ticketData.flat_number) || hasData(ticketData.unit_name) || hasData(ticketData.zone) || 
-                hasData(ticketData.district) || hasData(ticketData.room_name) || hasData(ticketData.area_name) || 
-                hasData(ticketData.site_name) || hasData(ticketData.city) || hasData(ticketData.state) || 
-                hasData(ticketData.address) || hasData(ticketData.wing_name)) ? (
+              {hasData(ticketData.region) ||
+              hasData(ticketData.building_name) ||
+              hasData(ticketData.floor_name) ||
+              hasData(ticketData.flat_number) ||
+              hasData(ticketData.unit_name) ||
+              hasData(ticketData.zone) ||
+              hasData(ticketData.district) ||
+              hasData(ticketData.room_name) ||
+              hasData(ticketData.area_name) ||
+              hasData(ticketData.site_name) ||
+              hasData(ticketData.city) ||
+              hasData(ticketData.state) ||
+              hasData(ticketData.address) ||
+              hasData(ticketData.wing_name) ? (
                 /* Location Information Card */
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <MapPin className="w-8 h-8" style={{ color: "#C72030" }} />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Location Information
-                    </h3>
-                  </div>
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-sm">
-                      <div className="space-y-3">
-                        {hasData(ticketData.region) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Region</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.region}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.building_name) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Building</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.building_name}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.floor_name) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Floor</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.floor_name}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.flat_number || ticketData.unit_name) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Flat/Unit</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.flat_number || ticketData.unit_name}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.zone) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Zone</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.zone}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.district) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">District</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.district}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.room_name) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Room</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.room_name}</span>
-                          </div>
-                        )}
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                        <MapPin className="w-6 h-6 text-[#C72030]" />
                       </div>
-
-                      <div className="space-y-3">
-                        {hasData(ticketData.area_name || ticketData.site_name) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Area/Site</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.area_name || ticketData.site_name}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.city) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">City</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.city}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.state) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">State</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.state}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.address) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Address</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.address}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.wing_name) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Wing</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.wing_name}</span>
-                          </div>
-                        )}
-                      </div>
+                      <span>LOCATION INFORMATION</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                      {hasData(ticketData.region) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Region</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.region}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.building_name) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Building</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.building_name}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.floor_name) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Floor</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.floor_name}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.flat_number || ticketData.unit_name) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Flat/Unit</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.flat_number || ticketData.unit_name}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.zone) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Zone</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.zone}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.district) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">District</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.district}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.room_name) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Room</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.room_name}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.area_name || ticketData.site_name) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Area/Site</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.area_name || ticketData.site_name}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.city) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">City</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.city}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.state) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">State</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.state}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.address) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Address</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.address}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.wing_name) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Wing</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.wing_name}</div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ) : (
                 /* No Data Available Message */
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <MapPin className="w-16 h-16 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-500 mb-2">No Location Information Available</h3>
+                  <h3 className="text-lg font-medium text-gray-500 mb-2">
+                    No Location Information Available
+                  </h3>
                   <p className="text-gray-400 max-w-sm">
-                    There is no location information available to display at this time.
+                    There is no location information available to display at
+                    this time.
                   </p>
                 </div>
               )}
@@ -612,61 +615,62 @@ export const TicketDetailsPage = () => {
           <TabsContent value="survey-info" className="p-4 sm:p-6">
             <div className="space-y-6">
               {/* Check if there's any survey data to display */}
-              {(hasData(ticketData.survey?.survey?.id) || hasData(ticketData.survey?.survey?.name) || 
-                hasData(ticketData.survey?.site_name) || hasData(ticketData.survey?.building_name) || 
-                hasData(ticketData.survey?.wing_name) || hasData(ticketData.survey?.area_name) || 
-                hasData(ticketData.survey?.floor_name) || hasData(ticketData.survey?.room_name)) ? (
+              {hasData(ticketData.survey?.survey?.id) ||
+              hasData(ticketData.survey?.survey?.name) ||
+              hasData(ticketData.survey?.site_name) ||
+              hasData(ticketData.survey?.building_name) ||
+              hasData(ticketData.survey?.wing_name) ||
+              hasData(ticketData.survey?.area_name) ||
+              hasData(ticketData.survey?.floor_name) ||
+              hasData(ticketData.survey?.room_name) ? (
                 /* Survey Information Card */
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileSearch className="w-8 h-8" style={{ color: "#C72030" }} />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Survey Information
-                    </h3>
-                  </div>
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-sm">
-                      <div className="space-y-3">
-                        {hasData(ticketData.survey?.survey?.id) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Survey ID</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.survey.survey.id}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.survey?.survey?.name) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Survey Name</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1 break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{ticketData.survey.survey.name}</span>
-                          </div>
-                        )}
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                        <FileSearch className="w-6 h-6 text-[#C72030]" />
                       </div>
-                      <div className="space-y-3">
-                        {(hasData(ticketData.survey?.site_name) || hasData(ticketData.survey?.building_name) || hasData(ticketData.survey?.wing_name) || hasData(ticketData.survey?.area_name) || hasData(ticketData.survey?.floor_name) || hasData(ticketData.survey?.room_name)) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Survey Location</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1 break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                              {[
-                                ticketData.survey.site_name,
-                                ticketData.survey.building_name,
-                                ticketData.survey.wing_name,
-                                ticketData.survey.area_name,
-                                ticketData.survey.floor_name,
-                                ticketData.survey.room_name
-                              ].filter(Boolean).join('/')}
-                            </span>
+                      <span>SURVEY INFORMATION</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                      {hasData(ticketData.survey?.survey?.id) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Survey ID</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.survey.survey.id}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.survey?.survey?.name) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Survey Name</label>
+                          <div className="font-semibold text-base lg:text-lg break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                            {ticketData.survey.survey.name}
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                      {(hasData(ticketData.survey?.site_name) || hasData(ticketData.survey?.building_name) || hasData(ticketData.survey?.wing_name) || hasData(ticketData.survey?.area_name) || hasData(ticketData.survey?.floor_name) || hasData(ticketData.survey?.room_name)) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Survey Location</label>
+                          <div className="font-semibold text-base lg:text-lg break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                            {[
+                              ticketData.survey.site_name,
+                              ticketData.survey.building_name,
+                              ticketData.survey.wing_name,
+                              ticketData.survey.area_name,
+                              ticketData.survey.floor_name,
+                              ticketData.survey.room_name
+                            ].filter(Boolean).join('/')}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ) : (
-                <p className="text-gray-500 text-center py-8">No survey information available</p>
+                <p className="text-gray-500 text-center py-8">
+                  No survey information available
+                </p>
               )}
             </div>
           </TabsContent>
@@ -675,122 +679,118 @@ export const TicketDetailsPage = () => {
           <TabsContent value="additional-info" className="p-4 sm:p-6">
             <div className="space-y-6">
               {/* Check if there's any additional data to display */}
-              {(hasData(ticketData.corrective_action) || hasData(ticketData.preventive_action) || 
-                hasData(ticketData.root_cause) || hasData(ticketData.response_tat) || hasData(ticketData.ticket_urgency) || 
-                hasData(ticketData.responsible_person) || hasData(ticketData.asset_service) || hasData(ticketData.resolution_tat) || 
-                hasData(ticketData.task_id) || hasData(ticketData.asset_service_location) || hasData(ticketData.resolution_time) || 
-                hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name)) ? (
+              {hasData(ticketData.corrective_action) ||
+              hasData(ticketData.preventive_action) ||
+              hasData(ticketData.root_cause) ||
+              hasData(ticketData.response_tat) ||
+              hasData(ticketData.ticket_urgency) ||
+              hasData(ticketData.responsible_person) ||
+              hasData(ticketData.asset_service) ||
+              hasData(ticketData.resolution_tat) ||
+              hasData(ticketData.task_id) ||
+              hasData(ticketData.asset_service_location) ||
+              hasData(ticketData.resolution_time) ||
+              hasData(ticketData.escalation_response_name) ||
+              hasData(ticketData.escalation_resolution_name) ? (
                 /* Additional Information Card */
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <PlusCircle className="w-8 h-8" style={{ color: "#C72030" }} />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Additional Information
-                    </h3>
-                  </div>
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-sm">
-                      <div className="space-y-3">
-                        {hasData(ticketData.corrective_action) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Corrective Action</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.corrective_action}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.preventive_action) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Preventive Action</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.preventive_action}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.root_cause) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Root Cause</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.root_cause}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.response_tat) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Response TAT</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.response_tat}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.ticket_urgency) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Ticket Urgency</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.ticket_urgency}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.responsible_person) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Responsible Person</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.responsible_person}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.asset_service) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Asset Service</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.asset_service}</span>
-                          </div>
-                        )}
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                        <PlusCircle className="w-6 h-6 text-[#C72030]" />
                       </div>
-
-                      <div className="space-y-3">
-                        {hasData(ticketData.resolution_tat) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Resolution TAT</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.resolution_tat}</span>
+                      <span>ADDITIONAL INFORMATION</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                      {hasData(ticketData.corrective_action) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Corrective Action</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.corrective_action}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.preventive_action) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Preventive Action</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.preventive_action}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.root_cause) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Root Cause</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.root_cause}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.response_tat) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Response TAT</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.response_tat}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.ticket_urgency) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Ticket Urgency</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.ticket_urgency}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.responsible_person) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Responsible Person</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.responsible_person}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.asset_service) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Asset Service</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.asset_service}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.resolution_tat) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Resolution TAT</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.resolution_tat}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.task_id) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Task ID</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.task_id}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.asset_service_location) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Asset/Service Location</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.asset_service_location}</div>
+                        </div>
+                      )}
+                      {hasData(ticketData.resolution_time) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Resolution Time</label>
+                          <div className="font-semibold text-base lg:text-lg">{ticketData.resolution_time}</div>
+                        </div>
+                      )}
+                      {(hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name)) && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-500 font-medium">Escalation Tracking</label>
+                          <div className="font-semibold text-base lg:text-lg">
+                            {`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`.replace(/^,\s*|,\s*$/g, '')}
                           </div>
-                        )}
-                        {hasData(ticketData.task_id) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Task ID</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.task_id}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.asset_service_location) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Asset/Service Location</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.asset_service_location}</span>
-                          </div>
-                        )}
-                        {hasData(ticketData.resolution_time) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Resolution Time</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{ticketData.resolution_time}</span>
-                          </div>
-                        )}
-                        {(hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name)) && (
-                          <div className="flex items-start">
-                            <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Escalation Tracking</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="font-semibold text-black flex-1">{`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`.replace(/^,\s*|,\s*$/g, '')}</span>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ) : (
                 /* No Data Available Message */
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <PlusCircle className="w-16 h-16 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-500 mb-2">No Additional Information Available</h3>
+                  <h3 className="text-lg font-medium text-gray-500 mb-2">
+                    No Additional Information Available
+                  </h3>
                   <p className="text-gray-400 max-w-sm">
-                    There is no additional information available to display at this time.
+                    There is no additional information available to display at
+                    this time.
                   </p>
                 </div>
               )}
@@ -819,29 +819,40 @@ export const TicketDetailsPage = () => {
               {/* Files Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-gray-900">Files</h3>
-                
+
                 {ticketData.documents && ticketData.documents.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {ticketData.documents.map((document, index) => {
                       // Updated to use the correct field name from API response
-                      const documentUrl = document.document || document.document_url || document.url || document.attachment_url;
-                      const fileExtension = documentUrl?.split('.').pop()?.toLowerCase() ||
-                        document.doctype?.split('/').pop()?.toLowerCase() || '';
-                      const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(fileExtension) ||
-                        document.doctype?.startsWith('image/');
-                      const isPdf = fileExtension === 'pdf' || document.doctype === 'application/pdf';
-                      const isExcel = ['xls', 'xlsx', 'csv'].includes(fileExtension) ||
-                        document.doctype?.includes('spreadsheet') ||
-                        document.doctype?.includes('excel');
+                      const documentUrl =
+                        document.document ||
+                        document.document_url ||
+                        document.url ||
+                        document.attachment_url;
+                      const fileExtension =
+                        documentUrl?.split(".").pop()?.toLowerCase() ||
+                        document.doctype?.split("/").pop()?.toLowerCase() ||
+                        "";
+                      const isImage =
+                        ["jpg", "jpeg", "png", "webp", "gif", "svg"].includes(
+                          fileExtension
+                        ) || document.doctype?.startsWith("image/");
+                      const isPdf =
+                        fileExtension === "pdf" ||
+                        document.doctype === "application/pdf";
+                      const isExcel =
+                        ["xls", "xlsx", "csv"].includes(fileExtension) ||
+                        document.doctype?.includes("spreadsheet") ||
+                        document.doctype?.includes("excel");
 
-                      console.log('📄 Document processing:', {
+                      console.log("📄 Document processing:", {
                         id: document.id,
                         documentUrl,
                         doctype: document.doctype,
                         fileExtension,
                         isImage,
                         isPdf,
-                        document
+                        document,
                       });
 
                       return (
@@ -857,7 +868,7 @@ export const TicketDetailsPage = () => {
                                 setPreviewImage({
                                   url: documentUrl,
                                   name: `Document ${index + 1}`,
-                                  document: document
+                                  document: document,
                                 });
                                 setShowImagePreview(true);
                               }
@@ -870,27 +881,34 @@ export const TicketDetailsPage = () => {
                                 className="object-contain w-full h-full rounded"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  (target.nextSibling as HTMLElement).style.display = 'flex';
+                                  target.style.display = "none";
+                                  (
+                                    target.nextSibling as HTMLElement
+                                  ).style.display = "flex";
                                 }}
                               />
                             ) : isPdf ? (
-                              <File className="w-8 h-8 text-red-600" />
+                              <FileIcon className="w-8 h-8 text-red-600" />
                             ) : isExcel ? (
                               <FileSpreadsheet className="w-8 h-8 text-green-600" />
                             ) : (
                               <FileText className="w-8 h-8 text-gray-600" />
                             )}
-                            
+
                             {/* Fallback for failed image loads */}
-                            <div className="w-full h-full items-center justify-center" style={{ display: 'none' }}>
+                            <div
+                              className="w-full h-full items-center justify-center"
+                              style={{ display: "none" }}
+                            >
                               <FileText className="w-8 h-8 text-gray-600" />
                             </div>
                           </div>
 
                           {/* File Name */}
                           <p className="text-sm text-gray-700 text-center font-medium break-all mb-2">
-                            {`Document_${document.id || index + 1}.${fileExtension || 'file'}`}
+                            {`Document_${document.id || index + 1}.${
+                              fileExtension || "file"
+                            }`}
                           </p>
 
                           {/* Download Button */}
@@ -899,78 +917,107 @@ export const TicketDetailsPage = () => {
                             variant="outline"
                             className="mt-auto text-xs px-2 py-1"
                             onClick={async () => {
-                              console.log('📎 Download attempt using new API:', {
-                                id: document.id,
-                                doctype: document.doctype,
-                                document
-                              });
+                              console.log(
+                                "📎 Download attempt using new API:",
+                                {
+                                  id: document.id,
+                                  doctype: document.doctype,
+                                  document,
+                                }
+                              );
 
                               if (!document.id) {
-                                console.error('No document ID found', document);
-                                toast.error('Unable to download: No document ID found');
+                                console.error("No document ID found", document);
+                                toast.error(
+                                  "Unable to download: No document ID found"
+                                );
                                 return;
                               }
 
                               try {
                                 // Check if we're in a browser environment
-                                if (typeof window === 'undefined' || !window.document) {
-                                  throw new Error('Download not supported in this environment');
+                                if (
+                                  typeof window === "undefined" ||
+                                  !window.document
+                                ) {
+                                  throw new Error(
+                                    "Download not supported in this environment"
+                                  );
                                 }
 
                                 // Import API_CONFIG to get the base URL
-                                const { API_CONFIG } = await import('@/config/apiConfig');
+                                const { API_CONFIG } = await import(
+                                  "@/config/apiConfig"
+                                );
                                 const baseUrl = API_CONFIG.BASE_URL;
-                                const token = localStorage.getItem('token');
-                                
+                                const token = localStorage.getItem("token");
+
                                 // Clean up base URL - ensure it doesn't have protocol and has no trailing slash
-                                const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+                                const cleanBaseUrl = baseUrl
+                                  .replace(/^https?:\/\//, "")
+                                  .replace(/\/$/, "");
                                 const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${document.id}?show_file=true`;
-                                
-                                console.log('🔗 New API download URL:', downloadUrl);
+
+                                console.log(
+                                  "🔗 New API download URL:",
+                                  downloadUrl
+                                );
 
                                 // Try authenticated download
                                 const response = await fetch(downloadUrl, {
-                                  method: 'GET',
+                                  method: "GET",
                                   headers: {
-                                    'Authorization': `Bearer ${token}`,
-                                    'Accept': '*/*',
+                                    Authorization: `Bearer ${token}`,
+                                    Accept: "*/*",
                                   },
-                                  mode: 'cors',
+                                  mode: "cors",
                                 });
 
                                 if (response.ok) {
                                   const blob = await response.blob();
-                                  
+
                                   // Get file extension from doctype or original URL
-                                  const fileExtension = document.doctype?.split('/').pop() || 
-                                    document.document?.split('.').pop()?.toLowerCase() || 'file';
+                                  const fileExtension =
+                                    document.doctype?.split("/").pop() ||
+                                    document.document
+                                      ?.split(".")
+                                      .pop()
+                                      ?.toLowerCase() ||
+                                    "file";
                                   const documentName = `document_${document.id}.${fileExtension}`;
-                                  
+
                                   // Create download link using window.document
                                   const url = window.URL.createObjectURL(blob);
-                                  const link = window.document.createElement('a');
+                                  const link =
+                                    window.document.createElement("a");
                                   link.href = url;
                                   link.download = documentName;
-                                  link.style.display = 'none';
+                                  link.style.display = "none";
                                   window.document.body.appendChild(link);
                                   link.click();
-                                  
+
                                   // Cleanup
                                   setTimeout(() => {
                                     window.document.body.removeChild(link);
                                     window.URL.revokeObjectURL(url);
                                   }, 100);
-                                  
-                                  toast.success('File downloaded successfully');
+
+                                  toast.success("File downloaded successfully");
                                   return;
                                 } else {
-                                  console.error('Download failed with status:', response.status);
-                                  throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                  console.error(
+                                    "Download failed with status:",
+                                    response.status
+                                  );
+                                  throw new Error(
+                                    `HTTP ${response.status}: ${response.statusText}`
+                                  );
                                 }
-
                               } catch (error) {
-                                console.error('Error downloading file:', error);
-                                toast.error(`Failed to download file: ${error.message}`);
+                                console.error("Error downloading file:", error);
+                                toast.error(
+                                  `Failed to download file: ${error.message}`
+                                );
                               }
                             }}
                           >
@@ -990,124 +1037,162 @@ export const TicketDetailsPage = () => {
             </div>
           </TabsContent>
 
-      {/* Image Preview Modal */}
-      {showImagePreview && previewImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setShowImagePreview(false)}>
-          <div className="max-w-4xl max-h-[90vh] bg-white rounded-lg p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold truncate">{previewImage.name}</h3>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    // Reuse the download logic for the preview modal with new API
-                    const document = previewImage.document;
-                    
-                    console.log('📎 Modal download attempt using new API:', {
-                      id: document.id,
-                      doctype: document.doctype
-                    });
+          {/* Image Preview Modal */}
+          {showImagePreview && previewImage && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+              onClick={() => setShowImagePreview(false)}
+            >
+              <div
+                className="max-w-4xl max-h-[90vh] bg-white rounded-lg p-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold truncate">
+                    {previewImage.name}
+                  </h3>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        // Reuse the download logic for the preview modal with new API
+                        const document = previewImage.document;
 
-                    if (!document.id) {
-                      toast.error('Unable to download: No document ID found');
-                      return;
-                    }
+                        console.log(
+                          "📎 Modal download attempt using new API:",
+                          {
+                            id: document.id,
+                            doctype: document.doctype,
+                          }
+                        );
 
-                    try {
-                      // Check if we're in a browser environment
-                      if (typeof window === 'undefined' || !window.document) {
-                        throw new Error('Download not supported in this environment');
-                      }
+                        if (!document.id) {
+                          toast.error(
+                            "Unable to download: No document ID found"
+                          );
+                          return;
+                        }
 
-                      // Import API_CONFIG to get the base URL
-                      const { API_CONFIG } = await import('@/config/apiConfig');
-                      const baseUrl = API_CONFIG.BASE_URL;
-                      const token = localStorage.getItem('token');
-                      
-                      // Clean up base URL - ensure it doesn't have protocol and has no trailing slash
-                      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
-                      const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${document.id}?show_file=true`;
-                      
-                      console.log('🔗 Modal download URL:', downloadUrl);
+                        try {
+                          // Check if we're in a browser environment
+                          if (
+                            typeof window === "undefined" ||
+                            !window.document
+                          ) {
+                            throw new Error(
+                              "Download not supported in this environment"
+                            );
+                          }
 
-                      // Try authenticated download
-                      const response = await fetch(downloadUrl, {
-                        method: 'GET',
-                        headers: {
-                          'Authorization': `Bearer ${token}`,
-                          'Accept': '*/*',
-                        },
-                        mode: 'cors',
-                      });
+                          // Import API_CONFIG to get the base URL
+                          const { API_CONFIG } = await import(
+                            "@/config/apiConfig"
+                          );
+                          const baseUrl = API_CONFIG.BASE_URL;
+                          const token = localStorage.getItem("token");
 
-                      if (response.ok) {
-                        const blob = await response.blob();
-                        
-                        // Get file extension from doctype or original URL
-                        const fileExtension = document.doctype?.split('/').pop() || 
-                          document.document?.split('.').pop()?.toLowerCase() || 'file';
-                        const documentName = `document_${document.id}.${fileExtension}`;
-                        
-                        // Create download link using window.document
-                        const url = window.URL.createObjectURL(blob);
-                        const link = window.document.createElement('a');
-                        link.href = url;
-                        link.download = documentName;
-                        link.style.display = 'none';
-                        window.document.body.appendChild(link);
-                        link.click();
-                        
-                        // Cleanup
-                        setTimeout(() => {
-                          window.document.body.removeChild(link);
-                          window.URL.revokeObjectURL(url);
-                        }, 100);
-                        
-                        toast.success('File downloaded successfully');
-                        return;
-                      } else {
-                        console.error('Modal download failed with status:', response.status);
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                      }
+                          // Clean up base URL - ensure it doesn't have protocol and has no trailing slash
+                          const cleanBaseUrl = baseUrl
+                            .replace(/^https?:\/\//, "")
+                            .replace(/\/$/, "");
+                          const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${document.id}?show_file=true`;
 
-                    } catch (error) {
-                      console.error('Error downloading file:', error);
-                      toast.error(`Failed to download: ${error.message}`);
-                    }
-                  }}
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Download
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowImagePreview(false)}>
-                  <X className="w-4 h-4 mr-1" />
-                  Close
-                </Button>
+                          console.log("🔗 Modal download URL:", downloadUrl);
+
+                          // Try authenticated download
+                          const response = await fetch(downloadUrl, {
+                            method: "GET",
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              Accept: "*/*",
+                            },
+                            mode: "cors",
+                          });
+
+                          if (response.ok) {
+                            const blob = await response.blob();
+
+                            // Get file extension from doctype or original URL
+                            const fileExtension =
+                              document.doctype?.split("/").pop() ||
+                              document.document
+                                ?.split(".")
+                                .pop()
+                                ?.toLowerCase() ||
+                              "file";
+                            const documentName = `document_${document.id}.${fileExtension}`;
+
+                            // Create download link using window.document
+                            const url = window.URL.createObjectURL(blob);
+                            const link = window.document.createElement("a");
+                            link.href = url;
+                            link.download = documentName;
+                            link.style.display = "none";
+                            window.document.body.appendChild(link);
+                            link.click();
+
+                            // Cleanup
+                            setTimeout(() => {
+                              window.document.body.removeChild(link);
+                              window.URL.revokeObjectURL(url);
+                            }, 100);
+
+                            toast.success("File downloaded successfully");
+                            return;
+                          } else {
+                            console.error(
+                              "Modal download failed with status:",
+                              response.status
+                            );
+                            throw new Error(
+                              `HTTP ${response.status}: ${response.statusText}`
+                            );
+                          }
+                        } catch (error) {
+                          console.error("Error downloading file:", error);
+                          toast.error(`Failed to download: ${error.message}`);
+                        }
+                      }}
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowImagePreview(false)}
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Close
+                    </Button>
+                  </div>
+                </div>
+                <div className="max-h-[70vh] overflow-auto">
+                  <img
+                    src={previewImage.url}
+                    alt={previewImage.name}
+                    className="max-w-full h-auto rounded-md"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                      (target.nextSibling as HTMLElement).style.display =
+                        "block";
+                    }}
+                  />
+                  <div className="hidden text-center py-8 text-gray-500">
+                    Failed to load image preview
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="max-h-[70vh] overflow-auto">
-              <img
-                src={previewImage.url}
-                alt={previewImage.name}
-                className="max-w-full h-auto rounded-md"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  (target.nextSibling as HTMLElement).style.display = 'block';
-                }}
-              />
-              <div className="hidden text-center py-8 text-gray-500">
-                Failed to load image preview
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
 
           {/* Cost Approval Tab */}
           <TabsContent value="cost-approval" className="p-4 sm:p-6">
-            {ticketData.cost_approval_enabled && ticketData.requests && ticketData.requests.length > 0 ? (
+            {ticketData.cost_approval_enabled &&
+            ticketData.requests &&
+            ticketData.requests.length > 0 ? (
               <div className="bg-white rounded-lg border overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -1130,41 +1215,60 @@ export const TicketDetailsPage = () => {
                   <TableBody>
                     {ticketData.requests.map((request, index) => (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">{request.id || `REQ-${index + 1}`}</TableCell>
-                        <TableCell>{request.amount || 'Not Provided'}</TableCell>
-                        <TableCell>{request.comment || 'No comments'}</TableCell>
-                        <TableCell>{request.created_on || request.created_at || 'Not Provided'}</TableCell>
-                        <TableCell>{request.created_by || 'Not Provided'}</TableCell>
-                        <TableCell>{request.approvals?.L1 || 'Na'}</TableCell>
-                        <TableCell>{request.approvals?.L2 || 'Na'}</TableCell>
-                        <TableCell>{request.approvals?.L3 || 'Na'}</TableCell>
-                        <TableCell>{request.approvals?.L4 || 'Na'}</TableCell>
-                        <TableCell>{request.approvals?.L5 || 'Na'}</TableCell>
+                        <TableCell className="font-medium">
+                          {request.id || `REQ-${index + 1}`}
+                        </TableCell>
+                        <TableCell>
+                          {request.amount || "Not Provided"}
+                        </TableCell>
+                        <TableCell>
+                          {request.comment || "No comments"}
+                        </TableCell>
+                        <TableCell>
+                          {request.created_on ||
+                            request.created_at ||
+                            "Not Provided"}
+                        </TableCell>
+                        <TableCell>
+                          {request.created_by || "Not Provided"}
+                        </TableCell>
+                        <TableCell>{request.approvals?.L1 || "Na"}</TableCell>
+                        <TableCell>{request.approvals?.L2 || "Na"}</TableCell>
+                        <TableCell>{request.approvals?.L3 || "Na"}</TableCell>
+                        <TableCell>{request.approvals?.L4 || "Na"}</TableCell>
+                        <TableCell>{request.approvals?.L5 || "Na"}</TableCell>
                         <TableCell>
                           <Badge className="bg-yellow-100 text-yellow-700">
-                            {request.master_status || 'Pending'}
+                            {request.master_status || "Pending"}
                           </Badge>
                         </TableCell>
-                        <TableCell>{request.cancelled_by || 'NA'}</TableCell>
+                        <TableCell>{request.cancelled_by || "NA"}</TableCell>
                         <TableCell>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
                               // Check if request has attachments
-                              if (request.attachments && request.attachments.length > 0) {
+                              if (
+                                request.attachments &&
+                                request.attachments.length > 0
+                              ) {
                                 const attachment = request.attachments[0]; // Take first attachment
                                 const imageUrl = attachment.url;
                                 if (imageUrl) {
                                   setPreviewImage({
                                     url: imageUrl,
-                                    name: `Cost Approval Request ${request.id || index + 1}`,
-                                    document: attachment
+                                    name: `Cost Approval Request ${
+                                      request.id || index + 1
+                                    }`,
+                                    document: attachment,
                                   });
                                   setShowImagePreview(true);
                                 }
                               } else {
-                                toast.error('No attachments found for this request');
+                                toast.error(
+                                  "No attachments found for this request"
+                                );
                               }
                             }}
                           >
@@ -1179,7 +1283,9 @@ export const TicketDetailsPage = () => {
               </div>
             ) : (
               <p className="text-gray-500 text-center py-8">
-                {ticketData.cost_approval_enabled ? 'No cost approval requests found' : 'Cost approval not enabled for this ticket'}
+                {ticketData.cost_approval_enabled
+                  ? "No cost approval requests found"
+                  : "Cost approval not enabled for this ticket"}
               </p>
             )}
           </TabsContent>
@@ -1209,16 +1315,24 @@ export const TicketDetailsPage = () => {
                             {log.log_status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm">{log.log_by || 'System'}</TableCell>
-                        <TableCell className="text-sm">{log.priority || '-'}</TableCell>
-                        <TableCell className="text-sm">{log.log_comment || 'No comments'}</TableCell>
+                        <TableCell className="text-sm">
+                          {log.log_by || "System"}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {log.priority || "-"}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {log.log_comment || "No comments"}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">No action logs found</p>
+              <p className="text-gray-500 text-center py-8">
+                No action logs found
+              </p>
             )}
           </TabsContent>
         </Tabs>
@@ -1226,10 +1340,18 @@ export const TicketDetailsPage = () => {
 
       {/* Image Preview Modal */}
       {showImagePreview && previewImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setShowImagePreview(false)}>
-          <div className="max-w-4xl max-h-[90vh] bg-white rounded-lg p-4" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={() => setShowImagePreview(false)}
+        >
+          <div
+            className="max-w-4xl max-h-[90vh] bg-white rounded-lg p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold truncate">{previewImage.name}</h3>
+              <h3 className="text-lg font-semibold truncate">
+                {previewImage.name}
+              </h3>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -1237,77 +1359,90 @@ export const TicketDetailsPage = () => {
                   onClick={async () => {
                     // Reuse the download logic for the preview modal with new API
                     const document = previewImage.document;
-                    
-                    console.log('📎 Modal download attempt using new API:', {
+
+                    console.log("📎 Modal download attempt using new API:", {
                       id: document.id,
-                      doctype: document.doctype
+                      doctype: document.doctype,
                     });
 
                     if (!document.id) {
-                      console.error('No document ID found', document);
-                      toast.error('Unable to download: No document ID found');
+                      console.error("No document ID found", document);
+                      toast.error("Unable to download: No document ID found");
                       return;
                     }
 
                     try {
                       // Check if we're in a browser environment
-                      if (typeof window === 'undefined' || !window.document) {
-                        throw new Error('Download not supported in this environment');
+                      if (typeof window === "undefined" || !window.document) {
+                        throw new Error(
+                          "Download not supported in this environment"
+                        );
                       }
 
                       // Import API_CONFIG to get the base URL
-                      const { API_CONFIG } = await import('@/config/apiConfig');
+                      const { API_CONFIG } = await import("@/config/apiConfig");
                       const baseUrl = API_CONFIG.BASE_URL;
-                      const token = localStorage.getItem('token');
-                      
+                      const token = localStorage.getItem("token");
+
                       // Clean up base URL - ensure it doesn't have protocol and has no trailing slash
-                      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+                      const cleanBaseUrl = baseUrl
+                        .replace(/^https?:\/\//, "")
+                        .replace(/\/$/, "");
                       const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${document.id}?show_file=true`;
-                      
-                      console.log('🔗 Modal new API download URL:', downloadUrl);
+
+                      console.log(
+                        "🔗 Modal new API download URL:",
+                        downloadUrl
+                      );
 
                       // Try authenticated download
                       const response = await fetch(downloadUrl, {
-                        method: 'GET',
+                        method: "GET",
                         headers: {
-                          'Authorization': `Bearer ${token}`,
-                          'Accept': '*/*',
+                          Authorization: `Bearer ${token}`,
+                          Accept: "*/*",
                         },
-                        mode: 'cors',
+                        mode: "cors",
                       });
 
                       if (response.ok) {
                         const blob = await response.blob();
-                        
+
                         // Get file extension from doctype or original URL
-                        const fileExtension = document.doctype?.split('/').pop() || 
-                          document.document?.split('.').pop()?.toLowerCase() || 'file';
+                        const fileExtension =
+                          document.doctype?.split("/").pop() ||
+                          document.document?.split(".").pop()?.toLowerCase() ||
+                          "file";
                         const documentName = `document_${document.id}.${fileExtension}`;
-                        
+
                         // Create download link using window.document
                         const url = window.URL.createObjectURL(blob);
-                        const link = window.document.createElement('a');
+                        const link = window.document.createElement("a");
                         link.href = url;
                         link.download = documentName;
-                        link.style.display = 'none';
+                        link.style.display = "none";
                         window.document.body.appendChild(link);
                         link.click();
-                        
+
                         // Cleanup
                         setTimeout(() => {
                           window.document.body.removeChild(link);
                           window.URL.revokeObjectURL(url);
                         }, 100);
-                        
-                        toast.success('File downloaded successfully');
+
+                        toast.success("File downloaded successfully");
                         return;
                       } else {
-                        console.error('Modal download failed with status:', response.status);
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        console.error(
+                          "Modal download failed with status:",
+                          response.status
+                        );
+                        throw new Error(
+                          `HTTP ${response.status}: ${response.statusText}`
+                        );
                       }
-
                     } catch (error) {
-                      console.error('Error downloading file:', error);
+                      console.error("Error downloading file:", error);
                       toast.error(`Failed to download: ${error.message}`);
                     }
                   }}
@@ -1315,7 +1450,11 @@ export const TicketDetailsPage = () => {
                   <Download className="w-4 h-4 mr-1" />
                   Download
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowImagePreview(false)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowImagePreview(false)}
+                >
                   <X className="w-4 h-4 mr-1" />
                   Close
                 </Button>
@@ -1328,8 +1467,8 @@ export const TicketDetailsPage = () => {
                 className="max-w-full h-auto rounded-md"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  (target.nextSibling as HTMLElement).style.display = 'block';
+                  target.style.display = "none";
+                  (target.nextSibling as HTMLElement).style.display = "block";
                 }}
               />
               <div className="hidden text-center py-8 text-gray-500">
