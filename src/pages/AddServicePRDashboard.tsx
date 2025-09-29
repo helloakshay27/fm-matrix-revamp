@@ -752,12 +752,19 @@ export const AddServicePRDashboard = () => {
                 label="Retention(%)"
                 placeholder="Retention"
                 value={formData.retention}
-                onChange={(e) => handleInputChange("retention", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (
+                    value === "" ||
+                    (/^\d*\.?\d{0,2}$/.test(value))
+                  ) {
+                    handleInputChange("retention", value);
+                  }
+                }}
                 fullWidth
                 variant="outlined"
-                type="number"
+                type="text" // use text for full control
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ min: 0, max: 100 }}
                 sx={fieldStyles}
               />
 
@@ -765,12 +772,19 @@ export const AddServicePRDashboard = () => {
                 label="TDS(%)"
                 placeholder="TDS"
                 value={formData.tds}
-                onChange={(e) => handleInputChange("tds", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (
+                    value === "" ||
+                    (/^\d*\.?\d{0,2}$/.test(value))
+                  ) {
+                    handleInputChange("tds", value);
+                  }
+                }}
                 fullWidth
                 variant="outlined"
-                type="number"
+                type="text"
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ min: 0, max: 100 }}
                 sx={fieldStyles}
               />
 
@@ -778,12 +792,19 @@ export const AddServicePRDashboard = () => {
                 label="QC(%)"
                 placeholder="QC"
                 value={formData.qc}
-                onChange={(e) => handleInputChange("qc", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (
+                    value === "" ||
+                    (/^\d*\.?\d{0,2}$/.test(value))
+                  ) {
+                    handleInputChange("qc", value);
+                  }
+                }}
                 fullWidth
                 variant="outlined"
-                type="number"
+                type="text"
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ min: 0, max: 100 }}
                 sx={fieldStyles}
               />
 
@@ -804,10 +825,18 @@ export const AddServicePRDashboard = () => {
                 label="Advance Amount"
                 placeholder="Advance Amount"
                 value={formData.advanceAmount}
-                onChange={(e) => handleInputChange("advanceAmount", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (
+                    value === "" ||
+                    (/^\d*\.?\d{0,2}$/.test(value))
+                  ) {
+                    handleInputChange("advanceAmount", value);
+                  }
+                }}
                 fullWidth
                 variant="outlined"
-                type="number"
+                type="text"
                 InputLabelProps={{ shrink: true }}
                 inputProps={{ min: 0 }}
                 sx={fieldStyles}
@@ -1023,12 +1052,15 @@ export const AddServicePRDashboard = () => {
                   <TextField
                     label="Rate*"
                     value={detailsData.rate}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "rate", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                        handleDetailsChange(detailsData.id, "rate", value);
+                      }
+                    }}
                     fullWidth
                     variant="outlined"
-                    type="number"
+                    type="text"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
@@ -1036,12 +1068,15 @@ export const AddServicePRDashboard = () => {
                   <TextField
                     label="CGST Rate"
                     value={detailsData.cgstRate}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "cgstRate", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                        handleDetailsChange(detailsData.id, "cgstRate", value);
+                      }
+                    }}
                     fullWidth
                     variant="outlined"
-                    type="number"
+                    type="text"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
@@ -1065,12 +1100,15 @@ export const AddServicePRDashboard = () => {
                   <TextField
                     label="SGST Rate"
                     value={detailsData.sgstRate}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "sgstRate", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                        handleDetailsChange(detailsData.id, "sgstRate", value);
+                      }
+                    }}
                     fullWidth
                     variant="outlined"
-                    type="number"
+                    type="text"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
@@ -1094,12 +1132,15 @@ export const AddServicePRDashboard = () => {
                   <TextField
                     label="IGST Rate"
                     value={detailsData.igstRate}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "igstRate", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                        handleDetailsChange(detailsData.id, "igstRate", value);
+                      }
+                    }}
                     fullWidth
                     variant="outlined"
-                    type="number"
+                    type="text"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
@@ -1123,12 +1164,15 @@ export const AddServicePRDashboard = () => {
                   <TextField
                     label="TCS Rate"
                     value={detailsData.tcsRate}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "tcsRate", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                        handleDetailsChange(detailsData.id, "tcsRate", value);
+                      }
+                    }}
                     fullWidth
                     variant="outlined"
-                    type="number"
+                    type="text"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
