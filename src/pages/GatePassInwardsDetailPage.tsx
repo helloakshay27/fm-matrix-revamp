@@ -6,6 +6,7 @@ import { API_CONFIG } from '@/config/apiConfig';
 import { AttachmentGoodsPreviewModal } from '@/components/AttachmentGoodsPreviewModal';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 export const GatePassInwardsDetailPage = () => {
@@ -13,6 +14,7 @@ export const GatePassInwardsDetailPage = () => {
   const navigate = useNavigate();
   const [gatePassData, setGatePassData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("profile");
 
   // Attachment/receive modal state
   const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
@@ -143,7 +145,7 @@ export const GatePassInwardsDetailPage = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -153,214 +155,258 @@ export const GatePassInwardsDetailPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Inward List
         </button>
-      </div>
 
-      {/* Top Info Card */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4 flex flex-col md:flex-row gap-4">
-        {/* Right: Info grid */}
-        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2 text-sm">
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Employer/Visitor Name:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{personName}</div>
-          </div>
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Company:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{vendorCompanyName}</div>
-          </div>
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Mobile No.:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{selectedEntry.contact_person_no || '--'}</div>
-          </div>
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Mode of Transport:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.mode_of_transport || '--'}{vehicleNo && ` / ${vehicleNo}`}</div>
-          </div>
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Building:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{buildingName}</div>
-          </div>
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Gate Pass Type:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{category}</div>
-          </div>
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Gate Pass No. :</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.gate_pass_no || '--'}</div>
-          </div>
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Gate No:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.gate_number || '--'}</div>
-          </div>
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Gate Pass Date:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</div>
-          </div>
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Reporting Time:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.due_at ? new Date(gatePassData.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</div>
-          </div>
-          {gatePassData.remarks && <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Remarks:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.remarks || '--'}</div>
-          </div>}
-        </div>
-      </div>
-
-      {/* Vendor Details */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4">
-        <div className="text-[#C72030] font-semibold text-xl mb-2">Vendor Details</div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Vendor Name:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.supplier_name || '--'}</div>
-          </div>
-          <div>
-            <div className="text-gray-500" style={{ fontSize:'10px'}}>Mobile No.:</div>
-            <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{selectedEntry.contact_person_no || '--'}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Details Table */}
-      <div className="bg-white rounded-lg px-4 pb-4 border border-gray-200 shadow-sm">
-        <div className="flex items-center pt-4 pb-2">
-          <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
-        </div>
-        <div className="overflow-x-auto">
-          <EnhancedTable
-            data={tableData}
-            columns={columns}
-            renderCell={renderCell}
-            storageKey="gate-pass-inwards-details-items"
-            pagination={true}
-            pageSize={10}
-            hideColumnsButton={true}
-            hideTableExport={true}
-            hideTableSearch={true}
-            loading={loading}
-          />
-        </div>
-      </div>
-
-      {/* Attachments Section */}
-      <div className="mt-8">
-        <div className="shadow-sm border border-border rounded-lg bg-white">
-          <div className="pb-4 pt-6 px-6">
-            <div className="text-[#C72030] font-semibold text-xl mb-2">Attachments</div>
-          </div>
-          <div className="pb-6 px-6">
-            {Array.isArray(gatePassData.attachments) && gatePassData.attachments.length > 0 ? (
-              <div className="flex items-center flex-wrap gap-4">
-                {gatePassData.attachments.map((attachment: any) => {
-                  const url = attachment.document || attachment.url;
-                  const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
-                  const isPdf = /\.pdf$/i.test(url);
-                  const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
-                  const isWord = /\.(doc|docx)$/i.test(url);
-                  const isDownloadable = isPdf || isExcel || isWord;
-
-                  return (
-                    <div
-                      key={attachment.id}
-                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                    >
-                      {isImage ? (
-                        <>
-                          <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                            title="View"
-                            onClick={() => {
-                              setSelectedDoc({
-                                ...attachment,
-                                url,
-                                type: 'image'
-                              });
-                              setIsModalOpen(true);
-                            }}
-                            type="button"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <img
-                            src={url}
-                            alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
-                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                            onClick={() => {
-                              setSelectedDoc({
-                                ...attachment,
-                                url,
-                                type: 'image'
-                              });
-                              setIsModalOpen(true);
-                            }}
-                          />
-                        </>
-                      ) : isPdf ? (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                          <FileText className="w-6 h-6" />
-                        </div>
-                      ) : isExcel ? (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                          <FileSpreadsheet className="w-6 h-6" />
-                        </div>
-                      ) : isWord ? (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                          <FileText className="w-6 h-6" />
-                        </div>
-                      ) : (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                          <File className="w-6 h-6" />
-                        </div>
-                      )}
-                      <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                        {attachment.document_name ||
-                          attachment.document_file_name ||
-                          url.split('/').pop() ||
-                          `Document_${attachment.id}`}
-                      </span>
-                      {isDownloadable && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                          onClick={() => {
-                            setSelectedDoc({
-                              ...attachment,
-                              url,
-                              type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
-                            });
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+                Gate Pass Inward - {gatePassData.gate_pass_no || gatePassData.id}
+              </h1>
+              <div className="text-base px-4 py-2 bg-green-100 text-green-800 rounded-md">
+                {status}
               </div>
-            ) : (
-              <p className="text-muted-foreground">No attachments</p>
-            )}
+            </div>
+
+            <div className="text-sm text-gray-600">
+              Created by {gatePassData.created_by_name || '--'} • Gate Pass Date: {gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Attachment Preview Modal */}
+      {/* Tabs */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <Tabs defaultValue="profile" className="w-full" onValueChange={setActiveTab}>
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+            <TabsTrigger
+              value="profile"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Profile
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="details"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Details
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="attachments"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Attachments
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile" className="p-4 sm:p-6">
+            {/* Gate Pass Info Card */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4">
+              <div className="text-[#C72030] font-semibold text-xl mb-4">Gate Pass Information</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4 text-sm">
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Employer/Visitor Name:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{personName}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Company:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{vendorCompanyName}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mobile No.:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{selectedEntry.contact_person_no || '--'}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mode of Transport:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.mode_of_transport || '--'}{vehicleNo && ` / ${vehicleNo}`}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Building:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{buildingName}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass Type:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{category}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass No. :</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.gate_pass_no || '--'}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate No:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.gate_number || '--'}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass Date:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Reporting Time:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.due_at ? new Date(gatePassData.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</div>
+                </div>
+                {gatePassData.remarks && (
+                  <div className="col-span-2">
+                    <div className="text-gray-500" style={{ fontSize:'12px'}}>Remarks:</div>
+                    <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.remarks || '--'}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Vendor Details */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+              <div className="text-[#C72030] font-semibold text-xl mb-4">Vendor Details</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Vendor Name:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{gatePassData.supplier_name || '--'}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mobile No.:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}} >{selectedEntry.contact_person_no || '--'}</div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="details" className="p-4 sm:p-6">
+            {/* Item Details Table */}
+            <div className="bg-white rounded-lg px-4 pb-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center pt-4 pb-2">
+                <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
+              </div>
+              <div className="overflow-x-auto">
+                <EnhancedTable
+                  data={tableData}
+                  columns={columns}
+                  renderCell={renderCell}
+                  storageKey="gate-pass-inwards-details-items"
+                  pagination={true}
+                  pageSize={10}
+                  hideColumnsButton={true}
+                  hideTableExport={true}
+                  hideTableSearch={true}
+                  loading={loading}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="attachments" className="p-4 sm:p-6">
+            {/* Attachments Section */}
+            <div className="shadow-sm border border-border rounded-lg bg-white">
+              <div className="pb-4 pt-6 px-6">
+                <div className="text-[#C72030] font-semibold text-xl mb-2">Attachments</div>
+              </div>
+              <div className="pb-6 px-6">
+                {Array.isArray(gatePassData.attachments) && gatePassData.attachments.length > 0 ? (
+                  <div className="flex items-center flex-wrap gap-4">
+                    {gatePassData.attachments.map((attachment: any) => {
+                      const url = attachment.document || attachment.url;
+                      const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                      const isPdf = /\.pdf$/i.test(url);
+                      const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                      const isWord = /\.(doc|docx)$/i.test(url);
+                      const isDownloadable = isPdf || isExcel || isWord;
+
+                      return (
+                        <div
+                          key={attachment.id}
+                          className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                        >
+                          {isImage ? (
+                            <>
+                              <button
+                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                title="View"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    ...attachment,
+                                    url,
+                                    type: 'image'
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                                type="button"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <img
+                                src={url}
+                                alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    ...attachment,
+                                    url,
+                                    type: 'image'
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                              />
+                            </>
+                          ) : isPdf ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                              <FileText className="w-6 h-6" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                              <FileSpreadsheet className="w-6 h-6" />
+                            </div>
+                          ) : isWord ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                              <FileText className="w-6 h-6" />
+                            </div>
+                          ) : (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                              <File className="w-6 h-6" />
+                            </div>
+                          )}
+                          <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                            {attachment.document_name ||
+                              attachment.document_file_name ||
+                              url.split('/').pop() ||
+                              `Document_${attachment.id}`}
+                          </span>
+                          {isDownloadable && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  ...attachment,
+                                  url,
+                                  type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
+                                });
+                                setIsModalOpen(true);
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No attachments</p>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Modals */}
       <AttachmentPreviewModal
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
         selectedDoc={selectedDoc}
         setSelectedDoc={setSelectedDoc}
-        modalTitle={
-          selectedDoc?.document_name ||
-          selectedDoc?.document_file_name ||
-          (selectedDoc?.url ? selectedDoc.url.split('/').pop() : '') ||
-          `Document_${selectedDoc?.id || ''}`
-        }
       />
 
-      {/* AttachmentGoodsPreviewModal for per-item attachments/receive */}
       <AttachmentGoodsPreviewModal
         isModalOpen={isAttachmentModalOpen}
         setIsModalOpen={setIsAttachmentModalOpen}

@@ -15,6 +15,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 export const GatePassOutwardsDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("profile");
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
   const [gatePassData, setGatePassData] = useState<any>(null);
@@ -236,7 +237,7 @@ export const GatePassOutwardsDetailPage = () => {
     };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -246,436 +247,350 @@ export const GatePassOutwardsDetailPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Outward List
         </button>
-      </div>
 
-      {/* Top Info Card */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4 flex flex-col md:flex-row gap-4">
-        {/* Left: Profile image placeholder */}
-        {/* <div className="flex-shrink-0 flex flex-col items-center justify-center w-32">
-          <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-            <User className="w-16 h-16 text-gray-400" />
-          </div>
-        </div> */}
-        {/* Right: Info grid */}
-        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2 text-sm">
-          <div>
-            <div className="text-gray-500 text-md">Employer/Visitor Name:</div>
-            <div className="font-medium text-gray-900">{personName}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Company:</div>
-            <div className="font-medium text-gray-900">{vendorCompanyName || '--'}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Mobile No.:</div>
-            <div className="font-medium text-gray-900">{mobileNo}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Mode of Transport:</div>
-            <div className="font-medium text-gray-900">{modeOfTransport}{vehicleNo && ` / ${vehicleNo}`}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Building:</div>
-            <div className="font-medium text-gray-900">{buildingName}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Gate Pass Type:</div>
-            <div className="font-medium text-gray-900">{gatePassType}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Gate Pass No. :</div>
-            <div className="font-medium text-gray-900">{gatePassData.gate_pass_no || '--'}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Gate No:</div>
-            <div className="font-medium text-gray-900">{gateNo}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Gate Pass Date:</div>
-            <div className="font-medium text-gray-900">{gatePassDate}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Reporting Time:</div>
-            <div className="font-medium text-gray-900">{reportingTime}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Goods Type:</div>
-            <div className="font-medium text-gray-900">{gatePassData.returnable == true ? 'Returnable' : 'Non-Returnable'}</div>
-          </div>
-          {
-            gatePassData.returnable && <div>
-              <div className="text-gray-500 text-md">Expected Return Date:</div>
-              <div className="font-medium text-gray-900">{gatePassData.expected_return_date ? new Date(gatePassData.expected_return_date).toLocaleDateString() : '--'}</div>
-            </div>
-          }
-          {remarks && <div>
-            <div className="text-gray-500 text-md">Remarks:</div>
-            <div className="font-medium text-gray-900">{remarks}</div>
-          </div>}
-
-        </div>
-      </div>
-
-      {/* Vendor Details */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4">
-        <div className="text-[#C72030] font-semibold text-xl mb-2">Vendor Details</div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <div className="text-gray-500 text-md">Vendor Name:</div>
-            <div className="font-medium text-gray-900">{supplierName}</div>
-          </div>
-          <div>
-            <div className="text-gray-500 text-md">Mobile No.:</div>
-            <div className="font-medium text-gray-900">{mobileNo}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Details Table */}
-      <div className="bg-white rounded-lg  px-4 pb-4 border border-gray-200 shadow-sm">
-        <div className="flex items-center pt-4 pb-2">
-          <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
-        </div>
-        <div className="overflow-x-auto">
-          <EnhancedTable
-            data={tableData}
-            columns={columns}
-            renderCell={renderCell}
-            storageKey="gate-pass-outwards-details-items"
-            pagination={true}
-            pageSize={10}
-            hideColumnsButton={true}
-            hideTableExport={true}
-            hideTableSearch={true}
-            loading={loading}
-          />
-        </div>
-      </div>
-
-      {/* Attachments Section */}
-      <div className="mt-8">
-        <div className="shadow-sm border border-border rounded-lg bg-white">
-          <div className="pb-4 pt-6 px-6">
-            <div className="text-[#C72030] font-semibold text-xl mb-2">Attachments</div>
-          </div>
-          <div className="pb-6 px-6">
-            {Array.isArray(gatePassData.attachments) && gatePassData.attachments.length > 0 ? (
-              <div className="flex items-center flex-wrap gap-4">
-                {gatePassData.attachments.map((attachment: any) => {
-                  const url = attachment.document || attachment.url;
-                  const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
-                  const isPdf = /\.pdf$/i.test(url);
-                  const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
-                  const isWord = /\.(doc|docx)$/i.test(url);
-                  const isDownloadable = isPdf || isExcel || isWord;
-
-                  return (
-                    <div
-                      key={attachment.id}
-                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                    >
-                      {isImage ? (
-                        <>
-                          <button
-                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                            title="View"
-                            onClick={() => {
-                              setSelectedDoc({
-                                ...attachment,
-                                url,
-                                type: 'image'
-                              });
-                              setIsModalOpen(true);
-                            }}
-                            type="button"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <img
-                            src={url}
-                            alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
-                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                            onClick={() => {
-                              setSelectedDoc({
-                                ...attachment,
-                                url,
-                                type: 'image'
-                              });
-                              setIsModalOpen(true);
-                            }}
-                          />
-                        </>
-                      ) : isPdf ? (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                          <FileText className="w-6 h-6" />
-                        </div>
-                      ) : isExcel ? (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                          <FileSpreadsheet className="w-6 h-6" />
-                        </div>
-                      ) : isWord ? (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                          <FileText className="w-6 h-6" />
-                        </div>
-                      ) : (
-                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                          <File className="w-6 h-6" />
-                        </div>
-                      )}
-                      <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                        {attachment.document_name ||
-                          attachment.document_file_name ||
-                          url.split('/').pop() ||
-                          `Document_${attachment.id}`}
-                      </span>
-                      {isDownloadable && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                          onClick={() => {
-                            setSelectedDoc({
-                              ...attachment,
-                              url,
-                              type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
-                            });
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+                Gate Pass Outward - {gatePassData.gate_pass_no || gatePassData.id}
+              </h1>
+              <div className="text-base px-4 py-2 bg-blue-100 text-blue-800 rounded-md">
+                {status}
               </div>
-            ) : (
-              <p className="text-muted-foreground">No attachments</p>
-            )}
+            </div>
+
+            <div className="text-sm text-gray-600">
+              Created by {gatePassData.created_by_name || '--'} • Gate Pass Date: {gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Attachment Preview Modal */}
+      {/* Tabs */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <Tabs defaultValue="profile" className="w-full" onValueChange={setActiveTab}>
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+            <TabsTrigger
+              value="profile"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Profile
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="details"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Details
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="attachments"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Attachments
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile" className="p-4 sm:p-6">
+            {/* Gate Pass Info Card */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4">
+              <div className="text-[#C72030] font-semibold text-xl mb-4">Gate Pass Information</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4 text-sm">
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Employer/Visitor Name:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{personName}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Company:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{vendorCompanyName || '--'}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mobile No.:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{mobileNo}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mode of Transport:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.mode_of_transport || '--'}{vehicleNo && ` / ${vehicleNo}`}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Building:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{buildingName}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass Type:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassType}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass No.:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.gate_pass_no || '--'}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate No:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.gate_number || '--'}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass Date:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Expected Return Date:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{expectedReturnDate}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Goods Type:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.returnable ? 'Returnable' : 'Non-Returnable'}</div>
+                </div>
+                {gatePassData.remarks && (
+                  <div className="col-span-2">
+                    <div className="text-gray-500" style={{ fontSize:'12px'}}>Remarks:</div>
+                    <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.remarks || '--'}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Vendor Details */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+              <div className="text-[#C72030] font-semibold text-xl mb-4">Vendor Details</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Vendor Name:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.supplier_name || '--'}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mobile No.:</div>
+                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{mobileNo}</div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="details" className="p-4 sm:p-6">
+            {/* Item Details Table */}
+            <div className="bg-white rounded-lg px-4 pb-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center pt-4 pb-2">
+                <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
+              </div>
+              <div className="overflow-x-auto">
+                <EnhancedTable
+                  data={tableData}
+                  columns={columns}
+                  renderCell={renderCell}
+                  storageKey="gate-pass-outwards-details-items"
+                  pagination={true}
+                  pageSize={10}
+                  hideColumnsButton={true}
+                  hideTableExport={true}
+                  hideTableSearch={true}
+                  loading={loading}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="attachments" className="p-4 sm:p-6">
+            {/* Attachments Section */}
+            <div className="shadow-sm border border-border rounded-lg bg-white">
+              <div className="pb-4 pt-6 px-6">
+                <div className="text-[#C72030] font-semibold text-xl mb-2">Attachments</div>
+              </div>
+              <div className="pb-6 px-6">
+                {Array.isArray(gatePassData.attachments) && gatePassData.attachments.length > 0 ? (
+                  <div className="flex items-center flex-wrap gap-4">
+                    {gatePassData.attachments.map((attachment: any) => {
+                      const url = attachment.document || attachment.url;
+                      const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                      const isPdf = /\.pdf$/i.test(url);
+                      const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                      const isWord = /\.(doc|docx)$/i.test(url);
+                      const isDownloadable = isPdf || isExcel || isWord;
+
+                      return (
+                        <div
+                          key={attachment.id}
+                          className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                        >
+                          {isImage ? (
+                            <>
+                              <button
+                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                title="View"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    ...attachment,
+                                    url,
+                                    type: 'image'
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                                type="button"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <img
+                                src={url}
+                                alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    ...attachment,
+                                    url,
+                                    type: 'image'
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                              />
+                            </>
+                          ) : isPdf ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                              <FileText className="w-6 h-6" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                              <FileSpreadsheet className="w-6 h-6" />
+                            </div>
+                          ) : isWord ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                              <FileText className="w-6 h-6" />
+                            </div>
+                          ) : (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                              <File className="w-6 h-6" />
+                            </div>
+                          )}
+                          <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                            {attachment.document_name ||
+                              attachment.document_file_name ||
+                              url.split('/').pop() ||
+                              `Document_${attachment.id}`}
+                          </span>
+                          {isDownloadable && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  ...attachment,
+                                  url,
+                                  type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
+                                });
+                                setIsModalOpen(true);
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No attachments</p>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Receive Modal */}
+      <Dialog open={isReceiveModalOpen} onOpenChange={setIsReceiveModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mark as Received</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="handoverTo">Handover To</Label>
+              <Input
+                id="handoverTo"
+                value={handoverTo}
+                onChange={(e) => setHandoverTo(e.target.value)}
+                placeholder="Enter person name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="receivedDate">Received Date</Label>
+              <Input
+                id="receivedDate"
+                type="date"
+                value={receivedDate}
+                onChange={(e) => setReceivedDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="remarks">Remarks</Label>
+              <Textarea
+                id="remarks"
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="Enter remarks"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Attachments</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      setAttachments(Array.from(e.target.files));
+                    }
+                  }}
+                  className="hidden"
+                  id="attachment-input"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('attachment-input')?.click()}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Choose Files
+                </Button>
+                <span className="text-sm text-gray-500">
+                  {attachments.length} file(s) selected
+                </span>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setIsReceiveModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                console.log('Received:', { handoverTo, receivedDate, remarks, attachments });
+                setIsReceiveModalOpen(false);
+              }}>
+                Mark as Received
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modals */}
       <AttachmentPreviewModal
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
         selectedDoc={selectedDoc}
         setSelectedDoc={setSelectedDoc}
-        modalTitle={
-          selectedDoc?.document_name ||
-          selectedDoc?.document_file_name ||
-          (selectedDoc?.url ? selectedDoc.url.split('/').pop() : '') ||
-          `Document_${selectedDoc?.id || ''}`
-        }
       />
 
-      {/* Receive/Handover Modal */}
-      <Dialog open={isReceiveModalOpen} onOpenChange={setIsReceiveModalOpen}>
-        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-900">
-              {handoverView[selectedItemIndex ?? -1]
-                ? "Material Handover Details"
-                : "Return Process"}
-            </DialogTitle>
-          </DialogHeader>
-          {handoverView[selectedItemIndex ?? -1] ? (
-            // Show filled/disabled fields
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Handover To</Label>
-                <Input
-                  value={handoverView[selectedItemIndex ?? -1].handover_to || ''}
-                  disabled
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Received Date</Label>
-                <Input
-                  value={
-                    handoverView[selectedItemIndex ?? -1].recieved_date
-                      ? new Date(handoverView[selectedItemIndex ?? -1].recieved_date).toLocaleDateString()
-                      : ''
-                  }
-                  disabled
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Remarks</Label>
-                <Textarea
-                  value={handoverView[selectedItemIndex ?? -1].remarks || ''}
-                  disabled
-                  className="w-full min-h-[80px]"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Attachment</Label>
-                <div className="flex items-center flex-wrap gap-4">
-                  {(handoverView[selectedItemIndex ?? -1].attachments || []).length > 0
-                    ? handoverView[selectedItemIndex ?? -1].attachments.map((attachment: any) => {
-                        const url = attachment.document || attachment.url;
-                        const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
-                        const isPdf = /\.pdf$/i.test(url);
-                        const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
-                        const isWord = /\.(doc|docx)$/i.test(url);
-                        const isDownloadable = isPdf || isExcel || isWord;
-
-                        return (
-                          <div
-                            key={attachment.id}
-                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                          >
-                            {isImage ? (
-                              <>
-                                <button
-                                  className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                  title="View"
-                                  onClick={() => {
-                                    setSelectedDoc({
-                                      ...attachment,
-                                      url,
-                                      type: 'image'
-                                    });
-                                    setIsModalOpen(true);
-                                  }}
-                                  type="button"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </button>
-                                <img
-                                  src={url}
-                                  alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
-                                  className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                  onClick={() => {
-                                    setSelectedDoc({
-                                      ...attachment,
-                                      url,
-                                      type: 'image'
-                                    });
-                                    setIsModalOpen(true);
-                                  }}
-                                />
-                              </>
-                            ) : isPdf ? (
-                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                <FileText className="w-6 h-6" />
-                              </div>
-                            ) : isExcel ? (
-                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                <FileSpreadsheet className="w-6 h-6" />
-                              </div>
-                            ) : isWord ? (
-                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                <FileText className="w-6 h-6" />
-                              </div>
-                            ) : (
-                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                <File className="w-6 h-6" />
-                              </div>
-                            )}
-                            <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                              {attachment.document_name ||
-                                attachment.document_file_name ||
-                                url.split('/').pop() ||
-                                `Document_${attachment.id}`}
-                            </span>
-                            {isDownloadable && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                onClick={() => {
-                                  setSelectedDoc({
-                                    ...attachment,
-                                    url,
-                                    type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
-                                  });
-                                  setIsModalOpen(true);
-                                }}
-                              >
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })
-                    : <span className="text-gray-400">No attachments</span>
-                  }
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Show editable fields for receive
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="handover" className="text-sm font-medium text-gray-700">
-                  Handover To
-                </Label>
-                <Input
-                  id="handover"
-                  placeholder="Enter handover details"
-                  className="w-full"
-                  value={handoverTo}
-                  onChange={e => setHandoverTo(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="received-date" className="text-sm font-medium text-gray-700">
-                  Received Date
-                </Label>
-                <Input
-                  type="date"
-                  id="received-date"
-                  placeholder="Enter received date"
-                  className="w-full"
-                  value={receivedDate}
-                  onChange={e => setReceivedDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">
-                  Remarks
-                </Label>
-                <Textarea
-                  id="remarks"
-                  placeholder="Enter remarks"
-                  className="w-full min-h-[80px]"
-                  value={remarks}
-                  onChange={e => setRemarks(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="attachment" className="text-sm font-medium text-gray-700">
-                  Attachment
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="attachment"
-                    type="file"
-                    className="w-full"
-                    multiple
-                    ref={fileInputRef}
-                    onChange={handleAttachmentChange}
-                  />
-                  <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-          {!handoverView[selectedItemIndex ?? -1] && (
-            <div className="flex justify-center pt-4">
-              <Button onClick={handleSubmitReceive} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8">
-                Submit
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <AttachmentGoodsPreviewModal
+        isModalOpen={isAttachmentModalOpen}
+        setIsModalOpen={setIsAttachmentModalOpen}
+        selectedDoc={selectedAttachment}
+        setSelectedDoc={setSelectedAttachment}
+        toReceive={(() => {
+          if (!selectedAttachment || selectedAttachment.itemIndex === undefined) return false;
+          const mat = gatePassData?.gate_pass_materials?.[selectedAttachment.itemIndex];
+          return mat && (!mat.recieved_date || mat.recieved_date === '' || mat.recieved_date === null);
+        })()}
+      />
     </div>
   );
-};
+}

@@ -1784,7 +1784,7 @@ export const FnBRestaurantDetailsPage = () => {
               </CardContent>
             </Card>
 
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-center gap-4">
               <Button
                 onClick={handleSave}
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
