@@ -261,13 +261,7 @@ export const ServiceDetailsPage = () => {
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
-          {/* <Button
-            variant="outline"
-            onClick={handleEditClick}
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-          >
-            Edit
-          </Button> */}
+
           <Button
             onClick={handleEditClick}
             variant="outline"

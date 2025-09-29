@@ -218,12 +218,12 @@ const MobileLMCPage: React.FC = () => {
             if (append) setUsersAppendLoading(true);
             else setUsersLoading(true);
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
-            const base = `https://${host}/pms/users/company_wise_users.json`;
+            const base = `https://${host}/pms/users/company_wise_users.json?q[employee_type_cont]=internal`;
             const params: string[] = [];
             if (restrictByCircle && circleId) params.push(`q[lock_user_permissions_circle_id_eq]=${encodeURIComponent(circleId)}`);
             if (page && page > 1) params.push(`page=${page}`);
-            if (search && search.trim()) params.push(`q[email_cont]=${encodeURIComponent(search.trim())}`);
-            const url = params.length ? `${base}?${params.join('&')}` : base;
+            if (search && search.trim()) params.push(`q[email_or_mobile_cont]=${encodeURIComponent(search.trim())}`);
+            const url = params.length ? `${base}&${params.join('&')}` : base;
             const data = await authedGet(url, authToken);
             const rawUsers = Array.isArray(data?.users) ? data.users : (Array.isArray(data) ? data : []);
             let mapped: UserOption[] = rawUsers.map((u: any) => {
@@ -232,7 +232,14 @@ const MobileLMCPage: React.FC = () => {
                 const fullFromParts = `${String(first).trim()} ${String(last).trim()}`.trim();
                 const fallbackFull = u.full_name || u.fullName || u.name || `User ${u.id}`;
                 const display = fullFromParts || fallbackFull;
-                return { id: String(u.id), name: String(display), circle_id: u.circle_id || u.circle || u.circleId, email: u.email || null };
+                // Include mobile in the mapped object for client-side filtering
+                return {
+                    id: String(u.id),
+                    name: String(display),
+                    circle_id: u.circle_id || u.circle || u.circleId,
+                    email: u.email || null,
+                    mobile: u.mobile || null
+                };
             });
             // Fallback client-side filter if server didn’t apply
             if (restrictByCircle && circleId) {
@@ -420,9 +427,14 @@ const MobileLMCPage: React.FC = () => {
     const filteredUsers = useMemo(() => {
         const q = userSearch.trim().toLowerCase();
         if (!q) return users;
-        return users.filter(u =>
-            u.name.toLowerCase().includes(q) || (u.email ? String(u.email).toLowerCase().includes(q) : false)
-        );
+        return users.filter(u => {
+            const nameMatch = u.name.toLowerCase().includes(q);
+            const emailMatch = u.email ? String(u.email).toLowerCase().includes(q) : false;
+            const mobileMatch = (u as any).mobile ? String((u as any).mobile).toLowerCase().includes(q) : false;
+            // Also check if the search is a number and matches the id (for direct id search)
+            const idMatch = String(u.id).includes(q);
+            return nameMatch || emailMatch || mobileMatch || idMatch;
+        });
     }, [userSearch, users]);
 
     const handleUserScroll: React.UIEventHandler<HTMLDivElement> = (e) => {
