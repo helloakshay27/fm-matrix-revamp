@@ -1102,6 +1102,58 @@ export const SurveyResponseDetailPage = () => {
     ];
   };
 
+  // Helper function to get axis labels based on question type
+  const getAxisLabels = (questionId: number) => {
+    // First check the actual response data for answer_type
+    const filteredResponses = getSummaryFilteredResponseData();
+    const responseAnswer = filteredResponses
+      .flatMap(response => response.answers || [])
+      .find(answer => answer.question_id === questionId);
+    
+    if (responseAnswer?.answer_type) {
+      if (responseAnswer.answer_type === "emoji") {
+        return {
+          xAxisLabel: "Response Type",
+          yAxisLabel: "Number of Responses"
+        };
+      } else if (responseAnswer.answer_type === "rating") {
+        return {
+          xAxisLabel: "Star Rating", 
+          yAxisLabel: "Number of Responses"
+        };
+      }
+    }
+
+    // Fallback to survey details data
+    if (surveyDetailsData?.survey_details?.surveys?.[0]) {
+      const surveyDetail = surveyDetailsData.survey_details.surveys[0];
+      const question = surveyDetail.questions?.find(
+        (q) => q.question_id === questionId
+      );
+
+      if (question?.options) {
+        const questionType = getQuestionType(question.options);
+        if (questionType === "emoji") {
+          return {
+            xAxisLabel: "Response Type",
+            yAxisLabel: "Number of Responses"
+          };
+        } else if (questionType === "rating") {
+          return {
+            xAxisLabel: "Star Rating",
+            yAxisLabel: "Number of Responses"
+          };
+        }
+      }
+    }
+    
+    // Default labels for non-bar chart questions
+    return {
+      xAxisLabel: undefined,
+      yAxisLabel: undefined
+    };
+  };
+
   // Helper function to determine if question should use bar chart or pie chart
   const shouldUseBarChart = (questionId: number): boolean => {
     // First check the actual response data for answer_type
@@ -2808,6 +2860,8 @@ export const SurveyResponseDetailPage = () => {
                               ),
                               endDate: new Date(),
                             }}
+                            xAxisLabel={getAxisLabels(question.question_id).xAxisLabel}
+                            yAxisLabel={getAxisLabels(question.question_id).yAxisLabel}
                             onDownload={() => {
                               // console.log(
                               //   `Download chart for question ${question.question_id}`
