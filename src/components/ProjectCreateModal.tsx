@@ -10,7 +10,15 @@ import {
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { X } from "lucide-react";
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
+import { createProject } from "@/store/slices/projectManagementSlice";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
+import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
+import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -26,11 +34,118 @@ const fieldStyles = {
     },
 };
 
-const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => {
+const ProjectCreateModal = ({ openDialog, handleCloseDialog }) => {
+    const dispatch = useAppDispatch();
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+
+    const [projectTypes, setProjectTypes] = useState([]);
+    const [owners, setOwners] = useState([])
+    const [teams, setTeams] = useState([])
+    const [tags, setTags] = useState([])
+    const [formData, setFormData] = useState({
+        title: "",
+        isChannel: false,
+        isTemplate: false,
+        description: "",
+        owner: "",
+        startDate: "",
+        endDate: "",
+        duration: "",
+        team: "",
+        type: "",
+        priority: "",
+        tags: []
+    });
+
+    const getOwners = async () => {
+        try {
+            const response = await dispatch(fetchFMUsers()).unwrap();
+            setOwners(response.users);
+        } catch (error) {
+            console.log(error)
+            toast.error(error)
+        }
+    }
+
+    const getTeams = async () => {
+        try {
+            const response = await dispatch(fetchProjectTeams({ baseUrl, token })).unwrap();
+            setTeams(response);
+        } catch (error) {
+            console.log(error)
+            toast.error(error)
+        }
+    }
+
+    const getProjectTypes = async () => {
+        try {
+            const response = await dispatch(fetchProjectTypes({ baseUrl, token })).unwrap();
+            setProjectTypes(response);
+        } catch (error) {
+            console.log(error)
+            toast.error(error)
+        }
+    }
+
+    const getTags = async () => {
+        try {
+            const response = await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
+            setTags(response);
+        } catch (error) {
+            console.log(error)
+            toast.error(error)
+        }
+    }
+
+    useEffect(() => {
+        getOwners();
+        getTeams();
+        getProjectTypes();
+        getTags();
+    }, [])
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const payload = {
+            project_management: {
+                title: formData.title,
+                description: formData.description,
+                start_date: formData.startDate,
+                end_date: formData.endDate,
+                status: "active",
+                owner_id: formData.owner,
+                priority: formData.priority,
+                active: true,
+                is_template: formData.isTemplate,
+                create_channel: formData.isChannel,
+                project_team_id: formData.team,
+                project_type_id: formData.type,
+            },
+            task_tag_ids: formData.tags
+        };
+        try {
+            await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
+            toast.success("Project created successfully");
+            handleCloseDialog();
+        } catch (error) {
+            console.error("Error creating project:", error);
+            toast.error(error.message || "Failed to create project");
+        }
+    };
+
     return (
         <Dialog open={openDialog} onClose={handleCloseDialog} TransitionComponent={Transition}>
             <DialogContent
-                className="w-[30rem] fixed right-0 top-0 h-full rounded-none bg-[#fff]"
+                className="w-[30rem] fixed right-0 top-0 rounded-none bg-[#fff]"
                 style={{ margin: 0 }}
                 sx={{
                     padding: "0 !important"
@@ -52,6 +167,8 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => 
                                 placeholder="Enter Project Title"
                                 fullWidth
                                 variant="outlined"
+                                value={formData.title}
+                                onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{ sx: fieldStyles }}
                                 sx={{ mt: 1 }}
@@ -59,15 +176,21 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => 
                         </div>
 
                         <div className="flex justify-between my-4">
-                            {["createChannel", "createTemplate"].map((name) => (
-                                <div key={name} className="flex items-center">
+                            {[
+                                { id: "createChannel", name: "isChannel", label: "Channel" },
+                                { id: "createTemplate", name: "isTemplate", label: "Template" }
+                            ].map(({ id, name, label }) => (
+                                <div key={id} className="flex items-center">
                                     <input
                                         type="checkbox"
-                                        id={name}
+                                        id={id}
+                                        name={name}
+                                        checked={formData[name]}
+                                        onChange={handleChange}
                                         className="mx-2 my-0.5"
                                     />
-                                    <label htmlFor={name} className="text-sm">
-                                        Create a {name === "createChannel" ? "Channel" : "Template"}
+                                    <label htmlFor={id} className="text-sm">
+                                        Create a {label}
                                     </label>
                                 </div>
                             ))}
@@ -82,6 +205,8 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => 
                                 variant="outlined"
                                 multiline
                                 minRows={2}
+                                value={formData.description}
+                                onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
                                 sx={{
                                     "& .MuiOutlinedInput-root": {
@@ -110,12 +235,21 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => 
                                 <Select
                                     label="Select Owner*"
                                     name="owner"
+                                    value={formData.owner}
+                                    onChange={handleChange}
                                     displayEmpty
                                     sx={fieldStyles}
                                 >
                                     <MenuItem value="">
                                         <em>Select Owner</em>
                                     </MenuItem>
+                                    {
+                                        owners.map((owner) => (
+                                            <MenuItem key={owner.id} value={owner.id}>
+                                                {owner.full_name}
+                                            </MenuItem>
+                                        ))
+                                    }
                                 </Select>
                             </FormControl>
                         </div>
@@ -126,6 +260,9 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => 
                                     <TextField
                                         label={field === "startDate" ? "Start Date" : "End Date"}
                                         type="date"
+                                        name={field}
+                                        value={formData[field]}
+                                        onChange={handleChange}
                                         fullWidth
                                         variant="outlined"
                                         InputLabelProps={{ shrink: true }}
@@ -138,6 +275,8 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => 
                             <div className="w-[300px] space-y-2">
                                 <TextField
                                     label="Duration"
+                                    name="duration"
+                                    value={formData.duration}
                                     fullWidth
                                     disabled
                                     variant="outlined"
@@ -162,12 +301,21 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => 
                                     <Select
                                         label="Select Team*"
                                         name="team"
+                                        value={formData.team}
+                                        onChange={handleChange}
                                         displayEmpty
                                         sx={fieldStyles}
                                     >
                                         <MenuItem value="">
                                             <em>Select Team</em>
                                         </MenuItem>
+                                        {
+                                            teams.map((team) => (
+                                                <MenuItem key={team.id} value={team.id}>
+                                                    {team.name}
+                                                </MenuItem>
+                                            ))
+                                        }
                                     </Select>
                                 </FormControl>
                             </div>
@@ -177,13 +325,22 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => 
                                     <InputLabel shrink>Project Type*</InputLabel>
                                     <Select
                                         label="Project Type*"
-                                        name="projectType"
+                                        name="type"
+                                        value={formData.type}
+                                        onChange={handleChange}
                                         displayEmpty
                                         sx={fieldStyles}
                                     >
                                         <MenuItem value="">
                                             <em>Select Project Type</em>
                                         </MenuItem>
+                                        {
+                                            projectTypes.map((type) => (
+                                                <MenuItem key={type.id} value={type.id}>
+                                                    {type.name}
+                                                </MenuItem>
+                                            ))
+                                        }
                                     </Select>
                                 </FormControl>
                                 <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
@@ -191,12 +348,17 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => 
                                     <Select
                                         label="Priority*"
                                         name="priority"
+                                        value={formData.priority}
+                                        onChange={handleChange}
                                         displayEmpty
                                         sx={fieldStyles}
                                     >
                                         <MenuItem value="">
                                             <em>Select Priority</em>
                                         </MenuItem>
+                                        <MenuItem value="high">High</MenuItem>
+                                        <MenuItem value="medium">Medium</MenuItem>
+                                        <MenuItem value="low">Low</MenuItem>
                                     </Select>
                                 </FormControl>
                             </div>
@@ -212,29 +374,40 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, handleSubmit }) => 
                                     <Select
                                         label="Tags*"
                                         name="tags"
+                                        multiple
+                                        value={formData.tags}
+                                        onChange={handleChange}
                                         displayEmpty
                                         sx={fieldStyles}
                                     >
                                         <MenuItem value="">
                                             <em>Select Tags</em>
                                         </MenuItem>
+                                        {
+                                            tags.map((tag) => (
+                                                <MenuItem key={tag.id} value={tag.id}>
+                                                    {tag.name}
+                                                </MenuItem>
+                                            ))
+                                        }
                                     </Select>
                                 </FormControl>
                             </div>
 
-                            <div className="flex items-center justify-center gap-3">
-                                <button
-                                    type="button"
-                                    className="border-2 border-red-500 px-4 py-2 text-black w-[100px]"
+                            <div className="flex justify-center gap-3 mb-4">
+                                <Button
+                                    variant="outline"
+                                    onClick={handleCloseDialog}
+                                    className="px-6"
                                 >
-                                    Save
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="border-2 border-red-500 px-4 py-2 text-black w-max"
+                                    Cancel
+                                </Button>
+                                <Button
+                                    className="bg-green-500 hover:bg-green-600 text-white px-6"
+                                    onClick={handleSubmit}
                                 >
                                     Submit
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>

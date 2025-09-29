@@ -6,7 +6,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { useAppDispatch } from "@/store/hooks";
 import { fetchProjectTypes, updateProjectTypes } from "@/store/slices/projectTypeSlice";
 import { format } from "date-fns";
-import { Edit2, Plus } from "lucide-react";
+import { Edit, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -117,7 +117,7 @@ const ProjectTypes = () => {
                         setRecord(item);
                     }}
                 >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit className="w-4 h-4" />
                 </Button>
             </div>
         );
@@ -163,10 +163,14 @@ const ProjectTypes = () => {
                 leftActions={leftActions}
                 renderCell={renderCell}
                 renderActions={renderActions}
+                loading={loading}
             />
             <ProjectTypeModal
                 openDialog={openDialog}
                 handleCloseDialog={() => setOpenDialog(false)}
+                isEditing={isEditing}
+                record={record}
+                fetchData={fetchData}
             />
         </div>
     )

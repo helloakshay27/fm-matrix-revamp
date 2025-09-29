@@ -59,7 +59,7 @@ import { approveInvoiceReducer, getInvoiceByIdReducer, getInvoiceFeedsReducer, g
 import { createRuleReducer, fetchCardCountReducer, fetchCustomersReducer, fetchRecurringRulesReducer, fetchTransactionHistoryReducer, fetchWalletDetailsReducer, fetchWalletDetailsTransactionHistoryReducer, fetchWalletListReducer, topupWalletReducer } from './slices/walletListSlice'
 import { createExpiryRuleReducer, editExpiryRuleReducer, fetchLogsReducer, fetchWalletRuleReducer } from './slices/pointExpirySlice'
 import { createAddressReducer, fetchAddressesReducer, getAddressByIdReducer, updateAddressReducer } from './slices/addressMasterSlice'
-import { fetchProjectsReducer } from './slices/projectManagementSlice'
+import { createProjectReducer, fetchProjectsReducer } from './slices/projectManagementSlice'
 import { createWBSCodeReducer, fetchWBSListReducer, updateWBSCodeReducer } from './slices/wbsSlice'
 import { createBannerReducers, editBannerReducers, fetchBannersByIdReducers, fetchBannersReducers } from './slices/bannerSlice'
 import { createTestimonialReucers, editTestimonialReucers, fetchTestimonialsByIdReucers, fetchTestimonialsReucers } from './slices/testimonialSlice'
@@ -286,8 +286,6 @@ export const store = configureStore({
     updateAddress: updateAddressReducer,
     getAddressById: getAddressByIdReducer,
 
-    // Projects Management
-    fetchProjects: fetchProjectsReducer,
     // Banner
     fetchBanners: fetchBannersReducers,
     fetchBannersById: fetchBannersByIdReducers,
@@ -310,6 +308,10 @@ export const store = configureStore({
     createCompanyPartner: createCompanyPartnerReducers,
     fetchCompanyPartners: fetchCompanyPartnersReducer,
     editCompanyPartner: editCompanyPartnerReducer,
+
+    // Projects Management
+    fetchProjects: fetchProjectsReducer,
+    createProject: createProjectReducer,
 
     // Project roles
     fetchProjectRoles: fetchProjectRolesReducer,

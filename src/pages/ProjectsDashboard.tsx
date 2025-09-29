@@ -316,23 +316,7 @@ export const ProjectsDashboard = () => {
   return (
     <div className="p-6">
       <EnhancedTable
-        data={[
-          {
-            id: 1,
-            title: "Project A",
-            status: "Active",
-            type: "Type A",
-            manager: "John Doe",
-            milestonesCompleted: 9,
-            milestonesTotal: 19,
-            tasksCompleted: 9,
-            tasksTotal: 19,
-            issues: 5,
-            start_date: "2022-01-01",
-            end_date: "2022-12-31",
-            priority: "High",
-          },
-        ]}
+        data={projects}
         columns={columns}
         renderActions={renderActions}
         renderCell={renderCell}
@@ -373,7 +357,6 @@ export const ProjectsDashboard = () => {
       <ProjectCreateModal
         openDialog={openFormDialog}
         handleCloseDialog={() => setOpenFormDialog(false)}
-        handleSubmit={handleSubmit}
       />
     </div>
   );
