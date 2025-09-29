@@ -2847,7 +2847,7 @@ function App() {
                     element={<ScheduledTaskDashboard />}
                   />
                   <Route
-                    path="/maintenance/task-details/:id"
+                    path="/maintenance/task/task-details/:id"
                     element={<TaskDetailsPage />}
                   />
                   <Route path="*" element={<NotFound />} />
