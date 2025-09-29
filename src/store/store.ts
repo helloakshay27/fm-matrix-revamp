@@ -68,7 +68,12 @@ import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPa
 import { createProjectRoleReducer, deleteProjectRoleReducer, fetchProjectRolesReducer, updateProjectRoleReducer } from './slices/projectRoleSlice'
 import { createProjectUsersReducer, fetchProjectExternalUsersReducer, fetchProjectInternalUsersReducer, fetchProjectUsersReducer } from './slices/projectUsersSlice'
 import { fetchCompaniesReducer } from './slices/projectCompanySlice'
-import { organizationsReducer } from './slices/organizationsSlice'
+import { createOrganizationReducer, organizationsReducer, updateOrganizationReducer } from './slices/organizationsSlice'
+import { fetchProjectTeamsReducer } from './slices/projectTeamsSlice'
+import { createProjectTypesReducer, fetchProjectTypesReducer, updateProjectTypesReducer } from './slices/projectTypeSlice'
+import { createProjectsTagsReducer, fetchProjectsTagsReducer, updateProjectsTagsReducer } from './slices/projectTagSlice'
+import { createProjectStatusesReducer, fetchProjectStatusesReducer, updateProjectStatusesReducer } from './slices/projectStatusSlice'
+import { createProjectGroupsReducer, fetchProjectGroupsReducer, updateProjectGroupsReducer } from './slices/projectGroupSlice'
 
 export const store = configureStore({
   reducer: {
@@ -323,6 +328,31 @@ export const store = configureStore({
 
     // Project Organizaions
     organizations: organizationsReducer,
+    createOrganization: createOrganizationReducer,
+    updateOrganization: updateOrganizationReducer,
+
+    // Project Teams
+    fetchProjectTeams: fetchProjectTeamsReducer,
+
+    // Project Types
+    fetchProjectTypes: fetchProjectTypesReducer,
+    createProjectTypes: createProjectTypesReducer,
+    updateProjectTypes: updateProjectTypesReducer,
+
+    // Project Tags
+    fetchProjectsTags: fetchProjectsTagsReducer,
+    createProjectsTags: createProjectsTagsReducer,
+    updateProjectsTags: updateProjectsTagsReducer,
+
+    // Project Status
+    fetchProjectStatuses: fetchProjectStatusesReducer,
+    createProjectStatuses: createProjectStatusesReducer,
+    updateProjectStatuses: updateProjectStatusesReducer,
+
+    // Project Groups
+    fetchProjectGroups: fetchProjectGroupsReducer,
+    createProjectGroups: createProjectGroupsReducer,
+    updateProjectGroups: updateProjectGroupsReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

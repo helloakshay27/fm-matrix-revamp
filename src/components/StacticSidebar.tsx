@@ -1184,10 +1184,6 @@ const modulesByPackage = {
               href: "/settings/project-users/organizations"
             },
             {
-              name: "Company",
-              href: "/settings/project-users/company"
-            },
-            {
               name: "Country",
               href: "/settings/project-users/country"
             },

@@ -746,6 +746,11 @@ import BannerDetailsPage from "./pages/BannerDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
 import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 import WeeklyReport from "./components/WeeklyReport";
+import ProjectOrganizations from "./pages/ProjectOrganizations";
+import ProjectTypes from "./pages/ProjectTypes";
+import ProjectTags from "./pages/ProjectTags";
+import ProjectStatus from "./pages/ProjectStatus";
+import ProjectGroup from "./pages/ProjectGroup";
 
 const queryClient = new QueryClient();
 
@@ -1106,6 +1111,26 @@ function App() {
                     <Route
                       path="/settings/manage-users/project-teams/edit/:id"
                       element={<EditProjectTeamPage />}
+                    />
+                    <Route
+                      path="/settings/project-users/organizations"
+                      element={<ProjectOrganizations />}
+                    />
+                    <Route
+                      path="/settings/project-users/types"
+                      element={<ProjectTypes />}
+                    />
+                    <Route
+                      path="/settings/project-users/tags"
+                      element={<ProjectTags />}
+                    />
+                    <Route
+                      path="/settings/project-users/status"
+                      element={<ProjectStatus />}
+                    />
+                    <Route
+                      path="/settings/project-users/project-group"
+                      element={<ProjectGroup />}
                     />
                     <Route
                       path="/settings/users/edit-details/:id"
