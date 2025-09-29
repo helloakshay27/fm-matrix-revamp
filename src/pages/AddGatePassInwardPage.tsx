@@ -223,7 +223,7 @@ export const AddGatePassInwardPage = () => {
   const fieldStyles = {
     height: '40px',
     backgroundColor: '#fff',
-    borderRadius: '0px',
+    borderRadius: '4px',
     '& .MuiOutlinedInput-root': {
       height: '40px',
       fontSize: '14px',
@@ -609,7 +609,7 @@ export const AddGatePassInwardPage = () => {
                   <tr key={row.id} className="bg-white border-b">
                     <td className="px-4 py-2 pt-4" style={{ width: '30px' }}>{index + 1}</td>
                     <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '0px' } }}>
+                      <FormControl fullWidth variant="outlined" size="small">
                         <InputLabel shrink>Item Type <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Type"
@@ -626,7 +626,7 @@ export const AddGatePassInwardPage = () => {
                       </FormControl>
                     </td>
                     <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '0px' } }}>
+                      <FormControl fullWidth variant="outlined" size="small">
                         <InputLabel shrink>Item Category <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Category"
@@ -684,10 +684,10 @@ export const AddGatePassInwardPage = () => {
                           value={row.otherMaterialName || ''}
                           onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
                           required
-                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '0px' } }}
+                        
                         />
                       ) : (
-                        <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '0px' } }}>
+                        <FormControl fullWidth variant="outlined" size="small">
                           <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
                           <MuiSelect
                             label="Item Name"
@@ -728,7 +728,7 @@ export const AddGatePassInwardPage = () => {
                         size="small"
                         type="number"
                         value={row.quantity}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '0px' } }}
+                      
                         placeholder='Quantity'
                         onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
                       />
@@ -738,7 +738,7 @@ export const AddGatePassInwardPage = () => {
                         variant="outlined"
                         size="small"
                         placeholder="Unit"
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '0px' } }}
+                      
                         value={row.unit}
                         onChange={e => {
                           const value = e.target.value;
@@ -747,7 +747,7 @@ export const AddGatePassInwardPage = () => {
                         inputProps={{ maxLength: 20, pattern: '[a-zA-Z\s]*' }}
                       />
                     </td>
-                    <td className="px-4 py-2 pt-4"><TextField variant="outlined" size="small" placeholder='Enter Description' sx={{ '& .MuiOutlinedInput-root': { borderRadius: '0px' } }} value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
+                    <td className="px-4 py-2 pt-4"><TextField variant="outlined" size="small" placeholder='Enter Description' value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
                     <td className="px-4 py-2 pt-4" style={{ width: '80px' }}>
                       <button type="button" onClick={() => handleDeleteRow(row.id)}>
                         <Trash2 className="w-4 h-4 text-red-600" />
