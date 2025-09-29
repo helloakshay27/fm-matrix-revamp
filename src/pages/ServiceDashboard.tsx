@@ -828,6 +828,7 @@ export const ServiceDashboard = () => {
           <StatsCard
             title="Total Services"
             value={totalServicesCount}
+            selected={selectedSummary === 'total'}
             onClick={handleTotalServicesClick}
             icon={<Settings className="w-6 h-6" style={{ color: '#C72030' }} />}
           />
@@ -835,6 +836,7 @@ export const ServiceDashboard = () => {
           <StatsCard
             title="Active Services"
             value={activeServicesCount}
+            selected={selectedSummary === 'active'}
             onClick={handleActiveServicesClick}
             icon={<Settings className="w-6 h-6" style={{ color: '#C72030' }} />}
           />
@@ -842,6 +844,7 @@ export const ServiceDashboard = () => {
           <StatsCard
             title="Inactive Services"
             value={inactiveServicesCount}
+            selected={selectedSummary === 'inactive'}
             onClick={handleInactiveServicesClick}
             icon={<Settings className="w-6 h-6" style={{ color: '#C72030' }} />}
           />

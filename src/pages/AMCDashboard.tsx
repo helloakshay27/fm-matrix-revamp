@@ -182,7 +182,7 @@ export const AMCDashboard = () => {
   const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'coverage_by_location']);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
   // Track which summary tile is selected; null means none selected on initial load
-  const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive' | 'underObservation' | 'expiring'>(null);
+  const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive' | 'underObservation' | 'expiring' | 'totalCost'>(null);
 
   const getDefaultDateRange = () => {
     const today = new Date();
@@ -1193,6 +1193,7 @@ export const AMCDashboard = () => {
               <StatsCard
                 title="Total AMCs"
                 value={(apiData as any)?.total_amcs_count || 0}
+                selected={selectedSummary === 'total'}
                 icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
                 // bgColor="#C4B89D54"
                 // isSelected={selectedSummary === 'total'}
@@ -1202,6 +1203,7 @@ export const AMCDashboard = () => {
               <StatsCard
                 title="Active AMCs"
                 value={(apiData as any)?.active_amcs_count || 0}
+                selected={selectedSummary === 'active'}
                 icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
                 // bgColor="#C4B89D54"
                 // isSelected={selectedSummary === 'active'}
@@ -1211,6 +1213,7 @@ export const AMCDashboard = () => {
               <StatsCard
                 title="Inactive AMCs"
                 value={(apiData as any)?.inactive_amcs_count || 0}
+                selected={selectedSummary === 'inactive'}
                 icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
                 // bgColor="#C4B89D54"
                 // isSelected={selectedSummary === 'inactive'}
@@ -1220,6 +1223,7 @@ export const AMCDashboard = () => {
               <StatsCard
                 title="Under Observation"
                 value={(apiData as any)?.under_observation || 0}
+                selected={selectedSummary === 'underObservation'}
                 icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
                 // bgColor="#C4B89D54"
                 // isSelected={selectedSummary === 'underObservation'}
@@ -1227,14 +1231,27 @@ export const AMCDashboard = () => {
               />
 
               <StatsCard
+                title="Expiring Soon (15 days)"
+                value={(apiData as any)?.expiring_in_fifteen_days || 0}
+                selected={selectedSummary === 'expiring'}
+                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                // bgColor="#C4B89D54"
+                // isSelected={selectedSummary === 'expiring'}
+                onClick={() => {
+                  handleExpiringIn90DaysClick(); setSelectedSummary('expiring');
+                }}
+              />
+              <StatsCard
                 title="Total AMC Cost"
                 value={`${localStorage.getItem("currency") ?? ''} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
+                selected={selectedSummary === 'totalCost'}
                 icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
                 // bgColor="#C4B89D54"
                 // isSelected={false}
                 onClick={() => { handleTotalAMCClick(); }}
               />
-          
+
+
             </div>
 
             <AmcBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
