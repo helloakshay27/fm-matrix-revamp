@@ -311,59 +311,80 @@ export const GatePassInwardsDetailPage = () => {
                       const isDownloadable = isPdf || isExcel || isWord;
 
                       return (
-                        <div 
-                          key={attachment.id} 
-                          className="relative w-24 h-24 border border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
-                          onClick={() => {
-                            if (isImage || isPdf) {
-                              setSelectedDoc(attachment);
-                              setIsModalOpen(true);
-                            } else if (isDownloadable) {
-                              window.open(url, '_blank');
-                            }
-                          }}
+                        <div
+                          key={attachment.id}
+                          className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                         >
                           {isImage ? (
-                            <img 
-                              src={url} 
-                              alt="Attachment" 
-                              className="w-full h-full object-cover rounded-lg"
-                            />
+                            <>
+                              <button
+                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                title="View"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    ...attachment,
+                                    url,
+                                    type: 'image'
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                                type="button"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <img
+                                src={url}
+                                alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    ...attachment,
+                                    url,
+                                    type: 'image'
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                              />
+                            </>
                           ) : isPdf ? (
-                            <FileText className="w-8 h-8 text-red-500" />
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                              <FileText className="w-6 h-6" />
+                            </div>
                           ) : isExcel ? (
-                            <FileSpreadsheet className="w-8 h-8 text-green-500" />
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                              <FileSpreadsheet className="w-6 h-6" />
+                            </div>
                           ) : isWord ? (
-                            <File className="w-8 h-8 text-blue-500" />
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                              <FileText className="w-6 h-6" />
+                            </div>
                           ) : (
-                            <File className="w-8 h-8 text-gray-500" />
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                              <File className="w-6 h-6" />
+                            </div>
                           )}
-                          
+                          <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                            {attachment.document_name ||
+                              attachment.document_file_name ||
+                              url.split('/').pop() ||
+                              `Document_${attachment.id}`}
+                          </span>
                           {isDownloadable && (
-                            <button
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(url, '_blank');
-                              }}
-                              title="Download"
-                            >
-                              <Download className="w-3 h-3" />
-                            </button>
-                          )}
-                          
-                          {(isImage || isPdf) && (
-                            <button
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-gray-500 text-white rounded-full flex items-center justify-center hover:bg-gray-600"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedDoc(attachment);
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  ...attachment,
+                                  url,
+                                  type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
+                                });
                                 setIsModalOpen(true);
                               }}
-                              title="View"
                             >
-                              <Eye className="w-3 h-3" />
-                            </button>
+                              <Download className="w-4 h-4" />
+                            </Button>
                           )}
                         </div>
                       );
