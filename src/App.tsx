@@ -579,7 +579,7 @@ import { AreaPage } from "./pages/master/AreaPage";
 import { FloorPage } from "./pages/master/FloorPage";
 import { UnitPage } from "./pages/master/UnitPage";
 import { RoomPage } from "./pages/master/RoomPage";
-import { LocationAccountPage } from "./pages/master/LocationAccountPage";
+import { OpsAccountPage } from "./pages/master/OpsAccountPage";
 
 // Import Address Master page
 import { AddressMasterPage } from "./pages/AddressMasterPage";
@@ -732,6 +732,7 @@ import AmenityDetailsPage from "./pages/AmenityDetailsPage";
 import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 import WeeklyReport from "./components/WeeklyReport";
 import useRouteLogger from "./hooks/useRouteLogger";
+import { LocationAccountPage } from "./pages/master/LocationAccountPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -802,7 +803,7 @@ function App() {
                 >
                   <Route
                     path="master/location/account"
-                    element={<LocationAccountPage />}
+                    element={<OpsAccountPage />}
                   />
 
                   <Route

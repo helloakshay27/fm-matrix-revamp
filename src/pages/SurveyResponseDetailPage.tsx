@@ -236,6 +236,11 @@ export const SurveyResponseDetailPage = () => {
     useState<SurveyDetailsResponse | null>(null);
   const [responseListData, setResponseListData] =
     useState<ResponseListData | null>(null);
+  
+  // Store original unfiltered data for summary tab reset functionality
+  const [originalSurveyData, setOriginalSurveyData] = useState<SurveyDetail | null>(null);
+  const [originalSurveyDetailsData, setOriginalSurveyDetailsData] = 
+    useState<SurveyDetailsResponse | null>(null);
 
   // Filter states - separate for each tab
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -429,6 +434,8 @@ export const SurveyResponseDetailPage = () => {
         surveyDetailsResponse = await fetchSurveyDetails(surveyId);
         // console.log("Fetched survey details:", surveyDetailsResponse);
         setSurveyDetailsData(surveyDetailsResponse);
+        // Store original data for reset functionality
+        setOriginalSurveyDetailsData(surveyDetailsResponse);
 
         // Extract survey data from the new API response
         if (surveyDetailsResponse?.survey_details?.surveys?.length > 0) {
@@ -436,6 +443,8 @@ export const SurveyResponseDetailPage = () => {
 
           // Set the survey data directly from the API response
           setSurveyData(surveyDetail);
+          // Store original data for reset functionality
+          setOriginalSurveyData(surveyDetail);
           // console.log("Survey data set:", surveyDetail);
         } else {
           console.error("No survey data found for survey ID:", surveyId);
@@ -661,11 +670,8 @@ export const SurveyResponseDetailPage = () => {
                 : 0;
           }
 
-          // Create a shorter, more readable question name
-          let questionName = question.question;
-          if (questionName.length > 25) {
-            questionName = questionName.substring(0, 25) + "...";
-          }
+          // Use the full question name without truncation
+          const questionName = question.question;
 
           // console.log(
           //   `🔍 Question ${index + 1}: "${
@@ -740,10 +746,7 @@ export const SurveyResponseDetailPage = () => {
                 )
               : 0;
 
-          let questionName = question.question;
-          if (questionName.length > 25) {
-            questionName = questionName.substring(0, 25) + "...";
-          }
+          const questionName = question.question;
 
           return {
             name: questionName,
@@ -2075,6 +2078,9 @@ export const SurveyResponseDetailPage = () => {
 
       // Refetch survey details with the new date filters for summary tab
       await refetchSurveyDetailsWithFilters(summaryFormFilters);
+      
+      // Show success toast for summary filters
+      toast.success("Summary filters applied successfully");
     } else {
       setTabularCurrentFilters(tabularFormFilters);
 
@@ -2088,6 +2094,9 @@ export const SurveyResponseDetailPage = () => {
       setFilteredTicketData(
         applyFiltersToTicketData(baseTicketData, tabularFormFilters)
       );
+      
+      // Show success toast for tabular filters
+      toast.success("Tabular filters applied successfully");
     }
 
     setShowFilterModal(false);
@@ -2105,16 +2114,25 @@ export const SurveyResponseDetailPage = () => {
       setSummaryCurrentFilters({});
       setSummaryFormFilters({});
 
-      // Refetch survey details without any date filters for summary tab
-      await refetchSurveyDetailsWithFilters({});
+      // Instead of refetching, restore original data to avoid page refresh
+      if (originalSurveyData && originalSurveyDetailsData) {
+        setSurveyData(originalSurveyData);
+        setSurveyDetailsData(originalSurveyDetailsData);
+      }
+      
+      // Show success toast for summary filter reset
+      toast.success("Summary filters cleared successfully");
     } else {
       setTabularCurrentFilters({});
       setTabularFormFilters({});
       setFilteredTabularData([]);
       setFilteredTicketData([]);
+      
+      // Show success toast for tabular filter reset
+      toast.success("Tabular filters cleared successfully");
     }
     // Keep modal open after clearing filters
-  }, [activeFilterTab, refetchSurveyDetailsWithFilters]);
+  }, [activeFilterTab, originalSurveyData, originalSurveyDetailsData]);
 
   const getActiveFiltersCount = useCallback(() => {
     const filters =
@@ -2285,11 +2303,11 @@ export const SurveyResponseDetailPage = () => {
                     ? "Filter Summary Data"
                     : "Filter Tabular Data"}
                 </h3>
-                <span className="text-xs text-gray-500">
+                {/* <span className="text-xs text-gray-500">
                   {activeFilterTab === "summary"
                     ? "Apply date filters to survey analytics"
                     : "Filter response records"}
-                </span>
+                </span> */}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -2324,7 +2342,7 @@ export const SurveyResponseDetailPage = () => {
               onClick={handleClearFilters}
               className="px-6"
             >
-              Clear All
+              Reset
             </Button>
             <Button
               onClick={handleApplyFilters}
@@ -2672,13 +2690,13 @@ export const SurveyResponseDetailPage = () => {
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <List className="h-4 w-4" />
                   </div>
-                  QUESTION RESPONSE DETAILS ({surveyData.questions?.length || 0}
-                  )
+                  QUESTION RESPONSE DETAILS 
+                  
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {surveyData.questions.map((question: SurveyQuestion) => {
+                  {surveyData.questions.map((question: SurveyQuestion, index: number) => {
                     const totalResponses =
                       question.options?.reduce(
                         (sum, opt) => sum + opt.response_count,
@@ -2704,6 +2722,9 @@ export const SurveyResponseDetailPage = () => {
                         <div className="flex items-center justify-between mb-4">
                           <div>
                             <h3 className="font-medium text-gray-800 mb-1 text-base">
+                              <span className="text-[#C72030] font-semibold mr-2">
+                                Q{index + 1}.
+                              </span>
                               {question.question}
                             </h3>
                             <p className="text-sm text-gray-600">

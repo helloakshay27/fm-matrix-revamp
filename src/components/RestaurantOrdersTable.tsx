@@ -1,16 +1,16 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Download, Eye, Loader2 } from "lucide-react";
 import { toast } from 'sonner';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useAppDispatch } from '@/store/hooks';
 import { exportOrders, fetchRestaurantOrders, fetchRestaurants } from '@/store/slices/f&bSlice';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import axios, { all } from 'axios';
+import axios from 'axios';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './ui/pagination';
 
@@ -28,7 +28,7 @@ interface RestaurantOrder {
   status_name: string;
   total_amount: number;
   items: { id: number; menu_name: string; quantity: number; price: number }[];
-  statuses: string[]; // Added statuses array
+  statuses: string[];
 }
 
 const getStatusBadgeVariant = (status: string) => {
@@ -45,6 +45,72 @@ const getStatusBadgeVariant = (status: string) => {
       return 'default';
   }
 };
+
+const columns: ColumnConfig[] = [
+  {
+    key: 'id',
+    label: 'Order ID',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'restaurant_name',
+    label: 'Restaurant',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'meeting_room',
+    label: 'Meeting Room',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'created_at',
+    label: 'Created on',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'created_by',
+    label: 'Created by',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'status_name',
+    label: 'Status',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'total_amount',
+    label: `Amount Paid (${localStorage.getItem('currency')})`,
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'items',
+    label: 'Name of Items',
+    sortable: false,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: 'payment_status',
+    label: 'Payment Status',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+];
 
 export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }) => {
   const { id } = useParams()
@@ -66,15 +132,12 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
   useEffect(() => {
     const fetchRestaurant = async () => {
       if (needPadding) {
-        setLoading(true);
         try {
           const response = await dispatch(fetchRestaurants({ baseUrl, token })).unwrap();
           setRestoId(response[0]?.id);
         } catch (error) {
           console.error('Error fetching restaurants:', error);
           toast.error('Failed to fetch restaurants');
-        } finally {
-          setLoading(false);
         }
       } else {
         setRestoId(id ? Number(id) : undefined);
@@ -86,6 +149,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
 
   useEffect(() => {
     const fetchOrders = async () => {
+      setLoading(true);
       if (restoId) {
         try {
           const params = needPadding
@@ -114,6 +178,8 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
         } catch (error) {
           console.error('Error fetching orders:', error);
           toast.error('Failed to fetch orders');
+        } finally {
+          setLoading(false);
         }
       }
     };
@@ -185,7 +251,23 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
       current_page: page,
     }));
     try {
-      const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(restoId), pageSize: 10, currentPage: page })).unwrap();
+      const params = needPadding
+        ? {
+          baseUrl,
+          token,
+          id: Number(restoId),
+          pageSize: 10,
+          currentPage: pagination.current_page,
+          all: true,
+        }
+        : {
+          baseUrl,
+          token,
+          id: Number(restoId),
+          pageSize: 10,
+          currentPage: pagination.current_page,
+        };
+      const response = await dispatch(fetchRestaurantOrders(params)).unwrap();
       setOrders(response.food_orders);
     } catch (error) {
       toast.error('Failed to fetch bookings');
@@ -307,72 +389,6 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
 
     return items;
   };
-
-  const columns: ColumnConfig[] = [
-    {
-      key: 'id',
-      label: 'Order ID',
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: 'restaurant_name',
-      label: 'Restaurant',
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: 'meeting_room',
-      label: 'Meeting Room',
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: 'created_at',
-      label: 'Created on',
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: 'created_by',
-      label: 'Created by',
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: 'status_name',
-      label: 'Status',
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: 'total_amount',
-      label: `Amount Paid (${localStorage.getItem('currency')})`,
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: 'items',
-      label: 'Name of Items',
-      sortable: false,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: 'payment_status',
-      label: 'Payment Status',
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-  ];
 
   useEffect(() => {
     const storageKey = 'restaurant-orders-table-columns';

@@ -279,7 +279,7 @@ export const AMCDetailsPage = () => {
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90"
             >
-              + Add Visit
+              Add Visit
             </Button>
             {/* <Button
               onClick={() => navigate(`/maintenance/amc/edit/${id}`)}
