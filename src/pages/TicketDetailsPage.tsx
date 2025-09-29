@@ -340,7 +340,7 @@ export const TicketDetailsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       {hasData(ticketData.ticket_number) && (
                         <div className="flex items-center">
                           <span className="text-gray-500 w-32">Ticket Number</span>
@@ -466,7 +466,7 @@ export const TicketDetailsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       {hasData(ticketData.posted_by) && (
                         <div className="flex items-center">
                           <span className="text-gray-500 w-32">Posted By</span>
@@ -529,7 +529,7 @@ export const TicketDetailsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       {hasData(ticketData.region) && (
                         <div className="flex items-center">
                           <span className="text-gray-500 w-32">Region</span>
@@ -656,7 +656,7 @@ export const TicketDetailsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       {hasData(ticketData.survey?.survey?.id) && (
                         <div className="flex items-center">
                           <span className="text-gray-500 w-32">Survey ID</span>
@@ -724,7 +724,7 @@ export const TicketDetailsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 text-sm">
                       {hasData(ticketData.corrective_action) && (
                         <div className="flex items-center">
                           <span className="text-gray-500 w-32">Corrective Action</span>
