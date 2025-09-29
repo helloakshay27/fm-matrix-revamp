@@ -69,7 +69,7 @@ import { createProjectRoleReducer, deleteProjectRoleReducer, fetchProjectRolesRe
 import { createProjectUsersReducer, fetchProjectExternalUsersReducer, fetchProjectInternalUsersReducer, fetchProjectUsersReducer } from './slices/projectUsersSlice'
 import { fetchCompaniesReducer } from './slices/projectCompanySlice'
 import { createOrganizationReducer, organizationsReducer, updateOrganizationReducer } from './slices/organizationsSlice'
-import { fetchProjectTeamsReducer } from './slices/projectTeamsSlice'
+import { createProjectTeamReducer, fetchProjectTeamByIdReducer, fetchProjectTeamsReducer, updateProjectTeamReducer } from './slices/projectTeamsSlice'
 import { createProjectTypesReducer, fetchProjectTypesReducer, updateProjectTypesReducer } from './slices/projectTypeSlice'
 import { createProjectsTagsReducer, fetchProjectsTagsReducer, updateProjectsTagsReducer } from './slices/projectTagSlice'
 import { createProjectStatusesReducer, fetchProjectStatusesReducer, updateProjectStatusesReducer } from './slices/projectStatusSlice'
@@ -333,6 +333,9 @@ export const store = configureStore({
 
     // Project Teams
     fetchProjectTeams: fetchProjectTeamsReducer,
+    fetchProjectTeamById: fetchProjectTeamByIdReducer,
+    createProjectTeam: createProjectTeamReducer,
+    updateProjectTeam: updateProjectTeamReducer,
 
     // Project Types
     fetchProjectTypes: fetchProjectTypesReducer,

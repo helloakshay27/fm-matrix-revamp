@@ -37,7 +37,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: 'teamMembers',
-    label: 'Team Members (TL+Members)',
+    label: 'Team Members',
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -51,15 +51,25 @@ const columns: ColumnConfig[] = [
   },
 ];
 
+const formattedData = (data) => {
+  return data.map((item) => {
+    return {
+      id: item.id,
+      teamName: item.name,
+      teamLead: item.team_lead?.name,
+      teamMembers: item.project_team_members?.map((member) => member.user?.name),
+      totalMembers: item.project_team_members?.length,
+      active: item.active
+    }
+  })
+}
+
 export const ProjectTeamsPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const token = localStorage.getItem('token');
   const baseUrl = localStorage.getItem('baseUrl');
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [record, setRecord] = useState<ProjectTeam | {}>({});
   const [projectTeamsData, setProjectTeamsData] = useState<ProjectTeam[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
@@ -67,7 +77,7 @@ export const ProjectTeamsPage = () => {
   const fetchData = async () => {
     try {
       const response = await dispatch(fetchProjectTeams({ baseUrl, token })).unwrap();
-      setProjectTeamsData(response);
+      setProjectTeamsData(formattedData(response));
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -127,9 +137,7 @@ export const ProjectTeamsPage = () => {
           variant="ghost"
           className="p-1"
           onClick={() => {
-            setIsEditing(true);
-            setShowAddModal(true);
-            setRecord(item);
+            navigate(`/settings/manage-users/project-teams/edit/${item.id}`);
           }}
         >
           <Edit className="w-4 h-4" />
