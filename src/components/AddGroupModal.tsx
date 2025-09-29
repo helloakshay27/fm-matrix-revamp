@@ -32,7 +32,7 @@ export const AddGroupModal = ({ isOpen, onClose, fetchGroups }: AddGroupModalPro
     const fetchUsers = async () => {
       try {
         const response = await dispatch(fetchFMUsers()).unwrap();
-        setMembers(response.fm_users);
+        setMembers(response.users);
       } catch (error) {
         console.log(error);
         toast.error("Failed to fetch users")
