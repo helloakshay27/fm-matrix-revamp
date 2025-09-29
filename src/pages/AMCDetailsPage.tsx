@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Edit, Download, Truck, Boxes, FileTextIcon, Paperclip, FileText, FileSpreadsheet, X } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Truck, Boxes, FileTextIcon, Paperclip, FileText, FileSpreadsheet, X, Ticket } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddVisitModal } from '@/components/AddVisitModal';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -289,7 +289,7 @@ export const AMCDetailsPage = () => {
               <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button> */}
-            
+
           </div>
         </div>
       </div>
@@ -322,12 +322,15 @@ export const AMCDetailsPage = () => {
 
           {/* AMC Information */}
           <TabsContent value="amc-information" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] border-b">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
+            <Card className="border border-[#D9D9D9] border-b">
+              <CardHeader>
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <FileTextIcon className="h-4 w-4" />
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <FileTextIcon className="w-6 h-6 text-[#C72030]" />
                   </div>
+                  {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <FileTextIcon className="h-4 w-4" />
+                  </div> */}
                   AMC INFORMATION
                 </CardTitle>
               </CardHeader>
@@ -348,12 +351,15 @@ export const AMCDetailsPage = () => {
 
           {/* Supplier Information */}
           <TabsContent value="supplier-information" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
+            <Card className="border border-[#D9D9D9]">
+              <CardHeader>
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Truck className="h-4 w-4" />
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <Truck className="w-6 h-6 text-[#C72030]" />
                   </div>
+                  {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <Truck className="h-4 w-4" />
+                  </div> */}
                   SUPPLIER INFORMATION
                 </CardTitle>
               </CardHeader>
@@ -371,12 +377,15 @@ export const AMCDetailsPage = () => {
 
           {/* Attachments */}
           <TabsContent value="attachments" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9]">
-              <CardHeader className="bg-[#F6F4EE] mb-4">
+            <Card className="border border-[#D9D9D9]">
+              <CardHeader >
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Paperclip className="h-4 w-4" />
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <Paperclip className="w-6 h-6 text-[#C72030]" />
                   </div>
+                  {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <Paperclip className="h-4 w-4" />
+                  </div> */}
                   ATTACHMENTS
                 </CardTitle>
               </CardHeader>
@@ -602,10 +611,13 @@ export const AMCDetailsPage = () => {
           {/* AMC Visits */}
           <TabsContent value="amc-visits" className="p-3 sm:p-6">
             <Card className="border border-[#D9D9D9]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
+              <CardHeader >
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                  {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <FileTextIcon className="h-4 w-4" />
+                  </div> */}
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <FileTextIcon className="w-6 h-6 text-[#C72030]" />
                   </div>
                   AMC VISITS
                 </CardTitle>
@@ -816,10 +828,13 @@ export const AMCDetailsPage = () => {
           {/* Tickets */}
           <TabsContent value="tickets" className="p-3 sm:p-6">
             <Card className="border border-[#D9D9D9]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
+              <CardHeader className="">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                  {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <FileTextIcon className="h-4 w-4" />
+                  </div> */}
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <Ticket className="w-6 h-6 text-[#C72030]" />
                   </div>
                   TICKETS
                 </CardTitle>
@@ -878,12 +893,15 @@ export const AMCDetailsPage = () => {
           {/* Asset Information */}
           {amcDetails.amc_type === 'Asset' && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
-              <Card className="mb-6 border border-[#D9D9D9]">
-                <CardHeader className="bg-[#F6F4EE] mb-6">
+              <Card className="border border-[#D9D9D9]">
+                <CardHeader >
                   <CardTitle className="text-lg flex items-center">
-                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                       <Boxes className="h-4 w-4" />
-                    </div>
+                    </div> */}
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <Boxes className="w-6 h-6 text-[#C72030]" />
+                  </div>
                     ASSET INFORMATION
                   </CardTitle>
                 </CardHeader>
@@ -949,12 +967,15 @@ export const AMCDetailsPage = () => {
 
           {amcDetails.amc_type === 'Service' && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
-              <Card className="mb-6 border border-[#D9D9D9]">
-                <CardHeader className="bg-[#F6F4EE] mb-6">
+              <Card className="border border-[#D9D9D9]">
+                <CardHeader >
                   <CardTitle className="text-lg flex items-center">
-                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                       <Boxes className="h-4 w-4" />
-                    </div>
+                    </div> */}
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <Boxes className="w-6 h-6 text-[#C72030]" />
+                  </div>
                     SERVICE INFORMATION
                   </CardTitle>
                 </CardHeader>
