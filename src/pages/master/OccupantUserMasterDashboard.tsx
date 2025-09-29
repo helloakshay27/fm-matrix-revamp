@@ -462,34 +462,34 @@ export const OccupantUserMasterDashboard = () => {
           <StatsCard
             title="Total Users"
             value={totalUsers}
-            icon={<Users className="w-6 h-6" />}
+            icon={<Users className="w-6 h-6 text-[#C72030]" />}
             onClick={fetchUsers}
           />
           <StatsCard
             title="Approved"
             value={approvedUsers}
-            icon={<Users className="w-6 h-6" />}
+            icon={<Users className="w-6 h-6 text-[#C72030]" />}
             onClick={() => handleApplyFilters({ status: "approved" })}
             className="cursor-pointer"
           />
           <StatsCard
             title="Pending"
             value={pendingUsers}
-            icon={<Users className="w-6 h-6" />}
+            icon={<Users className="w-6 h-6 text-[#C72030]" />}
             onClick={() => handleApplyFilters({ status: "pending" })}
             className="cursor-pointer"
           />
           <StatsCard
             title="Rejected"
             value={rejectedUsers}
-            icon={<Users className="w-6 h-6" />}
+            icon={<Users className="w-6 h-6 text-[#C72030]" />}
             onClick={() => handleApplyFilters({ status: "rejected" })}
             className="cursor-pointer"
           />
           <StatsCard
             title="App Downloaded"
             value={appDownloaded}
-            icon={<Download className="w-6 h-6" />}
+            icon={<Download className="w-6 h-6 text-[#C72030]" />}
             onClick={() => handleApplyFilters({ downloaded: true })}
             className="cursor-pointer"
           />
