@@ -119,8 +119,10 @@ export const getBaseUrl = (): string | null => {
   if (!savedUrl) return null;
 
   // Ensure the URL includes the protocol
-  return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
+  // return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
+  return savedUrl;
 };
+
 
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
