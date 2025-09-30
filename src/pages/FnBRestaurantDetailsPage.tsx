@@ -12,7 +12,7 @@ import {
   FormControlLabel,
   Checkbox as MuiCheckbox,
 } from "@mui/material";
-import { ArrowLeft, Ban, Clock, Image, Images, IndianRupee, Loader2, Menu, Percent, Save, TicketPercent, User } from "lucide-react";
+import { ArrowLeft, Ban, Clock, Image, Images, IndianRupee, Loader2, Menu, Save, TicketPercent, User } from "lucide-react";
 import { StatusSetupTable } from "../components/StatusSetupTable";
 import { CategoriesSetupTable } from "../components/CategoriesSetupTable";
 import { SubCategoriesSetupTable } from "../components/SubCategoriesSetupTable";
@@ -25,7 +25,6 @@ import {
   fetchRestaurantDetails,
 } from "@/store/slices/f&bSlice";
 import { RestaurantOrdersTable } from "@/components/RestaurantOrdersTable";
-import { Schedule } from "@mui/icons-material";
 
 interface Restaurant {
   id: number;
