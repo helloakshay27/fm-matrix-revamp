@@ -108,8 +108,9 @@ export const KRCCFormListDashboard = () => {
       const cleanedSearch = emailMatch ? emailMatch[0] : trimmed;
       const searchActive = !!cleanedSearch;
 
-      // Build base
-      let url = `https://${baseUrl}/krcc_forms.json?approval=yes&page=${page}`;
+      // Build base URL
+      const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      let url = `${cleanBaseUrl}/krcc_forms.json?approval=yes&page=${page}`;
 
       // Email param priority: explicit search box else filter email
       const effectiveEmail = searchActive ? cleanedSearch : (filterEmail || '').trim();
@@ -133,7 +134,8 @@ export const KRCCFormListDashboard = () => {
       if (searchActive && res.ok && effectiveEmail) {
         const firstPayload = await res.clone().json();
         if ((firstPayload.krcc_forms?.length ?? 0) === 0 && cleanedSearch.includes('@')) {
-          const fallbackUrl = `https://${baseUrl}/krcc_forms.json?approval=yes&q[email_cont]=${encodeURIComponent(cleanedSearch)}&page=1`;
+          const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+          const fallbackUrl = `${cleanBaseUrl}/krcc_forms.json?approval=yes&q[email_cont]=${encodeURIComponent(cleanedSearch)}&page=1`;
           res = await fetch(fallbackUrl, { headers: { Authorization: `Bearer ${token}` } });
         }
       }
