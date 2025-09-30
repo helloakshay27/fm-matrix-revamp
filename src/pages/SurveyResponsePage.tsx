@@ -232,10 +232,10 @@ export const SurveyResponsePage = () => {
     { key: "room_name", label: "Room Name", visible: true },
     { key: "total_responses", label: "Total Responses", visible: true },
     { key: "total_complaints", label: "Total Complaints", visible: true },
-    { key: "latest_response_date", label: "Latest Response", visible: true },
+    // { key: "latest_response_date", label: "Latest Response", visible: true },
     { key: "status", label: "Status", visible: true }, // Force status column to be visible
     // { key: 'answer_type', label: 'Answer Type', visible: true },
-    { key: "responded_by", label: "Responded By", visible: true },
+    // { key: "responded_by", label: "Responded By", visible: true },
   ]);
 
   // Handle analytics data updates from the analytics component
@@ -957,15 +957,15 @@ export const SurveyResponsePage = () => {
         visible: isColumnVisible("total_complaints"),
         hideable: true,
       },
-      {
-        key: "latest_response_date",
-        label: "Latest Response",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-        visible: isColumnVisible("latest_response_date"),
-        hideable: true,
-      },
+      // {
+      //   key: "latest_response_date",
+      //   label: "Latest Response",
+      //   sortable: true,
+      //   draggable: true,
+      //   defaultVisible: true,
+      //   visible: isColumnVisible("latest_response_date"),
+      //   hideable: true,
+      // },
       {
         key: "status",
         label: "Status",
@@ -976,15 +976,15 @@ export const SurveyResponsePage = () => {
         hideable: true,
       },
       // { key: 'answer_type', label: 'Answer Type', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('answer_type'), hideable: true },
-      {
-        key: "responded_by",
-        label: "Responded By",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-        visible: isColumnVisible("responded_by"),
-        hideable: true,
-      },
+      // {
+      //   key: "responded_by",
+      //   label: "Responded By",
+      //   sortable: true,
+      //   draggable: true,
+      //   defaultVisible: true,
+      //   visible: isColumnVisible("responded_by"),
+      //   hideable: true,
+      // },
     ];
 
     // Debug logging for status column

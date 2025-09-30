@@ -31,6 +31,13 @@ export const TicketDetailsPage = () => {
       : "Not Provided";
   };
 
+  // Helper to truncate text to 5 characters and append ellipsis; shows full text on hover via title
+  const truncateWithEllipsis = (value: string, max: number = 5) => {
+    if (typeof value !== 'string') return value;
+    if (value.length <= max) return value;
+    return value.slice(0, max) + '...';
+  };
+
   // State for expandable sections - will be set dynamically based on data
   const [expandedSections, setExpandedSections] = useState({
     ticketDetails: false,
@@ -729,21 +736,27 @@ export const TicketDetailsPage = () => {
                         <div className="flex items-center">
                           <span className="text-gray-500 min-w-[140px]">Corrective Action</span>
                           <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.corrective_action}</span>
+                          <span className="text-gray-900 font-medium" title={ticketData.corrective_action}>
+                            {truncateWithEllipsis(ticketData.corrective_action, 5)}
+                          </span>
                         </div>
                       )}
                       {hasData(ticketData.preventive_action) && (
                         <div className="flex items-center">
                           <span className="text-gray-500 min-w-[140px]">Preventive Action</span>
                           <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.preventive_action}</span>
+                          <span className="text-gray-900 font-medium" title={ticketData.preventive_action}>
+                            {truncateWithEllipsis(ticketData.preventive_action, 5)}
+                          </span>
                         </div>
                       )}
                       {hasData(ticketData.root_cause) && (
                         <div className="flex items-center">
                           <span className="text-gray-500 min-w-[140px]">Root Cause</span>
                           <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.root_cause}</span>
+                          <span className="text-gray-900 font-medium" title={ticketData.root_cause}>
+                            {truncateWithEllipsis(ticketData.root_cause, 5)}
+                          </span>
                         </div>
                       )}
                       {hasData(ticketData.response_tat) && (

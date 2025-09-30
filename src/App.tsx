@@ -2401,7 +2401,7 @@ function App() {
                   />
                   <Route
                     path="/vas/parking"
-                    element={<ConditionalParkingPage />}
+                    element={<ParkingDashboard />}
                   />
                   <Route
                     path="/vas/parking/details/:clientId"
