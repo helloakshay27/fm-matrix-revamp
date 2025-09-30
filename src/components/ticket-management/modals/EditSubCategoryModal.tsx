@@ -472,7 +472,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                 )}
               />
 
-              {/* <div className="space-y-2">
+              <div className="space-y-2">
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Icon
                 </label>
@@ -525,7 +525,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                     />
                   </div>
                 )}
-              </div> */}
+              </div>
             </div>
 
             {/* Tags Section */}

@@ -475,6 +475,20 @@ export const SurveyMappingDashboard = () => {
     [columns]
   );
 
+  // Helper: given a list of names, render only the first and show the full list on hover via title
+  const renderFirstWithHover = (allValues: (string | null | undefined)[], fallback?: string | null) => {
+    const unique = [...new Set(allValues.filter((v): v is string => !!v && v.trim() !== ''))];
+    const display = unique[0] || (fallback ?? '-') || '-';
+    const hasMore = unique.length > 1;
+    const title = unique.length > 0 ? unique.join(', ') : (display || '-');
+    return (
+      <span className="text-sm text-gray-600 truncate inline-block max-w-[220px] align-middle" title={title}>
+        {display}
+        {hasMore ? ' ...' : ''}
+      </span>
+    );
+  };
+
   const renderCell = (item: SurveyMapping, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
@@ -501,142 +515,47 @@ export const SurveyMappingDashboard = () => {
       case 'site_name':
         return <span className="text-sm text-gray-600">{item.site_name}</span>;
       case 'building_name': {
-        // Get all buildings for this survey from the complete data
         const surveyData = allMappingsData.find(s => s.id === item.survey_id);
-        const allBuildings = surveyData ? [...new Set(surveyData.mappings.map(m => m.building_name).filter(Boolean))] : [item.building_name];
-        
-        if (allBuildings.length <= 1) {
-          return <span className="text-sm text-gray-600">{item.building_name}</span>;
-        }
-        
-        return (
-          <div className="group relative">
-            <span className="cursor-pointer text-sm text-gray-600">
-              {item.building_name}
-              {allBuildings.length > 1 && <span className="text-blue-600 ml-1">...</span>}
-            </span>
-            <div className="absolute z-50 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 min-w-max max-w-xs shadow-lg pointer-events-none bottom-full left-1/2 transform -translate-x-1/2 mb-2">
-              <div className="font-semibold mb-1">All Buildings ({allBuildings.length}):</div>
-              {allBuildings.map((building, index) => (
-                <div key={index} className="py-0.5">{building}</div>
-              ))}
-              {/* Arrow pointing down */}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
-            </div>
-          </div>
-        );
+        const allBuildings = surveyData ? surveyData.mappings.map(m => m.building_name) : [item.building_name];
+        return renderFirstWithHover(allBuildings, item.building_name);
       }
       case 'wing_name': {
-        // Get all wings for this survey from the complete data
         const surveyData = allMappingsData.find(s => s.id === item.survey_id);
-        const allWings = surveyData ? [...new Set(surveyData.mappings.map(m => m.wing_name).filter(Boolean))] : [item.wing_name].filter(Boolean);
-        
-        if (allWings.length <= 1) {
-          return <span className="text-sm text-gray-600">{item.wing_name || '-'}</span>;
-        }
-        
-        return (
-          <div className="group relative">
-            <span className="cursor-pointer text-sm text-gray-600">
-              {item.wing_name || '-'}
-              {allWings.length > 1 && <span className="text-blue-600 ml-1">...</span>}
-            </span>
-            <div className="absolute z-50 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 min-w-max max-w-xs shadow-lg pointer-events-none bottom-full left-1/2 transform -translate-x-1/2 mb-2">
-              <div className="font-semibold mb-1">All Wings ({allWings.length}):</div>
-              {allWings.map((wing, index) => (
-                <div key={index} className="py-0.5">{wing}</div>
-              ))}
-              {/* Arrow pointing down */}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
-            </div>
-          </div>
-        );
+        const allWings = surveyData ? surveyData.mappings.map(m => m.wing_name) : [item.wing_name];
+        return renderFirstWithHover(allWings, item.wing_name);
       }
       case 'floor_name': {
-        // Get all floors for this survey from the complete data
         const surveyData = allMappingsData.find(s => s.id === item.survey_id);
-        const allFloors = surveyData ? [...new Set(surveyData.mappings.map(m => m.floor_name).filter(Boolean))] : [item.floor_name].filter(Boolean);
-        
-        if (allFloors.length <= 1) {
-          return <span className="text-sm text-gray-600">{item.floor_name || '-'}</span>;
-        }
-        
-        return (
-          <div className="group relative">
-            <span className="cursor-pointer text-sm text-gray-600">
-              {item.floor_name || '-'}
-              {allFloors.length > 1 && <span className="text-blue-600 ml-1">...</span>}
-            </span>
-            <div className="absolute z-50 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 min-w-max max-w-xs shadow-lg pointer-events-none bottom-full left-1/2 transform -translate-x-1/2 mb-2">
-              <div className="font-semibold mb-1">All Floors ({allFloors.length}):</div>
-              {allFloors.map((floor, index) => (
-                <div key={index} className="py-0.5">{floor}</div>
-              ))}
-              {/* Arrow pointing down */}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
-            </div>
-          </div>
-        );
+        const allFloors = surveyData ? surveyData.mappings.map(m => m.floor_name) : [item.floor_name];
+        return renderFirstWithHover(allFloors, item.floor_name);
       }
       case 'area_name': {
-        // Get all areas for this survey from the complete data
         const surveyData = allMappingsData.find(s => s.id === item.survey_id);
-        const allAreas = surveyData ? [...new Set(surveyData.mappings.map(m => m.area_name).filter(Boolean))] : [item.area_name].filter(Boolean);
-        
-        if (allAreas.length <= 1) {
-          return <span className="text-sm text-gray-600">{item.area_name || '-'}</span>;
-        }
-        
-        return (
-          <div className="group relative">
-            <span className="cursor-pointer text-sm text-gray-600">
-              {item.area_name || '-'}
-              {allAreas.length > 1 && <span className="text-blue-600 ml-1">...</span>}
-            </span>
-            <div className="absolute z-50 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 min-w-max max-w-xs shadow-lg pointer-events-none bottom-full left-1/2 transform -translate-x-1/2 mb-2">
-              <div className="font-semibold mb-1">All Areas ({allAreas.length}):</div>
-              {allAreas.map((area, index) => (
-                <div key={index} className="py-0.5">{area}</div>
-              ))}
-              {/* Arrow pointing down */}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
-            </div>
-          </div>
-        );
+        const allAreas = surveyData ? surveyData.mappings.map(m => m.area_name) : [item.area_name];
+        return renderFirstWithHover(allAreas, item.area_name);
       }
       case 'room_name': {
-        // Get all rooms for this survey from the complete data
         const surveyData = allMappingsData.find(s => s.id === item.survey_id);
-        const allRooms = surveyData ? [...new Set(surveyData.mappings.map(m => m.room_name).filter(Boolean))] : [item.room_name].filter(Boolean);
-        
-        if (allRooms.length <= 1) {
-          return <span className="text-sm text-gray-600">{item.room_name || '-'}</span>;
-        }
-        
-        return (
-          <div className="group relative">
-            <span className="cursor-pointer text-sm text-gray-600">
-              {item.room_name || '-'}
-              {allRooms.length > 1 && <span className="text-blue-600 ml-1">...</span>}
-            </span>
-            <div className="absolute z-50 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 min-w-max max-w-xs shadow-lg pointer-events-none bottom-full left-1/2 transform -translate-x-1/2 mb-2">
-              <div className="font-semibold mb-1">All Rooms ({allRooms.length}):</div>
-              {allRooms.map((room, index) => (
-                <div key={index} className="py-0.5">{room}</div>
-              ))}
-              {/* Arrow pointing down */}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
-            </div>
-          </div>
-        );
+        const allRooms = surveyData ? surveyData.mappings.map(m => m.room_name) : [item.room_name];
+        return renderFirstWithHover(allRooms, item.room_name);
       }
       case 'check_type':
         return <span className="text-sm text-gray-600 capitalize">{item.survey_check_type || '-'}</span>;
       case 'questions_count':
-        return <div className="text-center text-sm text-gray-600">{item.survey_questions_count || 0}</div>;
+        return (
+          <div
+            className="text-center text-sm text-gray-600"
+            title={`${item.survey_questions_count || 0} Questions`}
+          >
+            {item.survey_questions_count || 0}
+          </div>
+        );
       case 'associations_count':
         return (
-          <div className="text-center text-sm text-gray-600">
+          <div
+            className="text-center text-sm text-gray-600"
+            title={`${item.survey_no_of_associations || 0} Associations`}
+          >
             {item.survey_no_of_associations || 0}
           </div>
         );
