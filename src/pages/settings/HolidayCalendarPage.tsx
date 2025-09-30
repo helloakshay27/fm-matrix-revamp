@@ -759,6 +759,10 @@ export const HolidayCalendarPage = () => {
                             borderColor: '#e5e7eb',
                             borderWidth: '1px',
                           },
+                          '& input::placeholder': {
+                            color: '#9CA3AF',
+                            opacity: 1
+                          }
                         },
                       }}
                     />
@@ -777,7 +781,7 @@ export const HolidayCalendarPage = () => {
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {date ? format(date, "dd - MM - yyyy") : <span>DD - MM - YY</span>}
+                          {date ? format(date, "dd - MM - yyyy") : <span className="text-gray-400">DD - MM - YY</span>}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -801,7 +805,7 @@ export const HolidayCalendarPage = () => {
                           variant="outline"
                           className="w-full justify-between font-normal text-left !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
                         >
-                          {recurring ? (recurring === "yes" ? "Yes" : "No") : "Select"}
+                          {recurring ? (recurring === "yes" ? "Yes" : "No") : <span className="text-gray-400">Select</span> }
                           <ChevronDown className="h-4 w-4 opacity-50" />
                         </Button>
                       </PopoverTrigger>
@@ -842,7 +846,7 @@ export const HolidayCalendarPage = () => {
                         >
                           {selectedSites.length > 0 ? 
                             `${selectedSites.length} site${selectedSites.length > 1 ? 's' : ''} selected` : 
-                            "Select sites"
+                            <span className="text-gray-400">Select sites</span>
                           }
                           <ChevronDown className="ml-auto h-4 w-4" />
                         </Button>
@@ -886,7 +890,7 @@ export const HolidayCalendarPage = () => {
                           className="w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
                           onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
                         >
-                          {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : "Select type"}
+                          {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : <span className="text-gray-400">Select type</span>}
                           <ChevronDown className="ml-auto h-4 w-4" />
                         </Button>
                       </PopoverTrigger>
@@ -921,7 +925,7 @@ export const HolidayCalendarPage = () => {
                         >
                           {selectedCustomers.length > 0 ? 
                             `${selectedCustomers.length} customer${selectedCustomers.length > 1 ? 's' : ''} selected` : 
-                            "Select customers"
+                           <span className="text-gray-400">Select module</span>
                           }
                           <ChevronDown className="ml-auto h-4 w-4" />
                         </Button>
@@ -1185,7 +1189,7 @@ export const HolidayCalendarPage = () => {
                       >
                         {selectedCustomers.length > 0 ? 
                           `${selectedCustomers.length} customer${selectedCustomers.length > 1 ? 's' : ''} selected` : 
-                          "Select customers"
+                          "Select module"
                         }
                         <ChevronDown className="ml-auto h-4 w-4" />
                       </Button>

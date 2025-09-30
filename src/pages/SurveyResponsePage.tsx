@@ -270,7 +270,7 @@ export const SurveyResponsePage = () => {
     searchQuery?: string
   ) => {
     try {
-      const url = getFullUrl("/survey_mappings/response_list.json");
+      const url = getFullUrl("/survey_mappings/response_list.json?list_response=true");
       const options = getAuthenticatedFetchOptions();
 
       const urlWithParams = new URL(url);
