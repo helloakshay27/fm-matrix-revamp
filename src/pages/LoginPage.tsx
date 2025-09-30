@@ -124,16 +124,15 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   };
 
   const handleOrganizationSelect = (org: Organization) => {
+    const cleanBaseUrl = `${org.sub_domain}.${org.domain}`.replace(/^https?:\/\//, '');
     localStorage.setItem("selectedOrg", org.name)
-    localStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
+    localStorage.setItem("baseUrl", cleanBaseUrl);
     //Session Storage For App-Level
     sessionStorage.setItem("selectedOrg", org.name)
-    sessionStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
-    setBaseUrl(`${org.sub_domain}.${org.domain}`);
+    sessionStorage.setItem("baseUrl", cleanBaseUrl);
+    setBaseUrl(cleanBaseUrl);
     setSelectedOrganization(org);
-    // Save the base URL in the format: sub_domain.domain
-    const baseUrl = `${org.sub_domain}.${org.domain}`;
-    saveBaseUrl(baseUrl);
+    saveBaseUrl(cleanBaseUrl);
     setCurrentStep(3);
   };
 
@@ -151,8 +150,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
     setLoginLoading(true);
     try {
-      const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
-      const response = await loginUser(email, password, baseUrl);
+  const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`.replace(/^https?:\/\//, '');
+  const response = await loginUser(email, password, baseUrl);
 
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
@@ -177,7 +176,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         lock_role: response.lock_role
       });
 
-       saveBaseUrl(baseUrl);
+         saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id.toString());
       localStorage.setItem("userType", response.user_type.toString());
       // Session Storage
@@ -208,7 +207,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       });
       saveToken(response.access_token);
       setToken(response.access_token);
-      saveBaseUrl(baseUrl);
+  saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id.toString());
       localStorage.setItem("userType", response.user_type.toString());
       // Session storage
