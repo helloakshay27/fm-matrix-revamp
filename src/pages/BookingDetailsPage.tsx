@@ -9,6 +9,7 @@ import {
 } from "@/store/slices/facilityBookingsSlice";
 import { ArrowLeft } from "lucide-react";
 import { CustomTabs } from "@/components/CustomTabs";
+import { LogsTimeline } from "@/components/LogTimeline";
 
 export const BookingDetailsPage = () => {
   const { id } = useParams();
@@ -54,8 +55,8 @@ export const BookingDetailsPage = () => {
       value: "details",
       label: "Details",
       content: (
-        <Card className="mb-6">
-          <CardHeader
+        <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+          {/* <CardHeader
             className="bg-[#F6F4EE]"
             style={{ border: "1px solid #D9D9D9" }}
           >
@@ -65,120 +66,123 @@ export const BookingDetailsPage = () => {
               </span>
               BOOKING DETAILS
             </CardTitle>
-          </CardHeader>
-          <CardContent
-            className="px-[80px] py-[31px] bg-[#F6F7F7]"
-            style={{ border: "1px solid #D9D9D9" }}
+          </CardHeader> */}
+
+          <div className="flex items-center gap-3">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              B
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BOOKING DETAILS</h3>
+          </div>
+          <div
+            className="grid grid-cols-3 gap-8 px-3"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-4">
-                <div className="flex">
-                  <span className="text-[#1A1A1A80] w-32 text-14">Booking ID</span>
-                  <span className="font-medium text-16"> {bookings?.id}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-[#1A1A1A80] w-32 text-14">Comment</span>
-                  <span className="font-medium text-16 truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings?.comment}>
-                    {bookings?.comment}
-                  </span>
-                </div>
 
-                <div className="flex">
-                  <span className="text-[#1A1A1A80] w-32 text-14">Status</span>
-                  <span
-                    className={`font-medium px-2 py-1 rounded-none text-xs ${bookings?.current_status === "Cancelled"
-                      ? "bg-red-100 text-red-800"
-                      : bookings?.current_status === "Confirmed"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-blue-100 text-blue-800"
-                      }`}
-                  >
-                    {" "}
-                    {bookings?.current_status}
-                  </span>
-                </div>
-
-                <div className="flex">
-                  <span className="text-[#1A1A1A80] w-32 text-14">Payment Method</span>
-                  <span className="font-medium text-16">
-                    {" "}
-                    {bookings?.payment_method === "NA" ? "Complimentory" : bookings?.payment_method}
-                  </span>
-                </div>
+            <div className="space-y-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Booking ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {bookings?.id}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Comment</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings?.comment}>
+                  {bookings?.comment}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Status</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className={`text-gray-900 font-medium px-2 ${bookings?.current_status === "Cancelled"
+                  ? "bg-red-100 text-red-800"
+                  : bookings?.current_status === "Confirmed"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-blue-100 text-blue-800"
+                  }`} title={bookings?.comment}>
+                  {bookings?.current_status}
+                </span>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex">
-                  <span className="text-[#1A1A1A80] w-32 text-14">Booked by</span>
-                  <span className="font-medium text-16">
-                    {" "}
-                    {bookings?.created_by_name}
-                  </span>
-                </div>
-
-                <div className="flex">
-                  <span className="text-[#1A1A1A80] w-32 text-14">GST</span>
-                  <span className="font-medium text-16"> {bookings?.gst || "-"}</span>
-                </div>
-
-                <div className="flex">
-                  <span className="text-[#1A1A1A80] w-32 text-14">Scheduled Date</span>
-                  <span className="font-medium text-16">
-                    {" "}
-                    {bookings?.startdate.split(" ")[0]}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex">
-                  <span className="text-[#1A1A1A80] w-32 text-14">Schedule Slot</span>
-                  <span className="font-medium text-16 truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings?.show_schedule_24_hour}>
-                    {" "}
-                    {bookings?.show_schedule_24_hour}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-[#1A1A1A80] w-32 text-14">SGST</span>
-                  <span className="font-medium text-16"> {bookings?.sgst || "-"}</span>
-                </div>
-
-                <div className="flex">
-                  <span className="text-[#1A1A1A80] w-32 text-14">Booked On</span>
-                  <span className="font-medium text-16">
-                    {" "}
-                    {bookings?.created_at.split(" ")[0]}
-                  </span>
-                </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Payment Method</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {bookings?.payment_method === "NA" ? "Complimentory" : bookings?.payment_method}
+                </span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="space-y-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Booked by</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {bookings?.created_by_name}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">GST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {bookings?.gst || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Scheduled Date</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {bookings?.startdate.split(" ")[0]}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Schedule Slot</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings?.show_schedule_24_hour}>
+                  {bookings?.show_schedule_24_hour}
+                </span>
+              </div>
+
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">SGST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {bookings?.sgst || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Booked On</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {bookings?.sgst || "-"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       )
     },
     {
       value: "logs",
       label: "Logs",
       content: (
-        <Card>
-          <CardHeader
-            className="bg-[#F6F4EE]"
-            style={{ border: "1px solid #D9D9D9" }}
-          >
-            <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-              <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                L
-              </span>
-              LOGS
-            </CardTitle>
-          </CardHeader>
-          <CardContent
+        <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              L
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">LOGS</h3>
+          </div>
+          {/* <CardContent
             className="px-6 bg-[#F6F7F7]"
             style={{ border: "1px solid #D9D9D9" }}
           >
             <div className="text-gray-500">
-              {/* No logs available for this booking. */}
-
               <div className="timeline">
                 {logs.map((item, index) => (
                   <div key={index} className="timeline-item">
@@ -193,8 +197,11 @@ export const BookingDetailsPage = () => {
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </CardContent> */}
+          <div className="overflow-x-auto px-3">
+            <LogsTimeline logs={logs} />
+          </div>
+        </div>
       )
     }
   ]
@@ -221,7 +228,7 @@ export const BookingDetailsPage = () => {
           </h1>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="bg-white rounded-lg border-2 border-gray-200">
           <CustomTabs tabs={tabs} defaultValue="details" onValueChange={setActiveTab} />
         </div>
       </>
