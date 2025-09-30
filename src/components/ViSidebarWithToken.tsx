@@ -102,10 +102,10 @@ const ViSidebarWithToken: React.FC = () => {
         setIsLoading(false);
     }, [location.search]);
 
-    // Ensure section shows Maintenance for VI routes (must be before any returns to keep hook order stable)
+    // Ensure section shows Safety for VI routes (must be before any returns to keep hook order stable)
     useEffect(() => {
-        if (location.pathname.startsWith('/maintenance')) {
-            setCurrentSection('Maintenance');
+        if (location.pathname.startsWith('/safety')) {
+            setCurrentSection('Safety');
         }
     }, [location.pathname, setCurrentSection]);
 
@@ -157,7 +157,7 @@ const ViSidebarWithToken: React.FC = () => {
         return item.subItems[0]?.href || null;
     };
 
-    const currentModules = modulesByPackage['Maintenance'];
+    const currentModules = Array.isArray(modulesByPackage['Safety']) ? modulesByPackage['Safety'] : [];
 
     const toggleExpanded = (name: string) =>
         setExpandedItems((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
@@ -265,14 +265,14 @@ const ViSidebarWithToken: React.FC = () => {
                         className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? 'text-center' : 'tracking-wide'
                             }`}
                     >
-                        {isSidebarCollapsed ? '' : 'Maintenance'}
+                        {isSidebarCollapsed ? '' : 'Safety'}
                     </h3>
                 </div>
 
                 <nav className="space-y-2">
                     {isSidebarCollapsed ? (
                         <div className="flex flex-col items-center space-y-5 pt-4">
-                            {currentModules.map((module) => (
+                            {(Array.isArray(currentModules) ? currentModules : []).map((module) => (
                                 <button
                                     key={module.name}
                                     onClick={() => {
@@ -305,7 +305,7 @@ const ViSidebarWithToken: React.FC = () => {
                             ))}
                         </div>
                     ) : (
-                        currentModules.map((module) => renderItem(module))
+                        (Array.isArray(currentModules) ? currentModules : []).map((module) => renderItem(module))
                     )}
                 </nav>
             </div>

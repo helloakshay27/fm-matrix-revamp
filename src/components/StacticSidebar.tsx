@@ -611,7 +611,7 @@ const modulesByPackage = {
 
 
 
-        {
+    {
       name: "M-Safe",
       icon: User,
       href: "/safety/m-safe",
@@ -652,7 +652,7 @@ const modulesByPackage = {
       subItems: [
         {
           name: "Vehicle Details",
-          href: "/safety/vi-miles/vehicle-details", 
+          href: "/safety/vi-miles/vehicle-details",
           color: "text-[#1a1a1a]",
         },
         {
@@ -739,7 +739,6 @@ const modulesByPackage = {
     },
     { name: "Events", icon: Calendar, href: "/crm/events" },
     { name: "Broadcast", icon: Bell, href: "/crm/broadcast" },
-    { name: "Groups", icon: Users, href: "/crm/groups" },
     { name: "Polls", icon: BarChart3, href: "/crm/polls" },
     { name: "Campaign", icon: Target, href: "/crm/campaign" },
     {
@@ -1177,7 +1176,8 @@ const modulesByPackage = {
           color: "text-[#1a1a1a]",
         },
       ]
-    }
+    },
+    { name: "FM Groups", icon: Users, href: "/settings/groups" },
     // {
     //   name: 'Currency',
     //   icon: Currency,

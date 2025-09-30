@@ -746,7 +746,7 @@ function App() {
   const isOmanSite = hostname.includes("oig.gophygital.work");
   useRouteLogger();
 
-  
+
   // Initialize global MUI Select search enhancer
   useEffect(() => {
     console.log(
@@ -1295,7 +1295,6 @@ function App() {
                   />
                   <Route path="/crm/polls" element={<CRMPollsPage />} />
                   <Route path="/crm/polls/add" element={<AddPollPage />} />
-                  <Route path="/crm/groups" element={<CRMGroupsPage />} />
                   <Route
                     path="/crm/groups/details/:id"
                     element={<CRMGroupDetailsPage />}
@@ -3053,6 +3052,7 @@ function App() {
                     path="/settings/community-modules/amenity-setup/:id"
                     element={<AmenityDetailsPage />}
                   />
+                  <Route path="/settings/groups" element={<CRMGroupsPage />} />
                 </Route>
 
                 {/* Setup Routes - Outside of settings parent route */}

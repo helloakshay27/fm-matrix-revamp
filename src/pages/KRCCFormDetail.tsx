@@ -777,7 +777,7 @@ export const KRCCFormDetail: React.FC = () => {
           </div>
           <div className="p-6 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              {Object.entries(bicycle).map(([k, v]) => (
+              {bicycle && Object.entries(bicycle).map(([k, v]) => (
                 <KeyValue key={k} label={toTitle(k)} value={v} />
               ))}
             </div>
@@ -794,7 +794,7 @@ export const KRCCFormDetail: React.FC = () => {
           </div>
           <div className="p-6 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              {Object.entries(mhe).map(([k, v]) => (
+              {mhe && Object.entries(mhe).map(([k, v]) => (
                 <KeyValue key={k} label={toTitle(k)} value={v} />
               ))}
             </div>
