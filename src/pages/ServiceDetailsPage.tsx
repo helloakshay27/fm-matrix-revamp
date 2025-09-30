@@ -306,9 +306,7 @@ export const ServiceDetailsPage = () => {
       {/* Tab Section */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="location-detail" className="w-full">
-          <TabsList
-            className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar rounded-t-lg h-auto p-0 text-sm bg-transparent"
-          >
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             {[
               { label: 'Location Detail', value: 'location-detail' },
               { label: 'Attachments', value: 'documents' },
@@ -318,7 +316,7 @@ export const ServiceDetailsPage = () => {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap text-sm"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0 text-sm"
               >
                 {tab.label}
               </TabsTrigger>
@@ -330,49 +328,70 @@ export const ServiceDetailsPage = () => {
           <TabsContent value="location-detail" className="p-4 sm:p-6 text-base">
             <div className="bg-white rounded-lg border">
               <div className="flex p-4 items-center ">
-                {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <Box className="w-4 h-4" />
-                </div> */}
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                  <Box className="w-6 h-6 text-[#C72030]" />
+                  <Box className="w-5 h-5 text-[#C72030]" />
                 </div>
                 <h2 className="text-lg font-bold">LOCATION DETAIL</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2  p-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 text-sm p-4 gap-6">
                 <div className="space-y-3">
-                  <div className="flex text-base">
-                    <span className="text-gray-600 w-24 font-semibold">Site</span>
-                    <span className="font-semibold">:</span> {details.site || '—'}
+                  <div className="flex  ">
+                    <span className="text-gray-500 w-24  ">Site</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.site || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-base">
-                    <span className="text-gray-600 w-24 font-semibold">Wing</span>
-                    <span className="font-semibold">:</span> {details.wing || '—'}
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24  ">Wing</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.wing || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-base">
-                    <span className="text-gray-600 w-24 font-semibold">Area</span>
-                    <span className="font-semibold">:</span> {details.area || '—'}
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 text-sm ">Area</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.area || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-base">
-                    <span className="text-gray-600 w-24 font-semibold">Created On</span>
-                    <span className="font-semibold">:</span> {formatDateTime(details.created_at)}
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 text-sm ">Created On</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formatDateTime(details.created_at)}
+                    </span>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex text-base">
-                    <span className="text-gray-600 w-24 font-semibold">Building</span>
-                    <span className="font-semibold">:</span> {details.building || '—'}
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 text-sm ">Building</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.building || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-base">
-                    <span className="text-gray-600 w-24 font-semibold">Floor</span>
-                    <span className="font-semibold">:</span> {details.floor || '—'}
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 text-sm ">Floor</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.floor || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-base">
-                    <span className="text-gray-600 w-24 font-semibold">Room</span>
-                    <span className="font-semibold">:</span> {details.room || '—'}
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 text-sm ">Room</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.room || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-base">
-                    <span className="text-gray-600 w-24 font-semibold">Created By</span>
-                    <span className="font-semibold">:</span> {details.created_by || '—'}
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 text-sm ">Created By</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.created_by || '—'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -387,7 +406,7 @@ export const ServiceDetailsPage = () => {
                   <Paperclip className="w-4 h-4" />
                 </div> */}
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                  <Paperclip className="w-6 h-6 text-[#C72030]" />
+                  <Paperclip className="w-5 h-5 text-[#C72030]" />
                 </div>
                 <h2 className="text-lg font-bold">ATTACHMENTS</h2>
               </div>
@@ -491,7 +510,7 @@ export const ServiceDetailsPage = () => {
                   <QrCode className="w-4 h-4" />
                 </div> */}
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                  <QrCode className="w-6 h-6 text-[#C72030]" />
+                  <QrCode className="w-5 h-5 text-[#C72030]" />
                 </div>
                 <h2 className="text-lg font-bold">QR CODE</h2>
               </div>
