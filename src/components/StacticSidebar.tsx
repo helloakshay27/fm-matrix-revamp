@@ -73,6 +73,7 @@ import {
   FolderTree,
   Wallet,
   Trash,
+  ChartColumnIncreasing,
 } from "lucide-react";
 
 const navigationStructure = {
@@ -597,6 +598,15 @@ const modulesByPackage = {
       ],
     },
     {
+      name: 'Report',
+      icon: Download,
+      href: '/maintenance/report',
+      subItems: [
+        { name: 'Msafe User Report', icon: Download, href: '/maintenance/report/msafe-report' },
+        { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/report/msafe-detail-report' },
+      ],
+    },
+    {
       name: "Vi Miles",
       icon: User,
       href: "/maintenance/vi-miles",
@@ -624,16 +634,16 @@ const modulesByPackage = {
       href: "/maintenance/employee-deletion-history",
     },
 
-    {
-      name: "Msafe Report",
-      icon: Download,
-      href: "/maintenance/msafe-report",
-    },
-    {
-      name: "Msafe Detail Report",
-      icon: Download,
-      href: "/maintenance/msafe-detail-report",
-    },
+    // {
+    //   name: "Msafe Report",
+    //   icon: Download,
+    //   href: "/maintenance/msafe-report",
+    // },
+    // {
+    //   name: "Msafe Detail Report",
+    //   icon: Download,
+    //   href: "/maintenance/msafe-detail-report",
+    // },
 
     { name: "PDF Download", icon: Download, href: "/maintenance/pdf-download" },
 
