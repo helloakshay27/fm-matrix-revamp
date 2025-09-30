@@ -72,27 +72,27 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     if (password.length < 8) {
       return { isValid: false, message: "Password must be at least 8 characters long." };
     }
-    
+
     // Must contain at least one uppercase letter
     if (!/[A-Z]/.test(password)) {
       return { isValid: false, message: "Password must contain at least one uppercase letter." };
     }
-    
+
     // Must contain at least one lowercase letter
     if (!/[a-z]/.test(password)) {
       return { isValid: false, message: "Password must contain at least one lowercase letter." };
     }
-    
+
     // Must contain at least one number
     if (!/[0-9]/.test(password)) {
       return { isValid: false, message: "Password must contain at least one number." };
     }
-    
+
     // Must contain at least one special character
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
       return { isValid: false, message: "Password must contain at least one special character (!@#$%^&*(),.?\":{}|<>)." };
     }
-    
+
     return { isValid: true, message: "Password is valid." };
   };
 
@@ -124,15 +124,16 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   };
 
   const handleOrganizationSelect = (org: Organization) => {
-    const cleanBaseUrl = `${org.sub_domain}.${org.domain}`.replace(/^https?:\/\//, '');
     localStorage.setItem("selectedOrg", org.name)
-    localStorage.setItem("baseUrl", cleanBaseUrl);
+    localStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
     //Session Storage For App-Level
     sessionStorage.setItem("selectedOrg", org.name)
-    sessionStorage.setItem("baseUrl", cleanBaseUrl);
-    setBaseUrl(cleanBaseUrl);
+    sessionStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
+    setBaseUrl(`${org.sub_domain}.${org.domain}`);
     setSelectedOrganization(org);
-    saveBaseUrl(cleanBaseUrl);
+    // Save the base URL in the format: sub_domain.domain
+    const baseUrl = `${org.sub_domain}.${org.domain}`;
+    saveBaseUrl(baseUrl);
     setCurrentStep(3);
   };
 
@@ -150,38 +151,38 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
     setLoginLoading(true);
     try {
-  const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`.replace(/^https?:\/\//, '');
-  const response = await loginUser(email, password, baseUrl);
+      const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
+      const response = await loginUser(email, password, baseUrl);
 
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
       }
 
       // Check if number is verified first
-      if (response.number_verified === 0 ) {
+      if (response.number_verified === 0) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
         localStorage.setItem("temp_token", response.access_token);
 
-         saveUser({
-        id: response.id,
-        email: response.email,
-        firstname: response.firstname,
-        lastname: response.lastname,
-        mobile: response.mobile,
-        latitude: response.latitude,
-        longitude: response.longitude,
-        country_code: response.country_code,
-        // spree_api_key: response.spree_api_key,
-        lock_role: response.lock_role
-      });
+        saveUser({
+          id: response.id,
+          email: response.email,
+          firstname: response.firstname,
+          lastname: response.lastname,
+          mobile: response.mobile,
+          latitude: response.latitude,
+          longitude: response.longitude,
+          country_code: response.country_code,
+          // spree_api_key: response.spree_api_key,
+          lock_role: response.lock_role
+        });
 
-         saveBaseUrl(baseUrl);
-      localStorage.setItem("userId", response.id.toString());
-      localStorage.setItem("userType", response.user_type.toString());
-      // Session Storage
-      sessionStorage.setItem("userId", response.id.toString());
-      sessionStorage.setItem("userType", response.user_type.toString());
+        saveBaseUrl(baseUrl);
+        localStorage.setItem("userId", response.id.toString());
+        localStorage.setItem("userType", response.user_type.toString());
+        // Session Storage
+        sessionStorage.setItem("userId", response.id.toString());
+        sessionStorage.setItem("userType", response.user_type.toString());
 
         toast.success("OTP sent successfully! Please verify your phone number to continue.");
 
@@ -207,11 +208,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       });
       saveToken(response.access_token);
       setToken(response.access_token);
-  saveBaseUrl(baseUrl);
+      saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id.toString());
       localStorage.setItem("userType", response.user_type.toString());
       // Session storage
-       sessionStorage.setItem("userId", response.id.toString());
+      sessionStorage.setItem("userId", response.id.toString());
       sessionStorage.setItem("userType", response.user_type.toString());
 
       const from = (location.state as { from?: Location })?.from?.pathname + (location.state as { from?: Location })?.from?.search || "/maintenance/asset";
@@ -277,7 +278,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         <Label htmlFor="email" className="text-gray-700 font-medium text-base block mb-2">
           Email Address
         </Label>
-        
+
         {/* Input Field */}
         <TextField
           variant="outlined"
@@ -427,7 +428,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               <IconButton
                 onClick={() => setShowPassword(!showPassword)}
                 edge="end"
-                sx={{ 
+                sx={{
                   color: '#64748b',
                   '&:hover': {
                     backgroundColor: 'rgba(0,0,0,0.04)'

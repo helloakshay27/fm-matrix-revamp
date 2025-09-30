@@ -18,7 +18,13 @@ export const BookingDetailsPage = () => {
 
   const [bookings, setBookings] = useState<FacilityBookingDetails | null>(null);
   const [activeTab, setActiveTab] = useState("details");
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState([
+    {
+      id: "",
+      description: "",
+      timestamp: "",
+    }
+  ]);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
