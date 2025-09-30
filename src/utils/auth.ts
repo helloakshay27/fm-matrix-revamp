@@ -114,13 +114,26 @@ export const saveBaseUrl = (baseUrl: string): void => {
 };
 
 // Get base URL from localStorage
+// export const getBaseUrl = (): string | null => {
+//   const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
+//   if (!savedUrl) return null;
+
+//   // Ensure the URL includes the protocol
+//   return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
+// };
+
 export const getBaseUrl = (): string | null => {
   const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
   if (!savedUrl) return null;
 
-  // Ensure the URL includes the protocol
-  return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
+  // Check if the savedUrl starts with http:// or https://, if not add https://
+  if (savedUrl.startsWith("http://") || savedUrl.startsWith("https://")) {
+    return savedUrl;
+  } else {
+    return `https://${savedUrl}`;
+  }
 };
+
 
 
 // Check if user is authenticated
