@@ -74,27 +74,27 @@ export const BookingDetailsPage = () => {
               <div className="space-y-4">
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Booking ID</span>
-                  <span className="font-medium text-16"> {bookings.id}</span>
+                  <span className="font-medium text-16"> {bookings?.id}</span>
                 </div>
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Comment</span>
-                  <span className="font-medium text-16 truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings.comment}>
-                    {bookings.comment}
+                  <span className="font-medium text-16 truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings?.comment}>
+                    {bookings?.comment}
                   </span>
                 </div>
 
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Status</span>
                   <span
-                    className={`font-medium px-2 py-1 rounded-none text-xs ${bookings.current_status === "Cancelled"
+                    className={`font-medium px-2 py-1 rounded-none text-xs ${bookings?.current_status === "Cancelled"
                       ? "bg-red-100 text-red-800"
-                      : bookings.current_status === "Confirmed"
+                      : bookings?.current_status === "Confirmed"
                         ? "bg-green-100 text-green-800"
                         : "bg-blue-100 text-blue-800"
                       }`}
                   >
                     {" "}
-                    {bookings.current_status}
+                    {bookings?.current_status}
                   </span>
                 </div>
 
@@ -102,7 +102,7 @@ export const BookingDetailsPage = () => {
                   <span className="text-[#1A1A1A80] w-32 text-14">Payment Method</span>
                   <span className="font-medium text-16">
                     {" "}
-                    {bookings.payment_method === "NA" ? "Complimentory" : bookings.payment_method}
+                    {bookings?.payment_method === "NA" ? "Complimentory" : bookings?.payment_method}
                   </span>
                 </div>
               </div>
@@ -112,20 +112,20 @@ export const BookingDetailsPage = () => {
                   <span className="text-[#1A1A1A80] w-32 text-14">Booked by</span>
                   <span className="font-medium text-16">
                     {" "}
-                    {bookings.created_by_name}
+                    {bookings?.created_by_name}
                   </span>
                 </div>
 
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">GST</span>
-                  <span className="font-medium text-16"> {bookings.gst || "-"}</span>
+                  <span className="font-medium text-16"> {bookings?.gst || "-"}</span>
                 </div>
 
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Scheduled Date</span>
                   <span className="font-medium text-16">
                     {" "}
-                    {bookings.startdate.split(" ")[0]}
+                    {bookings?.startdate.split(" ")[0]}
                   </span>
                 </div>
               </div>
@@ -133,21 +133,21 @@ export const BookingDetailsPage = () => {
               <div className="space-y-4">
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Schedule Slot</span>
-                  <span className="font-medium text-16 truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings.show_schedule_24_hour}>
+                  <span className="font-medium text-16 truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings?.show_schedule_24_hour}>
                     {" "}
-                    {bookings.show_schedule_24_hour}
+                    {bookings?.show_schedule_24_hour}
                   </span>
                 </div>
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">SGST</span>
-                  <span className="font-medium text-16"> {bookings.sgst || "-"}</span>
+                  <span className="font-medium text-16"> {bookings?.sgst || "-"}</span>
                 </div>
 
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Booked On</span>
                   <span className="font-medium text-16">
                     {" "}
-                    {bookings.created_at.split(" ")[0]}
+                    {bookings?.created_at.split(" ")[0]}
                   </span>
                 </div>
               </div>
@@ -205,7 +205,6 @@ export const BookingDetailsPage = () => {
 
   return (
     <div className="p-[30px] min-h-screen bg-transparent">
-      {/* Header */}
       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
         <button
           onClick={() => navigate(-1)}
@@ -223,7 +222,7 @@ export const BookingDetailsPage = () => {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <CustomTabs tabs={tabs} defaultValue="order_details" onValueChange={setActiveTab} />
+          <CustomTabs tabs={tabs} defaultValue="details" onValueChange={setActiveTab} />
         </div>
       </>
     </div>
