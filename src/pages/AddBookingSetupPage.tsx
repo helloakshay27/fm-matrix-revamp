@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ChevronDown, ChevronUp, Upload, User, X } from "lucide-react";
+import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share, Share2, Tv, Upload, User, X } from "lucide-react";
 import {
   TextField,
   Select,
@@ -634,7 +634,7 @@ export const AddBookingSetupPage = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                 <User className="w-4 h-4" />
@@ -723,18 +723,15 @@ export const AddBookingSetupPage = () => {
             </div>
           </div>
 
-          {/* Configure Slot */}
-          <div className="border rounded-lg">
-            <div className="flex items-center gap-2 bg-[#F6F4EE] p-6"
-              style={{ border: "1px solid #D9D9D9" }}>
-              <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                2
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CalendarDays className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold text-[#C72030]">
-                CONFIGURE SLOT
-              </h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE SLOT</h3>
             </div>
-            <div className="p-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+
+            <div>
               <Button
                 onClick={addSlot}
                 className="bg-purple-600 hover:bg-purple-700 mb-4"
@@ -1201,18 +1198,15 @@ export const AddBookingSetupPage = () => {
             </div>
           </div>
 
-          {/* Configure Payment */}
-          <div className="border rounded-lg">
-            <div className="flex items-center gap-2 bg-[#F6F4EE] p-6"
-              style={{ border: "1px solid #D9D9D9" }}>
-              <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                3
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CreditCard className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold text-[#C72030]">
-                CONFIGURE PAYMENT
-              </h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE PAYMENT</h3>
             </div>
-            <div className="p-[31px] bg-[#F6F7F7] space-y-6" style={{ border: "1px solid #D9D9D9" }}>
+
+            <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -1285,20 +1279,16 @@ export const AddBookingSetupPage = () => {
             </div>
           </div>
 
-          {/* Cover Image */}
           <div className="flex items-start justify-between gap-4">
-            {/* Cover Image */}
-            <div className="border rounded-lg w-full"
-            >
-              <div className="flex items-center gap-2 bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  4
+            <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <FileImage className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  COVER IMAGE
-                </h3>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">COVER IMAGE</h3>
               </div>
-              <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+
+              <div className="p-6" style={{ border: "1px solid #D9D9D9" }}>
                 <div
                   className="border-2 border-dashed border-[#C72030]/30 rounded-lg text-center p-6"
                   onClick={triggerFileSelect}
@@ -1348,17 +1338,15 @@ export const AddBookingSetupPage = () => {
               </div>
             </div>
 
-            <div className="border rounded-lg w-full"
-            >
-              <div className="flex items-center gap-2 bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  5
+            <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <Image className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  Booking Summary Image
-                </h3>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Booking Summary Image</h3>
               </div>
-              <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+
+              <div className="p-6" style={{ border: "1px solid #D9D9D9" }}>
                 <div
                   className="border-2 border-dashed border-[#C72030]/30 rounded-lg text-center p-6"
                   onClick={triggerBookingImgSelect}
@@ -1409,17 +1397,15 @@ export const AddBookingSetupPage = () => {
             </div>
           </div>
 
-          {/* Description */}
-          <div className="border rounded-lg">
-            <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
-              <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                6
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <NotepadText className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold text-[#C72030]">
-                DESCRIPTION
-              </h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">DESCRIPTION</h3>
             </div>
-            <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+
+            <div>
               <Textarea
                 placeholder="Enter description"
                 value={formData.description}
@@ -1433,16 +1419,15 @@ export const AddBookingSetupPage = () => {
 
           {/* Terms & Conditions and Cancellation Text */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="border rounded-lg">
-              <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  7
+            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <ReceiptText className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  TERMS & CONDITIONS*
-                </h3>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">TERMS & CONDITIONS*</h3>
               </div>
-              <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+
+              <div>
                 <Textarea
                   placeholder="Enter terms and conditions"
                   value={formData.termsConditions}
@@ -1457,16 +1442,15 @@ export const AddBookingSetupPage = () => {
               </div>
             </div>
 
-            <div className="border rounded-lg">
-              <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  8
+            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <MessageSquareX className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  CANCELLATION POLICY*
-                </h3>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CANCELLATION POLICY*</h3>
               </div>
-              <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+
+              <div>
                 <Textarea
                   placeholder="Enter cancellation text"
                   value={formData.cancellationText}
@@ -1482,17 +1466,15 @@ export const AddBookingSetupPage = () => {
             </div>
           </div>
 
-          {/* Cancellation Rules */}
-          <div className="border rounded-lg">
-            <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
-              <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                9
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <Settings className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold text-[#C72030]">
-                RULE SETUP
-              </h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">RULE SETUP</h3>
             </div>
-            <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+
+            <div>
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="font-medium text-gray-700">
                   Rules Description
@@ -1584,13 +1566,13 @@ export const AddBookingSetupPage = () => {
             </div>
           </div>
 
-          <div className={`border rounded-lg overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[5rem]'}`}>
-            <div className="flex justify-between p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold"></div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  ADDITIONAL SETUP
-                </h3>
+          <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[6rem]'}`}>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <FileCog className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">ADDITIONAL SETUP</h3>
               </div>
               {additionalOpen ? (
                 <ChevronUp
@@ -1604,18 +1586,17 @@ export const AddBookingSetupPage = () => {
                 />
               )}
             </div>
-            <div className="p-6 space-y-4" style={{ border: "1px solid #D9D9D9" }} id="additional">
-              {/* Configure Amenity Info */}
-              <div className="border rounded-lg">
-                <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    10
+
+            <div className="space-y-4" id="additional">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <Tv className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">
-                    CONFIGURE AMENITY INFO
-                  </h3>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }} id="amenities">
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="tv"
@@ -1714,17 +1695,15 @@ export const AddBookingSetupPage = () => {
                 </div>
               </div>
 
-              {/* Seater Info */}
-              <div className="border rounded-lg">
-                <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="seater">
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    11
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <Armchair className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">
-                    SEATER INFO
-                  </h3>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">SEATER INFO</h3>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-2">
                   <FormControl>
                     <InputLabel>Seater Info</InputLabel>
                     <Select
@@ -1756,16 +1735,15 @@ export const AddBookingSetupPage = () => {
               </div>
 
               {/* Floor Info */}
-              <div className="border rounded-lg">
-                <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="floor">
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    12
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <LampFloor className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">
-                    FLOOR INFO
-                  </h3>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">FLOOR INFO</h3>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-2">
                   <FormControl>
                     <InputLabel>Floor Info</InputLabel>
                     <Select
@@ -1796,17 +1774,15 @@ export const AddBookingSetupPage = () => {
                 </div>
               </div>
 
-              {/* Shared Content Info */}
-              <div className="border rounded-lg">
-                <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="shared">
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    13
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <Share2 className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">
-                    Shared Content Info
-                  </h3>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Shared Content Info</h3>
                 </div>
-                <div className=" p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+
+                <div>
                   <Textarea
                     placeholder="Text content will appear on meeting room share icon in Application"
                     value={formData.sharedContentInfo}
@@ -1821,17 +1797,14 @@ export const AddBookingSetupPage = () => {
                 </div>
               </div>
 
-              {/* Configure App Key */}
-              <div className="border rounded-lg">
-                <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="appKey">
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    14
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <BookKey className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">
-                    CONFIGURE APP KEY
-                  </h3>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE APP KEY</h3>
                 </div>
-                <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }} id="appKey">
+                <div className="my-2" id="appKey">
                   <TextField
                     label="App Key"
                     placeholder="Enter Alphanumeric Key"
@@ -1846,16 +1819,16 @@ export const AddBookingSetupPage = () => {
             </div>
           </div>
 
-          <div className="flex gap-4 pt-6 border-t justify-center">
+          <div className="flex gap-4 justify-center">
+            <Button variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
             <Button
               onClick={handleSave}
               className="bg-purple-600 hover:bg-purple-700 text-white"
               disabled={isSubmitting}
             >
               Save
-            </Button>
-            <Button variant="outline" onClick={handleClose}>
-              Cancel
             </Button>
           </div>
         </div>
