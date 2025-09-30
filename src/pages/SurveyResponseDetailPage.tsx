@@ -1424,9 +1424,10 @@ export const SurveyResponseDetailPage = () => {
       console.log("🔍 Response answers:", response.answers);
 
       // Create one row per response (not per answer)
+      const responseId = response.response_id ?? '';
       const rowData: TabularResponseData = {
-        id: response.response_id.toString(),
-        response_id: response.response_id.toString(),
+        id: responseId.toString(),
+        response_id: responseId.toString(),
         date_time: response.responded_time
           ? new Date(response.responded_time).toLocaleString("en-GB", {
               day: "2-digit",

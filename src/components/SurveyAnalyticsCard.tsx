@@ -14,6 +14,8 @@ interface SurveyAnalyticsCardProps {
     endDate: Date;
   };
   onDownload?: () => void;
+  xAxisLabel?: string;
+  yAxisLabel?: string;
 }
 
 export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
@@ -22,7 +24,9 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
   type,
   className = '',
   dateRange,
-  onDownload
+  onDownload,
+  xAxisLabel,
+  yAxisLabel
 }) => {
   console.log("🎯 SurveyAnalyticsCard - Props received:");
   console.log("🎯 Title:", title);
@@ -80,7 +84,7 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
 
   const renderBarChart = () => (
     <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+      <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis 
           dataKey="name" 
@@ -88,8 +92,22 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
           textAnchor="end"
           height={80}
           fontSize={12}
+          label={{ 
+            value: xAxisLabel || '', 
+            position: 'insideBottom', 
+            offset: -10,
+            style: { textAnchor: 'middle', fontSize: '12px', fontWeight: 'bold' }
+          }}
         />
-        <YAxis allowDecimals={false} />
+        <YAxis 
+          allowDecimals={false}
+          label={{ 
+            value: yAxisLabel || '', 
+            angle: -90, 
+            position: 'insideLeft',
+            style: { textAnchor: 'middle', fontSize: '12px', fontWeight: 'bold' }
+          }}
+        />
         <Tooltip 
           formatter={(value: number, name: string) => [value, 'Count']}
           labelFormatter={(label) => `Survey Type: ${label}`}
