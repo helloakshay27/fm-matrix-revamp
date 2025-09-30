@@ -476,17 +476,17 @@ const TrainingDashboard = () => {
           ? atts
               .map((a: any) =>
                 isImage(a?.url, a?.doctype)
-    ? `<div style='width:100%;margin:0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;background:#fff;page-break-inside:avoid;'>
-         <img src='${a?.dataUrl || a?.url || ''}' crossOrigin='anonymous' style='width:100%;height:auto;max-height:150px;object-fit:contain;display:block;background:#fff'/>
-                     </div>`
-                  : `<div style='font-size:12px;color:#1f2937;word-break:break-all;'>• ${a?.url || ''}</div>`
+  ? `<div style='width:100%;margin:0;page-break-inside:avoid;padding:4px 0 4px 0;'>
+     <img src='${a?.dataUrl || a?.url || ''}' crossOrigin='anonymous' style='width:auto;max-width:160px;height:auto;max-height:110px;object-fit:contain;display:block;' />
+      </div>`
+                  : `<div style='font-size:12px;color:#1f2937;word-break:break-all;margin:4px 0;'>• ${a?.url || ''}</div>`
               )
               .join('')
           : `<span style='color:#9ca3af;font-size:13px;'>No attachments</span>`;
         const attachments = `
-          <div style='margin-top:12px;'>
-            <div style='font-weight:600;margin-bottom:4px;'>Attachments</div>
-      <div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;'>${attList}</div>
+          <div style='margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;'>
+            <div style='font-weight:600;margin-bottom:6px;'>Attachments</div>
+      <div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;'>${attList}</div>
           </div>`;
   return section('TRAINING DETAILS', body + attachments);
       };
@@ -524,8 +524,8 @@ const TrainingDashboard = () => {
                 ? atts.map((a: any) => `<div style='font-size:12px;color:#1f2937;word-break:break-all;'>• ${a?.url || ''}</div>`).join('')
                 : `<span style='color:#9ca3af;font-size:13px;'>No attachments</span>`;
               const attachments = `
-                <div style='margin-top:12px;'>
-                  <div style='font-weight:600;margin-bottom:4px;'>Attachments</div>
+                <div style='margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;'>
+                  <div style='font-weight:600;margin-bottom:6px;'>Attachments</div>
                   ${list}
                 </div>`;
               return section('TRAINING DETAILS', body + attachments);
