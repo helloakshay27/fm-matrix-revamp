@@ -148,7 +148,7 @@ export const AddGroupModal = ({ isOpen, onClose, fetchGroups }: AddGroupModalPro
                   <Label
                     className="text-sm font-normal cursor-pointer flex-1"
                   >
-                    {member.firstname + " " + member.lastname}
+                    {member.full_name}
                   </Label>
                 </div>
               ))}
