@@ -661,9 +661,7 @@ export const InventoryDetailsPage = () => {
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="inventory-detail" className="w-full">
-          <TabsList
-            className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar rounded-t-lg h-auto p-0 text-sm bg-transparent"
-          >
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             {[
               { label: 'Inventory Detail', value: 'inventory-detail' },
               { label: 'QR Code', value: 'qr-code' },
@@ -673,7 +671,7 @@ export const InventoryDetailsPage = () => {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0 text-sm"
               >
                 {tab.label}
               </TabsTrigger>
@@ -690,101 +688,177 @@ export const InventoryDetailsPage = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 p-4 gap-3">
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Name</span>
-                  <span>: {inventoryData?.name || '—'}</span>
+                  <span className="text-gray-500 w-24">Site</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.site || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Min Stock Level</span>
-                  <span>: {inventoryData?.min_stock_level || '—'}</span>
+                  <span className="text-gray-500 w-24">Name</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.name || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Type</span>
-                  <span>: {inventoryData?.inventory_type ? getInventoryType(inventoryData.inventory_type) : '—'}</span>
+                  <span className="text-gray-500 w-24">Min Stock Level</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.min_stock_level || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Type Name</span>
-                  <span>: {(inventoryData as any)?.inventory_type_name || '—'}</span>
+                  <span className="text-gray-500 w-24">Type</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.inventory_type ? getInventoryType(inventoryData.inventory_type) : '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Sub Type Name</span>
-                  <span>: {(inventoryData as any)?.inventory_sub_type_name || '—'}</span>
+                  <span className="text-gray-500 w-24">Type Name</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {(inventoryData as any)?.inventory_type_name || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Criticality</span>
-                  <span>: {inventoryData?.criticality ? getCriticality(inventoryData.criticality) : '—'}</span>
+                  <span className="text-gray-500 w-24">Sub Type Name</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {(inventoryData as any)?.inventory_sub_type_name || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Code</span>
-                  <span>: {inventoryData?.code || '—'}</span>
+                  <span className="text-gray-500 w-24">Criticality</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.criticality ? getCriticality(inventoryData.criticality) : '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Serial Number</span>
-                  <span>: {inventoryData?.serial_number || '—'}</span>
+                  <span className="text-gray-500 w-24">Code</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.code || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Quantity</span>
-                  <span>: {inventoryData?.quantity || '—'}</span>
+                  <span className="text-gray-500 w-24">Serial Number</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.serial_number || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">SGST Rate</span>
-                  <span>: {inventoryData?.sgst_rate || '—'}</span>
+                  <span className="text-gray-500 w-24">Quantity</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.quantity || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">IGST Rate</span>
-                  <span>: {inventoryData?.igst_rate || '—'}</span>
+                  <span className="text-gray-500 w-24">SGST Rate</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.sgst_rate || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Site</span>
-                  <span>: {inventoryData?.site || '—'}</span>
+                  <span className="text-gray-500 w-24">IGST Rate</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.igst_rate || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Active</span>
-                  <span>: {inventoryData?.active ? 'Active' : 'Inactive'}</span>
+                  <span className="text-gray-500 w-24">Site</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.site || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Rate Contract Vendor</span>
-                  <span>: {inventoryData?.rate_contract_vendor_code || '—'}</span>
+                  <span className="text-gray-500 w-24">Active</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.active ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Max Stock Level</span>
-                  <span>: {inventoryData?.max_stock_level || '—'}</span>
+                  <span className="text-gray-500 w-24">Rate Contract Vendor</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.rate_contract_vendor_code || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Min. Order Level</span>
-                  <span>: {inventoryData?.min_order_level || '—'}</span>
+                  <span className="text-gray-500 w-24">Max Stock Level</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.max_stock_level || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">SAC/HSN</span>
-                  <span>: {hsnCodeDisplay || (inventoryData?.hsn_id ? String((inventoryData as any).hsn_id) : '—')}</span>
+                  <span className="text-gray-500 w-24">Min. Order Level</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.min_order_level || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Cost</span>
-                  <span>: {inventoryData?.cost || 'NA'}</span>
+                  <span className="text-gray-500 w-24">SAC/HSN</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {hsnCodeDisplay || (inventoryData?.hsn_id ? String((inventoryData as any).hsn_id) : '—')}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">CGST Rate</span>
-                  <span>: {inventoryData?.cgst_rate || '—'}</span>
+                  <span className="text-gray-500 w-24">Cost</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.cost || 'NA'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Eco-friendly</span>
-                  <span>: {inventoryData?.green_product ? 'Yes' : 'No'}</span>
+                  <span className="text-gray-500 w-24">CGST Rate</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.cgst_rate || '—'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Unit</span>
-                  <span>: {formatUnit((inventoryData as any)?.unit)}</span>
+                  <span className="text-gray-500 w-24">Eco-friendly</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.green_product ? 'Yes' : 'No'}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Category</span>
-                  <span>: {inventoryData?.category || '—'}</span>
+                  <span className="text-gray-500 w-24">Unit</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {formatUnit((inventoryData as any)?.unit)}
+                  </span>
                 </div>
                 <div className="flex text-sm">
-                  <span className="text-gray-600 w-24 font-semibold">Expiry Date</span>
-                  <span>: {formatDateOnly(inventoryData?.expiry_date)}</span>
+                  <span className="text-gray-500 w-24">Category</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.category || '—'}
+                  </span>
+                </div>
+                <div className="flex text-sm">
+                  <span className="text-gray-500 w-24">Expiry Date</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {formatDateOnly(inventoryData?.expiry_date)}
+                  </span>
                 </div>
                 <div className="flex text-sm items-center">
-                  <span className="text-gray-600 w-24 font-semibold">Expired</span>
+                  <span className="text-gray-500 w-24">Expired</span>
                   <span className="flex items-center gap-2">
-                    :
+                    <span className="text-gray-500">:</span>
                     {((inventoryData as any)?.expired === true || String((inventoryData as any)?.expired).toLowerCase() === 'true') ? (
                       <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#C72030]/10 text-[#C72030]">Expired</span>
                     ) : (
@@ -934,49 +1008,77 @@ export const InventoryDetailsPage = () => {
                   <Box className="w-4 h-4" />
                 </div> */}
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                                  <Box className="w-6 h-6 text-[#C72030]" />
-                                </div>
+                  <Box className="w-6 h-6 text-[#C72030]" />
+                </div>
                 <h2 className="text-lg font-[700]">ASSET INFORMATION</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2  p-4 gap-6">
                 <div className="space-y-3">
-                  <div className="flex text-sm">
-                    <span className="text-gray-600 w-24 font-semibold">Name</span>
+                  <div className="flex  ">
+                    <span className="text-gray-500 w-24  ">Name</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                     <span>: {inventoryData?.asset_name || inventoryData?.name || '—'}</span>
+                    </span>
+                  </div>
+                  
+                  <div className="flex text-sm">
+                    <span className="text-gray-500 w-24">Group</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {inventoryData?.pms_asset_group || inventoryData?.group || '—'}
+                    </span>
                   </div>
                   <div className="flex text-sm">
-                    <span className="text-gray-600 w-24 font-semibold">Group</span>
-                    <span>: {inventoryData?.pms_asset_group || inventoryData?.group || '—'}</span>
+                    <span className="text-gray-500 w-24">SubGroup</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {inventoryData?.pms_asset_sub_group || inventoryData?.sub_group || '—'}
+                    </span>
                   </div>
                   <div className="flex text-sm">
-                    <span className="text-gray-600 w-24 font-semibold">SubGroup</span>
-                    <span>: {inventoryData?.pms_asset_sub_group || inventoryData?.sub_group || '—'}</span>
-                  </div>
-                  <div className="flex text-sm">
-                    <span className="text-gray-600 w-24 font-semibold">Site</span>
-                    <span>: {inventoryData?.site || '—'}</span>
+                    <span className="text-gray-500 w-24">Site</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {inventoryData?.site || '—'}
+                    </span>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex text-sm">
-                    <span className="text-gray-600 w-24 font-semibold">Building</span>
-                    <span>: {inventoryData?.building || '—'}</span>
+                    <span className="text-gray-500 w-24">Building</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {inventoryData?.building || '—'}
+                    </span>
                   </div>
                   <div className="flex text-sm">
-                    <span className="text-gray-600 w-24 font-semibold">Wing</span>
-                    <span>: {inventoryData?.wing || '—'}</span>
+                    <span className="text-gray-500 w-24">Wing</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {inventoryData?.wing || '—'}
+                    </span>
                   </div>
                   <div className="flex text-sm">
-                    <span className="text-gray-600 w-24 font-semibold">Floor</span>
-                    <span>: {inventoryData?.floor || '—'}</span>
+                    <span className="text-gray-500 w-24">Floor</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {inventoryData?.floor || '—'}
+                    </span>
                   </div>
                   <div className="flex text-sm">
-                    <span className="text-gray-600 w-24 font-semibold">Area</span>
-                    <span>: {inventoryData?.area || '—'}</span>
+                    <span className="text-gray-500 w-24">Area</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {inventoryData?.area || '—'}
+                    </span>
                   </div>
                   <div className="flex text-sm">
-                    <span className="text-gray-600 w-24 font-semibold">Room</span>
-                    <span>: {inventoryData?.room || '—'}</span>
+                    <span className="text-gray-500 w-24">Room</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {inventoryData?.room || '—'}
+                    </span>
                   </div>
                 </div>
               </div>
