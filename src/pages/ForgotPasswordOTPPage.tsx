@@ -25,6 +25,35 @@ export const ForgotPasswordOTPPage = () => {
   const isOmanSite = hostname.includes("oig.gophygital.work");
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
+  const validatePassword = (password: string) => {
+    // Password must be at least 8 characters long
+    if (password.length < 8) {
+      return { isValid: false, message: "Password must be at least 8 characters long." };
+    }
+    
+    // Must contain at least one uppercase letter
+    if (!/[A-Z]/.test(password)) {
+      return { isValid: false, message: "Password must contain at least one uppercase letter." };
+    }
+    
+    // Must contain at least one lowercase letter
+    if (!/[a-z]/.test(password)) {
+      return { isValid: false, message: "Password must contain at least one lowercase letter." };
+    }
+    
+    // Must contain at least one number
+    if (!/[0-9]/.test(password)) {
+      return { isValid: false, message: "Password must contain at least one number." };
+    }
+    
+    // Must contain at least one special character
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return { isValid: false, message: "Password must contain at least one special character (!@#$%^&*(),.?\":{}|<>)." };
+    }
+    
+    return { isValid: true, message: "Password is valid." };
+  };
+
   useEffect(() => {
     // Redirect if no email or mobile
     if (!emailOrMobile) {
@@ -56,8 +85,9 @@ export const ForgotPasswordOTPPage = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
+      toast.error(passwordValidation.message);
       return;
     }
 
@@ -291,6 +321,35 @@ export const ForgotPasswordOTPPage = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
+            
+            {/* Password Requirements */}
+            {/* {newPassword && (
+              <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
+                <p className="text-gray-700 text-xs font-medium mb-2">Password Requirements:</p>
+                <div className="space-y-1">
+                  <div className={`flex items-center text-xs ${newPassword.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
+                    <span className="mr-2">{newPassword.length >= 8 ? '✓' : '○'}</span>
+                    At least 8 characters
+                  </div>
+                  <div className={`flex items-center text-xs ${/[A-Z]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
+                    <span className="mr-2">{/[A-Z]/.test(newPassword) ? '✓' : '○'}</span>
+                    One uppercase letter
+                  </div>
+                  <div className={`flex items-center text-xs ${/[a-z]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
+                    <span className="mr-2">{/[a-z]/.test(newPassword) ? '✓' : '○'}</span>
+                    One lowercase letter
+                  </div>
+                  <div className={`flex items-center text-xs ${/[0-9]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
+                    <span className="mr-2">{/[0-9]/.test(newPassword) ? '✓' : '○'}</span>
+                    One number
+                  </div>
+                  <div className={`flex items-center text-xs ${/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? 'text-green-600' : 'text-gray-400'}`}>
+                    <span className="mr-2">{/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? '✓' : '○'}</span>
+                    One special character (!@#$%^&*(),.?":{}|&lt;&gt;)
+                  </div>
+                </div>
+              </div>
+            )} */}
           </div>
 
           {/* Confirm Password */}
