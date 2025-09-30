@@ -27,7 +27,7 @@ const modulesByPackage = {
         {
             name: 'Report',
             icon: Download,
-            href: '/safety',
+            href: '/safety/report',
             subItems: [
                 { name: 'Msafe User Report', icon: Download, href: '/safety/report/msafe-report' },
                 { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
