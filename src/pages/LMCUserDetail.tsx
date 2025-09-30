@@ -84,7 +84,8 @@ const LMCUserDetail = () => {
             if (!baseUrl || !token) { setError('Missing base URL or token'); return; }
             setLoading(true); setError(null);
             try {
-                const res = await fetch(`https://${baseUrl}/lmcs/${lmcId}.json`, { headers: { Authorization: `Bearer ${token}` } });
+                const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+                const res = await fetch(`${cleanBaseUrl}/lmcs/${lmcId}.json`, { headers: { Authorization: `Bearer ${token}` } });
                 if (!res.ok) throw new Error(`Failed (${res.status})`);
                 const json: LMCDetailApiResponse = await res.json();
                 // Log raw keys once for diagnostics (will remove later)
@@ -92,7 +93,7 @@ const LMCUserDetail = () => {
                     console.log('[LMC] Raw LMC detail keys:', Object.keys(json));
                     // Attempt to surface similarly named properties in case API uses a different naming
                     const possible = Object.entries(json).filter(([k]) => k.toLowerCase().includes('krcc'));
-                    if (possible.length) console.log('[LMC] Possible KRCC related props:', possible.map(([k,v]) => ({ k, type: typeof v, value: v })));
+                    if (possible.length) console.log('[LMC] Possible KRCC related props:', possible.map(([k, v]) => ({ k, type: typeof v, value: v })));
                 }
                 // Normalize unexpected API key naming (backend sent 'selected_krcc_categories=' instead of 'selected_krcc_categories')
                 const weirdKey = (json as any)['selected_krcc_categories='];
@@ -300,8 +301,8 @@ const LMCUserDetail = () => {
                     {groupedCheckpoints.map(group => (
                         <div key={group.category} className="mb-6 border rounded-lg">
                             <div className="px-4 py-2 border-b bg-gray-100 text-sm font-semibold flex items-center gap-2">
-                                <span className="text-[#C72030]">{SECTION_TITLE_MAP[group.category] || group.category.replace(/KrccRequirementComingFrom\./,'').replace(/_/g,' ').toUpperCase()}</span>
-                               
+                                <span className="text-[#C72030]">{SECTION_TITLE_MAP[group.category] || group.category.replace(/KrccRequirementComingFrom\./, '').replace(/_/g, ' ').toUpperCase()}</span>
+
                             </div>
                             <div className="p-4">
                                 {group.items.length > 0 ? (

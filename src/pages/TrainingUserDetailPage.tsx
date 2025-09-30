@@ -69,7 +69,8 @@ const TrainingUserDetailPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const url = `https://${baseUrl}/trainings/${id}/user_trainings.json`;
+      const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      const url = `${cleanBaseUrl}/trainings/${id}/user_trainings.json`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json: ApiResponse = await res.json();

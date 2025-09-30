@@ -109,7 +109,8 @@ const LMCDashboard = () => {
             if (appliedUserEmail) params.push(`q[user_email_cont]=${appliedUserEmail.trim()}`);
             else if (searchTerm) params.push(`q[user_email_cont]=${searchTerm.trim()}`);
             if (appliedCreatedByEmail) params.push(`q[created_by_email_cont]=${appliedCreatedByEmail.trim()}`);
-            const url = `https://${baseUrl}/lmcs.json?${params.join('&')}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+            const url = `${cleanBaseUrl}/lmcs.json?${params.join('&')}`;
             const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`Failed (${res.status})`);
             const json: LMCApiResponse = await res.json();

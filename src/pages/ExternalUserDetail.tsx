@@ -82,7 +82,8 @@ export const ExternalUserDetail = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) { setError('Missing base URL or token'); setLoading(false); return; }
-        const url = `https://${baseUrl}/pms/users/${userId}/user_show.json`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/${userId}/user_show.json`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const data = resp.data?.user || resp.data; // support either shape
         setUser(data);
