@@ -102,8 +102,8 @@ const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
 });
 
 const columns: ColumnConfig[] = [
-  { key: "active", label: "Active", sortable: true, draggable: true },
   { key: "id", label: "ID", sortable: true, draggable: true },
+  { key: "active", label: "Active", sortable: true, draggable: true },
   { key: "userName", label: "User Name", sortable: true, draggable: true },
   { key: "gender", label: "Gender", sortable: true, draggable: true },
   { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
