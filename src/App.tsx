@@ -2299,11 +2299,11 @@ function App() {
                   <Route path="/settings/staff" element={<StaffsDashboard />} />
 
                   <Route
-                    path="/maintenance/msafe-report"
+                    path="/maintenance/report/msafe-report"
                     element={<MsafeReportDownload />}
                   />
                   <Route
-                    path="/maintenance/msafe-detail-report"
+                    path="/maintenance/report/msafe-detail-report"
                     element={<MsafeDetailReportDownload />}
                   />
                   <Route

@@ -8,7 +8,7 @@ import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTre
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage = {
-    Maintenance: [
+    Safety: [
         {
             name: 'M-Safe',
             icon: Users,
@@ -23,6 +23,15 @@ const modulesByPackage = {
                 { name: 'External Reportee Reassign', href: '/maintenance/m-safe/reportees-reassign', color: 'text-[#1a1a1a]' },
             ],
         },
+        {
+            name: 'Report',
+            icon: Download,
+            href: '/maintenance',
+            subItems: [
+                { name: 'Msafe User Report', icon: Download, href: '/maintenance/report/msafe-report' },
+                { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/report/msafe-detail-report' },
+            ],
+        },
         // {
         //     name: 'Vi Miles',
         //     icon: Car,
@@ -34,11 +43,7 @@ const modulesByPackage = {
         // },
         { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
         { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
-
-
-        { name: 'Msafe User Report', icon: Download, href: '/maintenance/msafe-report' },
-        { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/msafe-detail-report' },
-        { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
+        // { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
 
     ],
 }

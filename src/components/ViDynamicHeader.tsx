@@ -18,12 +18,12 @@ export const ViDynamicHeader: React.FC = () => {
             <button
               onClick={() => setCurrentSection('Maintenance')}
               className={`pb-3 text-sm transition-colors ${
-                currentSection === 'Maintenance'
+                currentSection === 'Safety'
                   ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
                   : 'text-[#1a1a1a] opacity-70 hover:opacity-100'
               }`}
             >
-              Maintenance
+              Safety
             </button>
           </div>
         </div>
