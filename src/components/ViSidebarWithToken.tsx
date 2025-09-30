@@ -9,7 +9,7 @@ import { saveToken, saveUser, getToken, isAuthenticated } from '../utils/auth';
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage = {
-    Maintenance: [
+    Safety: [
         {
             name: 'M-Safe',
             icon: Users,
