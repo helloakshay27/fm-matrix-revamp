@@ -320,7 +320,7 @@ export const AMCDetailsPage = () => {
 
           {/* AMC Information */}
           <TabsContent value="amc-information" className="p-3 sm:p-6">
-            <Card className="border border-[#D9D9D9] border-b">
+            <Card className="border ">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
@@ -381,7 +381,7 @@ export const AMCDetailsPage = () => {
 
           {/* Supplier Information */}
           <TabsContent value="supplier-information" className="p-3 sm:p-6">
-            <Card className="border border-[#D9D9D9]">
+            <Card className="border">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
@@ -427,7 +427,7 @@ export const AMCDetailsPage = () => {
 
           {/* Attachments */}
           <TabsContent value="attachments" className="p-3 sm:p-6">
-            <Card className="border border-[#D9D9D9]">
+            <Card className="border">
               <CardHeader >
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
@@ -660,7 +660,7 @@ export const AMCDetailsPage = () => {
 
           {/* AMC Visits */}
           <TabsContent value="amc-visits" className="p-3 sm:p-6">
-            <Card className="border border-[#D9D9D9]">
+            <Card className="border">
               <CardHeader >
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
@@ -874,7 +874,7 @@ export const AMCDetailsPage = () => {
 
           {/* Tickets */}
           <TabsContent value="tickets" className="p-3 sm:p-6">
-            <Card className="border border-[#D9D9D9]">
+            <Card className="border">
               <CardHeader className="">
                 <CardTitle className="text-lg flex items-center">
                   {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -940,7 +940,7 @@ export const AMCDetailsPage = () => {
           {/* Asset Information */}
           {amcDetails.amc_type === 'Asset' && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
-              <Card className="border border-[#D9D9D9]">
+              <Card className="border">
                 <CardHeader >
                   <CardTitle className="text-lg flex items-center">
                     {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -1014,7 +1014,7 @@ export const AMCDetailsPage = () => {
 
           {amcDetails.amc_type === 'Service' && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
-              <Card className="border border-[#D9D9D9]">
+              <Card className="border">
                 <CardHeader >
                   <CardTitle className="text-lg flex items-center">
                     {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
