@@ -221,7 +221,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       // Add a slight delay for better UX, then redirect to dashboard
       setTimeout(() => {
-        isViSite ? navigate('/maintenance/m-safe/internal') : navigate(from, { replace: true });
+        isViSite ? navigate('/safety/m-safe/internal') : navigate(from, { replace: true });
       }, 500);
     } catch (error) {
       console.error("Login error:", error);

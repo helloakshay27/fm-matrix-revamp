@@ -287,7 +287,7 @@ export const MSafeDashboard = () => {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => navigate(`/maintenance/m-safe/user/${user.id}`, { state: { user } })}
+        onClick={() => navigate(`/safety/m-safe/user/${user.id}`, { state: { user } })}
         className="h-8 w-8 p-0"
       >
         <Eye className="h-4 w-4" />

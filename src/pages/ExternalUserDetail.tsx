@@ -95,10 +95,10 @@ export const ExternalUserDetail = () => {
   }, [userId]);
 
   if (loading) return (
-    <div className="p-6"><Button variant="ghost" onClick={() => navigate('/maintenance/m-safe/external')}><ArrowLeft className="h-4 w-4 mr-2" />Back</Button><div className="text-center py-8 text-gray-500">Loading user...</div></div>
+    <div className="p-6"><Button variant="ghost" onClick={() => navigate('/safety/m-safe/external')}><ArrowLeft className="h-4 w-4 mr-2" />Back</Button><div className="text-center py-8 text-gray-500">Loading user...</div></div>
   );
   if (error || !user) return (
-    <div className="p-6"><Button variant="ghost" onClick={() => navigate('/maintenance/m-safe/external')}><ArrowLeft className="h-4 w-4 mr-2" />Back</Button><div className="text-center py-8 text-gray-500">{error || 'User not found'}</div></div>
+    <div className="p-6"><Button variant="ghost" onClick={() => navigate('/safety/m-safe/external')}><ArrowLeft className="h-4 w-4 mr-2" />Back</Button><div className="text-center py-8 text-gray-500">{error || 'User not found'}</div></div>
   );
 
   // Field derivations & fallbacks per spec
@@ -108,20 +108,37 @@ export const ExternalUserDetail = () => {
   return (
     <div className="flex justify-center w-full min-h-screen bg-[#F8F8F7]">
       <div className="w-full">
-        <div className="flex items-center justify-between mb-6 px-4 pt-6">
+        {/* Desktop-only header actions */}
+        <div className="hidden md:flex items-center justify-between mb-6 px-4 pt-6">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/maintenance/m-safe/external')}>
+            <Button variant="ghost" onClick={() => navigate('/safety/m-safe/external')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
           </div>
-          <Button
-            variant="outline"
-            className="border-red-500 text-red-500 hover:bg-red-50"
-            onClick={() => navigate(`/maintenance/m-safe/external/user/${userId}/edit`, { state: { user } })}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="border-red-500 text-red-500 hover:bg-red-50"
+              onClick={() => navigate(`/safety/m-safe/external/user/${userId}/edit`, { state: { user } })}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+            {/* <Button
+              variant="outline"
+              className="border-blue-500 text-blue-500 hover:bg-blue-50"
+              onClick={() => navigate(`/safety/m-safe/external/user/${userId}/lmc-manager`)}
+            >
+              Add/Edit LMC Manager
+            </Button> */}
+          </div>
+        </div>
+        {/* Mobile back button only */}
+        <div className="flex md:hidden items-center px-4 pt-6 mb-4">
+          <Button variant="ghost" onClick={() => navigate('/safety/m-safe/external')}> 
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
           </Button>
         </div>
 

@@ -114,7 +114,7 @@ export const OTPVerificationPage = () => {
         // Redirect to appropriate dashboard
         setTimeout(() => {
           navigate(
-            isViSite ? "/maintenance/m-safe/internal" : "/maintenance/asset"
+            isViSite ? "/safety/m-safe/internal" : "/maintenance/asset"
           );
         }, 1000);
       }

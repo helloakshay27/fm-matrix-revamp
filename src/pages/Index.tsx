@@ -10,7 +10,7 @@ const Index = () => {
     const isViSite = hostname.includes('vi-web.gophygital.work');
 
     if (isViSite) {
-      navigate('/maintenance/m-safe/internal', { replace: true });
+      navigate('/safety/m-safe/internal', { replace: true });
     } else {
       navigate('/maintenance/asset', { replace: true });
     }
