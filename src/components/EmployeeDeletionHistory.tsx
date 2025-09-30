@@ -49,15 +49,16 @@ const EmployeeDeletionHistory: React.FC = () => {
     const [selected, setSelected] = useState<DeletionRecord | null>(null);
     const hoverTimerRef = React.useRef<number | null>(null);
 
-    const baseUrl = useMemo(() => localStorage.getItem('baseUrl') || '', []);
-    const token = useMemo(() => localStorage.getItem('token') || '', []);
-    const companyID = useMemo(() => localStorage.getItem('selectedCompanyId') || '', []);
+    const baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    const companyID = localStorage.getItem('selectedCompanyId') || '';
 
     const fetchData = async (p = page, pp = perPage, s = search) => {
         if (!baseUrl || !token || !companyID) {
             setError('Missing baseUrl/token/company');
             return;
         }
+        console.log(baseUrl, token, companyID);
         setLoading(true);
         setError(null);
         try {
