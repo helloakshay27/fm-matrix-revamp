@@ -12,7 +12,7 @@ const modulesByPackage = {
         {
             name: 'M-Safe',
             icon: Users,
-            href: '/maintenance/m-safe',
+            href: '/safety/m-safe',
             subItems: [
                 { name: 'Internal User (FTE)', href: '/safety/m-safe/internal', color: 'text-[#1a1a1a]' },
                 { name: 'External User (NON FTE)', href: '/safety/m-safe/external', color: 'text-[#1a1a1a]' },
