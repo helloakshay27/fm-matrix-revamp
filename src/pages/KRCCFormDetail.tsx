@@ -388,6 +388,7 @@ export const KRCCFormDetail: React.FC = () => {
     setError(null);
     try {
   // Ensure protocol present (else other modules use https://${baseUrl})
+  
   const protocolBase = baseUrl && baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
   const resp = await fetch(`${protocolBase}/krcc_forms/${id}.json`, {
         headers: {

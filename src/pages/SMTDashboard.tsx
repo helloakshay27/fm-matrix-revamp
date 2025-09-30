@@ -79,7 +79,8 @@ const SMTDashboard = () => {
       const token = localStorage.getItem('token');
       const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       const trimmed = (searchValue || '').trim();
-      let url = `https://${baseUrl}/smts.json?page=${page}&per_page=${pageSize}`;
+      const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      let url = `${cleanBaseUrl}/smts.json?page=${page}&per_page=${pageSize}`;
       if (trimmed) {
         url += `&q[user_email_cont]=${encodeURIComponent(trimmed)}`;
       }
@@ -181,7 +182,8 @@ const SMTDashboard = () => {
     setGeneratingId(row.id);
     try {
       // Fetch full detail
-      const url = `https://${baseUrl}/smts/${row.id}.json`;
+      const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      const url = `${cleanBaseUrl}/smts/${row.id}.json`;
       const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
       const payload = resp.data || {};
       const detail: any = Array.isArray(payload?.data) ? payload.data[0] : payload?.data || payload || {};
