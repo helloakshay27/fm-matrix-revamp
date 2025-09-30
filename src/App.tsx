@@ -733,6 +733,7 @@ import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 import WeeklyReport from "./components/WeeklyReport";
 import useRouteLogger from "./hooks/useRouteLogger";
 import { LocationAccountPage } from "./pages/master/LocationAccountPage";
+import LMCPage from "./pages/LMCPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2624,6 +2625,10 @@ function App() {
                   <Route
                     path="/safety/m-safe/external/user/:userId/edit"
                     element={<EditExternalUserPage />}
+                  />
+                  <Route
+                    path="/safety/m-safe/external/user/:userId/lmc-manager"
+                    element={<LMCPage />}
                   />
                   <Route
                     path="/safety/m-safe/non-fte-users"
