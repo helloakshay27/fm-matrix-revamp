@@ -756,13 +756,13 @@ export const IncidentDashboard = () => {
       defaultVisible: true,
       draggable: true,
     },
-    {
-      key: "region",
-      label: "Region",
-      sortable: false,
-      defaultVisible: false,
-      draggable: true,
-    },
+    // {
+    //   key: "region",
+    //   label: "Region",
+    //   sortable: false,
+    //   defaultVisible: false,
+    //   draggable: true,
+    // },
     {
       key: "site_name",
       label: "Site",
@@ -770,13 +770,13 @@ export const IncidentDashboard = () => {
       defaultVisible: true,
       draggable: false, // Make it non-draggable to test
     },
-    {
-      key: "test_site",
-      label: "Test Site",
-      sortable: false,
-      defaultVisible: true,
-      draggable: false,
-    },
+    // {
+    //   key: "test_site",
+    //   label: "Test Site",
+    //   sortable: false,
+    //   defaultVisible: true,
+    //   draggable: false,
+    // },
     {
       key: "building_name",
       label: "Tower",
@@ -854,20 +854,8 @@ export const IncidentDashboard = () => {
       defaultVisible: true,
       draggable: true,
     },
-    {
-      key: "support_required",
-      label: "Support Required",
-      sortable: true,
-      defaultVisible: true,
-      draggable: true,
-    },
-    {
-      key: "assigned_to_user_name",
-      label: "Assigned To",
-      sortable: true,
-      defaultVisible: false,
-      draggable: true,
-    },
+
+
     {
       key: "current_status",
       label: "Status",
@@ -1058,66 +1046,101 @@ export const IncidentDashboard = () => {
     navigate(`/safety/incident/${incidentId}`);
   };
 
-  // Handle export functionality
+  // Handle export functionality using API
+  // const handleExport = async () => {
+  //   try {
+
+  //     const baseUrl = localStorage.getItem('baseUrl') || '';
+  //     const token = localStorage.getItem('token') || '';
+  //     if (!baseUrl || !token) {
+  //       alert('API base URL or token not found in localStorage.');
+  //       return;
+  //     }
+
+
+  //     const exportUrl = `${baseUrl}/pms/incidents/export.json`;
+
+
+  //     const response = await fetch(exportUrl, {
+  //       method: 'GET',
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`,
+  //       },
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error('Failed to export incidents');
+  //     }
+
+
+  //     let filename = `incidents_${new Date().toISOString().split('T')[0]}.csv`;
+  //     const disposition = response.headers.get('Content-Disposition');
+  //     if (disposition && disposition.includes('filename=')) {
+  //       const match = disposition.match(/filename="?([^";]+)"?/);
+  //       if (match && match[1]) filename = match[1];
+  //     }
+
+  //     const blob = await response.blob();
+  //     const url = window.URL.createObjectURL(blob);
+  //     const link = document.createElement('a');
+  //     link.href = url;
+  //     link.setAttribute('download', filename);
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //     window.URL.revokeObjectURL(url);
+  //   } catch (error) {
+  //     console.error('Error exporting incidents:', error);
+  //     alert('Failed to export incidents');
+  //   }
+  // };
+  // Handle export functionality using API
   const handleExport = async () => {
-    try {
-      // Create CSV content
-      const headers = columns
-        .filter(col => col.defaultVisible !== false)
-        .map(col => col.label)
-        .join(',');
-
-      const csvContent = [
-        headers,
-        ...incidents.map(incident =>
-          columns
-            .filter(col => col.defaultVisible !== false)
-            .map(col => {
-              let value = '';
-              switch (col.key) {
-                case 'srNo':
-                  value = String(incidents.findIndex(inc => inc.id === incident.id) + 1);
-                  break;
-                case 'inc_time':
-                  value = incident.inc_time ? new Date(incident.inc_time).toLocaleString() : '-';
-                  break;
-                case 'support_required':
-                  value = incident.support_required ? 'Yes' : 'No';
-                  break;
-                case 'site_name':
-                  value = incident.site_name || incident.building_name || '-';
-                  break;
-                default:
-                  const fieldValue = incident[col.key as keyof Incident];
-                  value = String(fieldValue || '-');
-              }
-
-              // Handle values that might contain commas or quotes
-              const stringValue = String(value).replace(/"/g, '""');
-              return stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')
-                ? `"${stringValue}"`
-                : stringValue;
-            })
-            .join(',')
-        )
-      ].join('\n');
-
-      // Create and trigger download
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `incidents_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error exporting incidents:', error);
-      alert('Failed to export incidents');
+  try {
+    const baseUrl = localStorage.getItem("baseUrl") || "";
+    const token = localStorage.getItem("token") || "";
+    if (!baseUrl || !token) {
+      alert("API base URL or token not found in localStorage.");
+      return;
     }
-  };
+
+    const exportUrl = `${baseUrl}/pms/incidents/export.xlsx`;
+
+    const response = await fetch(exportUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to export incidents");
+    }
+
+    let filename = `incidents_${new Date().toISOString().split("T")[0]}.xlsx`;
+    const disposition = response.headers.get("Content-Disposition");
+    if (disposition && disposition.includes("filename=")) {
+      const match = disposition.match(/filename="?([^";]+)"?/);
+      if (match && match[1]) filename = match[1];
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error exporting incidents:", error);
+    alert("Failed to export incidents");
+  }
+};
+
+
 
   const StatCard = ({ icon, label, value, color }: any) => (
     <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow">
@@ -1240,7 +1263,7 @@ export const IncidentDashboard = () => {
             enableSearch={true}
             searchPlaceholder="Search incidents..."
             enableExport={true}
-            onExport={handleExport}
+            handleExport={handleExport}
             exportFileName="incidents"
             storageKey="incidents-dashboard-new"
             className="min-w-full"

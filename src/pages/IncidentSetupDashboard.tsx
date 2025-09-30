@@ -238,7 +238,7 @@ export const IncidentSetupDashboard = () => {
   const [propertyDamageCategories, setPropertyDamageCategories] = useState([]);
   const [rcaCategories, setRcaCategories] = useState([]);
   const [escalateToUsersList, setEscalateToUsersList] = useState([]);
-  const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Incident Disclaimer'];
+  const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category'];
 
 
 
@@ -2617,23 +2617,6 @@ export const IncidentSetupDashboard = () => {
                         </FormControl>
                       </div>
                     </>
-                  ) : selectedCategory === 'Incident Disclaimer' ? (
-                    <>
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Name
-                        </label>
-                        <TextField
-                          type="text"
-                          value={categoryName}
-                          onChange={e => setCategoryName(e.target.value)}
-                          placeholder="Enter Name"
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                        />
-                      </div>
-                    </>
                   ) : (selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') ? (
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2760,11 +2743,6 @@ export const IncidentSetupDashboard = () => {
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                             </>
                           ) : selectedCategory === 'RCA Category' ? (
-                            <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </>
-                          ) : selectedCategory === 'Incident Disclaimer' ? (
                             <>
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
@@ -2901,27 +2879,9 @@ export const IncidentSetupDashboard = () => {
                               </div>
                             </TableCell>
                           </TableRow>
-                        )) : selectedCategory === 'Incident Disclaimer' ? (
-                          [
-                            { id: 1, name: 'General Disclaimer' },
-                            { id: 2, name: 'Safety Disclaimer' },
-                            { id: 3, name: 'Legal Disclaimer' }
-                          ].map(item => (
-                            <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                              <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                              <TableCell className="px-4 py-3">
-                                <div className="flex gap-2">
-                                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => (
+
+
+                        )) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => (
                           <TableRow key={approval.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{approval.users}</TableCell>
                             <TableCell className="px-4 py-3">
