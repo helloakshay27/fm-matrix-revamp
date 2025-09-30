@@ -149,6 +149,10 @@ export const EditSurveyPage = () => {
   const [destroyOptionIds, setDestroyOptionIds] = useState<number[]>([]);
   const [destroyIconIds, setDestroyIconIds] = useState<number[]>([]);
 
+  // Emoji and rating constants
+  const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
+  const RATING_STARS = ["1-star", "2-star", "3-star", "4-star", "5-star"];
+
   useEffect(() => {
     fetchCategories();
     if (id) {
@@ -421,13 +425,18 @@ export const EditSurveyPage = () => {
           const updatedQuestion = { ...q, [field]: value };
           if (
             field === "answerType" &&
-            value === "multiple-choice" &&
+            ["multiple-choice", "rating", "emojis"].includes(value as string) &&
             !updatedQuestion.answerOptions
           ) {
             updatedQuestion.answerOptions = [
               { text: "", type: "P" },
               { text: "", type: "P" },
             ];
+          } else if (
+            field === "answerType" &&
+            !["multiple-choice", "rating", "emojis"].includes(value as string)
+          ) {
+            updatedQuestion.answerOptions = undefined;
           }
           if (
             field === "additionalFieldOnNegative" &&
@@ -469,6 +478,12 @@ export const EditSurveyPage = () => {
   };
 
   const handleAddAnswerOption = (questionId: string) => {
+    const question = questions.find(q => q.id === questionId);
+    if (!question) return;
+
+    const currentOptionsCount = question.answerOptions?.length || 0;
+    if (currentOptionsCount >= 5) return; // Limit to 5 options
+
     setQuestions(
       questions.map((q) =>
         q.id === questionId
@@ -712,13 +727,6 @@ export const EditSurveyPage = () => {
         });
         return;
       }
-      // if (!assignTo) {
-      //   toast.error("Validation Error", {
-      //     description: "Please select who to assign the ticket to",
-      //     duration: 3000,
-      //   });
-      //   return;
-      // }
     }
 
     // Validate questions (exclude deleted ones and null/empty ones)
@@ -759,8 +767,8 @@ export const EditSurveyPage = () => {
         return;
       }
       
-      // Check if multiple choice questions have at least one option with text
-      if (question.answerType === "multiple-choice") {
+      // Check if multiple choice, rating, or emojis have at least one option with text
+      if (["multiple-choice", "rating", "emojis"].includes(question.answerType)) {
         if (!question.answerOptions || question.answerOptions.length === 0) {
           toast.error("Validation Error", {
             description: `Please add at least one option for Question ${displayIndex}`,
@@ -921,9 +929,9 @@ export const EditSurveyPage = () => {
           });
         }
 
-        // Add multiple choice options with proper structure
+        // Add multiple choice, rating, and emoji options with proper structure
         if (
-          question.answerType === "multiple-choice" &&
+          ["multiple-choice", "rating", "emojis"].includes(question.answerType) &&
           question.answerOptions
         ) {
           question.answerOptions.forEach((option, optionIndex) => {
@@ -941,9 +949,6 @@ export const EditSurveyPage = () => {
             );
           });
         }
-
-        // Add generic tags for ticket configuration only (separate from additional fields)
-        // Note: Ticket configuration is now handled at survey level, not question level
       });
 
       console.log(
@@ -1008,8 +1013,6 @@ export const EditSurveyPage = () => {
   const handleProceed = async () => {
     await handleUpdateQuestion();
   };
-
-  const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
 
   if (initialLoading) {
     return (
@@ -1140,34 +1143,6 @@ export const EditSurveyPage = () => {
                       </MuiSelect>
                     </FormControl>
                   </div>
-
-                  <div className="space-y-2">
-                    {/* <FormControl fullWidth required sx={{
-                      ...fieldStyles,
-                      "& .MuiInputLabel-asterisk": { color: "#ef4444" }
-                    }}>
-                      <InputLabel id="assign-to-label">
-                       Assign To
-                      </InputLabel>
-                      <MuiSelect
-                        labelId="assign-to-label"
-                        id="assignTo"
-                        value={assignTo}
-                        label="Assign To"
-                        onChange={(e) => setAssignTo(e.target.value)}
-                        disabled={loadingFmUsers}
-                      >
-                        {fmUsers.map((user) => (
-                          <MenuItem
-                            key={user.id}
-                            value={user.id.toString()}
-                          >
-                         {user.full_name} 
-                          </MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl> */}
-                  </div>
                 </div>
               )}
             </div>
@@ -1238,11 +1213,6 @@ export const EditSurveyPage = () => {
                     
                     console.log(`Question ${question.id}: markedForDeletion=${isMarkedForDeletion}, hasValidId=${hasValidId}, hasValidText=${hasValidText}, hasValidAnswerType=${hasValidAnswerType}, isNotNullData=${isNotNullData}`);
                     
-                    // Only show questions that are:
-                    // - NOT marked for deletion
-                    // - Have valid ID
-                    // - Have non-null, non-empty text content
-                    // - Have valid answer type (or are new questions being created)
                     return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || question.id.startsWith("new_"));
                   });
                   
@@ -1301,133 +1271,98 @@ export const EditSurveyPage = () => {
                             <SelectValue placeholder="Choose Answer Type" />
                           </SelectTrigger>
                           <SelectContent>
-                            {/* <SelectItem value="description">
-                              Description Box
-                            </SelectItem> */}
                             <SelectItem value="multiple-choice">
                               Multiple Choice
                             </SelectItem>
-                            {/* <SelectItem value="input-box">Input Box</SelectItem> */}
                             <SelectItem value="rating">Rating</SelectItem>
                             <SelectItem value="emojis">Emojis</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
-                      {/* Multiple Choice Options */}
-                      {question.answerType === "multiple-choice" && (
-                        <div className="space-y-3">
-                          <Label>Answer Options</Label>
-                          {question.answerOptions?.map(
-                            (option, optionIndex) => (
-                              <div key={optionIndex} className="flex gap-2">
-                                <Input
-                                  value={option.text}
-                                  onChange={(e) =>
-                                    handleAnswerOptionChange(
-                                      question.id!,
-                                      optionIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  placeholder="Enter option"
-                                  className="flex-1"
-                                />
-                                <Select
-                                  value={option.type}
-                                  onValueChange={(value: "P" | "N") =>
-                                    handleAnswerOptionTypeChange(
-                                      question.id!,
-                                      optionIndex,
-                                      value
-                                    )
-                                  }
-                                >
-                                  <SelectTrigger className="w-20">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="P">P</SelectItem>
-                                    <SelectItem value="N">N</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() =>
-                                    handleRemoveAnswerOption(
-                                      question.id!,
-                                      optionIndex
-                                    )
-                                  }
-                                  className="p-2"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )
-                          )}
+                      {/* Multiple Choice, Rating, and Emoji Options */}
+                      {["multiple-choice", "rating", "emojis"].includes(question.answerType) && (
+                        <div className="space-y-3 pt-2">
+                          <Label className="text-sm font-medium text-gray-700">
+                            {question.answerType === "rating" ? "Rating Options" : 
+                             question.answerType === "emojis" ? "Emoji Options" : 
+                             "Answer Options"}
+                          </Label>
+                          {(question.answerOptions || []).map((option, optionIndex) => (
+                            <div key={optionIndex} className="flex items-center gap-3">
+                              {question.answerType === "emojis" ? (
+                                <div className="flex items-center justify-center w-12 h-12">
+                                  <span className="text-3xl">{EMOJIS[optionIndex]}</span>
+                                </div>
+                              ) : question.answerType === "rating" ? (
+                                <div className="flex items-center justify-center w-28 h-12">
+                                  <span className="text-base">{RATING_STARS[optionIndex]}</span>
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 flex items-center justify-center text-gray-400">
+                                  {optionIndex + 1}
+                                </div>
+                              )}
+                              <TextField
+                                placeholder={
+                                  question.answerType === "rating" ? `Enter rating description` :
+                                  question.answerType === "emojis" ? `Enter description for ${EMOJIS[optionIndex]}` :
+                                  `Option ${optionIndex + 1}`
+                                }
+                                value={option.text}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  handleAnswerOptionChange(question.id!, optionIndex, value);
+                                }}
+                                fullWidth
+                                variant="outlined"
+                                InputProps={{
+                                  sx: { 
+                                    ...fieldStyles, 
+                                    height: "40px",
+                                    backgroundColor: 'white'
+                                  },
+                                }}
+                              />
+                              <Select
+                                value={option.type}
+                                onValueChange={(value: "P" | "N") =>
+                                  handleAnswerOptionTypeChange(
+                                    question.id!,
+                                    optionIndex,
+                                    value
+                                  )
+                                }
+                              >
+                                <SelectTrigger className="w-20">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="P">P</SelectItem>
+                                  <SelectItem value="N">N</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() =>
+                                  handleRemoveAnswerOption(question.id!, optionIndex)
+                                }
+                                className="p-2 text-gray-400 hover:text-red-500"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleAddAnswerOption(question.id!)}
-                            className="p-0 h-auto font-medium"
-                            style={{ color: "#C72030" }}
+                            className="p-0 h-auto font-medium text-red-600 hover:text-red-700 flex items-center"
                           >
                             <Plus className="w-4 h-4 mr-1" />
                             Add Option
                           </Button>
-                        </div>
-                      )}
-
-                      {/* Rating */}
-                      {question.answerType === "rating" && (
-                        <div className="space-y-3">
-                          <Label>Rating Scale</Label>
-                          <div className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg bg-white">
-                            <div className="flex w-full justify-between px-2 text-xs text-gray-500"></div>
-                            <div className="flex items-center gap-9">
-                              {[...Array(5)].map((_, index) => {
-                                const ratingValue = index + 1;
-                                return (
-                                  <Star
-                                    key={ratingValue}
-                                    className={`w-8 h-8 cursor-pointer transition-colors ${
-                                      ratingValue <= (question.rating || 0)
-                                        ? "text-yellow-400 fill-yellow-400"
-                                        : "text-gray-300 hover:text-yellow-300"
-                                    }`}
-                                    onClick={() =>
-                                      handleQuestionChange(
-                                        question.id!,
-                                        "rating",
-                                        ratingValue
-                                      )
-                                    }
-                                  />
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Emojis */}
-                      {question.answerType === "emojis" && (
-                        <div className="space-y-3">
-                          <Label>Select Reaction</Label>
-                          <div className="flex items-center justify-around p-3 border border-gray-200 rounded-lg bg-white">
-                            {EMOJIS.map((emoji) => (
-                              <button
-                                key={emoji}
-                                type="button"
-                                onClick={() => handleQuestionChange(question.id!, 'selectedEmoji', emoji)}
-                                className={`text-3xl p-2 rounded-full transition-transform transform hover:scale-125 ${question.selectedEmoji === emoji ? 'bg-red-100 scale-110' : ''}`}
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
                         </div>
                       )}
 
