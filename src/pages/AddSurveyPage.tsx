@@ -36,8 +36,6 @@ interface Question {
   answerType: string;
   mandatory: boolean;
   answerOptions?: AnswerOption[];
-  rating?: number;
-  selectedEmoji?: string;
   additionalFieldOnNegative?: boolean;
   additionalFields?: Array<{
     title: string;
@@ -103,13 +101,9 @@ export const AddSurveyPage = () => {
   const [createTicket, setCreateTicket] = useState(false);
   const [ticketCategory, setTicketCategory] = useState("");
   const [assignTo, setAssignTo] = useState("");
-  const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>(
-    []
-  );
+  const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>([]);
   const [fmUsers, setFmUsers] = useState<
-    {
-      full_name: string; id: number; firstname: string; lastname: string; email?: string 
-}[]
+    { full_name: string; id: number; firstname: string; lastname: string; email?: string }[]
   >([]);
   const [loadingTicketCategories, setLoadingTicketCategories] = useState(false);
   const [loadingFmUsers, setLoadingFmUsers] = useState(false);
@@ -218,13 +212,18 @@ export const AddSurveyPage = () => {
           const updatedQuestion = { ...q, [field]: value };
           if (
             field === "answerType" &&
-            value === "multiple-choice" &&
+            ["multiple-choice", "rating", "emojis"].includes(value as string) &&
             !updatedQuestion.answerOptions
           ) {
             updatedQuestion.answerOptions = [
               { text: "", type: "P" },
               { text: "", type: "P" },
             ];
+          } else if (
+            field === "answerType" &&
+            !["multiple-choice", "rating", "emojis"].includes(value as string)
+          ) {
+            updatedQuestion.answerOptions = undefined;
           }
           if (
             field === "additionalFieldOnNegative" &&
@@ -337,7 +336,20 @@ export const AddSurveyPage = () => {
     );
   };
 
+  const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
+  const RATINGS = ["1", "2", "3", "4", "5"];
+  const RATING_STARS = ["1-star", "2-star", "3-star", "4-star", "5-star"];
+
   const handleAddAnswerOption = (questionId: string) => {
+    const question = questions.find(q => q.id === questionId);
+    if (!question) return;
+
+    const currentOptionsCount = question.answerOptions?.length || 0;
+    if (currentOptionsCount >= 5) return; // Limit to 5 options
+
+    // Always start with empty text to allow user input for both ratings and emojis
+    const newOptionText = "";
+
     setQuestions(
       questions.map((q) =>
         q.id === questionId
@@ -345,7 +357,7 @@ export const AddSurveyPage = () => {
               ...q,
               answerOptions: [
                 ...(q.answerOptions || []),
-                { text: "", type: "P" },
+                { text: newOptionText, type: "P" },
               ],
             }
           : q
@@ -435,13 +447,6 @@ export const AddSurveyPage = () => {
         });
         return;
       }
-      // if (!assignTo) {
-      //   toast.error("Validation Error", {
-      //     description: "Please select who to assign the ticket to",
-      //     duration: 3000,
-      //   });
-      //   return;
-      // }
     }
 
     // Validate questions
@@ -461,9 +466,9 @@ export const AddSurveyPage = () => {
         });
         return;
       }
-      
-      // Check if multiple choice questions have at least one option with text
-      if (question.answerType === "multiple-choice") {
+
+      // Check if multiple-choice, rating, or emojis have at least one option with text
+      if (["multiple-choice", "rating", "emojis"].includes(question.answerType)) {
         if (!question.answerOptions || question.answerOptions.length === 0) {
           toast.error("Validation Error", {
             description: `Please add at least one option for Question ${i + 1}`,
@@ -496,7 +501,7 @@ export const AddSurveyPage = () => {
         // Check that each additional field has both title and file
         for (let k = 0; k < question.additionalFields.length; k++) {
           const field = question.additionalFields[k];
-          
+
           if (!field.title || !field.title.trim()) {
             toast.error("Validation Error", {
               description: `Please enter a title for additional field ${k + 1} in Question ${i + 1}`,
@@ -516,29 +521,18 @@ export const AddSurveyPage = () => {
       }
     }
 
-    // if (questions.some(q => !q.text.trim())) {
-    //   alert('Please fill in all question texts');
-    //   return;
-    // }
-    // if (questions.some(q => !q.answerType)) {
-    //   alert('Please select answer type for all questions');
-    //   return;
-    // }
-
     try {
       setLoading(true);
       setIsSubmitting(true);
 
       // Create FormData for multipart/form-data request matching server expectations
       const formData = new FormData();
-      
-      // Add basic survey data as individual form fields (matching cURL structure)
+
+      // Add basic survey data as individual form fields
       formData.append('snag_checklist[name]', title);
       formData.append('snag_checklist[check_type]', checkType);
-    
-     
-      
-      // Add ticket creation fields - always send the state
+
+      // Add ticket creation fields
       formData.append('create_ticket', createTicket ? 'true' : 'false');
       if (createTicket) {
         formData.append('category_name', ticketCategory);
@@ -551,55 +545,39 @@ export const AddSurveyPage = () => {
       questions.forEach((question, questionIndex) => {
         // Add question basic fields
         formData.append(`question[][descr]`, question.text);
-        
+
         const qtype = question.answerType === "multiple-choice"
           ? "multiple"
-          : question.answerType === "input-box"
-          ? "input"
           : question.answerType === "rating"
           ? "rating"
           : question.answerType === "emojis"
           ? "emoji"
           : "description";
-        
+
         formData.append(`question[][qtype]`, qtype);
         formData.append(`question[][quest_mandatory]`, question.mandatory.toString());
         formData.append(`question[][image_mandatory]`, 'false');
 
-        // Add multiple choice options
-        if (question.answerType === "multiple-choice" && question.answerOptions) {
+        // Add options for multiple-choice, rating, and emojis
+        if (["multiple-choice", "rating", "emojis"].includes(question.answerType) && question.answerOptions) {
           question.answerOptions.forEach((option, optionIndex) => {
             formData.append(`question[][quest_options][][option_name]`, option.text);
             formData.append(`question[][quest_options][][option_type]`, option.type.toLowerCase());
           });
         }
 
-        // Add rating
-        if (question.answerType === "rating" && question.rating) {
-          formData.append(`question[][rating]`, question.rating.toString());
-        }
-
-        // Add emoji
-        if (question.answerType === "emojis" && question.selectedEmoji) {
-          formData.append(`question[][emoji]`, question.selectedEmoji);
-        }
-
         // Handle additional fields with files (generic_tags)
-        if (question.additionalFieldOnNegative &&
-          question.additionalFields &&
-          question.additionalFields.length > 0) {
-          
+        if (question.additionalFieldOnNegative && question.additionalFields && question.additionalFields.length > 0) {
           question.additionalFields.forEach((field, fieldIndex) => {
             // Add generic tag metadata
             formData.append(`question[][generic_tags][][category_name]`, field.title);
             formData.append(`question[][generic_tags][][category_type]`, 'questions');
             formData.append(`question[][generic_tags][][tag_type]`, 'not generic');
             formData.append(`question[][generic_tags][][active]`, 'true');
-            
+
             // Add files as icons array
             if (field.files && field.files.length > 0) {
               field.files.forEach((file, fileIndex) => {
-                // Add the actual file with proper array notation
                 formData.append(`question[][generic_tags][][icons][]`, file);
                 fileCounter++;
               });
@@ -611,7 +589,7 @@ export const AddSurveyPage = () => {
       // Add file count for server reference
       formData.append('total_files', fileCounter.toString());
 
-      // Debug logging to understand the FormData structure
+      // Debug logging
       console.log('\n=== FORMDATA STRUCTURE DEBUG ===');
       console.log('1. Survey Basic Fields:');
       console.log('   snag_checklist[name]:', title);
@@ -621,21 +599,21 @@ export const AddSurveyPage = () => {
         console.log('   category_name:', ticketCategory);
         console.log('   category_type:', assignTo);
       }
-      
+
       console.log('\n2. Questions Structure:');
       questions.forEach((question, qIndex) => {
         console.log(`   Question ${qIndex + 1}:`);
         console.log(`   question[][descr]: "${question.text}"`);
-        console.log(`   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "input-box" ? "input" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : "description"}`);
+        console.log(`   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : "description"}`);
         console.log(`   question[][quest_mandatory]: ${question.mandatory}`);
-        
-        if (question.answerType === "multiple-choice" && question.answerOptions) {
+
+        if (["multiple-choice", "rating", "emojis"].includes(question.answerType) && question.answerOptions) {
           question.answerOptions.forEach((option, optIndex) => {
             console.log(`   question[][quest_options][][option_name]: "${option.text}"`);
             console.log(`   question[][quest_options][][option_type]: ${option.type.toLowerCase()}`);
           });
         }
-        
+
         if (question.additionalFieldOnNegative && question.additionalFields) {
           question.additionalFields.forEach((field, fIndex) => {
             console.log(`   question[][generic_tags][][category_name]: "${field.title}"`);
@@ -650,8 +628,7 @@ export const AddSurveyPage = () => {
           });
         }
       });
-      
-      // Show all FormData keys for verification
+
       console.log('\n3. All FormData Keys:');
       const allKeys = Array.from(formData.keys()).sort();
       allKeys.forEach(key => {
@@ -661,7 +638,7 @@ export const AddSurveyPage = () => {
           console.log(`   ${key}: ${formData.get(key)}`);
         }
       });
-      
+
       console.log(`\n4. Summary:`);
       console.log(`   Total FormData fields: ${allKeys.length}`);
       console.log(`   Total files: ${fileCounter}`);
@@ -698,7 +675,6 @@ export const AddSurveyPage = () => {
     } catch (error) {
       console.error("Error creating survey:", error);
 
-      // Show detailed error message
       if (error.response) {
         console.error("Response data:", error.response.data);
         console.error("Response status:", error.response.status);
@@ -723,7 +699,30 @@ export const AddSurveyPage = () => {
     }
   };
 
-  const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
+  // Helper function to check if a string is a valid emoji
+  const isValidEmoji = (text: string) => {
+    const emojiRegex = /[\p{Emoji_Presentation}\p{Emoji}\u200D]/u;
+    return emojiRegex.test(text) && text.length <= 4; // Assuming single emoji or simple combination
+  };
+
+  // Helper function to render stars based on number
+  const renderStars = (text: string) => {
+    const num = parseInt(text, 10);
+    if (isNaN(num) || num < 1 || num > 5) return null;
+    return (
+      <div className="flex items-center gap-1">
+        {[...Array(5)].map((_, index) => (
+          <Star
+            key={index}
+            className={`w-5 h-5 ${
+              index < num ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+            }`}
+          />
+        ))}
+        <span className="ml-2 text-sm text-gray-600">{num} Star{num !== 1 ? 's' : ''}</span>
+      </div>
+    );
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -733,8 +732,6 @@ export const AddSurveyPage = () => {
       </div>
 
       <div className="space-y-6">
-        {/* Section: Files Upload */}
-
         {/* Section 1: Survey Details */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
@@ -750,23 +747,6 @@ export const AddSurveyPage = () => {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Category</InputLabel>
-                <MuiSelect
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  label="Category*"
-                  notched
-                  displayEmpty
-                  disabled={loading}
-                >
-                  <MenuItem value="">{loading ? "Loading..." : "Select Category"}</MenuItem>
-                  {categories.map((cat) => (
-                    <MenuItem key={cat.id} value={cat.id.toString()}>{cat.name}</MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl> */}
-
               <TextField
                 label="Title"
                 placeholder="Enter the title"
@@ -827,7 +807,6 @@ export const AddSurveyPage = () => {
             {/* Conditional Ticket Dropdowns */}
             {createTicket && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-200">
-                {/* Ticket Category Dropdown */}
                 <FormControl
                   fullWidth
                   variant="outlined"
@@ -858,36 +837,6 @@ export const AddSurveyPage = () => {
                     ))}
                   </MuiSelect>
                 </FormControl>
-
-                {/* Assign To Dropdown */}
-                {/* <FormControl
-                  fullWidth
-                  variant="outlined"
-                  required
-                  sx={{ 
-                    "& .MuiInputBase-root": fieldStyles,
-                    "& .MuiInputLabel-asterisk": { color: "#ef4444" }
-                  }}
-                >
-                  <InputLabel shrink>Assign To</InputLabel>
-                  <MuiSelect
-                    value={assignTo}
-                    onChange={(e) => setAssignTo(e.target.value)}
-                    label="Assign To*"
-                    notched
-                    displayEmpty
-                    disabled={loadingFmUsers}
-                  >
-                    <MenuItem value="">
-                      {loadingFmUsers ? "Loading users..." : "Select Assign To"}
-                    </MenuItem>
-                    {fmUsers.map((user) => (
-                      <MenuItem key={user.id} value={user.id.toString()}>
-                        {user.full_name || `${user.firstname} ${user.lastname}`}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl> */}
               </div>
             )}
           </div>
@@ -948,7 +897,6 @@ export const AddSurveyPage = () => {
                     }
                     fullWidth
                     variant="outlined"
-                    
                     required
                     InputLabelProps={{ 
                       shrink: true,
@@ -984,36 +932,52 @@ export const AddSurveyPage = () => {
                       <MenuItem value="multiple-choice">
                         Multiple Choice
                       </MenuItem>
-                      {/* <MenuItem value="input-box">Input Box</MenuItem> */}
-                      {/* <MenuItem value="description-box">
-                        Description Box
-                      </MenuItem> */}
                       <MenuItem value="rating">Rating</MenuItem>
                       <MenuItem value="emojis">Emojis</MenuItem>
                     </MuiSelect>
                   </FormControl>
 
-                  {question.answerType === "multiple-choice" && (
+                  {["multiple-choice", "rating", "emojis"].includes(question.answerType) && (
                     <div className="space-y-3 pt-2">
                       <label className="text-sm font-medium text-gray-700">
-                        Answer Options
+                        {question.answerType === "rating" ? "Rating Options" : 
+                         question.answerType === "emojis" ? "Emoji Options" : 
+                         "Answer Options"}
                       </label>
                       {(question.answerOptions || []).map((option, index) => (
-                        <div key={index} className="flex items-center gap-2">
+                        <div key={index} className="flex items-center gap-3">
+                          {question.answerType === "emojis" ? (
+                            <div className="flex items-center justify-center w-12 h-12">
+                              <span className="text-3xl">{EMOJIS[index]}</span>
+                            </div>
+                          ) : question.answerType === "rating" ? (
+                            <div className="flex items-center justify-center w-28 h-12">
+                              <span className="text-base">{RATING_STARS[index]}</span>
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 flex items-center justify-center text-gray-400">
+                              {question.answerType === "multiple-choice" ? index + 1 : "⭐"}
+                            </div>
+                          )}
                           <TextField
-                            placeholder={`Option ${index + 1}`}
-                            value={option.text}
-                            onChange={(e) =>
-                              handleAnswerOptionChange(
-                                question.id,
-                                index,
-                                e.target.value
-                              )
+                            placeholder={
+                              question.answerType === "rating" ? `Enter rating description` :
+                              question.answerType === "emojis" ? `Enter description for ${EMOJIS[index]}` :
+                              `Option ${index + 1}`
                             }
+                            value={option.text}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              handleAnswerOptionChange(question.id, index, value);
+                            }}
                             fullWidth
                             variant="outlined"
                             InputProps={{
-                              sx: { ...fieldStyles, height: "40px" },
+                              sx: { 
+                                ...fieldStyles, 
+                                height: "40px",
+                                backgroundColor: 'white'
+                              },
                             }}
                           />
                           <Select
@@ -1055,58 +1019,6 @@ export const AddSurveyPage = () => {
                         <Plus className="w-4 h-4 mr-1" /> Add Option
                       </Button>
                     </div>
-                  )}
-
-                  {question.answerType === "rating" && (
-                    <FormControl fullWidth>
-                      {/* <InputLabel shrink sx={{position: 'relative', top: '-8px', background: '#F9FAFB', paddingX: '4px'}}>Rating</InputLabel> */}
-                      <div className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg bg-white">
-                        {/* The div below is intentionally empty as per the previous request */}
-                        <div className="flex w-full justify-between px-2 text-xs text-gray-500"></div>
-                        <div className="flex items-center gap-9">
-                          {" "}
-                          {/* <-- This is the updated line */}
-                          {[...Array(5)].map((_, index) => {
-                            const ratingValue = index + 1;
-                            return (
-                              <Star
-                                key={ratingValue}
-                                className={`w-8 h-8 cursor-pointer transition-colors ${
-                                  ratingValue <= (question.rating || 0)
-                                    ? "text-yellow-400 fill-yellow-400"
-                                    : "text-gray-300 hover:text-yellow-300"
-                                }`}
-                                onClick={() =>
-                                  handleQuestionChange(
-                                    question.id,
-                                    "rating",
-                                    ratingValue
-                                  )
-                                }
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </FormControl>
-                  )}
-
-                  {question.answerType === 'emojis' && (
-                      <FormControl fullWidth>
-                          <InputLabel shrink sx={{position: 'relative', top: '-8px', background: '#F9FAFB', paddingX: '4px'}}>Select Reaction</InputLabel>
-                           <div className="flex items-center justify-around p-3 border border-gray-200 rounded-lg bg-white">
-                              {EMOJIS.map((emoji) => (
-                                <button
-                                  key={emoji}
-                                  type="button"
-                                  onClick={() => handleQuestionChange(question.id, 'selectedEmoji', emoji)}
-                                  className={`text-3xl p-2 rounded-full transition-transform transform hover:scale-125 ${question.selectedEmoji === emoji ? 'bg-red-100 scale-110' : ''}`}
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
-                            </div>
-                      </FormControl>
                   )}
 
                   <div className="flex items-center space-x-2 pt-2">
@@ -1260,27 +1172,21 @@ export const AddSurveyPage = () => {
                                 </div>
 
                                 {!isOnlyField && (
-                                  <>
-                                    {/* <div className="flex items-center justify-center">
-                                    <span className="text-xs font-medium text-gray-600">Field {fieldIndex + 1}</span>
-                                  </div> */}
-
-                                    <div className="flex items-center justify-center">
-                                      <Button
-                                        onClick={() =>
-                                          handleRemoveAdditionalField(
-                                            question.id,
-                                            fieldIndex
-                                          )
-                                        }
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-gray-400 hover:text-red-500 p-1 h-6 w-6"
-                                      >
-                                        <X className="w-3 h-3" />
-                                      </Button>
-                                    </div>
-                                  </>
+                                  <div className="flex items-center justify-center">
+                                    <Button
+                                      onClick={() =>
+                                        handleRemoveAdditionalField(
+                                          question.id,
+                                          fieldIndex
+                                        )
+                                      }
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-gray-400 hover:text-red-500 p-1 h-6 w-6"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </Button>
+                                  </div>
                                 )}
 
                                 {/* File thumbnails and names list */}
@@ -1298,7 +1204,6 @@ export const AddSurveyPage = () => {
                                             key={`${file.name}-${file.lastModified}`}
                                             className="relative group border border-gray-200 rounded-lg p-2 bg-gray-50 hover:bg-gray-100 transition-colors"
                                           >
-                                            {/* Thumbnail */}
                                             <div className="flex items-center justify-center w-12 h-12 mx-auto mb-2">
                                               {isImage && fileURL ? (
                                                 <img
@@ -1331,7 +1236,6 @@ export const AddSurveyPage = () => {
                                               )}
                                             </div>
                                             
-                                            {/* File info */}
                                             <div className="text-center">
                                               <p className="text-xs text-gray-700 truncate" title={file.name}>
                                                 {file.name}
@@ -1341,7 +1245,6 @@ export const AddSurveyPage = () => {
                                               </p>
                                             </div>
                                             
-                                            {/* Remove button */}
                                             <button
                                               type="button"
                                               className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
@@ -1388,114 +1291,6 @@ export const AddSurveyPage = () => {
             </div>
           </div>
         </div>
-
-        {/* <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <ClipboardList size={16} color="#C72030" />
-              </span>
-              Additional Data
-            </h2>
-          </div>
-          <div className="p-6 space-y-6">
-          
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextField
-                label="Title"
-                placeholder="Enter title"
-                value={additionalTitle}
-                onChange={(e) => setAdditionalTitle(e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
-              
-              <TextField
-                label="Description"
-                placeholder="Enter description"
-                value={additionalDescription}
-                onChange={(e) => setAdditionalDescription(e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
-            </div>
-            
-           
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                id="file-upload"
-                onChange={handleFileUpload}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
-                disabled={isSubmitting}
-              />
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <span className="text-[#C72030] font-medium text-[14px]">Choose File</span>
-                <span className="text-gray-500 text-[14px]">
-                  {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'No file chosen'}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => document.getElementById('file-upload')?.click()}
-                className={`bg-[#f6f4ee] text-[#C72030] px-4 py-2 rounded text-sm flex items-center justify-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={isSubmitting}
-              >
-                <span className="text-lg mr-2">+</span> Upload Files
-              </button>
-            </div>
-            {selectedFiles.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-4">
-                {selectedFiles.map((file, index) => {
-                  const isImage = file.type.startsWith('image/');
-                  const isPdf = file.type === 'application/pdf';
-                  const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
-                  const fileURL = URL.createObjectURL(file);
-                  return (
-                    <div
-                      key={`${file.name}-${file.lastModified}`}
-                      className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
-                    >
-                      {isImage ? (
-                        <img
-                          src={fileURL}
-                          alt={file.name}
-                          className="w-[40px] h-[40px] object-cover rounded border mb-1"
-                        />
-                      ) : isPdf ? (
-                        <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z"/><path d="M14 2v6h6"/></svg>
-                        </div>
-                      ) : isExcel ? (
-                        <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="2"/><path d="M8 11h8M8 15h8"/></svg>
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="2"/></svg>
-                        </div>
-                      )}
-                      <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
-                      <button
-                        type="button"
-                        className="absolute top-1 right-1 text-gray-600 hover:text-red-600 p-0"
-                        onClick={() => removeSelectedFile(index)}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div> */}
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center pt-6">
