@@ -632,10 +632,14 @@ export const fetchOrderDetails = createAsyncThunk(
 
 export const exportOrders = createAsyncThunk(
     "exportOrders",
-    async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
+    async ({ baseUrl, token, id, all }: { baseUrl: string; token: string; id: number, all?: boolean }, { rejectWithValue }) => {
         try {
+            const params = new URLSearchParams();
+            if (all) {
+                params.append("all", "true");
+            }
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.xlsx?all=true`,
+                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.xlsx?${params.toString()}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

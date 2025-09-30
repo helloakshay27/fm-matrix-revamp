@@ -223,7 +223,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
 
   const handleExport = async () => {
     try {
-      const response = await dispatch(exportOrders({ baseUrl, token, id: Number(restoId) })).unwrap();
+      const response = await dispatch(exportOrders({ baseUrl, token, id: Number(restoId), all: needPadding ? true : false })).unwrap();
 
       const url = window.URL.createObjectURL(new Blob([response]));
       const link = document.createElement("a");
@@ -514,16 +514,6 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
     </div>
   );
 
-  const leftActions = (
-    <Button
-      onClick={handleExport}
-      className="bg-[#8B4B8C] hover:bg-[#8B4B8C]/90 text-white flex items-center gap-2"
-    >
-      <Download className="w-4 h-4" />
-      Export
-    </Button>
-  );
-
   return (
     <div className={`${needPadding && 'p-6'}`}>
       <EnhancedTable
@@ -534,10 +524,10 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
         storageKey="restaurant-orders-table"
         className="min-w-full"
         emptyMessage="No orders found."
-        leftActions={leftActions}
         enableSearch={true}
+        enableExport={true}
+        handleExport={handleExport}
         enableSelection={false}
-        hideTableExport={true}
         pagination={true}
         pageSize={10}
         loading={loading}
