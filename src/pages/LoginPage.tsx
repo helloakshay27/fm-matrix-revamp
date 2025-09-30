@@ -143,11 +143,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       return;
     }
 
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      toast.error(passwordValidation.message);
-      return;
-    }
+    // const passwordValidation = validatePassword(password);
+    // if (!passwordValidation.isValid) {
+    //   toast.error(passwordValidation.message);
+    //   return;
+    // }
 
     setLoginLoading(true);
     try {
@@ -442,34 +442,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         }}
       />
 
-      {/* Password Requirements */}
-      {password && (
-        <div className="mt-2 mb-4 p-3 bg-white bg-opacity-10 backdrop-blur-sm rounded-lg">
-          <p className="text-white text-xs font-medium mb-2">Password Requirements:</p>
-          <div className="space-y-1">
-            <div className={`flex items-center text-xs ${password.length >= 8 ? 'text-green-300' : 'text-gray-300'}`}>
-              <span className="mr-2">{password.length >= 8 ? '✓' : '○'}</span>
-              At least 8 characters
-            </div>
-            <div className={`flex items-center text-xs ${/[A-Z]/.test(password) ? 'text-green-300' : 'text-gray-300'}`}>
-              <span className="mr-2">{/[A-Z]/.test(password) ? '✓' : '○'}</span>
-              One uppercase letter
-            </div>
-            <div className={`flex items-center text-xs ${/[a-z]/.test(password) ? 'text-green-300' : 'text-gray-300'}`}>
-              <span className="mr-2">{/[a-z]/.test(password) ? '✓' : '○'}</span>
-              One lowercase letter
-            </div>
-            <div className={`flex items-center text-xs ${/[0-9]/.test(password) ? 'text-green-300' : 'text-gray-300'}`}>
-              <span className="mr-2">{/[0-9]/.test(password) ? '✓' : '○'}</span>
-              One number
-            </div>
-            <div className={`flex items-center text-xs ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'text-green-300' : 'text-gray-300'}`}>
-              <span className="mr-2">{/[!@#$%^&*(),.?":{}|<>]/.test(password) ? '✓' : '○'}</span>
-              One special character
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Terms and Privacy */}
       <div className="text-center text-sm text-gray-300 mb-6">

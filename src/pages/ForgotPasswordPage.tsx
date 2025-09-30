@@ -47,7 +47,9 @@ export const ForgotPasswordPage = () => {
     try {
       const response = await sendForgotPasswordOTP(emailOrMobile);
 
-      if (response.success) {
+
+
+      if (response.code == 200) {
         toast.success(response.message || "OTP sent successfully!");
 
         // Pass email or mobile to OTP page
