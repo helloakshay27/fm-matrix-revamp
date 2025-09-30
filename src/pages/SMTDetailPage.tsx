@@ -49,8 +49,9 @@ const SMTDetailPage = () => {
     try {
       setLoading(true);
       setError(null);
+      const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
       const response = await axios.get(
-        `https://${baseUrl}/smts/${id}.json`,
+        `${cleanBaseUrl}/smts/${id}.json`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

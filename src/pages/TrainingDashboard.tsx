@@ -139,8 +139,10 @@ const TrainingDashboard = () => {
     setError(null);
     try {
   const dialogFilterActive = filterEmail.trim() || filterTrainingName.trim();
-  const effectivePage = page; // honor requested page; we already reset page elsewhere when search/filter changes
-      let url = `https://${baseUrl}/trainings.json?approval=true&page=${effectivePage}`;
+  const effectivePage = page;
+   // honor requested page; we already reset page elsewhere when search/filter changes
+           const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      let url = `${cleanBaseUrl}/trainings.json?approval=true&page=${effectivePage}`;
       // If dialog filter active, append each provided field separately (no combined OR param)
       if (dialogFilterActive) {
         const params: string[] = [];

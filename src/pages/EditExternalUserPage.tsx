@@ -264,7 +264,8 @@ export const EditExternalUserPage = () => {
           ] : []
         }
       };
-      const url = `https://${baseUrl}/pms/users/${idForUpdate}/update_vi_user`;
+      const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      const url = `${cleanBaseUrl}/pms/users/${idForUpdate}/update_vi_user`;
       await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('External user updated');
       navigate(`/safety/m-safe/external/user/${idForUpdate}`, { state: { user: { ...originalUser, ...formData } } });
@@ -305,7 +306,8 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) { setError('Missing base URL or token'); setLoading(false); return; }
-        const url = `https://${baseUrl}/pms/users/${userId}/user_show.json`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/${userId}/user_show.json`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const data = resp.data?.user || resp.data;
         // Normalize date values to strict YYYY-MM-DD to satisfy validation regex
@@ -358,7 +360,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
-        const url = `https://${baseUrl}/pms/users/get_departments.json?company_id=${companyId}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/get_departments.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const list = resp.data?.departments || [];
         setDepartments(list);
@@ -386,7 +389,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         const companyIdForRoles = getSelectedCompanyId() ?? formData.company_id;
-        const url = `https://${baseUrl}/pms/users/get_lock_roles.json?company_id=${companyIdForRoles}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/get_lock_roles.json?company_id=${companyIdForRoles}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const list = resp.data?.lock_roles || [];
         setRoles(list);
@@ -414,7 +418,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
-        const url = `https://${baseUrl}/pms/users/get_circles.json?company_id=${companyId}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/get_circles.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setCircles(resp.data?.circles || []);
       } catch (e) { console.error('Fetch circles error', e); }
@@ -439,7 +444,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         const companyId = getSelectedCompanyId() ?? (formData.company_id || 145);
-        const url = `https://${baseUrl}/pms/users/get_clusters.json?company_id=${companyId}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/get_clusters.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setClusters(resp.data?.clusters || []);
       } catch (e) { console.error('Fetch clusters error', e); }
@@ -464,7 +470,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
-        const url = `https://${baseUrl}/pms/users/get_work_locations.json?company_id=${companyId}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/get_work_locations.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setWorkLocations(resp.data?.work_locations || []);
       } catch (e) { console.error('Fetch work locations error', e); }
@@ -502,7 +509,8 @@ export const EditExternalUserPage = () => {
         if (!baseUrl || !token) return;
         setLmLoading(true);
         const companyId = getSelectedCompanyId() ?? (originalUser?.company_id || originalUser?.lock_user_permission?.company_id || formData.company_id || 145 || 15);
-        const url = `https://${baseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(lmQuery)}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(lmQuery)}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         if (!active) return;
         const users = resp.data?.users || [];
