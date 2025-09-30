@@ -915,7 +915,7 @@ export const MultipleUserDeletePage = () => {
                                     onClick={() => {
                                         const email = treeIdentifier.trim().toLowerCase();
                                         setShowDeleteChoice(false);
-                                        navigate(`/maintenance/m-safe/reportees-reassign?current_email=${encodeURIComponent(email)}`);
+                                        navigate(`/safety/m-safe/reportees-reassign?current_email=${encodeURIComponent(email)}`);
                                     }}
                                     className="group relative flex flex-col items-start w-full h-full text-left rounded-xl border border-gray-200 hover:border-[#C72030] hover:shadow-md bg-white p-5 transition focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                                 >

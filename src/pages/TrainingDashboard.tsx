@@ -231,7 +231,7 @@ const TrainingDashboard = () => {
               size="sm"
               className="h-8 w-8 p-0"
               title="View user trainings"
-              onClick={() => navigate(`/maintenance/m-safe/training-list/training-user-details/${item.id}`, { state: { row: item } })}
+              onClick={() => navigate(`/safety/m-safe/training-list/training-user-details/${item.id}`, { state: { row: item } })}
             >
               <Eye className="h-4 w-4" />
             </Button>

@@ -124,7 +124,7 @@ export const MSafeUserDetail = () => {
     return (
       <div className="p-6">
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" onClick={() => navigate('/maintenance/m-safe')}>
+          <Button variant="ghost" onClick={() => navigate('/safety/m-safe')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
@@ -138,7 +138,7 @@ export const MSafeUserDetail = () => {
     return (
       <div className="p-6">
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" onClick={() => navigate('/maintenance/m-safe')}>
+          <Button variant="ghost" onClick={() => navigate('/safety/m-safe')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
@@ -157,7 +157,7 @@ export const MSafeUserDetail = () => {
       <div className="w-full">
         <div className="flex items-center justify-between mb-6 px-4 pt-6">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate('/maintenance/m-safe')}>
+            <Button variant="ghost" onClick={() => navigate('/safety/m-safe')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>

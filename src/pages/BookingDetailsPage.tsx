@@ -8,6 +8,7 @@ import {
   getLogs,
 } from "@/store/slices/facilityBookingsSlice";
 import { ArrowLeft } from "lucide-react";
+import { CustomTabs } from "@/components/CustomTabs";
 
 export const BookingDetailsPage = () => {
   const { id } = useParams();
@@ -15,6 +16,7 @@ export const BookingDetailsPage = () => {
   const navigate = useNavigate();
 
   const [bookings, setBookings] = useState<FacilityBookingDetails | null>(null);
+  const [activeTab, setActiveTab] = useState("details");
   const [logs, setLogs] = useState<any[]>([]);
 
   const baseUrl = localStorage.getItem("baseUrl");
@@ -47,29 +49,11 @@ export const BookingDetailsPage = () => {
     fetchLogs();
   }, []);
 
-  if (!bookings) {
-    return <div className="p-10 text-gray-600">Loading booking details...</div>;
-  }
-
-  return (
-    <div className="p-[30px] min-h-screen bg-transparent">
-      {/* Header */}
-      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-1 hover:text-gray-800 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </button>
-      </div>
-      <>
-        <div className="flex items-center gap-4 mb-[30px]">
-          <h1 className="text-[24px] font-semibold text-[#1a1a1a]">
-            {bookings.facility_name}
-          </h1>
-        </div>
-
+  const tabs = [
+    {
+      value: "details",
+      label: "Details",
+      content: (
         <Card className="mb-6">
           <CardHeader
             className="bg-[#F6F4EE]"
@@ -170,43 +154,78 @@ export const BookingDetailsPage = () => {
             </div>
           </CardContent>
         </Card>
-      </>
-      {/* Logs Card */}
-      <Card>
-        <CardHeader
-          className="bg-[#F6F4EE]"
-          style={{ border: "1px solid #D9D9D9" }}
-        >
-          <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-            <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-              L
-            </span>
-            LOGS
-          </CardTitle>
-        </CardHeader>
-        <CardContent
-          className="px-6 bg-[#F6F7F7]"
-          style={{ border: "1px solid #D9D9D9" }}
-        >
-          <div className="text-gray-500">
-            {/* No logs available for this booking. */}
+      )
+    },
+    {
+      value: "logs",
+      label: "Logs",
+      content: (
+        <Card>
+          <CardHeader
+            className="bg-[#F6F4EE]"
+            style={{ border: "1px solid #D9D9D9" }}
+          >
+            <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
+              <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                L
+              </span>
+              LOGS
+            </CardTitle>
+          </CardHeader>
+          <CardContent
+            className="px-6 bg-[#F6F7F7]"
+            style={{ border: "1px solid #D9D9D9" }}
+          >
+            <div className="text-gray-500">
+              {/* No logs available for this booking. */}
 
-            <div className="timeline">
-              {logs.map((item, index) => (
-                <div key={index} className="timeline-item">
-                  <div className="timeline-icon"></div>
-                  <div className="timeline-content">
-                    <span className="date">
-                      {item.date} <span className="time">{item.time}</span>
-                    </span>
-                    <p className="mb-0">{item.text}</p>
+              <div className="timeline">
+                {logs.map((item, index) => (
+                  <div key={index} className="timeline-item">
+                    <div className="timeline-icon"></div>
+                    <div className="timeline-content">
+                      <span className="date">
+                        {item.date} <span className="time">{item.time}</span>
+                      </span>
+                      <p className="mb-0">{item.text}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )
+    }
+  ]
+
+  if (!bookings) {
+    return <div className="p-10 text-gray-600">Loading booking details...</div>;
+  }
+
+  return (
+    <div className="p-[30px] min-h-screen bg-transparent">
+      {/* Header */}
+      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </button>
+      </div>
+      <>
+        <div className="flex items-center gap-4 mb-[30px]">
+          <h1 className="text-[24px] font-semibold text-[#1a1a1a]">
+            {bookings.facility_name}
+          </h1>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <CustomTabs tabs={tabs} defaultValue="order_details" onValueChange={setActiveTab} />
+        </div>
+      </>
     </div>
   );
 };

@@ -504,7 +504,7 @@ export const KRCCFormDetail: React.FC = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [previewOpen, closePreview, gotoPrev, gotoNext]);
 
-  const handleBack = () => navigate("/maintenance/m-safe/krcc-list");
+  const handleBack = () => navigate("/safety/m-safe/krcc-list");
 
   const bike = mergedCategories?.bike;
   const car = mergedCategories?.car;

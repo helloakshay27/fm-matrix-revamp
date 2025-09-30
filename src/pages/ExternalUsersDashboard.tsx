@@ -356,7 +356,7 @@ export const ExternalUsersDashboard = () => {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => navigate(`/maintenance/m-safe/external/user/${user.id}`, { state: { user } })}
+        onClick={() => navigate(`/safety/m-safe/external/user/${user.id}`, { state: { user } })}
         className="h-8 w-8 p-0"
       >
         <Eye className="h-4 w-4" />
@@ -622,7 +622,7 @@ export const ExternalUsersDashboard = () => {
                   </Button>
                 )}
                 <Button
-                  onClick={() => navigate('/maintenance/m-safe/external-users/multiple-delete')}
+                  onClick={() => navigate('/safety/m-safe/external-users/multiple-delete')}
                   className="text-white bg-red-500 hover:bg-red-600"
                 >
                   <Trash2 className="w-4 h-4" />
