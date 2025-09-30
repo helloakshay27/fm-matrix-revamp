@@ -388,7 +388,23 @@ export const KRCCFormListDashboard = () => {
         if (isNaN(d.getTime())) return '—';
         return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
       };
-      const toTitle = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      // PDF label + value formatter ensuring any variant becomes 'M-Parivahan'
+      const isMParivahan = (val: string) => val.replace(/[_\s-]/g, '').toLowerCase().includes('mparivahan');
+      const normalizeMParivahan = (s: string) => isMParivahan(s) ? 'M-Parivahan' : s;
+      const toTitle = (s: string) => {
+        const raw = String(s || '');
+        if (isMParivahan(raw)) return 'M-Parivahan';
+        return raw
+          .replace(/_/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+      };
+      const formatValue = (v: any) => {
+        if (v == null) return v;
+        if (typeof v === 'string') return normalizeMParivahan(v);
+        return v;
+      };
       const isImage = (url?: string, doctype?: string | null) => {
         const u = url || '';
         const dt = (doctype || '').toLowerCase();
@@ -450,7 +466,7 @@ export const KRCCFormListDashboard = () => {
       const status = detailJson?.status || '—';
       const createdAt = detailJson?.created_at || null;
       const updatedAt = detailJson?.updated_at || null;
-      const formType = detailJson?.form_details?.form_type || '—';
+  // Removed formType display from PDF per latest request (previously: detailJson?.form_details?.form_type)
       const formDetails = detailJson?.form_details || {};
       const categories = detailJson?.categories || {};
       const topLevelAtts: Array<{ id?: number; url?: string; doctype?: string | null }> = detailJson?.krcc_attachments || [];
@@ -504,11 +520,18 @@ export const KRCCFormListDashboard = () => {
           </div>
       <div style='padding:24px;'>${bodyHtml}</div>
         </div>`;
-      const label = (l: string, v: string) => `
-        <div style='display:flex;flex-direction:column;gap:4px;'>
+      const label = (l: string, v: string) => {
+        // If the label is Vehicle or Vehicle Type, make it span the full row to avoid crowding/overlap
+        const isVehicle = /^(vehicle|vehicle type)$/i.test(l.trim());
+        const extraStyle = isVehicle ? 'grid-column:1 / -1;' : '';
+        // Mark vehicle row as non-splittable to avoid pagination slicing issues
+        const avoidAttr = isVehicle ? " data-avoid-split='1'" : '';
+        return `
+        <div${avoidAttr} style='display:flex;flex-direction:column;gap:4px;${extraStyle}'>
           <span style='color:#6b7280;font-size:12px;'>${l}</span>
           <span style='color:#111;font-size:13px;font-weight:600;'>${v || '—'}</span>
         </div>`;
+      };
       const labelIf = (l: string, v?: any) => {
         const has = v !== undefined && v !== null && String(v).toString().trim() !== '';
         return has ? label(l, String(v)) : '';
@@ -529,7 +552,6 @@ export const KRCCFormListDashboard = () => {
         label('Department', user?.department_name || '—'),
         label('Role', user?.role_name || '—'),
         label('Status', status || '—'),
-        label('Form Type', formType || '—'),
         label('Created On', fmtDateTime(createdAt)),
         label('Updated On', fmtDateTime(updatedAt)),
       ]);
@@ -564,32 +586,33 @@ export const KRCCFormListDashboard = () => {
         fit_to_work: 'Fit to Work',
       };
       const isYes = (v: any) => String(v).toLowerCase() === 'yes' || v === true || String(v).toLowerCase() === 'true' || v === 1;
-  const isNo = (v: any) => String(v).toLowerCase() === 'no' || String(v).toLowerCase() === 'false' || v === 0;
-  // Remove all checklist boxes & labels entirely (per latest request)
-  const buildChecklist = (_prefix: string, _title: string) => '';
+      const isNo = (v: any) => String(v).toLowerCase() === 'no' || String(v).toLowerCase() === 'false' || v === 0;
+      // Remove all checklist boxes & labels entirely (per latest request)
+      const buildChecklist = (_prefix: string, _title: string) => '';
 
 
       // Build category sections mirroring UPDATED detail page (separate sections + MHE + None of the Above)
       // Order list to keep a consistent, readable sequence of common fields
       const FIELD_ORDER = [
-        'dl_number','dl_valid_till','vehicle_type','reg_number',
-        'valid_insurance','valid_insurance_till','valid_insurence','valid_insurence_date',
-        'valid_puc','puc_date','valid_puc_date',
-        'medical_certificate_valid_till','medical_certificate_valid_date',
-        'qualification','license_number','license_validity',
-        'experience_years','role','fit_to_work','full_body_harness','first_aid_valid_till','first_aid_certificate_valid_till',
-        'safety_shoes','hand_gloves','reflective_jacket','full_face_helmet','yoe'
+        'dl_number', 'dl_valid_till', 'vehicle_type', 'reg_number',
+        'valid_insurance', 'valid_insurance_till', 'valid_insurence', 'valid_insurence_date',
+        'valid_puc', 'puc_date', 'valid_puc_date',
+        'medical_certificate_valid_till', 'medical_certificate_valid_date',
+        'qualification', 'license_number', 'license_validity',
+        'experience_years', 'role', 'fit_to_work', 'full_body_harness', 'first_aid_valid_till', 'first_aid_certificate_valid_till',
+        'safety_shoes', 'hand_gloves', 'reflective_jacket', 'full_face_helmet', 'yoe'
       ];
       const orderIndex = (k: string) => {
         const i = FIELD_ORDER.indexOf(k);
         return i === -1 ? FIELD_ORDER.length + 100 + k.charCodeAt(0) : i;
       };
       // If keys array omitted, automatically include all primitive (non-object) keys except attachments
-      const buildCatKV = (cat: any, keys?: string[]) => {
+      // Added optional labelOverrides to customize specific field labels per category (e.g., electrical fit_to_work)
+      const buildCatKV = (cat: any, keys?: string[], labelOverrides?: Record<string,string>) => {
         if (!cat) return '';
         let useKeys = keys && keys.length ? keys : Object.keys(cat).filter(k => k !== 'attachments');
         // Sort according to predefined order then fallback alpha
-        useKeys.sort((a,b)=>{
+        useKeys.sort((a, b) => {
           const ai = orderIndex(a); const bi = orderIndex(b);
           if (ai !== bi) return ai - bi; return a.localeCompare(b);
         });
@@ -598,7 +621,10 @@ export const KRCCFormListDashboard = () => {
           const v = cat?.[k];
           const isObj = v && typeof v === 'object' && !Array.isArray(v);
           const has = !isObj && v !== undefined && v !== null && String(v).toString().trim() !== '';
-          if (has) items.push(label(toTitle(k), String(v)));
+          if (has) {
+            const displayLabel = labelOverrides?.[k] || toTitle(k);
+            items.push(label(displayLabel, String(formatValue(v))));
+          }
         });
         return items.length ? grid3(items) : '';
       };
@@ -607,9 +633,9 @@ export const KRCCFormListDashboard = () => {
       // 2 Wheeler Section
       if (categories?.bike) {
         const bike = (categories as any).bike;
-  // Show all available simple fields for bike (2 Wheeler)
-  const kvBike = buildCatKV(bike); // dynamic extraction now includes insurance, puc, medical, etc.
-  const checklist2w = buildChecklist('2w_', '2 Wheeler');
+        // Show all available simple fields for bike (2 Wheeler)
+        const kvBike = buildCatKV(bike); // dynamic extraction now includes insurance, puc, medical, etc.
+        const checklist2w = buildChecklist('2w_', '2 Wheeler');
         const groups = await collectCatGroups(bike);
         const attHtml = groups.map(g => `
             <div style='margin-top:8px;'>
@@ -621,15 +647,15 @@ export const KRCCFormListDashboard = () => {
               </div>
             </div>`).join('');
         if (kvBike || checklist2w || attHtml) {
-          catHtml.push(section('KRCC Details (Ride a 2 Wheeler)', kvBike + (checklist2w||'') + attHtml));
+          catHtml.push(section('KRCC Details (Ride a 2 Wheeler)', kvBike + (checklist2w || '') + attHtml));
         }
       }
 
       // 4 Wheeler Section
       if (categories?.car) {
         const car = (categories as any).car;
-  const kvCar = buildCatKV(car, ['dl_number', 'dl_valid_till', 'vehicle_type', 'reg_number', 'valid_insurance', 'valid_insurance_till', 'valid_puc', 'puc_date', 'medical_certificate_valid_till']);
-  const checklist4w = buildChecklist('4w_', '4 Wheeler');
+        const kvCar = buildCatKV(car, ['dl_number', 'dl_valid_till', 'vehicle_type', 'reg_number', 'valid_insurance', 'valid_insurance_till', 'valid_puc', 'puc_date', 'medical_certificate_valid_till']);
+        const checklist4w = buildChecklist('4w_', '4 Wheeler');
         const groups = await collectCatGroups(car);
         const attHtml = groups.map(g => `
             <div style='margin-top:8px;'>
@@ -641,14 +667,18 @@ export const KRCCFormListDashboard = () => {
               </div>
             </div>`).join('');
         if (kvCar || checklist4w || attHtml) {
-          catHtml.push(section('KRCC Details (Drive a 4 Wheeler)', kvCar + (checklist4w||'') + attHtml));
+          catHtml.push(section('KRCC Details (Drive a 4 Wheeler)', kvCar + (checklist4w || '') + attHtml));
         }
       }
 
       // Electrical Work
       if (categories?.electrical) {
         const electrical = (categories as any).electrical;
-        const kv = buildCatKV(electrical, ['qualification', 'license_number', 'license_validity', 'fit_to_work', 'medical_certificate_valid_till', 'first_aid_valid_till']);
+        const kv = buildCatKV(
+          electrical,
+          ['qualification', 'license_number', 'license_validity', 'fit_to_work', 'medical_certificate_valid_till', 'first_aid_valid_till'],
+          { fit_to_work: 'Fit to work on electrical system' }
+        );
         const groups = await collectCatGroups(electrical);
         const attHtml = groups.map(g => `
           <div style='margin-top:8px;'>
@@ -683,7 +713,7 @@ export const KRCCFormListDashboard = () => {
       if (categories?.underground) {
         const underground = (categories as any).underground;
         const kv = buildCatKV(underground, ['experience_years', 'role', 'fit_to_work', 'medical_certificate_valid_till']);
-  const checklistUG = buildChecklist('work_under_ground_', 'Work Underground');
+        const checklistUG = buildChecklist('work_under_ground_', 'Work Underground');
         const groups = await collectCatGroups(underground);
         const attHtml = groups.map(g => `
           <div style='margin-top:8px;'>
@@ -694,7 +724,7 @@ export const KRCCFormListDashboard = () => {
               </div>`).join('')}
             </div>
           </div>`).join('');
-  if (kv || checklistUG || attHtml) catHtml.push(section('Work Underground', kv + (checklistUG||'') + attHtml));
+        if (kv || checklistUG || attHtml) catHtml.push(section('Work Underground', kv + (checklistUG || '') + attHtml));
       }
 
       // Ride a Bicycle
@@ -720,9 +750,11 @@ export const KRCCFormListDashboard = () => {
       container.innerHTML = `
   ${section('Personal Details', userHtml)}
   ${approvedByHtml ? section('Approved Details', approvedByHtml) : ''}
-        ${catHtml.join('')}
-        <div style='text-align:right;font-size:10px;color:#666;margin-top:8px;'>Generated: ${new Date().toLocaleString()}</div>
-      `;
+    ${catHtml.join('')}
+    <div style='text-align:right;font-size:10px;color:#666;margin-top:8px;'>Generated: ${new Date().toLocaleString()}</div>
+  `;
+      // Final safety normalization pass – replace any residual variants (e.g., "Mparivahan", "M_parivahan", etc.)
+      container.innerHTML = container.innerHTML.replace(/M[ _-]?parivahan/gi, 'M-Parivahan');
 
       document.body.appendChild(container);
 
@@ -869,7 +901,11 @@ export const KRCCFormListDashboard = () => {
 
         const electricalText = categories?.electrical ? (() => {
           const electrical = (categories as any).electrical;
-          return buildCatKV(electrical, ['qualification', 'license_number', 'license_validity', 'fit_to_work', 'medical_certificate_valid_till', 'first_aid_valid_till']);
+          return buildCatKV(
+            electrical,
+            ['qualification', 'license_number', 'license_validity', 'fit_to_work', 'medical_certificate_valid_till', 'first_aid_valid_till'],
+            { fit_to_work: 'Fit to work on electrical system' }
+          );
         })() : '';
 
         const bicycleText = categories?.bicycle ? (() => {
