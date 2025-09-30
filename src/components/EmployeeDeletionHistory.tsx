@@ -67,7 +67,8 @@ const EmployeeDeletionHistory: React.FC = () => {
             if (term.length > 0) {
                 params.append('q[user_email_cont]', term);
             }
-            const url = `https://${baseUrl}/pms/users/get_employee_deletion_history.json?${params.toString()}`;
+            const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+            const url = `${cleanBaseUrl}/pms/users/get_employee_deletion_history.json?${params.toString()}`;
             const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!resp.ok) throw new Error('Failed to load');
             const data: ApiResponse = await resp.json();
@@ -207,7 +208,7 @@ const EmployeeDeletionHistory: React.FC = () => {
                                             <td className="p-4 align-middle whitespace-nowrap">{serialBase + idx + 1}</td>
                                             <td className="p-4 align-middle whitespace-nowrap font-medium">{renderName(r)}</td>
                                             <td className="p-4 align-middle whitespace-nowrap">{r.detail?.email || r.user_email || '—'}</td>
-                                                                                        <td className="p-4 align-middle whitespace-nowrap">{formatDateTime(r.created_at)}</td>
+                                            <td className="p-4 align-middle whitespace-nowrap">{formatDateTime(r.created_at)}</td>
 
                                             <td className="p-4 align-middle whitespace-nowrap">{r.deleted_by_email || '—'}</td>
 
