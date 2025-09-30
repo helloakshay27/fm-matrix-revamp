@@ -758,7 +758,7 @@ export const ScheduleListDashboard = () => {
       {isLoading ? (
         <div className="flex items-center justify-center h-32">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto"></div>
             <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
           </div>
         </div>

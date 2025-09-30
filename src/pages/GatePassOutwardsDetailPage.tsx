@@ -134,7 +134,14 @@ export const GatePassOutwardsDetailPage = () => {
   };
 
   if (loading) {
-    return <div className="p-6 text-center text-gray-500 text-md">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto"></div>
+          <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!gatePassData) {
@@ -410,8 +417,13 @@ export const GatePassOutwardsDetailPage = () => {
                     <TableBody>
                       {loading ? (
                         <TableRow>
-                          <TableCell colSpan={gatePassData.returnable === true ? 7 : 6} className="text-center py-8 text-gray-500">
-                            Loading...
+                          <TableCell colSpan={gatePassData.returnable === true ? 7 : 6} className="text-center py-8">
+                            <div className="flex items-center justify-center">
+                              <div className="text-center">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mx-auto"></div>
+                                <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+                              </div>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ) : tableData && tableData.length > 0 ? (
