@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -319,76 +320,110 @@ export const GatePassOutwardsDetailPage = () => {
           </TabsList>
 
           <TabsContent value="profile" className="p-4 sm:p-6">
-            {/* Gate Pass Info Card */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4">
-              <div className="text-[#C72030] font-semibold text-xl mb-4">Gate Pass Information</div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4 text-sm">
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Employer/Visitor Name:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{personName}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Company:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{vendorCompanyName || '--'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mobile No.:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{mobileNo}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mode of Transport:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.mode_of_transport || '--'}{vehicleNo && ` / ${vehicleNo}`}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Building:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{buildingName}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass Type:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassType}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass No.:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.gate_pass_no || '--'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate No:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.gate_number || '--'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass Date:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Expected Return Date:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{expectedReturnDate}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Goods Type:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.returnable ? 'Returnable' : 'Non-Returnable'}</div>
-                </div>
-                {gatePassData.remarks && (
-                  <div className="col-span-2">
-                    <div className="text-gray-500" style={{ fontSize:'12px'}}>Remarks:</div>
-                    <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.remarks || '--'}</div>
+            <div className="space-y-6">
+              {/* Gate Pass Information Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Gate Pass Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Employer/Visitor Name</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{personName}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Company</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{vendorCompanyName || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Mobile No.</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{mobileNo}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Mode of Transport</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.mode_of_transport || '--'}{vehicleNo && ` / ${vehicleNo}`}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Building</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{buildingName}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Gate Pass Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassType}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Gate Pass No.</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.gate_pass_no || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Gate No</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.gate_number || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Gate Pass Date</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Expected Return Date</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{expectedReturnDate}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Goods Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.returnable ? 'Returnable' : 'Non-Returnable'}</span>
+                    </div>
+                    {gatePassData.remarks && (
+                      <div className="flex items-start col-span-2">
+                        <span className="text-gray-500 min-w-[140px]">Remarks</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{gatePassData.remarks || '--'}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
+                </CardContent>
+              </Card>
 
-            {/* Vendor Details */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-              <div className="text-[#C72030] font-semibold text-xl mb-4">Vendor Details</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Vendor Name:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.supplier_name || '--'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mobile No.:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{mobileNo}</div>
-                </div>
-              </div>
+              {/* Vendor Details Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <User className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Vendor Details</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Vendor Name</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.supplier_name || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Mobile No.</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{mobileNo}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
