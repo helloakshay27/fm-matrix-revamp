@@ -113,12 +113,14 @@ interface PaginationInfo {
 interface ParkingBookingApiResponse {
   cards: {
     total_slots: number;
-    total_two_wheeler: number;
-    total_four_wheeler: number;
-    vacant_two_wheeler: number;
-    vacant_four_wheeler: number;
+    two_total: number;
+    four_total: number;
+    two_booked: number;
+    four_available: number;
+    two_available: number;
     alloted: number;
     vacant: number;
+    four_booked: number;
   };
   parking_bookings: ParkingBooking[];
   pagination: PaginationInfo;
@@ -215,10 +217,12 @@ const ParkingBookingListSiteWise = () => {
   const [summary, setSummary] = useState<ParkingBookingSiteSummary | null>(null);
   const [cards, setCards] = useState<{
     total_slots: number;
-    total_two_wheeler: number;
-    total_four_wheeler: number;
-    vacant_two_wheeler: number;
-    vacant_four_wheeler: number;
+    two_total: number;
+    four_total: number;
+    four_booked: number;
+    two_available: number;
+    four_available: number;
+    two_booked: number;
     alloted: number;
     vacant: number;
   } | null>(null);
@@ -601,11 +605,11 @@ const ParkingBookingListSiteWise = () => {
     if (!cards) {
       return [
         // First row - Car parking stats
-        { title: "Total Parking for 4 Wheeler", count: 0, icon: Car },
+        { title: "Total Parking", count: 0, icon: Car },
         { title: "Total Booked Parking", count: 0, icon: CheckCircle },
         { title: "Total Vacant Parking", count: 0, icon: AlertTriangle },
         // Second row - Bike parking stats
-        { title: "Total Parking for 2 Wheeler", count: 0, icon: Bike },
+        { title: "Total Parking", count: 0, icon: Bike },
         { title: "Total Booked Parking", count: 0, icon: CheckCircle },
         { title: "Total Vacant Parking", count: 0, icon: AlertTriangle }
       ];
@@ -613,13 +617,13 @@ const ParkingBookingListSiteWise = () => {
 
     return [
       // First row - Car parking stats
-      { title: "Total Parking for 4 Wheeler", count: cards.total_four_wheeler, icon: Car },
-      { title: "Total Booked Parking", count: Math.abs(cards.total_four_wheeler - cards.vacant_four_wheeler), icon: CheckCircle },
-      { title: "Total Vacant Parking", count: cards.vacant_four_wheeler, icon: AlertTriangle },
+      { title: "Total Parking", count: cards.four_total, icon: Car },
+      { title: "Total Booked Parking", count: cards.four_booked, icon: CheckCircle },
+      { title: "Total Vacant Parking", count: cards.four_available, icon: AlertTriangle },
       // Second row - Bike parking stats
-      { title: "Total Parking for 2 Wheeler", count: cards.total_two_wheeler, icon: Bike },
-      { title: "Total Booked Parking", count: Math.abs(cards.total_two_wheeler - cards.vacant_two_wheeler), icon: CheckCircle },
-      { title: "Total Vacant Parking", count: cards.vacant_two_wheeler, icon: AlertTriangle }
+      { title: "Total Parking", count: cards.two_total, icon: Bike },
+      { title: "Total Booked Parking", count: cards.two_booked, icon: CheckCircle },
+      { title: "Total Vacant Parking", count: cards.two_available, icon: AlertTriangle }
     ];
   }, [cards]);
 
