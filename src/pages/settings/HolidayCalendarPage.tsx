@@ -633,7 +633,7 @@ export const HolidayCalendarPage = () => {
         </button> */}
         <button 
           onClick={() => handleEdit(holiday.id)} 
-          className="p-1 text-green-600 hover:bg-green-50 rounded" 
+          className="p-1 text-black-600 hover:bg-green-50 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />
@@ -911,7 +911,7 @@ export const HolidayCalendarPage = () => {
 
                   {/* Select Customers */}
                   <div className="space-y-2">
-                    <Label>Select Customers</Label>
+                    <Label>Select Module</Label>
                     <Popover open={customersDropdownOpen} onOpenChange={setCustomersDropdownOpen}>
                       <PopoverTrigger asChild>
                         <Button
@@ -1175,7 +1175,7 @@ export const HolidayCalendarPage = () => {
 
                 {/* Select Customers */}
                 <div className="space-y-2">
-                  <Label>Select Customers</Label>
+                  <Label>Select Module</Label>
                   <Popover open={customersDropdownOpen} onOpenChange={setCustomersDropdownOpen}>
                     <PopoverTrigger asChild>
                       <Button
