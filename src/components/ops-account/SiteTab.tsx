@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, Plus, Edit, Loader2 } from 'lucide-react';
+import { AddSiteModal } from '@/components/AddSiteModal';
+import { siteService, SiteData } from '@/services/siteService';
 
 interface SiteTabProps {
   searchQuery: string;
@@ -18,21 +21,52 @@ export const SiteTab: React.FC<SiteTabProps> = ({
   setEntriesPerPage
 }) => {
   // Site state
-  const [sites, setSites] = useState([
-    { country: 'India', region: 'West', zone: 'Mumbai', site: 'Lockated', latitude: '19.0760', longitude: '72.8777', status: true, qrCode: '/placeholder.svg' },
-  ]);
+  const [sites, setSites] = useState<SiteData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSite, setEditingSite] = useState<SiteData | null>(null);
 
-  const handleSiteStatusChange = (index: number, checked: boolean) => {
-    const updatedSites = [...sites];
-    updatedSites[index].status = checked;
-    setSites(updatedSites);
+  // Fetch sites on component mount
+  useEffect(() => {
+    fetchSites();
+  }, []);
+
+  const fetchSites = async () => {
+    setIsLoading(true);
+    try {
+      const sitesData = await siteService.getSites();
+      setSites(sitesData);
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddSite = () => {
+    setEditingSite(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditSite = (site: SiteData) => {
+    setEditingSite(site);
+    setIsModalOpen(true);
+  };
+
+  const handleSiteAdded = () => {
+    fetchSites(); // Refresh the list
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingSite(null);
   };
 
   const filteredSites = sites.filter(site =>
-    site.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    site.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    site.zone.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    site.site.toLowerCase().includes(searchQuery.toLowerCase())
+    site.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    site.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    site.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    site.state?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -60,6 +94,13 @@ export const SiteTab: React.FC<SiteTabProps> = ({
             />
           </div>
         </div>
+        <Button 
+          onClick={handleAddSite}
+          className="bg-[#C72030] hover:bg-[#A91D2A] text-white"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Site
+        </Button>
       </div>
       
       <Card>
@@ -67,43 +108,51 @@ export const SiteTab: React.FC<SiteTabProps> = ({
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold">Country</TableHead>
-                <TableHead className="font-semibold">Region</TableHead>
-                <TableHead className="font-semibold">Zone</TableHead>
-                <TableHead className="font-semibold">Site</TableHead>
+                <TableHead className="font-semibold">Site Name</TableHead>
+                <TableHead className="font-semibold">Company ID</TableHead>
+                <TableHead className="font-semibold">Region ID</TableHead>
+                <TableHead className="font-semibold">Address</TableHead>
+                <TableHead className="font-semibold">City</TableHead>
+                <TableHead className="font-semibold">State</TableHead>
                 <TableHead className="font-semibold">Latitude</TableHead>
                 <TableHead className="font-semibold">Longitude</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="font-semibold">QR Code</TableHead>
+                <TableHead className="font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSites.length === 0 ? (
+              {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
+                  <TableCell colSpan={9} className="text-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                    <p className="mt-2">Loading sites...</p>
+                  </TableCell>
+                </TableRow>
+              ) : filteredSites.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8">
                     No sites found
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredSites.map((site, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{site.country}</TableCell>
-                    <TableCell>{site.region}</TableCell>
-                    <TableCell>{site.zone}</TableCell>
-                    <TableCell>{site.site}</TableCell>
-                    <TableCell>{site.latitude}</TableCell>
-                    <TableCell>{site.longitude}</TableCell>
+                  <TableRow key={site.id || index}>
+                    <TableCell>{site.name}</TableCell>
+                    <TableCell>{site.company_id}</TableCell>
+                    <TableCell>{site.region_id}</TableCell>
+                    <TableCell>{site.address || '-'}</TableCell>
+                    <TableCell>{site.city || '-'}</TableCell>
+                    <TableCell>{site.state || '-'}</TableCell>
+                    <TableCell>{site.latitude || '-'}</TableCell>
+                    <TableCell>{site.longitude || '-'}</TableCell>
                     <TableCell>
-                      <Switch
-                        checked={site.status}
-                        onCheckedChange={(checked) => handleSiteStatusChange(index, checked)}
-                        className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                        <img src={site.qrCode} alt="QR Code" className="w-6 h-6" />
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditSite(site)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -112,6 +161,13 @@ export const SiteTab: React.FC<SiteTabProps> = ({
           </Table>
         </CardContent>
       </Card>
+
+      <AddSiteModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSiteAdded={handleSiteAdded}
+        editingSite={editingSite}
+      />
     </div>
   );
 };
