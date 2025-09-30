@@ -504,7 +504,7 @@ export const KRCCFormDetail: React.FC = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [previewOpen, closePreview, gotoPrev, gotoNext]);
 
-  const handleBack = () => navigate(-1);
+  const handleBack = () => navigate("/safety/m-safe/krcc-list");
 
   const bike = mergedCategories?.bike;
   const car = mergedCategories?.car;
@@ -673,16 +673,11 @@ export const KRCCFormDetail: React.FC = () => {
             <h2 className="text-lg font-semibold">KRCC Details (Ride a 2 Wheeler)</h2>
           </div>
           <div className="p-6 pt-2">
-            <div className="flex items-center gap-2 mb-4 mt-4">
-              <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
-              <h3 className="text-base font-medium text-gray-900">Driving License Details</h3>
-            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <KeyValue label="Driving License Number" value={bike.dl_number} />
-              <KeyValue label="Valid Till" value={bike.dl_valid_till} />
-              <KeyValue label="2 Wheeler Reg. Number" value={bike.reg_number} />
+              {Object.entries(bike).filter(([k]) => k !== 'attachments').map(([k, v]) => (
+                <KeyValue key={k} label={toTitle(k)} value={v} />
+              ))}
             </div>
-            <SectionChecklist title="2 Wheeler Checklist" prefix="2w_" formDetails={data.form_details} />
             <AttachmentGroup title="M-Parivahan" items={bike.attachments?.mparivahan as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Vehicle" items={bike.attachments?.vehicle as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Insurance" items={bike.attachments?.insurance as IAttachmentItem[]} onPreview={openPreview} />
@@ -701,27 +696,11 @@ export const KRCCFormDetail: React.FC = () => {
             <h2 className="text-lg font-semibold">KRCC Details (Drive a 4 Wheeler)</h2>
           </div>
           <div className="p-6 pt-2">
-            <div className="flex items-center gap-2 mb-4 mt-4">
-              <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
-              <h3 className="text-base font-medium text-gray-900">Driving License Details</h3>
-            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <KeyValue label="Driving License Number" value={car.dl_number} />
-              <KeyValue label="Valid Till" value={car.dl_valid_till} />
+              {Object.entries(car).filter(([k]) => k !== 'attachments').map(([k, v]) => (
+                <KeyValue key={k} label={toTitle(k)} value={v} />
+              ))}
             </div>
-            <div className="flex items-center gap-2 mb-4 mt-2">
-              <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
-              <h3 className="text-base font-medium text-gray-900">4 Wheeler Details</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <KeyValue label="Vehicle Type" value={car.vehicle_type} />
-              <KeyValue label="Registration Number" value={car.reg_number} />
-              <KeyValue label="Valid Insurance" value={car.valid_insurance} />
-              <KeyValue label="Valid Till" value={car.valid_insurance_till} />
-              <KeyValue label="Valid PUC" value={car.valid_puc} />
-              <KeyValue label="Valid Till (If Applicable)" value={car.medical_certificate_valid_till} />
-            </div>
-            <SectionChecklist title="4 Wheeler Checklist" prefix="4w_" formDetails={data.form_details} />
             <AttachmentGroup title="M-Parivahan" items={car.attachments?.mparivahan as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Insurance" items={car.attachments?.insurance as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="PUC" items={car.attachments?.puc as IAttachmentItem[]} onPreview={openPreview} />
@@ -738,19 +717,10 @@ export const KRCCFormDetail: React.FC = () => {
             <h2 className="text-lg font-semibold">Work on Electrical System</h2>
           </div>
           <div className="p-6 pt-2">
-            <div>
-              <div className="flex items-center gap-2 mb-4 mt-2">
-                <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
-                <h3 className="text-base font-medium text-gray-900">Qualification Details</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KeyValue label="Qualification" value={electrical.qualification} />
-                <KeyValue label="License Number" value={electrical.license_number} />
-                <KeyValue label="Valid Date" value={electrical.license_validity} />
-                <KeyValue label="Fit to work on electrical system" value={electrical.fit_to_work} />
-                <KeyValue label="Valid Till (If Applicable)" value={electrical.medical_certificate_valid_till} />
-                <KeyValue label="Valid Till" value={electrical.first_aid_valid_till} />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {Object.entries(electrical).filter(([k]) => k !== 'attachments').map(([k, v]) => (
+                <KeyValue key={k} label={toTitle(k)} value={v} />
+              ))}
             </div>
             <AttachmentGroup title="Certificates" items={electrical.attachments?.certificate as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Licenses" items={electrical.attachments?.license as IAttachmentItem[]} onPreview={openPreview} />
@@ -769,18 +739,10 @@ export const KRCCFormDetail: React.FC = () => {
             <h2 className="text-lg font-semibold">Work at Height</h2>
           </div>
           <div className="p-6 pt-2">
-            <div>
-              <div className="flex items-center gap-2 mb-4 mt-2">
-                <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
-                <h3 className="text-base font-medium text-gray-900">Experience Details</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KeyValue label="Experience to work on Height (In Years)" value={height.experience_years} />
-                <KeyValue label="Fit to work at height" value={height.fit_to_work} />
-                <KeyValue label="Availability of VIL approved full body harness" value={height.full_body_harness} />
-                <KeyValue label="Valid Till (If Applicable)" value={height.medical_certificate_valid_till} />
-                <KeyValue label="Valid Till" value={height.first_aid_certificate_valid_till} />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {Object.entries(height).filter(([k]) => k !== 'attachments').map(([k, v]) => (
+                <KeyValue key={k} label={toTitle(k)} value={v} />
+              ))}
             </div>
             <AttachmentGroup title="Medical Certificates" items={height.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="First Aid" items={height.attachments?.first_aid as IAttachmentItem[]} onPreview={openPreview} />
@@ -796,19 +758,11 @@ export const KRCCFormDetail: React.FC = () => {
             <h2 className="text-lg font-semibold">Work Underground</h2>
           </div>
           <div className="p-6 pt-2">
-            <div>
-              <div className="flex items-center gap-2 mb-4 mt-2">
-                <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
-                <h3 className="text-base font-medium text-gray-900">Experience Details</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KeyValue label="Experience to work Underground (In years)" value={underground.experience_years} />
-                <KeyValue label="Role" value={underground.role} />
-                <KeyValue label="Fit to work Underground" value={underground.fit_to_work} />
-                <KeyValue label="Valid Till (If Applicable)" value={underground.medical_certificate_valid_till} />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {Object.entries(underground).filter(([k]) => k !== 'attachments').map(([k, v]) => (
+                <KeyValue key={k} label={toTitle(k)} value={v} />
+              ))}
             </div>
-            <SectionChecklist title="Work Underground Checklist" prefix="work_under_ground_" formDetails={data.form_details} />
             <AttachmentGroup title="Medical Certificates" items={underground.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
@@ -822,26 +776,27 @@ export const KRCCFormDetail: React.FC = () => {
             <h2 className="text-lg font-semibold">Ride a Bicycle</h2>
           </div>
           <div className="p-6 pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <KeyValue label="Reflective jacket available" value={bicycle.reflective_jacket} />
-              <KeyValue label="Training for safe bicycle riding available" value={bicycle.training_available} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {bicycle && Object.entries(bicycle).map(([k, v]) => (
+                <KeyValue key={k} label={toTitle(k)} value={v} />
+              ))}
             </div>
           </div>
         </div>
       )}
 
       {/* Operate MHE */}
-  {mhe && (
+      {mhe && (
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
             <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
             <h2 className="text-lg font-semibold">Operate MHE</h2>
           </div>
           <div className="p-6 pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <KeyValue label="Safety shoes available" value={mhe.safety_shoes} />
-              <KeyValue label="Cut resistant hand gloves available" value={mhe.hand_gloves} />
-              <KeyValue label="Reflective jacket available" value={mhe.reflective_jacket} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {mhe && Object.entries(mhe).map(([k, v]) => (
+                <KeyValue key={k} label={toTitle(k)} value={v} />
+              ))}
             </div>
           </div>
         </div>

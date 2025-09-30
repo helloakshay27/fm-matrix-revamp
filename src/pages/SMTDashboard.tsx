@@ -142,7 +142,7 @@ const SMTDashboard = () => {
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
-              onClick={() => navigate(`/maintenance/m-safe/smt/${item.id}`, { state: { row: item } })}
+              onClick={() => navigate(`/safety/m-safe/smt/${item.id}`, { state: { row: item } })}
             >
               <Eye className="h-4 w-4" />
             </Button>

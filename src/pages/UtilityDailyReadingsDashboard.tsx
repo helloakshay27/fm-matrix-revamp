@@ -5,6 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Download, Upload, Filter, Edit, RefreshCw, X } from 'lucide-react';
@@ -95,6 +104,12 @@ export default function UtilityDailyReadingsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [perPage, setPerPage] = useState(20);
+
   // Customer data state
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customersLoading, setCustomersLoading] = useState(false);
@@ -120,12 +135,26 @@ export default function UtilityDailyReadingsDashboard() {
   });
 
   // API fetch function
-  const fetchMeasurements = useCallback(async () => {
+  const fetchMeasurements = useCallback(async (page: number = currentPage, filters?: any) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.MEASUREMENTS}`, {
+      // Build URL with pagination parameters
+      const url = new URL(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.MEASUREMENTS}`);
+      url.searchParams.append('page', page.toString());
+      url.searchParams.append('per_page', perPage.toString());
+
+      // Add filters if provided
+      if (filters) {
+        Object.keys(filters).forEach(key => {
+          if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+            url.searchParams.append(key, filters[key]);
+          }
+        });
+      }
+
+      const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Authorization': getAuthHeader(),
@@ -140,12 +169,26 @@ export default function UtilityDailyReadingsDashboard() {
       const data = await response.json();
       console.log('Fetched measurements data:', data);
 
+      // Extract pagination data from API response
+      const paginationData = {
+        totalCount: data.total_count || 0,
+        currentPage: data.current_page || 1,
+        totalPages: data.total_pages || 1,
+        perPage: data.per_page || 20,
+        nextPage: data.next_page,
+        previousPage: data.previous_page
+      };
+
+      // Update pagination state
+      setCurrentPage(paginationData.currentPage);
+      setTotalPages(paginationData.totalPages);
+      setTotalCount(paginationData.totalCount);
+      setPerPage(paginationData.perPage);
+
       // Support both array and object API responses
-      const measurementsArray = Array.isArray(data)
-        ? data
-        : Array.isArray(data.measurements)
-          ? data.measurements
-          : [];
+      const measurementsArray = Array.isArray(data.measurements)
+        ? data.measurements
+        : [];
 
       const transformedData = measurementsArray.map(transformMeasurement);
       setDailyReadingsData(transformedData);
@@ -161,7 +204,7 @@ export default function UtilityDailyReadingsDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, perPage]);
 
   // Fetch customers function
   const fetchCustomers = useCallback(async () => {
@@ -207,37 +250,41 @@ export default function UtilityDailyReadingsDashboard() {
 
   // Fetch data on component mount
   useEffect(() => {
-    fetchMeasurements();
+    fetchMeasurements(1);
     // Temporarily disabled until actual API endpoints are provided
     // fetchCustomers();
     // fetchParameters();
-  }, [fetchMeasurements]);
+  }, []); // Remove fetchMeasurements dependency to avoid infinite loops
 
-  const filteredData = dailyReadingsData.filter(item => {
-    // Text search filter
-    const matchesSearch = item.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.parameterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.includes(searchTerm);
+  // Handle page changes separately
+  useEffect(() => {
+    if (currentPage >= 1) {
+      const searchFilters = {
+        ...activeFilters,
+        ...(searchTerm && { 'q[asset_name_or_parameter_name_cont]': searchTerm })
+      };
+      fetchMeasurements(currentPage, searchFilters);
+    }
+  }, [currentPage, activeFilters, searchTerm]);
 
-    // Apply active filters
-    const matchesAsset = !activeFilters.asset || item.assetName.toLowerCase().includes(activeFilters.asset.toLowerCase());
+  // For server-side pagination, we use the data as-is from the API
+  // Filtering is handled on the server side
+  const filteredData = dailyReadingsData;
 
-    // Filter by customer ID instead of name
-    const matchesCustomer = !activeFilters.customerName ||
-      item.customerName.toLowerCase().includes(activeFilters.customerName.toLowerCase()) ||
-      // Also check if the customer ID matches (if we have the customer data)
-      customers.some(customer =>
-        customer.id.toString() === activeFilters.customerName &&
-        customer.name.toLowerCase().includes(item.customerName.toLowerCase())
-      );
+  // Handle search with server-side filtering
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1); // Reset to first page when searching
 
-    const matchesParameter = !activeFilters.parameterName || item.parameterName.toLowerCase().includes(activeFilters.parameterName.toLowerCase());
+    // Build search filters
+    const searchFilters = {
+      ...activeFilters,
+      // Add search term to the filters (adjust parameter name according to your API)
+      'q[asset_name_or_parameter_name_cont]': term
+    };
 
-    // Date range filter - for now just check if dateRange is set
-    const matchesDateRange = !activeFilters.dateRange; // Implement actual date range logic when you have the date range picker
-
-    return matchesSearch && matchesAsset && matchesCustomer && matchesParameter && matchesDateRange;
-  });
+    fetchMeasurements(1, searchFilters);
+  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -261,7 +308,7 @@ export default function UtilityDailyReadingsDashboard() {
 
   const handleRefresh = async () => {
     try {
-      await fetchMeasurements();
+      await fetchMeasurements(currentPage, activeFilters);
       toast({
         title: "Success",
         description: "Data refreshed successfully",
@@ -273,6 +320,12 @@ export default function UtilityDailyReadingsDashboard() {
         variant: "destructive",
       });
     }
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // fetchMeasurements will be called by useEffect when currentPage changes
   };
 
   const handleExport = async () => {
@@ -326,7 +379,8 @@ export default function UtilityDailyReadingsDashboard() {
 
   const handleImportComplete = (file: File) => {
     // Refresh the data after successful import
-    fetchMeasurements();
+    fetchMeasurements(1); // Reset to first page after import
+    setCurrentPage(1);
     toast({
       title: "Success",
       description: "Data imported successfully",
@@ -335,7 +389,12 @@ export default function UtilityDailyReadingsDashboard() {
 
   const handleFilterApply = (filters: FilterData) => {
     setActiveFilters(filters);
+    setCurrentPage(1); // Reset to first page when applying filters
     setShowFilterModal(false);
+
+    // Fetch data with new filters
+    fetchMeasurements(1, filters);
+
     toast({
       title: "Filters Applied",
       description: "Data filtered successfully",
@@ -481,24 +540,113 @@ export default function UtilityDailyReadingsDashboard() {
             </Button>
           </div>
         ) : (
-          <EnhancedTable
-            data={filteredData}
-            columns={columns}
-            renderCell={renderCell}
-            onSelectAll={handleSelectAll}
-            onSelectItem={handleSelectItem}
-            selectedItems={selectedItems}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            enableSearch={false}
-            enableExport={false}
-            hideColumnsButton={false}
-            pagination={true}
-            pageSize={20}
-            emptyMessage="No daily readings found"
-            selectable={true}
-            storageKey="daily-readings-table"
-          />
+          <div className="space-y-4">
+            <EnhancedTable
+              data={filteredData}
+              columns={columns}
+              renderCell={renderCell}
+              onSelectAll={handleSelectAll}
+              onSelectItem={handleSelectItem}
+              selectedItems={selectedItems}
+              searchTerm={searchTerm}
+              onSearchChange={handleSearch}
+              enableSearch={true}
+              enableExport={false}
+              hideColumnsButton={false}
+              pagination={false} // Disable built-in pagination
+              emptyMessage="No daily readings found"
+              selectable={true}
+              storageKey="daily-readings-table"
+            />
+
+            {/* Custom Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                  Showing {Math.min((currentPage - 1) * perPage + 1, totalCount)} to{' '}
+                  {Math.min(currentPage * perPage, totalCount)} of {totalCount} entries
+                </div>
+
+                <Pagination>
+                  <PaginationContent>
+                    {/* Previous Button */}
+                    <PaginationItem>
+                      <PaginationPrevious
+                        className={`cursor-pointer ${currentPage === 1 ? 'pointer-events-none opacity-50' : ''}`}
+                        onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                      />
+                    </PaginationItem>
+
+                    {/* First Page */}
+                    {currentPage > 3 && (
+                      <>
+                        <PaginationItem>
+                          <PaginationLink
+                            className="cursor-pointer"
+                            onClick={() => handlePageChange(1)}
+                            isActive={currentPage === 1}
+                          >
+                            1
+                          </PaginationLink>
+                        </PaginationItem>
+                        {currentPage > 4 && (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )}
+                      </>
+                    )}
+
+                    {/* Page Numbers around current page */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const pageNumber = Math.max(1, currentPage - 2) + i;
+                      if (pageNumber > totalPages) return null;
+
+                      return (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                            className="cursor-pointer"
+                            onClick={() => handlePageChange(pageNumber)}
+                            isActive={currentPage === pageNumber}
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }).filter(Boolean)}
+
+                    {/* Last Page */}
+                    {currentPage < totalPages - 2 && (
+                      <>
+                        {currentPage < totalPages - 3 && (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )}
+                        <PaginationItem>
+                          <PaginationLink
+                            className="cursor-pointer"
+                            onClick={() => handlePageChange(totalPages)}
+                            isActive={currentPage === totalPages}
+                          >
+                            {totalPages}
+                          </PaginationLink>
+                        </PaginationItem>
+                      </>
+                    )}
+
+                    {/* Next Button */}
+                    <PaginationItem>
+                      <PaginationNext
+                        className={`cursor-pointer ${currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}`}
+                        onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

@@ -11,7 +11,6 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { KRCCFormFilterDialog } from '@/components/KRCCFormFilterDialog';
 import { toast } from 'sonner';
-import axios from 'axios';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -135,7 +134,7 @@ export const KRCCFormListDashboard = () => {
         const firstPayload = await res.clone().json();
         if ((firstPayload.krcc_forms?.length ?? 0) === 0 && cleanedSearch.includes('@')) {
           const fallbackUrl = `https://${baseUrl}/krcc_forms.json?approval=yes&q[email_cont]=${encodeURIComponent(cleanedSearch)}&page=1`;
-            res = await fetch(fallbackUrl, { headers: { Authorization: `Bearer ${token}` } });
+          res = await fetch(fallbackUrl, { headers: { Authorization: `Bearer ${token}` } });
         }
       }
 
@@ -160,7 +159,7 @@ export const KRCCFormListDashboard = () => {
         setTotalPages(1);
         setTotalCount(mapped.length);
       }
-  if (searchActive && mapped.length === 0) {
+      if (searchActive && mapped.length === 0) {
         toast.info('No results found');
       }
     } catch (e: any) {
@@ -269,7 +268,7 @@ export const KRCCFormListDashboard = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(`/maintenance/m-safe/krcc-list/${form.id}`)}
+              onClick={() => navigate(`/safety/m-safe/krcc-list/${form.id}`)}
               className="h-8 w-8 p-0"
               title="View Form"
             >
@@ -496,12 +495,9 @@ export const KRCCFormListDashboard = () => {
       container.style.position = 'absolute';
       container.style.left = '-10000px';
 
-  const section = (title: string, bodyHtml: string, opts?: { marginTop?: number }) => `
+      const section = (title: string, bodyHtml: string, opts?: { marginTop?: number }) => `
     <div style='background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin:${opts?.marginTop ?? 0}px 0 24px;'>
           <div style='display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f6f4ee;'>
-            <div style='width:32px;height:32px;flex:0 0 auto;display:inline-block;'>
-              <svg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'><circle cx='16' cy='16' r='16' fill='#C72030' /><text x='16' y='16' dy='.35em' fill='#fff' font-family='Arial, sans-serif' font-size='16' font-weight='700' text-anchor='middle'>${title.charAt(0).toUpperCase()}</text></svg>
-            </div>
             <h2 style='margin:0;font-size:16px;font-weight:700;color:#111;'>${title}</h2>
           </div>
       <div style='padding:24px;'>${bodyHtml}</div>
@@ -579,14 +575,38 @@ export const KRCCFormListDashboard = () => {
           })
           .filter(it => !!it.labelText);
         if (!entries.length) return '';
+        //   const items = entries.map(it => `
+        //     <div data-avoid-split='1' style='display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;'>
+        //       <div style='width:14px;height:14px;border-radius:3px;border:1px solid #94a3b8;background:${it.checked ? '#16a34a' : '#fff'}'></div>
+        //       <div style='font-size:12px;color:#111;font-weight:600;'>${it.labelText}</div>
+        //       ${it.valueText ? `<div style='font-size:12px;color:#374151;margin-left:auto;'>${it.valueText}</div>` : ''}
+        //     </div>`).join('');
+        //   return section(title.toUpperCase(), `<div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px;'>${items}</div>`, { marginTop: 12 });
+        // 
+
         const items = entries.map(it => `
-          <div data-avoid-split='1' style='display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;'>
-            <div style='width:14px;height:14px;border-radius:3px;border:1px solid #94a3b8;background:${it.checked ? '#16a34a' : '#fff'}'></div>
-            <div style='font-size:12px;color:#111;font-weight:600;'>${it.labelText}</div>
-            ${it.valueText ? `<div style='font-size:12px;color:#374151;margin-left:auto;'>${it.valueText}</div>` : ''}
-          </div>`).join('');
-  return section(title.toUpperCase(), `<div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px;'>${items}</div>`, { marginTop: 12 });
+  <div data-avoid-split='1' style='display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;'>
+    <div style='width:14px;height:14px;border-radius:3px;border:1px solid #94a3b8;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;background:#fff;'>
+      ${it.checked ? `
+        <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="#16a34a" stroke-width="2">
+          <path d="M3 8l3 3 7-7"/>
+        </svg>
+      ` : ""}
+    </div>
+    <div style='font-size:12px;color:#111;font-weight:600;line-height:14px;'>${it.labelText}</div>
+    ${it.valueText ? `<div style='font-size:12px;color:#374151;margin-left:auto;line-height:14px;'>${it.valueText}</div>` : ''}
+  </div>`
+        ).join('');
+
+        return section(
+          title.toUpperCase(),
+          `<div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px;'>${items}</div>`,
+          { marginTop: 12 }
+        );
+
+
       };
+
 
       // Build category sections mirroring detail page
       const buildCatKV = (cat: any, keys: string[]) => {
@@ -600,15 +620,15 @@ export const KRCCFormListDashboard = () => {
       };
       const catHtml: string[] = [];
       // Consolidated KRCC Details (2W/4W) section
-  if (categories?.bike || categories?.car) {
+      if (categories?.bike || categories?.car) {
         let krccBody = '';
         // Bike / 2 Wheeler subsection
         if (categories?.bike) {
           const bike = (categories as any).bike;
-          const kvBike = buildCatKV(bike, ['dl_number','dl_valid_till','reg_number']);
+          const kvBike = buildCatKV(bike, ['dl_number', 'dl_valid_till', 'reg_number']);
           const checklist2w = buildChecklist('2w_', '2 Wheeler Checklist');
           const groups = await collectCatGroups(bike);
-      const attHtml = groups.map(g => `
+          const attHtml = groups.map(g => `
             <div style='margin-top:8px;'>
               <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
               <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
@@ -630,10 +650,10 @@ export const KRCCFormListDashboard = () => {
         // Car / 4 Wheeler subsection
         if (categories?.car) {
           const car = (categories as any).car;
-          const kvCar = buildCatKV(car, ['dl_number','dl_valid_till','vehicle_type','reg_number','valid_insurance','valid_insurance_till','valid_puc','medical_certificate_valid_till']);
+          const kvCar = buildCatKV(car, ['dl_number', 'dl_valid_till', 'vehicle_type', 'reg_number', 'valid_insurance', 'valid_insurance_till', 'valid_puc', 'medical_certificate_valid_till']);
           const checklist4w = buildChecklist('4w_', '4 Wheeler Checklist');
           const groups = await collectCatGroups(car);
-      const attHtml = groups.map(g => `
+          const attHtml = groups.map(g => `
             <div style='margin-top:8px;'>
               <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
               <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
@@ -658,11 +678,11 @@ export const KRCCFormListDashboard = () => {
         }
       }
       // Electrical Work
-  if (categories?.electrical) {
+      if (categories?.electrical) {
         const electrical = (categories as any).electrical;
-        const kv = buildCatKV(electrical, ['qualification','license_number','license_validity','fit_to_work','medical_certificate_valid_till','first_aid_valid_till']);
+        const kv = buildCatKV(electrical, ['qualification', 'license_number', 'license_validity', 'fit_to_work', 'medical_certificate_valid_till', 'first_aid_valid_till']);
         const groups = await collectCatGroups(electrical);
-    const attHtml = groups.map(g => `
+        const attHtml = groups.map(g => `
           <div style='margin-top:8px;'>
             <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
             <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
@@ -675,12 +695,12 @@ export const KRCCFormListDashboard = () => {
           catHtml.push(section('ELECTRICAL WORK', kv + attHtml));
         }
       }
-  // Work at Height
-  if (categories?.height) {
+      // Work at Height
+      if (categories?.height) {
         const height = (categories as any).height;
-        const kv = buildCatKV(height, ['experience_years','fit_to_work','full_body_harness','medical_certificate_valid_till','first_aid_certificate_valid_till']);
+        const kv = buildCatKV(height, ['experience_years', 'fit_to_work', 'full_body_harness', 'medical_certificate_valid_till', 'first_aid_certificate_valid_till']);
         const groups = await collectCatGroups(height);
-    const attHtml = groups.map(g => `
+        const attHtml = groups.map(g => `
           <div style='margin-top:8px;'>
             <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
             <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
@@ -696,7 +716,7 @@ export const KRCCFormListDashboard = () => {
       // Underground Work
       if (categories?.underground) {
         const underground = (categories as any).underground;
-        const kv = buildCatKV(underground, ['experience_years','role','fit_to_work','medical_certificate_valid_till']);
+        const kv = buildCatKV(underground, ['experience_years', 'role', 'fit_to_work', 'medical_certificate_valid_till']);
         const checklistUG = buildChecklist('work_under_ground_', 'Work Underground Checklist');
         const groups = await collectCatGroups(underground);
         const attHtml = groups.map(g => `
@@ -715,7 +735,7 @@ export const KRCCFormListDashboard = () => {
       // Ride a Bicycle
       if (categories?.bicycle) {
         const bicycle = (categories as any).bicycle;
-        const kv = buildCatKV(bicycle, ['reflective_jacket','training_available']);
+        const kv = buildCatKV(bicycle, ['reflective_jacket', 'training_available']);
         if (kv) {
           catHtml.push(section('Ride a Bicycle', kv));
         }
@@ -823,7 +843,7 @@ export const KRCCFormListDashboard = () => {
             const a = document.createElement('a');
             a.href = urlObj; a.download = `krcc_${form.id}.pdf`; document.body.appendChild(a); a.click();
             setTimeout(() => { URL.revokeObjectURL(urlObj); document.body.removeChild(a); }, 1500);
-          } catch {}
+          } catch { }
         }
 
         document.body.removeChild(container);
@@ -836,7 +856,7 @@ export const KRCCFormListDashboard = () => {
           let body = '';
           if (categories?.bike) {
             const bike = (categories as any).bike;
-            const kvBike = buildCatKV(bike, ['dl_number','dl_valid_till','reg_number']);
+            const kvBike = buildCatKV(bike, ['dl_number', 'dl_valid_till', 'reg_number']);
             const checklist2w = buildChecklist('2w_', '2 Wheeler Checklist');
             body += `
               <div style='margin-bottom:16px;'>
@@ -847,7 +867,7 @@ export const KRCCFormListDashboard = () => {
           }
           if (categories?.car) {
             const car = (categories as any).car;
-            const kvCar = buildCatKV(car, ['dl_number','dl_valid_till','vehicle_type','reg_number','valid_insurance','valid_insurance_till','valid_puc','medical_certificate_valid_till']);
+            const kvCar = buildCatKV(car, ['dl_number', 'dl_valid_till', 'vehicle_type', 'reg_number', 'valid_insurance', 'valid_insurance_till', 'valid_puc', 'medical_certificate_valid_till']);
             const checklist4w = buildChecklist('4w_', '4 Wheeler Checklist');
             body += `
               <div style='margin-bottom:16px;'>
@@ -861,24 +881,24 @@ export const KRCCFormListDashboard = () => {
 
         const ugText = categories?.underground ? (() => {
           const underground = (categories as any).underground;
-          const kv = buildCatKV(underground, ['experience_years','role','fit_to_work','medical_certificate_valid_till']);
+          const kv = buildCatKV(underground, ['experience_years', 'role', 'fit_to_work', 'medical_certificate_valid_till']);
           const checklistUG = buildChecklist('work_under_ground_', 'Work Underground Checklist');
           return kv + checklistUG;
         })() : '';
 
         const heightText = categories?.height ? (() => {
           const height = (categories as any).height;
-          return buildCatKV(height, ['experience_years','fit_to_work','full_body_harness','medical_certificate_valid_till','first_aid_certificate_valid_till']);
+          return buildCatKV(height, ['experience_years', 'fit_to_work', 'full_body_harness', 'medical_certificate_valid_till', 'first_aid_certificate_valid_till']);
         })() : '';
 
         const electricalText = categories?.electrical ? (() => {
           const electrical = (categories as any).electrical;
-          return buildCatKV(electrical, ['qualification','license_number','license_validity','fit_to_work','medical_certificate_valid_till','first_aid_valid_till']);
+          return buildCatKV(electrical, ['qualification', 'license_number', 'license_validity', 'fit_to_work', 'medical_certificate_valid_till', 'first_aid_valid_till']);
         })() : '';
 
         const bicycleText = categories?.bicycle ? (() => {
           const bicycle = (categories as any).bicycle;
-          return buildCatKV(bicycle, ['reflective_jacket','training_available']);
+          return buildCatKV(bicycle, ['reflective_jacket', 'training_available']);
         })() : '';
 
         const consolidatedKRCC = buildKRCCTextOnly();
@@ -959,14 +979,14 @@ export const KRCCFormListDashboard = () => {
             const a = document.createElement('a');
             a.href = urlObj; a.download = `krcc_${form.id}.pdf`; document.body.appendChild(a); a.click();
             setTimeout(() => { URL.revokeObjectURL(urlObj); document.body.removeChild(a); }, 1500);
-          } catch {}
+          } catch { }
         }
 
         document.body.removeChild(container);
         toast.success('PDF generated');
         return;
       }
-      
+
     } catch (e: any) {
       console.error('[KRCC][PDF] Generation error', e);
       toast.error(e?.message || 'Failed to generate PDF');

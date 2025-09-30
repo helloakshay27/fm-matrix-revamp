@@ -1554,13 +1554,13 @@ function App() {
 
                   {/* New Training User Detail route (distinct from existing training detail) */}
                   <Route
-                    path="/maintenance/m-safe/training-list/training-user-details/:id"
+                    path="/safety/m-safe/training-list/training-user-details/:id"
                     element={<TrainingUserDetailPage />}
                   />
 
                   {/* M-Safe Routes */}
                   <Route
-                    path="/maintenance/m-safe/internal"
+                    path="/safety/m-safe/internal"
                     element={<MSafeDashboard />}
                   />
 
@@ -2299,19 +2299,19 @@ function App() {
                   <Route path="/settings/staff" element={<StaffsDashboard />} />
 
                   <Route
-                    path="/maintenance/msafe-report"
+                    path="/safety/report/msafe-report"
                     element={<MsafeReportDownload />}
                   />
                   <Route
-                    path="/maintenance/msafe-detail-report"
+                    path="/safety/report/msafe-detail-report"
                     element={<MsafeDetailReportDownload />}
                   />
                   <Route
-                    path="/maintenance/employee-deletion-history"
+                    path="/safety/employee-deletion-history"
                     element={<EmployeeDeletionHistory />}
                   />
                   <Route
-                    path="/maintenance/check-hierarchy-levels"
+                    path="/safety/check-hierarchy-levels"
                     element={<CheckHierarchy />}
                   />
                   <Route
@@ -2596,86 +2596,86 @@ function App() {
                   {/* M Safe Routes */}
 
                   <Route
-                    path="/maintenance/m-safe/non-fte-users"
+                    path="/safety/m-safe/non-fte-users"
                     element={<NonFTEUsersDashboard />}
                   />
                   <Route
-                    path="/maintenance/m-safe/krcc-form-list"
+                    path="/safety/m-safe/krcc-form-list"
                     element={<KRCCFormListDashboard />}
                   />
                   <Route
-                    path="/maintenance/m-safe"
+                    path="/safety/m-safe"
                     element={
-                      <Navigate to="/maintenance/m-safe/internal" replace />
+                      <Navigate to="/safety/m-safe/internal" replace />
                     }
                   />
 
                   <Route
-                    path="/maintenance/m-safe/external"
+                    path="/safety/m-safe/external"
                     element={<ExternalUsersDashboard />}
                   />
                   <Route
-                    path="/maintenance/m-safe/user/:userId"
+                    path="/safety/m-safe/user/:userId"
                     element={<MSafeUserDetail />}
                   />
                   <Route
-                    path="/maintenance/m-safe/external/user/:userId"
+                    path="/safety/m-safe/external/user/:userId"
                     element={<ExternalUserDetail />}
                   />
                   <Route
-                    path="/maintenance/m-safe/external/user/:userId/edit"
+                    path="/safety/m-safe/external/user/:userId/edit"
                     element={<EditExternalUserPage />}
                   />
                   <Route
-                    path="/maintenance/m-safe/non-fte-users"
+                    path="/safety/m-safe/non-fte-users"
                     element={<NonFTEUsersDashboard />}
                   />
                   <Route
-                    path="/maintenance/m-safe/krcc-list"
+                    path="/safety/m-safe/krcc-list"
                     element={<KRCCFormListDashboard />}
                   />
                   <Route
-                    path="/maintenance/m-safe/krcc-list/:id"
+                    path="/safety/m-safe/krcc-list/:id"
                     element={<KRCCFormDetail />}
                   />
                   <Route
-                    path="/maintenance/m-safe/lmc"
+                    path="/safety/m-safe/lmc"
                     element={<LMCDashboard />}
                   />
                   <Route
-                    path="/maintenance/m-safe/lmc/:id"
+                    path="/safety/m-safe/lmc/:id"
                     element={<LMCUserDetail />}
                   />
                   <Route
-                    path="/maintenance/m-safe/training-list"
+                    path="/safety/m-safe/training-list"
                     element={<TrainingDashboard />}
                   />
                   <Route
-                    path="/maintenance/m-safe/training-list/:id"
+                    path="/safety/m-safe/training-list/:id"
                     element={<TrainingDetailPage />}
                   />
                   <Route
-                    path="/maintenance/m-safe/smt"
+                    path="/safety/m-safe/smt"
                     element={<SMTDashboard />}
                   />
                   <Route
-                    path="/maintenance/m-safe/smt/:id"
+                    path="/safety/m-safe/smt/:id"
                     element={<SMTDetailPage />}
                   />
                   <Route
-                    path="/maintenance/m-safe/external-users/multiple-delete"
+                    path="/safety/m-safe/external-users/multiple-delete"
                     element={<MultipleUserDeletePage />}
                   />
                   <Route
-                    path="/maintenance/m-safe/reportees-reassign"
+                    path="/safety/m-safe/reportees-reassign"
                     element={<ReporteesReassignPage />}
                   />
                   <Route
-                    path="/maintenance/vi-miles/vehicle-details"
+                    path="/safety/vi-miles/vehicle-details"
                     element={<VehicleDetails />}
                   />
                   <Route
-                    path="/maintenance/vi-miles/vehicle-check-in"
+                    path="/safety/vi-miles/vehicle-check-in"
                     element={<VehicleCheckIn />}
                   />
                   <Route
@@ -2847,7 +2847,7 @@ function App() {
                     element={<ScheduledTaskDashboard />}
                   />
                   <Route
-                    path="/maintenance/task-details/:id"
+                    path="/maintenance/task/task-details/:id"
                     element={<TaskDetailsPage />}
                   />
                   <Route path="*" element={<NotFound />} />

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -13,7 +12,7 @@ import {
   FormControlLabel,
   Checkbox as MuiCheckbox,
 } from "@mui/material";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Ban, Clock, Image, Images, IndianRupee, Loader2, Menu, Save, TicketPercent, User } from "lucide-react";
 import { StatusSetupTable } from "../components/StatusSetupTable";
 import { CategoriesSetupTable } from "../components/CategoriesSetupTable";
 import { SubCategoriesSetupTable } from "../components/SubCategoriesSetupTable";
@@ -612,22 +611,15 @@ export const FnBRestaurantDetailsPage = () => {
 
         <TabsContent value="restaurant" className="mt-6">
           <div className="space-y-6">
-            {/* Basic Details */}
-            <Card>
-              <CardHeader
-                className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                    1
-                  </span>
-                  BASIC DETAIL
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="grid grid-cols-1 md:grid-cols-3 gap-6 py-[31px]"
-                style={{ border: "1px solid #D9D9D9" }}
+            <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <User className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BASIC DETAIL</h3>
+              </div>
+              <div
+                className="grid grid-cols-2 gap-8 py-2"
               >
                 <div>
                   <TextField
@@ -1008,25 +1000,18 @@ export const FnBRestaurantDetailsPage = () => {
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Restaurant Schedule */}
-            <Card>
-              <CardHeader
-                className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                    2
-                  </span>
-                  RESTAURANT SCHEDULE
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="py-[31px]"
-                style={{ border: "1px solid #D9D9D9" }}
+            <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <Clock className="h-4 w-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">RESTAURANT SCHEDULE</h3>
+              </div>
+              <div
+                className="gap-8"
               >
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
@@ -1329,17 +1314,17 @@ export const FnBRestaurantDetailsPage = () => {
                     </tbody>
                   </table>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader className="bg-[#F6F4EE]" style={{ border: '1px solid #D9D9D9' }}>
-                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">3</span>
-                  BLOCKED DAYS
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="py-[31px]" style={{ border: '1px solid #D9D9D9' }}>
+            <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <Ban className="h-4 w-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BLOCKED DAYS</h3>
+              </div>
+              <div>
                 <div className="space-y-4">
                   {blockedDays.map((day, index) => (
                     <div key={index} className="flex items-center gap-6 p-3 border border-gray-200 rounded">
@@ -1402,26 +1387,17 @@ export const FnBRestaurantDetailsPage = () => {
                     Add Blocked Day
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Table Booking Configuration */}
-            <Card>
-              <CardHeader
-                className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                    3
-                  </span>
-                  TABLE BOOKING CONFIGURATION
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="grid grid-cols-1 md:grid-cols-2 gap-6 py-[31px]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
+            <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <TicketPercent className="h-4 w-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">TABLE BOOKING CONFIGURATION</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-6 py-2">
                 <div>
                   <TextField
                     label="Min Person"
@@ -1506,26 +1482,17 @@ export const FnBRestaurantDetailsPage = () => {
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Order Configuration */}
-            <Card>
-              <CardHeader
-                className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                    4
-                  </span>
-                  ORDER CONFIGURATION
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="grid grid-cols-1 md:grid-cols-2 gap-6 py-[31px]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
+            <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <IndianRupee className="h-4 w-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">ORDER CONFIGURATION</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-6 py-2">
                 <div>
                   <TextField
                     label="GST (%)"
@@ -1602,26 +1569,17 @@ export const FnBRestaurantDetailsPage = () => {
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Cover Images */}
-            <Card>
-              <CardHeader
-                className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                    5
-                  </span>
-                  COVER
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="py-[31px]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
+            <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <Image className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">COVER</h3>
+              </div>
+              <div>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <p className="text-gray-500">
                     Upload a cover image for the restaurant
@@ -1661,26 +1619,17 @@ export const FnBRestaurantDetailsPage = () => {
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Menu Images */}
-            <Card>
-              <CardHeader
-                className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                    6
-                  </span>
-                  MENU
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="py-[31px]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
+            <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <Menu className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">MENU</h3>
+              </div>
+              <div>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <p className="text-gray-500">
                     Upload menu images for the restaurant
@@ -1721,26 +1670,17 @@ export const FnBRestaurantDetailsPage = () => {
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Gallery Images */}
-            <Card>
-              <CardHeader
-                className="bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                    7
-                  </span>
-                  GALLERY
-                </CardTitle>
-              </CardHeader>
-              <CardContent
-                className="py-[31px]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
+            <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <Images className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GALLERY</h3>
+              </div>
+              <div>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <p className="text-gray-500">
                     Upload gallery images for the restaurant
@@ -1781,8 +1721,8 @@ export const FnBRestaurantDetailsPage = () => {
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             <div className="flex justify-center gap-4">
               <Button
@@ -1844,7 +1784,7 @@ export const FnBRestaurantDetailsPage = () => {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </div >
   );
 };
 

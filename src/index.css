@@ -10,7 +10,7 @@
    Ensures all MUI components are enhanced globally
    EXCLUDES textarea and multiline fields
    =========================================== */
-   
+
 /* Force apply to any MUI component that might not be caught - EXCLUDE TEXTAREA */
 [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
   height: 36px !important;
@@ -38,6 +38,7 @@
 }
 
 @media (min-width: 640px) {
+
   [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
   [class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
     padding: 10px 14px !important;
@@ -45,6 +46,7 @@
 }
 
 @media (min-width: 768px) {
+
   [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
   [class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
     padding: 12px 14px !important;
@@ -160,7 +162,8 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 0 65% 45%; /* #C72030 */
+    --primary: 0 65% 45%;
+    /* #C72030 */
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -187,7 +190,7 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    
+
     /* Analytics theme colors - beige/tan palette */
     --analytics-primary: 35 25% 75%;
     --analytics-secondary: 35 35% 85%;
@@ -196,14 +199,14 @@
     --analytics-border: 35 20% 80%;
     --analytics-text: 25 25% 25%;
     --analytics-muted: 35 15% 65%;
-    
+
     /* Chart colors - matching design */
     --chart-tan: 35 35% 75%;
     --chart-beige: 45 25% 85%;
     --chart-brown: 25 45% 55%;
     --chart-cream: 50 20% 90%;
     --chart-mocha: 20 35% 45%;
-    
+
     --radius: 0.5rem;
   }
 
@@ -234,18 +237,30 @@
     --chart-5: 340 75% 55%;
 
     /* Analytics specific colors - Beige/Tan Theme */
-    --analytics-background: 249 246 237; /* Light beige background */
-    --analytics-border: 215 204 200; /* Tan border */
-    --analytics-text: 101 85 73; /* Dark brown text */
-    --analytics-accent: 180 140 102; /* Warm tan accent */
-    --analytics-chart-1: 205 164 94; /* Chart color 1 */
-    --analytics-chart-2: 139 115 85; /* Chart color 2 */
-    --analytics-chart-3: 160 134 104; /* Chart color 3 */
-    --analytics-chart-4: 185 155 121; /* Chart color 4 */
-    --analytics-success: 134 154 120; /* Muted green */
-    --analytics-warning: 204 154 104; /* Warm orange */
-    --analytics-error: 180 120 115; /* Muted red */
-    --analytics-muted: 145 130 120; /* Muted text color */
+    --analytics-background: 249 246 237;
+    /* Light beige background */
+    --analytics-border: 215 204 200;
+    /* Tan border */
+    --analytics-text: 101 85 73;
+    /* Dark brown text */
+    --analytics-accent: 180 140 102;
+    /* Warm tan accent */
+    --analytics-chart-1: 205 164 94;
+    /* Chart color 1 */
+    --analytics-chart-2: 139 115 85;
+    /* Chart color 2 */
+    --analytics-chart-3: 160 134 104;
+    /* Chart color 3 */
+    --analytics-chart-4: 185 155 121;
+    /* Chart color 4 */
+    --analytics-success: 134 154 120;
+    /* Muted green */
+    --analytics-warning: 204 154 104;
+    /* Warm orange */
+    --analytics-error: 180 120 115;
+    /* Muted red */
+    --analytics-muted: 145 130 120;
+    /* Muted text color */
   }
 }
 
@@ -253,6 +268,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -261,9 +277,12 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;
 }
+
 .no-scrollbar {
-  -ms-overflow-style: none !important; /* IE/Edge */
-  scrollbar-width: none !important;    /* Firefox */
+  -ms-overflow-style: none !important;
+  /* IE/Edge */
+  scrollbar-width: none !important;
+  /* Firefox */
 }
 
 /* Comprehensive Date Picker - Exact Design Implementation */
@@ -272,21 +291,21 @@
   width: 328px;
   height: 386px;
   background: #FFFFFF;
-  
+
   /* Sharp corners - no border radius */
   border-radius: 0px;
-  
+
   /* Drop shadow specifications */
   box-shadow: 0px 2px 18px rgba(69, 69, 69, 0.1);
-  
+
   /* Layout structure */
   display: flex;
   flex-direction: column;
-  
+
   /* Typography base */
   font-family: system-ui, -apple-system, sans-serif;
   color: #1A1A1A;
-  
+
   /* Positioning */
   position: relative;
   z-index: 50;
@@ -458,41 +477,41 @@
     width: 280px;
     height: 330px;
   }
-  
+
   .date-picker-header {
     padding: 20px 14px 12px 18px;
   }
-  
+
   .month-year-text {
     font-size: 14px;
   }
-  
+
   .week-days-row {
     padding: 0 18px;
   }
-  
+
   .week-day-cell {
     font-size: 12px;
   }
-  
+
   .calendar-dates-grid {
     padding: 0 18px;
   }
-  
+
   .empty-date-cell,
   .date-number-cell {
     width: 35px;
     height: 35px;
   }
-  
+
   .date-number-cell {
     font-size: 14px;
   }
-  
+
   .date-picker-footer {
     padding: 12px 18px;
   }
-  
+
   .action-button {
     font-size: 14px;
   }
@@ -504,50 +523,50 @@
     width: 180px;
     height: 220px;
   }
-  
+
   .date-picker-header {
     padding: 12px 8px 8px 12px;
   }
-  
+
   .month-year-text {
     font-size: 12px;
   }
-  
+
   .dropdown-arrow,
   .nav-arrow {
     width: 10px;
     height: 10px;
   }
-  
+
   .week-days-row {
     padding: 0 12px;
   }
-  
+
   .week-day-cell {
     font-size: 10px;
     padding: 4px 0;
   }
-  
+
   .calendar-dates-grid {
     padding: 0 12px;
     gap: 1px;
   }
-  
+
   .empty-date-cell,
   .date-number-cell {
     width: 24px;
     height: 24px;
   }
-  
+
   .date-number-cell {
     font-size: 12px;
   }
-  
+
   .date-picker-footer {
     padding: 10px 12px;
     gap: 16px;
   }
-  
+
   .action-button {
     font-size: 12px;
     padding: 4px 8px;
@@ -556,6 +575,7 @@
 
 /* Mobile responsive textarea styling */
 @media (max-width: 640px) {
+
   [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
   [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"][class*="multiline"],
   [class*="MuiFormControl"] textarea {
@@ -563,7 +583,7 @@
     min-height: 70px !important;
     max-height: 100px !important;
   }
-  
+
   /* Smaller label on mobile */
   [class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"],
   [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"] {
@@ -587,7 +607,7 @@
   .date-picker-container {
     border: 2px solid #000;
   }
-  
+
   .date-number-cell.selected-date {
     background-color: #000;
     color: #fff;
@@ -597,6 +617,7 @@
 
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
+
   .date-number-cell,
   .action-button,
   .nav-arrow-btn {
@@ -606,9 +627,9 @@
 
 
 @media (min-width: 640px) {
-    .sm\:max-w-7xl {
-        max-width: 100% !important;
-    }
+  .sm\:max-w-7xl {
+    max-width: 100% !important;
+  }
 }
 
 /* Sticky/Frozen Scrollbar Styles for Asset Table */
@@ -778,4 +799,30 @@
 .timeline-content p {
   font-size: 14px;
   font-weight: 400;
+}
+
+.bg-green-500 {
+  background-color: #BF213e !important;
+  /* your red */
+}
+
+[data-state="checked"].bg-green-600,
+[data-state="checked"][class*="bg-green-600"] {
+  --tw-bg-opacity: 1;
+  background-color: #BF213e !important; /* your red color */
+}
+
+[data-state="checked"].border-green-600,
+[data-state="checked"][class*="border-green-600"] {
+  border-color: transparent !important; /* remove the green border */
+}
+
+
+td div , td span, th div, th span {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+td div , td span, th div, td button, td a {
+  padding-left: 2px !important;
 }

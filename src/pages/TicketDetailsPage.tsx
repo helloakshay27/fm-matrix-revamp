@@ -206,7 +206,7 @@ export const TicketDetailsPage = () => {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-4">
               <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
-                Ticket Summary
+                {ticketData.heading || "Ticket Summary"}
               </h1>
             </div>
 
@@ -217,7 +217,7 @@ export const TicketDetailsPage = () => {
             </div>
           </div>
 
-          {activeTab === "ticket-details" && (
+          {/* {activeTab === "ticket-details" && ( */}
             <div className="flex items-center gap-3">
               <Button
                 onClick={handleFeeds}
@@ -241,7 +241,7 @@ export const TicketDetailsPage = () => {
                 <Edit className="w-4 h-4" />
               </Button>
             </div>
-          )}
+          {/* )} */}
         </div>
       </div>
 
@@ -332,94 +332,102 @@ export const TicketDetailsPage = () => {
                 /* Ticket Information Card */
                 <Card className="w-full">
                   <CardHeader className="pb-4 lg:pb-6">
-                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
-                        <FileText className="w-6 h-6 text-[#C72030]" />
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
-                      <span>TICKET INFORMATION</span>
+                      <span className="uppercase tracking-wide">Ticket Information</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       {hasData(ticketData.ticket_number) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Ticket Number</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.ticket_number}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Ticket Number</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.ticket_number}</span>
                         </div>
                       )}
                       {hasData(ticketData.heading) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Title</label>
-                          <div className="font-semibold text-base lg:text-lg break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }} title={ticketData.heading}>
-                            {ticketData.heading}
-                          </div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Title</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }} title={ticketData.heading}>{ticketData.heading}</span>
                         </div>
                       )}
                       {hasData(ticketData.category_type) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Category</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.category_type}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Category</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.category_type}</span>
                         </div>
                       )}
                       {hasData(ticketData.sub_category_type) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">SubCategory</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.sub_category_type}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">SubCategory</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.sub_category_type}</span>
                         </div>
                       )}
                       {hasData(ticketData.issue_status) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Status</label>
-                          <div className="font-semibold text-base lg:text-lg">
-                            <Badge className="bg-yellow-100 text-yellow-700">{ticketData.issue_status}</Badge>
-                          </div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Status</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium"><Badge className="bg-yellow-100 text-yellow-700">{ticketData.issue_status}</Badge></span>
                         </div>
                       )}
                       {hasData(ticketData.created_by_name) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Created By</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.created_by_name}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Created By</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.created_by_name}</span>
                         </div>
                       )}
                       {(hasData(ticketData.created_date) || hasData(ticketData.created_time) || hasData(ticketData.created_at)) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Created On</label>
-                          <div className="font-semibold text-base lg:text-lg">
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Created On</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">
                             {ticketData.created_at
                               ? new Date(ticketData.created_at).toLocaleString()
                               : `${ticketData.created_date || ''} ${ticketData.created_time || ''}`.trim()
                             }
-                          </div>
+                          </span>
                         </div>
                       )}
                       {hasData(ticketData.updated_by) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Updated By</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.updated_by}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Updated By</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.updated_by}</span>
                         </div>
                       )}
                       {hasData(ticketData.complaint_mode) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Complaint Mode</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.complaint_mode}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Complaint Mode</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.complaint_mode}</span>
                         </div>
                       )}
                       {hasData(ticketData.priority || ticketData.external_priority) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Priority</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.priority || ticketData.external_priority}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Priority</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.priority || ticketData.external_priority}</span>
                         </div>
                       )}
                       {hasData(ticketData.priority_status || ticketData.effective_priority) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Admin Priority</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.priority_status || ticketData.effective_priority}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Admin Priority</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.priority_status || ticketData.effective_priority}</span>
                         </div>
                       )}
                       {hasData(ticketData.assigned_to) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Assigned To</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.assigned_to}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Assigned To</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.assigned_to}</span>
                         </div>
                       )}
                     </div>
@@ -458,17 +466,19 @@ export const TicketDetailsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       {hasData(ticketData.posted_by) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Posted By</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.posted_by}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Posted By</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.posted_by}</span>
                         </div>
                       )}
                       {hasData(ticketData.id_society) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Society</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.id_society}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Society</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.id_society}</span>
                         </div>
                       )}
                     </div>
@@ -519,77 +529,89 @@ export const TicketDetailsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       {hasData(ticketData.region) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Region</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.region}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Region</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.region}</span>
                         </div>
                       )}
                       {hasData(ticketData.building_name) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Building</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.building_name}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Building</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.building_name}</span>
                         </div>
                       )}
                       {hasData(ticketData.floor_name) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Floor</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.floor_name}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Floor</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.floor_name}</span>
                         </div>
                       )}
                       {hasData(ticketData.flat_number || ticketData.unit_name) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Flat/Unit</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.flat_number || ticketData.unit_name}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Flat/Unit</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.flat_number || ticketData.unit_name}</span>
                         </div>
                       )}
                       {hasData(ticketData.zone) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Zone</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.zone}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Zone</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.zone}</span>
                         </div>
                       )}
                       {hasData(ticketData.district) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">District</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.district}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">District</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.district}</span>
                         </div>
                       )}
                       {hasData(ticketData.room_name) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Room</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.room_name}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Room</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.room_name}</span>
                         </div>
                       )}
                       {hasData(ticketData.area_name || ticketData.site_name) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Area/Site</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.area_name || ticketData.site_name}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Area/Site</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.area_name || ticketData.site_name}</span>
                         </div>
                       )}
                       {hasData(ticketData.city) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">City</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.city}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">City</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.city}</span>
                         </div>
                       )}
                       {hasData(ticketData.state) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">State</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.state}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">State</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.state}</span>
                         </div>
                       )}
                       {hasData(ticketData.address) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Address</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.address}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Address</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.address}</span>
                         </div>
                       )}
                       {hasData(ticketData.wing_name) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Wing</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.wing_name}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Wing</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.wing_name}</span>
                         </div>
                       )}
                     </div>
@@ -634,34 +656,33 @@ export const TicketDetailsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       {hasData(ticketData.survey?.survey?.id) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Survey ID</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.survey.survey.id}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Survey ID</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.survey.survey.id}</span>
                         </div>
                       )}
                       {hasData(ticketData.survey?.survey?.name) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Survey Name</label>
-                          <div className="font-semibold text-base lg:text-lg break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                            {ticketData.survey.survey.name}
-                          </div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Survey Name</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{ticketData.survey.survey.name}</span>
                         </div>
                       )}
                       {(hasData(ticketData.survey?.site_name) || hasData(ticketData.survey?.building_name) || hasData(ticketData.survey?.wing_name) || hasData(ticketData.survey?.area_name) || hasData(ticketData.survey?.floor_name) || hasData(ticketData.survey?.room_name)) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Survey Location</label>
-                          <div className="font-semibold text-base lg:text-lg break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                            {[
-                              ticketData.survey.site_name,
-                              ticketData.survey.building_name,
-                              ticketData.survey.wing_name,
-                              ticketData.survey.area_name,
-                              ticketData.survey.floor_name,
-                              ticketData.survey.room_name
-                            ].filter(Boolean).join('/')}
-                          </div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Survey Location</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{[
+                            ticketData.survey.site_name,
+                            ticketData.survey.building_name,
+                            ticketData.survey.wing_name,
+                            ticketData.survey.area_name,
+                            ticketData.survey.floor_name,
+                            ticketData.survey.room_name
+                          ].filter(Boolean).join('/')}</span>
                         </div>
                       )}
                     </div>
@@ -703,79 +724,89 @@ export const TicketDetailsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 text-sm">
                       {hasData(ticketData.corrective_action) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Corrective Action</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.corrective_action}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Corrective Action</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.corrective_action}</span>
                         </div>
                       )}
                       {hasData(ticketData.preventive_action) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Preventive Action</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.preventive_action}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Preventive Action</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.preventive_action}</span>
                         </div>
                       )}
                       {hasData(ticketData.root_cause) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Root Cause</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.root_cause}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Root Cause</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.root_cause}</span>
                         </div>
                       )}
                       {hasData(ticketData.response_tat) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Response TAT</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.response_tat}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Response TAT</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.response_tat}</span>
                         </div>
                       )}
                       {hasData(ticketData.ticket_urgency) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Ticket Urgency</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.ticket_urgency}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Ticket Urgency</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.ticket_urgency}</span>
                         </div>
                       )}
                       {hasData(ticketData.responsible_person) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Responsible Person</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.responsible_person}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Responsible Person</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.responsible_person}</span>
                         </div>
                       )}
                       {hasData(ticketData.asset_service) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Asset Service</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.asset_service}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Asset Service</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.asset_service}</span>
                         </div>
                       )}
                       {hasData(ticketData.resolution_tat) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Resolution TAT</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.resolution_tat}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Resolution TAT</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.resolution_tat}</span>
                         </div>
                       )}
                       {hasData(ticketData.task_id) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Task ID</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.task_id}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Task ID</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.task_id}</span>
                         </div>
                       )}
                       {hasData(ticketData.asset_service_location) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Asset/Service Location</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.asset_service_location}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Asset/Service Location</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.asset_service_location}</span>
                         </div>
                       )}
                       {hasData(ticketData.resolution_time) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Resolution Time</label>
-                          <div className="font-semibold text-base lg:text-lg">{ticketData.resolution_time}</div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Resolution Time</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.resolution_time}</span>
                         </div>
                       )}
                       {(hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name)) && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-500 font-medium">Escalation Tracking</label>
-                          <div className="font-semibold text-base lg:text-lg">
-                            {`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`.replace(/^,\s*|,\s*$/g, '')}
-                          </div>
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Escalation Tracking</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`.replace(/^,\s*|,\s*$/g, '')}</span>
                         </div>
                       )}
                     </div>

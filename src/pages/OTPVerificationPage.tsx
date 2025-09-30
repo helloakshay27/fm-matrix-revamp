@@ -25,6 +25,7 @@ export const OTPVerificationPage = () => {
   const [canResend, setCanResend] = useState(false);
   const [email, setEmail] = useState("");
   const [attemptCount, setAttemptCount] = useState(0);
+  const [isVerifying, setIsVerifying] = useState(false); // Prevent multiple calls
 
   const hostname = window.location.hostname;
   // Check if it's Oman site
@@ -64,79 +65,102 @@ export const OTPVerificationPage = () => {
       return;
     }
 
+    // Prevent multiple simultaneous calls
+    if (isVerifying) {
+      return;
+    }
+
     setIsLoading(true);
+    setIsVerifying(true);
 
     try {
-      console.log(`OTP Verification Attempt ${attemptCount + 1}:`, { otp, email });
+      console.log(`OTP Verification Attempt ${attemptCount + 1}:`, {
+        otp,
+        email,
+      });
       const response = await verifyOTP(otp);
 
       // If we reach here, verification was successful
-      // Update user data with verification status
+      // Check if response has required data
+      if (response.verified == true) {
+        const baseUrl = getBaseUrl();
 
-      const baseUrl = getBaseUrl();
-      saveUser({
-        id: response.id,
-        email: response.email,
-        firstname: response.firstname,
-        lastname: response.lastname,
-        mobile: response.mobile,
-        latitude: response.latitude,
-        longitude: response.longitude,
-        country_code: response.country_code,
-        spree_api_key: response.spree_api_key,
-        lock_role: response.lock_role,
-      });
-      saveToken(response.access_token);
-      if (baseUrl) {
-        saveBaseUrl(baseUrl);
+        saveUser({
+          id: response.id,
+          email: response.email,
+          firstname: response.firstname,
+          lastname: response.lastname,
+          mobile: response.mobile,
+          latitude: response.latitude,
+          longitude: response.longitude,
+          country_code: response.country_code,
+          spree_api_key: response.spree_api_key,
+          lock_role: response.lock_role,
+        });
+        saveToken(response.access_token);
+
+        if (baseUrl) {
+          saveBaseUrl(baseUrl);
+        }
+
+        localStorage.setItem("userId", response.id.toString());
+
+        toast.success(`Welcome back, ${response.firstname || "User"}!`);
+
+        // Check the hostname to determine redirect
+        const hostname = window.location.hostname;
+        const isViSite = hostname.includes("vi-web.gophygital.work");
+
+        // Redirect to appropriate dashboard
+        setTimeout(() => {
+          navigate(
+            isViSite ? "/safety/m-safe/internal" : "/maintenance/asset"
+          );
+        }, 1000);
       }
-      localStorage.setItem("userId", response.id.toString());
 
-      toast.success(`Welcome back, ${response.firstname}!`);
-
-      // Check the hostname to determine redirect
-      const hostname = window.location.hostname;
-      const isViSite = hostname.includes("vi-web.gophygital.work");
-
-      // Redirect to appropriate dashboard
-      setTimeout(() => {
-        navigate(
-          isViSite ? "/maintenance/m-safe/internal" : "/maintenance/asset"
-        );
-      }, 1000);
+      // Get base URL before using it
     } catch (error) {
       const newAttemptCount = attemptCount + 1;
       setAttemptCount(newAttemptCount);
-      
+
       if (newAttemptCount >= 3) {
         toast.error("Too many incorrect attempts. Redirecting to login...");
         // Clear temporary data
         localStorage.removeItem("temp_email");
         localStorage.removeItem("temp_token");
-        
+
         // Redirect to login page after a short delay
         setTimeout(() => {
           navigate("/login");
         }, 2000);
       } else {
         const remainingAttempts = 3 - newAttemptCount;
-        
+
         // Show clean, user-friendly error messages
-        if (error instanceof Error && error.message.includes("Session expired")) {
+        if (
+          error instanceof Error &&
+          error.message.includes("Session expired")
+        ) {
           toast.error("Session expired. Please login again.");
           // Redirect to login immediately for session expired
           setTimeout(() => {
             navigate("/login");
           }, 1500);
         } else {
-          toast.error(`Invalid OTP. ${remainingAttempts} attempt${remainingAttempts > 1 ? 's' : ''} remaining.`);
+          toast.error(
+            `Invalid OTP. ${remainingAttempts} attempt${
+              remainingAttempts > 1 ? "s" : ""
+            } remaining.`
+          );
         }
       }
-      
+
       // Clear OTP input for retry but don't prevent further API calls
       setOtp("");
     } finally {
       setIsLoading(false);
+      setIsVerifying(false);
     }
   };
 
@@ -151,14 +175,37 @@ export const OTPVerificationPage = () => {
     setTimeLeft(30);
 
     try {
-      // Call resend OTP API - this would need to be implemented
-      // For now, just show success message
+      const response = await fetch(
+        "https://live-api.gophygital.work/resend_code.json",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to resend OTP");
+      }
+
+      const data = await response.json();
+
+      // Store new temp token if provided
+      if (data.temp_token) {
+        localStorage.setItem("temp_token", data.temp_token);
+      }
+
       toast.success("New OTP sent to your email.");
 
       // Clear the current OTP input and reset attempt counter
       setOtp("");
       setAttemptCount(0);
     } catch (error) {
+      console.error("Resend OTP error:", error);
       toast.error("Failed to send OTP. Please try again.");
       setCanResend(true);
       setTimeLeft(0);
@@ -348,15 +395,16 @@ export const OTPVerificationPage = () => {
         {/* Attempt Counter */}
         {attemptCount > 0 && (
           <div className="mb-4 text-center">
-            <p className={`text-sm font-medium ${
-              attemptCount >= 3 
-                ? "text-red-600 font-bold" 
-                : "text-orange-600"
-            }`}>
-              {attemptCount >= 3 
+            <p
+              className={`text-sm font-medium ${
+                attemptCount >= 3 ? "text-red-600 font-bold" : "text-orange-600"
+              }`}
+            >
+              {attemptCount >= 3
                 ? "Maximum attempts reached - Please login again"
-                : `${attemptCount} incorrect attempt${attemptCount > 1 ? 's' : ''} • ${3 - attemptCount} remaining`
-              }
+                : `${attemptCount} incorrect attempt${
+                    attemptCount > 1 ? "s" : ""
+                  } • ${3 - attemptCount} remaining`}
             </p>
           </div>
         )}
@@ -364,7 +412,9 @@ export const OTPVerificationPage = () => {
         {/* Verify Button */}
         <Button
           onClick={handleVerifyOTP}
-          disabled={isLoading || otp.length !== 5 || attemptCount >= 3}
+          disabled={
+            isLoading || otp.length !== 5 || attemptCount >= 3 || isVerifying
+          }
           className="w-full h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-base mt-8"
         >
           {isLoading ? (
@@ -380,20 +430,24 @@ export const OTPVerificationPage = () => {
         </Button>
 
         {/* Resend OTP */}
-        {/* <div className="text-center mt-6">
+        <div className="text-center mt-6">
           <p className="text-gray-600 text-sm mb-2">
+            Didn't receive the code?{" "}
             {canResend ? (
               <button
                 onClick={handleResendOTP}
-                className="text-gray-700 hover:text-gray-900 font-medium"
+                className="text-red-600 hover:text-red-700 font-medium underline"
+                disabled={attemptCount >= 3}
               >
-                Resend code in 0:45
+                Resend OTP
               </button>
             ) : (
-              `Resend code in 0:${timeLeft < 10 ? '0' + timeLeft : timeLeft}`
+              <span className="text-gray-500">
+                Resend in 0:{timeLeft < 10 ? "0" + timeLeft : timeLeft}
+              </span>
             )}
           </p>
-        </div> */}
+        </div>
 
         {/* Error Message */}
         <div className="text-center mt-4">

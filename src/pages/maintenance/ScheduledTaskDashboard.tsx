@@ -512,7 +512,7 @@ export const ScheduledTaskDashboard = () => {
   }, [activeTab, calendarFilters]);
 
   const handleViewTask = (taskId: string) => {
-    navigate(`/maintenance/task-details/${taskId}`);
+    navigate(`/maintenance/task/task-details/${taskId}`);
   };
 
   const handleAdvancedFilter = (filters: any) => {
@@ -889,7 +889,7 @@ export const ScheduledTaskDashboard = () => {
           )}
 
           {/* Task Table */}
-          <div className="bg-white rounded-lg">
+          <div className=" rounded-lg">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="text-gray-500">Loading tasks...</div>

@@ -46,7 +46,7 @@ import zonesReducer from './slices/zonesSlice'
 import roomsReducer from './slices/roomsSlice'
 import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
 import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
-import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
+import { createUserGroupReducer, fetchUserGroupIdReducer, fetchUserGroupsReducer, updateUserGroupReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
 import { addWOInvoiceReducer, approveRejectWOReducer, fetchBOQReducer, fetchServicePRReducer, fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
 import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, getAddressesReducer, getFeedsReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer, updateActiveStausReducer, updateMaterialPRReducer } from './slices/materialPRSlice'
@@ -181,6 +181,8 @@ export const store = configureStore({
     // User Groups
     fetchUserGroups: fetchUserGroupsReducer,
     createUserGroup: createUserGroupReducer,
+    updateUserGroup: updateUserGroupReducer,
+    fetchUserGroupId: fetchUserGroupIdReducer,
 
     // Work Order
     fetchWorkOrders: fetchWorkOrdersReducer,

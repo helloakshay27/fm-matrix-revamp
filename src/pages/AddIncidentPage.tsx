@@ -863,6 +863,38 @@ export const AddIncidentPage = () => {
           </div>
 
           {/* Description */}
+          {/* <div className="mt-6">
+            <TextField
+              label={<>Description<span style={{ color: '#C72030' }}>*</span></>}
+              value={incidentData.description}
+              onChange={e => handleInputChange('description', e.target.value)}
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={4}
+              InputLabelProps={{
+                shrink: true
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "10px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
+                },
+              }}
+            />
+          </div> */}
           <div className="mt-6">
             <TextField
               label={<>Description<span style={{ color: '#C72030' }}>*</span></>}
@@ -875,7 +907,16 @@ export const AddIncidentPage = () => {
               InputLabelProps={{
                 shrink: true
               }}
-              sx={fieldStyles}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  padding: "10px", // Increased padding
+                  minHeight: "120px", // Ensure minimum height
+                  marginTop: "8px", // Space between label and input
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
+                },
+              }}
             />
           </div>
         </CardContent>

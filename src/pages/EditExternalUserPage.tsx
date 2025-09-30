@@ -267,7 +267,7 @@ export const EditExternalUserPage = () => {
       const url = `https://${baseUrl}/pms/users/${idForUpdate}/update_vi_user`;
       await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('External user updated');
-      navigate(`/maintenance/m-safe/external/user/${idForUpdate}`, { state: { user: { ...originalUser, ...formData } } });
+      navigate(`/safety/m-safe/external/user/${idForUpdate}`, { state: { user: { ...originalUser, ...formData } } });
     } catch (e: any) {
       console.error('Update external user error', e);
       const respData = e?.response?.data;
@@ -295,7 +295,7 @@ export const EditExternalUserPage = () => {
     }
   };
 
-  const handleCancel = () => navigate(`/maintenance/m-safe/external/user/${userId}`, { state: { user: location.state?.user || initialUser } });
+  const handleCancel = () => navigate(`/safety/m-safe/external/user/${userId}`, { state: { user: location.state?.user || initialUser } });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -554,7 +554,7 @@ export const EditExternalUserPage = () => {
     return (
       <div className="p-6">
         <div className="flex items-center mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/maintenance/m-safe/external')} className="p-1 hover:bg-gray-100 mr-2"><ArrowLeft className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/safety/m-safe/external')} className="p-1 hover:bg-gray-100 mr-2"><ArrowLeft className="w-4 h-4" /></Button>
         </div>
         <div className="text-gray-500">Loading user...</div>
       </div>
@@ -564,7 +564,7 @@ export const EditExternalUserPage = () => {
     return (
       <div className="p-6">
         <div className="flex items-center mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/maintenance/m-safe/external')} className="p-1 hover:bg-gray-100 mr-2"><ArrowLeft className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/safety/m-safe/external')} className="p-1 hover:bg-gray-100 mr-2"><ArrowLeft className="w-4 h-4" /></Button>
         </div>
         <div className="text-red-500 text-sm">{error}</div>
       </div>

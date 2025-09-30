@@ -396,7 +396,7 @@ const LMCDashboard = () => {
                         size="sm"
                         className="h-8 w-8 p-0"
                         title="View"
-                        onClick={() => navigate(`/maintenance/m-safe/lmc/${row.id}`, { state: { row } })}
+                        onClick={() => navigate(`/safety/m-safe/lmc/${row.id}`, { state: { row } })}
                     >
                         <Eye className="h-4 w-4" />
                     </Button>

@@ -73,6 +73,7 @@ import {
   FolderTree,
   Wallet,
   Trash,
+  ChartColumnIncreasing,
 } from "lucide-react";
 
 const navigationStructure = {
@@ -571,71 +572,20 @@ const modulesByPackage = {
       icon: UserRoundPen,
       href: "/maintenance/vendor",
     },
-    {
-      name: "M-Safe",
-      icon: User,
-      href: "/maintenance/m-safe",
-      subItems: [
-        {
-          name: "Internal User (FTE)",
-          href: "/maintenance/m-safe/internal",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "External User (NON FTE)",
-          href: "/maintenance/m-safe/external",
-          color: "text-[#1a1a1a]",
-        },
-        { name: "LMC", href: "/maintenance/m-safe/lmc" },
-        { name: "SMT", href: "/maintenance/m-safe/smt" },
-        { name: "Krcc List", href: "/maintenance/m-safe/krcc-list" },
-        { name: "Training List", href: "/maintenance/m-safe/training-list" },
-        {
-          name: "Reportees Reassign",
-          href: "/maintenance/m-safe/reportees-reassign",
-        },
-      ],
-    },
-    {
-      name: "Vi Miles",
-      icon: User,
-      href: "/maintenance/vi-miles",
-      subItems: [
-        {
-          name: "Vehicle Details",
-          href: "/maintenance/vi-miles/vehicle-details",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Vehicle Check In",
-          href: "/maintenance/vi-miles/vehicle-check-in",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
-    {
-      name: "Check Hierarchy Levels",
-      icon: FolderTree,
-      href: "/maintenance/check-hierarchy-levels",
-    },
-    {
-      name: "Employee Deletion History",
-      icon: Trash,
-      href: "/maintenance/employee-deletion-history",
-    },
 
-    {
-      name: "Msafe Report",
-      icon: Download,
-      href: "/maintenance/msafe-report",
-    },
-    {
-      name: "Msafe Detail Report",
-      icon: Download,
-      href: "/maintenance/msafe-detail-report",
-    },
 
-    { name: "PDF Download", icon: Download, href: "/maintenance/pdf-download" },
+    // {
+    //   name: "Msafe Report",
+    //   icon: Download,
+    //   href: "/safety/msafe-report",
+    // },
+    // {
+    //   name: "Msafe Detail Report",
+    //   icon: Download,
+    //   href: "/safety/msafe-detail-report",
+    // },
+
+    { name: "PDF Download", icon: Download, href: "/safety/pdf-download" },
 
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
 
@@ -657,8 +607,71 @@ const modulesByPackage = {
         // { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
       ],
     },
-    { name: "M Safe", icon: Shield, href: "/safety/m-safe" },
-    { name: "Training List", icon: BookOpen, href: "/safety/training-list" },
+
+
+
+
+        {
+      name: "M-Safe",
+      icon: User,
+      href: "/safety/m-safe",
+      subItems: [
+        {
+          name: "Internal User (FTE)",
+          href: "/safety/m-safe/internal",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "External User (NON FTE)",
+          href: "/safety/m-safe/external",
+          color: "text-[#1a1a1a]",
+        },
+        { name: "LMC", href: "/safety/m-safe/lmc" },
+        { name: "SMT", href: "/safety/m-safe/smt" },
+        { name: "Krcc List", href: "/safety/m-safe/krcc-list" },
+        { name: "Training List", href: "/safety/m-safe/training-list" },
+        {
+          name: "Reportees Reassign",
+          href: "/safety/m-safe/reportees-reassign",
+        },
+      ],
+    },
+    {
+      name: 'Report',
+      icon: Download,
+      href: '/safety/report',
+      subItems: [
+        { name: 'Msafe User Report', icon: Download, href: '/safety/report/msafe-report' },
+        { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
+      ],
+    },
+    {
+      name: "Vi Miles",
+      icon: User,
+      href: "/safety/vi-miles",
+      subItems: [
+        {
+          name: "Vehicle Details",
+          href: "/safety/vi-miles/vehicle-details", 
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Vehicle Check In",
+          href: "/safety/vi-miles/vehicle-check-in",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "Check Hierarchy Levels",
+      icon: FolderTree,
+      href: "/safety/check-hierarchy-levels",
+    },
+    {
+      name: "Employee Deletion History",
+      icon: Trash,
+      href: "/safety/employee-deletion-history",
+    },
   ],
   Finance: [
     {
@@ -1091,7 +1104,6 @@ const modulesByPackage = {
         {
           name: "F&B",
           href: "/settings/vas/fnb/setup",
-          subItems: [{ name: "Setup", href: "/settings/vas/fnb/setup" }],
         },
         {
           name: "MOM",
@@ -1119,8 +1131,7 @@ const modulesByPackage = {
         },
         {
           name: "Booking",
-          href: "/settings/vas/booking",
-          subItems: [{ name: "Setup", href: "/settings/vas/booking/setup" }],
+          href: "/settings/vas/booking/setup",
         },
         {
           name: "Parking Management",

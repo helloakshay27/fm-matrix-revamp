@@ -414,17 +414,10 @@ export const SurveyMappingDashboard = () => {
       link.parentNode?.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast({
-        title: "Export Successful",
-        description: "Survey mappings exported successfully",
-      });
+      sonnerToast.success("Survey mapping data exported successfully");
     } catch (error: unknown) {
       console.error('Error exporting survey mappings:', error);
-      toast({
-        title: "Export Failed",
-        description: "Failed to export survey mappings",
-        variant: "destructive"
-      });
+      sonnerToast.error("Failed to export survey mappings");
     }
   };
 

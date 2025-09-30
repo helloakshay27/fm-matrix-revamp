@@ -62,7 +62,7 @@ export interface LoginResponse {
 }
 
 export interface OTPResponse {
-  success: boolean;
+  code: number;
   message: string;
   otp?: string; // For development/testing
 }
@@ -121,6 +121,7 @@ export const getBaseUrl = (): string | null => {
   // Ensure the URL includes the protocol
   return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
 };
+
 
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
@@ -353,10 +354,7 @@ export const sendForgotPasswordOTP = async (
 
   const data = await response.json();
 
-  return {
-    success: true,
-    message: data.message || "OTP sent successfully",
-  };
+  return data;
 };
 
 // Verify forgot password OTP and reset password

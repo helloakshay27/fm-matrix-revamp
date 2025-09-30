@@ -740,12 +740,16 @@ export const EditGRNDashboard = () => {
 
             <TextField
               label="Invoice Amount"
-              type="number"
+              type="text"
               placeholder="Enter Number"
               value={grnDetails.invoiceAmount}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, invoiceAmount: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+
+                if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  setGrnDetails({ ...grnDetails, invoiceAmount: value });
+                }
+              }}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -802,12 +806,16 @@ export const EditGRNDashboard = () => {
 
             <TextField
               label="Other Expense"
-              type="number"
+              type="text"
               placeholder="Other Expense"
               value={grnDetails.otherExpense}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, otherExpense: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+
+                if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  setGrnDetails({ ...grnDetails, otherExpense: value });
+                }
+              }}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -817,12 +825,16 @@ export const EditGRNDashboard = () => {
 
             <TextField
               label="Loading Expense"
-              type="number"
+              type="text"
               placeholder="Enter Number"
               value={grnDetails.loadingExpense}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, loadingExpense: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+
+                if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  setGrnDetails({ ...grnDetails, loadingExpense: value });
+                }
+              }}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -832,15 +844,16 @@ export const EditGRNDashboard = () => {
 
             <TextField
               label="Adjustment Amount"
-              type="number"
+              type="text"
               placeholder="Enter Number"
               value={grnDetails.adjustmentAmount}
-              onChange={(e) =>
-                setGrnDetails({
-                  ...grnDetails,
-                  adjustmentAmount: e.target.value,
-                })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+
+                if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  setGrnDetails({ ...grnDetails, adjustmentAmount: value });
+                }
+              }}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -1017,12 +1030,16 @@ export const EditGRNDashboard = () => {
 
                 <TextField
                   label="Rate"
-                  type="number"
+                  type="text"
                   placeholder="Enter Number"
                   value={item.rate}
-                  onChange={(e) =>
-                    handleInventoryChange(index, "rate", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                      handleInventoryChange(index, "rate", value);
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -1032,12 +1049,16 @@ export const EditGRNDashboard = () => {
 
                 <TextField
                   label="CGST Rate"
-                  type="number"
+                  type="text"
                   placeholder="Enter Number"
                   value={item.cgstRate}
-                  onChange={(e) =>
-                    handleInventoryChange(index, "cgstRate", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                      handleInventoryChange(index, "cgstRate", value);
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -1062,12 +1083,16 @@ export const EditGRNDashboard = () => {
 
                 <TextField
                   label="SGST Rate"
-                  type="number"
+                  type="text"
                   placeholder="Enter Number"
                   value={item.sgstRate}
-                  onChange={(e) =>
-                    handleInventoryChange(index, "sgstRate", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                      handleInventoryChange(index, "sgstRate", value);
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -1092,12 +1117,16 @@ export const EditGRNDashboard = () => {
 
                 <TextField
                   label="IGST Rate"
-                  type="number"
+                  type="text"
                   placeholder="Enter Number"
                   value={item.igstRate}
-                  onChange={(e) =>
-                    handleInventoryChange(index, "igstRate", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                      handleInventoryChange(index, "igstRate", value);
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -1122,12 +1151,16 @@ export const EditGRNDashboard = () => {
 
                 <TextField
                   label="TCS Rate"
-                  type="number"
+                  type="text"
                   placeholder="Enter Number"
                   value={item.tcsRate}
-                  onChange={(e) =>
-                    handleInventoryChange(index, "tcsRate", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                      handleInventoryChange(index, "tcsRate", value);
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}

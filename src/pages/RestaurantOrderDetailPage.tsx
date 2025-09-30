@@ -404,7 +404,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Pencil, X } from "lucide-react";
+import { ArrowLeft, Logs, Pencil, X } from "lucide-react";
 import { fetchOrderDetails } from "@/store/slices/f&bSlice";
 import { useAppDispatch } from "@/store/hooks";
 import { LogsTimeline } from "@/components/LogTimeline";
@@ -575,29 +575,48 @@ export const RestaurantOrderDetailPage = () => {
             className="grid grid-cols-2 gap-8 px-3"
           >
             <div>
-              <h3 className="text-lg font-semibold mb-4">
-                Order ID: {order.order_details.order_id}
-              </h3>
+              <div className="flex items-start mb-4 text-lg font-semibold">
+                <span className="min-w-[140px]">Order ID</span>
+                <span className="mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {order.order_details.order_id}
+                </span>
+              </div>
               <div className="space-y-2">
-                <div>
-                  <span className="font-medium">Order Date:</span>{" "}
-                  {order.order_details.order_date}
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Order Date</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {order.order_details.order_date}
+                  </span>
                 </div>
-                <div>
-                  <span className="font-medium">Payment Mode:</span>{" "}
-                  {Number(order.totals.total_amount) > 0 && order.order_details.payment_mode}
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Payment Mode</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {Number(order.totals.total_amount) > 0 && order.order_details.payment_mode}
+                  </span>
                 </div>
-                <div>
-                  <span className="font-medium">Payment Status:</span>{" "}
-                  {Number(order.totals.total_amount) > 0 && order.order_details.payment_status}
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Payment Status</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {Number(order.totals.total_amount) > 0 && order.order_details.payment_status}
+                  </span>
                 </div>
-                <div>
-                  <span className="font-medium">Transaction ID:</span>{" "}
-                  {Number(order.totals.total_amount) > 0 && order.order_details.transaction_id}
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Transaction ID</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {Number(order.totals.total_amount) > 0 && order.order_details.transaction_id}
+                  </span>
                 </div>
-                <div>
-                  <span className="font-medium">Preferred Time:</span>{" "}
-                  {order.order_details.preferred_time}
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Preferred Time</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {order.order_details.preferred_time}
+                  </span>
                 </div>
               </div>
             </div>
@@ -666,7 +685,7 @@ export const RestaurantOrderDetailPage = () => {
         <div className="bg-white rounded-lg shadow p-6 border-2 space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-              O
+              <Logs className="w-4 h-4" />
             </div>
             <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Order Log</h3>
           </div>

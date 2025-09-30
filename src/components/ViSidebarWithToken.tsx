@@ -9,37 +9,46 @@ import { saveToken, saveUser, getToken, isAuthenticated } from '../utils/auth';
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage = {
-    Maintenance: [
+    Safety: [
         {
             name: 'M-Safe',
             icon: Users,
-            href: '/maintenance/m-safe',
+            href: '/safety/m-safe',
             subItems: [
-                { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
-                { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' },
-                { name: 'LMC', href: '/maintenance/m-safe/lmc', color: 'text-[#1a1a1a]' },
-                { name: 'SMT', href: '/maintenance/m-safe/smt', color: 'text-[#1a1a1a]' },
-                { name: 'Krcc List', href: '/maintenance/m-safe/krcc-list', color: 'text-[#1a1a1a]' },
-                { name: 'Training List', href: '/maintenance/m-safe/training-list', color: 'text-[#1a1a1a]' },
-                { name: 'External Reportee Reassign', href: '/maintenance/m-safe/reportees-reassign', color: 'text-[#1a1a1a]' },
+                { name: 'Internal User (FTE)', href: '/safety/m-safe/internal', color: 'text-[#1a1a1a]' },
+                { name: 'External User (NON FTE)', href: '/safety/m-safe/external', color: 'text-[#1a1a1a]' },
+                { name: 'LMC', href: '/safety/m-safe/lmc', color: 'text-[#1a1a1a]' },
+                { name: 'SMT', href: '/safety/m-safe/smt', color: 'text-[#1a1a1a]' },
+                { name: 'Krcc List', href: '/safety/m-safe/krcc-list', color: 'text-[#1a1a1a]' },
+                { name: 'Training List', href: '/safety/m-safe/training-list', color: 'text-[#1a1a1a]' },
+                { name: 'External Reportee Reassign', href: '/safety/m-safe/reportees-reassign', color: 'text-[#1a1a1a]' },
+            ],
+        },
+        {
+            name: 'Report',
+            icon: Download,
+            href: '/safety/report',
+            subItems: [
+                { name: 'Msafe User Report', icon: Download, href: '/safety/report/msafe-report' },
+                { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
             ],
         },
         // {
         //     name: 'Vi Miles',
         //     icon: Car,
-        //     href: '/maintenance/vi-miles',
+        //     href: '/safety/vi-miles',
         //     subItems: [
-        //         { name: 'Vehicle Details', href: '/maintenance/vi-miles/vehicle-details', color: 'text-[#1a1a1a]' },
-        //         { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' },
+        //         { name: 'Vehicle Details', href: '/safety/vi-miles/vehicle-details', color: 'text-[#1a1a1a]' },
+        //         { name: 'Vehicle Check In', href: '/safety/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' },
         //     ],
         // },
-        { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
-        { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
+        { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/safety/check-hierarchy-levels' },
+        { name: 'Employee Deletion History', icon: Trash, href: '/safety/employee-deletion-history' },
 
 
-        { name: 'Msafe User Report', icon: Download, href: '/maintenance/msafe-report' },
-        { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/msafe-detail-report' },
-        { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
+        // { name: 'Msafe User Report', icon: Download, href: '/safety/msafe-report' },
+        // { name: 'Msafe Detail Report', icon: Download, href: '/safety/msafe-detail-report' },
+        // { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
 
     ],
 }

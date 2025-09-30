@@ -2357,12 +2357,12 @@ export const AddSchedulePage = () => {
             errors[`section_${sectionIndex}_task_${taskIndex}_inputType`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have an input type selected`;
           }
           // Group and SubGroup are mandatory
-          if (!task.group || !task.group.trim()) {
-            errors[`section_${sectionIndex}_task_${taskIndex}_group`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a group selected`;
-          }
-          if (!task.subGroup || !task.subGroup.trim()) {
-            errors[`section_${sectionIndex}_task_${taskIndex}_subGroup`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a sub-group selected`;
-          }
+          // if (!task.group || !task.group.trim()) {
+          //   errors[`section_${sectionIndex}_task_${taskIndex}_group`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a group selected`;
+          // }
+          // if (!task.subGroup || !task.subGroup.trim()) {
+          //   errors[`section_${sectionIndex}_task_${taskIndex}_subGroup`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a sub-group selected`;
+          // }
           // Help text is optional, but if enabled, value is required
           if (task.helpText && (!task.helpTextValue || !task.helpTextValue.trim())) {
             errors[`section_${sectionIndex}_task_${taskIndex}_helpTextValue`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} help text value is required when help text is enabled`;

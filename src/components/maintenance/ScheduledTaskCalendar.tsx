@@ -137,7 +137,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 
   const handleSelectEvent = (info: any) => {
     if (info.event.id) {
-      navigate(`/maintenance/task-details/${info.event.id}`);
+      navigate(`/maintenance/task/task-details/${info.event.id}`);
     }
   };
 
@@ -439,9 +439,9 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 
                   {/* Quick Action Link */}
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4" onClick={() => {
-                    console.log('Quick navigate to task details:', `/maintenance/task-details/${selectedEvent.id}`);
+                    console.log('Quick navigate to task details:', `/maintenance/task/task-details/${selectedEvent.id}`);
                     closeEventModal();
-                    navigate(`/maintenance/task-details/${selectedEvent.id}`);
+                    navigate(`/maintenance/task/task-details/${selectedEvent.id}`);
                   }}>
                     <div className="flex items-center justify-between">
                       <div>
@@ -452,9 +452,9 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
                       </div>
                       <button
                         onClick={() => {
-                          console.log('Quick navigate to task details:', `/maintenance/task-details/${selectedEvent.id}`);
+                          console.log('Quick navigate to task details:', `/maintenance/task/task-details/${selectedEvent.id}`);
                           closeEventModal();
-                          navigate(`/maintenance/task-details/${selectedEvent.id}`);
+                          navigate(`/maintenance/task/task-details/${selectedEvent.id}`);
                         }}
                         className="px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
                       >

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { API_CONFIG } from '@/config/apiConfig';
 import { AttachmentGoodsPreviewModal } from '@/components/AttachmentGoodsPreviewModal';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
-import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export const GatePassOutwardsDetailPage = () => {
   const { id } = useParams();
@@ -134,7 +135,14 @@ export const GatePassOutwardsDetailPage = () => {
   };
 
   if (loading) {
-    return <div className="p-6 text-center text-gray-500 text-md">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto"></div>
+          <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!gatePassData) {
@@ -171,6 +179,7 @@ export const GatePassOutwardsDetailPage = () => {
   const supplierName = gatePassData.supplier_name || '--';
   const expectedReturnDate = gatePassData.expected_return_date || '--';
   const returnableStatus = gatePassData.returnable ? 'Returnable' : 'Non-Returnable';
+  const status = gatePassData.status || '--';
   const vendorDetails = {
     name: supplierName,
     mobile: mobileNo,
@@ -205,7 +214,22 @@ export const GatePassOutwardsDetailPage = () => {
   ];
 
     // Render cell for EnhancedTable, especially for Updates column
-    const renderCell = (item: any, columnKey: string) => {
+    const getStatusBadgeStyles = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
+    switch (normalizedStatus) {
+      case 'pending':
+        return { backgroundColor: '#f5f2c9', color: '#000' };
+      case 'rejected':
+        return { backgroundColor: '#f5ccc6', color: '#000' };
+      case 'accepted':
+      case 'approved':
+        return { backgroundColor: '#c7ecd9', color: '#000' };
+      default:
+        return { backgroundColor: '#f3f4f6', color: '#000' };
+    }
+  };
+
+  const renderCell = (item: any, columnKey: string) => {
       // Only show receive/handover buttons if returnable
       if (columnKey === "updates" && gatePassData.returnable === true) {
         const idx = item.updates;
@@ -254,9 +278,12 @@ export const GatePassOutwardsDetailPage = () => {
               <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                 Gate Pass Outward - {gatePassData.gate_pass_no || gatePassData.id}
               </h1>
-              <div className="text-base px-4 py-2 bg-blue-100 text-blue-800 rounded-md">
+              {/* <div 
+                className="text-base px-4 py-2 rounded-md"
+                style={getStatusBadgeStyles(status)}
+              >
                 {status}
-              </div>
+              </div> */}
             </div>
 
             <div className="text-sm text-gray-600">
@@ -293,76 +320,110 @@ export const GatePassOutwardsDetailPage = () => {
           </TabsList>
 
           <TabsContent value="profile" className="p-4 sm:p-6">
-            {/* Gate Pass Info Card */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 mb-4">
-              <div className="text-[#C72030] font-semibold text-xl mb-4">Gate Pass Information</div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4 text-sm">
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Employer/Visitor Name:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{personName}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Company:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{vendorCompanyName || '--'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mobile No.:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{mobileNo}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mode of Transport:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.mode_of_transport || '--'}{vehicleNo && ` / ${vehicleNo}`}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Building:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{buildingName}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass Type:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassType}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass No.:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.gate_pass_no || '--'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate No:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.gate_number || '--'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Gate Pass Date:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Expected Return Date:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{expectedReturnDate}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Goods Type:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.returnable ? 'Returnable' : 'Non-Returnable'}</div>
-                </div>
-                {gatePassData.remarks && (
-                  <div className="col-span-2">
-                    <div className="text-gray-500" style={{ fontSize:'12px'}}>Remarks:</div>
-                    <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.remarks || '--'}</div>
+            <div className="space-y-6">
+              {/* Gate Pass Information Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Gate Pass Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Employer/Visitor Name</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{personName}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Company</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{vendorCompanyName || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Mobile No.</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{mobileNo}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Mode of Transport</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.mode_of_transport || '--'}{vehicleNo && ` / ${vehicleNo}`}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Building</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{buildingName}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Gate Pass Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassType}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Gate Pass No.</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.gate_pass_no || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Gate No</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.gate_number || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Gate Pass Date</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Expected Return Date</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{expectedReturnDate}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Goods Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.returnable ? 'Returnable' : 'Non-Returnable'}</span>
+                    </div>
+                    {gatePassData.remarks && (
+                      <div className="flex items-start col-span-2">
+                        <span className="text-gray-500 min-w-[140px]">Remarks</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{gatePassData.remarks || '--'}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
+                </CardContent>
+              </Card>
 
-            {/* Vendor Details */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-              <div className="text-[#C72030] font-semibold text-xl mb-4">Vendor Details</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Vendor Name:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{gatePassData.supplier_name || '--'}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500" style={{ fontSize:'12px'}}>Mobile No.:</div>
-                  <div className="font-medium text-gray-900" style={{ fontSize:'16px'}}>{mobileNo}</div>
-                </div>
-              </div>
+              {/* Vendor Details Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <User className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Vendor Details</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Vendor Name</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{gatePassData.supplier_name || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Mobile No.</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{mobileNo}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -373,18 +434,78 @@ export const GatePassOutwardsDetailPage = () => {
                 <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
               </div>
               <div className="overflow-x-auto">
-                <EnhancedTable
-                  data={tableData}
-                  columns={columns}
-                  renderCell={renderCell}
-                  storageKey="gate-pass-outwards-details-items"
-                  pagination={true}
-                  pageSize={10}
-                  hideColumnsButton={true}
-                  hideTableExport={true}
-                  hideTableSearch={true}
-                  loading={loading}
-                />
+                <div className="rounded-lg border border-gray-200 overflow-hidden">
+                  <Table className="border-separate">
+                    <TableHeader>
+                      <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Type</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Category</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Name</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Unit</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Quantity</TableHead>
+                        <TableHead className={`font-semibold text-gray-900 py-3 px-4${gatePassData.returnable === true ? ' border-r' : ''}`} style={{ borderColor: '#fff' }}>Description</TableHead>
+                        {gatePassData.returnable === true && (
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Updates</TableHead>
+                        )}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={gatePassData.returnable === true ? 7 : 6} className="text-center py-8">
+                            <div className="flex items-center justify-center">
+                              <div className="text-center">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mx-auto"></div>
+                                <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : tableData && tableData.length > 0 ? (
+                        tableData.map((item, index) => (
+                          <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="py-3 px-4 font-medium">{item.itemType}</TableCell>
+                            <TableCell className="py-3 px-4">{item.itemCategory}</TableCell>
+                            <TableCell className="py-3 px-4">{item.itemName}</TableCell>
+                            <TableCell className="py-3 px-4">{item.unit}</TableCell>
+                            <TableCell className="py-3 px-4">{item.quantity}</TableCell>
+                            <TableCell className="py-3 px-4">{item.description}</TableCell>
+                            {gatePassData.returnable === true && (
+                              <TableCell className="py-3 px-4">
+                                {handoverView[item.updates] ? (
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                    onClick={() => {
+                                      setSelectedItemIndex(item.updates);
+                                      setIsReceiveModalOpen(true);
+                                    }}
+                                  >
+                                    View Handover
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                    onClick={() => handleReceiveClick(item.updates)}
+                                  >
+                                    Receive
+                                  </Button>
+                                )}
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={gatePassData.returnable === true ? 7 : 6} className="text-center py-8 text-gray-500">
+                            No items found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           </TabsContent>

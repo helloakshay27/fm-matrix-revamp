@@ -38,6 +38,7 @@ const categorySchema = z.object({
   responseTime: z.string().min(1, 'Response time is required'),
   customerEnabled: z.boolean(),
   siteId: z.string().min(1, 'Site selection is required'),
+  engineerIds: z.array(z.number()).optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -71,6 +72,24 @@ interface CategoryApiResponse {
       created_at: string;
       updated_at: string;
     }>;
+    complaint_worker?: {
+      id: number;
+      society_id: number;
+      category_id: number;
+      assign_to: string[];
+      created_at: string;
+      updated_at: string;
+      assign: string | null;
+      esc_type: string | null;
+      of_phase: string;
+      of_atype: string;
+      site_id: number;
+      issue_type_id: number | null;
+      issue_related_to: string | null;
+      helpdesk_sub_category_id: number | null;
+      cloned_by_id: number | null;
+      cloned_at: string | null;
+    };
   }>;
   statuses: Array<{
     id: number;
@@ -110,6 +129,8 @@ export const CategoryTypeTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [faqItems, setFaqItems] = useState<FAQ[]>([{ question: '', answer: '' }]);
   const [vendorEmails, setVendorEmails] = useState<string[]>(['']);
+  const [engineers, setEngineers] = useState<{ id: number; full_name: string }[]>([]);
+  const [selectedEngineers, setSelectedEngineers] = useState<number[]>([]);
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [vendorEmailEnabled, setVendorEmailEnabled] = useState(false);
   const [accountData, setAccountData] = useState<{
@@ -133,6 +154,7 @@ export const CategoryTypeTab: React.FC = () => {
       responseTime: '',
       customerEnabled: false,
       siteId: '',
+      engineerIds: [],
     },
   });
 
@@ -187,6 +209,21 @@ export const CategoryTypeTab: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  // Fetch engineers
+  useEffect(() => {
+    const fetchEngineers = async () => {
+      try {
+        const response = await ticketManagementAPI.getEngineers();
+        const formatted = response?.users?.map((user: { id: number; full_name: string }) => ({ id: user.id, full_name: user.full_name })) || [];
+        setEngineers(formatted);
+      } catch (error) {
+        console.error('Error fetching engineers:', error);
+        toast.error('Failed to fetch engineers');
+      }
+    };
+    fetchEngineers();
   }, []);
 
   useEffect(() => {
@@ -247,11 +284,15 @@ export const CategoryTypeTab: React.FC = () => {
     }
 
     // Get the form data
+    // Get form values
+    const formValues = form.getValues();
+    
     const data: CategoryFormData = {
       categoryName: categoryNameInput.value.trim(),
       responseTime: responseTimeInput.value.trim(),
       customerEnabled: false, // or get from checkbox if needed
       siteId: selectedSite.id.toString(),
+      engineerIds: formValues.engineerIds || [],
     };
 
     // Continue with the rest of the validation and submission logic
@@ -309,6 +350,14 @@ export const CategoryTypeTab: React.FC = () => {
       
       if (iconFile) {
         formData.append('helpdesk_category[icon]', iconFile);
+      }
+
+      // Add selected engineers
+      const selectedEngineers = form.getValues('engineerIds') || [];
+      if (selectedEngineers.length) {
+        selectedEngineers.forEach(engineerId => {
+          formData.append('complaint_worker[assign_to][]', engineerId.toString());
+        });
       }
       
       // FAQ attributes
@@ -436,6 +485,16 @@ export const CategoryTypeTab: React.FC = () => {
       setEditFaqItems([{ question: '', answer: '' }]);
     }
     
+    // Populate assigned engineers if available
+    if (category.complaint_worker?.assign_to) {
+      const engineerIds = category.complaint_worker.assign_to.map(id => parseInt(id));
+      setSelectedEngineers(engineerIds);
+      form.setValue('engineerIds', engineerIds); // Update form state
+    } else {
+      setSelectedEngineers([]);
+      form.setValue('engineerIds', []); // Update form state
+    }
+    
     setEditIconFile(null);
     setEditVendorEmailEnabled(category.category_email?.length > 0);
     setEditVendorEmails(category.category_email?.length > 0 ? category.category_email.map(e => e.email) : ['']);
@@ -511,6 +570,13 @@ export const CategoryTypeTab: React.FC = () => {
       // Add icon if a new one is selected
       if (editIconFile) {
         submitFormData.append('helpdesk_category[icon]', editIconFile);
+      }
+
+      // Add selected engineers
+      if (selectedEngineers.length) {
+        selectedEngineers.forEach(engineerId => {
+          submitFormData.append('complaint_worker[assign_to][]', engineerId.toString());
+        });
       }
       
       // FAQ attributes
@@ -825,6 +891,80 @@ export const CategoryTypeTab: React.FC = () => {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="engineerIds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assign Engineers</FormLabel>
+                      <FormControl>
+                        <>
+                          <Select
+                            onValueChange={(value) => {
+                              const selected = engineers.find(e => e.id.toString() === value);
+                              if (selected) {
+                                const currentValues = field.value || [];
+                                if (!currentValues.includes(selected.id)) {
+                                  field.onChange([...currentValues, selected.id]);
+                                }
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select engineers">
+                                {field.value?.length ? `${field.value.length} engineers selected` : "Select engineers"}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {engineers.map((engineer) => (
+                                <SelectItem key={engineer.id} value={engineer.id.toString()}>
+                                  <div className="flex items-center gap-2">
+                                    <Checkbox
+                                      checked={field.value?.includes(engineer.id)}
+                                      onCheckedChange={(checked) => {
+                                        const currentValues = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...currentValues, engineer.id]);
+                                        } else {
+                                          field.onChange(currentValues.filter(id => id !== engineer.id));
+                                        }
+                                      }}
+                                    />
+                                    {engineer.full_name}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          {field.value?.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {field.value.map((engineerId) => {
+                                const engineer = engineers.find(e => e.id === engineerId);
+                                return engineer ? (
+                                  <span key={engineerId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100">
+                                    {engineer.full_name}
+                                    <button
+                                      type="button"
+                                      className="p-0.5 hover:bg-gray-200 rounded-full"
+                                      onClick={() => {
+                                        field.onChange(field.value?.filter(id => id !== engineerId));
+                                      }}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </span>
+                                ) : null;
+                              })}
+                            </div>
+                          )}
+                        </>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {/* PMS Phase - Hidden field, always "pms" */}
@@ -1134,6 +1274,75 @@ export const CategoryTypeTab: React.FC = () => {
                 </div>
               </div>
 
+              <div className="mt-4">
+                <label className="block text-sm font-medium mb-2">
+                  Assign Engineers
+                </label>
+                <div>
+                  <Select
+                    onValueChange={(value) => {
+                      const selected = engineers.find(e => e.id.toString() === value);
+                      if (selected) {
+                        const currentValues = selectedEngineers;
+                        if (!currentValues.includes(selected.id)) {
+                          const newValues = [...currentValues, selected.id];
+                          setSelectedEngineers(newValues);
+                          form.setValue('engineerIds', newValues); // Update form state
+                        }
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select engineers">
+                        {selectedEngineers.length ? `${selectedEngineers.length} engineers selected` : "Select engineers"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {engineers.map((engineer) => (
+                        <SelectItem key={engineer.id} value={engineer.id.toString()}>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={selectedEngineers.includes(engineer.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedEngineers([...selectedEngineers, engineer.id]);
+                                } else {
+                                  setSelectedEngineers(selectedEngineers.filter(id => id !== engineer.id));
+                                }
+                              }}
+                            />
+                            {engineer.full_name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {selectedEngineers.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedEngineers.map((engineerId) => {
+                        const engineer = engineers.find(e => e.id === engineerId);
+                        return engineer ? (
+                          <span key={engineerId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100">
+                            {engineer.full_name}
+                            <button
+                              type="button"
+                              className="p-0.5 hover:bg-gray-200 rounded-full"
+                              onClick={() => {
+                                setSelectedEngineers(selectedEngineers.filter(id => id !== engineerId));
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">FAQs</h3>
@@ -1185,6 +1394,7 @@ export const CategoryTypeTab: React.FC = () => {
                 ))}
               </div>
 
+              
               <div className="flex justify-end pt-4">
                 <Button 
                   onClick={() => handleEditSubmit({})}

@@ -1024,6 +1024,7 @@ export const AddPermitPage = () => {
       if (permitData.floor) formData.append('pms_permit[floor_id]', permitData.floor);
       if (permitData.room) formData.append('pms_permit[room_id]', permitData.room);
       formData.append('pms_permit[client_specific]', permitData.clientSpecific);
+      formData.append('pms_permit[comment]', permitData.comment ?? '');
 
       // Entity ID - take first selected entity if multiple
       if (permitData.listOfEntity.length > 0) {
