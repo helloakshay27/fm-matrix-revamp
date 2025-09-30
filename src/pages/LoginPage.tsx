@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { TextField } from '@mui/material';
+import { TextField, IconButton, InputAdornment } from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building2, Check } from 'lucide-react';
+import { ArrowLeft, Building2, Check, Eye, EyeOff } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getOrganizationsByEmail, loginUser, saveUser, saveToken, saveBaseUrl, Organization } from '@/utils/auth';
 import { toast } from 'sonner';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
 const muiFieldStyles = {
@@ -49,14 +48,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [selectedOrganization, setSelectedOrganization] =
     useState<Organization | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
-  const [loginMethod, setLoginMethod] = useState("email");
+  const [showPassword, setShowPassword] = useState(false);
 
   const hostname = window.location.hostname;
 
@@ -67,6 +65,35 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
   const validateEmail = (email: string) => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+  };
+
+  const validatePassword = (password: string) => {
+    // Password must be at least 8 characters long
+    if (password.length < 8) {
+      return { isValid: false, message: "Password must be at least 8 characters long." };
+    }
+    
+    // Must contain at least one uppercase letter
+    if (!/[A-Z]/.test(password)) {
+      return { isValid: false, message: "Password must contain at least one uppercase letter." };
+    }
+    
+    // Must contain at least one lowercase letter
+    if (!/[a-z]/.test(password)) {
+      return { isValid: false, message: "Password must contain at least one lowercase letter." };
+    }
+    
+    // Must contain at least one number
+    if (!/[0-9]/.test(password)) {
+      return { isValid: false, message: "Password must contain at least one number." };
+    }
+    
+    // Must contain at least one special character
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      return { isValid: false, message: "Password must contain at least one special character (!@#$%^&*(),.?\":{}|<>)." };
+    }
+    
+    return { isValid: true, message: "Password is valid." };
   };
 
   const handleEmailSubmit = async () => {
@@ -95,26 +122,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       setIsLoading(false);
     }
   };
-  const handlePhoneSubmit = async () => {
-    if (!phone) {
-      toast.error("Please enter your phone number.");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const orgs = await getOrganizationsByEmail(phone);
-      setOrganizations(orgs);
-      setCurrentStep(2);
-      if (orgs.length === 0) {
-        toast.error("No organizations found for this phone number.");
-      }
-    } catch (error) {
-      toast.error("Failed to fetch organizations. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleOrganizationSelect = (org: Organization) => {
     localStorage.setItem("selectedOrg", org.name)
@@ -136,10 +143,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
-      return;
-    }
+    // const passwordValidation = validatePassword(password);
+    // if (!passwordValidation.isValid) {
+    //   toast.error(passwordValidation.message);
+    //   return;
+    // }
 
     setLoginLoading(true);
     try {
@@ -151,7 +159,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       }
 
       // Check if number is verified first
-      if (response.number_verified === 0 && isViSite) {
+      if (response.number_verified === 0 ) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
         localStorage.setItem("temp_token", response.access_token);
@@ -265,44 +273,35 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
   const renderEmailStep = () => (
     <>
-
-      <RadioGroup value={loginMethod} onValueChange={setLoginMethod} className="flex gap-4 mb-6">
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="email" id="email" />
-          <Label htmlFor="email" className="text-gray-700 font-medium cursor-pointer">
-            Login with Email
-          </Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="phone" id="phone" />
-          <Label htmlFor="phone" className="text-gray-700 font-medium cursor-pointer">
-            Login with Phone no.
-          </Label>
-        </div>
-      </RadioGroup>
-
-      {/* Input Field */}
-      <TextField
-        variant="outlined"
-        placeholder={loginMethod === 'email' ? 'Enter your email' : 'Enter your phone number'}
-        type={loginMethod === 'email' ? 'email' : 'tel'}
-        value={loginMethod === 'email' ? email : phone}
-        onChange={(e) => loginMethod === 'email' ? setEmail(e.target.value) : setPhone(e.target.value)}
-        onKeyPress={(e) => e.key === 'Enter' && (loginMethod === 'email' ? handleEmailSubmit() : handlePhoneSubmit())}
-        sx={{
-          ...muiFieldStyles,
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '0.5rem',
-          },
-        }}
-        fullWidth
-      />
+      {/* Email Input Label */}
+      <div className="mb-4">
+        <Label htmlFor="email" className="text-gray-700 font-medium text-base block mb-2">
+          Email Address
+        </Label>
+        
+        {/* Input Field */}
+        <TextField
+          variant="outlined"
+          placeholder="Enter your email address"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleEmailSubmit()}
+          sx={{
+            ...muiFieldStyles,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '0.5rem',
+            },
+          }}
+          fullWidth
+        />
+      </div>
 
       {/* Submit Button */}
       <Button
-        onClick={loginMethod === 'email' ? handleEmailSubmit : handlePhoneSubmit}
-        disabled={isLoading || (loginMethod === 'email' ? !email : !phone)}
-        className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-medium rounded-lg text-base mt-2"
+        onClick={handleEmailSubmit}
+        disabled={isLoading || !email}
+        className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-medium rounded-lg text-base mt-4"
       >
         {isLoading ? (
           <div className="flex items-center justify-center">
@@ -417,13 +416,33 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       <TextField
         variant="outlined"
-        type="password"
+        type={showPassword ? "text" : "password"}
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         sx={muiFieldStyles}
         onKeyPress={(e) => e.key === "Enter" && handleLogin()}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() => setShowPassword(!showPassword)}
+                edge="end"
+                sx={{ 
+                  color: '#64748b',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0,0,0,0.04)'
+                  }
+                }}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
       />
+
+
 
       {/* Terms and Privacy */}
       <div className="text-center text-sm text-gray-300 mb-6">

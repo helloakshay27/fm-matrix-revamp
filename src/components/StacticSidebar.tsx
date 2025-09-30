@@ -1091,7 +1091,6 @@ const modulesByPackage = {
         {
           name: "F&B",
           href: "/settings/vas/fnb/setup",
-          subItems: [{ name: "Setup", href: "/settings/vas/fnb/setup" }],
         },
         {
           name: "MOM",
@@ -1119,8 +1118,7 @@ const modulesByPackage = {
         },
         {
           name: "Booking",
-          href: "/settings/vas/booking",
-          subItems: [{ name: "Setup", href: "/settings/vas/booking/setup" }],
+          href: "/settings/vas/booking/setup",
         },
         {
           name: "Parking Management",

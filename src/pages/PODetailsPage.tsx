@@ -29,10 +29,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   TextField,
 } from "@mui/material";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
@@ -698,15 +694,30 @@ export const PODetailsPage = () => {
               </Button>
             </>
           )}
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-            onClick={() => navigate(`/finance/po/add?clone=${id}`)}
-          >
-            <Copy className="w-4 h-4 mr-1" />
-            Clone
-          </Button>
+          {
+            !shouldShowButtons && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={() => navigate(`/finance/po/add?clone=${id}`)}
+                >
+                  <Copy className="w-4 h-4 mr-1" />
+                  Clone
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={handlePrint}
+                >
+                  <Printer className="w-4 h-4 mr-1" />
+                  Print
+                </Button>
+              </>
+            )
+          }
           <Button
             size="sm"
             variant="outline"
@@ -715,15 +726,6 @@ export const PODetailsPage = () => {
           >
             <Rss className="w-4 h-4 mr-1" />
             Feeds
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-            onClick={handlePrint}
-          >
-            <Printer className="w-4 h-4 mr-1" />
-            Print
           </Button>
         </div>
       </div>

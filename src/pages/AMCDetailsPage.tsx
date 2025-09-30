@@ -296,10 +296,7 @@ export const AMCDetailsPage = () => {
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="amc-information" className="w-full">
-          <TabsList
-            className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar rounded-t-lg h-auto p-0 text-sm bg-transparent"
-          >
-
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             {[
               { label: 'AMC Information', value: 'amc-information' },
               { label: 'Supplier Information', value: 'supplier-information' },
@@ -309,15 +306,16 @@ export const AMCDetailsPage = () => {
               {
                 label: amcDetails.amc_type === "Service" ? "Service Information" : "Asset Information",
                 value: "asset-information",
-              },].map((tab) => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-                >
-                  {tab.label}
-                </TabsTrigger>
-              ))}
+              },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0 text-sm"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           {/* AMC Information */}
@@ -326,7 +324,7 @@ export const AMCDetailsPage = () => {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                    <FileTextIcon className="w-6 h-6 text-[#C72030]" />
+                    <FileTextIcon className="w-5 h-5 text-[#C72030]" />
                   </div>
                   {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <FileTextIcon className="h-4 w-4" />
@@ -336,14 +334,46 @@ export const AMCDetailsPage = () => {
               </CardHeader>
               <CardContent className='bg-white'>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><strong>ID:</strong> {amcDetails.id}</div>
-                  <div><strong>Cost:</strong> {formatCurrency(amcDetails.amc_cost)}</div>
-                  <div><strong>Start Date:</strong> {formatDate(amcDetails.amc_start_date)}</div>
-                  <div><strong>End Date:</strong> {formatDate(amcDetails.amc_end_date)}</div>
-                  <div><strong>First Service:</strong> {formatDate(amcDetails.amc_first_service)}</div>
-                  <div><strong>No. of Visits:</strong> {amcDetails.no_of_visits || '—'}</div>
-                  <div><strong>Payment Terms:</strong> {formatPaymentTerm(amcDetails.payment_term)}</div>
-                  <div className="md:col-span-2"><strong>Remarks:</strong> {amcDetails.remarks || '—'}</div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">ID</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.id}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">Cost</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{formatCurrency(amcDetails.amc_cost)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">Start Date</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_start_date)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">End Date</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_end_date)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">First Service</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_first_service)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">No. of Visits</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.no_of_visits || '—'}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">Payment Terms</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{formatPaymentTerm(amcDetails.payment_term)}</span>
+                  </div>
+                  <div className="md:col-span-2 flex">
+                    <span className="text-gray-500 w-24">Remarks</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.remarks || '—'}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -355,7 +385,7 @@ export const AMCDetailsPage = () => {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                    <Truck className="w-6 h-6 text-[#C72030]" />
+                    <Truck className="w-5 h-5 text-[#C72030]" />
                   </div>
                   {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <Truck className="h-4 w-4" />
@@ -365,11 +395,31 @@ export const AMCDetailsPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><strong>Name:</strong> {amcDetails.amc_vendor_name || '—'}</div>
-                  <div><strong>Email:</strong> {amcDetails.amc_vendor_email || '—'}</div>
-                  <div><strong>Mobile1:</strong> {amcDetails.amc_vendor_mobile || '—'}</div>
-                  <div><strong>Mobile2:</strong> —</div>
-                  <div><strong>Company name:</strong> {amcDetails.amc_vendor_name || '—'}</div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">Name</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_name || '—'}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">Email</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_email || '—'}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">Mobile1</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_mobile || '—'}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">Mobile2</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">—</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">Company name</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_name || '—'}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -381,7 +431,7 @@ export const AMCDetailsPage = () => {
               <CardHeader >
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                    <Paperclip className="w-6 h-6 text-[#C72030]" />
+                    <Paperclip className="w-5 h-5 text-[#C72030]" />
                   </div>
                   {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <Paperclip className="h-4 w-4" />
@@ -613,11 +663,8 @@ export const AMCDetailsPage = () => {
             <Card className="border border-[#D9D9D9]">
               <CardHeader >
                 <CardTitle className="text-lg flex items-center">
-                  {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <FileTextIcon className="h-4 w-4" />
-                  </div> */}
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                    <FileTextIcon className="w-6 h-6 text-[#C72030]" />
+                    <FileTextIcon className="w-5 h-5 text-[#C72030]" />
                   </div>
                   AMC VISITS
                 </CardTitle>
@@ -834,7 +881,7 @@ export const AMCDetailsPage = () => {
                     <FileTextIcon className="h-4 w-4" />
                   </div> */}
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                    <Ticket className="w-6 h-6 text-[#C72030]" />
+                    <Ticket className="w-5 h-5 text-[#C72030]" />
                   </div>
                   TICKETS
                 </CardTitle>
@@ -900,8 +947,8 @@ export const AMCDetailsPage = () => {
                       <Boxes className="h-4 w-4" />
                     </div> */}
                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                    <Boxes className="w-6 h-6 text-[#C72030]" />
-                  </div>
+                      <Boxes className="w-5 h-5 text-[#C72030]" />
+                    </div>
                     ASSET INFORMATION
                   </CardTitle>
                 </CardHeader>
@@ -973,9 +1020,9 @@ export const AMCDetailsPage = () => {
                     {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                       <Boxes className="h-4 w-4" />
                     </div> */}
-                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                    <Boxes className="w-6 h-6 text-[#C72030]" />
-                  </div>
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                      <Boxes className="w-5 h-5 text-[#C72030]" />
+                    </div>
                     SERVICE INFORMATION
                   </CardTitle>
                 </CardHeader>

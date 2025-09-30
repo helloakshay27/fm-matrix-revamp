@@ -485,7 +485,7 @@ export const WODetailsPage = () => {
               Send To SAP Team
             </Button>
           )}
-          {workOrder.all_level_approved === null && (
+          {workOrder.all_level_approved === null && !shouldShowButtons && (
             <Button
               size="sm"
               variant="outline"
@@ -496,24 +496,30 @@ export const WODetailsPage = () => {
               Edit
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-            onClick={() => navigate(`/finance/wo/add?clone=${id}`)}
-          >
-            <Copy className="w-4 h-4 mr-1" />
-            Clone
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-            onClick={handlePrint}
-          >
-            <Printer className="w-4 h-4 mr-1" />
-            Print
-          </Button>
+          {
+            !shouldShowButtons && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={() => navigate(`/finance/wo/add?clone=${id}`)}
+                >
+                  <Copy className="w-4 h-4 mr-1" />
+                  Clone
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={handlePrint}
+                >
+                  <Printer className="w-4 h-4 mr-1" />
+                  Print
+                </Button>
+              </>
+            )
+          }
           <Button
             size="sm"
             variant="outline"

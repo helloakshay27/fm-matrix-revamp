@@ -62,7 +62,7 @@ export interface LoginResponse {
 }
 
 export interface OTPResponse {
-  success: boolean;
+  code: number;
   message: string;
   otp?: string; // For development/testing
 }
@@ -353,10 +353,7 @@ export const sendForgotPasswordOTP = async (
 
   const data = await response.json();
 
-  return {
-    success: true,
-    message: data.message || "OTP sent successfully",
-  };
+  return data;
 };
 
 // Verify forgot password OTP and reset password

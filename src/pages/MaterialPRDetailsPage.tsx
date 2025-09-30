@@ -515,7 +515,7 @@ export const MaterialPRDetailsPage = () => {
             </Button>
           )}
           {
-            pr.all_level_approved === null && <Button
+            pr.all_level_approved === null && !shouldShowButtons && <Button
               size="sm"
               variant="outline"
               className="border-gray-300"
@@ -525,14 +525,24 @@ export const MaterialPRDetailsPage = () => {
               Edit
             </Button>
           }
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/finance/material-pr/add?clone=${id}`)}
-          >
-            <Copy className="w-4 h-4 mr-2" />
-            Clone
-          </Button>
+          {
+            !shouldShowButtons && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/finance/material-pr/add?clone=${id}`)}
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Clone
+                </Button>
+                <Button variant="outline" size="sm" onClick={handlePrint}>
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
+                </Button>
+              </>
+            )
+          }
           <Button
             variant="outline"
             size="sm"
@@ -540,10 +550,6 @@ export const MaterialPRDetailsPage = () => {
           >
             <Rss className="w-4 h-4 mr-2" />
             Feeds
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />
-            Print
           </Button>
           {pr.all_level_approved && (
             <Button
