@@ -71,6 +71,7 @@ interface SurveyAnswers {
     selectedTags?: GenericTag[];
     selectedOptions?: SurveyOption[];
     comments?: string;
+    optionId?: number;
   };
 }
 
@@ -107,6 +108,7 @@ export const MobileSurveyLanding: React.FC = () => {
     | { rating: number; emoji: string; label: string }
     | SurveyOption[]
     | number
+    | { rating: number; option: SurveyOption }
   >(null);
 
   console.log("Negative cmnt", negativeComments);
@@ -238,7 +240,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
       const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
 
-      // Check for negative option (option_type === 'n')
+      // Check for negative option (option_type === 'n') from API response
       const hasNegative = option.option_type === "n";
       if (
         hasNegative &&
@@ -288,14 +290,37 @@ export const MobileSurveyLanding: React.FC = () => {
 
       const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
 
+      // Check if any rating option has option_type === 'n' for negative flow
+      const hasNegativeOption = currentQuestion.snag_quest_options?.some(
+        (option) => option.option_type === "n"
+      );
+
+      // For rating questions, check if the selected rating corresponds to a negative option
+      // Map rating to option index based on API options count
+      const ratingToOptionIndex = Array.from(
+        { length: currentQuestion.snag_quest_options?.length || 5 }, 
+        (_, index) => ({ rating: index + 1, optionIndex: currentQuestion.snag_quest_options.length - 1 - index })
+      );
+      
+      const selectedOptionMapping = ratingToOptionIndex.find(
+        (opt) => opt.rating === rating
+      );
+      
+      const selectedOption = selectedOptionMapping && currentQuestion.snag_quest_options?.[selectedOptionMapping.optionIndex];
+      const isNegativeRating = selectedOption?.option_type === "n";
+
       if (
-        rating <= 3 &&
+        isNegativeRating &&
         currentQuestion.generic_tags &&
         currentQuestion.generic_tags.length > 0
       ) {
         // Negative response - go to generic tags page
         setPendingNegativeType("rating");
-        setPendingNegativeAnswer(rating);
+        // Store both rating and the corresponding option for option_id
+        setPendingNegativeAnswer({
+          rating,
+          option: selectedOption
+        });
         setShowGenericTags(true);
       } else {
         // Positive response - auto-progress
@@ -322,8 +347,22 @@ export const MobileSurveyLanding: React.FC = () => {
     const currentQuestion = getCurrentQuestion();
     const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
 
+    // For emoji/smiley questions, check if the selected rating corresponds to a negative option
+    // Map rating to option index based on API options count
+    const ratingToOptionIndex = Array.from(
+      { length: currentQuestion?.snag_quest_options?.length || 5 }, 
+      (_, index) => ({ rating: index + 1, optionIndex: currentQuestion.snag_quest_options.length - 1 - index })
+    );
+    
+    const selectedOptionMapping = ratingToOptionIndex.find(
+      (opt) => opt.rating === rating
+    );
+    
+    const selectedOption = selectedOptionMapping && currentQuestion?.snag_quest_options?.[selectedOptionMapping.optionIndex];
+    const isNegativeEmoji = selectedOption?.option_type === "n";
+
     if (
-      rating <= 3 &&
+      isNegativeEmoji &&
       currentQuestion?.generic_tags &&
       currentQuestion.generic_tags.length > 0
     ) {
@@ -524,20 +563,24 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "emoji_selection";
 
-          // For emoji/smiley questions, find and add option_id based on rating
+          // For emoji/smiley questions, find and add option_id from API response
           if (currentAnswer.rating !== undefined) {
-            const emojiOptionMapping = [
-              { rating: 1, option_id: 1 }, // Terrible
-              { rating: 2, option_id: 2 }, // Bad
-              { rating: 3, option_id: 3 }, // Okay
-              { rating: 4, option_id: 4 }, // Good
-              { rating: 5, option_id: 5 }, // Amazing
-            ];
-            const emojiOption = emojiOptionMapping.find(
-              (opt) => opt.rating === currentAnswer.rating
+            // Find the corresponding option from API response based on rating
+            const questionData = surveyData.snag_checklist.snag_questions.find(
+              (q) => q.id === currentQuestion.id
             );
-            if (emojiOption) {
-              surveyResponseItem.option_id = emojiOption.option_id;
+            if (questionData?.snag_quest_options) {
+              // Map rating to option based on API structure
+              const ratingToOptionMapping = Array.from(
+                { length: questionData.snag_quest_options.length }, 
+                (_, index) => ({ rating: index + 1, optionIndex: questionData.snag_quest_options.length - 1 - index })
+              );
+              const mapping = ratingToOptionMapping.find(
+                (opt) => opt.rating === currentAnswer.rating
+              );
+              if (mapping && questionData.snag_quest_options[mapping.optionIndex]) {
+                surveyResponseItem.option_id = questionData.snag_quest_options[mapping.optionIndex].id;
+              }
             }
           }
           break;
@@ -554,20 +597,27 @@ export const MobileSurveyLanding: React.FC = () => {
             currentAnswer.rating > 1 ? "s" : ""
           }`;
 
-          // Add option_id mapping for rating questions (similar to emoji)
-          if (currentAnswer.rating !== undefined) {
-            const ratingOptionMapping = [
-              { rating: 1, option_id: 1 }, // 1 star
-              { rating: 2, option_id: 2 }, // 2 stars
-              { rating: 3, option_id: 3 }, // 3 stars
-              { rating: 4, option_id: 4 }, // 4 stars
-              { rating: 5, option_id: 5 }, // 5 stars
-            ];
-            const ratingOption = ratingOptionMapping.find(
-              (opt) => opt.rating === currentAnswer.rating
+          // Add option_id mapping for rating questions from API response
+          if (currentAnswer.optionId) {
+            // Use stored option_id from negative flow
+            surveyResponseItem.option_id = currentAnswer.optionId;
+          } else if (currentAnswer.rating !== undefined) {
+            // Fallback to mapping for positive responses
+            const questionData = surveyData.snag_checklist.snag_questions.find(
+              (q) => q.id === currentQuestion.id
             );
-            if (ratingOption) {
-              surveyResponseItem.option_id = ratingOption.option_id;
+            if (questionData?.snag_quest_options) {
+              // Map rating to option based on API structure
+              const ratingToOptionMapping = Array.from(
+                { length: questionData.snag_quest_options.length }, 
+                (_, index) => ({ rating: index + 1, optionIndex: questionData.snag_quest_options.length - 1 - index })
+              );
+              const mapping = ratingToOptionMapping.find(
+                (opt) => opt.rating === currentAnswer.rating
+              );
+              if (mapping && questionData.snag_quest_options[mapping.optionIndex]) {
+                surveyResponseItem.option_id = questionData.snag_quest_options[mapping.optionIndex].id;
+              }
             }
           }
           break;
@@ -694,21 +744,23 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "emoji_selection";
 
-          // For emoji/smiley questions, find and add option_id based on rating
+          // For emoji/smiley questions, find and add option_id from API response
           if (answerData.rating !== undefined) {
-            // Find the emoji option that matches the rating
-            const emojiOptionMapping = [
-              { rating: 1, option_id: 1 }, // Terrible
-              { rating: 2, option_id: 2 }, // Bad
-              { rating: 3, option_id: 3 }, // Okay
-              { rating: 4, option_id: 4 }, // Good
-              { rating: 5, option_id: 5 }, // Amazing
-            ];
-            const emojiOption = emojiOptionMapping.find(
-              (opt) => opt.rating === answerData.rating
+            const questionData = surveyData.snag_checklist.snag_questions.find(
+              (q) => q.id === currentQuestion.id
             );
-            if (emojiOption) {
-              surveyResponseItem.option_id = emojiOption.option_id;
+            if (questionData?.snag_quest_options) {
+              // Map rating to option based on API structure
+              const ratingToOptionMapping = Array.from(
+                { length: questionData.snag_quest_options.length }, 
+                (_, index) => ({ rating: index + 1, optionIndex: questionData.snag_quest_options.length - 1 - index })
+              );
+              const mapping = ratingToOptionMapping.find(
+                (opt) => opt.rating === answerData.rating
+              );
+              if (mapping && questionData.snag_quest_options[mapping.optionIndex]) {
+                surveyResponseItem.option_id = questionData.snag_quest_options[mapping.optionIndex].id;
+              }
             }
           }
           break;
@@ -724,6 +776,11 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.ans_descr = `${answerData.rating} star${
             answerData.rating > 1 ? "s" : ""
           }`;
+          
+          // Add option_id for rating questions
+          if (answerData.optionId) {
+            surveyResponseItem.option_id = answerData.optionId;
+          }
           break;
 
         case "input":
@@ -789,7 +846,7 @@ export const MobileSurveyLanding: React.FC = () => {
       ) {
         // For emoji/smiley questions, we need to find the emoji and label based on selectedRating
         if (selectedRating !== null) {
-          const emojiOptions = getStaticEmojiOptions();
+          const emojiOptions = getEmojiOptions(currentQuestion);
           const selectedOption = emojiOptions.find(
             (opt) => opt.rating === selectedRating
           );
@@ -967,25 +1024,25 @@ export const MobileSurveyLanding: React.FC = () => {
             surveyResponseItem.answer_type = question.qtype;
             surveyResponseItem.answer_mode = "emoji_selection";
 
-            // For emoji questions, find and add option_id based on rating
+            // For emoji questions, find and add option_id from API response
             if (answer.rating !== undefined) {
-              const emojiOptionMapping = [
-                { rating: 1, option_id: 1 }, // Terrible
-                { rating: 2, option_id: 2 }, // Bad
-                { rating: 3, option_id: 3 }, // Okay
-                { rating: 4, option_id: 4 }, // Good
-                { rating: 5, option_id: 5 }, // Amazing
-              ];
-              const emojiOption = emojiOptionMapping.find(
-                (opt) => opt.rating === answer.rating
-              );
-              if (emojiOption) {
-                surveyResponseItem.option_id = emojiOption.option_id;
-              } else {
-                console.warn(
-                  `[Multi-Submit ${question.qtype}] No option_id found for rating:`,
-                  answer.rating
+              if (question.snag_quest_options) {
+                // Map rating to option based on API structure
+                const ratingToOptionMapping = Array.from(
+                  { length: question.snag_quest_options.length }, 
+                  (_, index) => ({ rating: index + 1, optionIndex: question.snag_quest_options.length - 1 - index })
                 );
+                const mapping = ratingToOptionMapping.find(
+                  (opt) => opt.rating === answer.rating
+                );
+                if (mapping && question.snag_quest_options[mapping.optionIndex]) {
+                  surveyResponseItem.option_id = question.snag_quest_options[mapping.optionIndex].id;
+                } else {
+                  console.warn(
+                    `[Multi-Submit ${question.qtype}] No option_id found for rating:`,
+                    answer.rating
+                  );
+                }
               }
             }
             break;
@@ -1002,25 +1059,32 @@ export const MobileSurveyLanding: React.FC = () => {
               answer.rating > 1 ? "s" : ""
             }`;
 
-            // Add option_id mapping for rating questions (similar to emoji)
-            if (answer.rating !== undefined) {
-              const ratingOptionMapping = [
-                { rating: 1, option_id: 1 }, // 1 star
-                { rating: 2, option_id: 2 }, // 2 stars
-                { rating: 3, option_id: 3 }, // 3 stars
-                { rating: 4, option_id: 4 }, // 4 stars
-                { rating: 5, option_id: 5 }, // 5 stars
-              ];
-              const ratingOption = ratingOptionMapping.find(
-                (opt) => opt.rating === answer.rating
-              );
-              if (ratingOption) {
-                surveyResponseItem.option_id = ratingOption.option_id;
-              } else {
-                console.warn(
-                  `[Multi-Submit ${question.qtype}] No option_id found for rating:`,
-                  answer.rating
+            // Add option_id mapping for rating questions from API response
+            if (answer.optionId) {
+              // Use stored option_id from negative flow
+              surveyResponseItem.option_id = answer.optionId;
+            } else if (answer.rating !== undefined) {
+              // Fallback to mapping for positive responses
+              if (question.snag_quest_options) {
+                // Map rating to option based on API structure
+                const ratingToOptionMapping = [
+                  { rating: 1, optionIndex: 4 }, // 1 star (last option)
+                  { rating: 2, optionIndex: 3 }, // 2 stars
+                  { rating: 3, optionIndex: 2 }, // 3 stars
+                  { rating: 4, optionIndex: 1 }, // 4 stars
+                  { rating: 5, optionIndex: 0 }, // 5 stars (first option)
+                ];
+                const mapping = ratingToOptionMapping.find(
+                  (opt) => opt.rating === answer.rating
                 );
+                if (mapping && question.snag_quest_options[mapping.optionIndex]) {
+                  surveyResponseItem.option_id = question.snag_quest_options[mapping.optionIndex].id;
+                } else {
+                  console.warn(
+                    `[Multi-Submit ${question.qtype}] No option_id found for rating:`,
+                    answer.rating
+                  );
+                }
               }
             }
             break;
@@ -1086,14 +1150,47 @@ export const MobileSurveyLanding: React.FC = () => {
     }
   };
 
-  // Static emoji/smiley options for emoji and smiley question types
-  const getStaticEmojiOptions = () => [
-    { rating: 5, emoji: "😄", label: "Amazing" },
-    { rating: 4, emoji: "😊", label: "Good" },
-    { rating: 3, emoji: "😐", label: "Okay" },
-    { rating: 2, emoji: "😞", label: "Bad" },
-    { rating: 1, emoji: "😠", label: "Terrible" },
-  ];
+  // Get emoji options from API response
+  const getEmojiOptions = (question: SurveyQuestion) => {
+    if (!question.snag_quest_options || question.snag_quest_options.length === 0) {
+      // Fallback to static options if no API options
+      return [
+        { rating: 5, emoji: "😄", label: "Amazing", optionId: 5 },
+        { rating: 4, emoji: "😊", label: "Good", optionId: 4 },
+        { rating: 3, emoji: "😐", label: "Okay", optionId: 3 },
+        { rating: 2, emoji: "😞", label: "Bad", optionId: 2 },
+        { rating: 1, emoji: "😠", label: "Terrible", optionId: 1 },
+      ];
+    }
+
+    // Map API options to emoji display
+    const emojiMapping = [
+      { emoji: "😄", label: "Amazing" },
+      { emoji: "😊", label: "Good" },
+      { emoji: "😐", label: "Okay" },
+      { emoji: "😞", label: "Bad" },
+      { emoji: "😠", label: "Terrible" },
+    ];
+
+    return question.snag_quest_options.map((option, index) => ({
+      rating: question.snag_quest_options.length - index, // Reverse order: first option = highest rating
+      emoji: emojiMapping[index]?.emoji || "😐",
+      label: emojiMapping[index]?.label || option.qname,
+      optionId: option.id,
+      option: option
+    }));
+  };
+
+  // Get rating options from API response
+  const getRatingOptions = (question: SurveyQuestion) => {
+    if (!question.snag_quest_options || question.snag_quest_options.length === 0) {
+      // Fallback to 5 stars if no API options
+      return [1, 2, 3, 4, 5];
+    }
+
+    // Return array of rating numbers based on API options count
+    return Array.from({ length: question.snag_quest_options.length }, (_, index) => index + 1);
+  };
 
   // Check if survey is active
   const isSurveyActive = (): boolean => {
@@ -1564,7 +1661,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 {currentQuestion.qtype === "rating" && !showGenericTags && (
                   <>
                     <div className="flex justify-center items-center space-x-2 sm:space-x-3 mt-20">
-                      {[1, 2, 3, 4, 5].map((rating) => (
+                      {getRatingOptions(currentQuestion).map((rating) => (
                         <button
                           key={rating}
                           onClick={() => handleRatingSelect(rating)}
@@ -1600,8 +1697,8 @@ export const MobileSurveyLanding: React.FC = () => {
                   currentQuestion.qtype === "smiley") &&
                   !showGenericTags && (
                     <div className="w-full mt-16">
-                      <div className="grid grid-cols-5 gap-3 px-2">
-                        {getStaticEmojiOptions().map((option) => (
+                      <div className={`grid gap-3 px-2 ${getEmojiOptions(currentQuestion).length === 4 ? 'grid-cols-4' : 'grid-cols-5'}`}>
+                        {getEmojiOptions(currentQuestion).map((option) => (
                           <button
                             key={option.rating}
                             onClick={() =>
@@ -1708,12 +1805,15 @@ export const MobileSurveyLanding: React.FC = () => {
                             pendingNegativeType === "smiley") &&
                           typeof pendingNegativeAnswer === "object" &&
                           pendingNegativeAnswer !== null &&
-                          "rating" in pendingNegativeAnswer
+                          "rating" in pendingNegativeAnswer &&
+                          "emoji" in pendingNegativeAnswer
                         ) {
+                          // Type guard for emoji/smiley objects
+                          const emojiAnswer = pendingNegativeAnswer as { rating: number; emoji: string; label: string };
                           answerData = saveCurrentAnswer(
-                            pendingNegativeAnswer.rating,
-                            pendingNegativeAnswer.emoji,
-                            pendingNegativeAnswer.label,
+                            emojiAnswer.rating,
+                            emojiAnswer.emoji,
+                            emojiAnswer.label,
                             selectedTags,
                             currentComments
                           );
@@ -1727,15 +1827,22 @@ export const MobileSurveyLanding: React.FC = () => {
                           );
                         } else if (
                           pendingNegativeType === "rating" &&
-                          typeof pendingNegativeAnswer === "number"
+                          pendingNegativeAnswer &&
+                          typeof pendingNegativeAnswer === "object" &&
+                          "rating" in pendingNegativeAnswer &&
+                          "option" in pendingNegativeAnswer
                         ) {
                           answerData = saveCurrentAnswer(
-                            pendingNegativeAnswer,
+                            pendingNegativeAnswer.rating,
                             undefined,
                             undefined,
                             selectedTags,
                             currentComments
                           );
+                          // Store the option_id for later use in submission
+                          if (answerData) {
+                            answerData.optionId = pendingNegativeAnswer.option.id;
+                          }
                         }
 
                         // Reset states immediately
