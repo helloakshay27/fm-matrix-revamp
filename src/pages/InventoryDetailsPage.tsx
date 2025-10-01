@@ -584,9 +584,10 @@ export const InventoryDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6">
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading inventory details...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading inventory details...</p>
         </div>
       </div>
     );
