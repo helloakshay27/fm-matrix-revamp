@@ -241,7 +241,7 @@ export const AMCDetailsPage = () => {
           Back to AMC List
         </button>
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details - {amcDetails.id}</h1>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details</h1>
           <div className="flex gap-2">
             <Button
               onClick={() => navigate(`/maintenance/amc/edit/${id}`)}

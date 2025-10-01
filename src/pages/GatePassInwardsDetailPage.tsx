@@ -331,67 +331,79 @@ export const GatePassInwardsDetailPage = () => {
 
           <TabsContent value="details" className="p-4 sm:p-6">
             {/* Item Details Table */}
-            <div className="bg-white rounded-lg px-4 pb-4 border border-gray-200 shadow-sm">
-              <div className="flex items-center pt-4 pb-2">
-                <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
-              </div>
-              <div className="overflow-x-auto">
-                <div className="rounded-lg border border-gray-200 overflow-hidden">
-                  <Table className="border-separate">
-                    <TableHeader>
-                      <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Type</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Category</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Name</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Unit</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Quantity</TableHead>
-                        <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Description</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8">
-                            <div className="flex items-center justify-center">
-                              <div className="text-center">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mx-auto"></div>
-                                <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+            <Card className="w-full">
+              <CardHeader className="pb-4 lg:pb-6">
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Box className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <span className="uppercase tracking-wide">Item Details</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="overflow-x-auto">
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <Table className="border-separate">
+                      <TableHeader>
+                        <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Type</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Category</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Name</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Unit</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Quantity</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Description</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {loading ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8">
+                              <div className="flex items-center justify-center">
+                                <div className="text-center">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mx-auto"></div>
+                                  <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+                                </div>
                               </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ) : tableData && tableData.length > 0 ? (
-                        tableData.map((item, index) => (
-                          <TableRow key={index} className="hover:bg-gray-50 transition-colors">
-                            <TableCell className="py-3 px-4 font-medium">{item.itemType}</TableCell>
-                            <TableCell className="py-3 px-4">{item.itemCategory}</TableCell>
-                            <TableCell className="py-3 px-4">{item.itemName}</TableCell>
-                            <TableCell className="py-3 px-4">{item.unit}</TableCell>
-                            <TableCell className="py-3 px-4">{item.quantity}</TableCell>
-                            <TableCell className="py-3 px-4">{item.description}</TableCell>
+                            </TableCell>
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                            No items found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                        ) : tableData && tableData.length > 0 ? (
+                          tableData.map((item, index) => (
+                            <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                              <TableCell className="py-3 px-4 font-medium">{item.itemType}</TableCell>
+                              <TableCell className="py-3 px-4">{item.itemCategory}</TableCell>
+                              <TableCell className="py-3 px-4">{item.itemName}</TableCell>
+                              <TableCell className="py-3 px-4">{item.unit}</TableCell>
+                              <TableCell className="py-3 px-4">{item.quantity}</TableCell>
+                              <TableCell className="py-3 px-4">{item.description}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                              No items found
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="attachments" className="p-4 sm:p-6">
             {/* Attachments Section */}
-            <div className="shadow-sm border border-border rounded-lg bg-white">
-              <div className="pb-4 pt-6 px-6">
-                <div className="text-[#C72030] font-semibold text-xl mb-2">Attachments</div>
-              </div>
-              <div className="pb-6 px-6">
+            <Card className="w-full">
+              <CardHeader className="pb-4 lg:pb-6">
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <span className="uppercase tracking-wide">Attachments</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
                 {Array.isArray(gatePassData.attachments) && gatePassData.attachments.length > 0 ? (
                   <div className="flex items-center flex-wrap gap-4">
                     {gatePassData.attachments.map((attachment: any) => {
@@ -485,8 +497,8 @@ export const GatePassInwardsDetailPage = () => {
                 ) : (
                   <p className="text-muted-foreground">No attachments</p>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

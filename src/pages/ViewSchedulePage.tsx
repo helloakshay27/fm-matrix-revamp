@@ -5,15 +5,16 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, FileText, Box, Clock, Calendar, Link, Mail, MapPin } from 'lucide-react';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
-import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, Box, Typography, Tooltip } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, Typography, Tooltip } from '@mui/material';
 import AttachFile from '@mui/icons-material/AttachFile';
 import { assetService } from '@/services/assetService';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCustomFormDetails } from '@/services/customFormsAPI';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
-import { custom } from 'zod';
 
 const muiFieldStyles = {
   width: '100%',
@@ -85,6 +86,9 @@ export const ViewSchedulePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState("basic");
 
   // Get the form_code from navigation state
   const formCode = location.state?.formCode;
@@ -282,1190 +286,707 @@ export const ViewSchedulePage = () => {
   const handleViewPerformance = () => {
     navigate(`/maintenance/schedule/performance/${id}`, { state: { formCode } });
   };
+
+  const handleBack = () => navigate('/maintenance/schedule');
+
   console.log("Selected Group ID:", selectedGroupId);
   console.log("Selected Sub Group ID:", selectedSubGroupId);
   console.log("groupOptions:", groupOptions);
   
 
   return (
-    <div className="p-6 mx-auto">
+    <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">View Schedule</h1>
-        <div className="flex gap-3 mb-6">
-          {/* Create Ticket Toggle */}
-          <div className="flex items-center space-x-2">
-            <RadioGroup value={createTicketEnabled ? "enabled" : "disabled"}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="enabled" id="create-ticket-enabled" />
-                <Label htmlFor="create-ticket-enabled">Create Ticket</Label>
-              </div>
-            </RadioGroup>
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Schedule
+        </button>
+
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+                {customForm?.form_name}
+              </h1>
+            </div>
+            <div className="text-sm text-gray-600">
+              Schedule #{assetTask?.id || id} • Created by {assetTask?.created_by || 'Unknown'} • Last updated {formatDate(assetTask?.start_date || assetTask?.services?.[0]?.created_at)}
+            </div>
           </div>
-
-          {/* Weightage Toggle */}
-          <div className="flex items-center space-x-2">
-            <RadioGroup value={weightageEnabled ? "enabled" : "disabled"}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="enabled" id="weightage-enabled" />
-                <Label htmlFor="weightage-enabled">Weightage</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* <Button 
-            onClick={handleSetApproval}
-            style={{ backgroundColor: '#C72030' }} 
-            className="text-white"
-          >
-            Set Approval
-          </Button> */}
-          <Button 
-            onClick={handleViewPerformance}
-            variant="outline" 
-            className="border-[#C72030] text-[#C72030]"
-          >
-            View Performance
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-8">
-        {/* Basic Info */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[#C72030] flex items-center gap-2 text-lg font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-7 h-7 flex items-center justify-center text-base">1</span>
-              Basic Configuration
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6 pt-2">
-            <div className="flex justify-between gap-6">
-              <div className="space-y-3">
-                <Label className="text-base font-medium">Type</Label>
-                <RadioGroup value={customForm?.schedule_type || 'PPM'} className="flex gap-4" disabled>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="PPM" id="type-ppm" disabled />
-                    <Label htmlFor="type-ppm" className="text-sm">PPM</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="AMC" id="type-amc" disabled />
-                    <Label htmlFor="type-amc" className="text-sm">AMC</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Preparedness" id="type-preparedness" disabled />
-                    <Label htmlFor="type-preparedness" className="text-sm">Preparedness</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Routine" id="type-routine" disabled />
-                    <Label htmlFor="type-routine" className="text-sm">Routine</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div className="space-y-3 ml-5">
-                <Label className="text-base font-medium">Schedule For</Label>
-                <RadioGroup value={customForm?.sch_type || 'Asset'} className="flex gap-6" disabled>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Asset" id="schedule-asset" disabled />
-                    <Label htmlFor="schedule-asset" className="text-sm">Asset</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Service" id="schedule-service" disabled />
-                    <Label htmlFor="schedule-service" className="text-sm">Service</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Vendor" id="schedule-vendor" disabled />
-                    <Label htmlFor="schedule-vendor" className="text-sm">Vendor</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <TextField
-                label="Activity Name"
-                value={customForm?.form_name || ''}
-                InputProps={{ readOnly: true, disabled: true }}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                sx={{ ...muiFieldStyles, fontSize: '1rem', borderRadius: '8px' }}
-              />
-            </div>
-            <div className="space-y-3">
-              <TextField
-                label="Description"
-                value={customForm?.description || ''}
-                InputProps={{ readOnly: true, disabled: true }}
-                fullWidth
-                multiline
-                rows={4}
-                variant="outlined"
-                placeholder="Enter description"
-                InputLabelProps={{ shrink: true }}
-                sx={{ ...multilineFieldStyles, fontSize: '1rem', borderRadius: '8px' }}
-              />
-            </div>
-            <div className="space-y-3">
-              {customForm?.attachments && customForm.attachments.length > 0 && (
-                <>
-              <Label className="text-base font-medium">Attachments</Label>
-                <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-                  {customForm.attachments.map((attachment: any, index: number) => {
-                    const isImage = attachment.file_name && attachment.file_name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
-                    return (
-                      <a key={attachment.id || index} href={attachment.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                        <Box
-                          sx={{
-                            width: '120px',
-                            height: '120px',
-                            border: '2px dashed #ccc',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative',
-                            backgroundColor: '#fafafa',
-                            '&:hover': {
-                              borderColor: '#999'
-                            }
-                          }}
-                        >
-                          {isImage && attachment.url ? (
-                            <img
-                              src={attachment.url}
-                              alt={attachment.file_name}
-                              style={{
-                                maxWidth: '100px',
-                                maxHeight: '100px',
-                                objectFit: 'contain',
-                                borderRadius: 4,
-                              }}
-                            />
-                          ) : (
-                            <>
-                              <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  textAlign: 'center',
-                                  px: 1,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                  width: '100%',
-                                  color: '#333'
-                                }}
-                              >
-                                {attachment.file_name}
-                              </Typography>
-                            </>
-                          )}
-                        </Box>
-                      </a>
-                    );
-                  })}
-                </Box>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Task */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center gap-2">
-              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
-              Task
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Group and Sub Group Dropdowns with selected value from master data */}
-            {(() => {
-              return (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                 <Autocomplete
-      options={groupOptions}
-      getOptionLabel={(option) => option.name || ''}
-      value={
-        groupOptions.find(group => group.id ===  Number(selectedGroupId)) || null
-      }
-      isOptionEqualToValue={(option, value) => option.id === value.id}
-      disabled
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label="Group"
-          InputLabelProps={{ shrink: true }}
-          sx={muiFieldStyles}
-        />
-      )}
-    />
-                  </div>
-                  <div className="space-y-2">
-                    <Autocomplete
-      options={subGroupOptions}
-      getOptionLabel={(option) => option.name || ''}
-      value={subGroupOptions.find(subGroup => subGroup.id === Number(selectedSubGroupId)) || null}
-      isOptionEqualToValue={(option, value) => option.id === value.id}
-      disabled
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label="Sub Group"
-          InputLabelProps={{ shrink: true }}
-          sx={muiFieldStyles}
-        />
-      )}
-    />
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Dynamic Task Content */}
-            {customForm?.content && customForm.content.length > 0 && (
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-700">Tasks:</h4>
-                {customForm.content.map((task, index) => (
-                  <div key={index} className="p-4 border rounded-lg bg-gray-50">
-                    <div className="flex items-center gap-8">
-                      <div className="flex items-center space-x-2 mb-6">
-                        <Checkbox
-                          checked={task.required === 'true'}
-                          disabled
-                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
-                        />
-                        <Label className="text-gray-900 font-medium">Mandatory</Label>
-                      </div>
-                      <div className="flex items-center space-x-2 mb-6">
-                        <Checkbox
-                          checked={!!task.hint}
-                          disabled
-                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
-                        />
-                        <Label className="text-gray-900 font-medium">Help Text</Label>
-                      </div>
-                      <div className="flex items-center space-x-2 mb-6">
-                        <Checkbox
-                          checked={task.is_reading === 'true'}
-                          disabled
-                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
-                        />
-                        <Label className="text-gray-900 font-medium">Reading</Label>
-                      </div>
-                      {task.rating_enabled === 'true' && (<div className="flex items-center space-x-2 mb-6">
-                        <Checkbox
-                          checked={task.rating_enabled === 'true'}
-                          disabled
-                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
-                        />
-                        <Label className="text-gray-900 font-medium">Rating</Label>
-                      </div>)}
-                    </div>
-                    {/* Fields Row */}
-                    <div className="flex gap-4 mb-4">
-                      <div className="flex-1">
-                        <TextField
-                          label="Task"
-                          value={task.label}
-                          InputProps={{ readOnly: true, disabled: true }}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{ shrink: true }}
-                          sx={muiFieldStyles}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <FormControl fullWidth variant="outlined" disabled>
-                          <InputLabel shrink>Input Type</InputLabel>
-                          <Select
-                            value={
-                              task.type === 'text'
-                                ? 'Text'
-                                : task.type === 'radio-group'
-                                  ? 'Radio'
-                                  : task.type === 'numeric'
-                                    ? 'Numeric'
-                                    : task.type
-                            }
-                            label="Input Type"
-                            disabled
-                            sx={muiFieldStyles}
-                          >
-                            <MenuItem value={
-                              task.type === 'text'
-                                ? 'Text'
-                                : task.type === 'radio-group'
-                                  ? 'Radio'
-                                  : task.type === 'numeric'
-                                    ? 'Numeric'
-                                    : task.type
-                            }>
-                              {task.type === 'text'
-                                ? 'Text'
-                                : task.type === 'radio-group'
-                                  ? 'Radio'
-                                  : task.type === 'numeric'
-                                    ? 'Numeric'
-                                    : task.type === 'select'
-                                      ? 'Dropdown'
-                                      : task.type}
-                            </MenuItem>
-                          </Select>
-                        </FormControl>
-                      </div>
-                      {task.weightage && (<div className="flex-1">
-                        <TextField
-                          label="Weightage"
-                          value={task.weightage || ''}
-                          InputProps={{ readOnly: true, disabled: true }}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{ shrink: true }}
-                          sx={muiFieldStyles}
-                        />
-                      </div>)}
-                    </div>
-                    {/* Hint Row */}
-                    {task.hint && (
-                      <div className="mb-4">
-                        <TextField
-                          label="Help Text (Hint)"
-                          value={task.hint}
-                          InputProps={{ readOnly: true, disabled: true }}
-                          fullWidth
-                          variant="outlined"
-                          InputLabelProps={{ shrink: true }}
-                          sx={muiFieldStyles}
-                        />
-                        {task.question_hint_image_url && task.question_hint_image_url.length > 0 && (
-                          <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-                            {task.question_hint_image_url.map((image: any, imgIndex: number) => {
-                              const isImage = image.filename && image.filename.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
-                              return (
-                                <a key={image.id || imgIndex} href={image.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                                  <Box
-                                    sx={{
-                                      width: '120px',
-                                      height: '120px',
-                                      border: '2px dashed #ccc',
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      position: 'relative',
-                                      backgroundColor: '#fafafa',
-                                      '&:hover': {
-                                        borderColor: '#999'
-                                      }
-                                    }}
-                                  >
-                                    {isImage && image.url ? (
-                                      <img
-                                        src={image.url}
-                                        alt={image.filename}
-                                        style={{
-                                          maxWidth: '100px',
-                                          maxHeight: '100px',
-                                          objectFit: 'contain',
-                                          borderRadius: 4,
-                                        }}
-                                      />
-                                    ) : (
-                                      <>
-                                        <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
-                                        <Typography
-                                          variant="caption"
-                                          sx={{
-                                            textAlign: 'center',
-                                            px: 1,
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                            width: '100%',
-                                            color: '#333'
-                                          }}
-                                        >
-                                          {image.filename}
-                                        </Typography>
-                                      </>
-                                    )}
-                                  </Box>
-                                </a>
-                              );
-                            })}
-                          </Box>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Conditional Value Sections */}
-                    <div className="col-span-3">
-                      {task.type === 'dropdown' && Array.isArray(task.values) && task.values.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
-                            <Label className="block text-sm font-semibold mb-2 text-gray-700">Enter Value</Label>
-                            {task.values.map((value, valueIndex) => (
-                              <div key={valueIndex} className="flex items-center gap-2 mb-2">
-                                <input
-                                  value={value.label}
-                                  readOnly
-                                  disabled
-                                  className="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-gray-700 text-sm"
-                                />
-                                <select
-                                  value={value.type}
-                                  disabled
-                                  className="w-20 bg-white border border-gray-300 rounded px-2 py-2 text-gray-700 text-sm"
-                                >
-                                  <option value="positive">P</option>
-                                  <option value="negative">N</option>
-                                </select>
-                                {task.values.length > 1 && (
-                                  <span className="text-red-600 cursor-not-allowed">&#10005;</span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {task.type === 'radio-group' && Array.isArray(task.values) && task.values.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
-                            <div className="flex justify-between items-center mb-2">
-                              <Label className="text-sm font-semibold text-gray-700">Selected</Label>
-                              <Label className="text-sm font-semibold text-gray-700">Enter Value</Label>
-                            </div>
-                            {task.values.map((value, valueIndex) => (
-                              <div key={valueIndex} className="flex items-center gap-2 mb-2">
-                                <input
-                                  type="radio"
-                                  name={`radio-${index}`}
-                                  checked={valueIndex === 0}
-                                  disabled
-                                  className="text-red-600"
-                                  readOnly
-                                />
-                                <input
-                                  value={value.label}
-                                  readOnly
-                                  disabled
-                                  className="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-gray-700 text-sm"
-                                />
-                                <select
-                                  value={value.type}
-                                  disabled
-                                  className="w-20 bg-white border border-gray-300 rounded px-2 py-2 text-gray-700 text-sm"
-                                >
-                                  <option value="positive">P</option>
-                                  <option value="negative">N</option>
-                                </select>
-                                {task.values.length > 1 && (
-                                  <span className="text-red-600 cursor-not-allowed">&#10005;</span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {task.type === 'checkbox' && Array.isArray(task.values) && task.values.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
-                            <div className="flex justify-between items-center mb-2">
-                              <Label className="text-sm font-semibold text-gray-700">Selected</Label>
-                              <Label className="text-sm font-semibold text-gray-700">Enter Value</Label>
-                            </div>
-                            {task.values.map((value, valueIndex) => (
-                              <div key={valueIndex} className="flex items-center gap-2 mb-2">
-                                <input
-                                  type="checkbox"
-                                  checked={valueIndex === 0}
-                                  disabled
-                                  className="text-red-600"
-                                  readOnly
-                                />
-                                <input
-                                  value={value.label}
-                                  readOnly
-                                  disabled
-                                  className="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-gray-700 text-sm"
-                                />
-                                {task.values.length > 1 && (
-                                  <span className="text-red-600 cursor-not-allowed">&#10005;</span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {task.type === 'options-inputs' && Array.isArray(task.values) && task.values.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
-                            <Label className="block text-sm font-semibold mb-2 text-gray-700 text-center">Enter Value</Label>
-                            {task.values.map((value, valueIndex) => (
-                              <div key={valueIndex} className="flex items-center gap-2 mb-2">
-                                <input
-                                  value={value.label}
-                                  readOnly
-                                  disabled
-                                  className="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-gray-700 text-sm"
-                                />
-                                {task.values.length > 1 && (
-                                  <span className="text-red-600 cursor-not-allowed">&#10005;</span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Time Setup */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center gap-2">
-              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
-              Time Setup
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Parse cron expression and show as MUI Table */}
-            {(() => {
-              const cron = (assetTask && ((assetTask as any).cron_expression || (assetTask as any).cron || (assetTask as any).schedule_cron)) || '';
-              let minutes: string[] = [], hours: string[] = [], months: string[] = [], weekdays: string[] = [];
-              if (cron) {
-                const parts = cron.split(' ');
-                if (parts.length >= 5) {
-                  minutes = parts[0].split(',');
-                  hours = parts[1].split(',');
-                  months = parts[3] === '*' ? ['All'] : parts[3].split(',');
-                  weekdays = parts[4] === '*' ? ['All'] : parts[4].split(',');
-                }
-              }
-              if (!hours.length || (hours.length === 1 && hours[0] === '*')) hours = ['All'];
-              if (!minutes.length || (minutes.length === 1 && minutes[0] === '*')) minutes = ['All'];
-              if (!months.length) months = ['All'];
-              if (!weekdays.length) weekdays = ['All'];
-              const weekdayMap: Record<string, string> = { '1': 'Sunday', '2': 'Monday', '3': 'Tuesday', '4': 'Wednesday', '5': 'Thursday', '6': 'Friday', '7': 'Saturday' };
-              const weekdayNames = weekdays.map(wd => weekdayMap[wd] || wd);
-              return (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Hours</TableHead>
-                      <TableHead>Minutes</TableHead>
-                      <TableHead>Day of Week</TableHead>
-                      <TableHead>Month</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>{hours.join(', ')}</TableCell>
-                      <TableCell>{minutes.join(', ')}</TableCell>
-                      <TableCell>{weekdayNames.join(', ')}</TableCell>
-                      <TableCell>{months.join(', ')}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              );
-            })()}
-          </CardContent>
-        </Card>
-
-        {/* Schedule */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center gap-2">
-              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
-              Schedule
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Checklist Type</Label>
-              <RadioGroup value={assetTask?.assignment_type === 'people' ? 'Individual' : 'Asset Group'} className="flex gap-4" disabled>
+          
+          <div className="flex gap-3">
+            {/* Create Ticket Toggle */}
+            <div className="flex items-center space-x-2">
+              <RadioGroup value={createTicketEnabled ? "enabled" : "disabled"}>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Individual" id="checklist-individual" disabled />
-                  <Label htmlFor="checklist-individual" className="text-gray-400">Individual</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Asset Group" id="checklist-asset-group" disabled />
-                  <Label htmlFor="checklist-asset-group" className="text-gray-400">Asset Group</Label>
+                  <RadioGroupItem value="enabled" id="create-ticket-enabled" disabled />
+                  <Label htmlFor="create-ticket-enabled">Create Ticket</Label>
                 </div>
               </RadioGroup>
             </div>
 
-            {/* Dynamic Asset/Service Display */}
-            {/* <div className="space-y-2">
-              <Label>{customForm?.sch_type === 'Service' ? 'Services' : 'Assets'}</Label>
-              <div className="bg-red-50 p-2 rounded border border-red-200">
-                {customForm?.sch_type === 'Service' ? (
-                  assetTask?.services?.map((service, index) => (
-                    <div key={index} className="text-red-600 text-sm mb-2">
-                      {service.service_name}[{service.service_code}]
-                    </div>
-                  ))
-                ) : (
-                  assetTask?.assets?.map((asset, index) => (
-                    <div key={index} className="text-red-600 text-sm mb-2">
-                      {asset.name}                    </div>
-                  ))
-                )}
-                {(!assetTask?.services || assetTask.services.length === 0) && 
-                 (!assetTask?.assets || assetTask.assets.length === 0) && (
-                  <div className="text-red-600 text-sm">No assets or services assigned</div>
-                )}
-              </div>
-            </div> */}
-
-            <div className="grid grid-cols-3 gap-4 mt-3">
-              <div className="space-y-2">
-                <Tooltip 
-  title={
-    Array.isArray(assetTask.assigned_to) && assetTask.assigned_to.length > 0
-      ? assetTask.assigned_to.map((user: any) => user.name).join('\n')
-      : 'Not assigned'
-  }
-  arrow
-  placement="bottom-start"
-  componentsProps={{
-    tooltip: {
-      sx: {
-        backgroundColor: '#333',
-        color: 'white',
-        fontSize: '12px',
-        maxWidth: '300px',
-        whiteSpace: 'pre-line', // This allows line breaks from \n
-        padding: '8px 12px',
-        borderRadius: '4px',
-      }
-    }
-  }}
->
-  <TextField
-    label="Assign to"
-    value={
-      Array.isArray(assetTask.assigned_to) && assetTask.assigned_to.length > 0
-        ? assetTask.assigned_to.map((user: any) => user.name).join(', ')
-        : 'Not assigned'
-    }
-    InputProps={{ readOnly: true, disabled: true }}
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: true }}
-    sx={{
-      ...muiFieldStyles,
-      '& .MuiOutlinedInput-input': {
-        ...muiFieldStyles['& .MuiOutlinedInput-input, & .MuiSelect-select'],
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }
-    }}
-  />
-</Tooltip>
-              </div>
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Scan Type</InputLabel>
-                  <Select
-                    value={assetTask?.scan_type || 'Select Scan Type'}
-                    label="Scan Type"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value={assetTask?.scan_type || 'Select Scan Type'}>
-                      {assetTask?.scan_type || 'Select Scan Type'}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Plan Duration Type</InputLabel>
-                  <Select
-                    value={assetTask?.plan_type || 'Day'}
-                    label="Plan Duration Type"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value={assetTask?.plan_type || 'Day'}>
-                      {assetTask?.plan_type || 'Day'}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
+            {/* Weightage Toggle */}
+            <div className="flex items-center space-x-2">
+              <RadioGroup value={weightageEnabled ? "enabled" : "disabled"}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="enabled" id="weightage-enabled" disabled />
+                  <Label htmlFor="weightage-enabled">Weightage</Label>
+                </div>
+              </RadioGroup>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <TextField
-                  label="Plan value"
-                  value={assetTask?.plan_value || '1'}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
-              <div className="space-y-2">
-                <TextField
-                  label="Email Trigger Rule"
-                  value={emailRules?.[0]?.rule_name || 'No rules'}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
-              <div className="space-y-2">
-                <TextField
-                  label="Backup Assigned to"
-                  value={assetTask?.backup_assigned?.name || 'No backup assigned'}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
-              {/* {customForm?.backup_assigned.name !== "" && (<div className="space-y-2">
-                <TextField
-                  label="Backup Assigned to"
-                  value={customForm?.backup_assigned.name || 'No backkup assigned'}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>)} */}
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Supervisors</InputLabel>
-                  <Select
-                    value={
-                      Array.isArray(customForm?.supervisors) && customForm.supervisors.length > 0
-                        ? customForm.supervisors.map((id: any) => {
-                          const user = users.find(u => String(u.id) === String(id));
-                          return user ? user.full_name : id;
-                        }).join(', ')
-                        : 'Select Supervisors'
-                    }
-                    label="Supervisors"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value={
-                      Array.isArray(customForm?.supervisors) && customForm.supervisors.length > 0
-                        ? customForm.supervisors.map((id: any) => {
-                          const user = users.find(u => String(u.id) === String(id));
-                          return user ? user.full_name : id;
-                        }).join(', ')
-                        : 'Select Supervisors'
-                    }>
-                      {Array.isArray(customForm?.supervisors) && customForm.supervisors.length > 0
-                        ? customForm.supervisors.map((id: any) => {
-                          const user = users.find(u => String(u.id) === String(id));
-                          return user ? user.full_name : id;
-                        }).join(', ')
-                        : 'Select Supervisors'}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-              {/* <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Priority</InputLabel>
-                  <Select
-                    value={assetTask?.priority || 'Select Priority'}
-                    label="Priority"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value={assetTask?.priority || 'Select Priority'}>
-                      {assetTask?.priority || 'Select Priority'}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </div> */}
-              
-              <div className="space-y-2">
-                <TextField
-                  label="Submission Type"
-                  value={customForm?.submission_time_type || 'No Submission Time'}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
-              <div className="space-y-2">
-                <TextField
-                  label="Submission Time Value"
-                  value={customForm?.submission_time_value?.toString() || 'No Submission Value'}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Category</InputLabel>
-                  <Select
-                    value={assetTask?.category || 'Technical'}
-                    label="Category"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value={assetTask?.category || 'Technical'}>
-                      {assetTask?.category || 'Technical'}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-              
-              
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Grace Time</InputLabel>
-                  <Select
-                    value={assetTask?.grace_time_type || 'Hour'}
-                    label="Grace Time"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value={assetTask?.grace_time_type || 'Hour'}>
-                      {assetTask?.grace_time_type || 'Hour'}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="space-y-2">
-                <TextField
-                  label="Grace Time Value"
-                  value={assetTask?.grace_time_value || '3'}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
-
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Lock Overdue Task</InputLabel>
-                  <Select
-                    value={assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}
-                    label="Lock Overdue Task"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value={assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}>
-                      {assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-              
-              {/* <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Frequency</InputLabel>
-                  <Select
-                    value={assetTask?.frequency || 'Select Frequency'}
-                    label="Frequency"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value={assetTask?.frequency || 'Select Frequency'}>
-                      {assetTask?.frequency || 'Select Frequency'}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </div> */}
-              {customForm?.supplier_id && (<div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Supplier</InputLabel>
-                  <Select
-                    value={
-                      customForm?.supplier_id
-                        ? (suppliers.find(s => String(s.id) === String(customForm.supplier_id))?.name || `Supplier ID: ${customForm.supplier_id}`)
-                        : 'Supplier'
-                    }
-                    label="Supplier"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    {suppliers && suppliers.length > 0 ? (
-                      suppliers.map(supplier => (
-                        <MenuItem key={supplier.id} value={supplier.name}>{supplier.name}</MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value={customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}>
-                        {customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}
-                      </MenuItem>
-                    )}
-                  </Select>
-                </FormControl>
-              </div>)}
-
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <TextField
-                  label="Start Date"
-                  value={formatDate(assetTask?.start_date)}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
-              <div className="space-y-2">
-                <TextField
-                  label="End Date"
-                  value={formatDate(assetTask?.end_date)}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
-
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Association */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center gap-2">
-              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
-              Association
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {customForm?.sch_type === 'Service' ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Service Name</TableHead>
-                    <TableHead>Service Code</TableHead>
-                    <TableHead>Created on</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assetTask?.services && assetTask.services.length > 0 ? (
-                    assetTask.services.map((service, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{service.service_name}</TableCell>
-                        <TableCell>{service.service_code}</TableCell>
-                          <TableCell>{formatDateTime(service.created_at)}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center text-gray-500">
-                        No services associated
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Asset Name</TableHead>
-                    <TableHead>Model Number</TableHead>
-                    <TableHead>Purchase Cost</TableHead>
-                    <TableHead>Created on</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assetTask?.assets && assetTask.assets.length > 0 ? (
-                    assetTask.assets.map((asset, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{asset.name || 'N/A'}</TableCell>
-                        {/* <TableCell>{asset.asset_code || 'N/A'}</TableCell> */}
-                        <TableCell>{asset.model_number || 'N/A'}</TableCell>
-                        {/* <TableCell>{asset.purchase_date ? formatDateTime(asset.purchase_date) : 'N/A'}</TableCell> */}
-                        <TableCell>{asset.purchase_cost || 'N/A'}</TableCell>
-                        <TableCell>{asset.created_at ? formatDateTime(asset.created_at) : 'N/A'}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-gray-500">
-                        No assets associated
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Email Trigger Rules */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center gap-2">
-              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
-              Email Trigger Rules
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Rule Name</TableHead>
-                  <TableHead>Trigger Type</TableHead>
-                  <TableHead>Trigger To</TableHead>
-                  {/* <TableHead>Role</TableHead> */}
-                  <TableHead>Period Value</TableHead>
-                  <TableHead>Period Type</TableHead>
-                  {/* <TableHead>Created On</TableHead> */}
-                  <TableHead>Created By</TableHead>
-                  
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {emailRules && emailRules.length > 0 ? (
-                  emailRules.map((rule, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{rule.rule_name || 'N/A'}</TableCell>
-                      <TableCell>{rule.trigger_type || 'N/A'}</TableCell>
-                      <TableCell>{rule.trigger_to || 'N/A'}</TableCell>
-                      {/* <TableCell>{rule.role || 'N/A'}</TableCell> */}
-                      <TableCell>{rule.period_value || 'N/A'}</TableCell>
-                      <TableCell>{rule.period_type || 'N/A'}</TableCell>
-                      {/* <TableCell>{rule.created_on ? formatDateTime(rule.created_on) : 'N/A'}</TableCell> */}
-                      <TableCell>
-                        {rule.created_by || 'N/A'}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center text-gray-500">
-                      No email trigger rules found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Asset Mapping List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center gap-2">
-              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
-              Asset Mapping List
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{customForm?.sch_type === 'Service' ? 'Service Name' : 'Asset Name'}</TableHead>
-                  <TableHead>Tasks</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customForm?.sch_type === 'Service' ? (
-                  assetTask?.services && assetTask.services.length > 0 ? (
-                    assetTask.services.map((service, index) => (
-                      
-                      <TableRow key={index}>
-                        <TableCell>{service.service_name}</TableCell>
-                        <TableCell>
-                          {customForm?.content?.map((task, taskIndex) => (
-                            <span key={taskIndex} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-1 mb-1">
-                              {task.label}
-                            </span>
-                          ))}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center text-gray-500">
-                        No service mappings found
-                      </TableCell>
-                    </TableRow>
-                  )
-                ) : (
-                  assetTask?.assets && assetTask.assets.length > 0 ? (
-                    assetTask.assets.map((asset, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{asset.name || asset.asset_name || 'N/A'}</TableCell>
-                        <TableCell>
-                          {customForm?.content?.map((task, taskIndex) => (
-                            <span key={taskIndex} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-1 mb-1">
-                              {task.label}
-                            </span>
-                          ))}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center text-gray-500">
-                        No asset mappings found
-                      </TableCell>
-                    </TableRow>
-                  )
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-6">
-          <Button
-            onClick={() => navigate('/maintenance/schedule')}
-            variant="outline"
-            className="px-8"
-          >
-            Back to List
-          </Button>
-          {/* <Button 
-            onClick={() => navigate(`/maintenance/schedule/edit/${id}`)}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 px-8"
-          >
-            Edit Schedule
-          </Button> */}
+            <Button 
+              onClick={handleViewPerformance}
+              variant="outline" 
+              className="border-[#C72030] text-[#C72030]"
+            >
+              View Performance
+            </Button>
+          </div>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <Tabs defaultValue="basic" className="w-full" onValueChange={setActiveTab}>
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+            <TabsTrigger
+              value="basic"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Basic Configuration
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="task"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Task
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="time"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Time Setup
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="schedule"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Schedule
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="association"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Association
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="email"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Email Trigger Rules
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="mapping"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Asset Mapping List
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="basic" className="p-4 sm:p-6">
+            <div className="space-y-6">
+              {/* Basic Configuration Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Basic Configuration</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.schedule_type || 'PPM'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Schedule For</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.sch_type || 'Asset'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Activity Name</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.form_name || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Form Code</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.custom_form_code || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Create Ticket</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.create_ticket ? 'Enabled' : 'Disabled'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Weightage</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.weightage_enabled ? 'Enabled' : 'Disabled'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Ticket Level</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.ticket_level || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Observations</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.observations_enabled ? 'Enabled' : 'Disabled'}</span>
+                    </div>
+                    {customForm?.description && (
+                      <div className="flex items-start col-span-2">
+                        <span className="text-gray-500 min-w-[140px]">Description</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{customForm.description}</span>
+                      </div>
+                    )}
+                    {customForm?.attachments && customForm.attachments.length > 0 && (
+                      <div className="flex items-start col-span-2">
+                        <span className="text-gray-500 min-w-[140px]">Attachments</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {customForm.attachments.map((attachment: any, index: number) => (
+                            <a 
+                              key={attachment.id || index} 
+                              href={attachment.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                              {attachment.file_name || `Attachment ${index + 1}`}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="task" className="p-4 sm:p-6">
+            <div className="space-y-6">
+              {/* Task Information Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <Box className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Task Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Group</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {groupOptions.find(group => group.id === Number(selectedGroupId))?.name || '--'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Sub Group</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {subGroupOptions.find(subGroup => subGroup.id === Number(selectedSubGroupId))?.name || '--'}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dynamic Tasks Card */}
+              {customForm?.content && customForm.content.length > 0 && (
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                      </div>
+                      <span className="uppercase tracking-wide">Task Details</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-6">
+                      {customForm.content.map((task, index) => (
+                        <div key={index} className="p-4 border rounded-lg bg-gray-50">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-4">
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Task Name</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{task.label || '--'}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Input Type</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">
+                                {task.type === 'text' ? 'Text' : 
+                                 task.type === 'radio-group' ? 'Radio' : 
+                                 task.type === 'numeric' ? 'Numeric' :
+                                 task.type === 'select' ? 'Dropdown' : 
+                                 task.type === 'checkbox' ? 'Checkbox' :
+                                 task.type}
+                              </span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Mandatory</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{task.required === 'true' ? 'Yes' : 'No'}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Reading</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{task.is_reading === 'true' ? 'Yes' : 'No'}</span>
+                            </div>
+                            {task.rating_enabled === 'true' && (
+                              <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Rating Enabled</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">Yes</span>
+                              </div>
+                            )}
+                            {task.weightage && (
+                              <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Weightage</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{task.weightage}</span>
+                              </div>
+                            )}
+                            {task.hint && (
+                              <div className="flex items-start col-span-2">
+                                <span className="text-gray-500 min-w-[140px]">Help Text</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{task.hint}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Task Values */}
+                          {Array.isArray(task.values) && task.values.length > 0 && (
+                            <div className="mt-4">
+                              <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Available Options</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {task.values.map((value, valueIndex) => (
+                                    <span key={valueIndex} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                      {value.label} ({value.type === 'positive' ? 'P' : 'N'})
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Help Text Images */}
+                          {task.question_hint_image_url && task.question_hint_image_url.length > 0 && (
+                            <div className="mt-4">
+                              <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Help Images</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {task.question_hint_image_url.map((image: any, imgIndex: number) => (
+                                    <a 
+                                      key={image.id || imgIndex} 
+                                      href={image.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:text-blue-800 underline"
+                                    >
+                                      {image.filename || `Image ${imgIndex + 1}`}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="time" className="p-4 sm:p-6">
+            {/* Time Setup */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Clock className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <span className="uppercase tracking-wide">Time Setup</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Parse cron expression and show as MUI Table */}
+                {(() => {
+                  const cron = (assetTask && ((assetTask as any).cron_expression || (assetTask as any).cron || (assetTask as any).schedule_cron)) || '';
+                  let minutes: string[] = [], hours: string[] = [], months: string[] = [], weekdays: string[] = [];
+                  if (cron) {
+                    const parts = cron.split(' ');
+                    if (parts.length >= 5) {
+                      minutes = parts[0].split(',');
+                      hours = parts[1].split(',');
+                      months = parts[3] === '*' ? ['All'] : parts[3].split(',');
+                      weekdays = parts[4] === '*' ? ['All'] : parts[4].split(',');
+                    }
+                  }
+                  if (!hours.length || (hours.length === 1 && hours[0] === '*')) hours = ['All'];
+                  if (!minutes.length || (minutes.length === 1 && minutes[0] === '*')) minutes = ['All'];
+                  if (!months.length) months = ['All'];
+                  if (!weekdays.length) weekdays = ['All'];
+                  const weekdayMap: Record<string, string> = { '1': 'Sunday', '2': 'Monday', '3': 'Tuesday', '4': 'Wednesday', '5': 'Thursday', '6': 'Friday', '7': 'Saturday' };
+                  const weekdayNames = weekdays.map(wd => weekdayMap[wd] || wd);
+                  return (
+                    <div className="rounded-lg border border-gray-200 overflow-hidden">
+                      <Table className="border-separate">
+                        <TableHeader>
+                          <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                            <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Hours</TableHead>
+                            <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Minutes</TableHead>
+                            <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Day of Week</TableHead>
+                            <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Month</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="py-3 px-4 font-medium">{hours.join(', ')}</TableCell>
+                            <TableCell className="py-3 px-4">{minutes.join(', ')}</TableCell>
+                            <TableCell className="py-3 px-4">{weekdayNames.join(', ')}</TableCell>
+                            <TableCell className="py-3 px-4">{months.join(', ')}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="schedule" className="p-4 sm:p-6">
+            <div className="space-y-6">
+              {/* Schedule Configuration Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Schedule Configuration</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Assignment Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.assignment_type === 'people' ? 'Individual' : 'Asset Group'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Assigned To</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {Array.isArray(assetTask?.assigned_to) && assetTask.assigned_to.length > 0
+                          ? assetTask.assigned_to.map((user: any) => user.name).join(', ')
+                          : 'Not assigned'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Scan Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.scan_type?.toUpperCase() || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Plan Duration</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.plan_value} {assetTask?.plan_type}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Priority</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.priority || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Grace Time</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.grace_time_value} {assetTask?.grace_time_type}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Lock Overdue Task</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Category</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.category || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Backup Assigned To</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{assetTask?.backup_assigned?.name || 'No backup assigned'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Submission Time</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{customForm?.submission_time_value} {customForm?.submission_time_type}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Start Date</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{formatDate(assetTask?.start_date)}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">End Date</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{formatDate(assetTask?.end_date)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="association" className="p-4 sm:p-6">
+            {/* Association */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Link className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <span className="uppercase tracking-wide">Association</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {customForm?.sch_type === 'Service' ? (
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <Table className="border-separate">
+                      <TableHeader>
+                        <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Service Name</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Service Code</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Created on</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {assetTask?.services && assetTask.services.length > 0 ? (
+                          assetTask.services.map((service, index) => (
+                            <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                              <TableCell className="py-3 px-4 font-medium">{service.service_name}</TableCell>
+                              <TableCell className="py-3 px-4">{service.service_code}</TableCell>
+                              <TableCell className="py-3 px-4">{formatDateTime(service.created_at)}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center text-gray-500 py-8">
+                              No services associated
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <Table className="border-separate">
+                      <TableHeader>
+                        <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Asset Name</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Model Number</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Purchase Cost</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Created on</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {assetTask?.assets && assetTask.assets.length > 0 ? (
+                          assetTask.assets.map((asset, index) => (
+                            <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                              <TableCell className="py-3 px-4 font-medium">{asset.name || 'N/A'}</TableCell>
+                              <TableCell className="py-3 px-4">{asset.model_number || 'N/A'}</TableCell>
+                              <TableCell className="py-3 px-4">{asset.purchase_cost || 'N/A'}</TableCell>
+                              <TableCell className="py-3 px-4">{asset.created_at ? formatDateTime(asset.created_at) : 'N/A'}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center text-gray-500 py-8">
+                              No assets associated
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="email" className="p-4 sm:p-6">
+            {/* Email Trigger Rules */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Mail className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <span className="uppercase tracking-wide">Email Trigger Rules</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border border-gray-200 overflow-hidden">
+                  <Table className="border-separate">
+                    <TableHeader>
+                      <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Rule Name</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Trigger Type</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Trigger To</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Period Value</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Period Type</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Created By</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {emailRules && emailRules.length > 0 ? (
+                        emailRules.map((rule, index) => (
+                          <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="py-3 px-4 font-medium">{rule.rule_name || 'N/A'}</TableCell>
+                            <TableCell className="py-3 px-4">{rule.trigger_type || 'N/A'}</TableCell>
+                            <TableCell className="py-3 px-4">{rule.trigger_to || 'N/A'}</TableCell>
+                            <TableCell className="py-3 px-4">{rule.period_value || 'N/A'}</TableCell>
+                            <TableCell className="py-3 px-4">{rule.period_type || 'N/A'}</TableCell>
+                            <TableCell className="py-3 px-4">{rule.created_by || 'N/A'}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                            No email trigger rules found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="mapping" className="p-4 sm:p-6">
+            {/* Asset Mapping List */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <MapPin className="w-6 h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <span className="uppercase tracking-wide">Asset Mapping List</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border border-gray-200 overflow-hidden">
+                  <Table className="border-separate">
+                    <TableHeader>
+                      <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>{customForm?.sch_type === 'Service' ? 'Service Name' : 'Asset Name'}</TableHead>
+                        <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Tasks</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {customForm?.sch_type === 'Service' ? (
+                        assetTask?.services && assetTask.services.length > 0 ? (
+                          assetTask.services.map((service, index) => (
+                            <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                              <TableCell className="py-3 px-4 font-medium">{service.service_name}</TableCell>
+                              <TableCell className="py-3 px-4">
+                                {customForm?.content?.map((task, taskIndex) => (
+                                  <span key={taskIndex} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-1 mb-1">
+                                    {task.label}
+                                  </span>
+                                ))}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={2} className="text-center text-gray-500 py-8">
+                              No service mappings found
+                            </TableCell>
+                          </TableRow>
+                        )
+                      ) : (
+                        assetTask?.assets && assetTask.assets.length > 0 ? (
+                          assetTask.assets.map((asset, index) => (
+                            <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                              <TableCell className="py-3 px-4 font-medium">{asset.name || asset.asset_name || 'N/A'}</TableCell>
+                              <TableCell className="py-3 px-4">
+                                {customForm?.content?.map((task, taskIndex) => (
+                                  <span key={taskIndex} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-1 mb-1">
+                                    {task.label}
+                                  </span>
+                                ))}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={2} className="text-center text-gray-500 py-8">
+                              No asset mappings found
+                            </TableCell>
+                          </TableRow>
+                        )
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-3 pt-6">
+        <Button
+          onClick={() => navigate('/maintenance/schedule')}
+          variant="outline"
+          className="px-8"
+        >
+          Back to List
+        </Button>
       </div>
 
       {/* Set Approval Modal */}
