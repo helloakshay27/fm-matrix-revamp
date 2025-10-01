@@ -332,9 +332,9 @@ export const AMCDetailsPage = () => {
                   AMC INFORMATION
                 </CardTitle>
               </CardHeader>
-              <CardContent className='bg-white'>
+              <CardContent className='bg-white text-[15px]'>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex">
+                  <div className="flex text-[15px]">
                     <span className="text-gray-500 w-24">ID</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.id}</span>
@@ -393,7 +393,7 @@ export const AMCDetailsPage = () => {
                   SUPPLIER INFORMATION
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[15px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex">
                     <span className="text-gray-500 w-24">Name</span>
@@ -439,7 +439,7 @@ export const AMCDetailsPage = () => {
                   ATTACHMENTS
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 text-[15px]">
                 <div className="flex flex-wrap gap-6">
                   {['amc_contracts', 'amc_invoices'].map((sectionKey) => {
                     const sectionTitle = sectionKey === 'amc_contracts' ? 'AMC Contract:' : 'AMC Invoice:';
@@ -669,7 +669,7 @@ export const AMCDetailsPage = () => {
                   AMC VISITS
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[15px]">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -886,7 +886,7 @@ export const AMCDetailsPage = () => {
                   TICKETS
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[15px]">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -952,7 +952,7 @@ export const AMCDetailsPage = () => {
                     ASSET INFORMATION
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="text-[15px]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1026,7 +1026,7 @@ export const AMCDetailsPage = () => {
                     SERVICE INFORMATION
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="text-[15px]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
