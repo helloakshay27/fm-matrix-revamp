@@ -123,6 +123,8 @@ export const getBaseUrl = (): string | null => {
 };
 
 
+
+
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
   const user = getUser();

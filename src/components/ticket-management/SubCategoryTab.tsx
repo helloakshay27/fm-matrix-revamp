@@ -457,7 +457,7 @@ export const SubCategoryTab: React.FC = () => {
                   )}
                 />
 
-                {/* <div className="space-y-2">
+                <div className="space-y-2">
                   <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Icon
                   </label>
@@ -481,7 +481,7 @@ export const SubCategoryTab: React.FC = () => {
                       <span className="text-sm text-gray-600">{iconFile.name}</span>
                     )}
                   </div>
-                </div> */}
+                </div>
               </div>
 
               {/* Tags Section */}

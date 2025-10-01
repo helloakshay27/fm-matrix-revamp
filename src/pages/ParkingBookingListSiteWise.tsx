@@ -113,12 +113,14 @@ interface PaginationInfo {
 interface ParkingBookingApiResponse {
   cards: {
     total_slots: number;
-    total_two_wheeler: number;
-    total_four_wheeler: number;
-    vacant_two_wheeler: number;
-    vacant_four_wheeler: number;
+    two_total: number;
+    four_total: number;
+    two_booked: number;
+    four_available: number;
+    two_available: number;
     alloted: number;
     vacant: number;
+    four_booked: number;
   };
   parking_bookings: ParkingBooking[];
   pagination: PaginationInfo;
@@ -215,10 +217,12 @@ const ParkingBookingListSiteWise = () => {
   const [summary, setSummary] = useState<ParkingBookingSiteSummary | null>(null);
   const [cards, setCards] = useState<{
     total_slots: number;
-    total_two_wheeler: number;
-    total_four_wheeler: number;
-    vacant_two_wheeler: number;
-    vacant_four_wheeler: number;
+    two_total: number;
+    four_total: number;
+    four_booked: number;
+    two_available: number;
+    four_available: number;
+    two_booked: number;
     alloted: number;
     vacant: number;
   } | null>(null);
@@ -235,6 +239,13 @@ const ParkingBookingListSiteWise = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // Card-only filter override (applies only when clicking cards)
+  const [cardFilter, setCardFilter] = useState<{
+    active: boolean;
+    categoryId?: string;
+    status?: string;
+  } | null>(null);
 
   // Transform API data to match UI structure
   const transformApiDataToBookings = (parkingBookings: ParkingBooking[]): ParkingBookingSite[] => {
@@ -285,27 +296,29 @@ const ParkingBookingListSiteWise = () => {
     };
   };
 
-  // Helper function to convert date from YYYY-MM-DD to DD/MM/YYYY format
+  // Helper function to convert date from YYYY-MM-DD to DD/MM/YYYY format (zero-padded)
   const formatDateForAPI = (dateString: string): string => {
     if (!dateString) return '';
-    
     try {
       const date = new Date(dateString);
-      const day = date.getDate(); // No padding for single digits
-      const month = date.getMonth() + 1; // No padding for single digits
-      const year = date.getFullYear(); // Get full 4-digit year
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = String(date.getFullYear());
       const formattedDate = `${day}/${month}/${year}`;
-      
-      console.log('🔍 Date Formatting Debug:');
-      console.log('Input date string:', dateString);
-      console.log('Parsed date object:', date);
-      console.log('Formatted date (DD/MM/YYYY):', formattedDate);
-      
       return formattedDate;
     } catch (error) {
       console.error('Error formatting date:', error);
-      return dateString; // Return original if conversion fails
+      return dateString;
     }
+  };
+
+  // Default today's date values
+  const getTodayYMD = (): string => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
   // Filter states
@@ -314,8 +327,9 @@ const ParkingBookingListSiteWise = () => {
     user: 'all',
     parking_slot: '',
     status: 'all',
-    scheduled_on_from: '',
-    scheduled_on_to: '',
+    // Default Scheduled On to today
+    scheduled_on_from: getTodayYMD(),
+    scheduled_on_to: getTodayYMD(),
     booked_on_from: '',
     booked_on_to: ''
   });
@@ -383,6 +397,7 @@ const ParkingBookingListSiteWise = () => {
       }
       
       // Add filter parameters
+      // Category filter
       if (filterParams.category && filterParams.category !== 'all') {
         console.log('🔍 Category Filter Debug:');
         console.log('Category filter value:', filterParams.category);
@@ -404,6 +419,7 @@ const ParkingBookingListSiteWise = () => {
         params.append('q[parking_number_name_cont]', filterParams.parking_slot);
       }
       
+      // Status filter
       if (filterParams.statuses && filterParams.statuses.length > 0) {
         filterParams.statuses.forEach(status => {
           params.append('q[status_in][]', status);
@@ -411,11 +427,14 @@ const ParkingBookingListSiteWise = () => {
       }
       
       if (filterParams.scheduled_date_range) {
-        params.append('q[date_range]', filterParams.scheduled_date_range);
+        // Cards filter needs plain date_range; keep q[date_range1] for current date filter
+        params.append('date_range', filterParams.scheduled_date_range);
+        params.append('q[date_range1]', filterParams.scheduled_date_range);
       }
       
       if (filterParams.booked_date_range) {
-        params.append('q[date_range1]', filterParams.booked_date_range);
+        // Preserve booked range under q[date_range] to avoid clashing with current date filter
+        params.append('q[date_range]', filterParams.booked_date_range);
       }
       
       const fullUrl = `${url}?${params.toString()}`;
@@ -498,15 +517,17 @@ const ParkingBookingListSiteWise = () => {
         console.log('Raw endpoint:', '/pms/admin/parking_bookings.json');
         
         // Convert UI filters to API filter parameters
-        const buildApiFilterParams = (): ApiFilterParams => {
+        const buildApiFilterParamsBase = (): ApiFilterParams => {
           const apiParams: ApiFilterParams = {};
           
-          if (filters.category !== 'all') {
+          // Only apply dialog category if not overridden by card filter
+          if (filters.category !== 'all' && !cardFilter?.active) {
             console.log('🔍 Building API Filter - Category:');
             console.log('UI Filter category value:', filters.category);
             console.log('UI Filter category type:', typeof filters.category);
             apiParams.category = filters.category;
           }
+          // Do not apply card overrides to base (cards should stay original)
           
           if (filters.user !== 'all') {
             apiParams.user_ids = [filters.user];
@@ -519,6 +540,7 @@ const ParkingBookingListSiteWise = () => {
             apiParams.parking_slot = filters.parking_slot.trim();
           }
           
+          // Only dialog status in base
           if (filters.status !== 'all') {
             // Map UI status to API status
             const statusMap: { [key: string]: string } = {
@@ -549,10 +571,23 @@ const ParkingBookingListSiteWise = () => {
           
           return apiParams;
         };
+
+        const buildApiFilterParamsEffective = (): ApiFilterParams => {
+          const base = buildApiFilterParamsBase();
+          const effective: ApiFilterParams = { ...base };
+          if (cardFilter?.active && cardFilter.categoryId) {
+            effective.category = cardFilter.categoryId;
+          }
+          if (cardFilter?.active && cardFilter.status) {
+            effective.statuses = [cardFilter.status];
+          }
+          return effective;
+        };
         
         // Fetch both parking bookings and users in parallel
-        const [response, usersData, categoriesData] = await Promise.all([
-          fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParams()),
+        const [cardsResponse, response, usersData, categoriesData] = await Promise.all([
+          fetchParkingBookings(1, debouncedSearchTerm, buildApiFilterParamsBase()),
+          fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParamsEffective()),
           fetchUsers(),
           fetchParkingCategories()
         ]);
@@ -563,8 +598,8 @@ const ParkingBookingListSiteWise = () => {
         // Set parking categories data
         setParkingCategories(categoriesData);
         
-        // Set cards data from API response
-        setCards(response.cards);
+        // Cards stay original (base filters only)
+        setCards(cardsResponse.cards);
         
         // Set raw API data
         setBookings(response.parking_bookings);
@@ -594,34 +629,64 @@ const ParkingBookingListSiteWise = () => {
     };
 
     loadBookingData();
-  }, [currentPage, itemsPerPage, debouncedSearchTerm, filters]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm, filters, cardFilter]);
 
   // Generate parking stats from cards data
   const parkingStats = useMemo(() => {
     if (!cards) {
       return [
         // First row - Car parking stats
-        { title: "Total Parking for 4 Wheeler", count: 0, icon: Car },
-        { title: "Total Booked Parking", count: 0, icon: CheckCircle },
-        { title: "Total Vacant Parking", count: 0, icon: AlertTriangle },
+        { title: "Total Parking", count: 0, icon: Car, vehicle: 'four' as const, metric: 'total' as const },
+        { title: "Total Booked Parking", count: 0, icon: CheckCircle, vehicle: 'four' as const, metric: 'booked' as const },
+        { title: "Total Vacant Parking", count: 0, icon: AlertTriangle, vehicle: 'four' as const, metric: 'vacant' as const },
         // Second row - Bike parking stats
-        { title: "Total Parking for 2 Wheeler", count: 0, icon: Bike },
-        { title: "Total Booked Parking", count: 0, icon: CheckCircle },
-        { title: "Total Vacant Parking", count: 0, icon: AlertTriangle }
+        { title: "Total Parking", count: 0, icon: Bike, vehicle: 'two' as const, metric: 'total' as const },
+        { title: "Total Booked Parking", count: 0, icon: CheckCircle, vehicle: 'two' as const, metric: 'booked' as const },
+        { title: "Total Vacant Parking", count: 0, icon: AlertTriangle, vehicle: 'two' as const, metric: 'vacant' as const }
       ];
     }
 
     return [
       // First row - Car parking stats
-      { title: "Total Parking for 4 Wheeler", count: cards.total_four_wheeler, icon: Car },
-      { title: "Total Booked Parking", count: Math.abs(cards.total_four_wheeler - cards.vacant_four_wheeler), icon: CheckCircle },
-      { title: "Total Vacant Parking", count: cards.vacant_four_wheeler, icon: AlertTriangle },
+      { title: "Total Parking", count: cards.four_total, icon: Car, vehicle: 'four' as const, metric: 'total' as const },
+      { title: "Total Booked Parking", count: cards.four_booked, icon: CheckCircle, vehicle: 'four' as const, metric: 'booked' as const },
+      { title: "Total Vacant Parking", count: cards.four_available, icon: AlertTriangle, vehicle: 'four' as const, metric: 'vacant' as const },
       // Second row - Bike parking stats
-      { title: "Total Parking for 2 Wheeler", count: cards.total_two_wheeler, icon: Bike },
-      { title: "Total Booked Parking", count: Math.abs(cards.total_two_wheeler - cards.vacant_two_wheeler), icon: CheckCircle },
-      { title: "Total Vacant Parking", count: cards.vacant_two_wheeler, icon: AlertTriangle }
+      { title: "Total Parking", count: cards.two_total, icon: Bike, vehicle: 'two' as const, metric: 'total' as const },
+      { title: "Total Booked Parking", count: cards.two_booked, icon: CheckCircle, vehicle: 'two' as const, metric: 'booked' as const },
+      { title: "Total Vacant Parking", count: cards.two_available, icon: AlertTriangle, vehicle: 'two' as const, metric: 'vacant' as const }
     ];
   }, [cards]);
+
+  // Resolve category ids for two/four wheeler from loaded categories
+  const twoWheelerCategoryId = useMemo(() => {
+    const match = parkingCategories.find(cat => {
+      const lower = cat.name.toLowerCase();
+      return lower.includes('two') || lower.includes('2') || lower.includes('bike');
+    });
+    return match ? match.id.toString() : null;
+  }, [parkingCategories]);
+
+  const fourWheelerCategoryId = useMemo(() => {
+    const match = parkingCategories.find(cat => {
+      const lower = cat.name.toLowerCase();
+      return lower.includes('four') || lower.includes('4') || lower.includes('car');
+    });
+    return match ? match.id.toString() : null;
+  }, [parkingCategories]);
+
+  const getCategoryIdForVehicle = (vehicle: 'two' | 'four'): string | null => {
+    return vehicle === 'two' ? twoWheelerCategoryId : fourWheelerCategoryId;
+  };
+
+  // Handle card clicks to filter table data
+  const handleStatCardClick = (vehicle: 'two' | 'four', metric: 'total' | 'booked' | 'vacant') => {
+    // Only apply filter for Total Booked Parking cards as requested
+    if (metric !== 'booked') return;
+    const categoryId = getCategoryIdForVehicle(vehicle) || undefined;
+    setCardFilter({ active: true, categoryId, status: 'confirmed' });
+    setCurrentPage(1);
+  };
 
   const handleExport = () => {
     setIsExportModalOpen(true);
@@ -1044,6 +1109,8 @@ const ParkingBookingListSiteWise = () => {
       booked_on_from: '',
       booked_on_to: ''
     });
+    // Also clear any card overrides
+    setCardFilter(null);
     setCurrentPage(1);
     // Note: The useEffect will trigger API call automatically due to dependency changes
   };
@@ -1085,6 +1152,10 @@ const ParkingBookingListSiteWise = () => {
             <div
               key={index}
               className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] hover:bg-[#e6e2da] transition-all duration-200"
+              onClick={() => handleStatCardClick(stat.vehicle, stat.metric)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleStatCardClick(stat.vehicle, stat.metric); }}
             >
               <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                 <stat.icon

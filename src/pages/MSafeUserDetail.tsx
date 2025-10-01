@@ -83,7 +83,8 @@ export const MSafeUserDetail = () => {
           setLoading(false);
           return;
         }
-        const url = `https://${baseUrl}/pms/users/${effectiveId}/user_show.json`;
+                const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/${effectiveId}/user_show.json`;
         console.log('Fetching user detail:', url);
         const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}`} });
         const data = response.data?.user || response.data; // handle either shape

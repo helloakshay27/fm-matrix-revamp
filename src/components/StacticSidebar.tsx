@@ -585,7 +585,7 @@ const modulesByPackage = {
     //   href: "/safety/msafe-detail-report",
     // },
 
-    { name: "PDF Download", icon: Download, href: "/safety/pdf-download" },
+    { name: "PDF Download", icon: Download, href: "/maintenance/pdf-download" },
 
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
 
@@ -821,7 +821,23 @@ const modulesByPackage = {
   ],
   "Value Added Services": [
     { name: "F&B", icon: Coffee, href: "/vas/fnb" },
-    { name: "Parking", icon: Car, href: "/vas/parking" },
+    {
+      name: "Parking",
+      icon: Car,
+      href: "/vas/parking",
+      subItems: [
+        {
+          name: "Parking Booking",
+          href: "/vas/parking",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Parking Allocation",
+          href: "/vas/parking/site-wise-bookings",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
     { name: "OSR", icon: TreePine, href: "/vas/osr" },
     {
       name: "Space Management",
@@ -1274,17 +1290,20 @@ export const StacticSidebar = () => {
 
   const currentModules = modulesByPackage[currentSection] || [];
 
-  const isActiveRoute = (href: string) => {
+  const isActiveRoute = (href: string, mode: "exact" | "prefix" = "exact") => {
     const currentPath = location.pathname;
-    const isActive = currentPath === href || currentPath.startsWith(href + "/");
+    const exactMatch = currentPath === href;
+    const prefixMatch = currentPath.startsWith(href + "/");
+    const isActive = mode === "prefix" ? (exactMatch || prefixMatch) : exactMatch;
 
     // Debug logging for Services
     if (href === "/maintenance/service") {
       console.log("Services route check:", {
         currentPath,
         href,
-        exactMatch: currentPath === href,
-        prefixMatch: currentPath.startsWith(href + "/"),
+        exactMatch,
+        prefixMatch,
+        mode,
         isActive,
       });
     }
@@ -1342,7 +1361,7 @@ export const StacticSidebar = () => {
     const isExpanded = expandedItems.includes(item.name);
     const showDropdowns =
       item.hasDropdowns && item.href && location.pathname === item.href;
-    const isActive = item.href ? isActiveRoute(item.href) : false;
+    const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
 
     if (hasSubItems) {
       return (
@@ -1381,7 +1400,7 @@ export const StacticSidebar = () => {
                         onClick={() => toggleExpanded(subItem.name)}
                         className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                       >
-                        {subItem.href && isActiveRoute(subItem.href) && (
+                        {subItem.href && isActiveRoute(subItem.href, "exact") && (
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
                         )}
                         <span>{subItem.name}</span>
@@ -1400,7 +1419,7 @@ export const StacticSidebar = () => {
                               className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
                                 }`}
                             >
-                              {isActiveRoute(nestedItem.href) && (
+                              {isActiveRoute(nestedItem.href, "exact") && (
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
                               )}
                               {nestedItem.name}
@@ -1417,7 +1436,7 @@ export const StacticSidebar = () => {
                       className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
                         }`}
                     >
-                      {isActiveRoute(subItem.href) && (
+                      {isActiveRoute(subItem.href, "exact") && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
                       )}
                       {subItem.name}
@@ -1498,7 +1517,7 @@ export const StacticSidebar = () => {
   const CollapsedMenuItem = ({ module, level = 0 }) => {
     const hasSubItems = module.subItems && module.subItems.length > 0;
     const isExpanded = expandedItems.includes(module.name);
-    const active = module.href ? isActiveRoute(module.href) : false;
+    const active = module.href ? isActiveRoute(module.href, "prefix") : false;
 
     return (
       <>
@@ -1613,17 +1632,17 @@ export const StacticSidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href, "prefix")
                     ? "bg-[#f0e8dc] shadow-inner"
                     : "hover:bg-[#DBC2A9]"
                     }`}
                   title={module.name}
                 >
-                  {isActiveRoute(module.href) && (
+                  {isActiveRoute(module.href, "prefix") && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${isActiveRoute(module.href)
+                    className={`w-5 h-5 ${isActiveRoute(module.href, "prefix")
                       ? "text-[#C72030]"
                       : "text-[#1a1a1a]"
                       }`}

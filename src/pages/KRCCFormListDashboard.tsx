@@ -108,8 +108,9 @@ export const KRCCFormListDashboard = () => {
       const cleanedSearch = emailMatch ? emailMatch[0] : trimmed;
       const searchActive = !!cleanedSearch;
 
-      // Build base
-      let url = `https://${baseUrl}/krcc_forms.json?approval=yes&page=${page}`;
+      // Build base URL
+      const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      let url = `${cleanBaseUrl}/krcc_forms.json?approval=yes&page=${page}`;
 
       // Email param priority: explicit search box else filter email
       const effectiveEmail = searchActive ? cleanedSearch : (filterEmail || '').trim();
@@ -133,7 +134,8 @@ export const KRCCFormListDashboard = () => {
       if (searchActive && res.ok && effectiveEmail) {
         const firstPayload = await res.clone().json();
         if ((firstPayload.krcc_forms?.length ?? 0) === 0 && cleanedSearch.includes('@')) {
-          const fallbackUrl = `https://${baseUrl}/krcc_forms.json?approval=yes&q[email_cont]=${encodeURIComponent(cleanedSearch)}&page=1`;
+          const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+          const fallbackUrl = `${cleanBaseUrl}/krcc_forms.json?approval=yes&q[email_cont]=${encodeURIComponent(cleanedSearch)}&page=1`;
           res = await fetch(fallbackUrl, { headers: { Authorization: `Bearer ${token}` } });
         }
       }
@@ -386,7 +388,23 @@ export const KRCCFormListDashboard = () => {
         if (isNaN(d.getTime())) return '—';
         return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
       };
-      const toTitle = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      // PDF label + value formatter ensuring any variant becomes 'M-Parivahan'
+      const isMParivahan = (val: string) => val.replace(/[_\s-]/g, '').toLowerCase().includes('mparivahan');
+      const normalizeMParivahan = (s: string) => isMParivahan(s) ? 'M-Parivahan' : s;
+      const toTitle = (s: string) => {
+        const raw = String(s || '');
+        if (isMParivahan(raw)) return 'M-Parivahan';
+        return raw
+          .replace(/_/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+      };
+      const formatValue = (v: any) => {
+        if (v == null) return v;
+        if (typeof v === 'string') return normalizeMParivahan(v);
+        return v;
+      };
       const isImage = (url?: string, doctype?: string | null) => {
         const u = url || '';
         const dt = (doctype || '').toLowerCase();
@@ -448,7 +466,7 @@ export const KRCCFormListDashboard = () => {
       const status = detailJson?.status || '—';
       const createdAt = detailJson?.created_at || null;
       const updatedAt = detailJson?.updated_at || null;
-      const formType = detailJson?.form_details?.form_type || '—';
+  // Removed formType display from PDF per latest request (previously: detailJson?.form_details?.form_type)
       const formDetails = detailJson?.form_details || {};
       const categories = detailJson?.categories || {};
       const topLevelAtts: Array<{ id?: number; url?: string; doctype?: string | null }> = detailJson?.krcc_attachments || [];
@@ -502,11 +520,18 @@ export const KRCCFormListDashboard = () => {
           </div>
       <div style='padding:24px;'>${bodyHtml}</div>
         </div>`;
-      const label = (l: string, v: string) => `
-        <div style='display:flex;flex-direction:column;gap:4px;'>
+      const label = (l: string, v: string) => {
+        // If the label is Vehicle or Vehicle Type, make it span the full row to avoid crowding/overlap
+        const isVehicle = /^(vehicle|vehicle type)$/i.test(l.trim());
+        const extraStyle = isVehicle ? 'grid-column:1 / -1;' : '';
+        // Mark vehicle row as non-splittable to avoid pagination slicing issues
+        const avoidAttr = isVehicle ? " data-avoid-split='1'" : '';
+        return `
+        <div${avoidAttr} style='display:flex;flex-direction:column;gap:4px;${extraStyle}'>
           <span style='color:#6b7280;font-size:12px;'>${l}</span>
           <span style='color:#111;font-size:13px;font-weight:600;'>${v || '—'}</span>
         </div>`;
+      };
       const labelIf = (l: string, v?: any) => {
         const has = v !== undefined && v !== null && String(v).toString().trim() !== '';
         return has ? label(l, String(v)) : '';
@@ -527,7 +552,6 @@ export const KRCCFormListDashboard = () => {
         label('Department', user?.department_name || '—'),
         label('Role', user?.role_name || '—'),
         label('Status', status || '—'),
-        label('Form Type', formType || '—'),
         label('Created On', fmtDateTime(createdAt)),
         label('Updated On', fmtDateTime(updatedAt)),
       ]);
@@ -563,72 +587,57 @@ export const KRCCFormListDashboard = () => {
       };
       const isYes = (v: any) => String(v).toLowerCase() === 'yes' || v === true || String(v).toLowerCase() === 'true' || v === 1;
       const isNo = (v: any) => String(v).toLowerCase() === 'no' || String(v).toLowerCase() === 'false' || v === 0;
-      const buildChecklist = (prefix: string, title: string) => {
-        const entries = Object.entries(formDetails || {})
-          .filter(([k]) => k.startsWith(prefix))
-          .map(([k, v]) => {
-            const base = k.slice(prefix.length).replace(/^_/, '');
-            const labelText = FIELD_LABELS[base] || toTitle(base);
-            const checked = isYes(v) || (!isNo(v) && typeof v === 'string' && v.trim() !== '') || (typeof v === 'number' && !isNaN(Number(v)));
-            const showVal = typeof v === 'string' && !['yes', 'no', 'true', 'false'].includes(v.toLowerCase()) && v.trim() !== '';
-            return { labelText, checked, valueText: showVal ? String(v) : '' };
-          })
-          .filter(it => !!it.labelText);
-        if (!entries.length) return '';
-        //   const items = entries.map(it => `
-        //     <div data-avoid-split='1' style='display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;'>
-        //       <div style='width:14px;height:14px;border-radius:3px;border:1px solid #94a3b8;background:${it.checked ? '#16a34a' : '#fff'}'></div>
-        //       <div style='font-size:12px;color:#111;font-weight:600;'>${it.labelText}</div>
-        //       ${it.valueText ? `<div style='font-size:12px;color:#374151;margin-left:auto;'>${it.valueText}</div>` : ''}
-        //     </div>`).join('');
-        //   return section(title.toUpperCase(), `<div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px;'>${items}</div>`, { marginTop: 12 });
-        // 
-
-        const items = entries.map(it => `
-  <div data-avoid-split='1' style='display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;'>
-    <div style='width:14px;height:14px;border-radius:3px;border:1px solid #94a3b8;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;background:#fff;'>
-      ${it.checked ? `
-        <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="#16a34a" stroke-width="2">
-          <path d="M3 8l3 3 7-7"/>
-        </svg>
-      ` : ""}
-    </div>
-    <div style='font-size:12px;color:#111;font-weight:600;line-height:14px;'>${it.labelText}</div>
-    ${it.valueText ? `<div style='font-size:12px;color:#374151;margin-left:auto;line-height:14px;'>${it.valueText}</div>` : ''}
-  </div>`
-        ).join('');
-
-        return section(
-          title.toUpperCase(),
-          `<div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px;'>${items}</div>`,
-          { marginTop: 12 }
-        );
+      // Remove all checklist boxes & labels entirely (per latest request)
+      const buildChecklist = (_prefix: string, _title: string) => '';
 
 
+      // Build category sections mirroring UPDATED detail page (separate sections + MHE + None of the Above)
+      // Order list to keep a consistent, readable sequence of common fields
+      const FIELD_ORDER = [
+        'dl_number', 'dl_valid_till', 'vehicle_type', 'reg_number',
+        'valid_insurance', 'valid_insurance_till', 'valid_insurence', 'valid_insurence_date',
+        'valid_puc', 'puc_date', 'valid_puc_date',
+        'medical_certificate_valid_till', 'medical_certificate_valid_date',
+        'qualification', 'license_number', 'license_validity',
+        'experience_years', 'role', 'fit_to_work', 'full_body_harness', 'first_aid_valid_till', 'first_aid_certificate_valid_till',
+        'safety_shoes', 'hand_gloves', 'reflective_jacket', 'full_face_helmet', 'yoe'
+      ];
+      const orderIndex = (k: string) => {
+        const i = FIELD_ORDER.indexOf(k);
+        return i === -1 ? FIELD_ORDER.length + 100 + k.charCodeAt(0) : i;
       };
-
-
-      // Build category sections mirroring detail page
-      const buildCatKV = (cat: any, keys: string[]) => {
+      // If keys array omitted, automatically include all primitive (non-object) keys except attachments
+      // Added optional labelOverrides to customize specific field labels per category (e.g., electrical fit_to_work)
+      const buildCatKV = (cat: any, keys?: string[], labelOverrides?: Record<string,string>) => {
+        if (!cat) return '';
+        let useKeys = keys && keys.length ? keys : Object.keys(cat).filter(k => k !== 'attachments');
+        // Sort according to predefined order then fallback alpha
+        useKeys.sort((a, b) => {
+          const ai = orderIndex(a); const bi = orderIndex(b);
+          if (ai !== bi) return ai - bi; return a.localeCompare(b);
+        });
         const items: string[] = [];
-        keys.forEach(k => {
+        useKeys.forEach(k => {
           const v = cat?.[k];
-          const has = v !== undefined && v !== null && String(v).toString().trim() !== '';
-          if (has) items.push(label(toTitle(k), String(v)));
+          const isObj = v && typeof v === 'object' && !Array.isArray(v);
+          const has = !isObj && v !== undefined && v !== null && String(v).toString().trim() !== '';
+          if (has) {
+            const displayLabel = labelOverrides?.[k] || toTitle(k);
+            items.push(label(displayLabel, String(formatValue(v))));
+          }
         });
         return items.length ? grid3(items) : '';
       };
       const catHtml: string[] = [];
-      // Consolidated KRCC Details (2W/4W) section
-      if (categories?.bike || categories?.car) {
-        let krccBody = '';
-        // Bike / 2 Wheeler subsection
-        if (categories?.bike) {
-          const bike = (categories as any).bike;
-          const kvBike = buildCatKV(bike, ['dl_number', 'dl_valid_till', 'reg_number']);
-          const checklist2w = buildChecklist('2w_', '2 Wheeler Checklist');
-          const groups = await collectCatGroups(bike);
-          const attHtml = groups.map(g => `
+
+      // 2 Wheeler Section
+      if (categories?.bike) {
+        const bike = (categories as any).bike;
+        // Show all available simple fields for bike (2 Wheeler)
+        const kvBike = buildCatKV(bike); // dynamic extraction now includes insurance, puc, medical, etc.
+        const checklist2w = buildChecklist('2w_', '2 Wheeler');
+        const groups = await collectCatGroups(bike);
+        const attHtml = groups.map(g => `
             <div style='margin-top:8px;'>
               <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
               <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
@@ -637,50 +646,39 @@ export const KRCCFormListDashboard = () => {
                 </div>`).join('')}
               </div>
             </div>`).join('');
-          if (kvBike || checklist2w || attHtml) {
-            krccBody += `
-            <div style='margin-bottom:16px;'>
-              <div style='font-size:14px;font-weight:700;color:#111;margin-bottom:8px;'>Ride a 2 Wheeler</div>
-              ${kvBike}
-              ${checklist2w}
-              ${attHtml}
-            </div>`;
-          }
-        }
-        // Car / 4 Wheeler subsection
-        if (categories?.car) {
-          const car = (categories as any).car;
-          const kvCar = buildCatKV(car, ['dl_number', 'dl_valid_till', 'vehicle_type', 'reg_number', 'valid_insurance', 'valid_insurance_till', 'valid_puc', 'medical_certificate_valid_till']);
-          const checklist4w = buildChecklist('4w_', '4 Wheeler Checklist');
-          const groups = await collectCatGroups(car);
-          const attHtml = groups.map(g => `
-            <div style='margin-top:8px;'>
-              <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
-              <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
-  ${g.items.map(it => `<div data-avoid-split='1' style='border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;'>
-      <img src='${it.dataUrl || it.url || ''}' style='width:100%;height:auto;max-height:240px;object-fit:contain;display:block;background:#fff;'/>
-                </div>`).join('')}
-              </div>
-            </div>`).join('');
-          if (kvCar || checklist4w || attHtml) {
-            krccBody += `
-            <div style='margin-bottom:16px;'>
-              <div style='font-size:14px;font-weight:700;color:#111;margin-bottom:8px;'>Drive a 4 Wheeler</div>
-              ${kvCar}
-              ${checklist4w}
-              ${attHtml}
-            </div>`;
-          }
-        }
-        // Build consolidated section only if some body exists
-        if (krccBody.trim().length > 0) {
-          catHtml.push(section('KRCC Details (Drive a ..)', krccBody));
+        if (kvBike || checklist2w || attHtml) {
+          catHtml.push(section('KRCC Details (Ride a 2 Wheeler)', kvBike + (checklist2w || '') + attHtml));
         }
       }
+
+      // 4 Wheeler Section
+      if (categories?.car) {
+        const car = (categories as any).car;
+        const kvCar = buildCatKV(car, ['dl_number', 'dl_valid_till', 'vehicle_type', 'reg_number', 'valid_insurance', 'valid_insurance_till', 'valid_puc', 'puc_date', 'medical_certificate_valid_till']);
+        const checklist4w = buildChecklist('4w_', '4 Wheeler');
+        const groups = await collectCatGroups(car);
+        const attHtml = groups.map(g => `
+            <div style='margin-top:8px;'>
+              <div style='font-weight:600;margin-bottom:6px;'>${g.title}</div>
+              <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;'>
+  ${g.items.map(it => `<div data-avoid-split='1' style='border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;'>
+      <img src='${it.dataUrl || it.url || ''}' style='width:100%;height:auto;max-height:240px;object-fit:contain;display:block;background:#fff;'/>
+                </div>`).join('')}
+              </div>
+            </div>`).join('');
+        if (kvCar || checklist4w || attHtml) {
+          catHtml.push(section('KRCC Details (Drive a 4 Wheeler)', kvCar + (checklist4w || '') + attHtml));
+        }
+      }
+
       // Electrical Work
       if (categories?.electrical) {
         const electrical = (categories as any).electrical;
-        const kv = buildCatKV(electrical, ['qualification', 'license_number', 'license_validity', 'fit_to_work', 'medical_certificate_valid_till', 'first_aid_valid_till']);
+        const kv = buildCatKV(
+          electrical,
+          ['qualification', 'license_number', 'license_validity', 'fit_to_work', 'medical_certificate_valid_till', 'first_aid_valid_till'],
+          { fit_to_work: 'Fit to work on electrical system' }
+        );
         const groups = await collectCatGroups(electrical);
         const attHtml = groups.map(g => `
           <div style='margin-top:8px;'>
@@ -691,10 +689,9 @@ export const KRCCFormListDashboard = () => {
               </div>`).join('')}
             </div>
           </div>`).join('');
-        if (kv || attHtml) {
-          catHtml.push(section('ELECTRICAL WORK', kv + attHtml));
-        }
+        if (kv || attHtml) catHtml.push(section('Work on Electrical System', kv + attHtml));
       }
+
       // Work at Height
       if (categories?.height) {
         const height = (categories as any).height;
@@ -709,15 +706,14 @@ export const KRCCFormListDashboard = () => {
               </div>`).join('')}
             </div>
           </div>`).join('');
-        if (kv || attHtml) {
-          catHtml.push(section('WORK AT HEIGHT', kv + attHtml));
-        }
+        if (kv || attHtml) catHtml.push(section('Work at Height', kv + attHtml));
       }
-      // Underground Work
+
+      // Work Underground
       if (categories?.underground) {
         const underground = (categories as any).underground;
         const kv = buildCatKV(underground, ['experience_years', 'role', 'fit_to_work', 'medical_certificate_valid_till']);
-        const checklistUG = buildChecklist('work_under_ground_', 'Work Underground Checklist');
+        const checklistUG = buildChecklist('work_under_ground_', 'Work Underground');
         const groups = await collectCatGroups(underground);
         const attHtml = groups.map(g => `
           <div style='margin-top:8px;'>
@@ -728,25 +724,37 @@ export const KRCCFormListDashboard = () => {
               </div>`).join('')}
             </div>
           </div>`).join('');
-        if (kv || checklistUG || attHtml) {
-          catHtml.push(section('Work Underground', kv + checklistUG + attHtml));
-        }
+        if (kv || checklistUG || attHtml) catHtml.push(section('Work Underground', kv + (checklistUG || '') + attHtml));
       }
+
       // Ride a Bicycle
       if (categories?.bicycle) {
         const bicycle = (categories as any).bicycle;
         const kv = buildCatKV(bicycle, ['reflective_jacket', 'training_available']);
-        if (kv) {
-          catHtml.push(section('Ride a Bicycle', kv));
-        }
+        if (kv) catHtml.push(section('Ride a Bicycle', kv));
       }
-      // Exclude MHE, None of the Above, and top-level attachments per requirement
+
+      // Operate MHE
+      if (categories?.mhe) {
+        const mhe = (categories as any).mhe;
+        const kv = buildCatKV(mhe, ['safety_shoes', 'hand_gloves', 'reflective_jacket']);
+        if (kv) catHtml.push(section('Operate MHE', kv));
+      }
+
+      // None of the Above
+      if (categories?.none_of_the_above) {
+        catHtml.push(section('None of the Above', `<p style='font-size:12px;color:#374151;'>User selected "None of the above"; no category-specific details provided.</p>`));
+      }
+
+      // (Still skipping top-level standalone attachments unless needed later)
       container.innerHTML = `
   ${section('Personal Details', userHtml)}
   ${approvedByHtml ? section('Approved Details', approvedByHtml) : ''}
-        ${catHtml.join('')}
-        <div style='text-align:right;font-size:10px;color:#666;margin-top:8px;'>Generated: ${new Date().toLocaleString()}</div>
-      `;
+    ${catHtml.join('')}
+    <div style='text-align:right;font-size:10px;color:#666;margin-top:8px;'>Generated: ${new Date().toLocaleString()}</div>
+  `;
+      // Final safety normalization pass – replace any residual variants (e.g., "Mparivahan", "M_parivahan", etc.)
+      container.innerHTML = container.innerHTML.replace(/M[ _-]?parivahan/gi, 'M-Parivahan');
 
       document.body.appendChild(container);
 
@@ -857,7 +865,7 @@ export const KRCCFormListDashboard = () => {
           if (categories?.bike) {
             const bike = (categories as any).bike;
             const kvBike = buildCatKV(bike, ['dl_number', 'dl_valid_till', 'reg_number']);
-            const checklist2w = buildChecklist('2w_', '2 Wheeler Checklist');
+            const checklist2w = buildChecklist('2w_', '2 Wheeler');
             body += `
               <div style='margin-bottom:16px;'>
                 <div style='font-size:14px;font-weight:700;color:#111;margin-bottom:8px;'>Ride a 2 Wheeler</div>
@@ -868,7 +876,7 @@ export const KRCCFormListDashboard = () => {
           if (categories?.car) {
             const car = (categories as any).car;
             const kvCar = buildCatKV(car, ['dl_number', 'dl_valid_till', 'vehicle_type', 'reg_number', 'valid_insurance', 'valid_insurance_till', 'valid_puc', 'medical_certificate_valid_till']);
-            const checklist4w = buildChecklist('4w_', '4 Wheeler Checklist');
+            const checklist4w = buildChecklist('4w_', '4 Wheeler');
             body += `
               <div style='margin-bottom:16px;'>
                 <div style='font-size:14px;font-weight:700;color:#111;margin-bottom:8px;'>Drive a 4 Wheeler</div>
@@ -882,7 +890,7 @@ export const KRCCFormListDashboard = () => {
         const ugText = categories?.underground ? (() => {
           const underground = (categories as any).underground;
           const kv = buildCatKV(underground, ['experience_years', 'role', 'fit_to_work', 'medical_certificate_valid_till']);
-          const checklistUG = buildChecklist('work_under_ground_', 'Work Underground Checklist');
+          const checklistUG = buildChecklist('work_under_ground_', 'Work Underground');
           return kv + checklistUG;
         })() : '';
 
@@ -893,7 +901,11 @@ export const KRCCFormListDashboard = () => {
 
         const electricalText = categories?.electrical ? (() => {
           const electrical = (categories as any).electrical;
-          return buildCatKV(electrical, ['qualification', 'license_number', 'license_validity', 'fit_to_work', 'medical_certificate_valid_till', 'first_aid_valid_till']);
+          return buildCatKV(
+            electrical,
+            ['qualification', 'license_number', 'license_validity', 'fit_to_work', 'medical_certificate_valid_till', 'first_aid_valid_till'],
+            { fit_to_work: 'Fit to work on electrical system' }
+          );
         })() : '';
 
         const bicycleText = categories?.bicycle ? (() => {
@@ -901,15 +913,19 @@ export const KRCCFormListDashboard = () => {
           return buildCatKV(bicycle, ['reflective_jacket', 'training_available']);
         })() : '';
 
-        const consolidatedKRCC = buildKRCCTextOnly();
+        const consolidatedKRCC = buildKRCCTextOnly(); // still used for fallback (2W + 4W)
+        const noneAboveText = categories?.none_of_the_above ? section('None of the Above', `<p style='font-size:12px;color:#374151;'>User selected "None of the above"; no category-specific details provided.</p>`) : '';
+        const mheText = categories?.mhe ? section('Operate MHE', buildCatKV((categories as any).mhe, ['safety_shoes', 'hand_gloves', 'reflective_jacket'])) : '';
         const sectionsHtml = [
           section('Personal Details', userHtml),
           approvedBy ? section('Approved Details', approvedByHtml) : '',
-          consolidatedKRCC ? section('KRCC Details (Drive a ..)', consolidatedKRCC) : '',
+          consolidatedKRCC ? section('KRCC Details (Ride / Drive)', consolidatedKRCC) : '',
           ugText ? section('Work Underground', ugText) : '',
           bicycleText ? section('Ride a Bicycle', bicycleText) : '',
           heightText ? section('Work at Height', heightText) : '',
-          electricalText ? section('Electrical Work', electricalText) : '',
+          electricalText ? section('Work on Electrical System', electricalText) : '',
+          mheText,
+          noneAboveText,
         ].join('');
 
         container.innerHTML = `

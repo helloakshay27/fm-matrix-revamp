@@ -232,10 +232,10 @@ export const SurveyResponsePage = () => {
     { key: "room_name", label: "Room Name", visible: true },
     { key: "total_responses", label: "Total Responses", visible: true },
     { key: "total_complaints", label: "Total Complaints", visible: true },
-    { key: "latest_response_date", label: "Latest Response", visible: true },
+    // { key: "latest_response_date", label: "Latest Response", visible: true },
     { key: "status", label: "Status", visible: true }, // Force status column to be visible
     // { key: 'answer_type', label: 'Answer Type', visible: true },
-    { key: "responded_by", label: "Responded By", visible: true },
+    // { key: "responded_by", label: "Responded By", visible: true },
   ]);
 
   // Handle analytics data updates from the analytics component
@@ -957,15 +957,15 @@ export const SurveyResponsePage = () => {
         visible: isColumnVisible("total_complaints"),
         hideable: true,
       },
-      {
-        key: "latest_response_date",
-        label: "Latest Response",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-        visible: isColumnVisible("latest_response_date"),
-        hideable: true,
-      },
+      // {
+      //   key: "latest_response_date",
+      //   label: "Latest Response",
+      //   sortable: true,
+      //   draggable: true,
+      //   defaultVisible: true,
+      //   visible: isColumnVisible("latest_response_date"),
+      //   hideable: true,
+      // },
       {
         key: "status",
         label: "Status",
@@ -976,15 +976,15 @@ export const SurveyResponsePage = () => {
         hideable: true,
       },
       // { key: 'answer_type', label: 'Answer Type', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('answer_type'), hideable: true },
-      {
-        key: "responded_by",
-        label: "Responded By",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-        visible: isColumnVisible("responded_by"),
-        hideable: true,
-      },
+      // {
+      //   key: "responded_by",
+      //   label: "Responded By",
+      //   sortable: true,
+      //   draggable: true,
+      //   defaultVisible: true,
+      //   visible: isColumnVisible("responded_by"),
+      //   hideable: true,
+      // },
     ];
 
     // Debug logging for status column
@@ -1023,15 +1023,15 @@ export const SurveyResponsePage = () => {
       case "site_name":
         return item.site_name || "N/A";
       case "building_name":
-        return item.building_name || "N/A";
+        return renderLocation(item.building_name);
       case "wing_name":
-        return item.wing_name || "N/A";
+        return renderLocation(item.wing_name);
       case "floor_name":
-        return item.floor_name || "N/A";
+        return renderLocation(item.floor_name);
       case "area_name":
-        return item.area_name || "N/A";
+        return renderLocation(item.area_name);
       case "room_name":
-        return item.room_name || "N/A";
+        return renderLocation(item.room_name);
       case "total_responses":
         return (
           <span
@@ -1127,6 +1127,22 @@ export const SurveyResponsePage = () => {
     const count = summaryStats.total_responses;
     // console.log('👍 Total Responses count from state:', count);
     return count;
+  };
+
+  // Helper: show only first location; show full value on hover with ellipsis
+  const renderLocation = (value?: string) => {
+    const safe = (value || "").trim();
+    if (!safe) return "N/A";
+    // Split by comma or pipe or slash common delimiters
+    const parts = safe.split(/\s*,\s*|\s*\|\s*|\s*\/\s*/).filter(Boolean);
+    const first = parts[0] || safe;
+    const hasMore = parts.length > 1;
+    return (
+      <span title={safe} className="truncate inline-block max-w-[220px] align-middle">
+        {first}
+        {hasMore ? " ..." : ""}
+      </span>
+    );
   };
 
   // Fetch survey responses when component mounts, page changes, or filters change

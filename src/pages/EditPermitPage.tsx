@@ -176,7 +176,16 @@ export const EditPermitPage = () => {
     const [loadingRooms, setLoadingRooms] = useState(false);
 
     const [activities, setActivities] = useState([
-        { activity: '', subActivity: '', categoryOfHazards: '', selectedRisks: [] as string[] }
+        {
+            id: '', // To store existing permit detail ID for updates
+            activity: '',
+            subActivity: '',
+            categoryOfHazards: '',
+            selectedRisks: [] as string[],
+            originalActivityName: '',
+            originalSubActivityName: '',
+            originalHazardCategoryName: ''
+        }
     ]);
 
     // API helper functions
@@ -249,19 +258,30 @@ export const EditPermitPage = () => {
             // Map created_by information to requestor details
             const createdBy = permit.created_by || {};
 
-            // Update permit data with basic info
+            // Update permit data with all available info
             setPermitData(prev => ({
                 ...prev,
-                // Requestor details from created_by
+                // Requestor Details
                 name: createdBy.full_name || '',
                 contactNumber: createdBy.mobile || '',
                 department: createdBy.department_name || '',
-                unit: '', // Not available in response
-                site: '', // Not available in response
+                unit: '', // Not provided in API response
+                site: '', // Not provided in API response
 
-                // Basic details
+                // Basic Details
                 permitFor: permit.permit_for || '',
-                clientSpecific: 'Internal', // Default, will be updated based on data
+                building: permit.building_id ? permit.building_id.toString() : '',
+                wing: permit.wing_id ? permit.wing_id.toString() : '',
+                area: permit.area_id ? permit.area_id.toString() : '',
+                floor: permit.floor_id ? permit.floor_id.toString() : '',
+                room: permit.room_id ? permit.room_id.toString() : '',
+                clientSpecific: permit.client_specific || 'Internal',
+                copyTo: permit.intimate_to || [],
+                listOfEntity: permit.entity_id ? [permit.entity_id.toString()] : [],
+
+                // Permit Details - will be populated after dropdowns load
+                permitType: '',
+                vendor: '',
                 comment: permit.comment || ''
             }));
 
@@ -270,13 +290,18 @@ export const EditPermitPage = () => {
                 setExistingAttachments(data.main_attachments);
             }
 
-            // Handle activities from activity_details
+            // Handle activities from activity_details - store raw data for later mapping
             if (data.activity_details && data.activity_details.length > 0) {
                 const activitiesData = data.activity_details.map((detail: any) => ({
+                    id: detail.id,
                     activity: '', // Will be mapped after dropdowns load
                     subActivity: '', // Will be mapped after dropdowns load  
                     categoryOfHazards: '', // Will be mapped after dropdowns load
-                    selectedRisks: [] // Will be mapped after dropdowns load
+                    selectedRisks: detail.risks || [],
+                    // Store original names for mapping after dropdowns load
+                    originalActivityName: detail.activity || '',
+                    originalSubActivityName: detail.sub_activity || '',
+                    originalHazardCategoryName: detail.hazard_category || ''
                 }));
                 setActivities(activitiesData);
             }
@@ -285,7 +310,7 @@ export const EditPermitPage = () => {
         } catch (error) {
             console.error('Error fetching permit details:', error);
             toast.error('Failed to fetch permit details');
-            navigate('/maintenance/permit');
+            navigate('/safety/permit');
         } finally {
             setInitialLoading(false);
         }
@@ -737,6 +762,34 @@ export const EditPermitPage = () => {
         }
     }, [id]);
 
+    // Map permit type and vendor after data is loaded
+    useEffect(() => {
+        if (originalPermitData && originalPermitData.permit && permitTypes.length > 0 && suppliers.length > 0) {
+            const permit = originalPermitData.permit;
+
+            // Find permit type ID from permit type name
+            let permitTypeId = '';
+            if (permit.permit_type) {
+                const foundPermitType = permitTypes.find(pt => pt.name === permit.permit_type);
+                permitTypeId = foundPermitType ? foundPermitType.id.toString() : '';
+            }
+
+            // Find vendor ID from vendor data
+            let vendorId = '';
+            if (permit.vendor && permit.vendor.company_name) {
+                const foundVendor = suppliers.find(s => s.name === permit.vendor.company_name);
+                vendorId = foundVendor ? foundVendor.id : '';
+            }
+
+            // Update permit data with mapped IDs
+            setPermitData(prev => ({
+                ...prev,
+                permitType: permitTypeId,
+                vendor: vendorId
+            }));
+        }
+    }, [originalPermitData, permitTypes, suppliers]);
+
     // Handle dependent dropdowns after permit data is loaded
     useEffect(() => {
         if (permitData.building && buildings.length > 0) {
@@ -790,20 +843,98 @@ export const EditPermitPage = () => {
         }
     }, [permitData.permitType, permitTypes]);
 
-    // Handle activities dependent data - fetch sub activities and hazard categories for existing activities
+    // Map activities from original data after permit activities are loaded
     useEffect(() => {
-        activities.forEach((activity, index) => {
-            if (activity.activity && permitActivities.length > 0) {
-                fetchPermitSubActivities(activity.activity);
-            }
-            if (activity.subActivity && permitSubActivities.length > 0) {
-                fetchPermitHazardCategories(activity.subActivity);
-            }
-            if (activity.categoryOfHazards && permitHazardCategories.length > 0) {
-                fetchPermitRisks(activity.categoryOfHazards);
-            }
-        });
-    }, [activities, permitActivities, permitSubActivities, permitHazardCategories]);
+        if (originalPermitData && originalPermitData.activity_details && permitActivities.length > 0) {
+            const mappedActivities = originalPermitData.activity_details.map((detail: any) => {
+                // Find activity ID from name
+                const foundActivity = permitActivities.find(pa => pa.name === detail.activity);
+                const activityId = foundActivity ? foundActivity.id.toString() : '';
+
+                return {
+                    id: detail.id,
+                    activity: activityId,
+                    subActivity: '', // Will be set after sub activities load
+                    categoryOfHazards: '', // Will be set after hazard categories load
+                    selectedRisks: detail.risks || [],
+                    originalActivityName: detail.activity || '',
+                    originalSubActivityName: detail.sub_activity || '',
+                    originalHazardCategoryName: detail.hazard_category || ''
+                };
+            });
+            setActivities(mappedActivities);
+
+            // Fetch sub activities for each activity
+            mappedActivities.forEach((activity) => {
+                if (activity.activity) {
+                    fetchPermitSubActivities(activity.activity);
+                }
+            });
+        }
+    }, [originalPermitData, permitActivities]);
+
+    // Map sub activities after they are loaded
+    useEffect(() => {
+        if (originalPermitData && originalPermitData.activity_details && permitSubActivities.length > 0) {
+            setActivities(prev => prev.map((activity, index) => {
+                const originalData = originalPermitData.activity_details[index];
+                if (originalData && originalData.sub_activity) {
+                    const foundSubActivity = permitSubActivities.find(psa => psa.name === originalData.sub_activity);
+                    const subActivityId = foundSubActivity ? foundSubActivity.id.toString() : '';
+
+                    // Fetch hazard categories if sub activity found
+                    if (subActivityId) {
+                        fetchPermitHazardCategories(subActivityId);
+                    }
+
+                    return { ...activity, subActivity: subActivityId };
+                }
+                return activity;
+            }));
+        }
+    }, [originalPermitData, permitSubActivities]);
+
+    // Map hazard categories after they are loaded
+    useEffect(() => {
+        if (originalPermitData && originalPermitData.activity_details && permitHazardCategories.length > 0) {
+            setActivities(prev => prev.map((activity, index) => {
+                const originalData = originalPermitData.activity_details[index];
+                if (originalData && originalData.hazard_category) {
+                    const foundHazardCategory = permitHazardCategories.find(phc => phc.name === originalData.hazard_category);
+                    const hazardCategoryId = foundHazardCategory ? foundHazardCategory.id.toString() : '';
+
+                    // Fetch risks if hazard category found
+                    if (hazardCategoryId) {
+                        fetchPermitRisks(hazardCategoryId);
+                    }
+
+                    return { ...activity, categoryOfHazards: hazardCategoryId };
+                }
+                return activity;
+            }));
+        }
+    }, [originalPermitData, permitHazardCategories]);
+
+    // Map risks after they are loaded
+    useEffect(() => {
+        if (originalPermitData && originalPermitData.activity_details && permitRisks.length > 0) {
+            setActivities(prev => prev.map((activity, index) => {
+                const originalData = originalPermitData.activity_details[index];
+                if (originalData && originalData.risks && Array.isArray(originalData.risks)) {
+                    // Map risk names to IDs
+                    const mappedRiskIds = originalData.risks
+                        .map((riskName: string) => {
+                            const foundRisk = permitRisks.find(pr => pr.name === riskName);
+                            return foundRisk ? foundRisk.id.toString() : null;
+                        })
+                        .filter((id: string | null) => id !== null);
+
+                    return { ...activity, selectedRisks: mappedRiskIds };
+                }
+                return activity;
+            }));
+        }
+    }, [originalPermitData, permitRisks]);
 
     // Handle permit type change
     const handlePermitTypeChange = (permitTypeId: string) => {
@@ -950,7 +1081,7 @@ export const EditPermitPage = () => {
             toast.success('File uploaded successfully');
         }
     };
-
+    console.log(activities)
     // Handle submit with PUT method
     const handleSubmit = async () => {
         if (isSubmitting) return;
@@ -1008,8 +1139,26 @@ export const EditPermitPage = () => {
             }
 
             // Permit details
+            // activities.forEach((activity, index) => {
+            //     if (activity.activity && activity.subActivity && activity.categoryOfHazards) {
+            //         formData.append(`pms_permit[permit_details_attributes][${index}][id]`, activity.id);
+            //         formData.append(`pms_permit[permit_details_attributes][${index}][_destroy]`, 'false');
+            //         formData.append(`pms_permit[permit_details_attributes][${index}][permit_activity_id]`, activity.activity);
+            //         formData.append(`pms_permit[permit_details_attributes][${index}][permit_sub_activity_id]`, activity.subActivity);
+            //         formData.append(`pms_permit[permit_details_attributes][${index}][permit_hazard_category_id]`, activity.categoryOfHazards);
+
+            //         activity.selectedRisks.forEach((riskId, riskIndex) => {
+            //             formData.append(`pms_permit[permit_details_attributes][${index}][permit_risks_attributes][${riskIndex}][permit_risk_id]`, riskId);
+            //         });
+            //     }
+            // });
             activities.forEach((activity, index) => {
                 if (activity.activity && activity.subActivity && activity.categoryOfHazards) {
+                    // Append ID only if it exists
+                    if (activity.id) {
+                        formData.append(`pms_permit[permit_details_attributes][${index}][id]`, activity.id);
+                    }
+
                     formData.append(`pms_permit[permit_details_attributes][${index}][_destroy]`, 'false');
                     formData.append(`pms_permit[permit_details_attributes][${index}][permit_activity_id]`, activity.activity);
                     formData.append(`pms_permit[permit_details_attributes][${index}][permit_sub_activity_id]`, activity.subActivity);
@@ -1020,6 +1169,7 @@ export const EditPermitPage = () => {
                     });
                 }
             });
+
 
             // Attachments
             if (permitData.attachments) {
@@ -1046,7 +1196,7 @@ export const EditPermitPage = () => {
             console.log('Permit updated successfully:', responseData);
 
             toast.success('Permit updated successfully!');
-            navigate('/maintenance/permit');
+            navigate('/safety/permit');
 
         } catch (error) {
             console.error('Error updating permit:', error);
@@ -1059,7 +1209,7 @@ export const EditPermitPage = () => {
     return (
         <div className="p-6">
             <div className="mb-6">
-                <Button variant="ghost" onClick={() => navigate('/maintenance/permit')} className="mb-4">
+                <Button variant="ghost" onClick={() => navigate('/safety/permit')} className="mb-4">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Permit List
                 </Button>

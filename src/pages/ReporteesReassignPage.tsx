@@ -36,7 +36,7 @@ const ReporteesReassignPage = () => {
             const params = new URLSearchParams(window.location.search);
             const fromQ = (params.get('current_email') || '').trim();
             if (fromQ && !currentEmail) setCurrentEmail(fromQ.toLowerCase());
-        } catch {}
+        } catch { }
     }, []); // run once
 
     const handleFetchReportees = async () => {
@@ -53,8 +53,10 @@ const ReporteesReassignPage = () => {
         }
         setIsFetching(true);
         try {
+
             const basePath = '/pms/users/get_reportees_of_line_magager';
             const qs = new URLSearchParams({ line_manager_email: current, company_id: String(companyId) });
+
             const url = getFullUrl(`${basePath}?${qs.toString()}`);
             const res = await fetch(url, {
                 method: 'GET',
@@ -215,7 +217,7 @@ const ReporteesReassignPage = () => {
                 toast.error(message);
                 return;
             }
-            
+
             const resultData = data as ReassignResult;
             toast.success(resultData?.message || 'Reportees reassigned successfully');
             setResults(prev => [...prev, resultData || {}]);

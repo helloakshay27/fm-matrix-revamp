@@ -35,7 +35,8 @@ const formatDateTime = (iso?: string | null) => {
   if (!iso) return '—';
   try {
     const d = new Date(iso);
-    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    if (isNaN(d.getTime())) return '—';
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`; // date only per request
   } catch { return '—'; }
 };
 
@@ -69,7 +70,8 @@ const TrainingUserDetailPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const url = `https://${baseUrl}/trainings/${id}/user_trainings.json`;
+      const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      const url = `${cleanBaseUrl}/trainings/${id}/user_trainings.json`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json: ApiResponse = await res.json();
@@ -105,8 +107,17 @@ const TrainingUserDetailPage: React.FC = () => {
           <div><span className="text-gray-500 text-sm">Mobile Number</span><p className="text-gray-900 font-medium">{createdBy?.mobile || '—'}</p></div>
           <div><span className="text-gray-500 text-sm">User Type</span><p className="text-gray-900 font-medium">{createdBy?.employee_type || '—'}</p></div>
           <div>
-            <span className="text-gray-500 text-sm">Status</span>
-            <p className="text-gray-900 font-medium">{getStatusMeta(primary?.status).label}</p>
+            <span className="text-gray-500 text-sm">Status: </span>
+            {(() => {
+              const meta = getStatusMeta(primary?.status);
+              return (
+                <span
+                  className={`inline-block mt-0.5 px-2 py-1 rounded font-bold leading-snug text-xs ${meta.className}`}
+                >
+                  {meta.label}
+                </span>
+              );
+            })()}
           </div>
           <div><span className="text-gray-500 text-sm">Training Date</span><p className="text-gray-900 font-medium">{formatDateTime(primary?.training_date)}</p></div>
         </div>
@@ -129,7 +140,7 @@ const TrainingUserDetailPage: React.FC = () => {
               {(() => {
                 const meta = getStatusMeta(rec.status);
                 return (
-                  <span className={`text-xs font-semibold px-2 py-1 rounded ${meta.className}`}>
+                  <span className={`px-2 py-1 rounded font-bold text-sm md:text-base ${meta.className}`}>
                     {meta.label}
                   </span>
                 );
@@ -139,7 +150,6 @@ const TrainingUserDetailPage: React.FC = () => {
               <div><span className="text-gray-500 text-sm">Training Name</span><p className="text-gray-900 font-medium">{rec.training_subject_name || '—'}</p></div>
               <div><span className="text-gray-500 text-sm">Training Type</span><p className="text-gray-900 font-medium">{rec.training_type || '—'}</p></div>
               <div><span className="text-gray-500 text-sm">Training Date</span><p className="text-gray-900 font-medium">{formatDateTime(rec.training_date)}</p></div>
-              <div><span className="text-gray-500 text-sm">Resource</span><p className="text-gray-900 font-medium">{rec.resource_type || '—'} {rec.resource_id ? `#${rec.resource_id}` : ''}</p></div>
               <div><span className="text-gray-500 text-sm">Created On</span><p className="text-gray-900 font-medium">{formatDateTime(rec.created_at)}</p></div>
               <div><span className="text-gray-500 text-sm">Updated On</span><p className="text-gray-900 font-medium">{formatDateTime(rec.updated_at)}</p></div>
             </div>
