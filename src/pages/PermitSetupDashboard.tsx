@@ -1890,7 +1890,8 @@ export const PermitSetupDashboard = () => {
   const token = localStorage.getItem('token');
   const baseUrl = localStorage.getItem('baseUrl');
   // Ensure baseUrl is present and ends with no trailing slash
-  const apiBase = baseUrl ? `${baseUrl.replace(/\/$/, '')}/pms/permit_tags.json` : '';
+  const apiBase = baseUrl ? `https://${baseUrl}/pms/permit_tags.json` : '';
+
 
   // Helper for headers
   const getHeaders = () => ({
