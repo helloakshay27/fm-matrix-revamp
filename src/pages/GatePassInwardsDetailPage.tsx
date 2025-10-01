@@ -8,6 +8,7 @@ import { AttachmentGoodsPreviewModal } from '@/components/AttachmentGoodsPreview
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2 } from 'lucide-react';
 
 
 export const GatePassInwardsDetailPage = () => {
@@ -53,9 +54,9 @@ export const GatePassInwardsDetailPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-32">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto"></div>
-          <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+        <div className="flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading...</span>
         </div>
       </div>
     );
@@ -359,10 +360,8 @@ export const GatePassInwardsDetailPage = () => {
                           <TableRow>
                             <TableCell colSpan={6} className="text-center py-8">
                               <div className="flex items-center justify-center">
-                                <div className="text-center">
-                                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mx-auto"></div>
-                                  <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
-                                </div>
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                                <span className="ml-2">Loading...</span>
                               </div>
                             </TableCell>
                           </TableRow>

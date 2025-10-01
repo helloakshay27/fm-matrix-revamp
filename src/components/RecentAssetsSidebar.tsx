@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Flag, Eye, Star, Hash, Timer, Activity } from 'lucide-react';
+import { MessageSquare, Flag, Eye, Star, Hash, Timer, Activity, EyeIcon, Building2, Building2Icon, User2Icon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AddCommentModal } from '@/components/AddCommentModal';
 import { recentAssetsService, RecentAsset } from '@/services/recentAssetsAPI';
@@ -123,7 +123,7 @@ export const RecentAssetsSidebar = () => {
   //   switch (status) {
   //     case 'In Use':
   //       return "bg-[#DBC2A9] text-[#1A1A1A]";
-  //     case 'Breakdown':
+  //     case 'Breakdown':  
   //       return "bg-[#E4626F] text-[#1A1A1A]"; 
   //     case 'Maintenance':
   //       return 'bg-yellow-100 text-yellow-700';
@@ -150,10 +150,10 @@ export const RecentAssetsSidebar = () => {
 
 
   return (
-    <div className="bg-[#C4B89D]/25 p-4 h-fit">
+    <div className="bg-white p-4 h-fit">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-lg font-bold mb-1" style={{ color: 'black' }}>Recent Assets</h3>
+        <h3 className="text-lg font-bold mb-1" style={{ color: '#C72030' }}>Recent Assets</h3>
         <p className="text-sm text-gray-600">{new Date().toLocaleDateString('en-US', {
           weekday: 'long',
           year: 'numeric',
@@ -182,46 +182,41 @@ export const RecentAssetsSidebar = () => {
         )}
 
         {!isLoading && !isError && recentAssets.map((asset) => (
-          <div key={asset.id} className="bg-[#C4B89D]/20 border border-[#C4B89D]/40 rounded-lg p-4">
-            {/* Header with Asset No and Star */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Hash className="w-4 h-4" style={{ color: '#C72030' }} />
-                <span className="font-medium text-sm">{asset.assetNo}</span>
-              </div>
-
+          <div key={asset.id} className="bg-white border border-[#C4B89D]/40 rounded-lg p-4">
+            {/* Headline: Asset No and Name */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-semibold text-gray-500 text-sm leading-[12px] tracking-[0px]">{asset.assetNo}</span>
+            </div>
+            <div className="mb-3">
+              <h3 className="font-semibold text-gray-900 text-sm leading-[14px] tracking-[0px]">{asset.name}</h3>
             </div>
 
-            {/* Asset Name */}
-            <h4 className="font-semibold text-base mb-3 text-gray-800">{asset.name}</h4>
 
-            {/* TAT in quotes */}
-            <div className="mb-4">
-              <span className="text-blue-600 font-medium">"{asset.tat}"</span>
+            {/* TAT row with icon and spacing */}
+            <div className="flex items-center gap-3 mb-3">
+              <Building2Icon className="h-4 w-4 text-red-500" />
+              <span className="text-sm font-medium text-gray-700 min-w-[100px]">TAT :</span>
+              <span className="text-sm text-gray-700">:</span>
+              <span className="text-sm text-gray-900">{asset.tat}</span>
             </div>
 
-            {/* Asset Details */}
-            <div className="space-y-2 mb-4">
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4" style={{ color: '#C72030' }} />
-                <span className="text-sm font-medium">Status:</span>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(asset.status)}`}>
-                  {asset.status}
-                </span>
-              </div>
-
-
+            {/* Asset Status row with icon and spacing */}
+            <div className="flex items-center gap-3 mb-4">
+              <Activity className="h-4 w-4 text-red-500" />
+              <span className="text-sm font-medium text-gray-700 min-w-[100px]">Status :</span>
+              <span className="text-sm text-gray-700">:</span>
+              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(asset.status)}`}>{asset.status}</span>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between">
-
-
+            <div className="flex items-center justify-end gap-4">
               <button
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium underline"
+                className="flex items-center gap-1 text-sm font-medium underline text-[#C72030] hover:opacity-80"
                 onClick={() => handleViewDetails(asset.id)}
               >
-                View Detail&gt;&gt;
+                {/* <EyeIcon size={25} color="#C72030" /> */}
+                <EyeIcon className="h-[24px] w-[24px]" color="#C72030" />
+
               </button>
             </div>
           </div>

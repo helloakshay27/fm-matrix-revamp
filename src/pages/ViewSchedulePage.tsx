@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, FileText, Box, Clock, Calendar, Link, Mail, MapPin } from 'lucide-react';
+import { ArrowLeft, FileText, Box, Clock, Calendar, Link, Mail, MapPin, Loader2 } from 'lucide-react';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, Typography, Tooltip } from '@mui/material';
 import AttachFile from '@mui/icons-material/AttachFile';
@@ -258,9 +258,9 @@ export const ViewSchedulePage = () => {
     return (
       <div className="p-6 mx-auto">
         <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-sm text-muted-foreground">Loading schedule details...</p>
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading schedule details...</span>
           </div>
         </div>
       </div>

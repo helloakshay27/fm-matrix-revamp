@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TextField, Grid } from '@mui/material';
-import { Building, FileText, Landmark, ShieldCheck, User, ArrowLeft } from 'lucide-react';
+import { Building, FileText, Landmark, ShieldCheck, User, ArrowLeft, Loader2, Eye, Download, FileSpreadsheet, File } from 'lucide-react';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
 // Define the types for the vendor data based on the provided JSON
 interface Contact {
@@ -35,12 +36,9 @@ interface AuditScore {
 
 interface Attachment {
     document_name: string;
-    document_submitted: string;
-    status: string;
-    upload_date: string;
-    comments: string;
-    file_url: string;
-    // Added a category to distinguish different attachment types
+    document_url: string; // Changed from file_url to document_url
+    document_size?: number;
+    attachment_id: number;
     category: string; 
 }
 
@@ -99,7 +97,7 @@ interface Vendor {
         total_amount_all: string;
         total_paid_amount_all: number;
         total_outstanding_amount_all: string;
-    };
+    }
     approval_info: {
         applicable_approval_present: boolean;
         approval_levels: Array<{
@@ -124,6 +122,8 @@ const DetailsVendorPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState("basic");
+    const [selectedDoc, setSelectedDoc] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchVendorDetails = async () => {
@@ -182,8 +182,30 @@ const DetailsVendorPage = () => {
         </Grid>
     );
 
+    const getStatusBadgeStyles = (status: string) => {
+        const normalizedStatus = status.toLowerCase();
+        switch (normalizedStatus) {
+            case 'pending':
+                return { backgroundColor: '#f5f2c9', color: '#000' };
+            case 'rejected':
+                return { backgroundColor: '#f5ccc6', color: '#000' };
+            case 'accepted':
+            case 'approved':
+                return { backgroundColor: '#c7ecd9', color: '#000' };
+            default:
+                return { backgroundColor: '#f3f4f6', color: '#000' };
+        }
+    };
+
     if (loading) {
-        return <div className="p-6">Loading...</div>;
+        return (
+          <div className="flex items-center justify-center h-32">
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading...</span>
+            </div>
+          </div>
+        );
     }
 
     if (error) {
@@ -538,33 +560,59 @@ const DetailsVendorPage = () => {
                                         <Table className="border-separate">
                                             <TableHeader>
                                                 <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
-                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Name</TableHead>
-                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Documents Submitted</TableHead>
-                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Status</TableHead>
-                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Upload Date</TableHead>
-                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Comments</TableHead>
-                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Attachments</TableHead>
-                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Decision</TableHead>
+                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Category</TableHead>
+                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Document Name</TableHead>
+                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Size</TableHead>
+                                                    <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Actions</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {allAttachments.length > 0 ? allAttachments.map((att, index) => (
                                                     <TableRow key={index} className="hover:bg-gray-50 transition-colors">
-                                                        <TableCell className="py-3 px-4 font-medium">{att.document_name || att.category}</TableCell>
-                                                        <TableCell className="py-3 px-4">{att.document_submitted}</TableCell>
-                                                        <TableCell className="py-3 px-4">{att.status}</TableCell>
-                                                        <TableCell className="py-3 px-4">{att.upload_date ? new Date(att.upload_date).toLocaleDateString() : 'N/A'}</TableCell>
-                                                        <TableCell className="py-3 px-4">{att.comments}</TableCell>
-                                                        <TableCell className="py-3 px-4">
-                                                            <a href={att.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                                                View
-                                                            </a>
+                                                        <TableCell className="py-3 px-4 font-medium">
+                                                            <span className="capitalize">{att.category}</span>
                                                         </TableCell>
-                                                        <TableCell className="py-3 px-4">Decision</TableCell>
+                                                        <TableCell className="py-3 px-4">{att.document_name || 'N/A'}</TableCell>
+                                                        <TableCell className="py-3 px-4">
+                                                            {att.document_size ? `${(att.document_size / 1024).toFixed(1)} KB` : 'N/A'}
+                                                        </TableCell>
+                                                        <TableCell className="py-3 px-4">
+                                                            <button
+                                                                className="p-1 text-gray-600 hover:text-black rounded-full"
+                                                                title="View Attachment"
+                                                                onClick={() => {
+                                                                    const url = att.document_url;
+                                                                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                                                                    const isPdf = /\.pdf$/i.test(url);
+                                                                    const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                                                                    const isWord = /\.(doc|docx)$/i.test(url);
+                                                                    
+                                                                    let type = 'file';
+                                                                    if (isImage) type = 'image';
+                                                                    else if (isPdf) type = 'pdf';
+                                                                    else if (isExcel) type = 'excel';
+                                                                    else if (isWord) type = 'word';
+
+                                                                    setSelectedDoc({
+                                                                        id: att.attachment_id, // Use attachment_id for API calls
+                                                                        attachment_id: att.attachment_id, // Keep both for compatibility
+                                                                        url: url,
+                                                                        document_url: url,
+                                                                        type,
+                                                                        document_name: att.document_name || att.category,
+                                                                        document_file_name: att.document_name || att.category
+                                                                    });
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                                type="button"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </button>
+                                                        </TableCell>
                                                     </TableRow>
                                                 )) : (
                                                     <TableRow>
-                                                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">No attachments found.</TableCell>
+                                                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">No attachments found.</TableCell>
                                                     </TableRow>
                                                 )}
                                             </TableBody>
@@ -692,9 +740,12 @@ const DetailsVendorPage = () => {
                                                                 <TableCell className="py-3 px-4 font-medium">{level.name}</TableCell>
                                                                 <TableCell className="py-3 px-4">{level.order}</TableCell>
                                                                 <TableCell className="py-3 px-4">
-                                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${level.approval_history.status_text === 'Pending' ? 'bg-yellow-100 text-yellow-800' : level.approval_history.status_text === 'Approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                                    <div 
+                                                                        className="text-xs p-2 rounded-md inline-block font-medium"
+                                                                        style={getStatusBadgeStyles(level.approval_history.status_text)}
+                                                                    >
                                                                         {level.approval_history.status_text}
-                                                                    </span>
+                                                                    </div>
                                                                 </TableCell>
                                                             </TableRow>
                                                         ))}
@@ -709,6 +760,14 @@ const DetailsVendorPage = () => {
                     </TabsContent>
                 </Tabs>
             </div>
+
+            {/* Attachment Preview Modal */}
+            <AttachmentPreviewModal
+                isModalOpen={isModalOpen}
+                setIsModalOpen={setIsModalOpen}
+                selectedDoc={selectedDoc}
+                setSelectedDoc={setSelectedDoc}
+            />
         </div>
     );
 };

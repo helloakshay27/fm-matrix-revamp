@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Box } from 'lucide-react';
+import { ArrowLeft, FileText, Box, Loader2 } from 'lucide-react';
 import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAssetTypes } from '@/services/assetTypesAPI';
@@ -69,7 +69,10 @@ export const ViewChecklistMasterPage = () => {
       <div className="p-6">
         <div className="text-center py-8">
           {loading ? (
-            <p className="text-gray-500">Loading checklist details...</p>
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading checklist details...</span>
+            </div>
           ) : error ? (
             <p className="text-red-500">{error}</p>
           ) : (

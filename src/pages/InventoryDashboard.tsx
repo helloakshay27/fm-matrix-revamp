@@ -13,7 +13,10 @@ import {
   Eye,
   Plus,
   Package,
-  Settings,
+  Boxes,
+  BadgeCheck,
+  CircleSlash,
+  Leaf,
   Download,
   BarChart3,
   Pencil,
@@ -470,8 +473,8 @@ export const InventoryDashboard = () => {
     if (groupId) newFilters['q[pms_asset_pms_asset_group_id_eq]'] = groupId;
     if (subGroupId) newFilters['q[pms_asset_pms_asset_sub_group_id_eq]'] = subGroupId;
     setActiveFilters(newFilters);
-  // Changing filters via dialog shouldn't preselect any summary tile
-  setSelectedSummary(null);
+    // Changing filters via dialog shouldn't preselect any summary tile
+    setSelectedSummary(null);
     setLocalCurrentPage(1);
   };
 
@@ -815,11 +818,11 @@ export const InventoryDashboard = () => {
     if (term && term.trim()) {
       const nf = { 'q[name_cont]': term.trim() };
       setActiveFilters(nf);
-  setSelectedSummary(null);
+      setSelectedSummary(null);
       dispatch(fetchInventoryData({ page: 1, pageSize, filters: nf }));
     } else {
       setActiveFilters({});
-  setSelectedSummary(null);
+      setSelectedSummary(null);
       dispatch(fetchInventoryData({ page: 1, pageSize }));
     }
   };
@@ -898,7 +901,7 @@ export const InventoryDashboard = () => {
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
+
       // Create descriptive filename based on filters
       let filename = 'inventories';
       if (Object.keys(activeFilters).length > 0) {
@@ -908,14 +911,14 @@ export const InventoryDashboard = () => {
         filename += '_selected';
       }
       filename += '.xlsx';
-      
+
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-      
-      const message = Object.keys(activeFilters).length > 0 
+
+      const message = Object.keys(activeFilters).length > 0
         ? 'Filtered inventory data exported successfully'
         : 'Inventory data exported successfully';
       toast.success(message);
@@ -1121,7 +1124,7 @@ export const InventoryDashboard = () => {
     setShowFilter(false);
     setShowDateFilter(false);
     setActiveFilters({});
-  setSelectedSummary(null);
+    setSelectedSummary(null);
     setLocalCurrentPage(1);
     dispatch(fetchInventoryData({ page: 1, pageSize }));
   };
@@ -1230,7 +1233,7 @@ export const InventoryDashboard = () => {
                 title="Total Inventories"
                 value={baselineCounts.totalInventories}
                 selected={selectedSummary === 'total'}
-                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                icon={<Boxes className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
                 // selected={selectedSummary === 'total'}
                 onClick={() => {
                   setActiveFilters({});
@@ -1242,7 +1245,7 @@ export const InventoryDashboard = () => {
                 title="Active Inventory"
                 value={baselineCounts.activeCount}
                 selected={selectedSummary === 'active'}
-                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                icon={<BadgeCheck className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
                 // selected={selectedSummary === 'active'}
                 onClick={() => {
                   const nf = { 'q[active_eq]': true as any } as Record<string, string>;
@@ -1252,10 +1255,10 @@ export const InventoryDashboard = () => {
                 }}
               />
               <StatsCard
-                title="Inactive"
+                title="Inactive Inventory"
                 value={baselineCounts.inactiveCount}
                 selected={selectedSummary === 'inactive'}
-                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                icon={<CircleSlash className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
                 // selected={selectedSummary === 'inactive'}
                 onClick={() => {
                   const nf = { 'q[active_eq]': false as any } as Record<string, string>;
@@ -1279,6 +1282,7 @@ export const InventoryDashboard = () => {
                     }}
                   />
                 }
+
                 // selected={selectedSummary === 'green'}
                 onClick={() => {
                   const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;

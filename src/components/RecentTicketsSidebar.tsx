@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, RotateCcw } from 'lucide-react';
+import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, RotateCcw, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddCommentModal } from './AddCommentModal';
 import { useNavigate } from 'react-router-dom';
@@ -233,10 +233,11 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
     navigate(`details/${ticketId}`);
   };
   return <>
-      <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
+     <div className="w-full bg-[#fff] border-l p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
+
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-red-600 mb-2">
+          <h2 className="text-lg font-semibold mb-2" style={{ color: "#c72030" }}>
             Recent Tickets
           </h2>
           {/* <div className="text-sm font-medium text-gray-800">
@@ -252,7 +253,7 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
             const isCurrentlyGolden = goldenTickets.has(ticket.id.toString());
             console.log(`Ticket ${ticket.id} - API flagged: ${ticket.is_flagged}, localStorage flagged: ${isCurrentlyFlagged}, API golden: ${ticket.is_golden_ticket}, localStorage golden: ${isCurrentlyGolden}`);
             
-            return <div key={`${ticket.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" style={{ borderWidth: '0.6px' }}>
+            return <div key={`${ticket.id}-${index}`} className="bg-[#fff] rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" style={{ borderWidth: '0.6px' }}>
               {/* Header with ID, Star, and Priority */}
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-gray-800 text-sm">{ticket.ticketNumber}</span>
@@ -271,19 +272,26 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
                         : 'text-gray-400 hover:text-yellow-500'
                     }`} />
                   </button>
-                  <span className="bg-pink-300 text-pink-800 px-2 py-1 rounded text-xs font-medium">
-                    {ticket.priority}
-                  </span>
+                  <span
+  className="text-pink-800 px-6 py-1 rounded-full text-xs font-medium"
+  style={{ backgroundColor: "#FFCFCF" }}
+>
+  {ticket.priority}
+</span>
+
+
                 </div>
               </div>
               
               {/* Title and TAT */}
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900 text-base">{ticket.title}</h3>
-                <div className="flex items-center gap-1">
+                {/* <div className="flex items-center gap-1">
                   <span className="text-sm font-medium text-gray-700">TAT :</span>
-                  <span className="text-sm font-bold text-blue-600">"{ticket.tat}"</span>
-                </div>
+                  <span className="text-sm font-bold" style={{ color: "#c72030" }}>
+  {ticket.tat}
+</span>
+                </div> */}
               </div>
               
               {/* Details */}
@@ -300,6 +308,13 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
                   <span className="text-sm font-medium text-gray-700 min-w-[100px]">Sub-Category</span>
                   <span className="text-sm text-gray-700">:</span>
                   <span className="text-sm text-gray-900">{ticket.subCategory}</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Building2 className="h-4 w-4 text-red-500" />
+                  <span className="text-sm font-medium text-gray-700 min-w-[100px]">TAT :</span>
+                  <span className="text-sm text-gray-700">:</span>
+                  <span className="text-sm text-gray-900">{ticket.tat}</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
@@ -333,7 +348,7 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
               </div>
               
               {/* Action Buttons */}
-              <div className="flex items-center justify-between w-full">
+              {/* <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-6">
                   <button 
                     className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80" 
@@ -365,13 +380,61 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
                   </button>
                 </div>
                 
-                <button 
-                  className="text-blue-600 text-sm font-medium underline hover:text-blue-800" 
-                  onClick={() => handleViewDetails(ticket.id)}
-                >
-                  View Detail&gt;&gt;
-                </button>
-              </div>
+                <button
+  className="text-sm font-medium underline hover:opacity-80"
+  style={{ color: "#c72030" }}
+  onClick={() => handleViewDetails(ticket.id)}
+>
+  View Detail&gt;&gt;
+</button>
+
+              </div> */}
+<div className="flex items-center w-full">
+  {/* Left space or any content can go here if needed */}
+
+  {/* Buttons aligned to the right */}
+  <div className="flex items-center gap-3 ml-auto">
+   
+    
+  <button 
+                    type="button"
+                    className={`flex items-center text-black text-sm font-medium transition-all duration-200 hover:opacity-80 hover:scale-105 active:scale-95 ${
+                      flaggedTickets.has(ticket.id.toString()) ? 'opacity-75' : ''
+                    }`} 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleFlag(ticket.id);
+                    }}
+                  >
+                    <Flag className={`h-5 w-5 transition-all duration-200 ${
+                      flaggedTickets.has(ticket.id.toString()) 
+                        ? 'text-red-600 fill-red-600 drop-shadow-sm' 
+                        : 'text-red-500 hover:text-red-600 hover:fill-red-100'
+                    }`} />
+                    <span className="transition-colors duration-200">
+                      {flaggedTickets.has(ticket.id.toString()) ? '' : ''}
+                    </span>
+                  </button>
+<button 
+      className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80" 
+      onClick={() => handleAddComment(ticket.id)}
+    >
+      <MessageSquare className="h-5 w-5 " style={{ color: "#c72030" }}/>
+    </button>
+
+
+    {/* Eye icon at the very end */}
+    <button
+      className="hover:opacity-80"
+      onClick={() => handleViewDetails(ticket.id)}
+    >
+      <Eye className="w-5 h-5" style={{ color: "#c72030" }} />
+    </button>
+  </div>
+</div>
+
+
             </div>;
           })}
         </div>
@@ -382,4 +445,4 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
       ticketId: ''
     })} itemId={commentModal.ticketId} itemType="ticket" />
     </>;
-}
+} 
