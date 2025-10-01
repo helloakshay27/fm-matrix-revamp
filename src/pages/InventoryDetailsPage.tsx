@@ -679,7 +679,7 @@ export const InventoryDetailsPage = () => {
           </TabsList>
 
           <TabsContent value="inventory-detail" className="p-4 sm:p-6">
-            <div className="bg-white rounded-lg border">
+            <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
                   <Box className="w-6 h-6 text-[#C72030]" />
@@ -871,7 +871,7 @@ export const InventoryDetailsPage = () => {
           </TabsContent>
 
           <TabsContent value="history" className="p-4 sm:p-6">
-            <div className="bg-white rounded-lg border ">
+            <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
                   <Box className="w-6 h-6 text-[#C72030]" />
@@ -963,7 +963,7 @@ export const InventoryDetailsPage = () => {
           </TabsContent>
 
           <TabsContent value="qr-code" className="p-4 sm:p-6">
-            <div className=" border rounded-lg">
+            <div className=" border rounded-lg text-[15px]">
               <div className="flex items-center mb-4 p-4">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
                   <QrCode className="w-6 h-6 text-[#C72030]" />
@@ -1002,7 +1002,7 @@ export const InventoryDetailsPage = () => {
           </TabsContent>
 
           <TabsContent value="asset-information" className="p-4 sm:p-6">
-            <div className="bg-white rounded-lg border">
+            <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center ">
                 {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                   <Box className="w-4 h-4" />
