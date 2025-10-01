@@ -33,7 +33,7 @@ const columns: ColumnConfig[] = [
   { key: 'fixedStatus', label: 'Fixed Status', sortable: true, hideable: true, draggable: true },
   { key: 'mail', label: 'Mail', sortable: true, hideable: true, draggable: true },
   { key: 'sms', label: 'SMS', sortable: true, hideable: true, draggable: true },
-  { key: 'canCancel', label: 'Can Cancel', sortable: true, hideable: true, draggable: true },
+  { key: 'cancel', label: 'Can Cancel', sortable: true, hideable: true, draggable: true },
   { key: 'color', label: 'Color', sortable: true, hideable: true, draggable: true },
 ];
 
@@ -104,38 +104,40 @@ export const StatusSetupTable = () => {
     }
   };
 
-  const toggleCheckbox = (id: number, field: 'mail' | 'sms' | 'canCancel') => {
+  const toggleCheckbox = (id: number, field: 'mail' | 'sms' | 'cancel') => {
     setStatusItems(statusItems.map(item =>
       item.id === id ? { ...item, [field]: !item[field] } : item
     ));
   };
 
   const getStatusVariant = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'active':
-        return 'accepted';
-      case 'inactive':
-        return 'rejected';
-      case 'pending':
-        return 'pending';
+    switch (status.toLowerCase()) {
+      case "active":
+        return "bg-green-100";
+      case "inactive":
+        return "bg-red-100";
+      case "pending":
+        return "bg-yellow-100";
       default:
-        return 'pending';
+        return "bg-gray-100";
     }
   };
 
   const renderRow = (item: StatusItem) => ({
     order: item.position,
     status: (
-      <StatusBadge status={getStatusVariant(item.name)}>
+      <div className={`px-2 py-1 flex items-center gap-2 text-sm ${getStatusVariant(item.name)}`} style={{ borderRadius: '4px', justifyContent: 'center' }}>
+        <span className={`rounded-full w-2 h-2 inline-block ${item.name === "Inactive"
+          ? "bg-[#D92E14]"
+          : item.name === "Active"
+            ? "bg-[#16B364]"
+            : "bg-[#D9CA20]"
+          }`}></span>
         {item.name}
-      </StatusBadge>
+      </div>
     ),
     display: item.display,
-    fixedStatus: (
-      <select className="border rounded px-2 py-1 text-sm">
-        <option value={item.fixed_state}>{item.fixed_state}</option>
-      </select>
-    ),
+    fixedStatus: item.fixed_state.slice(0, 1).toUpperCase() + item.fixed_state.slice(1),
     mail: (
       <Checkbox
         checked={item.mail}
@@ -148,10 +150,10 @@ export const StatusSetupTable = () => {
         onCheckedChange={() => toggleCheckbox(item.id, 'sms')}
       />
     ),
-    canCancel: (
+    cancel: (
       <Checkbox
         checked={item.cancel}
-        onCheckedChange={() => toggleCheckbox(item.id, 'canCancel')}
+        onCheckedChange={() => toggleCheckbox(item.id, 'cancel')}
       />
     ),
     color: (
