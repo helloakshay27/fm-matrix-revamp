@@ -2,16 +2,10 @@ import AddProjectModal from "@/components/AddProjectModal";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import ProjectCreateModal from "@/components/ProjectCreateModal";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { fetchProjects } from "@/store/slices/projectManagementSlice";
+import { createProject, fetchProjects } from "@/store/slices/projectManagementSlice";
+import { MenuItem, Select, TextField } from "@mui/material";
 import {
   ChartNoAxesColumn,
   ChevronDown,
@@ -22,6 +16,11 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
+import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
+import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
+import { toast } from "sonner";
 
 const columns: ColumnConfig[] = [
   {
@@ -108,7 +107,9 @@ const transformedProjects = (projects: any) => {
     return {
       id: project.id,
       title: project.title,
-      status: project.status,
+      status: project.status
+        ? project.status.charAt(0).toUpperCase() + project.status.slice(1)
+        : "",
       type: project.project_type_name,
       manager: project.project_owner_name,
       milestones: project.total_milestone_count,
@@ -119,7 +120,9 @@ const transformedProjects = (projects: any) => {
       resolvedIssues: project.completed_issues_count,
       start_date: project.start_date,
       end_date: project.end_date,
-      priority: project.priority,
+      priority: project.priority
+        ? project.priority.charAt(0).toUpperCase() + project.priority.slice(1)
+        : "",
     };
   });
 };
@@ -135,30 +138,73 @@ export const ProjectsDashboard = () => {
   const [openFormDialog, setOpenFormDialog] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedView, setSelectedView] = useState("List");
-  const [formData, setFormData] = useState({
-    title: "",
-    status: "",
-    type: "",
-    manager: "",
-    start_date: "",
-    end_date: "",
-    priority: "",
-  });
+  const [projectTypes, setProjectTypes] = useState([]);
+  const [owners, setOwners] = useState([])
+  const [teams, setTeams] = useState([])
+  const [tags, setTags] = useState([])
+
+  const fetchData = async () => {
+    try {
+      const response = await dispatch(
+        fetchProjects({ token, baseUrl })
+      ).unwrap();
+      setProjects(transformedProjects(response));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await dispatch(
-          fetchProjects({ token, baseUrl })
-        ).unwrap();
-        setProjects(transformedProjects(response));
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
     fetchData();
   }, [dispatch, token, baseUrl]);
+
+  const getOwners = async () => {
+    try {
+      const response = await dispatch(fetchFMUsers()).unwrap();
+      setOwners(response.users);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  const getTeams = async () => {
+    try {
+      const response = await dispatch(fetchProjectTeams({ baseUrl, token })).unwrap();
+      setTeams(response);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  const getProjectTypes = async () => {
+    try {
+      const response = await dispatch(fetchProjectTypes({ baseUrl, token })).unwrap();
+      setProjectTypes(response);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  const getTags = async () => {
+    try {
+      const response = await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
+      setTags(response);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  useEffect(() => {
+    getOwners();
+    getTeams();
+    getProjectTypes();
+    getTags();
+  }, [])
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -166,26 +212,29 @@ export const ProjectsDashboard = () => {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setFormData({
-      title: "",
-      status: "",
-      type: "",
-      manager: "",
-      start_date: "",
-      end_date: "",
-      priority: "",
-    });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = () => {
-    // Handle form submission (e.g., dispatch an action to add the project)
-    console.log("Form submitted:", formData);
-    handleCloseDialog();
+  const handleSubmit = async (data) => {
+    try {
+      const payload = {
+        project_management: {
+          title: data.title,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          status: "active",
+          owner_id: data.manager,
+          priority: data.priority,
+          active: true,
+          project_type_id: data.type,
+        },
+      }
+      await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
+      toast.success("Project created successfully");
+      fetchData();
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
   };
 
   const renderActions = (item: any) => (
@@ -262,6 +311,111 @@ export const ProjectsDashboard = () => {
     </>
   );
 
+  const renderEditableCell = (columnKey, value, onChange) => {
+    if (columnKey === "status") {
+      return (
+        <Select
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          displayEmpty
+          size="small"
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="">
+            <em>Select status</em>
+          </MenuItem>
+          <MenuItem value="active">Active</MenuItem>
+          <MenuItem value="inactive">Inactive</MenuItem>
+        </Select>
+      );
+    }
+    if (columnKey === "type") {
+      return (
+        <Select
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          displayEmpty
+          size="small"
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="">
+            <em>Select type</em>
+          </MenuItem>
+          {
+            projectTypes.map((projectType) => (
+              <MenuItem key={projectType.id} value={projectType.id}>
+                {projectType.name}
+              </MenuItem>
+            ))
+          }
+        </Select>
+      );
+    }
+    if (columnKey === "manager") {
+      return (
+        <Select
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          displayEmpty
+          size="small"
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="">
+            <em>Select owner</em>
+          </MenuItem>
+          {
+            owners.map((owner) => (
+              <MenuItem key={owner.id} value={owner.id}>
+                {owner.full_name}
+              </MenuItem>
+            ))
+          }
+        </Select>
+      );
+    }
+    if (columnKey === "start_date") {
+      return (
+        <TextField
+          type="date"
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          size="small"
+          sx={{ minWidth: 120 }}
+        />
+      );
+    }
+    if (columnKey === "end_date") {
+      return (
+        <TextField
+          type="date"
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          size="small"
+          sx={{ minWidth: 120 }}
+        />
+      );
+    }
+    if (columnKey === "priority") {
+      return (
+        <Select
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          displayEmpty
+          size="small"
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="">
+            <em>Select priority</em>
+          </MenuItem>
+          <MenuItem value="high">High</MenuItem>
+          <MenuItem value="medium">Medium</MenuItem>
+          <MenuItem value="low">Low</MenuItem>
+        </Select>
+      );
+    }
+    return null;
+  }
+
   const rightActions = (
     <div className="relative">
       <button
@@ -327,24 +481,9 @@ export const ProjectsDashboard = () => {
         canAddRow={true}
         readonlyColumns={["id"]}
         onAddRow={(newRowData) => {
-          console.log("New row data:", newRowData);
+          handleSubmit(newRowData)
         }}
-        renderEditableCell={(columnKey, value, onChange) => {
-          if (columnKey === "status") {
-            return (
-              <Select value={value} onValueChange={onChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            );
-          }
-          return null;
-        }}
+        renderEditableCell={renderEditableCell}
         newRowPlaceholder="Click to add new project"
       />
 
@@ -357,6 +496,10 @@ export const ProjectsDashboard = () => {
       <ProjectCreateModal
         openDialog={openFormDialog}
         handleCloseDialog={() => setOpenFormDialog(false)}
+        owners={owners}
+        projectTypes={projectTypes}
+        tags={tags}
+        teams={teams}
       />
     </div>
   );

@@ -2,10 +2,30 @@ import { Button } from '@/components/ui/button'
 import MilestoneBody from '../components/MilestoneBody'
 import { Plus } from 'lucide-react'
 import AddMilestoneModal from '@/components/AddMilestoneModal'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useAppDispatch } from '@/store/hooks'
+import { fetchFMUsers } from '@/store/slices/fmUserSlice'
+import { toast } from 'sonner'
 
 const ProjectMilestones = () => {
+    const dispatch = useAppDispatch();
+
     const [openDialog, setOpenDialog] = useState(false)
+    const [owners, setOwners] = useState([])
+
+    const getOwners = async () => {
+        try {
+            const response = await dispatch(fetchFMUsers()).unwrap();
+            setOwners(response.users);
+        } catch (error) {
+            console.log(error)
+            toast.error(error)
+        }
+    }
+
+    useEffect(() => {
+        getOwners()
+    }, [])
 
     return (
         <div className='py-6'>
@@ -23,7 +43,7 @@ const ProjectMilestones = () => {
             <AddMilestoneModal
                 openDialog={openDialog}
                 handleCloseDialog={() => setOpenDialog(false)}
-                handleSubmit={() => { }}
+                owners={owners}
             />
         </div>
     )

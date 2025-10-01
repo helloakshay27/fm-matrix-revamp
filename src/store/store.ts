@@ -74,6 +74,7 @@ import { createProjectTypesReducer, fetchProjectTypesReducer, updateProjectTypes
 import { createProjectsTagsReducer, fetchProjectsTagsReducer, updateProjectsTagsReducer } from './slices/projectTagSlice'
 import { createProjectStatusesReducer, fetchProjectStatusesReducer, updateProjectStatusesReducer } from './slices/projectStatusSlice'
 import { createProjectGroupsReducer, fetchProjectGroupsReducer, updateProjectGroupsReducer } from './slices/projectGroupSlice'
+import { createMilestoneReducer } from './slices/projectMilestoneSlice'
 
 export const store = configureStore({
   reducer: {
@@ -312,6 +313,9 @@ export const store = configureStore({
     // Projects Management
     fetchProjects: fetchProjectsReducer,
     createProject: createProjectReducer,
+
+    // Project Milestones
+    createMilestone: createMilestoneReducer,
 
     // Project roles
     fetchProjectRoles: fetchProjectRolesReducer,

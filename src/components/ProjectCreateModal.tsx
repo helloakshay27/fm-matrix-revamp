@@ -15,10 +15,6 @@ import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { createProject } from "@/store/slices/projectManagementSlice";
-import { fetchFMUsers } from "@/store/slices/fmUserSlice";
-import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
-import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
-import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -34,15 +30,11 @@ const fieldStyles = {
     },
 };
 
-const ProjectCreateModal = ({ openDialog, handleCloseDialog }) => {
+const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, projectTypes, tags }) => {
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
 
-    const [projectTypes, setProjectTypes] = useState([]);
-    const [owners, setOwners] = useState([])
-    const [teams, setTeams] = useState([])
-    const [tags, setTags] = useState([])
     const [formData, setFormData] = useState({
         title: "",
         isChannel: false,
@@ -57,53 +49,6 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog }) => {
         priority: "",
         tags: []
     });
-
-    const getOwners = async () => {
-        try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            setOwners(response.users);
-        } catch (error) {
-            console.log(error)
-            toast.error(error)
-        }
-    }
-
-    const getTeams = async () => {
-        try {
-            const response = await dispatch(fetchProjectTeams({ baseUrl, token })).unwrap();
-            setTeams(response);
-        } catch (error) {
-            console.log(error)
-            toast.error(error)
-        }
-    }
-
-    const getProjectTypes = async () => {
-        try {
-            const response = await dispatch(fetchProjectTypes({ baseUrl, token })).unwrap();
-            setProjectTypes(response);
-        } catch (error) {
-            console.log(error)
-            toast.error(error)
-        }
-    }
-
-    const getTags = async () => {
-        try {
-            const response = await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
-            setTags(response);
-        } catch (error) {
-            console.log(error)
-            toast.error(error)
-        }
-    }
-
-    useEffect(() => {
-        getOwners();
-        getTeams();
-        getProjectTypes();
-        getTags();
-    }, [])
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;

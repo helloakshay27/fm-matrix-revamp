@@ -33,7 +33,8 @@ export const createProject = createAsyncThunk(
             const message = error.response?.data?.error || error.error || 'Failed to create project'
             return rejectWithValue(message)
         }
-    })
+    }
+)
 
 const fetchProjectsSlice = createApiSlice("fetchProjects", fetchProjects);
 const createProjectSlice = createApiSlice("createProject", createProject);
