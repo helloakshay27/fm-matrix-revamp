@@ -464,10 +464,10 @@ export const IncidentDetailsPage = () => {
                 value={incident.support_required ? "Yes" : "No"}
               />
             )}
-            {incident.first_aid_provided !== undefined && (
+            {incident.incident_detail?.first_aid_provided_employees !== undefined && (
               <Field
                 label="First Aid Provided by Employees?"
-                value={incident.first_aid_provided}
+                value={incident.incident_detail.first_aid_provided_employees ? "Yes" : "No"}
               />
             )}
             {incident.incident_detail?.name_first_aid_attendants && (
@@ -476,12 +476,19 @@ export const IncidentDetailsPage = () => {
                 value={incident.incident_detail.name_first_aid_attendants}
               />
             )}
-            {incident.sent_for_medical_treatment !== undefined && (
+            {incident.incident_detail?.sent_for_medical_treatment !== undefined && (
               <Field
                 label="Sent for Medical Treatment"
-                value={incident.sent_for_medical_treatment ? "Yes" : "No"}
+                value={
+                  incident.incident_detail.sent_for_medical_treatment === true
+                    ? "Yes"
+                    : incident.incident_detail.sent_for_medical_treatment === false
+                      ? "No"
+                      : "-"
+                }
               />
             )}
+
             {incident.incident_detail?.name_and_address_treatment_facility && (
               <Field
                 label="Name and Address of Treatment Facility"

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ANALYTICS_PALETTE } from '@/styles/chartPalette';
 import { Button } from '@/components/ui/button';
 import { Download, MapPin, ChevronRight, ChevronDown, Building2, Home, Map } from 'lucide-react';
 import { AMCLocationCoverageNode } from '@/services/amcAnalyticsAPI';
@@ -28,13 +29,13 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
     const l = String(level || '').toLowerCase();
     switch (l) {
       case 'site':
-        return <Building2 className="w-4 h-4 text-blue-600" />;
+  return <Building2 className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[3] }} />;
       case 'building':
-        return <Home className="w-4 h-4 text-green-600" />;
+  return <Home className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[0] }} />;
       case 'floor':
-        return <Map className="w-4 h-4 text-purple-600" />;
+  return <Map className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[1] }} />;
       default:
-        return <MapPin className="w-4 h-4 text-gray-600" />;
+  return <MapPin className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[2] }} />;
     }
   };
 
@@ -122,8 +123,8 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
     <Card className="h-full flex flex-col">
       <CardHeader className="flex-shrink-0 pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-blue-600" />
+          <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-[#C72030]" />
             Coverage by Location
           </CardTitle>
           <Button
@@ -142,36 +143,36 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
       <CardContent className="flex-1 flex flex-col overflow-hidden">
         {/* Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 p-3 rounded-lg">
+          <div className="p-3 rounded-lg" style={{ background: '#f5f4f1' }}>
             <div className="flex items-center gap-2 mb-1">
-              <Building2 className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Locations</span>
+              <Building2 className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[3] }} />
+              <span className="text-sm font-medium text-black">Locations</span>
             </div>
-            <div className="text-2xl font-bold text-blue-900">{totalLocations}</div>
+            <div className="text-2xl font-bold text-black">{totalLocations}</div>
           </div>
           
-          <div className="bg-gray-50 p-3 rounded-lg">
+          <div className="p-3 rounded-lg" style={{ background: '#f0f2f2' }}>
             <div className="flex items-center gap-2 mb-1">
-              <Home className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-800">Total Assets</span>
+              <Home className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[0] }} />
+              <span className="text-sm font-medium text-black">Total Assets</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{totalAssets}</div>
+            <div className="text-2xl font-bold text-black">{totalAssets}</div>
           </div>
           
-          <div className="bg-green-50 p-3 rounded-lg">
+          <div className="p-3 rounded-lg" style={{ background: '#f6f0f0' }}>
             <div className="flex items-center gap-2 mb-1">
-              <MapPin className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">Under AMC</span>
+              <MapPin className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[2] }} />
+              <span className="text-sm font-medium text-black">Under AMC</span>
             </div>
-            <div className="text-2xl font-bold text-green-900">{totalAssetsUnderAMC}</div>
+            <div className="text-2xl font-bold text-black">{totalAssetsUnderAMC}</div>
           </div>
           
-          <div className="bg-purple-50 p-3 rounded-lg">
+          <div className="p-3 rounded-lg" style={{ background: '#edeae4' }}>
             <div className="flex items-center gap-2 mb-1">
-              <Map className="w-4 h-4 text-purple-600" />
-              <span className="text-sm font-medium text-purple-800">Coverage</span>
+              <Map className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[1] }} />
+              <span className="text-sm font-medium text-black">Coverage</span>
             </div>
-            <div className="text-2xl font-bold text-purple-900">{overallCoverage.toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-black">{overallCoverage.toFixed(1)}%</div>
           </div>
         </div>
 

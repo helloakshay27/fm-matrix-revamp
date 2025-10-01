@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ITEM_STATUS_COLORS, ANALYTICS_PALETTE, CATEGORY_BAR_COLOR, LINE_CHART_COLORS, getPaletteColor } from '@/styles/chartPalette';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList, LineChart, Line, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
@@ -214,8 +215,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 48 }} barCategoryGap={20}>
                   <defs>
                     <linearGradient id="invCostBar" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#E84A4A" />
-                      <stop offset="100%" stopColor="#C72030" />
+                      <stop offset="0%" stopColor={ANALYTICS_PALETTE[2]} />
+                      <stop offset="100%" stopColor={ANALYTICS_PALETTE[3]} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -392,11 +393,14 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
 
       case 'itemsStatus': {
         // Convert status data to chart format with safe fallbacks
+        // Updated color palette as requested:
+        // #C4B89D, #D5DBDB, #E4626F, #C4AE9D
+        // Mapped in order: Active, Inactive, Critical, Non-Critical
         const statusChartData = [
-          { name: 'Active', value: Number(data?.count_of_active_items) || 0, color: '#22C55E' },
-          { name: 'Inactive', value: Number(data?.count_of_inactive_items) || 0, color: '#EF4444' },
-          { name: 'Critical', value: Number(data?.count_of_critical_items) || 0, color: '#F97316' },
-          { name: 'Non-Critical', value: Number(data?.count_of_non_critical_items) || 0, color: '#3B82F6' }
+          { name: 'Active', value: Number(data?.count_of_active_items) || 0, color: ITEM_STATUS_COLORS.active },
+          { name: 'Inactive', value: Number(data?.count_of_inactive_items) || 0, color: ITEM_STATUS_COLORS.inactive },
+          { name: 'Critical', value: Number(data?.count_of_critical_items) || 0, color: ITEM_STATUS_COLORS.critical },
+            { name: 'Non-Critical', value: Number(data?.count_of_non_critical_items) || 0, color: ITEM_STATUS_COLORS.nonCritical }
         ];
         const total = statusChartData.reduce((sum, item) => sum + (item.value || 0), 0);
         const withPct = statusChartData.map((s) => ({
@@ -486,13 +490,13 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                   }}
                 />
                 <Tooltip />
-                <Bar dataKey="item_count" fill="#3B82F6" />
+                <Bar dataKey="item_count" fill={CATEGORY_BAR_COLOR} />
               </BarChart>
             </ResponsiveContainer>
             <div className="flex justify-center gap-6 mt-4 flex-wrap">
               {categoryData.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#3B82F6' }}></div>
+                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: CATEGORY_BAR_COLOR }}></div>
                   <span className="text-sm font-medium text-gray-700">{item.group_name}: {item.item_count}</span>
                 </div>
               ))}
@@ -659,14 +663,14 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         return (
           <div className="w-full h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartRows} margin={{ top: 10, right: 30, left: 10, bottom: 50 }}>
+              <LineChart data={chartRows} margin={{ top: 10, right: 30, left: 50, bottom: 50 }}>
                 <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
                 <XAxis dataKey="product" angle={-30} textAnchor="end" interval={0} height={70} tick={{ fontSize: 12, fill: '#374151' }} />
-                <YAxis domain={yDomainNG} allowDecimals={false} tick={{ fontSize: 12, fill: '#374151' }} label={{ value: 'Stock', angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }} />
+                <YAxis width={80} domain={yDomainNG} allowDecimals={false} tick={{ fontSize: 12, fill: '#374151' }} label={{ value: 'Stock', angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }} />
                 <Tooltip formatter={(v:number) => v} cursor={{ stroke: '#9ca3af', strokeDasharray: '4 4' }} />
                 <Legend verticalAlign="bottom" align="center" height={32} iconType="square" wrapperStyle={{ paddingTop: 12 }} />
-                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke="#C72030" strokeWidth={2} dot={{ r: 4, fill: '#C72030', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabelNG} />
-                <Line type="monotone" dataKey="current" name="Current Stock" stroke="#000000" strokeWidth={2} dot={{ r: 5, fill: '#000000', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabelNG} />
+                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke={LINE_CHART_COLORS.minimum} strokeWidth={2} dot={{ r: 4, fill: LINE_CHART_COLORS.minimum, stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabelNG} />
+                <Line type="monotone" dataKey="current" name="Current Stock" stroke={LINE_CHART_COLORS.current} strokeWidth={2} dot={{ r: 5, fill: LINE_CHART_COLORS.current, stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabelNG} />
               </LineChart>
             </ResponsiveContainer>
             {!hasValues && (
@@ -710,15 +714,14 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         return (
           <div className="w-full h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartRows} margin={{ top: 10, right: 30, left: 10, bottom: 50 }}>
+              <LineChart data={chartRows} margin={{ top: 10, right: 30, left: 50, bottom: 50 }}>
                 <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
                 <XAxis dataKey="product" angle={-30} textAnchor="end" interval={0} height={70} tick={{ fontSize: 12, fill: '#374151' }} />
-                <YAxis domain={yDomain} allowDecimals={false} tick={{ fontSize: 12, fill: '#374151' }} label={{ value: 'Stock', angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }} />
+                <YAxis width={80} domain={yDomain} allowDecimals={false} tick={{ fontSize: 12, fill: '#374151' }} label={{ value: 'Stock', angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }} />
                 <Tooltip formatter={(v:number) => v} cursor={{ stroke: '#9ca3af', strokeDasharray: '4 4' }} />
                 <Legend verticalAlign="bottom" align="center" height={32} iconType="square" wrapperStyle={{ paddingTop: 12 }} />
-                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke="#C72030" strokeWidth={2} dot={{ r: 4, fill: '#C72030', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabel} />
-                {/* Match Non-Green UI: use black current line and larger dots */}
-                <Line type="monotone" dataKey="current" name="Current Stock" stroke="#000000" strokeWidth={2} dot={{ r: 5, fill: '#000000', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabel} />
+                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke={LINE_CHART_COLORS.minimum} strokeWidth={2} dot={{ r: 4, fill: LINE_CHART_COLORS.minimum, stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabel} />
+                <Line type="monotone" dataKey="current" name="Current Stock" stroke={LINE_CHART_COLORS.current} strokeWidth={2} dot={{ r: 5, fill: LINE_CHART_COLORS.current, stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabel} />
               </LineChart>
             </ResponsiveContainer>
             {!hasValues && (
