@@ -1,7 +1,9 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, memo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// MUI components for revamped Filter dialog
+import { Box, Typography, FormControl, InputLabel, Select as MUISelect, MenuItem, TextField } from '@mui/material';
 import { Plus, Eye, Trash2, BarChart3, Download, Settings, Flag, Filter, Pencil } from 'lucide-react';
 import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
 import { amcAnalyticsAPI, AMCStatusData, AMCStatusSummary, AMCTypeDistribution, AMCExpiryAnalysis, AMCServiceTrackingLog, AMCVendorPerformance, AMCComplianceReport, AMCUnitResourceData, AMCServiceStatsData, AMCLocationCoverageNode } from '@/services/amcAnalyticsAPI';
@@ -34,14 +36,8 @@ import {
 } from '@/components/ui/pagination';
 import axios from 'axios';
 import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
+// Replaced shadcn Dialog with MUI Dialog for Filter modal
+import { Dialog as MUIDialog, DialogContent as MUIDialogContent, DialogActions as MUIDialogActions, IconButton } from '@mui/material';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -138,6 +134,9 @@ const columns: ColumnConfig[] = [
 ];
 
 export const AMCDashboard = () => {
+  // Ref for anchoring MUI Select menus inside filter dialog
+  const filterDialogRef = useRef<HTMLDivElement | null>(null);
+  const amcTypeControlRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
@@ -358,7 +357,10 @@ export const AMCDashboard = () => {
         })),
       };
       dispatch(fetchAMCData.fulfilled(mappedData, 'fetchAMCData', undefined));
-      setCurrentPage(fetchedData.pagination.current_page);
+      // Only adjust currentPage if server corrected an out-of-range request
+      if (fetchedData.pagination && fetchedData.pagination.current_page !== page) {
+        setCurrentPage(fetchedData.pagination.current_page);
+      }
     } catch (error) {
       console.error('Error fetching AMC data:', error);
       dispatch(fetchAMCData.rejected(error as any, 'fetchAMCData', undefined));
@@ -892,8 +894,8 @@ export const AMCDashboard = () => {
   };
 
   const handlePageChange = (page: number) => {
+    // Just update state; effect will fetch. Avoid double-fetch race.
     setCurrentPage(page);
-    fetchFilteredAMCs(filter, page, isExpiringFilterActive ? formatDateForAPI(new Date(new Date().setDate(new Date().getDate() + 90))) : undefined, debouncedSearchQuery);
   };
 
   const statusData = [
@@ -1326,86 +1328,108 @@ export const AMCDashboard = () => {
           </TabsContent>
         </Tabs>
 
-        <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Filter AMCs</DialogTitle>
-              <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+        <MUIDialog
+          open={isFilterModalOpen}
+          onClose={() => setIsFilterModalOpen(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: '5px', overflow: 'hidden' } }}
+        >
+          <MUIDialogContent sx={{ p: 0 }}>
+            <div className="p-6" ref={filterDialogRef}>
+              <div className="flex items-start justify-between mb-6">
+                <Typography variant="h6" className="!text-[20px] font-extrabold text-[#0f172a]">
+                  FILTER BY
+                </Typography>
+                <IconButton
+                  aria-label="close"
+                  size="small" 
+                  onClick={() => setIsFilterModalOpen(false)}
+                  sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </DialogClose>
-            </DialogHeader>
-
-            <div className="grid gap-4 py-4">
-              <Label htmlFor="amc-type" className="text-left">
-                AMC Type
-              </Label>
-              <div className="grid grid-cols-4 items-center gap-4 w-full">
-                <Select
-                  value={tempAmcTypeFilter || 'all'}
-                  onValueChange={(value) => setTempAmcTypeFilter(value === 'all' ? null : value)}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select AMC Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    {["Asset", "Service"].map((type) => (
-                      <SelectItem key={String(type)} value={String(type)}>
-                        {String(type)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </IconButton>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <Box className="space-y-10">
                 <div>
-                  <Label htmlFor="start-date">Start Date</Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    value={tempStartDateFilter || ''}
-                    onChange={(e) => setTempStartDateFilter(e.target.value || null)}
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <div>
+                      <FormControl fullWidth size="small" ref={amcTypeControlRef}>
+                        <InputLabel id="amc-type-label">AMC Type</InputLabel>
+                        <MUISelect
+                          labelId="amc-type-label"
+                          label="AMC Type"
+                          value={tempAmcTypeFilter || 'all'}
+                          onChange={(e) => setTempAmcTypeFilter(e.target.value === 'all' ? null : e.target.value as string)}
+                          sx={{ '& .MuiSelect-select': { display: 'flex', alignItems: 'center' } }}
+                          MenuProps={{
+                            PaperProps: { sx: { mt: 0.5, borderRadius: '10px', boxShadow: '0 6px 18px rgba(0,0,0,0.18)', minWidth: amcTypeControlRef.current?.offsetWidth } },
+                          }}
+                        >
+                          <MenuItem value="all">All Types</MenuItem>
+                          <MenuItem value="Asset">Asset</MenuItem>
+                          <MenuItem value="Service">Service</MenuItem>
+                        </MUISelect>
+                      </FormControl>
+                    </div>
+                    <div>
+                      <TextField
+                        label="Start Date"
+                        type="date"
+                        size="small"
+                        fullWidth
+                        value={tempStartDateFilter || ''}
+                        onChange={(e) => setTempStartDateFilter(e.target.value || null)}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                    <div>
+                      <TextField
+                        label="End Date"
+                        type="date"
+                        size="small"
+                        fullWidth
+                        value={tempEndDateFilter || ''}
+                        onChange={(e) => setTempEndDateFilter(e.target.value || null)}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="end-date">End Date</Label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    value={tempEndDateFilter || ''}
-                    onChange={(e) => setTempEndDateFilter(e.target.value || null)}
-                  />
-                </div>
+              </Box>
+
+              <div className="flex justify-end gap-4 mt-12 pt-6 border-t">
+                <Button
+                  variant="outline"
+                  onClick={handleResetFilters}
+                  className="h-11 px-6 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/5"
+                >
+                  Clear All
+                </Button>
+                <Button
+                  onClick={handleApplyFilters}
+                  className="h-11 px-6 bg-[#C72030] hover:bg-[#a81c29] text-white"
+                >
+                  Apply Filter
+                </Button>
               </div>
             </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={handleResetFilters}>
-                Reset
-              </Button>
-              <Button
-                onClick={handleApplyFilters}
-                className="bg-[#C72030] hover:bg-[#C72030]/90"
-              >
-                Apply
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </MUIDialogContent>
+        </MUIDialog>
 
         <AMCAnalyticsFilterDialog
           isOpen={isAnalyticsFilterOpen}
