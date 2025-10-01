@@ -292,6 +292,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
             '& .MuiOutlinedInput-root': {
               borderRadius: '0.5rem',
             },
+            ...(isViSite && {
+              '& .MuiOutlinedInput-input': {
+                fontSize: '16px',
+              },
+            }),
           }}
           fullWidth
         />
@@ -326,9 +331,17 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         >
           <ArrowLeft size={20} />
         </Button>
-        <h2 className="text-xl font-semibold text-white ml-2">
-          Select Organization
-        </h2>
+
+        {isViSite ? (
+          <h2 className="text-sm font-semibold text-white ml-2 tracking-tight">
+            Select Organization
+          </h2>
+        ) : (
+          <h2 className="text-xl font-semibold text-white ml-2">
+            Select Organization
+          </h2>
+        )}
+
       </div>
       <p className="text-black-400 text-sm mb-6">
         Email: <span className="text-black-300">{email}</span>
@@ -591,7 +604,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
 
 
-              <p className="text-gray-600 text-sm font-medium">
+              <p className={`${isViSite ? 'text-gray-800 text-base sm:text-lg font-semibold tracking-tight' : 'text-gray-600 text-sm font-medium'}`}>
                 Sign in to your account
               </p>
             </div>
