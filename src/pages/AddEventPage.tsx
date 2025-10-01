@@ -58,7 +58,7 @@ export const AddEventPage = () => {
     const fetchUsers = async () => {
       try {
         const response = await dispatch(fetchFMUsers()).unwrap();
-        setUsers(response.fm_users);
+        setUsers(response.users);
       } catch (error) {
         console.log(error);
         toast.error("Failed to fetch users")
@@ -566,7 +566,7 @@ export const AddEventPage = () => {
                     {
                       users.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
-                          {user.firstname + " " + user.lastname}
+                          {user.full_name}
                         </MenuItem>
                       ))
                     }

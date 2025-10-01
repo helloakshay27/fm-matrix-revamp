@@ -52,7 +52,7 @@ const AddPollPage = () => {
     const fetchUsers = async () => {
       try {
         const response = await dispatch(fetchFMUsers()).unwrap();
-        setUsers(response.fm_users);
+        setUsers(response.users);
       } catch (error) {
         console.log(error);
       }
@@ -404,7 +404,7 @@ const AddPollPage = () => {
                                 />
                               </ListItemIcon>
                               <ListItemText
-                                primary={user.firstname + ' ' + user.lastname}
+                                primary={user.full_name}
                                 secondary={user.email}
                               />
                             </ListItemButton>
@@ -423,7 +423,7 @@ const AddPollPage = () => {
                             return user ? (
                               <Chip
                                 key={userId}
-                                label={user.firstname + ' ' + user.lastname}
+                                label={user.full_name}
                                 size="small"
                                 onDelete={() => handleUserSelection(userId)}
                                 sx={{
