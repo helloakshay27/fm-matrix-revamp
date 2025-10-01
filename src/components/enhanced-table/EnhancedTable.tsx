@@ -748,6 +748,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { Search, Download, Loader2, Grid3x3, Plus, X, Filter, Check, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAuthHeader, API_CONFIG } from '@/config/apiConfig';
+import { TextField } from '@mui/material';
 
 // Excel export utility function
 const exportToExcel = <T extends Record<string, any>>(
@@ -1187,12 +1188,17 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
 
     return (
-      <Input
-        value={value || ''}
+      <TextField
+        value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={`Enter ${columns.find(col => col.key === columnKey)?.label || columnKey}`}
-        className="w-full"
-        autoFocus={columnKey === visibleColumns.find(col => !readonlyColumns.includes(col.key))?.key}
+        placeholder={`Enter ${columns.find((col) => col.key === columnKey)?.label || columnKey
+          }`}
+        fullWidth
+        size="small"
+        autoFocus={
+          columnKey ===
+          visibleColumns.find((col) => !readonlyColumns.includes(col.key))?.key
+        }
       />
     );
   };

@@ -479,7 +479,7 @@ export const ProjectsDashboard = () => {
         storageKey="projects-table"
         onFilterClick={() => { }}
         canAddRow={true}
-        readonlyColumns={["id"]}
+        readonlyColumns={["id", "milestones", "tasks", "issues"]}
         onAddRow={(newRowData) => {
           handleSubmit(newRowData)
         }}
