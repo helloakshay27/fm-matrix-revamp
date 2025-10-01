@@ -333,7 +333,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         </Button>
 
         {isViSite ? (
-          <h2 className="text-sm font-semibold text-white ml-2 tracking-tight">
+          <h2 className="text-sm font-semibold text-black ml-2 tracking-tight">
             Select Organization
           </h2>
         ) : (
