@@ -17,6 +17,7 @@ import {
   PaginationEllipsis,
 } from '@/components/ui/pagination';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 // Define your API base URL here or import it from your config/environment
 const API_BASE_URL = API_CONFIG.BASE_URL;
@@ -331,14 +332,6 @@ export const GatePassInwardsDashboard = () => {
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
-      {loading ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto"></div>
-            <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
-          </div>
-        </div>
-      ) : (
         <EnhancedTable
           data={dataWithIndex}
           columns={columns}
@@ -352,12 +345,12 @@ export const GatePassInwardsDashboard = () => {
           searchPlaceholder="Search inward entries..."
           exportFileName="inward-gate-pass-entries"
           leftActions={renderActionButton()}
-          // selectable={true}
+          loading={loading}
+          loadingMessage="Loading inward entries..."
           selectedItems={selectedItems}
           onSelectItem={(id, checked) => setSelectedItems(checked ? [...selectedItems, id] : selectedItems.filter(i => i !== id))}
           onSelectAll={checked => setSelectedItems(checked ? dataWithIndex.map(d => d.id) : [])}
         />
-      )}
       {/* Pagination UI */}
       {totalPages > 1 && (
         <div className="mt-6">
