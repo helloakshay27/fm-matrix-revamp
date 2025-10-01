@@ -26,6 +26,7 @@ import { apiClient } from '@/utils/apiClient';
 import { toast, Toaster } from "sonner";
 import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import axios from 'axios';
+import { Loader2 } from 'lucide-react';
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
@@ -755,27 +756,6 @@ export const ScheduleListDashboard = () => {
         />
       )}
 
-      {isLoading ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto"></div>
-            <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
-          </div>
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center max-w-md">
-            <p className="text-sm text-red-600 mb-2">Error loading schedules</p>
-            <p className="text-xs text-gray-500 mb-3">{error instanceof Error ? error.message : 'Unknown error'}</p>
-            <button
-              onClick={() => refetch()}
-              className="mt-2 px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      ) : (
         <>
           <EnhancedTable
             data={schedules}
@@ -791,6 +771,7 @@ export const ScheduleListDashboard = () => {
             onFilterClick={() => setShowFilterDialog(true)}
             onExport={handleScheduleExport}
             loading={isLoading}
+            loadingMessage="Loading schedules..."
           />
 
           {/* Pagination */}
@@ -840,7 +821,7 @@ export const ScheduleListDashboard = () => {
             </div>
           )}
         </>
-      )}
+      
     </div>
   );
 

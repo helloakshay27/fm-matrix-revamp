@@ -433,6 +433,14 @@ export const MobileSurveyLanding: React.FC = () => {
       case "rating": {
         answerData.rating = rating || selectedRating;
         answerData.value = rating || selectedRating;
+        // attach dynamic label from API if available
+        const dynamicLabel = getRatingLabel(
+          currentQuestion,
+          (rating || selectedRating) as number
+        );
+        if (dynamicLabel) {
+          answerData.label = dynamicLabel;
+        }
         // Use provided tags parameter or current selectedTags state
         const ratingTags =
           tags || (selectedTags.length > 0 ? selectedTags : undefined);
@@ -557,7 +565,7 @@ export const MobileSurveyLanding: React.FC = () => {
           }
           if (currentAnswer.label) {
             surveyResponseItem.label = currentAnswer.label;
-            surveyResponseItem.ans_descr = currentAnswer.label; // New field: ans_descr
+            surveyResponseItem.ans_descr = currentAnswer.label; // dynamic label from API
           }
           // New fields for emoji/smiley
           surveyResponseItem.answer_type = currentQuestion.qtype;
@@ -593,8 +601,10 @@ export const MobileSurveyLanding: React.FC = () => {
           // New fields for rating
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "star_rating";
-          surveyResponseItem.ans_descr = `${currentAnswer.rating} star${
-            currentAnswer.rating > 1 ? "s" : ""
+          // Use dynamic label when available, fallback to star text
+          const ratingLabel = currentAnswer.label || getRatingLabel(currentQuestion, currentAnswer.rating);
+          surveyResponseItem.ans_descr = ratingLabel || `${currentAnswer.rating} star${
+            (currentAnswer.rating || 0) > 1 ? "s" : ""
           }`;
 
           // Add option_id mapping for rating questions from API response
@@ -773,8 +783,10 @@ export const MobileSurveyLanding: React.FC = () => {
           // New fields for rating
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "star_rating";
-          surveyResponseItem.ans_descr = `${answerData.rating} star${
-            answerData.rating > 1 ? "s" : ""
+          // Use dynamic label when available
+          const ratingLabelNeg = answerData.label || getRatingLabel(currentQuestion, answerData.rating);
+          surveyResponseItem.ans_descr = ratingLabelNeg || `${answerData.rating} star${
+            (answerData.rating || 0) > 1 ? "s" : ""
           }`;
           
           // Add option_id for rating questions
@@ -1055,8 +1067,9 @@ export const MobileSurveyLanding: React.FC = () => {
             // New fields for rating
             surveyResponseItem.answer_type = question.qtype;
             surveyResponseItem.answer_mode = "star_rating";
-            surveyResponseItem.ans_descr = `${answer.rating} star${
-              answer.rating > 1 ? "s" : ""
+            const ratingLabelMulti = answer.label || getRatingLabel(question, answer.rating);
+            surveyResponseItem.ans_descr = ratingLabelMulti || `${answer.rating} star${
+              (answer.rating || 0) > 1 ? "s" : ""
             }`;
 
             // Add option_id mapping for rating questions from API response
@@ -1158,8 +1171,8 @@ export const MobileSurveyLanding: React.FC = () => {
         { rating: 5, emoji: "😄", label: "Amazing", optionId: 5 },
         { rating: 4, emoji: "😊", label: "Good", optionId: 4 },
         { rating: 3, emoji: "😐", label: "Okay", optionId: 3 },
-        { rating: 2, emoji: "😞", label: "Bad", optionId: 2 },
-        { rating: 1, emoji: "😠", label: "Terrible", optionId: 1 },
+        { rating: 2, emoji: "😟", label: "Bad", optionId: 2 },
+        { rating: 1, emoji: "😞", label: "Terrible", optionId: 1 },
       ];
     }
 
@@ -1168,17 +1181,21 @@ export const MobileSurveyLanding: React.FC = () => {
       { emoji: "😄", label: "Amazing" },
       { emoji: "😊", label: "Good" },
       { emoji: "😐", label: "Okay" },
-      { emoji: "😞", label: "Bad" },
-      { emoji: "😠", label: "Terrible" },
+      { emoji: "😟", label: "Bad" },
+      { emoji: "😞", label: "Terrible" },
     ];
 
-    return question.snag_quest_options.map((option, index) => ({
-      rating: question.snag_quest_options.length - index, // Reverse order: first option = highest rating
-      emoji: emojiMapping[index]?.emoji || "😐",
-      label: emojiMapping[index]?.label || option.qname,
-      optionId: option.id,
-      option: option
-    }));
+    // Reverse the order so that the first API option is the lowest rating, last is highest
+    return question.snag_quest_options
+      .slice()
+      .reverse()
+      .map((option, index) => ({
+        rating: index + 1, // 1 = lowest, up to N = highest
+        emoji: emojiMapping[index]?.emoji || "😐",
+        label: option.qname,
+        optionId: option.id,
+        option: option
+      }));
   };
 
   // Get rating options from API response
@@ -1190,6 +1207,20 @@ export const MobileSurveyLanding: React.FC = () => {
 
     // Return array of rating numbers based on API options count
     return Array.from({ length: question.snag_quest_options.length }, (_, index) => index + 1);
+  };
+
+  // Get dynamic label for a rating from API options
+  const getRatingLabel = (question: SurveyQuestion | null, rating?: number | null): string | undefined => {
+    if (!question || !rating || !question.snag_quest_options || question.snag_quest_options.length === 0) return undefined;
+    const mapping = Array.from(
+      { length: question.snag_quest_options.length },
+      (_, index) => ({ rating: index + 1, optionIndex: question.snag_quest_options.length - 1 - index })
+    );
+    const selected = mapping.find((m) => m.rating === rating);
+    if (selected && question.snag_quest_options[selected.optionIndex]) {
+      return question.snag_quest_options[selected.optionIndex].qname;
+    }
+    return undefined;
   };
 
   // Check if survey is active

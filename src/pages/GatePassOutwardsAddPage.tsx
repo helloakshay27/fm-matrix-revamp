@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { API_CONFIG } from '@/config/apiConfig';
 import { useSelector } from 'react-redux';
 import { toast } from "sonner";
+import { Loader2 } from 'lucide-react';
 
 // Define DropdownOption type
 interface DropdownOption {
@@ -89,6 +90,8 @@ export const GatePassOutwardsAddPage = () => {
   const selectedBuilding = useSelector((state: any) => state.project.selectedBuilding);
   const selectedCompany = useSelector((state: any) => state.project.selectedCompany);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     // Fetch suppliers for Company Name dropdown
     fetch(`${API_CONFIG.BASE_URL}/pms/suppliers/get_suppliers.json`, {
@@ -114,6 +117,8 @@ export const GatePassOutwardsAddPage = () => {
       .then(res => res.json())
       .then(data => setGateNumbers(data || data))
       .catch(() => setGateNumbers([]));
+
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -420,6 +425,17 @@ export const GatePassOutwardsAddPage = () => {
   const handleGoBack = () => {
     navigate('/security/gate-pass/outwards');
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">

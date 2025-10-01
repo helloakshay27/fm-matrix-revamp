@@ -631,7 +631,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
 
 
 
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4  min-h-[calc(100vh-200px)]">
 
                 <div className="lg:col-span-8">
                     <div className={`space-y-6 ${className}`}>
