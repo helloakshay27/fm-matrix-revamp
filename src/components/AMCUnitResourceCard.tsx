@@ -1,4 +1,5 @@
 import React from 'react';
+import { ANALYTICS_PALETTE } from '@/styles/chartPalette';
 import { Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
@@ -13,7 +14,8 @@ interface AMCUnitResourceCardProps {
   onDownload?: () => Promise<void>;
 }
 
-const COLORS = ['#3b82f6', '#10b981']; // Blue for Services, Green for Assets
+// Unified palette mapping
+const COLORS = [ANALYTICS_PALETTE[3], ANALYTICS_PALETTE[1]]; // Services, Assets
 
 export const AMCUnitResourceCard: React.FC<AMCUnitResourceCardProps> = ({ data, className, onDownload }) => {
   const { toast } = useToast();
@@ -105,9 +107,9 @@ export const AMCUnitResourceCard: React.FC<AMCUnitResourceCardProps> = ({ data, 
               ))}
               
               {/* Summary */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="text-sm font-semibold text-blue-800 mb-1">Total Units</div>
-                <div className="text-lg font-bold text-blue-900">
+              <div className="mt-4 p-3 rounded-lg border" style={{ background: '#f5f4f1', borderColor: '#e0ddd6' }}>
+                <div className="text-sm font-semibold mb-1" style={{ color: ANALYTICS_PALETTE[3] }}>Total Units</div>
+                <div className="text-lg font-bold" style={{ color: ANALYTICS_PALETTE[3] }}>
                   {chartData?.reduce((sum, item) => sum + item.value, 0) || 0}
                 </div>
               </div>
