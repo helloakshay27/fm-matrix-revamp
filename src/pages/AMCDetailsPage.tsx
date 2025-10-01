@@ -188,9 +188,10 @@ export const AMCDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading AMC details...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading AMC details...</p>
         </div>
       </div>
     );
@@ -241,7 +242,7 @@ export const AMCDetailsPage = () => {
           Back to AMC List
         </button>
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details - {amcDetails.id}</h1>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details</h1>
           <div className="flex gap-2">
             <Button
               onClick={() => navigate(`/maintenance/amc/edit/${id}`)}
@@ -332,45 +333,45 @@ export const AMCDetailsPage = () => {
                   AMC INFORMATION
                 </CardTitle>
               </CardHeader>
-              <CardContent className='bg-white'>
+              <CardContent className='bg-white text-[15px]'>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex">
-                    <span className="text-gray-500 w-24">ID</span>
+                  <div className="flex text-[15px]">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">ID</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.id}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Cost</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Cost</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{formatCurrency(amcDetails.amc_cost)}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Start Date</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Start Date</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_start_date)}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">End Date</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">End Date</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_end_date)}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">First Service</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">First Service</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_first_service)}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">No. of Visits</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">No. of Visits</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.no_of_visits || '—'}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Payment Terms</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Payment Terms</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{formatPaymentTerm(amcDetails.payment_term)}</span>
                   </div>
                   <div className="md:col-span-2 flex">
-                    <span className="text-gray-500 w-24">Remarks</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Remarks</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.remarks || '—'}</span>
                   </div>
@@ -393,30 +394,30 @@ export const AMCDetailsPage = () => {
                   SUPPLIER INFORMATION
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[15px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Name</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Name</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_name || '—'}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Email</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Email</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_email || '—'}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Mobile1</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Mobile1</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_mobile || '—'}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Mobile2</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Mobile2</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">—</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Company name</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Company name</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_name || '—'}</span>
                   </div>
@@ -439,7 +440,7 @@ export const AMCDetailsPage = () => {
                   ATTACHMENTS
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 text-[15px]">
                 <div className="flex flex-wrap gap-6">
                   {['amc_contracts', 'amc_invoices'].map((sectionKey) => {
                     const sectionTitle = sectionKey === 'amc_contracts' ? 'AMC Contract:' : 'AMC Invoice:';
@@ -669,7 +670,7 @@ export const AMCDetailsPage = () => {
                   AMC VISITS
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[15px]">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -886,7 +887,7 @@ export const AMCDetailsPage = () => {
                   TICKETS
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[15px]">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -952,7 +953,7 @@ export const AMCDetailsPage = () => {
                     ASSET INFORMATION
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="text-[15px]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1026,7 +1027,7 @@ export const AMCDetailsPage = () => {
                     SERVICE INFORMATION
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="text-[15px]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>

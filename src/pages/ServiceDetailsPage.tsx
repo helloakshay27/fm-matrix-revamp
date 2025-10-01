@@ -207,9 +207,10 @@ export const ServiceDetailsPage = () => {
   // If loading, show loading state
   if (loading) {
     return (
-      <div className="p-4 sm:p-6">
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading service details...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading service details...</p>
         </div>
       </div>
     );
@@ -325,15 +326,15 @@ export const ServiceDetailsPage = () => {
 
 
           {/* LOCATION DETAIL */}
-          <TabsContent value="location-detail" className="p-4 sm:p-6 text-base">
-            <div className="bg-white rounded-lg border">
+          <TabsContent value="location-detail" className="p-4 sm:p-6 text-[15px]">
+            <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center ">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
                   <Box className="w-5 h-5 text-[#C72030]" />
                 </div>
                 <h2 className="text-lg font-bold">LOCATION DETAIL</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 text-sm p-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 text-[15px] p-4 gap-6">
                 <div className="space-y-3">
                   <div className="flex  ">
                     <span className="text-gray-500 w-24  ">Site</span>
@@ -350,14 +351,14 @@ export const ServiceDetailsPage = () => {
                     </span>
                   </div>
                   <div className="flex ">
-                    <span className="text-gray-500 w-24 text-sm ">Area</span>
+                    <span className="text-gray-500 w-24 ">Area</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
                       {details.area || '—'}
                     </span>
                   </div>
                   <div className="flex ">
-                    <span className="text-gray-500 w-24 text-sm ">Created On</span>
+                    <span className="text-gray-500 w-24 ">Created On</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
                       {formatDateTime(details.created_at)}
@@ -366,28 +367,28 @@ export const ServiceDetailsPage = () => {
                 </div>
                 <div className="space-y-3">
                   <div className="flex ">
-                    <span className="text-gray-500 w-24 text-sm ">Building</span>
+                    <span className="text-gray-500 w-24 ">Building</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
                       {details.building || '—'}
                     </span>
                   </div>
                   <div className="flex ">
-                    <span className="text-gray-500 w-24 text-sm ">Floor</span>
+                    <span className="text-gray-500 w-24 ">Floor</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
                       {details.floor || '—'}
                     </span>
                   </div>
                   <div className="flex ">
-                    <span className="text-gray-500 w-24 text-sm ">Room</span>
+                    <span className="text-gray-500 w-24 ">Room</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
                       {details.room || '—'}
                     </span>
                   </div>
                   <div className="flex ">
-                    <span className="text-gray-500 w-24 text-sm ">Created By</span>
+                    <span className="text-gray-500 w-24 ">Created By</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
                       {details.created_by || '—'}
@@ -399,8 +400,8 @@ export const ServiceDetailsPage = () => {
           </TabsContent>
 
           {/* DOCUMENTS */}
-          <TabsContent value="documents" className="p-4 sm:p-6 text-base">
-            <div className="bg-white rounded-lg border">
+          <TabsContent value="documents" className="p-4 sm:p-6 text-[15px]">
+            <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex items-center  p-4">
                 {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                   <Paperclip className="w-4 h-4" />
@@ -429,7 +430,7 @@ export const ServiceDetailsPage = () => {
                             📄
                           </div>
                         )}
-                        <span className="text-base truncate max-w-[180px] font-semibold">
+                        <span className="truncate max-w-[180px] font-semibold text-[15px]">
                           {`Document_${doc.id || doc.filename}.${doc.doctype.split('/')[1] || 'file'}`}
                         </span>
                       </div>
@@ -496,14 +497,14 @@ export const ServiceDetailsPage = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="p-3 text-base text-gray-600">No documents available</div>
+                  <div className="p-3 text-[15px] text-gray-600">No documents available</div>
                 )}
               </div>
             </div>
           </TabsContent>
 
           {/* QR CODE */}
-          <TabsContent value="qr-code" className="p-4 sm:p-6 text-base">
+          <TabsContent value="qr-code" className="p-4 sm:p-6 text-[15px]">
             <div className="border border-[#D9D9D9] rounded-lg">
               <div className="flex items-center mb-2  p-4">
                 {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -575,14 +576,14 @@ export const ServiceDetailsPage = () => {
 
                   </>
                 ) : (
-                  <div className="text-base text-gray-600">No QR code available</div>
+                  <div className="text-[15px] text-gray-600">No QR code available</div>
                 )}
               </div>
             </div>
           </TabsContent>
 
           {/* ASSOCIATED ASSETS */}
-          <TabsContent value="associated-assets" className="p-4 sm:p-6 text-base">
+          <TabsContent value="associated-assets" className="p-4 sm:p-6 text-[15px]">
             <div className="border border-[#D9D9D9] rounded-lg">
               <div className="flex items-center mb-2  p-4">
                 {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -599,7 +600,7 @@ export const ServiceDetailsPage = () => {
                     {renderAssetNode(assetHierarchy)}
                   </div>
                 ) : (
-                  <div className="text-base text-gray-600">No associated assets</div>
+                  <div className="text-[15px] text-gray-600">No associated assets</div>
                 )}
               </div>
             </div>

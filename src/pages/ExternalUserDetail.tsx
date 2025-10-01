@@ -126,13 +126,13 @@ export const ExternalUserDetail = () => {
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            {/* <Button
+            <Button
               variant="outline"
               className="border-blue-500 text-blue-500 hover:bg-blue-50"
               onClick={() => navigate(`/safety/m-safe/external/user/${userId}/lmc-manager`)}
             >
               Add/Edit LMC Manager
-            </Button> */}
+            </Button>
           </div>
         </div>
         {/* Mobile back button only */}

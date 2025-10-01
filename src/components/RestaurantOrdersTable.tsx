@@ -28,7 +28,7 @@ interface RestaurantOrder {
   status_name: string;
   total_amount: number;
   items: { id: number; menu_name: string; quantity: number; price: number }[];
-  statuses: string[];
+  statuses: { id: number; status_name: string; color_code: string }[];
 }
 
 const getStatusBadgeVariant = (status: string) => {
@@ -440,20 +440,11 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
             onValueChange={(newStatus) => handleStatusUpdate(item.id, newStatus)}
             disabled={statusUpdating === item.id}
           >
-            <SelectTrigger className="w-[140px] border-none bg-transparent flex justify-center items-center [&>svg]:hidden">
+            <SelectTrigger className="w-max border-none bg-transparent flex items-center [&>svg]:hidden">
               <SelectValue asChild>
-                <Badge
-                  variant={getStatusBadgeVariant(item.status_name)}
-                  className={cn(
-                    'cursor-pointer',
-                    item.status_name === 'Completed' && 'bg-[#A4F4E7] hover:bg-[#A4F4E7] text-black',
-                    item.status_name === 'Pending' && 'bg-[#F4C790] hover:bg-[#F4C790] text-black',
-                    item.status_name === 'Confirmed' && 'bg-[#A3E4DB] hover:bg-[#8CDAD1] text-black',
-                    item.status_name === 'Cancelled' && 'bg-[#E4626F] hover:bg-[#E4626F] text-white'
-                  )}
-                >
+                <span className={`text-gray-900 pl-0 px-[5px] py-[3px] flex items-start gap-2 text-sm`} style={{ borderRadius: "4px", backgroundColor: item.statuses.find(status => status.name === item.status_name && status.color_code)?.color_code }}>
                   {item.status_name}
-                </Badge>
+                </span>
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -461,17 +452,9 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
                 .filter(status => status.active)
                 .map((status) => (
                   <SelectItem key={status.id} value={status}>
-                    <Badge
-                      variant={getStatusBadgeVariant(status.name)}
-                      className={cn(
-                        status === 'Completed' && 'bg-[#A4F4E7] hover:bg-[#A4F4E7] text-black',
-                        status === 'Pending' && 'bg-[#F4C790] hover:bg-[#F4C790] text-black',
-                        status === 'Confirmed' && 'bg-[#A3E4DB] hover:bg-[#8CDAD1] text-black',
-                        status === 'Cancelled' && 'bg-[#E4626F] hover:bg-[#E4626F] text-white'
-                      )}
-                    >
+                    <span className={`text-gray-900 px-[5px] py-[3px] flex items-start gap-2 text-sm`} style={{ borderRadius: "4px", backgroundColor: status.color_code }}>
                       {status.name}
-                    </Badge>
+                    </span>
                   </SelectItem>
                 ))}
             </SelectContent>

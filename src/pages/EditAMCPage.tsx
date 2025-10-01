@@ -126,70 +126,70 @@ export const EditAMCPage = () => {
 
   // Update form data when AMC data is loaded
 
-useEffect(() => {
-  if (amcData && typeof amcData === 'object') {
-    const data = amcData as any;
-    const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
-    const isGroupType = data.amc_details_type === 'group';
+  useEffect(() => {
+    if (amcData && typeof amcData === 'object') {
+      const data = amcData as any;
+      const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
+      const isGroupType = data.amc_details_type === 'group';
 
-    let assetIds: string[] = [];
-    if (Array.isArray(data.amc_assets)) {
-      assetIds = data.amc_assets
-        .map((item: any) => item.asset_id?.toString())
-        .filter(Boolean);
+      let assetIds: string[] = [];
+      if (Array.isArray(data.amc_assets)) {
+        assetIds = data.amc_assets
+          .map((item: any) => item.asset_id?.toString())
+          .filter(Boolean);
+      }
+
+      const supplierId = data.supplier_id?.toString();
+      const foundSupplier = suppliers.find(
+        (supplier) => supplier.id.toString() === supplierId
+      );
+
+      const serviceId = data.service_id?.toString();
+      const foundService = services.find(
+        (service) => service.id.toString() === serviceId
+      );
+
+      setFormData({
+        details: detailType,
+        type: isGroupType ? 'Group' : 'Individual',
+        assetName: foundService
+          ? serviceId
+          : data.resource_id === 'Pms::Service'
+            ? data.resource_id
+            : '',
+        asset_ids: assetIds,
+        vendor: foundSupplier ? supplierId : '',
+        group: data.group_id ? data.group_id.toString() : formData.group,
+        subgroup: data.sub_group_id ? data.sub_group_id.toString() : formData.subgroup,
+        service: foundService
+          ? serviceId
+          : data.service_id?.toString() || formData.service,
+        supplier: foundSupplier ? supplierId : '',
+        startDate: data.amc_start_date || '',
+        endDate: data.amc_end_date || '',
+        cost: data.amc_cost?.toString() || '',
+        contractName: data.contract_name || '',
+        paymentTerms: data.payment_term || '',
+        firstService: data.amc_first_service || '',
+        noOfVisits: data.no_of_visits?.toString() || '',
+        remarks: data.remarks || ''
+      });
+
+      // Extract and flatten contract/invoice documents for preview
+      const contracts = Array.isArray(data.amc_contracts)
+        ? data.amc_contracts.flatMap((c: any) => Array.isArray(c.documents) ? c.documents : [])
+        : [];
+      const invoices = Array.isArray(data.amc_invoices)
+        ? data.amc_invoices.flatMap((c: any) => Array.isArray(c.documents) ? c.documents : [])
+        : [];
+      setExistingFiles({ contracts, invoices });
+
+      if (data.group_id) {
+        // Always load subgroups if group_id is present, for both Individual and Group types
+        handleGroupChange(data.group_id.toString(), data.sub_group_id ? data.sub_group_id.toString() : undefined);
+      }
     }
-
-    const supplierId = data.supplier_id?.toString();
-    const foundSupplier = suppliers.find(
-      (supplier) => supplier.id.toString() === supplierId
-    );
-
-    const serviceId = data.service_id?.toString();
-    const foundService = services.find(
-      (service) => service.id.toString() === serviceId
-    );
-
-    setFormData({
-      details: detailType,
-      type: isGroupType ? 'Group' : 'Individual',
-      assetName: foundService
-        ? serviceId
-        : data.resource_id === 'Pms::Service'
-          ? data.resource_id
-          : '',
-      asset_ids: assetIds,
-      vendor: foundSupplier ? supplierId : '',
-      group: data.group_id ? data.group_id.toString() : formData.group,
-      subgroup: data.sub_group_id ? data.sub_group_id.toString() : formData.subgroup,
-      service: foundService
-        ? serviceId
-        : data.service_id?.toString() || formData.service,
-      supplier: foundSupplier ? supplierId : '',
-      startDate: data.amc_start_date || '',
-      endDate: data.amc_end_date || '',
-      cost: data.amc_cost?.toString() || '',
-      contractName: data.contract_name || '',
-      paymentTerms: data.payment_term || '',
-      firstService: data.amc_first_service || '',
-      noOfVisits: data.no_of_visits?.toString() || '',
-      remarks: data.remarks || ''
-    });
-
-    // Extract and flatten contract/invoice documents for preview
-    const contracts = Array.isArray(data.amc_contracts)
-      ? data.amc_contracts.flatMap((c: any) => Array.isArray(c.documents) ? c.documents : [])
-      : [];
-    const invoices = Array.isArray(data.amc_invoices)
-      ? data.amc_invoices.flatMap((c: any) => Array.isArray(c.documents) ? c.documents : [])
-      : [];
-    setExistingFiles({ contracts, invoices });
-
-    if (data.group_id) {
-      // Always load subgroups if group_id is present, for both Individual and Group types
-      handleGroupChange(data.group_id.toString(), data.sub_group_id ? data.sub_group_id.toString() : undefined);
-    }
-  }
-}, [amcData, assetList, suppliers, services]);
+  }, [amcData, assetList, suppliers, services]);
 
 
   const handleInputChange = (field: string, value: string) => {
@@ -457,7 +457,7 @@ useEffect(() => {
   const handleSubmit = useCallback(async (action: string) => {
     if (!id) return;
 
-  if (assetsLoading || suppliersLoading || servicesLoading || loading) {
+    if (assetsLoading || suppliersLoading || servicesLoading || loading) {
       toast({
         title: 'Error',
         description: 'Please wait for all data to load.',
@@ -480,10 +480,10 @@ useEffect(() => {
     try {
       const sendData = new FormData();
 
-  // Append common form data
-  // Use the correct supplier field: 'vendor' is used for Individual type forms, 'supplier' for Group type
-  const supplierIdForSubmit = formData.type === 'Group' ? formData.supplier : formData.vendor;
-  sendData.append('pms_asset_amc[supplier_id]', supplierIdForSubmit);
+      // Append common form data
+      // Use the correct supplier field: 'vendor' is used for Individual type forms, 'supplier' for Group type
+      const supplierIdForSubmit = formData.type === 'Group' ? formData.supplier : formData.vendor;
+      sendData.append('pms_asset_amc[supplier_id]', supplierIdForSubmit);
       sendData.append('pms_asset_amc[amc_cost]', parseFloat(formData.cost).toString());
       sendData.append('pms_asset_amc[contract_name]', formData.contractName);
       sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
@@ -1104,17 +1104,21 @@ useEffect(() => {
                     },
                   }}
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '6px',
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
                     },
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#D1D5DB',
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
                     },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
                     },
                   }}
                 />

@@ -1272,7 +1272,7 @@ export const TicketDashboard = () => {
         </TabsList>
 
 
-        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-4 mt-4">
 
 
 
@@ -1300,15 +1300,15 @@ export const TicketDashboard = () => {
           </div>
 
           {/* Main Analytics Layout */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 min-h-[calc(100vh-200px)]">
             {/* Left Section - Charts */}
             <div className="xl:col-span-8 space-y-4 sm:space-y-6">
               {/* All Charts with Drag and Drop */}
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                  <div className="space-y-4 sm:space-y-6">
+                  <div className="space-y-4 sm:space-y-2">
                     {/* First Row - Ticket Status and ProActive/Reactive */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                       {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map(chartId => {
                         if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                           return (
@@ -1425,7 +1425,7 @@ export const TicketDashboard = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="tickets" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+        <TabsContent value="tickets" className="space-y-4 sm:space-y-4 mt-4 sm:mt-6">
           {/* Ticket Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 mb-6">
             {[{
