@@ -279,7 +279,7 @@ export const SurveyResponsePage = () => {
       urlWithParams.searchParams.append("page", page.toString());
 
       // Add per_page parameter
-      urlWithParams.searchParams.append("per_page", "15");
+      urlWithParams.searchParams.append("per_page", "10");
 
       // Add access_token parameter if available
       if (API_CONFIG.TOKEN) {
