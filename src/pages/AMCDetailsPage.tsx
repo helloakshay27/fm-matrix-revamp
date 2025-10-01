@@ -336,42 +336,42 @@ export const AMCDetailsPage = () => {
               <CardContent className='bg-white text-[15px]'>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex text-[15px]">
-                    <span className="text-gray-500 w-24">ID</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">ID</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.id}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Cost</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Cost</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{formatCurrency(amcDetails.amc_cost)}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Start Date</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Start Date</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_start_date)}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">End Date</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">End Date</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_end_date)}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">First Service</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">First Service</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_first_service)}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">No. of Visits</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">No. of Visits</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.no_of_visits || '—'}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Payment Terms</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Payment Terms</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{formatPaymentTerm(amcDetails.payment_term)}</span>
                   </div>
                   <div className="md:col-span-2 flex">
-                    <span className="text-gray-500 w-24">Remarks</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Remarks</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.remarks || '—'}</span>
                   </div>
@@ -397,27 +397,27 @@ export const AMCDetailsPage = () => {
               <CardContent className="text-[15px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Name</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Name</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_name || '—'}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Email</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Email</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_email || '—'}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Mobile1</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Mobile1</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_mobile || '—'}</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Mobile2</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Mobile2</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">—</span>
                   </div>
                   <div className="flex">
-                    <span className="text-gray-500 w-24">Company name</span>
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Company name</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_name || '—'}</span>
                   </div>
