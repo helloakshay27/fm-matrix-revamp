@@ -183,21 +183,14 @@ export const RecentAssetsSidebar = () => {
 
         {!isLoading && !isError && recentAssets.map((asset) => (
           <div key={asset.id} className="bg-white border border-[#C4B89D]/40 rounded-lg p-4">
-            {/* Header with Asset No */}
-            <div className="flex items-center gap-3 mb-3">
-              <Hash className="h-4 w-4 text-red-500" />
-              <span className="text-sm font-medium text-gray-700 min-w-[100px]">Asset No :</span>
-              <span className="text-sm text-gray-700">:</span>
-              <span className="text-sm text-gray-900">{asset.assetNo}</span>
+            {/* Headline: Asset No and Name */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-semibold text-gray-500 text-sm leading-[12px] tracking-[0px]">{asset.assetNo}</span>
+            </div>
+            <div className="mb-3">
+              <h3 className="font-semibold text-gray-900 text-sm leading-[14px] tracking-[0px]">{asset.name}</h3>
             </div>
 
-            {/* Asset Name row with icon and spacing */}
-            <div className="flex items-center gap-3 mb-3">
-              <User2Icon className="h-4 w-4 text-red-500" />
-              <span className="text-sm font-medium text-gray-700 min-w-[100px]">Asset Name :</span>
-              <span className="text-sm text-gray-700">:</span>
-              <span className="text-sm text-gray-900">{asset.name}</span>
-            </div>
 
             {/* TAT row with icon and spacing */}
             <div className="flex items-center gap-3 mb-3">
@@ -222,7 +215,7 @@ export const RecentAssetsSidebar = () => {
                 onClick={() => handleViewDetails(asset.id)}
               >
                 {/* <EyeIcon size={25} color="#C72030" /> */}
-                <EyeIcon className="h-5 w-5" color="#C72030" />
+                <EyeIcon className="h-[24px] w-[24px]" color="#C72030" />
 
               </button>
             </div>
