@@ -95,12 +95,18 @@ export const BookingDetailsPage = () => {
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Status</span>
                 <span className="text-gray-500 mx-2">:</span>
-                <span className={`text-gray-900 font-medium px-2 ${bookings?.current_status === "Cancelled"
-                  ? "bg-red-100 text-red-800"
+                <span className={`text-gray-900 px-2 py-[2px] flex items-center gap-2 text-sm ${bookings?.current_status === "Cancelled"
+                  ? "bg-red-100"
                   : bookings?.current_status === "Confirmed"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-blue-100 text-blue-800"
-                  }`} title={bookings?.comment}>
+                    ? "bg-green-100"
+                    : "bg-yellow-100"
+                  }`} title={bookings?.comment} style={{ borderRadius: "4px" }}>
+                  <span className={`rounded-full w-2 h-2 inline-block ${bookings?.current_status === "Cancelled"
+                    ? "bg-[#D92E14]"
+                    : bookings?.current_status === "Confirmed"
+                      ? "bg-[#16B364]"
+                      : "bg-[#D9CA20]"
+                    }`}></span>
                   {bookings?.current_status}
                 </span>
               </div>
