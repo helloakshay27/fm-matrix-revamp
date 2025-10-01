@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Download } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
 
 interface AMCTypeDistributionCardProps {
@@ -29,7 +29,7 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
       } catch (error) {
         console.error('Error downloading breakdown vs preventive visit data:', error);
         toast({
-          title: "Error", 
+          title: "Error",
           description: "Failed to download breakdown vs preventive visit data",
           variant: "destructive"
         });
@@ -44,6 +44,50 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
     color: COLORS[index % COLORS.length]
   }));
 
+  const [chartSize, setChartSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+
+  // Custom label placed just outside the slice; clamps to chart bounds
+  const renderOuterLabel = (props: any) => {
+    const { cx, cy, midAngle, outerRadius, payload } = props;
+    const RADIAN = Math.PI / 180;
+    const offset = 14;
+    const r = (outerRadius || 0) + offset;
+    let rawX = cx + r * Math.cos(-midAngle * RADIAN);
+    const y = cy + r * Math.sin(-midAngle * RADIAN);
+    const labelText = `${payload.name}: ${payload.percentage.toFixed(1)}%`;
+    const padding = 6;
+    const charW = 7; // increased char width estimate to prevent left clipping
+    const textW = labelText.length * charW;
+    // Decide anchor BEFORE clamping using raw position
+    const isRight = rawX > cx;
+    let x = rawX;
+    if (chartSize.w) {
+      if (isRight) {
+        // ensure rightmost edge (x + textW) within bounds
+        const maxX = chartSize.w - padding - textW;
+        x = Math.min(x, maxX);
+      } else {
+        // anchor end: text extends leftwards; ensure left edge (x - textW) >= padding
+        const minX = padding + textW + 2; // small extra buffer
+        x = Math.max(x, minX);
+      }
+    }
+    return (
+      <text
+        x={x}
+        y={y}
+        fill={payload.color || '#111827'}
+        fontSize={12}
+        fontWeight={500}
+        textAnchor={isRight ? 'start' : 'end'}
+        dominantBaseline="central"
+        style={{ pointerEvents: 'none' }}
+      >
+        {labelText}
+      </text>
+    );
+  };
+
   return (
     <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 h-full flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-6 pb-0">
@@ -55,21 +99,21 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
           />
         )}
       </div>
-      
+
       <div className="flex-1 overflow-auto p-3 sm:p-6 pt-0">
         {data && data.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Pie Chart */}
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+              <ResponsiveContainer width="100%" height="100%" onResize={(w, h) => setChartSize({ w, h })}>
+                <PieChart margin={{ top: 20, right: 70, bottom: 20, left: 70 }}>
                   <Pie
                     data={chartData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
-                    outerRadius={80}
+                    label={renderOuterLabel}
+                    outerRadius={70}
                     fill="#8884d8"
                     dataKey="value"
                   >
@@ -77,7 +121,7 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: number, name: string, props: any) => [
                       `${value} (${props.payload.percentage.toFixed(1)}%)`,
                       name
@@ -86,14 +130,14 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            
+
             {/* Legend and Stats */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-gray-700 mb-3">Visit Type Breakdown</h4>
               {chartData?.map((item, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div 
+                    <div
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: item.color }}
                     />

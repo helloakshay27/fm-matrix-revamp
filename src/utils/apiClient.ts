@@ -1,12 +1,8 @@
-import axios from 'axios'
+import axios, { AxiosRequestHeaders } from 'axios'
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig'
 
-// Create configured axios instance
-export const apiClient = axios.create({
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
+// Create configured axios instance (do not set a global Content-Type)
+export const apiClient = axios.create({})
 
 // Request interceptor to dynamically set baseURL and auth header
 apiClient.interceptors.request.use(
@@ -14,7 +10,17 @@ apiClient.interceptors.request.use(
     // Dynamically set baseURL from localStorage
     config.baseURL = API_CONFIG.BASE_URL
     // Dynamically set auth header from localStorage
-    config.headers.Authorization = getAuthHeader()
+    const headers: AxiosRequestHeaders = (config.headers as AxiosRequestHeaders) || ({} as AxiosRequestHeaders)
+    headers.Authorization = getAuthHeader()
+    config.headers = headers
+
+    // If sending FormData, let the browser set the Content-Type with boundary
+    if (config.data instanceof FormData) {
+      // Let the browser/axios set proper multipart boundary. Remove any preset Content-Type.
+      if ((config.headers as AxiosRequestHeaders)['Content-Type']) {
+        delete (config.headers as AxiosRequestHeaders)['Content-Type']
+      }
+    }
     return config
   },
   (error) => {
