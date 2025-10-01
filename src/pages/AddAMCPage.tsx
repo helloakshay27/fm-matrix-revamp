@@ -490,7 +490,7 @@ export const AddAMCPage = () => {
 
     const sendData = new FormData();
     // sendData.append('pms_asset_amc);
-    
+
     sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
     sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
@@ -516,7 +516,7 @@ export const AddAMCPage = () => {
           sendData.append('sub_group_id', formData.subgroup);
         }
       }
-    } 
+    }
 
     // Include selected asset IDs for Individual Asset flow
     if (formData.details === 'Asset' && formData.type === 'Individual' && Array.isArray(formData.asset_ids) && formData.asset_ids.length > 0) {
@@ -838,11 +838,11 @@ export const AddAMCPage = () => {
                       {!supplierSearchLoading && supplierOptions.length === 0 && (
                         <MenuItem disabled>No results</MenuItem>
                       )}
-                        {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
-                          <MenuItem key={supplier.id} value={supplier.id?.toString?.() || String(supplier.id)}>
-                            {supplier.company_name || supplier.name}
-                          </MenuItem>
-                        ))}
+                      {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
+                        <MenuItem key={supplier.id} value={supplier.id?.toString?.() || String(supplier.id)}>
+                          {supplier.company_name || supplier.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                     {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
                   </FormControl>
@@ -1130,17 +1130,21 @@ export const AddAMCPage = () => {
                   inputProps={{ maxLength: 250 }}
                   slotProps={{ inputLabel: { shrink: true } }}
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '6px',
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
                     },
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#D1D5DB',
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
                     },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#C72030',
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
                     },
                   }}
                   disabled={isSubmitting}
