@@ -267,12 +267,12 @@ export const TicketDetailsPage = () => {
               Ticket Details
             </TabsTrigger>
 
-            <TabsTrigger
+            {/* <TabsTrigger
               value="creator-info"
               className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
             >
               Creator Info
-            </TabsTrigger>
+            </TabsTrigger> */}
 
             <TabsTrigger
               value="location-info"
@@ -288,12 +288,12 @@ export const TicketDetailsPage = () => {
               Survey Info
             </TabsTrigger>
 
-            <TabsTrigger
+            {/* <TabsTrigger
               value="additional-info"
               className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
             >
               Additional
-            </TabsTrigger>
+            </TabsTrigger> */}
 
             <TabsTrigger
               value="attachments"
@@ -440,6 +440,9 @@ export const TicketDetailsPage = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                
+                
               ) : (
                 /* No Data Available Message */
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -453,16 +456,153 @@ export const TicketDetailsPage = () => {
                   </p>
                 </div>
               )}
+
+              <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                        <User className="w-6 h-6 text-[#C72030]" />
+                      </div>
+                      <span>CREATOR INFORMATION</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      {hasData(ticketData.posted_by) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Posted By</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.posted_by}</span>
+                        </div>
+                      )}
+                      {hasData(ticketData.id_society) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Society</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.id_society}</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                        <PlusCircle className="w-6 h-6 text-[#C72030]" />
+                      </div>
+                      <span>ADDITIONAL INFORMATION</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 text-sm">
+                      {hasData(ticketData.corrective_action) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Corrective Action</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium" title={ticketData.corrective_action}>
+                            {truncateWithEllipsis(ticketData.corrective_action, 5)}
+                          </span>
+                        </div>
+                      )}
+                      {hasData(ticketData.preventive_action) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Preventive Action</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium" title={ticketData.preventive_action}>
+                            {truncateWithEllipsis(ticketData.preventive_action, 5)}
+                          </span>
+                        </div>
+                      )}
+                      {hasData(ticketData.root_cause) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Root Cause</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium" title={ticketData.root_cause}>
+                            {truncateWithEllipsis(ticketData.root_cause, 5)}
+                          </span>
+                        </div>
+                      )}
+                      {hasData(ticketData.response_tat) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Response TAT</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.response_tat}</span>
+                        </div>
+                      )}
+                      {hasData(ticketData.ticket_urgency) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Ticket Urgency</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.ticket_urgency}</span>
+                        </div>
+                      )}
+                      {hasData(ticketData.responsible_person) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Responsible Person</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.responsible_person}</span>
+                        </div>
+                      )}
+                      {hasData(ticketData.asset_service) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Asset Service</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.asset_service}</span>
+                        </div>
+                      )}
+                      {hasData(ticketData.resolution_tat) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Resolution TAT</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.resolution_tat}</span>
+                        </div>
+                      )}
+                      {hasData(ticketData.task_id) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Task ID</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.task_id}</span>
+                        </div>
+                      )}
+                      {hasData(ticketData.asset_service_location) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Asset/Service Location</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.asset_service_location}</span>
+                        </div>
+                      )}
+                      {hasData(ticketData.resolution_time) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Resolution Time</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{ticketData.resolution_time}</span>
+                        </div>
+                      )}
+                      {(hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name)) && (
+                        <div className="flex items-center">
+                          <span className="text-gray-500 min-w-[140px]">Escalation Tracking</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`.replace(/^,\s*|,\s*$/g, '')}</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
             </div>
+
+            
           </TabsContent>
 
-          {/* Creator Info Tab */}
+          
+
+          
           <TabsContent value="creator-info" className="p-4 sm:p-6">
             <div className="space-y-6">
-              {/* Check if there's any creator data to display */}
+             
               {hasData(ticketData.posted_by) ||
               hasData(ticketData.id_society) ? (
-                /* Creator Information Card */
+              
                 <Card className="w-full">
                   <CardHeader className="pb-4 lg:pb-6">
                     <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
@@ -492,7 +632,7 @@ export const TicketDetailsPage = () => {
                   </CardContent>
                 </Card>
               ) : (
-                /* No Data Available Message */
+               
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <User className="w-16 h-16 text-gray-300 mb-4" />
                   <h3 className="text-lg font-medium text-gray-500 mb-2">
@@ -706,7 +846,7 @@ export const TicketDetailsPage = () => {
           {/* Additional Info Tab */}
           <TabsContent value="additional-info" className="p-4 sm:p-6">
             <div className="space-y-6">
-              {/* Check if there's any additional data to display */}
+           
               {hasData(ticketData.corrective_action) ||
               hasData(ticketData.preventive_action) ||
               hasData(ticketData.root_cause) ||
@@ -720,7 +860,7 @@ export const TicketDetailsPage = () => {
               hasData(ticketData.resolution_time) ||
               hasData(ticketData.escalation_response_name) ||
               hasData(ticketData.escalation_resolution_name) ? (
-                /* Additional Information Card */
+              
                 <Card className="w-full">
                   <CardHeader className="pb-4 lg:pb-6">
                     <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
@@ -826,7 +966,7 @@ export const TicketDetailsPage = () => {
                   </CardContent>
                 </Card>
               ) : (
-                /* No Data Available Message */
+               
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <PlusCircle className="w-16 h-16 text-gray-300 mb-4" />
                   <h3 className="text-lg font-medium text-gray-500 mb-2">
