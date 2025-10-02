@@ -78,7 +78,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Headquarters API response:', data);
+        console.log('Countries API response:', data);
         
         if (Array.isArray(data)) {
           setCountries(data);
@@ -87,17 +87,17 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         } else if (data && data.data && Array.isArray(data.data)) {
           setCountries(data.data);
         } else {
-          console.error('Headquarters data format unexpected:', data);
+          console.error('Countries data format unexpected:', data);
           setCountries([]);
-          toast.error('Invalid headquarters data format');
+          toast.error('Invalid countries data format');
         }
       } else {
-        toast.error('Failed to fetch headquarters');
+        toast.error('Failed to fetch countries');
         setCountries([]);
       }
     } catch (error) {
-      console.error('Error fetching headquarters:', error);
-      toast.error('Error fetching headquarters');
+      console.error('Error fetching countries:', error);
+      toast.error('Error fetching countries');
       setCountries([]);
     } finally {
       setIsLoadingCountries(false);
@@ -145,7 +145,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/pms/countries/country_list.json'), {
+      const response = await fetch(getFullUrl('/headquarters.json'), {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
@@ -154,7 +154,38 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        if (data && data.countries && Array.isArray(data.countries)) {
+        console.log('Countries dropdown API response:', data);
+        
+        if (Array.isArray(data)) {
+          // Handle direct array format
+          const uniqueCountries = new Map();
+          data.forEach((country: any) => {
+            const id = country.country_id || country.id;
+            const name = country.country_name || country.name;
+            if (id && name && !uniqueCountries.has(id)) {
+              uniqueCountries.set(id, name);
+            }
+          });
+          
+          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id, name }));
+          setCountriesDropdown(countriesArray);
+          setCountriesMap(uniqueCountries);
+        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
+          // Handle nested headquarters format
+          const uniqueCountries = new Map();
+          data.headquarters.forEach((hq: any) => {
+            const id = hq.country_id;
+            const name = hq.country_name;
+            if (id && name && !uniqueCountries.has(id)) {
+              uniqueCountries.set(id, name);
+            }
+          });
+          
+          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id, name }));
+          setCountriesDropdown(countriesArray);
+          setCountriesMap(uniqueCountries);
+        } else if (data && data.countries && Array.isArray(data.countries)) {
+          // Handle existing format as fallback
           const mappedCountries = data.countries.map(([id, name]) => ({ id, name }));
           setCountriesDropdown(mappedCountries);
           const countryMap = new Map();
@@ -176,7 +207,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     }
 
     if (!canEditCountry) {
-      toast.error('You do not have permission to create headquarters');
+      toast.error('You do not have permission to create countries');
       return;
     }
 
@@ -196,7 +227,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       });
 
       if (response.ok) {
-        toast.success('Headquarters created successfully');
+        toast.success('Country created successfully');
         fetchCountries();
         setIsAddCountryOpen(false);
         setCountryFormData({
@@ -207,12 +238,12 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         });
       } else {
         const errorData = await response.json();
-        console.error('Failed to create headquarters:', errorData);
-        toast.error('Failed to create headquarters');
+        console.error('Failed to create country:', errorData);
+        toast.error('Failed to create country');
       }
     } catch (error) {
-      console.error('Error creating headquarters:', error);
-      toast.error('Error creating headquarters');
+      console.error('Error creating country:', error);
+      toast.error('Error creating country');
     }
   };
 
@@ -223,7 +254,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     }
 
     if (!canEditCountry) {
-      toast.error('You do not have permission to edit headquarters');
+      toast.error('You do not have permission to edit countries');
       return;
     }
 
@@ -243,7 +274,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       });
 
       if (response.ok) {
-        toast.success('Headquarters updated successfully');
+        toast.success('Country updated successfully');
         fetchCountries();
         setIsEditCountryOpen(false);
         setEditingCountry(null);
@@ -255,22 +286,22 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         });
       } else {
         const errorData = await response.json();
-        console.error('Failed to update headquarters:', errorData);
-        toast.error('Failed to update headquarters');
+        console.error('Failed to update country:', errorData);
+        toast.error('Failed to update country');
       }
     } catch (error) {
-      console.error('Error updating headquarters:', error);
-      toast.error('Error updating headquarters');
+      console.error('Error updating country:', error);
+      toast.error('Error updating country');
     }
   };
 
   const handleDeleteCountry = async (countryId: number) => {
     if (!canEditCountry) {
-      toast.error('You do not have permission to delete headquarters');
+      toast.error('You do not have permission to delete countries');
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this headquarters?')) {
+    if (!confirm('Are you sure you want to delete this country?')) {
       return;
     }
 
@@ -283,20 +314,20 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       });
 
       if (response.ok) {
-        toast.success('Headquarters deleted successfully');
+        toast.success('Country deleted successfully');
         fetchCountries();
       } else {
-        toast.error('Failed to delete headquarters');
+        toast.error('Failed to delete country');
       }
     } catch (error) {
-      console.error('Error deleting headquarters:', error);
-      toast.error('Error deleting headquarters');
+      console.error('Error deleting country:', error);
+      toast.error('Error deleting country');
     }
   };
 
   const handleEditCountry = (headquarters: any) => {
     if (!canEditCountry) {
-      toast.error('You do not have permission to edit headquarters');
+      toast.error('You do not have permission to edit countries');
       return;
     }
 
@@ -329,12 +360,12 @@ export const CountryTab: React.FC<CountryTabProps> = ({
           <DialogTrigger asChild>
             <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
               <Plus className="w-4 h-4 mr-2" />
-              Add Headquarters
+              Add Country
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Add Headquarters</DialogTitle>
+              <DialogTitle>Add Country</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -382,7 +413,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 Cancel
               </Button>
               <Button onClick={handleCreateCountry} className="bg-[#C72030] hover:bg-[#A01020] text-white">
-                Create Headquarters
+                Create Country
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -403,7 +434,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
             <Search className="w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search headquarters..."
+              placeholder="Search countries..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="border border-gray-300 rounded px-3 py-1 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
@@ -427,13 +458,13 @@ export const CountryTab: React.FC<CountryTabProps> = ({
               {isLoadingCountries ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
-                    Loading headquarters...
+                    Loading countries...
                   </TableCell>
                 </TableRow>
               ) : filteredCountries.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
-                    No headquarters found
+                    No countries found
                   </TableCell>
                 </TableRow>
               ) : (
@@ -474,7 +505,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       <Dialog open={isEditCountryOpen} onOpenChange={setIsEditCountryOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Headquarters</DialogTitle>
+            <DialogTitle>Edit Country</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -522,7 +553,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
               Cancel
             </Button>
             <Button onClick={handleUpdateCountry} className="bg-[#C72030] hover:bg-[#A01020] text-white">
-              Update Headquarters
+              Update Country
             </Button>
           </DialogFooter>
         </DialogContent>
