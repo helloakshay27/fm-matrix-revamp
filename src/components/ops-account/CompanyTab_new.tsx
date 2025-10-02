@@ -2,12 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, Filter, Upload, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { AddRegionModal } from '@/components/AddRegionModal';
-import { EditRegionModal } from '@/components/EditRegionModal';
-import { DeleteRegionModal } from '@/components/DeleteRegionModal';
-import { RegionFilterModal, RegionFilters } from '@/components/RegionFilterModal';
-import { ExportModal } from '@/components/ExportModal';
-import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
@@ -17,23 +11,23 @@ import { getUser } from '@/utils/auth';
 import { useDebounce } from '@/hooks/useDebounce';
 
 // Type definitions for the API response
-interface RegionItem {
+interface CompanyItem {
   id: number;
   name: string;
+  organization_id: number;
   country_id: number;
-  company_id: number;
-  code: string;
-  description: string;
-  active: boolean;
+  billing_term: string;
+  billing_rate: string;
+  live_date: string;
+  remarks: string;
   created_at: string;
   updated_at: string;
-  country_name?: string;
-  company_name?: string;
 }
 
-interface RegionApiResponse {
-  regions: RegionItem[];
-  data: RegionItem[];
+interface CompanyApiResponse {
+  data: CompanyItem[];
+  companies: CompanyItem[];
+  code: number;
   pagination?: {
     current_page: number;
     per_page: number;
@@ -44,7 +38,7 @@ interface RegionApiResponse {
   };
 }
 
-interface RegionTabProps {
+interface CompanyTabProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   entriesPerPage: string;
@@ -62,21 +56,14 @@ const columns: ColumnConfig[] = [
   },
   {
     key: 'name',
-    label: 'Region Name',
+    label: 'Company Name',
     sortable: true,
     hideable: true,
     draggable: true
   },
   {
-    key: 'code',
-    label: 'Code',
-    sortable: true,
-    hideable: true,
-    draggable: true
-  },
-  {
-    key: 'company',
-    label: 'Company',
+    key: 'organization',
+    label: 'Organization',
     sortable: true,
     hideable: true,
     draggable: true
@@ -89,8 +76,15 @@ const columns: ColumnConfig[] = [
     draggable: true
   },
   {
-    key: 'status',
-    label: 'Status',
+    key: 'billing_rate',
+    label: 'Billing Rate',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'live_date',
+    label: 'Live Date',
     sortable: true,
     hideable: true,
     draggable: true
@@ -104,7 +98,7 @@ const columns: ColumnConfig[] = [
   }
 ];
 
-export const RegionTab: React.FC<RegionTabProps> = ({
+export const CompanyTab: React.FC<CompanyTabProps> = ({
   searchQuery,
   setSearchQuery,
   entriesPerPage,
@@ -114,13 +108,12 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const { getFullUrl, getAuthHeader } = useApiConfig();
   
   // State management
-  const [regions, setRegions] = useState<RegionItem[]>([]);
+  const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
-  const [appliedFilters, setAppliedFilters] = useState<RegionFilters>({});
   const [pagination, setPagination] = useState({
     current_page: 1,
     per_page: 10,
@@ -137,12 +130,12 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   
   // Dropdowns and permissions
-  const [companiesDropdown, setCompaniesDropdown] = useState<any[]>([]);
+  const [organizationsDropdown, setOrganizationsDropdown] = useState<any[]>([]);
   const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
-  const [canEditRegion, setCanEditRegion] = useState(false);
+  const [canEditCompany, setCanEditCompany] = useState(false);
 
   const user = getUser() || {
     id: 0,
@@ -154,47 +147,33 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const checkEditPermission = () => {
     const userEmail = user.email || '';
     const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com'];
-    setCanEditRegion(allowedEmails.includes(userEmail));
+    setCanEditCompany(allowedEmails.includes(userEmail));
   };
 
   useEffect(() => {
-    fetchCompaniesDropdown();
+    fetchOrganizationsDropdown();
     fetchCountriesDropdown();
     checkEditPermission();
   }, []);
 
   // Load data on component mount and when page/perPage/filters change
   useEffect(() => {
-    fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+    fetchCompanies(currentPage, perPage, debouncedSearchQuery);
+  }, [currentPage, perPage, debouncedSearchQuery]);
 
-  // Fetch regions data from API
-  const fetchRegions = async (page = 1, per_page = 10, search = '', filters: RegionFilters = {}) => {
+  // Fetch companies data from API
+  const fetchCompanies = async (page = 1, per_page = 10, search = '') => {
     setLoading(true);
     try {
       // Build API URL with parameters
-      let apiUrl = getFullUrl(`/pms/regions.json?page=${page}&per_page=${per_page}`);
+      let apiUrl = getFullUrl(`/pms/company_setups/company_index.json?page=${page}&per_page=${per_page}`);
 
       // Add search parameter
       if (search.trim()) {
         apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
       }
 
-      // Add filter parameters
-      if (filters.companyId) {
-        apiUrl += `&q[company_id_eq]=${filters.companyId}`;
-      }
-
-      if (filters.countryId) {
-        apiUrl += `&q[country_id_eq]=${filters.countryId}`;
-      }
-
-      if (filters.status) {
-        const isActive = filters.status === 'active';
-        apiUrl += `&q[active_eq]=${isActive}`;
-      }
-
-      console.log('🔗 API URL with filters:', apiUrl);
+      console.log('🔗 API URL:', apiUrl);
 
       const response = await fetch(apiUrl, {
         method: 'GET',
@@ -209,11 +188,11 @@ export const RegionTab: React.FC<RegionTabProps> = ({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result: RegionApiResponse = await response.json();
-      console.log('Regions API response:', result);
+      const result: CompanyApiResponse = await response.json();
+      console.log('Companies API response:', result);
 
-      if (result && Array.isArray(result.regions)) {
-        setRegions(result.regions);
+      if (result && result.code === 200 && Array.isArray(result.data)) {
+        setCompanies(result.data);
         // Set pagination if available, otherwise use default
         if (result.pagination) {
           setPagination(result.pagination);
@@ -221,33 +200,33 @@ export const RegionTab: React.FC<RegionTabProps> = ({
           setPagination({
             current_page: page,
             per_page: per_page,
-            total_pages: Math.ceil(result.regions.length / per_page),
-            total_count: result.regions.length,
+            total_pages: Math.ceil(result.data.length / per_page),
+            total_count: result.data.length,
             has_next_page: false,
             has_prev_page: false
           });
         }
-      } else if (result && Array.isArray(result.data)) {
-        setRegions(result.data);
+      } else if (result && Array.isArray(result.companies)) {
+        setCompanies(result.companies);
       } else if (Array.isArray(result)) {
-        setRegions(result);
+        setCompanies(result);
       } else {
-        throw new Error('Invalid regions data format');
+        throw new Error('Invalid companies data format');
       }
     } catch (error: any) {
-      console.error('Error fetching regions:', error);
-      toast.error(`Failed to load regions: ${error.message}`, {
+      console.error('Error fetching companies:', error);
+      toast.error(`Failed to load companies: ${error.message}`, {
         duration: 5000,
       });
-      setRegions([]);
+      setCompanies([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCompaniesDropdown = async () => {
+  const fetchOrganizationsDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/pms/company_setups/company_index.json'), {
+      const response = await fetch(getFullUrl('/organizations.json'), {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
@@ -256,16 +235,14 @@ export const RegionTab: React.FC<RegionTabProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        if (data && data.code === 200 && Array.isArray(data.data)) {
-          setCompaniesDropdown(data.data);
-        } else if (data && Array.isArray(data.companies)) {
-          setCompaniesDropdown(data.companies);
+        if (data && data.organizations && Array.isArray(data.organizations)) {
+          setOrganizationsDropdown(data.organizations);
         } else if (Array.isArray(data)) {
-          setCompaniesDropdown(data);
+          setOrganizationsDropdown(data);
         }
       }
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      console.error('Error fetching organizations:', error);
     }
   };
 
@@ -323,13 +300,6 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     }
   };
 
-  // Handle filter application
-  const handleApplyFilters = (filters: RegionFilters) => {
-    console.log('📊 Applying filters:', filters);
-    setAppliedFilters(filters);
-    setCurrentPage(1); // Reset to first page when applying filters
-  };
-
   // Handle search
   const handleSearch = (term: string) => {
     console.log('Search query:', term);
@@ -337,7 +307,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
     if (!term.trim()) {
-      fetchRegions(1, perPage, '', appliedFilters);
+      fetchCompanies(1, perPage, '');
     }
   };
 
@@ -352,11 +322,11 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     setCurrentPage(1); // Reset to first page when changing page size
   };
 
-  // Helper function to get company name
-  const getCompanyName = (companyId: number | null | undefined) => {
-    if (!companyId) return 'Unknown';
-    const company = companiesDropdown.find(c => c.id && c.id.toString() === companyId.toString());
-    return company ? company.name : 'Unknown';
+  // Helper function to get organization name
+  const getOrganizationName = (organizationId: number | null | undefined) => {
+    if (!organizationId) return 'Unknown';
+    const organization = organizationsDropdown.find(o => o.id && o.id.toString() === organizationId.toString());
+    return organization ? organization.name : 'Unknown';
   };
 
   // Helper function to get country name
@@ -385,33 +355,33 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const totalPages = pagination.total_pages;
   
   // Use API data directly instead of client-side filtering
-  const displayedData = regions;
+  const displayedData = companies;
 
   // Render row function for enhanced table
-  const renderRow = (region: RegionItem) => ({
+  const renderRow = (company: CompanyItem) => ({
     actions: (
       <div className="flex items-center gap-2">
         <button
-          onClick={() => region?.id && handleView(region.id)}
+          onClick={() => company?.id && handleView(company.id)}
           className="p-1 text-blue-600 hover:bg-blue-50 rounded"
           title="View"
-          disabled={!region?.id}
+          disabled={!company?.id}
         >
           <Eye className="w-4 h-4" />
         </button>
         <button
-          onClick={() => region?.id && handleEdit(region.id)}
+          onClick={() => company?.id && handleEdit(company.id)}
           className="p-1 text-green-600 hover:bg-green-50 rounded"
           title="Edit"
-          disabled={!canEditRegion || !region?.id}
+          disabled={!canEditCompany || !company?.id}
         >
           <Edit className="w-4 h-4" />
         </button>
         <button
-          onClick={() => region?.id && handleDelete(region.id)}
+          onClick={() => company?.id && handleDelete(company.id)}
           className="p-1 text-red-600 hover:bg-red-50 rounded"
           title="Delete"
-          disabled={!canEditRegion || !region?.id}
+          disabled={!canEditCompany || !company?.id}
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -420,74 +390,71 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     name: (
       <div className="flex items-center gap-3">
         <div>
-          <div className="font-medium">{region?.name || 'N/A'}</div>
-          {region?.description && (
-            <div className="text-sm text-gray-500">{region.description}</div>
+          <div className="font-medium">{company?.name || 'N/A'}</div>
+          {company?.remarks && (
+            <div className="text-sm text-gray-500">{company.remarks}</div>
           )}
         </div>
       </div>
     ),
-    code: (
-      <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-        {region?.code || '-'}
-      </span>
-    ),
-    company: (
+    organization: (
       <span className="text-sm text-gray-600">
-        {getCompanyName(region?.company_id)}
+        {getOrganizationName(company?.organization_id)}
       </span>
     ),
     country: (
       <span className="text-sm text-gray-600">
-        {getCountryName(region?.country_id)}
+        {getCountryName(company?.country_id)}
       </span>
     ),
-    status: (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          region?.active
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'
-        }`}
-      >
-        {region?.active ? 'Active' : 'Inactive'}
+    billing_rate: (
+      <div className="text-sm">
+        <div>{company?.billing_rate || '-'}</div>
+        {company?.billing_term && (
+          <div className="text-gray-500">Term: {company.billing_term}</div>
+        )}
+      </div>
+    ),
+    live_date: (
+      <span className="text-sm text-gray-600">
+        {formatDate(company?.live_date)}
       </span>
     ),
     created_at: (
       <span className="text-sm text-gray-600">
-        {formatDate(region?.created_at)}
+        {formatDate(company?.created_at)}
       </span>
     )
   });
 
   const handleView = (id: number) => {
-    console.log('View region:', id);
-    // Navigate to region details page
-    navigate(`/ops-account/regions/details/${id}`);
+    console.log('View company:', id);
+    // Navigate to company details page
+    navigate(`/ops-account/companies/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
-    console.log('Edit region:', id);
-    setSelectedRegionId(id);
+    console.log('Edit company:', id);
+    setSelectedCompanyId(id);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
-    console.log('Delete region:', id);
-    setSelectedRegionId(id);
+    console.log('Delete company:', id);
+    setSelectedCompanyId(id);
     setIsDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!selectedRegionId) return;
+    if (!selectedCompanyId) return;
 
-    if (!canEditRegion) {
-      toast.error('You do not have permission to delete regions');
+    if (!canEditCompany) {
+      toast.error('You do not have permission to delete companies');
       return;
     }
 
     try {
-      const response = await fetch(getFullUrl(`/pms/regions/${selectedRegionId}.json`), {
+      const response = await fetch(getFullUrl(`/pms/company_setups/${selectedCompanyId}.json`), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -500,17 +467,17 @@ export const RegionTab: React.FC<RegionTabProps> = ({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      toast.success('Region deleted successfully!', {
+      toast.success('Company deleted successfully!', {
         duration: 3000,
       });
 
       // Refresh the data
-      fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+      fetchCompanies(currentPage, perPage, debouncedSearchQuery);
       setIsDeleteModalOpen(false);
-      setSelectedRegionId(null);
+      setSelectedCompanyId(null);
     } catch (error: any) {
-      console.error('Error deleting region:', error);
-      toast.error(`Failed to delete region: ${error.message}`, {
+      console.error('Error deleting company:', error);
+      toast.error(`Failed to delete company: ${error.message}`, {
         duration: 5000,
       });
     }
@@ -519,13 +486,13 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   return (
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Regions</h1>
+        <h1 className="text-2xl font-bold">Companies</h1>
       </header>
 
       {loading && (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
-          <span className="ml-2 text-gray-600">Loading regions...</span>
+          <span className="ml-2 text-gray-600">Loading companies...</span>
         </div>
       )}
 
@@ -535,7 +502,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
             data={displayedData}
             columns={columns}
             renderRow={renderRow}
-            storageKey="region-dashboard-v1"
+            storageKey="company-dashboard-v1"
             hideTableExport={true}
             hideTableSearch={false}
             enableSearch={true}
@@ -546,9 +513,9 @@ export const RegionTab: React.FC<RegionTabProps> = ({
               <Button 
                 className='bg-primary text-primary-foreground hover:bg-primary/90'  
                 onClick={() => setIsAddModalOpen(true)}
-                disabled={!canEditRegion}
+                disabled={!canEditCompany}
               >
-                <Plus className="w-4 h-4 mr-2" /> Add Region
+                <Plus className="w-4 h-4 mr-2" /> Add Company
               </Button>
             )}
             rightActions={(
@@ -557,7 +524,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsBulkUploadOpen(true)}
-                  disabled={!canEditRegion}
+                  disabled={!canEditCompany}
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Bulk Upload
@@ -586,76 +553,15 @@ export const RegionTab: React.FC<RegionTabProps> = ({
         </>
       )}
 
-      {/* Modals */}
-      <AddRegionModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={() => {
-          fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-          setIsAddModalOpen(false);
-        }}
-        companiesDropdown={companiesDropdown}
-        countriesDropdown={countriesDropdown}
-        canEdit={canEditRegion}
-      />
-
-      {selectedRegionId !== null && (
-        <>
-          <EditRegionModal
-            isOpen={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setSelectedRegionId(null);
-            }}
-            onSuccess={() => {
-              fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-              setIsEditModalOpen(false);
-              setSelectedRegionId(null);
-            }}
-            regionId={selectedRegionId}
-            companiesDropdown={companiesDropdown}
-            countriesDropdown={countriesDropdown}
-            canEdit={canEditRegion}
-          />
-
-          <DeleteRegionModal
-            isOpen={isDeleteModalOpen}
-            onClose={() => {
-              setIsDeleteModalOpen(false);
-              setSelectedRegionId(null);
-            }}
-            onConfirm={handleDeleteConfirm}
-            regionId={selectedRegionId}
-          />
-        </>
-      )}
-
-      <RegionFilterModal
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-        onApply={handleApplyFilters}
-        companiesDropdown={companiesDropdown}
-        countriesDropdown={countriesDropdown}
-      />
-
-      <BulkUploadModal
-        isOpen={isBulkUploadOpen}
-        onClose={() => setIsBulkUploadOpen(false)}
-        title="Bulk Upload Regions"
-        description="Upload a CSV file to import regions"
-        onImport={async (file: File) => {
-          // Handle bulk upload logic here
-          console.log('Uploading regions file:', file);
-          toast.success('Regions uploaded successfully');
-          fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-          setIsBulkUploadOpen(false);
-        }}
-      />
-
-      <ExportModal
-        isOpen={isExportOpen}
-        onClose={() => setIsExportOpen(false)}
-      />
+      {/* TODO: Add Company modals similar to OrganizationTab */}
+      {/* 
+      <AddCompanyModal ... />
+      <EditCompanyModal ... />
+      <DeleteCompanyModal ... />
+      <CompanyFilterModal ... />
+      <BulkUploadModal ... />
+      <ExportModal ... />
+      */}
     </div>
   );
 };

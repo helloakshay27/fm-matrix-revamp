@@ -2,12 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, Filter, Upload, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { AddRegionModal } from '@/components/AddRegionModal';
-import { EditRegionModal } from '@/components/EditRegionModal';
-import { DeleteRegionModal } from '@/components/DeleteRegionModal';
-import { RegionFilterModal, RegionFilters } from '@/components/RegionFilterModal';
-import { ExportModal } from '@/components/ExportModal';
-import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
@@ -120,7 +114,6 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
-  const [appliedFilters, setAppliedFilters] = useState<RegionFilters>({});
   const [pagination, setPagination] = useState({
     current_page: 1,
     per_page: 10,
@@ -165,11 +158,11 @@ export const RegionTab: React.FC<RegionTabProps> = ({
 
   // Load data on component mount and when page/perPage/filters change
   useEffect(() => {
-    fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+    fetchRegions(currentPage, perPage, debouncedSearchQuery);
+  }, [currentPage, perPage, debouncedSearchQuery]);
 
   // Fetch regions data from API
-  const fetchRegions = async (page = 1, per_page = 10, search = '', filters: RegionFilters = {}) => {
+  const fetchRegions = async (page = 1, per_page = 10, search = '') => {
     setLoading(true);
     try {
       // Build API URL with parameters
@@ -180,21 +173,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
         apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
       }
 
-      // Add filter parameters
-      if (filters.companyId) {
-        apiUrl += `&q[company_id_eq]=${filters.companyId}`;
-      }
-
-      if (filters.countryId) {
-        apiUrl += `&q[country_id_eq]=${filters.countryId}`;
-      }
-
-      if (filters.status) {
-        const isActive = filters.status === 'active';
-        apiUrl += `&q[active_eq]=${isActive}`;
-      }
-
-      console.log('🔗 API URL with filters:', apiUrl);
+      console.log('🔗 API URL:', apiUrl);
 
       const response = await fetch(apiUrl, {
         method: 'GET',
@@ -323,13 +302,6 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     }
   };
 
-  // Handle filter application
-  const handleApplyFilters = (filters: RegionFilters) => {
-    console.log('📊 Applying filters:', filters);
-    setAppliedFilters(filters);
-    setCurrentPage(1); // Reset to first page when applying filters
-  };
-
   // Handle search
   const handleSearch = (term: string) => {
     console.log('Search query:', term);
@@ -337,7 +309,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
     if (!term.trim()) {
-      fetchRegions(1, perPage, '', appliedFilters);
+      fetchRegions(1, perPage, '');
     }
   };
 
@@ -505,7 +477,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       });
 
       // Refresh the data
-      fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+      fetchRegions(currentPage, perPage, debouncedSearchQuery);
       setIsDeleteModalOpen(false);
       setSelectedRegionId(null);
     } catch (error: any) {
@@ -586,76 +558,15 @@ export const RegionTab: React.FC<RegionTabProps> = ({
         </>
       )}
 
-      {/* Modals */}
-      <AddRegionModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={() => {
-          fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-          setIsAddModalOpen(false);
-        }}
-        companiesDropdown={companiesDropdown}
-        countriesDropdown={countriesDropdown}
-        canEdit={canEditRegion}
-      />
-
-      {selectedRegionId !== null && (
-        <>
-          <EditRegionModal
-            isOpen={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setSelectedRegionId(null);
-            }}
-            onSuccess={() => {
-              fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-              setIsEditModalOpen(false);
-              setSelectedRegionId(null);
-            }}
-            regionId={selectedRegionId}
-            companiesDropdown={companiesDropdown}
-            countriesDropdown={countriesDropdown}
-            canEdit={canEditRegion}
-          />
-
-          <DeleteRegionModal
-            isOpen={isDeleteModalOpen}
-            onClose={() => {
-              setIsDeleteModalOpen(false);
-              setSelectedRegionId(null);
-            }}
-            onConfirm={handleDeleteConfirm}
-            regionId={selectedRegionId}
-          />
-        </>
-      )}
-
-      <RegionFilterModal
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-        onApply={handleApplyFilters}
-        companiesDropdown={companiesDropdown}
-        countriesDropdown={countriesDropdown}
-      />
-
-      <BulkUploadModal
-        isOpen={isBulkUploadOpen}
-        onClose={() => setIsBulkUploadOpen(false)}
-        title="Bulk Upload Regions"
-        description="Upload a CSV file to import regions"
-        onImport={async (file: File) => {
-          // Handle bulk upload logic here
-          console.log('Uploading regions file:', file);
-          toast.success('Regions uploaded successfully');
-          fetchRegions(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-          setIsBulkUploadOpen(false);
-        }}
-      />
-
-      <ExportModal
-        isOpen={isExportOpen}
-        onClose={() => setIsExportOpen(false)}
-      />
+      {/* TODO: Add Region modals similar to OrganizationTab */}
+      {/* 
+      <AddRegionModal ... />
+      <EditRegionModal ... />
+      <DeleteRegionModal ... />
+      <RegionFilterModal ... />
+      <BulkUploadModal ... />
+      <ExportModal ... />
+      */}
     </div>
   );
 };
