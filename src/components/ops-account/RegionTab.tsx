@@ -70,6 +70,44 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     checkEditPermission();
   }, []);
 
+  // Separate filtered companies for add and edit modes
+  const [filteredCompaniesAdd, setFilteredCompaniesAdd] = useState<any[]>([]);
+  const [filteredCompaniesEdit, setFilteredCompaniesEdit] = useState<any[]>([]);
+
+  // Filter companies based on selected headquarter (country) for ADD mode
+  useEffect(() => {
+    if (newRegionData.headquarter_id) {
+      const filtered = companiesDropdown.filter(company => 
+        company.country_id === parseInt(newRegionData.headquarter_id)
+      );
+      setFilteredCompaniesAdd(filtered);
+      
+      // Reset company if current selection is not valid
+      if (newRegionData.company_id && !filtered.find(c => c.id.toString() === newRegionData.company_id)) {
+        setNewRegionData(prev => ({ ...prev, company_id: '' }));
+      }
+    } else {
+      setFilteredCompaniesAdd(companiesDropdown);
+    }
+  }, [newRegionData.headquarter_id, companiesDropdown]);
+
+  // Filter companies based on selected headquarter (country) for EDIT mode
+  useEffect(() => {
+    if (editRegionData.headquarter_id) {
+      const filtered = companiesDropdown.filter(company => 
+        company.country_id === parseInt(editRegionData.headquarter_id)
+      );
+      setFilteredCompaniesEdit(filtered);
+      
+      // Reset company if current selection is not valid
+      if (editRegionData.company_id && !filtered.find(c => c.id.toString() === editRegionData.company_id)) {
+        setEditRegionData(prev => ({ ...prev, company_id: '' }));
+      }
+    } else {
+      setFilteredCompaniesEdit(companiesDropdown);
+    }
+  }, [editRegionData.headquarter_id, companiesDropdown]);
+
   const fetchRegions = async () => {
     setIsLoadingRegions(true);
     try {
@@ -325,25 +363,19 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                 />
               </div>
               <div>
-                <Label htmlFor="company">Company *</Label>
-                <Select value={newRegionData.company_id} onValueChange={(value) => setNewRegionData({ ...newRegionData, company_id: value })}>
+                <Label htmlFor="headquarter">Country *</Label>
+                <Select 
+                  value={newRegionData.headquarter_id} 
+                  onValueChange={(value) => {
+                    setNewRegionData({ 
+                      ...newRegionData, 
+                      headquarter_id: value,
+                      company_id: '' // Reset company when country changes
+                    });
+                  }}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companiesDropdown.map((company) => (
-                      <SelectItem key={company.id} value={company.id.toString()}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="headquarter">Headquarter *</Label>
-                <Select value={newRegionData.headquarter_id} onValueChange={(value) => setNewRegionData({ ...newRegionData, headquarter_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select headquarter" />
+                    <SelectValue placeholder="Select country" />
                   </SelectTrigger>
                   <SelectContent>
                     {headquartersDropdown.map((hq) => (
@@ -353,6 +385,45 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label htmlFor="company">Company *</Label>
+                <Select 
+                  value={newRegionData.company_id} 
+                  onValueChange={(value) => setNewRegionData({ ...newRegionData, company_id: value })}
+                  disabled={!newRegionData.headquarter_id}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={
+                      !newRegionData.headquarter_id 
+                        ? "Select country first"
+                        : filteredCompaniesAdd.length === 0
+                        ? "No companies available for selected country"
+                        : "Select company"
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCompaniesAdd.length === 0 ? (
+                      <SelectItem value="no-data" disabled>
+                        {!newRegionData.headquarter_id 
+                          ? "Please select a country first"
+                          : "No companies available for selected country"
+                        }
+                      </SelectItem>
+                    ) : (
+                      filteredCompaniesAdd.map((company) => (
+                        <SelectItem key={company.id} value={company.id.toString()}>
+                          {company.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {newRegionData.headquarter_id && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {filteredCompaniesAdd.length} companies available for selected country
+                  </p>
+                )}
               </div>
             </div>
             <DialogFooter>
@@ -467,25 +538,19 @@ export const RegionTab: React.FC<RegionTabProps> = ({
               />
             </div>
             <div>
-              <Label htmlFor="edit_company">Company *</Label>
-              <Select value={editRegionData.company_id} onValueChange={(value) => setEditRegionData({ ...editRegionData, company_id: value })}>
+              <Label htmlFor="edit_headquarter">Country *</Label>
+              <Select 
+                value={editRegionData.headquarter_id} 
+                onValueChange={(value) => {
+                  setEditRegionData({ 
+                    ...editRegionData, 
+                    headquarter_id: value,
+                    company_id: '' // Reset company when country changes
+                  });
+                }}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select company" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companiesDropdown.map((company) => (
-                    <SelectItem key={company.id} value={company.id.toString()}>
-                      {company.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="edit_headquarter">Headquarter *</Label>
-              <Select value={editRegionData.headquarter_id} onValueChange={(value) => setEditRegionData({ ...editRegionData, headquarter_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select headquarter" />
+                  <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
                   {headquartersDropdown.map((hq) => (
@@ -495,6 +560,45 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label htmlFor="edit_company">Company *</Label>
+              <Select 
+                value={editRegionData.company_id} 
+                onValueChange={(value) => setEditRegionData({ ...editRegionData, company_id: value })}
+                disabled={!editRegionData.headquarter_id}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    !editRegionData.headquarter_id 
+                      ? "Select country first"
+                      : filteredCompaniesEdit.length === 0
+                      ? "No companies available for selected country"
+                      : "Select company"
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredCompaniesEdit.length === 0 ? (
+                    <SelectItem value="no-data" disabled>
+                      {!editRegionData.headquarter_id 
+                        ? "Please select a country first"
+                        : "No companies available for selected country"
+                      }
+                    </SelectItem>
+                  ) : (
+                    filteredCompaniesEdit.map((company) => (
+                      <SelectItem key={company.id} value={company.id.toString()}>
+                        {company.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {editRegionData.headquarter_id && (
+                <p className="text-xs text-gray-400 mt-1">
+                  {filteredCompaniesEdit.length} companies available for selected country
+                </p>
+              )}
             </div>
           </div>
           <DialogFooter>

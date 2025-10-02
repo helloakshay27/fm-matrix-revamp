@@ -330,97 +330,228 @@ export const AddIncidentPage = () => {
     return idx === -1 ? '' : String(idx + 1);
   };
 
-  const handleSubmit = async () => {
-    // Enhanced validation for all required fields
+  // const handleSubmit = async () => {
+  //   // Enhanced validation for all required fields
 
+  //   // Time validation
+  //   if (!incidentData.hour || !incidentData.minute) {
+  //     toast.error('Please select both hour and minute');
+  //     return;
+  //   }
+
+  //   // Date validation
+  //   if (!incidentData.day || !incidentData.month || !incidentData.year) {
+  //     toast.error('Please select complete date (day, month, year)');
+  //     return;
+  //   }
+
+  //   if (!incidentData.building) {
+  //     toast.error('Please select a building');
+  //     return;
+  //   }
+
+  //   if (!incidentData.categoryForIncident) {
+  //     toast.error('Please select primary category');
+  //     return;
+  //   }
+
+  //   if (!incidentData.primaryCategory) {
+  //     toast.error('Please select sub category');
+  //     return;
+  //   }
+
+  //   if (!incidentData.subCategory) {
+  //     toast.error('Please select sub sub category');
+  //     return;
+  //   }
+
+  //   if (!incidentData.subSubCategory) {
+  //     toast.error('Please select sub sub sub category');
+  //     return;
+  //   }
+
+  //   if (!incidentData.severity) {
+  //     toast.error('Please select severity');
+  //     return;
+  //   }
+
+  //   if (!incidentData.probability) {
+  //     toast.error('Please select probability');
+  //     return;
+  //   }
+
+  //   if (!incidentData.incidentLevel) {
+  //     toast.error('Please select incident level');
+  //     return;
+  //   }
+
+  //   if (!incidentData.description || incidentData.description.trim() === '') {
+  //     toast.error('Please enter a description');
+  //     return;
+  //   }
+
+  //   // Secondary category hierarchy validation - all levels are now mandatory
+  //   if (!incidentData.secondaryCategory) {
+  //     toast.error('Please select secondary category');
+  //     return;
+  //   }
+
+  //   if (!incidentData.secondarySubCategory) {
+  //     toast.error('Please select secondary sub category');
+  //     return;
+  //   }
+
+  //   if (!incidentData.secondarySubSubCategory) {
+  //     toast.error('Please select secondary sub sub category');
+  //     return;
+  //   }
+
+  //   if (!incidentData.secondarySubSubSubCategory) {
+  //     toast.error('Please select secondary sub sub sub category');
+  //     return;
+  //   }
+
+
+  //   if (!incidentData.factsCorrect) {
+  //     toast.error('Please confirm the disclaimer');
+  //     return;
+  //   }
+
+  //   try {
+
+  //     let baseUrl = localStorage.getItem('baseUrl') || '';
+  //     const token = localStorage.getItem('token') || '';
+  //     if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+  //       baseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+  //     }
+
+  //     const form = new FormData();
+
+  //     // Time fields
+  //     form.append('incident[inc_time(1i)]', incidentData.year);
+  //     form.append('incident[inc_time(2i)]', monthNameToNumber(incidentData.month));
+  //     form.append('incident[inc_time(3i)]', incidentData.day);
+  //     form.append('incident[inc_time(4i)]', incidentData.hour);
+  //     form.append('incident[inc_time(5i)]', incidentData.minute);
+
+  //     // Building
+  //     form.append('incident[building_id]', incidentData.building);
+
+  //     // Primary hierarchy
+  //     form.append('incident[inc_category_id]', incidentData.categoryForIncident);
+  //     form.append('incident[inc_sub_category_id]', incidentData.primaryCategory);
+  //     form.append('incident[inc_sub_sub_category_id]', incidentData.subCategory);
+  //     form.append('incident[inc_sub_sub_sub_category_id]', incidentData.subSubCategory);
+
+  //     // Secondary hierarchy (optional)
+  //     if (incidentData.secondaryCategory) form.append('incident[inc_sec_category_id]', incidentData.secondaryCategory);
+  //     if (incidentData.secondarySubCategory) form.append('incident[inc_sec_sub_category_id]', incidentData.secondarySubCategory);
+  //     if (incidentData.secondarySubSubCategory) form.append('incident[inc_sec_sub_sub_category_id]', incidentData.secondarySubSubCategory);
+  //     if (incidentData.secondarySubSubSubCategory) form.append('incident[inc_sec_sub_sub_sub_category_id]', incidentData.secondarySubSubSubCategory);
+
+  //     // Severity and Probability
+  //     form.append('incident[severity]', incidentData.severity);
+  //     form.append('incident[probability]', incidentData.probability);
+
+  //     // Incident Level (auto-calculated, if available)
+  //     if (incidentData.incidentLevel) {
+  //       form.append('incident[inc_level_id]', incidentData.incidentLevel);
+  //     }
+
+  //     form.append('incident[description]', incidentData.description);
+
+  //     form.append('incident[support_required]', incidentData.supportRequired ? '1' : '0');
+  //     form.append('incident[disclaimer]', incidentData.factsCorrect ? '1' : '0');
+
+  //     form.append('noticeboard[document]', '');
+  //     form.append('noticeboard[expire_time]', '');
+
+  //     if (incidentData.attachments) {
+  //       form.append('noticeboard[files_attached][]', incidentData.attachments);
+  //     }
+
+  //     const resp = await fetch(`${baseUrl}/pms/incidents.json`, {
+  //       method: 'POST',
+  //       headers: {
+  //         Authorization: `Bearer ${token}`
+  //       },
+  //       body: form
+  //     });
+
+  //     if (!resp.ok) {
+  //       const errText = await resp.text();
+  //       throw new Error(errText || 'Failed to create incident');
+  //     }
+
+  //     toast.success('Incident reported successfully!');
+  //     navigate('/safety/incident');
+  //   } catch (err: any) {
+  //     console.error('Incident POST failed:', err);
+  //     toast.error('Failed to create incident');
+  //   }
+  // };
+
+
+  const handleSubmit = async () => {
     // Time validation
+    if (!incidentData.year || !incidentData.month || !incidentData.day) {
+      toast.error('Please select complete date (day, month, year)');
+      return;
+    }
+
     if (!incidentData.hour || !incidentData.minute) {
       toast.error('Please select both hour and minute');
       return;
     }
 
-    // Date validation
-    if (!incidentData.day || !incidentData.month || !incidentData.year) {
-      toast.error('Please select complete date (day, month, year)');
-      return;
-    }
-
+    // Building validation
     if (!incidentData.building) {
       toast.error('Please select a building');
       return;
     }
 
+    // Primary category hierarchy validation
     if (!incidentData.categoryForIncident) {
       toast.error('Please select primary category');
       return;
     }
-
     if (!incidentData.primaryCategory) {
       toast.error('Please select sub category');
       return;
     }
-
     if (!incidentData.subCategory) {
       toast.error('Please select sub sub category');
       return;
     }
-
     if (!incidentData.subSubCategory) {
       toast.error('Please select sub sub sub category');
       return;
     }
 
+    // Risk validation
     if (!incidentData.severity) {
       toast.error('Please select severity');
       return;
     }
-
     if (!incidentData.probability) {
       toast.error('Please select probability');
       return;
     }
 
-    if (!incidentData.incidentLevel) {
-      toast.error('Please select incident level');
-      return;
-    }
-
+    // Description validation
     if (!incidentData.description || incidentData.description.trim() === '') {
       toast.error('Please enter a description');
       return;
     }
 
-    // Secondary category hierarchy validation - all levels are now mandatory
-    if (!incidentData.secondaryCategory) {
-      toast.error('Please select secondary category');
-      return;
-    }
-
-    if (!incidentData.secondarySubCategory) {
-      toast.error('Please select secondary sub category');
-      return;
-    }
-
-    if (!incidentData.secondarySubSubCategory) {
-      toast.error('Please select secondary sub sub category');
-      return;
-    }
-
-    if (!incidentData.secondarySubSubSubCategory) {
-      toast.error('Please select secondary sub sub sub category');
-      return;
-    }
-
-    // Support validation - this field is optional, no validation needed
-
-    // Disclaimer validation (must be checked)
+    // Disclaimer validation
     if (!incidentData.factsCorrect) {
       toast.error('Please confirm the disclaimer');
       return;
     }
 
     try {
-      // Build base URL and token
+      // Base URL and token
       let baseUrl = localStorage.getItem('baseUrl') || '';
       const token = localStorage.getItem('token') || '';
       if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
@@ -445,43 +576,26 @@ export const AddIncidentPage = () => {
       form.append('incident[inc_sub_sub_category_id]', incidentData.subCategory);
       form.append('incident[inc_sub_sub_sub_category_id]', incidentData.subSubCategory);
 
-      // Secondary hierarchy (optional)
-      if (incidentData.secondaryCategory) form.append('incident[inc_sec_category_id]', incidentData.secondaryCategory);
-      if (incidentData.secondarySubCategory) form.append('incident[inc_sec_sub_category_id]', incidentData.secondarySubCategory);
-      if (incidentData.secondarySubSubCategory) form.append('incident[inc_sec_sub_sub_category_id]', incidentData.secondarySubSubCategory);
-      if (incidentData.secondarySubSubSubCategory) form.append('incident[inc_sec_sub_sub_sub_category_id]', incidentData.secondarySubSubSubCategory);
-
-      // Severity and Probability
+      // Severity, Probability, Incident Level
       form.append('incident[severity]', incidentData.severity);
       form.append('incident[probability]', incidentData.probability);
-
-      // Incident Level (auto-calculated, if available)
-      if (incidentData.incidentLevel) {
-        form.append('incident[inc_level_id]', incidentData.incidentLevel);
-      }
+      if (incidentData.incidentLevel) form.append('incident[inc_level_id]', incidentData.incidentLevel);
 
       // Description
       form.append('incident[description]', incidentData.description);
 
-      // Booleans
+      // Disclaimer and support
       form.append('incident[support_required]', incidentData.supportRequired ? '1' : '0');
       form.append('incident[disclaimer]', incidentData.factsCorrect ? '1' : '0');
 
-      // Noticeboard (optional fields as in sample curl)
-      form.append('noticeboard[document]', '');
-      form.append('noticeboard[expire_time]', '');
-
-      // File attachments (supports single for now)
+      // Attachments (optional)
       if (incidentData.attachments) {
         form.append('noticeboard[files_attached][]', incidentData.attachments);
       }
 
       const resp = await fetch(`${baseUrl}/pms/incidents.json`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
-          // Do not set Content-Type when using FormData
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: form
       });
 
@@ -497,6 +611,7 @@ export const AddIncidentPage = () => {
       toast.error('Failed to create incident');
     }
   };
+
 
   return (
     <div className="p-6">
@@ -724,7 +839,7 @@ export const AddIncidentPage = () => {
             {/* SECONDARY CATEGORY HIERARCHY */}
             {/* Level 1: Secondary Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Secondary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Secondary Category</InputLabel>
               <MuiSelect
                 label="Secondary Category *"
                 value={incidentData.secondaryCategory}
@@ -742,7 +857,7 @@ export const AddIncidentPage = () => {
 
             {/* Level 2: Secondary Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.secondaryCategory}>
-              <InputLabel shrink>Secondary Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Secondary Sub Category</InputLabel>
               <MuiSelect
                 label="Secondary Sub Category *"
                 value={incidentData.secondarySubCategory}
@@ -760,7 +875,7 @@ export const AddIncidentPage = () => {
 
             {/* Level 3: Secondary Sub Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.secondarySubCategory}>
-              <InputLabel shrink>Secondary Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Secondary Sub Sub Category</InputLabel>
               <MuiSelect
                 label="Secondary Sub Sub Category *"
                 value={incidentData.secondarySubSubCategory}
@@ -778,7 +893,7 @@ export const AddIncidentPage = () => {
 
             {/* Level 4: Secondary Sub Sub Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.secondarySubSubCategory}>
-              <InputLabel shrink>Secondary Sub Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Secondary Sub Sub Sub Category</InputLabel>
               <MuiSelect
                 label="Secondary Sub Sub Sub Category *"
                 value={incidentData.secondarySubSubSubCategory}
@@ -966,7 +1081,7 @@ export const AddIncidentPage = () => {
                     }}
                   />
                 }
-                label={<>I have correctly stated all the facts related to the incident. <span style={{ color: '#C72030' }}>*</span></>}
+                label={<>I have correctly stated all the facts related to the incident. </>}
               />
             </div>
           </div>

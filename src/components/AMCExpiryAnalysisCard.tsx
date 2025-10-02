@@ -1,4 +1,5 @@
 import React from 'react';
+import { ANALYTICS_PALETTE } from '@/styles/chartPalette';
 import { Download, TrendingUp, AlertTriangle, Clock } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +39,7 @@ export const AMCExpiryAnalysisCard: React.FC<AMCExpiryAnalysisCardProps> = ({ da
   return (
     <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 h-full flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-6 pb-0">
-        <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMC Expiry Analysis</h3>
+  <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMC Expiry Analysis</h3>
         {onDownload && (
           <Download
             className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer text-[#C72030] hover:text-[#A01828]"
@@ -52,42 +53,42 @@ export const AMCExpiryAnalysisCard: React.FC<AMCExpiryAnalysisCardProps> = ({ da
           <div className="space-y-6">
             {/* Key Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-xl border border-red-200 shadow-sm">
+              <div className="text-center p-4 rounded-xl border shadow-sm" style={{ background: '#f6f0f0', borderColor: '#ead9d9' }}>
                 <div className="flex items-center justify-center mb-2">
-                  <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
-                  <span className="text-sm font-medium text-red-700">Expired</span>
+                  <AlertTriangle className="w-5 h-5 mr-2" style={{ color: ANALYTICS_PALETTE[2] }} />
+                  <span className="text-sm font-medium text-black">Expired</span>
                 </div>
-                <div className="text-2xl font-bold text-red-600">
+                <div className="text-2xl font-bold text-black">
                   {data.find(item => item.period === 'Expired')?.expiredCount || 0}
                 </div>
               </div>
               
-              <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200 shadow-sm">
+              <div className="text-center p-4 rounded-xl border shadow-sm" style={{ background: '#f5f4f1', borderColor: '#e3e0d9' }}>
                 <div className="flex items-center justify-center mb-2">
-                  <Clock className="w-5 h-5 text-orange-600 mr-2" />
-                  <span className="text-sm font-medium text-orange-700">30 Days</span>
+                  <Clock className="w-5 h-5 mr-2" style={{ color: ANALYTICS_PALETTE[0] }} />
+                  <span className="text-sm font-medium text-black">30 Days</span>
                 </div>
-                <div className="text-2xl font-bold text-orange-600">
+                <div className="text-2xl font-bold text-black">
                   {data.find(item => item.period === 'Next 30 Days')?.expiringCount || 0}
               </div>
             </div>
             
-            <div className="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl border border-yellow-200 shadow-sm">
+            <div className="text-center p-4 rounded-xl border shadow-sm" style={{ background: '#f0f2f2', borderColor: '#d9dede' }}>
               <div className="flex items-center justify-center mb-2">
-                <Clock className="w-5 h-5 text-yellow-600 mr-2" />
-                <span className="text-sm font-medium text-yellow-700">60 Days</span>
+                <Clock className="w-5 h-5 mr-2" style={{ color: ANALYTICS_PALETTE[1] }} />
+                <span className="text-sm font-medium text-black">60 Days</span>
               </div>
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-2xl font-bold text-black">
                 {data.find(item => item.period === 'Next 60 Days')?.expiringCount || 0}
               </div>
             </div>
             
-            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 shadow-sm">
+            <div className="text-center p-4 rounded-xl border shadow-sm" style={{ background: '#edeae4', borderColor: '#dbd4c9' }}>
               <div className="flex items-center justify-center mb-2">
-                <TrendingUp className="w-5 h-5 text-blue-600 mr-2" />
-                <span className="text-sm font-medium text-blue-700">90 Days</span>
+                <TrendingUp className="w-5 h-5 mr-2" style={{ color: ANALYTICS_PALETTE[3] }} />
+                <span className="text-sm font-medium text-black">90 Days</span>
               </div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-black">
                 {data.find(item => item.period === 'Next 90 Days')?.expiringCount || 0}
               </div>
             </div>
@@ -96,10 +97,10 @@ export const AMCExpiryAnalysisCard: React.FC<AMCExpiryAnalysisCardProps> = ({ da
           {/* Trend Chart */}
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg font-semibold text-gray-800">AMC Expiry Trend</h4>
+              <h4 className="text-lg font-semibold text-black">AMC Expiry Trend</h4>
               <div className="flex items-center text-sm text-gray-600">
                 <TrendingUp className="w-4 h-4 mr-1" />
-                <span>Expiry Forecast</span>
+                <span className="text-black">Expiry Forecast</span>
               </div>
             </div>
             
@@ -111,8 +112,8 @@ export const AMCExpiryAnalysisCard: React.FC<AMCExpiryAnalysisCardProps> = ({ da
                 >
                   <defs>
                     <linearGradient id="expiringGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.05}/>
+                      <stop offset="5%" stopColor={ANALYTICS_PALETTE[0]} stopOpacity={0.35}/>
+                      <stop offset="95%" stopColor={ANALYTICS_PALETTE[0]} stopOpacity={0.05}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -137,11 +138,11 @@ export const AMCExpiryAnalysisCard: React.FC<AMCExpiryAnalysisCardProps> = ({ da
                   <Area 
                     type="monotone" 
                     dataKey="expiringCount" 
-                    stroke="#f59e0b" 
+                    stroke={ANALYTICS_PALETTE[0]} 
                     strokeWidth={3}
                     fill="url(#expiringGradient)"
-                    dot={{ fill: '#f59e0b', strokeWidth: 2, r: 5 }}
-                    activeDot={{ r: 7, fill: '#f59e0b', stroke: '#ffffff', strokeWidth: 2 }}
+                    dot={{ fill: ANALYTICS_PALETTE[0], strokeWidth: 2, r: 5 }}
+                    activeDot={{ r: 7, fill: ANALYTICS_PALETTE[0], stroke: '#ffffff', strokeWidth: 2 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>

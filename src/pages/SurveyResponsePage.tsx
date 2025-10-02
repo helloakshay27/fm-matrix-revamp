@@ -279,7 +279,7 @@ export const SurveyResponsePage = () => {
       urlWithParams.searchParams.append("page", page.toString());
 
       // Add per_page parameter
-      urlWithParams.searchParams.append("per_page", "15");
+      urlWithParams.searchParams.append("per_page", "10");
 
       // Add access_token parameter if available
       if (API_CONFIG.TOKEN) {
@@ -287,10 +287,13 @@ export const SurveyResponsePage = () => {
         // console.log('🔑 Adding access_token to request');
       }
 
-      // Add search query if provided
+      // Add search query if provided - composite search across name and location fields
       if (searchQuery && searchQuery.trim()) {
-        urlWithParams.searchParams.append("q[name_cont]", searchQuery.trim());
-        // console.log('🔍 Adding search query:', searchQuery);
+        urlWithParams.searchParams.append(
+          "q[name_or_survey_mappings_building_name_or_survey_mappings_wing_name_or_survey_mappings_floor_name_or_survey_mappings_room_name_cont]",
+          searchQuery.trim()
+        );
+        // console.log('🔍 Adding composite search query:', searchQuery);
       }
 
       // Add survey title filter if provided

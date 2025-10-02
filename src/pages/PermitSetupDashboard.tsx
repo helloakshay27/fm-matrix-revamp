@@ -1890,7 +1890,8 @@ export const PermitSetupDashboard = () => {
   const token = localStorage.getItem('token');
   const baseUrl = localStorage.getItem('baseUrl');
   // Ensure baseUrl is present and ends with no trailing slash
-  const apiBase = baseUrl ? `${baseUrl.replace(/\/$/, '')}/pms/permit_tags.json` : '';
+  const apiBase = baseUrl ? `https://${baseUrl}/pms/permit_tags.json` : '';
+
 
   // Helper for headers
   const getHeaders = () => ({
@@ -2451,7 +2452,7 @@ export const PermitSetupDashboard = () => {
     <ThemeProvider theme={muiTheme}>
       <div className="flex-1 p-6 bg-white min-h-screen">
         {/* Header */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-gray-900">Permit Setup</h1>
             <Button className="bg-gray-600 hover:bg-gray-700 text-white">
@@ -2459,7 +2460,7 @@ export const PermitSetupDashboard = () => {
               Import Permit Tags
             </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* Tabs */}
         <Tabs defaultValue="permit-type" className="w-full">

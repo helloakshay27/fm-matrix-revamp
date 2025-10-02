@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import axios from 'axios';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface Asset {
   id: number;
@@ -29,7 +29,6 @@ interface AssociateServiceModalProps {
 }
 
 export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId }: AssociateServiceModalProps) => {
-  const { toast } = useToast();
   const [selectedAsset, setSelectedAsset] = useState('');
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,20 +39,12 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
 
 
     if (!token) {
-      toast({
-        title: "Error",
-        description: "Missing token",
-        variant: "destructive",
-      });
+      toast.error('Missing token');
       return;
     }
 
     if (!assetGroupId) {
-      toast({
-        title: "Error",
-        description: "Missing asset group ID",
-        variant: "destructive",
-      });
+      // Silent skip: handled by effect toast
       return;
     }
 
@@ -79,11 +70,7 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
       setAssets(assetsArray);
     } catch (error) {
       console.error('Failed to fetch asset data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch assets",
-        variant: "destructive",
-      });
+  toast.error('Failed to fetch assets');
     } finally {
       setLoading(false);
     }
@@ -91,11 +78,7 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
 
   const handleAssociate = async () => {
     if (!selectedAsset) {
-      toast({
-        title: "Error",
-        description: "Please select an asset first",
-        variant: "destructive",
-      });
+      toast.error('Please select an asset first');
       return;
     }
 
@@ -103,11 +86,7 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
     const token = localStorage.getItem('token');
 
     if (!baseUrl || !token) {
-      toast({
-        title: "Error",
-        description: "Missing base URL or token",
-        variant: "destructive",
-      });
+      toast.error('Missing base URL or token');
       return;
     }
 
@@ -129,28 +108,28 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
         }
       );
 
-      toast({
-        title: "Success",
-        description: "Service associated successfully!",
-      });
+  toast.success('Service associated successfully!');
       onClose();
     } catch (error) {
       console.error('Failed to associate service:', error);
-      toast({
-        title: "Error",
-        description: "Failed to associate service",
-        variant: "destructive",
-      });
+  toast.error('Failed to associate service');
     } finally {
       setLoading(false);
     }
   };
 
+  const shownMissingGroupToast = useRef(false);
   useEffect(() => {
-    if (isOpen) {
-      fetchAssetData();
+    if (!isOpen) return;
+    if (!assetGroupId) {
+      if (!shownMissingGroupToast.current) {
+  toast('No asset group is associated with this service yet. Assign one before associating assets.');
+        shownMissingGroupToast.current = true;
+      }
+      return;
     }
-  }, [isOpen]);
+    fetchAssetData();
+  }, [isOpen, assetGroupId]);
 
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -177,7 +156,7 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
 
       <DialogContent style={{ padding: '24px' }}>
         <div style={{ marginBottom: '24px' }}>
-          <FormControl fullWidth variant="outlined" disabled={loading}>
+          <FormControl fullWidth variant="outlined" disabled={loading || !assetGroupId}>
             <InputLabel id="asset-select-label" shrink>Asset</InputLabel>
             <MuiSelect
               labelId="asset-select-label"
@@ -200,13 +179,18 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
               <CircularProgress size={20} />
             </div>
           )}
+          {!loading && !assetGroupId && (
+            <div className="text-xs text-gray-600 mt-2">
+              Asset group not available. Close this dialog and assign a group to the service, then retry.
+            </div>
+          )}
         </div>
 
         <div className="flex justify-center">
           <Button
             onClick={handleAssociate}
             className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
-            disabled={loading}
+            disabled={loading || !assetGroupId}
           >
             Associate Service
           </Button>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { User, Building2 } from 'lucide-react';
 
 type RecentUser = {
   id: number;
@@ -62,21 +62,23 @@ export function RecentAttendanceSidebar() {
   };
 
   return (
-    <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
+    <div className="w-full h-full flex flex-col bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-red-600 mb-2">Recent Attendance</h2>
-        <div className="text-sm font-medium text-gray-800">{new Date().toLocaleDateString('en-GB')}</div>
+        <h2 className="text-lg font-bold text-[#C72030] mb-1">Recent Attendance</h2>
+        <div className="text-sm font-semibold text-black tracking-wide">
+          {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+        </div>
       </div>
 
       {/* Attendance List */}
-      <div className="flex-1 overflow-y-auto space-y-4">
+      <div className="flex-1 overflow-y-auto space-y-6 pr-1 custom-scrollbar">
         {loading ? (
-          <div className="text-sm text-gray-600">Loading…</div>
+          <div className="text-sm text-black">Loading…</div>
         ) : error ? (
-          <div className="text-sm text-red-600">{error}</div>
+          <div className="text-sm text-[#E4626F]">{error}</div>
         ) : users.length === 0 ? (
-          <div className="text-sm text-gray-600">No recent attendance found.</div>
+          <div className="text-sm text-black">No recent attendance found.</div>
         ) : (
           users.map((u) => {
             const name = (u.full_name && String(u.full_name).trim().length > 0)
@@ -85,29 +87,45 @@ export function RecentAttendanceSidebar() {
             return (
               <div
                 key={u.id}
-                className="bg-[#C4B89D] rounded-lg p-4 shadow-sm border border-[#E7D8C5]"
+                className="bg-white rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60"
                 style={{ borderWidth: '0.6px' }}
               >
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <User className="h-4 w-4 text-red-500" />
-                    <span className="text-sm font-medium text-gray-700 min-w-[100px]">Employee</span>
-                    <span className="text-sm text-gray-700">:</span>
-                    <span className="text-sm text-gray-900 font-semibold">{name}</span>
+                {/* Header ID (mirroring ticket number style) */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-semibold text-gray-800 text-sm">{u.id || '-'}</span>
+                  {/* Right side left intentionally empty to keep layout consistent without adding new features */}
+                  <span className="text-xs font-medium px-4 py-1 rounded-full bg-[#D5DBDB] text-black/70 tracking-wide">EMP</span>
+                </div>
+                {/* Details */}
+                <div className="space-y-4 mb-2">
+                  {/* Employee Row */}
+                  <div className="grid grid-cols-[16px_95px_8px_1fr] gap-x-2 items-start">
+                    <User className="h-4 w-4 text-[#C72030] flex-shrink-0 mt-[2px]" />
+                    <span className="text-sm font-medium text-gray-700 leading-snug">Employee</span>
+                    <span className="text-sm text-gray-700 leading-snug">:</span>
+                    <span
+                      className="text-sm text-gray-900 font-semibold leading-snug break-words"
+                      style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                    >
+                      {name}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Building2 className="h-4 w-4 text-red-500" />
-                    <span className="text-sm font-medium text-gray-700 min-w-[100px]">Department</span>
-                    <span className="text-sm text-gray-700">:</span>
-                    <span className="text-sm text-gray-900">{u.department_name || '-'}</span>
+                  {/* Department Row */}
+                  <div className="grid grid-cols-[16px_95px_8px_1fr] gap-x-2 items-start">
+                    <Building2 className="h-4 w-4 text-[#C72030] flex-shrink-0 mt-[2px]" />
+                    <span className="text-sm font-medium text-gray-700 leading-snug">Department</span>
+                    <span className="text-sm text-gray-700 leading-snug">:</span>
+                    <span className="text-sm text-gray-900 leading-snug break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{u.department_name || '-'}</span>
                   </div>
                 </div>
-                <div className="flex justify-end mt-3">
+                {/* Footer Action */}
+                <div className="flex justify-end mt-4">
                   <button
-                    className="text-blue-600 text-sm font-medium underline hover:text-blue-800"
+                    className="text-sm font-medium underline hover:opacity-80"
+                    style={{ color: '#c72030' }}
                     onClick={() => viewDetails(u.id)}
                   >
-                    View Detail&gt;&gt;
+                    View Details »
                   </button>
                 </div>
               </div>

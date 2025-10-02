@@ -1,11 +1,21 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
+import {
+    Switch as MuiSwitch,
+    FormControlLabel,
+    TextField,
+    CircularProgress,
+    Box,
+    Typography,
+    Card as MUICard,
+    CardContent as MUICardContent,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel
+} from '@mui/material';
 import { toast } from 'sonner';
 
 interface CircleOption { id: string; name: string; }
@@ -26,6 +36,8 @@ async function authedPost(url: string, body: any, token: string) {
 }
 
 const LMCPage: React.FC = () => {
+    // Minimum characters before server search triggers
+    const SEARCH_THRESHOLD = 3;
     const { userId } = useParams();
     const navigate = useNavigate();
     const [restrictByCircle, setRestrictByCircle] = useState(true);
@@ -36,14 +48,12 @@ const LMCPage: React.FC = () => {
     const [usersAppendLoading, setUsersAppendLoading] = useState(false);
     const [usersPage, setUsersPage] = useState(1);
     const [usersTotalPages, setUsersTotalPages] = useState(1);
-    const [userSearch, setUserSearch] = useState('');
+    // User search restored for server-side querying
     const [selectedCircle, setSelectedCircle] = useState('');
-    const [circleSelectOpen, setCircleSelectOpen] = useState(false);
-    const [circleSearch, setCircleSearch] = useState('');
-    const circleSearchInputRef = useRef<HTMLInputElement>(null);
-    const circleContentRef = useRef<HTMLDivElement>(null);
+    const [userSearch, setUserSearch] = useState(''); // updated via global enhancer event
     const [selectedUser, setSelectedUser] = useState('');
-    const searchInputRef = useRef<HTMLInputElement>(null);
+    // Removed Autocomplete open states after switching to Select/TextField
+    // searchInputRef removed
     const selectedUserOptionRef = useRef<UserOption | null>(null);
     const mappedCircleIdRef = useRef<string | null>(null);
     const [urlUserId, setUrlUserId] = useState('');
@@ -52,8 +62,7 @@ const LMCPage: React.FC = () => {
     const [mappingLoading, setMappingLoading] = useState(false);
     const [resolvingUserLoading, setResolvingUserLoading] = useState(false);
     const [resolvingCircleLoading, setResolvingCircleLoading] = useState(false);
-    const [userSelectOpen, setUserSelectOpen] = useState(false);
-    const userSelectContentRef = useRef<HTMLDivElement>(null);
+    // Removed radix select open state variables after MUI migration
 
     const authToken = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
     const rawBase = typeof window !== 'undefined' ? localStorage.getItem('baseUrl') || '' : '';
@@ -188,11 +197,11 @@ const LMCPage: React.FC = () => {
             setUsers(prev => {
                 if (!append) {
                     const includeSelected = !!selectedUser && !mapped.some(u => u.id === selectedUser);
-                        const selectedOpt = includeSelected
-                            ? (selectedUserOptionRef.current && selectedUserOptionRef.current.id === selectedUser
-                                    ? selectedUserOptionRef.current
-                                    : (prev.find(u => u.id === selectedUser) || { id: selectedUser, name: `User #${selectedUser}` }))
-                            : null;
+                    const selectedOpt = includeSelected
+                        ? (selectedUserOptionRef.current && selectedUserOptionRef.current.id === selectedUser
+                            ? selectedUserOptionRef.current
+                            : (prev.find(u => u.id === selectedUser) || { id: selectedUser, name: `User #${selectedUser}` }))
+                        : null;
                     return includeSelected && selectedOpt ? [selectedOpt as UserOption, ...mapped] : mapped;
                 }
                 const existing = new Map(prev.map(u => [u.id, u] as const));
@@ -210,29 +219,77 @@ const LMCPage: React.FC = () => {
     };
 
     useEffect(() => { if (!selectedUser) return; const opt = users.find(u => u.id === selectedUser); if (opt) selectedUserOptionRef.current = opt; }, [selectedUser, users]);
-    useEffect(() => { if (!selectedUser) return; const cur = selectedUserOptionRef.current || users.find(u => u.id === selectedUser); const name = cur?.name || ''; const isPlaceholder = !name || /^user\s*#?\s*\d+$/i.test(name) || name === `User #${selectedUser}`; if (isPlaceholder) resolveUserNameById(selectedUser).catch(()=>{}); }, [selectedUser]);
+    useEffect(() => { if (!selectedUser) return; const cur = selectedUserOptionRef.current || users.find(u => u.id === selectedUser); const name = cur?.name || ''; const isPlaceholder = !name || /^user\s*#?\s*\d+$/i.test(name) || name === `User #${selectedUser}`; if (isPlaceholder) resolveUserNameById(selectedUser).catch(() => { }); }, [selectedUser]);
 
     useEffect(() => { loadCircles(); }, []);
     useEffect(() => { const companyId = STATIC_COMPANY_ID; if (!companyId) setRestrictByCircle(false); }, []);
     useEffect(() => { if (userId) { setUrlUserId(userId); loadExistingMapping(userId); } }, [userId]);
+    // Handle circle restriction / circle selection changes (not on every keystroke search)
     useEffect(() => {
-        if (!restrictByCircle) { setSelectedCircle(''); setUsers([]); setUsersPage(1); setUsersTotalPages(1); loadUsers(undefined,1,false); if (selectedUser) resolveUserNameById(selectedUser).catch(()=>{}); }
-        else if (restrictByCircle && selectedCircle) { setUsers([]); setUsersPage(1); setUsersTotalPages(1); loadUsers(selectedCircle,1,false); }
-        else { const mapped = mappedCircleIdRef.current; if (mapped) { setSelectedCircle(mapped); setUsers([]); setUsersPage(1); setUsersTotalPages(1); loadUsers(mapped,1,false); if (selectedUser) resolveUserNameById(selectedUser).catch(()=>{}); } else { setUsers([]); setUsersPage(1); setUsersTotalPages(1); } }
+        if (!restrictByCircle) {
+            const q = userSearch.trim();
+            setSelectedCircle('');
+            setUsers([]); setUsersPage(1); setUsersTotalPages(1);
+            loadUsers(undefined, 1, false, q.length >= SEARCH_THRESHOLD ? q : undefined);
+            if (selectedUser) resolveUserNameById(selectedUser).catch(() => { });
+            return;
+        }
+        if (restrictByCircle && selectedCircle) {
+            setUsers([]); setUsersPage(1); setUsersTotalPages(1); loadUsers(selectedCircle, 1, false);
+            return;
+        }
+        const mapped = mappedCircleIdRef.current;
+        if (mapped) {
+            setSelectedCircle(mapped);
+            setUsers([]); setUsersPage(1); setUsersTotalPages(1); loadUsers(mapped, 1, false);
+            if (selectedUser) resolveUserNameById(selectedUser).catch(() => { });
+        } else {
+            setUsers([]); setUsersPage(1); setUsersTotalPages(1);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [restrictByCircle, selectedCircle]);
 
-    useEffect(() => { if (userSelectOpen) { const t = setTimeout(()=>{ try { searchInputRef.current?.focus({preventScroll:true} as any);} catch{} },0); return ()=>clearTimeout(t);} }, [userSelectOpen]);
-    useEffect(() => { if (circleSelectOpen) { const t = setTimeout(()=>{ try { circleSearchInputRef.current?.focus({preventScroll:true} as any);} catch{} },0); return ()=>clearTimeout(t);} }, [circleSelectOpen]);
-    useEffect(() => { if (!circleSelectOpen) return; const t=setTimeout(()=>{ try { circleSearchInputRef.current?.focus({preventScroll:true} as any);} catch{} },0); return ()=>clearTimeout(t); }, [circleSearch, circleSelectOpen]);
+    // Focus effects no longer needed with MUI Autocomplete popper
 
     const userDisabled = restrictByCircle && !selectedCircle;
     const userPlaceholder = restrictByCircle ? (userDisabled ? 'Select circle first' : 'Select LMC Manager User') : 'Select LMC Manager User';
-    const filteredCircles = useMemo(()=>{ const q=circleSearch.trim().toLowerCase(); if(!q) return circles; return circles.filter(c=> c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)); },[circleSearch,circles]);
-    const filteredUsers = useMemo(()=>{ const q=userSearch.trim().toLowerCase(); if(!q) return users; return users.filter(u=>{ const nameMatch=u.name.toLowerCase().includes(q); const emailMatch=u.email?u.email.toLowerCase().includes(q):false; const mobileMatch=u.mobile?u.mobile.toLowerCase().includes(q):false; const idMatch=u.id.includes(q); return nameMatch||emailMatch||mobileMatch||idMatch;}); },[userSearch,users]);
+    const filteredCircles = circles; // no external filter
+    const filteredUsers = users; // server returns already filtered when searching
 
-    const handleUserScroll: React.UIEventHandler<HTMLDivElement> = e => { const el=e.currentTarget; if (usersLoading||usersAppendLoading) return; const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 24; if (nearBottom && usersPage < usersTotalPages) { const next = usersPage+1; const circleId = restrictByCircle ? (selectedCircle||undefined) : undefined; const q = userSearch.trim(); loadUsers(circleId,next,true, q.length>=3 ? q: undefined); } };
+    const handleUserScroll: React.UIEventHandler<HTMLUListElement> = e => { const el = e.currentTarget; if (usersLoading || usersAppendLoading) return; const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 24; if (nearBottom && usersPage < usersTotalPages) { const next = usersPage + 1; const circleId = restrictByCircle ? (selectedCircle || undefined) : undefined; const q = userSearch.trim(); loadUsers(circleId, next, true, q.length >= SEARCH_THRESHOLD ? q : undefined); } };
 
-    useEffect(()=>{ if (userDisabled) return; const circleId = restrictByCircle ? (selectedCircle||undefined) : undefined; const q = userSearch.trim(); const qlen=q.length; const h=setTimeout(()=>{ if(qlen>=3){ setUsers([]); setUsersPage(1); setUsersTotalPages(1); loadUsers(circleId,1,false,q);} else if(qlen===0){ setUsers([]); setUsersPage(1); setUsersTotalPages(1); loadUsers(circleId,1,false);} },350); return ()=>clearTimeout(h); },[userSearch]);
+    // Debounced server-side search (>= SEARCH_THRESHOLD chars). Clears results when empty.
+    useEffect(() => {
+        if (userDisabled) return; // block while disabled
+        const circleId = restrictByCircle ? (selectedCircle || undefined) : undefined;
+        const q = userSearch.trim();
+        const handle = setTimeout(() => {
+        if (q.length >= SEARCH_THRESHOLD) {
+                setUsers([]); setUsersPage(1); setUsersTotalPages(1); loadUsers(circleId, 1, false, q);
+            } else if (q.length === 0) {
+                setUsers([]); setUsersPage(1); setUsersTotalPages(1); loadUsers(circleId, 1, false);
+            }
+        }, 300);
+        return () => clearTimeout(handle);
+    }, [userSearch, userDisabled, restrictByCircle, selectedCircle]);
+
+    // Listen for global MUI select search events; robustly detect user select menu (accept inner elements as dropdown)
+    useEffect(() => {
+        const handler = (e: any) => {
+            const term = (e.detail?.searchTerm || '').toString();
+            const dropdown: HTMLElement | undefined = e.detail?.dropdown;
+            if (!dropdown) return;
+            const isUserMenu = dropdown.hasAttribute('data-user-select-menu')
+                || !!dropdown.getAttribute('data-user-select-menu')
+                || !!dropdown.closest?.('[data-user-select-menu]')
+                || !!dropdown.querySelector?.('[data-user-select-menu]');
+            if (isUserMenu) {
+                setUserSearch(prev => prev === term ? prev : term);
+            }
+        };
+        document.addEventListener('muiSelectSearch', handler as any);
+        return () => document.removeEventListener('muiSelectSearch', handler as any);
+    }, []);
 
     const handleSubmit = async () => {
         try {
@@ -246,89 +303,168 @@ const LMCPage: React.FC = () => {
             const wasUpdate = hasExistingMapping;
             if (resp?.success) { setHasExistingMapping(true); toast.success(resp?.message || (wasUpdate ? 'LMC Manager mapping updated' : 'LMC Manager mapping created')); }
             else toast.error(resp?.message || 'Failed to save');
-        } catch (e:any) { toast.error(e?.message || 'Failed to save'); } finally { setSubmitLoading(false); }
+        } catch (e: any) { toast.error(e?.message || 'Failed to save'); } finally { setSubmitLoading(false); }
     };
 
-        return (
-            <div className="p-6">
-                {/* Page Header */}
-                <div className="mb-6 flex flex-wrap items-center gap-4">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>Back</Button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-[#1a1a1a]">LMC MANAGER ASSIGNMENT</h1>
-                        <p className="text-sm text-gray-600 mt-1">Select (optional) circle and assign or update the LMC Manager.</p>
-                    </div>
-                </div>
+    return (
+        <div className="p-6">
+            {/* Page Header */}
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="flex items-center gap-1">
+                <ArrowLeft className="w-4 h-4" />
+                Back
+            </Button>
 
-                <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-                    <CardHeader className="bg-[#F6F4EE] mb-4">
-                        <CardTitle className="text-lg text-black flex items-center">
-                            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
-                            DETAILS
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {/* Restrict Toggle */}
-                        <div className="flex flex-wrap items-center gap-3 bg-white border border-gray-200 rounded-md px-4 py-2 mb-5 shadow-sm">
-                            <Switch id="restrict-circle" checked={restrictByCircle} onCheckedChange={setRestrictByCircle} className="data-[state=checked]:bg-[#C72030]" />
-                            <Label htmlFor="restrict-circle" className="text-sm font-medium cursor-pointer">Restrict by Circle</Label>
-                            <span className="text-[11px] text-gray-500">{restrictByCircle ? 'Select circle first' : 'All circles allowed'}</span>
-                        </div>
-                        {/* Fields Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Circle */}
-                            <div className="flex flex-col gap-2">
-                                <Label className="text-xs font-semibold tracking-wide text-gray-600">CIRCLE</Label>
-                                <Select value={selectedCircle} onValueChange={v=>{ setSelectedCircle(v); setCircleSelectOpen(false); }} disabled={!restrictByCircle || circlesLoading || resolvingCircleLoading || mappingLoading} open={circleSelectOpen} onOpenChange={o=>{ setCircleSelectOpen(o); if(!o) setCircleSearch(''); }}>
-                                    <SelectTrigger className={`h-11 rounded-md text-sm border ${!restrictByCircle ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-gray-300 hover:border-[#C72030] focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030]/30'}`}>
-                                        <SelectValue placeholder={circlesLoading ? 'Loading circles...' : 'Select circle'} />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white rounded-md border border-gray-200 shadow-md w-[var(--radix-select-trigger-width)]" ref={circleContentRef} onCloseAutoFocus={(e:any)=>e.preventDefault()} onPointerDownOutside={(e:any)=>{ const t=e.target as HTMLElement|null; if(t && t.closest('input')){ e.preventDefault(); setTimeout(()=>circleSearchInputRef.current?.focus(),0);} }}>
-                                        <div className="p-2 sticky top-0 bg-white border-b border-gray-100">
-                                            <input ref={circleSearchInputRef} value={circleSearch} onChange={e=>setCircleSearch(e.target.value)} placeholder="Search circle" className="w-full h-9 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]" autoFocus />
-                                        </div>
-                                        {filteredCircles.map(c=> <SelectItem key={c.id} value={c.id} className="py-2.5 text-sm hover:bg-gray-50 cursor-pointer">{c.name}</SelectItem>)}
-                                        {!circlesLoading && filteredCircles.length===0 && <div className="px-4 py-6 text-center text-gray-500 text-xs">No circles found</div>}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            {/* User */}
-                            <div className="flex flex-col gap-2">
-                                <Label className="text-xs font-semibold tracking-wide text-gray-600">LMC MANAGER USER</Label>
-                                <Select value={selectedUser} onValueChange={v=>setSelectedUser(v)} disabled={userDisabled || usersLoading || mappingLoading} open={userSelectOpen} onOpenChange={setUserSelectOpen}>
-                                    <SelectTrigger className={`h-11 rounded-md text-sm border ${userDisabled ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-gray-300 hover:border-[#C72030] focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030]/30'}`}>
-                                        <SelectValue placeholder={usersLoading ? 'Loading users...' : userPlaceholder} />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white rounded-md border border-gray-200 shadow-md w-[var(--radix-select-trigger-width)]" ref={userSelectContentRef} onCloseAutoFocus={(e:any)=>e.preventDefault()} onPointerDownOutside={(e:any)=>{ const t=e.target as HTMLElement|null; if(t && t.closest('input')) e.preventDefault(); }}>
-                                        <div className="p-2 sticky top-0 bg-white border-b border-gray-100">
-                                            <input ref={searchInputRef} value={userSearch} onChange={e=>setUserSearch(e.target.value)} placeholder="Search user (type 3+ chars)" className="w-full h-9 px-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]" />
-                                        </div>
-                                        <div className="max-h-60 overflow-auto" onScroll={handleUserScroll}>
-                                            {filteredUsers.map(u=> <SelectItem key={u.id} value={u.id} className="py-2.5 text-sm hover:bg-gray-50 cursor-pointer">{`${u.name}${u.email ? ` (${u.email})` : ''}`}</SelectItem>)}
-                                            {(usersLoading || usersAppendLoading) && <div className="px-4 py-3 text-center text-gray-500 text-xs">Loading...</div>}
-                                            {!usersLoading && filteredUsers.length===0 && <div className="px-4 py-6 text-center text-gray-500 text-xs">{restrictByCircle && !selectedCircle ? 'Select a circle first' : 'No users found'}</div>}
-                                        </div>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        {hasExistingMapping && <div className="mt-4 text-[11px] font-medium text-amber-600">Existing mapping found – you can update it.</div>}
-                    </CardContent>
-                </Card>
-
-                <div className="flex gap-4 flex-wrap justify-center">
-                    <Button disabled={!selectedUser || submitLoading} onClick={handleSubmit} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90 flex items-center px-8 h-11 text-sm font-semibold rounded-md disabled:bg-gray-300 disabled:text-gray-600">
-                        {submitLoading ? (
-                            <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Saving...
-                            </>
-                        ) : (hasExistingMapping ? 'Update Mapping' : 'Create Mapping')}
-                    </Button>
-                    {(circlesLoading || usersLoading) && <div className="flex items-center text-[#C72030] text-xs font-medium"><Loader2 className="w-4 h-4 animate-spin mr-2"/>Loading {circlesLoading ? 'circles' : 'users'}...</div>}
+            <div className="mb-6 flex flex-wrap items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-[#1a1a1a]">LMC MANAGER ASSIGNMENT</h1>
+                    <p className="text-sm text-gray-600 mt-1">Select (optional) circle and assign or update the LMC Manager.</p>
                 </div>
             </div>
-        );
+
+            <MUICard className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]" elevation={0} sx={{ borderRadius: '8px', border: '1px solid #D9D9D9', backgroundColor: '#F6F7F7' }}>
+                <Box sx={{ background: '#F6F4EE', mb: 2, px: 2, py: 1.5, borderBottom: '1px solid #E4E2DB' }}>
+                    <Typography variant="subtitle1" className="text-black flex items-center" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                        <Box component="span" className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">
+                            1
+                        </Box>
+                        DETAILS
+                    </Typography>
+                </Box>
+                <MUICardContent sx={{ pt: 0 }}>
+                    {/* Restrict Toggle */}
+                    <div className="flex flex-wrap items-center gap-4 bg-white border border-gray-200 rounded-md px-4 py-3 mb-5 shadow-sm">
+                        <FormControlLabel
+                            control={<MuiSwitch
+                                checked={restrictByCircle}
+                                onChange={(e) => setRestrictByCircle(e.target.checked)}
+                                sx={{
+                                    '& .MuiSwitch-switchBase': { color: '#9CA3AF' }, // thumb (unchecked)
+                                    '& .MuiSwitch-track': { backgroundColor: '#E5E7EB' }, // track (unchecked)
+                                    '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' }, // thumb (checked)
+                                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }, // track (checked)
+                                    '& .MuiSwitch-switchBase.Mui-checked:hover': { backgroundColor: 'rgba(199,32,48,0.08)' },
+                                    '& .MuiSwitch-switchBase:hover': { backgroundColor: 'rgba(0,0,0,0.04)' },
+                                    '& .MuiSwitch-switchBase.Mui-focusVisible.Mui-checked': { color: '#C72030' },
+                                    '& .MuiSwitch-switchBase.Mui-focusVisible.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' }
+                                }}
+                            />}
+                            label={<span className="text-sm font-medium">Restrict by Circle</span>}
+                        />
+                        <span className="text-sm text-gray-500">{restrictByCircle ? 'Select circle first' : 'All circles allowed'}</span>
+                    </div>
+                    {/* Fields Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Circle (Select only) */}
+                        <div className="flex flex-col gap-2">
+                            <span className="text-xs font-semibold tracking-wide text-gray-600">CIRCLE</span>
+                            <div className="flex flex-col gap-2">
+                                <FormControl size="small" disabled={!restrictByCircle || circlesLoading || resolvingCircleLoading || mappingLoading}>
+                                    <Select
+                                        displayEmpty
+                                        value={selectedCircle || ''}
+                                        onChange={(e) => setSelectedCircle(e.target.value as string)}
+                                        sx={{
+                                            '& .MuiSelect-select': { fontSize: '0.85rem', paddingY: '6px' },
+                                            backgroundColor: !restrictByCircle ? '#f3f4f6' : 'white',
+                                            borderRadius: '6px'
+                                        }}
+                                        MenuProps={{
+                                            PaperProps: {
+                                                sx: { maxHeight: 300 },
+                                            }
+                                        }}
+                                    >
+                                        <MenuItem value="">
+                                            <em style={{ fontSize: '0.9rem' }}>{restrictByCircle ? 'Select circle' : 'Circle disabled'}</em>
+                                        </MenuItem>
+                                        {filteredCircles.length === 0 && restrictByCircle && !circlesLoading && !resolvingCircleLoading && (
+                                            <MenuItem disabled><em style={{ fontSize: '0.75rem' }}>No circles</em></MenuItem>
+                                        )}
+                                        {filteredCircles.map(c => (
+                                            <MenuItem key={c.id} value={c.id} style={{ fontSize: '0.8rem' }}>{c.name}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </div>
+                        </div>
+                        {/* User (Select with in-menu search + infinite scroll) */}
+                        <div className="flex flex-col gap-2">
+                            <span className="text-xs font-semibold tracking-wide text-gray-600">LMC MANAGER USER</span>
+                            <FormControl size="small" disabled={userDisabled || mappingLoading}>
+                                <Select
+                                    data-select-user="true"
+                                    displayEmpty
+                                    value={selectedUser || ''}
+                                    onChange={(e) => setSelectedUser(e.target.value as string)}
+                                    sx={{
+                                        '& .MuiSelect-select': { fontSize: '0.85rem', paddingY: '6px' },
+                                        backgroundColor: userDisabled ? '#f3f4f6' : 'white',
+                                        borderRadius: '6px'
+                                    }}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: { maxHeight: 320 },
+                                            'data-user-select-menu': true,
+                                            onScroll: (e: any) => {
+                                                const el = e.currentTarget as HTMLElement;
+                                                if (usersLoading || usersAppendLoading) return;
+                                                const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 24;
+                                                if (nearBottom && usersPage < usersTotalPages) {
+                                                    const next = usersPage + 1;
+                                                    const circleId = restrictByCircle ? (selectedCircle || undefined) : undefined;
+                                                    const q = userSearch.trim();
+                                                        loadUsers(circleId, next, true, q.length >= SEARCH_THRESHOLD ? q : undefined);
+                                                }
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <MenuItem value="">
+                                        <em style={{ fontSize: '0.9rem' }}>{userDisabled ? 'Select circle first' : (userPlaceholder)}</em>
+                                    </MenuItem>
+                                    {/* Hint before threshold reached */}
+                                    {!userDisabled && userSearch.trim().length === 0 && (
+                                        <MenuItem disabled style={{ fontSize: '0.7rem', opacity: 0.8 }}>Type {SEARCH_THRESHOLD}+ characters to search</MenuItem>
+                                    )}
+                                    {!userDisabled && userSearch.trim().length > 0 && userSearch.trim().length < SEARCH_THRESHOLD && (
+                                        <MenuItem disabled style={{ fontSize: '0.7rem', opacity: 0.8 }}>Type {SEARCH_THRESHOLD - userSearch.trim().length} more character{SEARCH_THRESHOLD - userSearch.trim().length === 1 ? '' : 's'} to search</MenuItem>
+                                    )}
+                                    {/* Search input removed; global enhancer injects it */}
+                                    {filteredUsers.length === 0 && !usersLoading && (
+                                        <MenuItem disabled><em style={{ fontSize: '0.75rem' }}>No users</em></MenuItem>
+                                    )}
+                                    {usersLoading && (
+                                        <MenuItem disabled style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <CircularProgress size={14} sx={{ mr: 1 }} /> Loading...
+                                        </MenuItem>
+                                    )}
+                                    {filteredUsers.map(u => (
+                                        <MenuItem key={u.id} value={u.id} style={{ fontSize: '0.8rem', whiteSpace: 'normal', lineHeight: 1.2 }}>
+                                            {u.name}{u.email ? ` (${u.email})` : ''}
+                                        </MenuItem>
+                                    ))}
+                                    {usersAppendLoading && <MenuItem disabled style={{ fontSize: '0.7rem' }}>Loading more...</MenuItem>}
+                                </Select>
+                            </FormControl>
+                        </div>
+                    </div>
+                    {hasExistingMapping && <div className="mt-4 text-[11px] font-medium text-amber-600">Existing mapping found – you can update it.</div>}
+                </MUICardContent>
+            </MUICard>
+
+            <div className="flex gap-4 flex-wrap justify-center">
+                <Button disabled={!selectedUser || submitLoading} onClick={handleSubmit} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90 flex items-center px-8 h-11 text-sm font-semibold rounded-md disabled:bg-gray-300 disabled:text-gray-600">
+                    {submitLoading ? (
+                        <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Saving...
+                        </>
+                    ) : (hasExistingMapping ? 'Update Mapping' : 'Create Mapping')}
+                </Button>
+                {(circlesLoading || usersLoading) && <div className="flex items-center text-[#C72030] text-xs font-medium"><Loader2 className="w-4 h-4 animate-spin mr-2" />Loading {circlesLoading ? 'circles' : 'users'}...</div>}
+            </div>
+        </div>
+    );
 };
 
 export default LMCPage;

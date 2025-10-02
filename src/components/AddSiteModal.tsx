@@ -63,6 +63,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     zone_id: "",
   });
 
+  // Filtered dropdown options based on selections
+  const [filteredCompanies, setFilteredCompanies] = useState<CompanyOption[]>([]);
+  const [filteredHeadquarters, setFilteredHeadquarters] = useState<HeadquarterOption[]>([]);
+
   // Fetch dropdown data on component mount
   useEffect(() => {
     if (isOpen) {
@@ -77,15 +81,15 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         name: editingSite.name || "",
         company_id: editingSite.company_id || 0,
         headquarter_id: editingSite.headquarter_id || 0,
-        region_id: editingSite.region_id || 0,
-        latitude: editingSite.latitude || "",
-        longitude: editingSite.longitude || "",
-        geofence_range: editingSite.geofence_range || "",
+        region_id: typeof editingSite.region_id === 'string' ? parseInt(editingSite.region_id) : editingSite.region_id || 0,
+        latitude: typeof editingSite.latitude === 'number' ? editingSite.latitude.toString() : editingSite.latitude || "",
+        longitude: typeof editingSite.longitude === 'number' ? editingSite.longitude.toString() : editingSite.longitude || "",
+        geofence_range: typeof editingSite.geofence_range === 'number' ? editingSite.geofence_range.toString() : editingSite.geofence_range || "",
         address: editingSite.address || "",
         state: editingSite.state || "",
         city: editingSite.city || "",
         district: editingSite.district || "",
-        zone_id: editingSite.zone_id || "",
+        zone_id: typeof editingSite.zone_id === 'number' ? editingSite.zone_id.toString() : editingSite.zone_id || "",
       });
     } else {
       // Reset form for new site
@@ -106,12 +110,44 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     }
   }, [editingSite, isOpen]);
 
-  // Show all regions without filtering
+  // Filter companies based on selected headquarter (country)
   useEffect(() => {
-    console.log("Setting all regions:", regions.length);
-    console.log("First few regions:", regions.slice(0, 3));
-    setFilteredRegions(regions);
-  }, [regions]);
+    if (formData.headquarter_id) {
+      const filtered = companies.filter(company => 
+        company.country_id === formData.headquarter_id
+      );
+      setFilteredCompanies(filtered);
+      
+      // Reset company and region if current selection is not valid
+      if (formData.company_id && !filtered.find(c => c.id === formData.company_id)) {
+        setFormData(prev => ({ ...prev, company_id: 0, region_id: 0 }));
+      }
+    } else {
+      setFilteredCompanies(companies);
+    }
+  }, [formData.headquarter_id, companies]);
+
+  // Filter regions based on selected company
+  useEffect(() => {
+    if (formData.company_id) {
+      const filtered = regions.filter(region => 
+        region.company_id === formData.company_id
+      );
+      setFilteredRegions(filtered);
+      
+      // Reset region if current selection is not valid
+      if (formData.region_id && !filtered.find(r => r.id === formData.region_id)) {
+        setFormData(prev => ({ ...prev, region_id: 0 }));
+      }
+    } else {
+      setFilteredRegions([]);
+    }
+  }, [formData.company_id, regions]);
+
+  // Set all headquarters as available (these are countries)
+  useEffect(() => {
+    setFilteredHeadquarters(headquarters);
+  }, [headquarters]);
 
   const fetchDropdownData = async () => {
     setIsLoadingDropdowns(true);
@@ -156,7 +192,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         toast.error("Failed to fetch companies");
       }
 
-      // Fetch headquarters
+      // Fetch headquarters (countries)
       const headquartersResponse = await fetch(
         getFullUrl("/headquarters.json"),
         {
@@ -189,10 +225,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         }
       } else {
         console.error(
-          "Failed to fetch headquarters:",
+          "Failed to fetch countries:",
           headquartersResponse.statusText
         );
-        toast.error("Failed to fetch headquarters");
+        toast.error("Failed to fetch countries");
       }
 
       // Fetch regions
@@ -262,11 +298,12 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       const newData = { ...prev, [field]: value };
 
       // Reset dependent fields when parent changes
+      if (field === "headquarter_id") {
+        newData.company_id = 0; // Reset company when country changes
+        newData.region_id = 0; // Reset region when country changes
+      }
       if (field === "company_id") {
         newData.region_id = 0; // Reset region when company changes
-      }
-      if (field === "headquarter_id") {
-        newData.region_id = 0; // Reset region when headquarter changes
       }
 
       return newData;
@@ -321,7 +358,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
             <Loader2 className="h-6 w-6 animate-spin mr-2" />
             <p>Loading form data...</p>
             <div className="text-xs text-gray-400 mt-2">
-              Debug: Companies: {companies.length}, HQ: {headquarters.length},
+              Debug: Companies: {companies.length}, Countries: {headquarters.length},
               Regions: {regions.length}
             </div>
           </div>
@@ -341,12 +378,12 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="company_id">Company *</Label>
+                <Label htmlFor="headquarter_id">Country *</Label>
                 <Select
-                  value={formData.company_id?.toString() || ""}
+                  value={formData.headquarter_id?.toString() || ""}
                   onValueChange={(value) => {
-                    console.log("Company selected:", value);
-                    handleInputChange("company_id", parseInt(value) || 0);
+                    console.log("Country selected:", value);
+                    handleInputChange("headquarter_id", parseInt(value) || 0);
                   }}
                   disabled={isLoading || isLoadingDropdowns}
                 >
@@ -354,20 +391,67 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                     <SelectValue
                       placeholder={
                         isLoadingDropdowns
+                          ? "Loading countries..."
+                          : filteredHeadquarters.length === 0
+                          ? "No countries available"
+                          : "Select Country"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredHeadquarters.length === 0 ? (
+                      <SelectItem value="no-data" disabled>
+                        No countries found
+                      </SelectItem>
+                    ) : (
+                      filteredHeadquarters.map((hq) => (
+                        <SelectItem key={hq.id} value={hq.id.toString()}>
+                          {hq.country_name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {!isLoadingDropdowns && (
+                  <p className="text-xs text-gray-400">
+                    {filteredHeadquarters.length} countries loaded
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="company_id">Company *</Label>
+                <Select
+                  value={formData.company_id?.toString() || ""}
+                  onValueChange={(value) => {
+                    console.log("Company selected:", value);
+                    handleInputChange("company_id", parseInt(value) || 0);
+                  }}
+                  disabled={isLoading || isLoadingDropdowns || !formData.headquarter_id}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        !formData.headquarter_id
+                          ? "Select country first"
+                          : isLoadingDropdowns
                           ? "Loading companies..."
-                          : companies.length === 0
-                          ? "No companies available"
+                          : filteredCompanies.length === 0
+                          ? "No companies available for selected country"
                           : "Select Company"
                       }
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {companies.length === 0 ? (
+                    {filteredCompanies.length === 0 ? (
                       <SelectItem value="no-data" disabled>
-                        No companies found
+                        {!formData.headquarter_id 
+                          ? "Please select a country first"
+                          : "No companies found for selected country"
+                        }
                       </SelectItem>
                     ) : (
-                      companies.map((company) => (
+                      filteredCompanies.map((company) => (
                         <SelectItem
                           key={company.id}
                           value={company.id.toString()}
@@ -378,51 +462,9 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                     )}
                   </SelectContent>
                 </Select>
-                {!isLoadingDropdowns && (
+                {!isLoadingDropdowns && formData.headquarter_id && (
                   <p className="text-xs text-gray-400">
-                    {companies.length} companies loaded
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="headquarter_id">Headquarter *</Label>
-                <Select
-                  value={formData.headquarter_id?.toString() || ""}
-                  onValueChange={(value) => {
-                    console.log("Headquarter selected:", value);
-                    handleInputChange("headquarter_id", parseInt(value) || 0);
-                  }}
-                  disabled={isLoading || isLoadingDropdowns}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        isLoadingDropdowns
-                          ? "Loading headquarters..."
-                          : headquarters.length === 0
-                          ? "No headquarters available"
-                          : "Select Headquarter"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {headquarters.length === 0 ? (
-                      <SelectItem value="no-data" disabled>
-                        No headquarters found
-                      </SelectItem>
-                    ) : (
-                      headquarters.map((hq) => (
-                        <SelectItem key={hq.id} value={hq.id.toString()}>
-                          {hq.country_name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-                {!isLoadingDropdowns && (
-                  <p className="text-xs text-gray-400">
-                    {headquarters.length} headquarters loaded
+                    {filteredCompanies.length} companies available for selected country
                   </p>
                 )}
               </div>
@@ -435,15 +477,17 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                     console.log("Region selected:", value);
                     handleInputChange("region_id", parseInt(value) || 0);
                   }}
-                  disabled={isLoading || isLoadingDropdowns}
+                  disabled={isLoading || isLoadingDropdowns || !formData.company_id}
                 >
                   <SelectTrigger>
                     <SelectValue
                       placeholder={
-                        isLoadingDropdowns
+                        !formData.company_id
+                          ? "Select company first"
+                          : isLoadingDropdowns
                           ? "Loading regions..."
                           : filteredRegions.length === 0
-                          ? "No regions available"
+                          ? "No regions available for selected company"
                           : "Select Region"
                       }
                     />
@@ -451,7 +495,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   <SelectContent>
                     {filteredRegions.length === 0 ? (
                       <SelectItem value="no-data" disabled>
-                        No regions found
+                        {!formData.company_id
+                          ? "Please select a company first"
+                          : "No regions found for selected company"
+                        }
                       </SelectItem>
                     ) : (
                       filteredRegions.map((region) => (
@@ -459,15 +506,15 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                           key={region.id}
                           value={region.id.toString()}
                         >
-                          {region.name} (ID: {region.id})
+                          {region.name}
                         </SelectItem>
                       ))
                     )}
                   </SelectContent>
                 </Select>
-                {!isLoadingDropdowns && (
+                {!isLoadingDropdowns && formData.company_id && (
                   <p className="text-xs text-gray-400">
-                    {filteredRegions.length} regions available
+                    {filteredRegions.length} regions available for selected company
                   </p>
                 )}
               </div>
