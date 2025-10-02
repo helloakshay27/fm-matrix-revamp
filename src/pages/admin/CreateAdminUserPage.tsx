@@ -2,13 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { ArrowLeft, Plus, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { createOrganizationAdmin, getOrganizations, getCompanies } from '@/services/adminUserAPI';
+
+const fieldStyles = {
+  height: '45px',
+  '& .MuiInputBase-root': {
+    height: '45px',
+  },
+  '& .MuiInputBase-input': {
+    padding: '12px 14px',
+  },
+  '& .MuiSelect-select': {
+    padding: '12px 14px',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 interface FormData {
   firstname: string;
@@ -232,56 +259,53 @@ export const CreateAdminUserPage = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Personal Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstname" className="text-sm font-medium text-gray-700">
-                  First Name *
-                </Label>
-                <Input
-                  id="firstname"
+            <div className="space-y-6">
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">Personal Information</h3>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <TextField
+                  label="First Name"
+                  placeholder="Enter first name"
                   value={formData.firstname}
                   onChange={(e) => handleInputChange('firstname', e.target.value)}
-                  placeholder="Enter first name"
-                  className="mt-1"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                   required
+                  disabled={isSubmitting}
                 />
-              </div>
 
-              <div>
-                <Label htmlFor="lastname" className="text-sm font-medium text-gray-700">
-                  Last Name *
-                </Label>
-                <Input
-                  id="lastname"
+                <TextField
+                  label="Last Name"
+                  placeholder="Enter last name"
                   value={formData.lastname}
                   onChange={(e) => handleInputChange('lastname', e.target.value)}
-                  placeholder="Enter last name"
-                  className="mt-1"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                   required
+                  disabled={isSubmitting}
                 />
-              </div>
 
-              <div>
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email Address *
-                </Label>
-                <Input
-                  id="email"
+                <TextField
+                  label="Email Address"
+                  placeholder="Enter email address"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="Enter email address"
-                  className="mt-1"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                   required
+                  disabled={isSubmitting}
                 />
-              </div>
 
-              <div>
-                <Label htmlFor="mobile" className="text-sm font-medium text-gray-700">
-                  Mobile Number *
-                </Label>
-                <Input
-                  id="mobile"
+                <TextField
+                  label="Mobile Number"
+                  placeholder="Enter mobile number"
                   type="tel"
                   value={formData.mobile}
                   onChange={(e) => {
@@ -291,84 +315,89 @@ export const CreateAdminUserPage = () => {
                       handleInputChange('mobile', value);
                     }
                   }}
-                  placeholder="Enter mobile number"
-                  className="mt-1"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
 
             {/* Organization Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="organization" className="text-sm font-medium text-gray-700">
-                  Organization *
-                </Label>
-                <Select
-                  value={formData.organization_id}
-                  onValueChange={(value) => handleInputChange('organization_id', value)}
-                  disabled={loadingOrganizations}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder={loadingOrganizations ? "Loading organizations..." : "Select organization"} />
-                  </SelectTrigger>
-                  <SelectContent>
+            <div className="space-y-6 mt-8">
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">Organization Information</h3>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <FormControl fullWidth variant="outlined" required>
+                  <InputLabel shrink>Organization</InputLabel>
+                  <MuiSelect
+                    value={formData.organization_id}
+                    onChange={(e) => handleInputChange('organization_id', e.target.value as string)}
+                    label="Organization"
+                    displayEmpty
+                    MenuProps={selectMenuProps}
+                    sx={fieldStyles}
+                    disabled={loadingOrganizations || isSubmitting}
+                  >
+                    <MenuItem value="">
+                      <em>{loadingOrganizations ? "Loading organizations..." : "Select Organization"}</em>
+                    </MenuItem>
                     {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id.toString()}>
+                      <MenuItem key={org.id} value={org.id.toString()}>
                         {org.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  </MuiSelect>
+                </FormControl>
 
-              <div>
-                <Label htmlFor="company" className="text-sm font-medium text-gray-700">
-                  Company *
-                </Label>
-                <Select
-                  value={formData.company_id}
-                  onValueChange={(value) => handleInputChange('company_id', value)}
-                  disabled={loadingCompanies || !formData.organization_id || filteredCompanies.length === 0}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue 
-                      placeholder={
-                        !formData.organization_id
+                <FormControl fullWidth variant="outlined" required>
+                  <InputLabel shrink>Company</InputLabel>
+                  <MuiSelect
+                    value={formData.company_id}
+                    onChange={(e) => handleInputChange('company_id', e.target.value as string)}
+                    label="Company"
+                    displayEmpty
+                    MenuProps={selectMenuProps}
+                    sx={fieldStyles}
+                    disabled={loadingCompanies || !formData.organization_id || filteredCompanies.length === 0 || isSubmitting}
+                  >
+                    <MenuItem value="">
+                      <em>
+                        {!formData.organization_id
                           ? "Select organization first"
                           : loadingCompanies
                           ? "Loading companies..."
                           : filteredCompanies.length === 0
                           ? "No companies available"
-                          : "Select company"
-                      } 
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
+                          : "Select Company"}
+                      </em>
+                    </MenuItem>
                     {filteredCompanies.map((company) => (
-                      <SelectItem key={company.id} value={company.id.toString()}>
+                      <MenuItem key={company.id} value={company.id.toString()}>
                         {company.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </FormControl>
               </div>
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex justify-center gap-4 pt-6">
+            <div className="flex items-center justify-end gap-3 mt-8 pt-4 border-t border-gray-200">
               <Button
                 variant="outline"
                 onClick={handleCancel}
                 disabled={isSubmitting}
-                className="px-8"
+                className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+                className="px-6 py-2 bg-[#C72030] text-white hover:bg-[#A61B29] disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>

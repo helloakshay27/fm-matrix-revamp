@@ -5,11 +5,39 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Users, Search, Filter, MoreHorizontal } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { useApiConfig } from '@/hooks/useApiConfig';
+
+const fieldStyles = {
+  height: '45px',
+  '& .MuiInputBase-root': {
+    height: '45px',
+  },
+  '& .MuiInputBase-input': {
+    padding: '12px 14px',
+  },
+  '& .MuiSelect-select': {
+    padding: '12px 14px',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 interface AdminUser {
   id: number;
@@ -45,9 +73,8 @@ export const AdminUsersDashboard = () => {
   const fetchAdminUsers = async () => {
     setIsLoading(true);
     try {
-      // This would be the actual API endpoint for fetching admin users
-      // For now, we'll use the FM users endpoint and filter admin users
-      const response = await fetch(getFullUrl('/pms/admin/users/admin_users.json'), {
+      // API endpoint for fetching organization admin users
+      const response = await fetch(getFullUrl('/pms/users/organization_admin_users.json'), {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
@@ -208,30 +235,38 @@ export const AdminUsersDashboard = () => {
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
             <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search by name, email, phone, organization, or company..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+              <TextField
+                placeholder="Search by name, email, phone, organization, or company..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ 
+                  sx: fieldStyles,
+                  startAdornment: <Search className="text-gray-400 w-4 h-4 mr-2" />
+                }}
+              />
             </div>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex gap-4">
+              <FormControl variant="outlined" style={{ minWidth: 160 }}>
+                <InputLabel shrink>Status Filter</InputLabel>
+                <MuiSelect
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as string)}
+                  label="Status Filter"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="all">All Status</MenuItem>
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
         </CardContent>
