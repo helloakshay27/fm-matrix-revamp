@@ -1076,7 +1076,7 @@ function App() {
                     element={<EditApprovalMatrixDashboard />}
                   />
                   <Route
-                    path="/maintenance/pdf-download"
+                    path="/settings/account/report-setup"
                     element={<PDFDownloadPage />}
                   />
                   <Route

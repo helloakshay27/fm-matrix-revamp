@@ -585,8 +585,6 @@ const modulesByPackage = {
     //   href: "/safety/msafe-detail-report",
     // },
 
-    { name: "PDF Download", icon: Download, href: "/maintenance/pdf-download" },
-
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
 
     // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
