@@ -943,9 +943,50 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
     }, []);
 
 
-    console.log("Rahul", checklistStatusRows);
     // --- Global loader: show until ALL individual API loaders have finished (success or error) ---
     const overallLoading = topCatLoading || weeklySummaryLoading || priorityLoading || ageingLoading || tatLoading || categoryTatLoading || customerFeedbackLoading || weeklyTrendLoading || assetMgmtLoading || checklistStatusLoading;
+
+    // Detect auto print trigger via query param (?auto=1 / true / yes)
+    const auto = React.useMemo(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            const p = new URLSearchParams(window.location.search);
+            const v = (p.get('auto') || '').toLowerCase();
+            return ['1', 'true', 'yes', 'y'].includes(v);
+        } catch { return false; }
+    }, []);
+
+    const [autoTriggered, setAutoTriggered] = React.useState(false);
+
+    // Simplified auto-print (polling) closely mirroring monthly report behavior
+    React.useEffect(() => {
+        if (!auto || autoTriggered) return;
+        const w = window;
+        let printed = false;
+        let interval: number | undefined;
+        const handleAfter = () => {
+            try { w.close(); } catch { /* ignore */ }
+            w.removeEventListener('afterprint', handleAfter as any);
+        };
+        w.addEventListener('afterprint', handleAfter as any);
+
+        const attempt = () => {
+            if (printed) return;
+            if (overallLoading) return; // wait until data done
+            printed = true;
+            setAutoTriggered(true);
+            // short delay to allow last paint similar to monthly implementation
+            setTimeout(() => {
+                try { w.focus(); w.print(); } catch { /* ignore */ }
+            }, 300);
+            if (interval) clearInterval(interval);
+        };
+        // Try every 400ms until loading complete
+        interval = window.setInterval(attempt, 400);
+        // Safety timeout (10s) to force attempt even if loading flag stuck false/true mismatch
+        const failSafe = window.setTimeout(() => { if (!printed) attempt(); }, 10000);
+        return () => { if (interval) clearInterval(interval); clearTimeout(failSafe); };
+    }, [auto, overallLoading, autoTriggered]);
 
     if (overallLoading) {
         return (
@@ -962,6 +1003,8 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
 
     return (
         <div className="w-full print-exact">
+            {/* readiness marker so external logic (or tests) can detect when page content mounted */}
+            <div data-component="weekly-report" data-loading={overallLoading ? 'true' : 'false'} style={{ display: 'none' }} />
             <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } }`}</style>
             <header className="w-full bg-[#F6F4EE] py-6 sm:py-8 mb-6 print:py-4 print:mb-4">
                 <h1 className="text-center text-black font-extrabold text-3xl sm:text-4xl print:text-2xl">{title}</h1>

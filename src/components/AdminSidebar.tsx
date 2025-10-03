@@ -31,6 +31,8 @@ const adminNavigationStructure = {
         icon: Users,
         subItems: [
           { name: "FM Users", href: "/ops-console/master/user/fm-users" },
+          { name: "Admin Users", href: "/ops-console/admin/users" },
+          { name: "Create Admin User", href: "/ops-console/admin/create-admin-user" },
           { name: "Roles", href: "/ops-console/settings/roles/role" },
         ],
       },

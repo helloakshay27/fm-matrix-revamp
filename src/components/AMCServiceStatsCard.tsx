@@ -1,4 +1,5 @@
 import React from 'react';
+import { ANALYTICS_PALETTE } from '@/styles/chartPalette';
 import { Download, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
@@ -13,7 +14,8 @@ interface AMCServiceStatsCardProps {
   onDownload?: () => Promise<void>;
 }
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444']; // Green for Completed, Yellow for Pending, Red for Overdue
+// Unified palette mapping: Completed, Pending, Overdue
+const COLORS = [ANALYTICS_PALETTE[0], ANALYTICS_PALETTE[3], ANALYTICS_PALETTE[2]];
 
 export const AMCServiceStatsCard: React.FC<AMCServiceStatsCardProps> = ({ data, className, onDownload }) => {
   const { toast } = useToast();
@@ -49,11 +51,11 @@ export const AMCServiceStatsCard: React.FC<AMCServiceStatsCardProps> = ({ data, 
   const getStatusIcon = (type: string) => {
     switch (type) {
       case 'Completed':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+  return <CheckCircle className="w-5 h-5" style={{ color: ANALYTICS_PALETTE[0] }} />;
       case 'Pending':
-        return <Clock className="w-5 h-5 text-yellow-600" />;
+  return <Clock className="w-5 h-5" style={{ color: ANALYTICS_PALETTE[3] }} />;
       case 'Overdue':
-        return <AlertTriangle className="w-5 h-5 text-red-600" />;
+  return <AlertTriangle className="w-5 h-5" style={{ color: ANALYTICS_PALETTE[2] }} />;
       default:
         return null;
     }
@@ -62,11 +64,11 @@ export const AMCServiceStatsCard: React.FC<AMCServiceStatsCardProps> = ({ data, 
   const getStatusColor = (type: string) => {
     switch (type) {
       case 'Completed':
-        return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-600' };
+  return { bg: 'bg-white', border: 'border-gray-200', text: '' };
       case 'Pending':
-        return { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-600' };
+  return { bg: 'bg-white', border: 'border-gray-200', text: '' };
       case 'Overdue':
-        return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-600' };
+  return { bg: 'bg-white', border: 'border-gray-200', text: '' };
       default:
         return { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-600' };
     }
@@ -75,7 +77,7 @@ export const AMCServiceStatsCard: React.FC<AMCServiceStatsCardProps> = ({ data, 
   return (
     <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 h-full flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-6 pb-0">
-        <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMC Service Statistics</h3>
+        <h3 className="text-base sm:text-lg font-bold text-black">AMC Service Statistics</h3>
         {onDownload && (
           <Download
             className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer text-[#C72030] hover:text-[#A01828]"
@@ -95,10 +97,10 @@ export const AMCServiceStatsCard: React.FC<AMCServiceStatsCardProps> = ({ data, 
                   <div key={index} className={`text-center p-4 ${colors.bg} rounded-xl border ${colors.border} shadow-sm`}>
                     <div className="flex items-center justify-center mb-2">
                       {getStatusIcon(item.type)}
-                      <span className={`text-sm font-medium ${colors.text} ml-2`}>{item.type}</span>
+                      <span className="text-sm font-medium ml-2 text-black">{item.type}</span>
                     </div>
-                    <div className={`text-2xl font-bold ${colors.text}`}>{item.count.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500 mt-1">{item.percentage.toFixed(1)}% of total</div>
+                    <div className="text-2xl font-bold text-black">{item.count.toLocaleString()}</div>
+                    <div className="text-xs text-black mt-1">{item.percentage.toFixed(1)}% of total</div>
                   </div>
                 );
               })}
@@ -108,8 +110,8 @@ export const AMCServiceStatsCard: React.FC<AMCServiceStatsCardProps> = ({ data, 
               {/* Pie Chart */}
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-semibold text-gray-800">Service Distribution</h4>
-                  <div className="text-sm text-gray-600">
+                  <h4 className="text-lg font-semibold text-black">Service Distribution</h4>
+                  <div className="text-sm text-black">
                     Total: {totalServices.toLocaleString()}
                   </div>
                 </div>
@@ -151,9 +153,9 @@ export const AMCServiceStatsCard: React.FC<AMCServiceStatsCardProps> = ({ data, 
           </div>
         ) : (
           <div className="text-center py-12">
-            <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <div className="text-gray-500 text-lg font-medium">No service statistics available</div>
-            <div className="text-gray-400 text-sm mt-1">No AMC service data found for the selected date range</div>
+            <CheckCircle className="w-12 h-12 text-black mx-auto mb-4" />
+            <div className="text-black text-lg font-medium">No service statistics available</div>
+            <div className="text-black text-sm mt-1">No AMC service data found for the selected date range</div>
           </div>
         )}
       </div>

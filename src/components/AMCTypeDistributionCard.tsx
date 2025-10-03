@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ANALYTICS_PALETTE } from '@/styles/chartPalette';
 import { Download } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
@@ -13,7 +14,8 @@ interface AMCTypeDistributionCardProps {
   onDownload?: () => Promise<void>;
 }
 
-const COLORS = ['#ef4444', '#10b981']; // Red for Breakdown, Green for Preventive
+// Use unified analytics palette
+const COLORS = [ANALYTICS_PALETTE[2], ANALYTICS_PALETTE[0]]; // Breakdown, Preventive
 
 export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = ({ data, className, onDownload }) => {
   const { toast } = useToast();

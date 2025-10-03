@@ -1,15 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Plus, Download, Filter, Upload, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AddCompanyModal } from '@/components/AddCompanyModal';
+import { EditCompanyModalNew } from '@/components/EditCompanyModalNew';
+import { DeleteCompanyModal } from '@/components/DeleteCompanyModal';
+import { CompanyFilterModal, CompanyFilters } from '@/components/CompanyFilterModal';
+import { ExportModal } from '@/components/ExportModal';
+import { BulkUploadModal } from '@/components/BulkUploadModal';
+import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { getUser } from '@/utils/auth';
+import { useDebounce } from '@/hooks/useDebounce';
+
+// Type definitions for the API response
+interface CompanyItem {
+  id: number;
+  name: string;
+  organization_id: number;
+  country_id: number;
+  billing_term: string;
+  billing_rate: string;
+  live_date: string;
+  remarks: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface CompanyApiResponse {
+  data: CompanyItem[];
+  companies: CompanyItem[];
+  code: number;
+  pagination?: {
+    current_page: number;
+    per_page: number;
+    total_pages: number;
+    total_count: number;
+    has_next_page: boolean;
+    has_prev_page: boolean;
+  };
+}
 
 interface CompanyTabProps {
   searchQuery: string;
@@ -18,45 +51,98 @@ interface CompanyTabProps {
   setEntriesPerPage: (entries: string) => void;
 }
 
+// Column configuration for the enhanced table
+const columns: ColumnConfig[] = [
+  {
+    key: 'actions',
+    label: 'Action',
+    sortable: false,
+    hideable: false,
+    draggable: false
+  },
+  {
+    key: 'name',
+    label: 'Company Name',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'organization',
+    label: 'Organization',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'country',
+    label: 'Country',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'billing_rate',
+    label: 'Billing Rate',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'live_date',
+    label: 'Live Date',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'created_at',
+    label: 'Created At',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  }
+];
+
 export const CompanyTab: React.FC<CompanyTabProps> = ({
   searchQuery,
   setSearchQuery,
   entriesPerPage,
   setEntriesPerPage
 }) => {
+  const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
   
-  // Company state
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
-  const [isAddCompanyOpen, setIsAddCompanyOpen] = useState(false);
-  const [isEditCompanyOpen, setIsEditCompanyOpen] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<any>(null);
-  const [canEditCompany, setCanEditCompany] = useState(false);
-  const [isCreatingCompany, setIsCreatingCompany] = useState(false);
-  const [isUpdatingCompany, setIsUpdatingCompany] = useState(false);
-  const [isDeletingCompany, setIsDeletingCompany] = useState(false);
-  
-  // Maps for displaying related data
-  const [countriesMap, setCountriesMap] = useState<Map<number, string>>(new Map());
-  const [organizationsMap, setOrganizationsMap] = useState<Map<number, string>>(new Map());
-  const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
-  const [organizationsDropdown, setOrganizationsDropdown] = useState<any[]>([]);
-  
-  const [companyFormData, setCompanyFormData] = useState({
-    name: '',
-    organization_id: '',
-    country_id: '',
-    billing_term: '',
-    billing_rate: '',
-    live_date: '',
-    remarks: '',
-    logo: null as File | null,
-    bill_to_address: { address: '', email: '' },
-    postal_address: { address: '', email: '' },
-    finance_spoc: { name: '', designation: '', email: '', mobile: '' },
-    operation_spoc: { name: '', designation: '', email: '', mobile: '' }
+  // State management
+  const [companies, setCompanies] = useState<CompanyItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const [appliedFilters, setAppliedFilters] = useState<CompanyFilters>({});
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 10,
+    total_pages: 1,
+    total_count: 0,
+    has_next_page: false,
+    has_prev_page: false
   });
+
+  // Modal states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  
+  // Dropdowns and permissions
+  const [organizationsDropdown, setOrganizationsDropdown] = useState<any[]>([]);
+  const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
+  const [canEditCompany, setCanEditCompany] = useState(false);
 
   const user = getUser() || {
     id: 0,
@@ -72,52 +158,101 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   };
 
   useEffect(() => {
-    fetchCompanies();
-    fetchOrganizations();
+    fetchOrganizationsDropdown();
     fetchCountriesDropdown();
     checkEditPermission();
   }, []);
 
-  const fetchCompanies = async () => {
-    setIsLoadingCompanies(true);
+  // Load data on component mount and when page/perPage/filters change
+  useEffect(() => {
+    fetchCompanies(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+
+  // Fetch companies data from API
+  const fetchCompanies = async (page = 1, per_page = 10, search = '', filters: CompanyFilters = {}) => {
+    setLoading(true);
     try {
-      const response = await fetch(getFullUrl('/pms/company_setups/company_index.json'), {
+      // Build API URL with parameters
+      let apiUrl = getFullUrl(`/pms/company_setups/company_index.json?page=${page}&per_page=${per_page}`);
+
+      // Add search parameter
+      if (search.trim()) {
+        apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
+      }
+
+      // Add filter parameters
+      if (filters.organizationId) {
+        apiUrl += `&q[organization_id_eq]=${filters.organizationId}`;
+      }
+
+      if (filters.countryId) {
+        apiUrl += `&q[country_id_eq]=${filters.countryId}`;
+      }
+
+      if (filters.billing_rate) {
+        apiUrl += `&q[billing_rate_cont]=${encodeURIComponent(filters.billing_rate)}`;
+      }
+
+      if (filters.live_date_from) {
+        apiUrl += `&q[live_date_gteq]=${filters.live_date_from}`;
+      }
+
+      if (filters.live_date_to) {
+        apiUrl += `&q[live_date_lteq]=${filters.live_date_to}`;
+      }
+
+      console.log('🔗 API URL with filters:', apiUrl);
+
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
-          'Authorization': getAuthHeader(),
-        },
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
       });
 
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log('Companies API response:', responseData);
-        
-        if (responseData && responseData.code === 200 && Array.isArray(responseData.data)) {
-          setCompanies(responseData.data);
-        } else if (responseData && Array.isArray(responseData.companies)) {
-          setCompanies(responseData.companies);
-        } else if (Array.isArray(responseData)) {
-          setCompanies(responseData);
-        } else {
-          console.warn('Companies data format unexpected:', responseData);
-          setCompanies([]);
-          toast.error('Invalid companies data format');
-        }
-      } else {
-        console.error('Failed to fetch companies:', response.statusText);
-        toast.error('Failed to fetch companies');
-        setCompanies([]);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (error) {
+
+      const result: CompanyApiResponse = await response.json();
+      console.log('Companies API response:', result);
+
+      if (result && result.code === 200 && Array.isArray(result.data)) {
+        setCompanies(result.data);
+        // Set pagination if available, otherwise use default
+        if (result.pagination) {
+          setPagination(result.pagination);
+        } else {
+          setPagination({
+            current_page: page,
+            per_page: per_page,
+            total_pages: Math.ceil(result.data.length / per_page),
+            total_count: result.data.length,
+            has_next_page: false,
+            has_prev_page: false
+          });
+        }
+      } else if (result && Array.isArray(result.companies)) {
+        setCompanies(result.companies);
+      } else if (Array.isArray(result)) {
+        setCompanies(result);
+      } else {
+        throw new Error('Invalid companies data format');
+      }
+    } catch (error: any) {
       console.error('Error fetching companies:', error);
-      toast.error('Error fetching companies');
+      toast.error(`Failed to load companies: ${error.message}`, {
+        duration: 5000,
+      });
       setCompanies([]);
     } finally {
-      setIsLoadingCompanies(false);
+      setLoading(false);
     }
   };
 
-  const fetchOrganizations = async () => {
+  const fetchOrganizationsDropdown = async () => {
     try {
       const response = await fetch(getFullUrl('/organizations.json'), {
         headers: {
@@ -130,18 +265,8 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
         const data = await response.json();
         if (data && data.organizations && Array.isArray(data.organizations)) {
           setOrganizationsDropdown(data.organizations);
-          const orgMap = new Map();
-          data.organizations.forEach((org: any) => {
-            orgMap.set(org.id, org.name);
-          });
-          setOrganizationsMap(orgMap);
         } else if (Array.isArray(data)) {
           setOrganizationsDropdown(data);
-          const orgMap = new Map();
-          data.forEach((org: any) => {
-            orgMap.set(org.id, org.name);
-          });
-          setOrganizationsMap(orgMap);
         }
       }
     } catch (error) {
@@ -151,7 +276,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/pms/countries/country_list.json'), {
+      const response = await fetch(getFullUrl('/headquarters.json'), {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
@@ -160,733 +285,379 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        if (data && data.countries && Array.isArray(data.countries)) {
-          const mappedCountries = data.countries.map(([id, name]) => ({ id, name }));
-          setCountriesDropdown(mappedCountries);
-          const countryMap = new Map();
-          data.countries.forEach(([id, name]) => {
-            countryMap.set(id, name);
+        console.log('Countries API response:', data);
+        
+        if (Array.isArray(data)) {
+          // Handle direct array format
+          const uniqueCountries = new Map();
+          data.forEach((country: any) => {
+            const id = country?.country_id || country?.id;
+            const name = country?.country_name || country?.name;
+            if (id && name && !uniqueCountries.has(id)) {
+              uniqueCountries.set(id, name);
+            }
           });
-          setCountriesMap(countryMap);
+          
+          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
+          setCountriesDropdown(countriesArray);
+        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
+          // Handle nested headquarters format
+          const uniqueCountries = new Map();
+          data.headquarters.forEach((hq: any) => {
+            const id = hq?.country_id;
+            const name = hq?.country_name;
+            if (id && name && !uniqueCountries.has(id)) {
+              uniqueCountries.set(id, name);
+            }
+          });
+          
+          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
+          setCountriesDropdown(countriesArray);
+        } else {
+          console.error('Countries data format unexpected:', data);
+          setCountriesDropdown([]);
         }
+      } else {
+        toast.error('Failed to fetch countries');
+        setCountriesDropdown([]);
       }
     } catch (error) {
       console.error('Error fetching countries:', error);
+      toast.error('Error fetching countries');
+      setCountriesDropdown([]);
     }
   };
 
-  const createCompany = async () => {
-    if (!canEditCompany) {
-      toast.error('You do not have permission to create companies');
-      return;
-    }
+  // Handle filter application
+  const handleApplyFilters = (filters: CompanyFilters) => {
+    console.log('📊 Applying filters:', filters);
+    setAppliedFilters(filters);
+    setCurrentPage(1); // Reset to first page when applying filters
+  };
 
-    setIsCreatingCompany(true);
+  // Handle search
+  const handleSearch = (term: string) => {
+    console.log('Search query:', term);
+    setSearchTerm(term);
+    setCurrentPage(1); // Reset to first page when searching
+    // Force immediate search if query is empty (for clear search)
+    if (!term.trim()) {
+      fetchCompanies(1, perPage, '', appliedFilters);
+    }
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle per page change
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  // Helper function to get organization name
+  const getOrganizationName = (organizationId: number | null | undefined) => {
+    if (!organizationId) return 'Unknown';
+    const organization = organizationsDropdown.find(o => o.id && o.id.toString() === organizationId.toString());
+    return organization ? organization.name : 'Unknown';
+  };
+
+  // Helper function to get country name
+  const getCountryName = (countryId: number | null | undefined) => {
+    if (!countryId) return 'Unknown';
+    const country = countriesDropdown.find(c => c.id && c.id.toString() === countryId.toString());
+    return country ? country.name : 'Unknown';
+  };
+
+  // Format date helper
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
     try {
-      const formData = new FormData();
-      
-      // Company setup data
-      formData.append('pms_company_setup[name]', companyFormData.name);
-      formData.append('pms_company_setup[organization_id]', companyFormData.organization_id);
-      formData.append('pms_company_setup[country_id]', companyFormData.country_id);
-      formData.append('pms_company_setup[billing_term]', companyFormData.billing_term);
-      formData.append('pms_company_setup[billing_rate]', companyFormData.billing_rate);
-      formData.append('pms_company_setup[live_date]', companyFormData.live_date);
-      formData.append('pms_company_setup[remarks]', companyFormData.remarks);
-      
-      // Address data with nested attributes structure
-      formData.append('pms_company_setup[bill_to_address_attributes][address]', companyFormData.bill_to_address.address);
-      formData.append('pms_company_setup[bill_to_address_attributes][email]', companyFormData.bill_to_address.email);
-      formData.append('pms_company_setup[bill_to_address_attributes][address_type]', 'BillTo');
-      
-      formData.append('pms_company_setup[postal_address_attributes][address]', companyFormData.postal_address.address);
-      formData.append('pms_company_setup[postal_address_attributes][email]', companyFormData.postal_address.email);
-      formData.append('pms_company_setup[postal_address_attributes][address_type]', 'Postal');
-
-      // SPOC data with nested attributes structure
-      formData.append('pms_company_setup[finance_spoc_attributes][name]', companyFormData.finance_spoc.name);
-      formData.append('pms_company_setup[finance_spoc_attributes][designation]', companyFormData.finance_spoc.designation);
-      formData.append('pms_company_setup[finance_spoc_attributes][email]', companyFormData.finance_spoc.email);
-      formData.append('pms_company_setup[finance_spoc_attributes][mobile]', companyFormData.finance_spoc.mobile);
-      formData.append('pms_company_setup[finance_spoc_attributes][spoc_type]', 'Finance');
-      
-      formData.append('pms_company_setup[operation_spoc_attributes][name]', companyFormData.operation_spoc.name);
-      formData.append('pms_company_setup[operation_spoc_attributes][designation]', companyFormData.operation_spoc.designation);
-      formData.append('pms_company_setup[operation_spoc_attributes][email]', companyFormData.operation_spoc.email);
-      formData.append('pms_company_setup[operation_spoc_attributes][mobile]', companyFormData.operation_spoc.mobile);
-      formData.append('pms_company_setup[operation_spoc_attributes][spoc_type]', 'Operation');
-      
-      // Logo
-      if (companyFormData.logo) {
-        formData.append('logo', companyFormData.logo);
-      } else {
-        formData.append('logo', '');
-      }
-
-      const response = await fetch(getFullUrl('/pms/company_setups/create_company.json'), {
-        method: 'POST',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-        body: formData,
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
       });
-
-      if (response.ok) {
-        toast.success('Company created successfully');
-        setIsAddCompanyOpen(false);
-        resetCompanyForm();
-        fetchCompanies();
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to create company:', errorData);
-        toast.error('Failed to create company');
-      }
     } catch (error) {
-      console.error('Error creating company:', error);
-      toast.error('Error creating company');
-    } finally {
-      setIsCreatingCompany(false);
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
     }
   };
 
-  const updateCompany = async () => {
-    if (!canEditCompany || !selectedCompany) {
-      toast.error('You do not have permission to update companies');
-      return;
-    }
+  const totalRecords = pagination.total_count;
+  const totalPages = pagination.total_pages;
+  
+  // Use API data directly instead of client-side filtering
+  const displayedData = companies;
 
-    setIsUpdatingCompany(true);
-    try {
-      const formData = new FormData();
-      
-      // Company setup data
-      formData.append('pms_company_setup[name]', companyFormData.name);
-      formData.append('pms_company_setup[organization_id]', companyFormData.organization_id);
-      formData.append('pms_company_setup[country_id]', companyFormData.country_id);
-      formData.append('pms_company_setup[billing_term]', companyFormData.billing_term);
-      formData.append('pms_company_setup[billing_rate]', companyFormData.billing_rate);
-      formData.append('pms_company_setup[live_date]', companyFormData.live_date);
-      formData.append('pms_company_setup[remarks]', companyFormData.remarks);
-      
-      // Address data with nested attributes structure (include IDs for updates)
-      if (selectedCompany.bill_to_address?.id) {
-        formData.append('pms_company_setup[bill_to_address_attributes][id]', selectedCompany.bill_to_address.id.toString());
-      }
-      formData.append('pms_company_setup[bill_to_address_attributes][address]', companyFormData.bill_to_address.address);
-      formData.append('pms_company_setup[bill_to_address_attributes][email]', companyFormData.bill_to_address.email);
-      
-      if (selectedCompany.postal_address?.id) {
-        formData.append('pms_company_setup[postal_address_attributes][id]', selectedCompany.postal_address.id.toString());
-      }
-      formData.append('pms_company_setup[postal_address_attributes][address]', companyFormData.postal_address.address);
-      formData.append('pms_company_setup[postal_address_attributes][email]', companyFormData.postal_address.email);
+  // Render row function for enhanced table
+  const renderRow = (company: CompanyItem) => ({
+    actions: (
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => company?.id && handleView(company.id)}
+          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+          title="View"
+          disabled={!company?.id}
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => company?.id && handleEdit(company.id)}
+          className="p-1 text-green-600 hover:bg-green-50 rounded"
+          title="Edit"
+          disabled={!canEditCompany || !company?.id}
+        >
+          <Edit className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => company?.id && handleDelete(company.id)}
+          className="p-1 text-red-600 hover:bg-red-50 rounded"
+          title="Delete"
+          disabled={!canEditCompany || !company?.id}
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    ),
+    name: (
+      <div className="flex items-center gap-3">
+        <div>
+          <div className="font-medium">{company?.name || 'N/A'}</div>
+          {company?.remarks && (
+            <div className="text-sm text-gray-500">{company.remarks}</div>
+          )}
+        </div>
+      </div>
+    ),
+    organization: (
+      <span className="text-sm text-gray-600">
+        {getOrganizationName(company?.organization_id)}
+      </span>
+    ),
+    country: (
+      <span className="text-sm text-gray-600">
+        {getCountryName(company?.country_id)}
+      </span>
+    ),
+    billing_rate: (
+      <div className="text-sm">
+        <div>{company?.billing_rate || '-'}</div>
+        {company?.billing_term && (
+          <div className="text-gray-500">Term: {company.billing_term}</div>
+        )}
+      </div>
+    ),
+    live_date: (
+      <span className="text-sm text-gray-600">
+        {formatDate(company?.live_date)}
+      </span>
+    ),
+    created_at: (
+      <span className="text-sm text-gray-600">
+        {formatDate(company?.created_at)}
+      </span>
+    )
+  });
 
-      // SPOC data with nested attributes structure (include IDs for updates)
-      if (selectedCompany.finance_spoc?.id) {
-        formData.append('pms_company_setup[finance_spoc_attributes][id]', selectedCompany.finance_spoc.id.toString());
-      }
-      formData.append('pms_company_setup[finance_spoc_attributes][name]', companyFormData.finance_spoc.name);
-      formData.append('pms_company_setup[finance_spoc_attributes][designation]', companyFormData.finance_spoc.designation);
-      formData.append('pms_company_setup[finance_spoc_attributes][email]', companyFormData.finance_spoc.email);
-      formData.append('pms_company_setup[finance_spoc_attributes][mobile]', companyFormData.finance_spoc.mobile);
-      
-      if (selectedCompany.operation_spoc?.id) {
-        formData.append('pms_company_setup[operation_spoc_attributes][id]', selectedCompany.operation_spoc.id.toString());
-      }
-      formData.append('pms_company_setup[operation_spoc_attributes][name]', companyFormData.operation_spoc.name);
-      formData.append('pms_company_setup[operation_spoc_attributes][designation]', companyFormData.operation_spoc.designation);
-      formData.append('pms_company_setup[operation_spoc_attributes][email]', companyFormData.operation_spoc.email);
-      formData.append('pms_company_setup[operation_spoc_attributes][mobile]', companyFormData.operation_spoc.mobile);
-      
-      // Logo
-      if (companyFormData.logo) {
-        formData.append('logo', companyFormData.logo);
-      } else {
-        formData.append('logo', '');
-      }
-
-      const response = await fetch(getFullUrl(`/pms/company_setups/${selectedCompany.id}/company_update.json`), {
-        method: 'PATCH',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        toast.success('Company updated successfully');
-        setIsEditCompanyOpen(false);
-        resetCompanyForm();
-        fetchCompanies();
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to update company:', errorData);
-        toast.error('Failed to update company');
-      }
-    } catch (error) {
-      console.error('Error updating company:', error);
-      toast.error('Error updating company');
-    } finally {
-      setIsUpdatingCompany(false);
-    }
+  const handleView = (id: number) => {
+    console.log('View company:', id);
+    // Navigate to company details page
+    navigate(`/ops-account/companies/details/${id}`);
   };
 
-  const handleDeleteCompany = async (companyId: number) => {
+  const handleEdit = (id: number) => {
+    console.log('Edit company:', id);
+    setSelectedCompanyId(id);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    console.log('Delete company:', id);
+    setSelectedCompanyId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedCompanyId) return;
+
     if (!canEditCompany) {
       toast.error('You do not have permission to delete companies');
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this company?')) {
-      return;
-    }
-
-    setIsDeletingCompany(true);
     try {
-      const response = await fetch(getFullUrl(`/pms/company_setups/${companyId}/company_update.json`), {
+      const response = await fetch(getFullUrl(`/pms/company_setups/${selectedCompanyId}.json`), {
         method: 'DELETE',
         headers: {
-          'Authorization': getAuthHeader(),
-        },
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
       });
 
-      if (response.ok) {
-        toast.success('Company deleted successfully');
-        fetchCompanies();
-      } else {
-        toast.error('Failed to delete company');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (error) {
+
+      toast.success('Company deleted successfully!', {
+        duration: 3000,
+      });
+
+      // Refresh the data
+      fetchCompanies(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+      setIsDeleteModalOpen(false);
+      setSelectedCompanyId(null);
+    } catch (error: any) {
       console.error('Error deleting company:', error);
-      toast.error('Error deleting company');
-    } finally {
-      setIsDeletingCompany(false);
+      toast.error(`Failed to delete company: ${error.message}`, {
+        duration: 5000,
+      });
     }
   };
-
-  const handleEditCompany = (company: any) => {
-    if (!canEditCompany) {
-      toast.error('You do not have permission to edit companies');
-      return;
-    }
-
-    setSelectedCompany(company);
-    setCompanyFormData({
-      name: company.name || '',
-      organization_id: company.organization_id?.toString() || '',
-      country_id: company.country_id?.toString() || '',
-      billing_term: company.billing_term || '',
-      billing_rate: company.billing_rate || '',
-      live_date: company.live_date || '',
-      remarks: company.remarks || '',
-      logo: null,
-      bill_to_address: {
-        address: company.bill_to_address?.address || '',
-        email: company.bill_to_address?.email || ''
-      },
-      postal_address: {
-        address: company.postal_address?.address || '',
-        email: company.postal_address?.email || ''
-      },
-      finance_spoc: {
-        name: company.finance_spoc?.name || '',
-        designation: company.finance_spoc?.designation || '',
-        email: company.finance_spoc?.email || '',
-        mobile: company.finance_spoc?.mobile || ''
-      },
-      operation_spoc: {
-        name: company.operation_spoc?.name || '',
-        designation: company.operation_spoc?.designation || '',
-        email: company.operation_spoc?.email || '',
-        mobile: company.operation_spoc?.mobile || ''
-      }
-    });
-    setIsEditCompanyOpen(true);
-  };
-
-  const resetCompanyForm = () => {
-    setCompanyFormData({
-      name: '',
-      organization_id: '',
-      country_id: '',
-      billing_term: '',
-      billing_rate: '',
-      live_date: '',
-      remarks: '',
-      logo: null,
-      bill_to_address: { address: '', email: '' },
-      postal_address: { address: '', email: '' },
-      finance_spoc: { name: '', designation: '', email: '', mobile: '' },
-      operation_spoc: { name: '', designation: '', email: '', mobile: '' }
-    });
-  };
-
-  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setCompanyFormData({ ...companyFormData, logo: file });
-    }
-  };
-
-  const filteredCompanies = companies.filter(company =>
-    company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    organizationsMap.get(company.organization_id)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    countriesMap.get(company.country_id)?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <Dialog open={isAddCompanyOpen} onOpenChange={setIsAddCompanyOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Company
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add Company</DialogTitle>
-            </DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Company Name *</Label>
-                <Input
-                  id="name"
-                  value={companyFormData.name}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, name: e.target.value })}
-                  placeholder="Enter company name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="organization">Organization *</Label>
-                <Select value={companyFormData.organization_id} onValueChange={(value) => setCompanyFormData({ ...companyFormData, organization_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select organization" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {organizationsDropdown.map((org) => (
-                      <SelectItem key={org.id} value={org.id.toString()}>
-                        {org.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="country">Country *</Label>
-                <Select value={companyFormData.country_id} onValueChange={(value) => setCompanyFormData({ ...companyFormData, country_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countriesDropdown.map((country) => (
-                      <SelectItem key={country.id} value={country.id.toString()}>
-                        {country.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="billing_term">Billing Term</Label>
-                <Input
-                  id="billing_term"
-                  value={companyFormData.billing_term}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, billing_term: e.target.value })}
-                  placeholder="Enter billing term"
-                />
-              </div>
-              <div>
-                <Label htmlFor="billing_rate">Billing Rate</Label>
-                <Input
-                  id="billing_rate"
-                  value={companyFormData.billing_rate}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, billing_rate: e.target.value })}
-                  placeholder="Enter billing rate"
-                />
-              </div>
-              <div>
-                <Label htmlFor="live_date">Live Date</Label>
-                <Input
-                  id="live_date"
-                  type="date"
-                  value={companyFormData.live_date}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, live_date: e.target.value })}
-                />
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="remarks">Remarks</Label>
-                <Input
-                  id="remarks"
-                  value={companyFormData.remarks}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, remarks: e.target.value })}
-                  placeholder="Enter remarks"
-                />
-              </div>
-              <div>
-                <Label htmlFor="logo">Company Logo</Label>
-                <Input
-                  id="logo"
-                  type="file"
-                  onChange={handleLogoChange}
-                  accept="image/*"
-                />
-              </div>
-              <div>
-                <Label htmlFor="bill_to_address">Bill To Address</Label>
-                <Input
-                  id="bill_to_address"
-                  value={companyFormData.bill_to_address.address}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    bill_to_address: { ...companyFormData.bill_to_address, address: e.target.value }
-                  })}
-                  placeholder="Enter bill to address"
-                />
-              </div>
-              <div>
-                <Label htmlFor="bill_to_email">Bill To Email</Label>
-                <Input
-                  id="bill_to_email"
-                  value={companyFormData.bill_to_address.email}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    bill_to_address: { ...companyFormData.bill_to_address, email: e.target.value }
-                  })}
-                  placeholder="Enter bill to email"
-                />
-              </div>
-              <div>
-                <Label htmlFor="postal_address">Postal Address</Label>
-                <Input
-                  id="postal_address"
-                  value={companyFormData.postal_address.address}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    postal_address: { ...companyFormData.postal_address, address: e.target.value }
-                  })}
-                  placeholder="Enter postal address"
-                />
-              </div>
-              <div>
-                <Label htmlFor="postal_email">Postal Email</Label>
-                <Input
-                  id="postal_email"
-                  value={companyFormData.postal_address.email}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    postal_address: { ...companyFormData.postal_address, email: e.target.value }
-                  })}
-                  placeholder="Enter postal email"
-                />
-              </div>
-              
-              {/* Finance SPOC */}
-              <div className="col-span-2">
-                <h3 className="font-semibold text-lg mt-4 mb-2">Finance SPOC</h3>
-              </div>
-              <div>
-                <Label htmlFor="finance_name">Name</Label>
-                <Input
-                  id="finance_name"
-                  value={companyFormData.finance_spoc.name}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    finance_spoc: { ...companyFormData.finance_spoc, name: e.target.value }
-                  })}
-                  placeholder="Enter finance SPOC name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="finance_designation">Designation</Label>
-                <Input
-                  id="finance_designation"
-                  value={companyFormData.finance_spoc.designation}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    finance_spoc: { ...companyFormData.finance_spoc, designation: e.target.value }
-                  })}
-                  placeholder="Enter finance SPOC designation"
-                />
-              </div>
-              <div>
-                <Label htmlFor="finance_email">Email</Label>
-                <Input
-                  id="finance_email"
-                  value={companyFormData.finance_spoc.email}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    finance_spoc: { ...companyFormData.finance_spoc, email: e.target.value }
-                  })}
-                  placeholder="Enter finance SPOC email"
-                />
-              </div>
-              <div>
-                <Label htmlFor="finance_mobile">Mobile</Label>
-                <Input
-                  id="finance_mobile"
-                  value={companyFormData.finance_spoc.mobile}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    finance_spoc: { ...companyFormData.finance_spoc, mobile: e.target.value }
-                  })}
-                  placeholder="Enter finance SPOC mobile"
-                />
-              </div>
-              
-              {/* Operation SPOC */}
-              <div className="col-span-2">
-                <h3 className="font-semibold text-lg mt-4 mb-2">Operation SPOC</h3>
-              </div>
-              <div>
-                <Label htmlFor="operation_name">Name</Label>
-                <Input
-                  id="operation_name"
-                  value={companyFormData.operation_spoc.name}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    operation_spoc: { ...companyFormData.operation_spoc, name: e.target.value }
-                  })}
-                  placeholder="Enter operation SPOC name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="operation_designation">Designation</Label>
-                <Input
-                  id="operation_designation"
-                  value={companyFormData.operation_spoc.designation}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    operation_spoc: { ...companyFormData.operation_spoc, designation: e.target.value }
-                  })}
-                  placeholder="Enter operation SPOC designation"
-                />
-              </div>
-              <div>
-                <Label htmlFor="operation_email">Email</Label>
-                <Input
-                  id="operation_email"
-                  value={companyFormData.operation_spoc.email}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    operation_spoc: { ...companyFormData.operation_spoc, email: e.target.value }
-                  })}
-                  placeholder="Enter operation SPOC email"
-                />
-              </div>
-              <div>
-                <Label htmlFor="operation_mobile">Mobile</Label>
-                <Input
-                  id="operation_mobile"
-                  value={companyFormData.operation_spoc.mobile}
-                  onChange={(e) => setCompanyFormData({ 
-                    ...companyFormData, 
-                    operation_spoc: { ...companyFormData.operation_spoc, mobile: e.target.value }
-                  })}
-                  placeholder="Enter operation SPOC mobile"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddCompanyOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={createCompany} 
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                disabled={isCreatingCompany}
-              >
-                {isCreatingCompany ? 'Creating...' : 'Create Company'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        <div className="flex items-center gap-4">
-          <select
-            value={entriesPerPage}
-            onChange={(e) => setEntriesPerPage(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1 text-sm"
-          >
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-          <span className="text-sm text-gray-600">entries per page</span>
-          <div className="flex items-center gap-2">
-            <Search className="w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search companies..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-1 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-            />
-          </div>
+    <div className="p-6 space-y-6">
+      <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Companies</h1>
+      </header>
+
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+          <span className="ml-2 text-gray-600">Loading companies...</span>
         </div>
-      </div>
+      )}
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold">ID</TableHead>
-                <TableHead className="font-semibold">Name</TableHead>
-                <TableHead className="font-semibold">Organization</TableHead>
-                <TableHead className="font-semibold">Country</TableHead>
-                <TableHead className="font-semibold">Live Date</TableHead>
-                <TableHead className="font-semibold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoadingCompanies ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    Loading companies...
-                  </TableCell>
-                </TableRow>
-              ) : filteredCompanies.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    No companies found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredCompanies.map((company) => (
-                  <TableRow key={company.id}>
-                    <TableCell>{company.id}</TableCell>
-                    <TableCell>{company.name}</TableCell>
-                    <TableCell>{organizationsMap.get(company.organization_id) || '-'}</TableCell>
-                    <TableCell>{countriesMap.get(company.country_id) || '-'}</TableCell>
-                    <TableCell>{company.live_date || '-'}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditCompany(company)}
-                          className="hover:bg-gray-100"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteCompany(company.id)}
-                          className="hover:bg-red-100 text-red-600"
-                          disabled={isDeletingCompany}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {!loading && (
+        <>
+          <EnhancedTaskTable
+            data={displayedData}
+            columns={columns}
+            renderRow={renderRow}
+            storageKey="company-dashboard-v1"
+            hideTableExport={true}
+            hideTableSearch={false}
+            enableSearch={true}
+            searchTerm={searchTerm}
+            onSearchChange={handleSearch}
+            onFilterClick={() => setIsFilterOpen(true)}
+            leftActions={(
+              <Button 
+                className='bg-primary text-primary-foreground hover:bg-primary/90'  
+                onClick={() => setIsAddModalOpen(true)}
+                disabled={!canEditCompany}
+              >
+                <Plus className="w-4 h-4 mr-2" /> Add Company
+              </Button>
+            )}
+            rightActions={(
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsBulkUploadOpen(true)}
+                  disabled={!canEditCompany}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Bulk Upload
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsExportOpen(true)}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              </div>
+            )}
+          />
 
-      {/* Edit Company Dialog - Similar to Add but with different title and update function */}
-      <Dialog open={isEditCompanyOpen} onOpenChange={setIsEditCompanyOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Company</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="edit_name">Company Name *</Label>
-              <Input
-                id="edit_name"
-                value={companyFormData.name}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, name: e.target.value })}
-                placeholder="Enter company name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit_organization">Organization *</Label>
-              <Select value={companyFormData.organization_id} onValueChange={(value) => setCompanyFormData({ ...companyFormData, organization_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select organization" />
-                </SelectTrigger>
-                <SelectContent>
-                  {organizationsDropdown.map((org) => (
-                    <SelectItem key={org.id} value={org.id.toString()}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="edit_country">Country *</Label>
-              <Select value={companyFormData.country_id} onValueChange={(value) => setCompanyFormData({ ...companyFormData, country_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select country" />
-                </SelectTrigger>
-                <SelectContent>
-                  {countriesDropdown.map((country) => (
-                    <SelectItem key={country.id} value={country.id.toString()}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="edit_billing_term">Billing Term</Label>
-              <Input
-                id="edit_billing_term"
-                value={companyFormData.billing_term}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, billing_term: e.target.value })}
-                placeholder="Enter billing term"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit_billing_rate">Billing Rate</Label>
-              <Input
-                id="edit_billing_rate"
-                value={companyFormData.billing_rate}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, billing_rate: e.target.value })}
-                placeholder="Enter billing rate"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit_live_date">Live Date</Label>
-              <Input
-                id="edit_live_date"
-                type="date"
-                value={companyFormData.live_date}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, live_date: e.target.value })}
-              />
-            </div>
-            <div className="col-span-2">
-              <Label htmlFor="edit_remarks">Remarks</Label>
-              <Input
-                id="edit_remarks"
-                value={companyFormData.remarks}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, remarks: e.target.value })}
-                placeholder="Enter remarks"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditCompanyOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={updateCompany} 
-              className="bg-[#C72030] hover:bg-[#A01020] text-white"
-              disabled={isUpdatingCompany}
-            >
-              {isUpdatingCompany ? 'Updating...' : 'Update Company'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <TicketPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+            perPage={perPage}
+            isLoading={loading}
+            onPageChange={handlePageChange}
+            onPerPageChange={handlePerPageChange}
+          />
+        </>
+      )}
+
+      {/* Modals */}
+      <AddCompanyModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={() => {
+          fetchCompanies(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+          setIsAddModalOpen(false);
+        }}
+        organizationsDropdown={organizationsDropdown}
+        countriesDropdown={countriesDropdown}
+        canEdit={canEditCompany}
+      />
+
+      {selectedCompanyId !== null && (
+        <>
+          <EditCompanyModalNew
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setSelectedCompanyId(null);
+            }}
+            onSuccess={() => {
+              fetchCompanies(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+              setIsEditModalOpen(false);
+              setSelectedCompanyId(null);
+            }}
+            companyId={selectedCompanyId}
+            organizationsDropdown={organizationsDropdown}
+            countriesDropdown={countriesDropdown}
+            canEdit={canEditCompany}
+          />
+
+          <DeleteCompanyModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => {
+              setIsDeleteModalOpen(false);
+              setSelectedCompanyId(null);
+            }}
+            onConfirm={handleDeleteConfirm}
+            companyId={selectedCompanyId}
+          />
+        </>
+      )}
+
+      <CompanyFilterModal
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={handleApplyFilters}
+        organizationsDropdown={organizationsDropdown}
+        countriesDropdown={countriesDropdown}
+      />
+
+      <BulkUploadModal
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
+        title="Bulk Upload Companies"
+        description="Upload a CSV file to import companies"
+        onImport={async (file: File) => {
+          // Handle bulk upload logic here
+          console.log('Uploading companies file:', file);
+          toast.success('Companies uploaded successfully');
+          fetchCompanies(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+          setIsBulkUploadOpen(false);
+        }}
+      />
+
+      <ExportModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+      />
     </div>
   );
 };

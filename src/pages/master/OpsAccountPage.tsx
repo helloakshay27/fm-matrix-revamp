@@ -28,10 +28,10 @@ export const OpsAccountPage = () => {
           <TabsTrigger value="company">Company</TabsTrigger>
           <TabsTrigger value="country">Country</TabsTrigger>
           <TabsTrigger value="region">Region</TabsTrigger>
-          <TabsTrigger value="zone">Zone</TabsTrigger>
+          {/* <TabsTrigger value="zone">Zone</TabsTrigger> */}
           <TabsTrigger value="site">Site</TabsTrigger>
-          <TabsTrigger value="entity">Entity</TabsTrigger>
-          <TabsTrigger value="user-category">User Category</TabsTrigger>
+          {/* <TabsTrigger value="entity">Entity</TabsTrigger>
+          <TabsTrigger value="user-category">User Category</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="organization" className="space-y-4">
@@ -70,14 +70,14 @@ export const OpsAccountPage = () => {
           />
         </TabsContent>
 
-        <TabsContent value="zone" className="space-y-4">
+        {/* <TabsContent value="zone" className="space-y-4">
           <ZoneTab
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             entriesPerPage={entriesPerPage}
             setEntriesPerPage={setEntriesPerPage}
           />
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="site" className="space-y-4">
           <SiteTab
@@ -87,7 +87,7 @@ export const OpsAccountPage = () => {
             setEntriesPerPage={setEntriesPerPage}
           />
         </TabsContent>
-
+{/* 
         <TabsContent value="entity" className="space-y-4">
           <EntityTab
             searchQuery={searchQuery}
@@ -104,7 +104,7 @@ export const OpsAccountPage = () => {
             entriesPerPage={entriesPerPage}
             setEntriesPerPage={setEntriesPerPage}
           />
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );

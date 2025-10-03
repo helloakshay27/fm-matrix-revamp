@@ -2452,7 +2452,7 @@ export const PermitSetupDashboard = () => {
     <ThemeProvider theme={muiTheme}>
       <div className="flex-1 p-6 bg-white min-h-screen">
         {/* Header */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-gray-900">Permit Setup</h1>
             <Button className="bg-gray-600 hover:bg-gray-700 text-white">
@@ -2460,7 +2460,7 @@ export const PermitSetupDashboard = () => {
               Import Permit Tags
             </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* Tabs */}
         <Tabs defaultValue="permit-type" className="w-full">

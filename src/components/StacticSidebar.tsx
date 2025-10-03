@@ -585,8 +585,6 @@ const modulesByPackage = {
     //   href: "/safety/msafe-detail-report",
     // },
 
-    { name: "PDF Download", icon: Download, href: "/maintenance/pdf-download" },
-
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
 
     // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
@@ -1574,7 +1572,7 @@ export const StacticSidebar = () => {
     <div
       className={`${isSidebarCollapsed ? "w-16" : "w-64"
         } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
-      style={{ top: "4rem", height: "91vh" }}
+      style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
         <button

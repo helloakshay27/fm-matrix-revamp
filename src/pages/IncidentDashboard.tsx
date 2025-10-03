@@ -733,6 +733,7 @@ export const IncidentDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
+
   // Define columns for the EnhancedTable
   const columns: ColumnConfig[] = [
     {
@@ -913,7 +914,7 @@ export const IncidentDashboard = () => {
   };
 
   // Calculate page size for Sr. No. calculation
-  const pageSize = incidents.length > 0 && totalPages > 0 ? Math.ceil(totalCount / totalPages) : incidents.length;
+  // const pageSize = incidents.length > 0 && totalPages > 0 ? Math.ceil(totalCount / totalPages) : incidents.length;
 
   // Render cell function for custom formatting
   const renderCell = (item: Incident, columnKey: string): React.ReactNode => {
@@ -922,7 +923,7 @@ export const IncidentDashboard = () => {
     switch (columnKey) {
       case "srNo":
         // Continuous Sr. No. across pages
-        return <span className="font-medium">{(currentPage - 1) * pageSize + index + 1}</span>;
+        return <span className="font-medium">{(currentPage - 1) * 20 + index + 1}</span>;
       case "id":
         return <span className="font-medium">{item.id}</span>;
       case "description":
@@ -1096,49 +1097,49 @@ export const IncidentDashboard = () => {
   // };
   // Handle export functionality using API
   const handleExport = async () => {
-  try {
-    const baseUrl = localStorage.getItem("baseUrl") || "";
-    const token = localStorage.getItem("token") || "";
-    if (!baseUrl || !token) {
-      alert("API base URL or token not found in localStorage.");
-      return;
+    try {
+      const baseUrl = localStorage.getItem("baseUrl") || "";
+      const token = localStorage.getItem("token") || "";
+      if (!baseUrl || !token) {
+        alert("API base URL or token not found in localStorage.");
+        return;
+      }
+
+      const exportUrl = `${baseUrl}/pms/incidents/export.xlsx`;
+
+      const response = await fetch(exportUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to export incidents");
+      }
+
+      let filename = `incidents_${new Date().toISOString().split("T")[0]}.xlsx`;
+      const disposition = response.headers.get("Content-Disposition");
+      if (disposition && disposition.includes("filename=")) {
+        const match = disposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting incidents:", error);
+      alert("Failed to export incidents");
     }
-
-    const exportUrl = `${baseUrl}/pms/incidents/export.xlsx`;
-
-    const response = await fetch(exportUrl, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to export incidents");
-    }
-
-    let filename = `incidents_${new Date().toISOString().split("T")[0]}.xlsx`;
-    const disposition = response.headers.get("Content-Disposition");
-    if (disposition && disposition.includes("filename=")) {
-      const match = disposition.match(/filename="?([^";]+)"?/);
-      if (match && match[1]) filename = match[1];
-    }
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("Error exporting incidents:", error);
-    alert("Failed to export incidents");
-  }
-};
+  };
 
 
 
