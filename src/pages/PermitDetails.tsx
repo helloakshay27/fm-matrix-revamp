@@ -1489,7 +1489,7 @@ export const PermitDetails = () => {
                         </div>
                     </div>
                     <div className="mt-6 text-wrap break-words">
-                        <Field label="Location Details" value={permitData.permit.location_details} fullWidth />
+                        <Field label="Location Details" value={permitData.permit.location_details} />
                         <Field label="Comment" value={permitData.permit.comment || "No comments"} fullWidth className="" />
                         <Field label="Rejection Reason" value={permitData.permit.rejection_reason || "None"} fullWidth />
                     </div>
