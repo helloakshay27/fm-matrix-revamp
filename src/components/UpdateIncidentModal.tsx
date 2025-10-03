@@ -132,6 +132,12 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
   };
 
   const handleUpdate = async () => {
+    // Validate status selection
+    if (!updateData.status) {
+      toast.error('Please select a status type before submitting.');
+      return;
+    }
+
     // Check if status is "Closed" and validate required fields
     const selectedStatus = incidenceStatuses.find(status => status.id.toString() === updateData.status);
     const isClosedStatus = selectedStatus?.name?.toLowerCase() === 'closed';

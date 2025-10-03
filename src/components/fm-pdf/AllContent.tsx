@@ -440,13 +440,10 @@ const AllContent = () => {
     }, [parkingDateSiteWiseData]);
 
     const parkingChartData = useMemo(() => {
-        // New shape: { data: { parking_management: { chart_data, site_wise_details, ... } } }
         const pm = parkingDateSiteWiseData?.data?.parking_management
             ?? parkingDateSiteWiseData?.parking_management
             ?? null;
-
         if (pm) {
-            // Preferred mapping when detailed site-wise breakdown is available
             const details = Array.isArray(pm.site_wise_details) ? pm.site_wise_details : null;
             if (details) {
                 return details.map((d: any) => ({
@@ -456,28 +453,19 @@ const AllContent = () => {
                     Vacant: Number(d.vacant_spaces ?? 0),
                 }));
             }
-
-            // Fallback to chart_data series if site_wise_details is not present
             const categories: any[] = pm?.chart_data?.x_axis?.categories ?? [];
             const series: any[] = pm?.chart_data?.series ?? [];
             if (Array.isArray(categories) && Array.isArray(series) && categories.length) {
-                const findSeries = (type: string, namePattern?: RegExp) =>
-                    series.find((s: any) => (s?.type && s.type === type) || (namePattern && s?.name && namePattern.test(String(s.name))));
-
-                const allocated = findSeries('allocated', /alloc/i);
-                const vacant = findSeries('vacant', /vacant/i);
-
-                return categories.map((site: any, idx: number) => ({
-                    site: String(site ?? '-'),
-                    // Without a breakdown, treat allocated as Paid and keep Free as 0 to preserve chart shape
-                    Free: 0,
-                    Paid: Number(allocated?.data?.[idx] ?? 0),
-                    Vacant: Number(vacant?.data?.[idx] ?? 0),
+                // Attempt to align series by index if names aren't explicit
+                return categories.map((cat: any, idx: number) => ({
+                    site: String(cat || '-'),
+                    Free: Number(series[0]?.data?.[idx] ?? 0),
+                    Paid: Number(series[1]?.data?.[idx] ?? 0),
+                    Vacant: Number(series[2]?.data?.[idx] ?? 0),
                 }));
             }
         }
-
-        // Legacy shape fallback: parking_summary [{ site_name, free_parking, paid_parking, vacant_parking }]
+        // Legacy fallback from parkingSummary
         return parkingSummary.map((r: any) => ({
             site: r.site_name || r.site || '-',
             Free: Number(r.free_parking ?? 0),
@@ -486,54 +474,43 @@ const AllContent = () => {
         }));
     }, [parkingDateSiteWiseData, parkingSummary]);
 
-    // Visitor Management – derive chart rows from API
+    // Visitor Management – derive chart rows
     const visitorTrendRows = useMemo(() => {
-        // Shape: { data: { visitor_management: { site_wise_analysis:[{ current_period, previous_period }], chart_data?... } } }
         const vm = visitorTrendAnalysisData?.data?.visitor_management
             ?? visitorTrendAnalysisData?.visitor_management
             ?? null;
         if (vm) {
-            // Preferred: site_wise_analysis with current_period / previous_period
             const swa: any[] = Array.isArray(vm.site_wise_analysis) ? vm.site_wise_analysis : [];
             if (swa.length) {
-                return swa.map((siteRow: any) => ({
-                    site: siteRow.site_name || siteRow.site || '-',
-                    last: Number(
-                        siteRow?.previous_period?.total_visitors
-                        ?? siteRow?.previous_period?.total
-                        ?? siteRow?.last_quarter?.total_visitors
-                        ?? 0
-                    ),
-                    current: Number(
+                return swa.map((siteRow: any) => {
+                    const site = siteRow.site_name || siteRow.site || '-';
+                    const cur = Number(
                         siteRow?.current_period?.total_visitors
                         ?? siteRow?.current_period?.total
-                        ?? siteRow?.current_quarter?.total_visitors
                         ?? 0
-                    ),
-                }));
+                    );
+                    const prev = Number(
+                        siteRow?.previous_period?.total_visitors
+                        ?? siteRow?.previous_period?.total
+                        ?? 0
+                    );
+                    return { site, last: prev, current: cur };
+                });
             }
-
-            // Fallback: derive totals from chart_data (side-by-side charts labelled Last vs Current)
             const categories: any[] = vm?.chart_data?.x_axis?.categories ?? [];
             const charts: any[] = Array.isArray(vm?.chart_data?.charts) ? vm.chart_data.charts : [];
             if (Array.isArray(categories) && categories.length && charts.length) {
-                const lastChart = charts.find((c: any) => /last|prev|previous/i.test(String(c?.title)) || c?.position === 'left');
-                const currentChart = charts.find((c: any) => /current|this/i.test(String(c?.title)) || c?.position === 'right');
-
-                const sumSeriesAt = (chart: any, idx: number) => {
-                    const seriesArr: any[] = Array.isArray(chart?.series) ? chart.series : [];
-                    return seriesArr.reduce((acc, s) => acc + Number(s?.data?.[idx] ?? 0), 0);
-                };
-
-                return categories.map((site: any, idx: number) => ({
-                    site: String(site ?? '-'),
-                    last: Number(sumSeriesAt(lastChart, idx) || 0),
-                    current: Number(sumSeriesAt(currentChart, idx) || 0),
+                const lastChart = charts.find((c: any) => /last/i.test(c?.name || ''));
+                const currentChart = charts.find((c: any) => /current/i.test(c?.name || ''));
+                const lastSeries: number[] = Array.isArray(lastChart?.data) ? lastChart.data : [];
+                const currentSeries: number[] = Array.isArray(currentChart?.data) ? currentChart.data : [];
+                return categories.map((cat: any, idx: number) => ({
+                    site: String(cat || '-'),
+                    last: Number(lastSeries[idx] ?? 0),
+                    current: Number(currentSeries[idx] ?? 0),
                 }));
             }
         }
-
-        // Legacy shape: { data: { visitor_trend_analysis: [...] } } with last_quarter/current_quarter totals
         const root = visitorTrendAnalysisData?.data?.visitor_trend_analysis
             ?? visitorTrendAnalysisData?.visitor_trend_analysis
             ?? visitorTrendAnalysisData
@@ -3582,49 +3559,72 @@ const AllContent = () => {
                                             ) : (
                                                 checklistProgress.map((row: any, i: number) => {
                                                     const site = row.site_name ?? row.center_name ?? row.site ?? '-';
-                                                    const cur = row.current ?? {};
-                                                    const diff = row.difference ?? row.delta ?? {};
-                                                    const fmt = (v: any) => {
-                                                        const n = typeof v === 'number' ? v : (typeof v === 'string' ? parseFloat(v.replace(/[^0-9.\-]/g, '')) : 0);
-                                                        if (!isFinite(n)) return '0%';
-                                                        // Show integer percentages if whole; else show 2 decimals
-                                                        return Number.isInteger(n) ? `${n}%` : `${n.toFixed(2)}%`;
+                                                    // Only use current_period (or flattened current values) and difference
+                                                    const curRaw = row.current_period ?? row.current ?? row.period_current ?? {};
+                                                    const diffRaw = row.difference ?? row.delta ?? {};
+
+                                                    // Fallback: some APIs duplicate values at top-level (row.open etc.)
+                                                    const pick = (status: string) => {
+                                                        const direct = curRaw[status];
+                                                        if (direct !== undefined) return direct;
+                                                        return row[status];
                                                     };
+                                                    const pickDiff = (status: string) => {
+                                                        const d = diffRaw[status];
+                                                        if (d !== undefined) return d;
+                                                        return 0; // no reconstruction without previous period
+                                                    };
+
                                                     const toNum = (v: any) => {
                                                         if (typeof v === 'number') return v;
                                                         if (typeof v === 'string') {
-                                                            const s = v.trim().replace('%', '');
+                                                            const s = v.trim().replace(/%/g, '');
                                                             const n = parseFloat(s);
-                                                            return isNaN(n) ? 0 : n;
+                                                            return Number.isFinite(n) ? n : 0;
                                                         }
                                                         return 0;
                                                     };
-                                                    // Overdue: show current | last with colored arrow (increase = red ▲, decrease = green ▼)
-                                                    const curOverNum = toNum(cur.overdue);
-                                                    const diffOverNum = toNum(diff.overdue ?? 0);
-                                                    const lastOverNum = curOverNum - diffOverNum;
-                                                    const overdueArrowUp = diffOverNum > 0;
-                                                    const overdueArrowDown = diffOverNum < 0;
-                                                    // Closed: show current | last with colored arrow (increase = green ▲, decrease = red ▼)
-                                                    const curClosedNum = toNum(cur.closed);
-                                                    const diffClosedNum = toNum(diff.closed ?? 0);
-                                                    const lastClosedNum = curClosedNum - diffClosedNum;
-                                                    const closedArrowUp = diffClosedNum > 0;
-                                                    const closedArrowDown = diffClosedNum < 0;
+                                                    const fmt = (v: any) => {
+                                                        const n = toNum(v);
+                                                        return Number.isFinite(n) ? (Number.isInteger(n) ? `${n}%` : `${n.toFixed(2)}%`) : '0%';
+                                                    };
+                                                    const fmtDiff = (v: any) => {
+                                                        const n = toNum(v);
+                                                        if (!n) return '0%';
+                                                        const abs = Math.abs(n);
+                                                        const base = Number.isInteger(abs) ? `${abs}%` : `${abs.toFixed(2)}%`;
+                                                        return n > 0 ? `+${base}` : `-${base}`;
+                                                    };
+
+                                                    const curOpen = pick('open');
+                                                    const curInProg = pick('in_progress');
+                                                    const curOver = pick('overdue');
+                                                    const curPart = pick('partially_closed');
+                                                    const curClosed = pick('closed');
+
+                                                    const diffOver = pickDiff('overdue');
+                                                    const diffClosed = pickDiff('closed');
+
+                                                    // Arrow logic: Overdue up = red, down = green. Closed up = green, down = red.
+                                                    const overdueArrowUp = diffOver > 0;
+                                                    const overdueArrowDown = diffOver < 0;
+                                                    const closedArrowUp = diffClosed > 0;
+                                                    const closedArrowDown = diffClosed < 0;
+
                                                     return (
                                                         <tr key={i} className={`${i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''} border-b border-gray-300 last:border-b-0`}>
                                                             <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site}</td>
-                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.open ?? cur.not_completed)}</td>
-                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.in_progress ?? cur.inProgress)}</td>
+                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curOpen)}</td>
+                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curInProg)}</td>
                                                             <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                                                {fmt(curOverNum)} | {fmt(lastOverNum)}{' '}
+                                                                {fmt(curOver)} <span className="text-xs text-gray-600">(Δ {fmtDiff(diffOver)})</span>
                                                                 {overdueArrowUp && <span className="text-red-600 arrow-print">▲</span>}
                                                                 {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
                                                                 {!overdueArrowUp && !overdueArrowDown && <span className="text-gray-400">—</span>}
                                                             </td>
-                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.partially_closed ?? cur.partiallyClosed ?? cur.partial)}</td>
+                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curPart)}</td>
                                                             <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                                                {fmt(curClosedNum)} | {fmt(lastClosedNum)}{' '}
+                                                                {fmt(curClosed)} <span className="text-xs text-gray-600">(Δ {fmtDiff(diffClosed)})</span>
                                                                 {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
                                                                 {closedArrowDown && <span className="text-red-600 arrow-print">▼</span>}
                                                                 {!closedArrowUp && !closedArrowDown && <span className="text-gray-400">—</span>}
@@ -3637,7 +3637,7 @@ const AllContent = () => {
                                     </table>
                                 </div>
                                 <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
-                                    <strong>Note :</strong> This table shows checklist progress by status across centers, comparing the current period with the previous period. The "Change in Closed" column highlights the shift in closed checklists since the prior period.
+                                    <strong>Note :</strong> Values show current period status distribution. Δ indicates the reported difference for that status (no previous-period values displayed).
                                 </div>
                             </div>
 

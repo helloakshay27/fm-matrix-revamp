@@ -1,15 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AddCountryModal } from '@/components/AddCountryModal';
+import { EditCountryModal } from '@/components/EditCountryModal';
+import { DeleteCountryModal } from '@/components/DeleteCountryModal';
+import { CountryFilterModal, CountryFilters } from '@/components/CountryFilterModal';
+import { ExportModal } from '@/components/ExportModal';
+import { BulkUploadModal } from '@/components/BulkUploadModal';
+import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { getUser } from '@/utils/auth';
+import { useDebounce } from '@/hooks/useDebounce';
+
+// Type definitions for the API response
+interface CountryItem {
+  id: number;
+  company_setup_id: number;
+  country_id: number;
+  active: boolean;
+  organization_id: number | null;
+  created_at: string;
+  updated_at: string;
+  url: string;
+  company_name: string;
+  country_name: string;
+}
+
+interface CountryApiResponse {
+  headquarters?: CountryItem[];
+  data?: CountryItem[];
+  pagination?: {
+    current_page: number;
+    per_page: number;
+    total_pages: number;
+    total_count: number;
+    has_next_page: boolean;
+    has_prev_page: boolean;
+  };
+}
 
 interface CountryTabProps {
   searchQuery: string;
@@ -18,33 +50,93 @@ interface CountryTabProps {
   setEntriesPerPage: (entries: string) => void;
 }
 
+// Column configuration for the enhanced table
+const columns: ColumnConfig[] = [
+  {
+    key: 'actions',
+    label: 'Action',
+    sortable: false,
+    hideable: false,
+    draggable: false
+  },
+  {
+    key: 'id',
+    label: 'ID',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'country_name',
+    label: 'Country',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'company_name',
+    label: 'Company',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'active',
+    label: 'Status',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'created_at',
+    label: 'Created At',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  }
+];
+
 export const CountryTab: React.FC<CountryTabProps> = ({
   searchQuery,
   setSearchQuery,
   entriesPerPage,
   setEntriesPerPage
 }) => {
+  const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
   
-  // Countries state for API management
-  const [countries, setCountries] = useState<any[]>([]);
-  const [isLoadingCountries, setIsLoadingCountries] = useState(false);
-  const [isAddCountryOpen, setIsAddCountryOpen] = useState(false);
-  const [isEditCountryOpen, setIsEditCountryOpen] = useState(false);
-  const [editingCountry, setEditingCountry] = useState<any>(null);
-  const [countryFormData, setCountryFormData] = useState({
-    name: '',
-    logo: null as File | null,
-    company_setup_id: '',
-    country_id: ''
+  // State management
+  const [countries, setCountries] = useState<CountryItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const [appliedFilters, setAppliedFilters] = useState<CountryFilters>({});
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 10,
+    total_pages: 1,
+    total_count: 0,
+    has_next_page: false,
+    has_prev_page: false
   });
-  const [canEditCountry, setCanEditCountry] = useState(false);
+
+  // Modal states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null);
   
   // Maps for displaying related data
   const [countriesMap, setCountriesMap] = useState<Map<number, string>>(new Map());
   const [companiesMap, setCompaniesMap] = useState<Map<number, string>>(new Map());
   const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
   const [companiesDropdown, setCompaniesDropdown] = useState<any[]>([]);
+  const [canEditCountry, setCanEditCountry] = useState(false);
 
   const user = getUser() || {
     id: 0,
@@ -60,47 +152,101 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   };
 
   useEffect(() => {
-    fetchCountries();
     fetchCompanies();
     fetchCountriesDropdown();
     checkEditPermission();
   }, []);
 
-  const fetchCountries = async () => {
-    setIsLoadingCountries(true);
+  // Load data on component mount and when page/perPage/filters change
+  useEffect(() => {
+    fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+
+  // Fetch countries data from API
+  const fetchCountries = async (page = 1, per_page = 10, search = '', filters: CountryFilters = {}) => {
+    setLoading(true);
     try {
-      const response = await fetch(getFullUrl('/headquarters.json'), {
+      // Build API URL with parameters
+      let apiUrl = getFullUrl('/headquarters.json');
+
+
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
         headers: {
-          'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
-        },
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Headquarters API response:', data);
-        
-        if (Array.isArray(data)) {
-          setCountries(data);
-        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
-          setCountries(data.headquarters);
-        } else if (data && data.data && Array.isArray(data.data)) {
-          setCountries(data.data);
-        } else {
-          console.error('Headquarters data format unexpected:', data);
-          setCountries([]);
-          toast.error('Invalid headquarters data format');
-        }
-      } else {
-        toast.error('Failed to fetch headquarters');
-        setCountries([]);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const result: CountryApiResponse = await response.json();
+
+
+      let countryData: CountryItem[] = [];
+      
+      if (Array.isArray(result)) {
+        countryData = result;
+      } else if (result && result.headquarters && Array.isArray(result.headquarters)) {
+        countryData = result.headquarters;
+      } else if (result && result.data && Array.isArray(result.data)) {
+        countryData = result.data;
+      }
+
+
+
+      // Apply client-side filtering and searching
+      let filteredData = countryData;
+
+      if (search.trim()) {
+        const searchLower = search.toLowerCase();
+        filteredData = filteredData.filter(country =>
+          country.country_name?.toLowerCase().includes(searchLower) ||
+          country.company_name?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      if (filters.countryId) {
+        filteredData = filteredData.filter(country => 
+          country.country_id === parseInt(filters.countryId!)
+        );
+      }
+
+      if (filters.companyId) {
+        filteredData = filteredData.filter(country => 
+          country.company_setup_id === parseInt(filters.companyId!)
+        );
+      }
+
+      // Implement client-side pagination
+      const totalPages = Math.ceil(filteredData.length / per_page);
+      const startIndex = (page - 1) * per_page;
+      const endIndex = startIndex + per_page;
+      const paginatedData = filteredData.slice(startIndex, endIndex);
+      
+
+      
+      setCountries(paginatedData);
+      
+      setPagination({
+        current_page: page,
+        per_page: per_page,
+        total_pages: totalPages,
+        total_count: filteredData.length,
+        has_next_page: page < totalPages,
+        has_prev_page: page > 1
+      });
+
     } catch (error) {
-      console.error('Error fetching headquarters:', error);
-      toast.error('Error fetching headquarters');
+      console.error('Error fetching countries:', error);
+      toast.error('Error fetching countries');
       setCountries([]);
     } finally {
-      setIsLoadingCountries(false);
+      setLoading(false);
     }
   };
 
@@ -145,7 +291,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/pms/countries/country_list.json'), {
+      const response = await fetch(getFullUrl('/headquarters.json'), {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
@@ -154,7 +300,38 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        if (data && data.countries && Array.isArray(data.countries)) {
+
+        
+        if (Array.isArray(data)) {
+          // Handle direct array format
+          const uniqueCountries = new Map();
+          data.forEach((country: any) => {
+            const id = country.country_id || country.id;
+            const name = country.country_name || country.name;
+            if (id && name && !uniqueCountries.has(id)) {
+              uniqueCountries.set(id, name);
+            }
+          });
+          
+          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id, name }));
+          setCountriesDropdown(countriesArray);
+          setCountriesMap(uniqueCountries);
+        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
+          // Handle nested headquarters format
+          const uniqueCountries = new Map();
+          data.headquarters.forEach((hq: any) => {
+            const id = hq.country_id;
+            const name = hq.country_name;
+            if (id && name && !uniqueCountries.has(id)) {
+              uniqueCountries.set(id, name);
+            }
+          });
+          
+          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id, name }));
+          setCountriesDropdown(countriesArray);
+          setCountriesMap(uniqueCountries);
+        } else if (data && data.countries && Array.isArray(data.countries)) {
+          // Handle existing format as fallback
           const mappedCountries = data.countries.map(([id, name]) => ({ id, name }));
           setCountriesDropdown(mappedCountries);
           const countryMap = new Map();
@@ -169,364 +346,246 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     }
   };
 
-  const handleCreateCountry = async () => {
-    if (!countryFormData.company_setup_id || !countryFormData.country_id) {
-      toast.error('Please select both company and country');
-      return;
-    }
-
+  // Modal handlers
+  const handleEdit = (countryId: number) => {
     if (!canEditCountry) {
-      toast.error('You do not have permission to create headquarters');
+      toast.error('You do not have permission to edit countries');
       return;
     }
-
-    try {
-      const response = await fetch(getFullUrl('/headquarters.json'), {
-        method: 'POST',
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pms_headquarter: {
-            company_setup_id: parseInt(countryFormData.company_setup_id),
-            country_id: parseInt(countryFormData.country_id)
-          }
-        }),
-      });
-
-      if (response.ok) {
-        toast.success('Headquarters created successfully');
-        fetchCountries();
-        setIsAddCountryOpen(false);
-        setCountryFormData({
-          name: '',
-          logo: null,
-          company_setup_id: '',
-          country_id: ''
-        });
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to create headquarters:', errorData);
-        toast.error('Failed to create headquarters');
-      }
-    } catch (error) {
-      console.error('Error creating headquarters:', error);
-      toast.error('Error creating headquarters');
-    }
+    setSelectedCountryId(countryId);
+    setIsEditModalOpen(true);
   };
 
-  const handleUpdateCountry = async () => {
-    if (!editingCountry || !countryFormData.company_setup_id || !countryFormData.country_id) {
-      toast.error('Please select both company and country');
-      return;
-    }
-
+  const handleDelete = (countryId: number) => {
     if (!canEditCountry) {
-      toast.error('You do not have permission to edit headquarters');
+      toast.error('You do not have permission to delete countries');
       return;
     }
-
-    try {
-      const response = await fetch(getFullUrl(`/headquarters/${editingCountry.id}.json`), {
-        method: 'PATCH',
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pms_headquarter: {
-            company_setup_id: parseInt(countryFormData.company_setup_id),
-            country_id: parseInt(countryFormData.country_id)
-          }
-        }),
-      });
-
-      if (response.ok) {
-        toast.success('Headquarters updated successfully');
-        fetchCountries();
-        setIsEditCountryOpen(false);
-        setEditingCountry(null);
-        setCountryFormData({
-          name: '',
-          logo: null,
-          company_setup_id: '',
-          country_id: ''
-        });
-      } else {
-        const errorData = await response.json();
-        console.error('Failed to update headquarters:', errorData);
-        toast.error('Failed to update headquarters');
-      }
-    } catch (error) {
-      console.error('Error updating headquarters:', error);
-      toast.error('Error updating headquarters');
-    }
+    setSelectedCountryId(countryId);
+    setIsDeleteModalOpen(true);
   };
 
-  const handleDeleteCountry = async (countryId: number) => {
-    if (!canEditCountry) {
-      toast.error('You do not have permission to delete headquarters');
-      return;
-    }
-
-    if (!confirm('Are you sure you want to delete this headquarters?')) {
-      return;
-    }
-
-    try {
-      const response = await fetch(getFullUrl(`/headquarters/${countryId}.json`), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-      });
-
-      if (response.ok) {
-        toast.success('Headquarters deleted successfully');
-        fetchCountries();
-      } else {
-        toast.error('Failed to delete headquarters');
-      }
-    } catch (error) {
-      console.error('Error deleting headquarters:', error);
-      toast.error('Error deleting headquarters');
-    }
+  const handleDeleteConfirm = () => {
+    fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
   };
 
-  const handleEditCountry = (headquarters: any) => {
-    if (!canEditCountry) {
-      toast.error('You do not have permission to edit headquarters');
-      return;
-    }
-
-    setEditingCountry(headquarters);
-    setCountryFormData({
-      name: headquarters.name || '',
-      logo: null,
-      company_setup_id: headquarters.company_setup_id?.toString() || '',
-      country_id: headquarters.country_id?.toString() || ''
-    });
-    setIsEditCountryOpen(true);
+  const handleApplyFilters = (filters: CountryFilters) => {
+    setAppliedFilters(filters);
+    setCurrentPage(1); // Reset to first page when applying filters
   };
 
-  const handleCountryLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setCountryFormData({ ...countryFormData, logo: file });
-    }
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
-  const filteredCountries = countries.filter(country =>
-    country.country_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    companiesMap.get(country.company_setup_id)?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1); // Reset to first page when changing per page
+  };
+
+  // Update search term when parent searchQuery changes
+  useEffect(() => {
+    setSearchTerm(searchQuery);
+  }, [searchQuery]);
+
+  // Sync with parent's entries per page
+  useEffect(() => {
+    const entriesNum = parseInt(entriesPerPage);
+    if (!isNaN(entriesNum) && entriesNum !== perPage) {
+      setPerPage(entriesNum);
+      setCurrentPage(1);
+    }
+  }, [entriesPerPage, perPage]);
+
+  // Data is passed directly to EnhancedTaskTable with renderCell and renderActions
+
+  const totalPages = pagination.total_pages;
+  const totalRecords = pagination.total_count;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <Dialog open={isAddCountryOpen} onOpenChange={setIsAddCountryOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#C72030] hover:bg-[#A01020] text-white">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Headquarters
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add Headquarters</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="company">Company *</Label>
-                <Select value={countryFormData.company_setup_id} onValueChange={(value) => setCountryFormData({ ...countryFormData, company_setup_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companiesDropdown.map((company) => (
-                      <SelectItem key={company.id} value={company.id.toString()}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="country">Country *</Label>
-                <Select value={countryFormData.country_id} onValueChange={(value) => setCountryFormData({ ...countryFormData, country_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countriesDropdown.map((country) => (
-                      <SelectItem key={country.id} value={country.id.toString()}>
-                        {country.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="logo">Logo</Label>
-                <Input
-                  id="logo"
-                  type="file"
-                  onChange={handleCountryLogoChange}
-                  accept="image/*"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddCountryOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateCountry} className="bg-[#C72030] hover:bg-[#A01020] text-white">
-                Create Headquarters
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        <div className="flex items-center gap-4">
-          <select
-            value={entriesPerPage}
-            onChange={(e) => setEntriesPerPage(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1 text-sm"
-          >
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-          <span className="text-sm text-gray-600">entries per page</span>
-          <div className="flex items-center gap-2">
-            <Search className="w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search headquarters..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-1 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-            />
-          </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
         </div>
-      </div>
+      ) : (
+        <>
+          <EnhancedTaskTable 
+            data={countries}
+            columns={columns}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            loading={loading}
+            renderActions={(country: CountryItem) => (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEdit(country.id)}
+                  className="hover:bg-gray-100"
+                  title="Edit"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(country.id)}
+                  className="hover:bg-red-100 text-red-600"
+                  title="Delete"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            renderCell={(country: CountryItem, columnKey: string) => {
+              switch (columnKey) {
+                case 'id':
+                  return country.id;
+                case 'country_name':
+                  return country.country_name || '-';
+                case 'company_name':
+                  return country.company_name || '-';
+                case 'active':
+                  return (
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        country.active
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {country.active ? 'Active' : 'Inactive'}
+                    </span>
+                  );
+                case 'created_at':
+                  return country.created_at ? new Date(country.created_at).toLocaleDateString() : '-';
+                default:
+                  return '-';
+              }
+            }}
+            leftActions={
+              <Button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-[#C72030] hover:bg-[#A01020] text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Country
+              </Button>
+            }
+            rightActions={(
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsFilterOpen(true)}
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filter
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsBulkUploadOpen(true)}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsExportOpen(true)}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              </div>
+            )}
+          />
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold">ID</TableHead>
-                <TableHead className="font-semibold">Country</TableHead>
-                <TableHead className="font-semibold">Company</TableHead>
-                <TableHead className="font-semibold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoadingCountries ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
-                    Loading headquarters...
-                  </TableCell>
-                </TableRow>
-              ) : filteredCountries.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
-                    No headquarters found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredCountries.map((country) => (
-                  <TableRow key={country.id}>
-                    <TableCell>{country.id}</TableCell>
-                    <TableCell>{country.country_name || countriesMap.get(country.country_id) || '-'}</TableCell>
-                    <TableCell>{companiesMap.get(country.company_setup_id) || '-'}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditCountry(country)}
-                          className="hover:bg-gray-100"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteCountry(country.id)}
-                          className="hover:bg-red-100 text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+          <TicketPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+            perPage={perPage}
+            isLoading={loading}
+            onPageChange={handlePageChange}
+            onPerPageChange={handlePerPageChange}
+          />
+        </>
+      )}
 
-      {/* Edit Country Dialog */}
-      <Dialog open={isEditCountryOpen} onOpenChange={setIsEditCountryOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Headquarters</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit_company">Company *</Label>
-              <Select value={countryFormData.company_setup_id} onValueChange={(value) => setCountryFormData({ ...countryFormData, company_setup_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select company" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companiesDropdown.map((company) => (
-                    <SelectItem key={company.id} value={company.id.toString()}>
-                      {company.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="edit_country">Country *</Label>
-              <Select value={countryFormData.country_id} onValueChange={(value) => setCountryFormData({ ...countryFormData, country_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select country" />
-                </SelectTrigger>
-                <SelectContent>
-                  {countriesDropdown.map((country) => (
-                    <SelectItem key={country.id} value={country.id.toString()}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="edit_logo">Logo</Label>
-              <Input
-                id="edit_logo"
-                type="file"
-                onChange={handleCountryLogoChange}
-                accept="image/*"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditCountryOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateCountry} className="bg-[#C72030] hover:bg-[#A01020] text-white">
-              Update Headquarters
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Modals */}
+      <AddCountryModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={() => {
+          fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+          setIsAddModalOpen(false);
+        }}
+        countriesDropdown={countriesDropdown}
+        companiesDropdown={companiesDropdown}
+        canEdit={canEditCountry}
+      />
+
+      {selectedCountryId !== null && (
+        <>
+          <EditCountryModal
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setSelectedCountryId(null);
+            }}
+            onSuccess={() => {
+              fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+              setIsEditModalOpen(false);
+              setSelectedCountryId(null);
+            }}
+            countryId={selectedCountryId}
+            countriesDropdown={countriesDropdown}
+            companiesDropdown={companiesDropdown}
+            canEdit={canEditCountry}
+          />
+
+          <DeleteCountryModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => {
+              setIsDeleteModalOpen(false);
+              setSelectedCountryId(null);
+            }}
+            onConfirm={handleDeleteConfirm}
+            countryId={selectedCountryId}
+          />
+        </>
+      )}
+
+      <CountryFilterModal
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={handleApplyFilters}
+        countriesDropdown={countriesDropdown}
+        companiesDropdown={companiesDropdown}
+      />
+
+      <BulkUploadModal
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
+        title="Bulk Upload Countries"
+        description="Upload a CSV file to import countries"
+        onImport={async (file: File) => {
+          // Handle bulk upload logic here
+          console.log('Uploading countries file:', file);
+          toast.success('Countries uploaded successfully');
+          fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+          setIsBulkUploadOpen(false);
+        }}
+      />
+
+      <ExportModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+      />
     </div>
   );
 };

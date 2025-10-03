@@ -575,18 +575,30 @@ export const KRCCFormDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6 flex items-center gap-2 text-sm text-gray-600"><Loader2 className="h-4 w-4 animate-spin" /> Loading KRCC form...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4" />
+          <p className="text-gray-700 text-sm">Loading KRCC form...</p>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <Button variant="ghost" onClick={handleBack} className="h-8 w-8 p-0"><ArrowLeft className="h-4 w-4" /></Button>
-          <Button onClick={fetchDetails} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">Retry</Button>
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div>
+            <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800 text-base">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+            <h1 className="text-2xl font-bold text-[#1a1a1a] mt-3">KRCC FORM DETAILS</h1>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={fetchDetails} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">Retry</Button>
+          </div>
         </div>
-        <p className="text-red-600 text-sm">{error}</p>
+        <div className="text-red-600">Error: {error}</div>
       </div>
     );
   }
@@ -596,38 +608,49 @@ export const KRCCFormDetail: React.FC = () => {
   // Wait for all images to load before showing full page
   if (!imagesLoaded) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center gap-3 text-sm text-gray-600 min-h-[60vh]">
-        <Loader2 className="h-6 w-6 animate-spin" />
-        <div>Loading images {imageProgress.loaded}/{imageProgress.total}</div>
+      <div className="p-6 bg-white min-h-screen flex flex-col items-center justify-center gap-3 text-sm text-gray-600">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]" />
+        <p>Loading images {imageProgress.loaded}/{imageProgress.total}</p>
       </div>
     );
   }
 
   return (
-  <div className="p-6 flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={handleBack} className="h-8 w-8 p-0"><ArrowLeft className="h-4 w-4" /></Button>
-          <p className="text-gray-900">Back</p>
+    <div className="p-4 sm:p-6 flex flex-col gap-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+        <div>
+          <button onClick={handleBack} className="flex items-center gap-1 hover:text-gray-800 mb-4 text-base">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">KRCC FORM DETAILS</h1>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button onClick={exportToExcel} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex items-center gap-2">
+            <Download className="w-4 h-4" /> Export
+          </Button>
         </div>
       </div>
 
-      {/* Personal Details */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="flex items-center gap-2 bg-[#f6f4ee] p-6">
-          <User className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-          <h2 className="text-lg font-semibold">Personal Details</h2>
+      {/* PERSONAL DETAILS */}
+      <div className="bg-white rounded-lg border text-[15px]">
+        <div className="flex p-4 items-center">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+            <User className="w-5 h-5 text-[#C72030]" />
+          </div>
+          <h2 className="text-lg font-bold">PERSONAL DETAILS</h2>
         </div>
         {personalDetailsGrid}
       </div>
 
       {/* Approved By */}
       {data.approved_by && (data.approved_by.fullname || data.approved_by.firstname || data.approved_by.employee_id) && (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6">
-            <User className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-            <h2 className="text-lg font-semibold">Approved Details</h2>
+        <div className="bg-white rounded-lg border text-[15px]">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+              <User className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">APPROVED DETAILS</h2>
           </div>
           <div className="p-6">
             <div className="flex items-center gap-4 mb-6">
@@ -668,10 +691,12 @@ export const KRCCFormDetail: React.FC = () => {
 
       {/* Bike / 2 Wheeler */}
       {bike && (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
-            <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-            <h2 className="text-lg font-semibold">KRCC Details (Ride a 2 Wheeler)</h2>
+        <div className="bg-white rounded-lg border text-[15px]">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+              <BadgeCheck className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">KRCC DETAILS (RIDE A 2 WHEELER)</h2>
           </div>
           <div className="p-6 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -691,10 +716,12 @@ export const KRCCFormDetail: React.FC = () => {
 
       {/* Car / 4 Wheeler */}
       {car && (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
-            <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-            <h2 className="text-lg font-semibold">KRCC Details (Drive a 4 Wheeler)</h2>
+        <div className="bg-white rounded-lg border text-[15px]">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+              <BadgeCheck className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">KRCC DETAILS (DRIVE A 4 WHEELER)</h2>
           </div>
           <div className="p-6 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -712,10 +739,12 @@ export const KRCCFormDetail: React.FC = () => {
 
       {/* Electrical Work */}
       {electrical && (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
-            <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-            <h2 className="text-lg font-semibold">Work on Electrical System</h2>
+        <div className="bg-white rounded-lg border text-[15px]">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+              <BadgeCheck className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">WORK ON ELECTRICAL SYSTEM</h2>
           </div>
           <div className="p-6 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -734,10 +763,12 @@ export const KRCCFormDetail: React.FC = () => {
 
       {/* Work at Height */}
       {height && (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
-            <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-            <h2 className="text-lg font-semibold">Work at Height</h2>
+        <div className="bg-white rounded-lg border text-[15px]">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+              <BadgeCheck className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">WORK AT HEIGHT</h2>
           </div>
           <div className="p-6 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -753,10 +784,12 @@ export const KRCCFormDetail: React.FC = () => {
 
       {/* Work Underground */}
       {underground && (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
-            <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-            <h2 className="text-lg font-semibold">Work Underground</h2>
+        <div className="bg-white rounded-lg border text-[15px]">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+              <BadgeCheck className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">WORK UNDERGROUND</h2>
           </div>
           <div className="p-6 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -771,10 +804,12 @@ export const KRCCFormDetail: React.FC = () => {
 
       {/* Ride a Bicycle */}
       {bicycle && (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
-            <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-            <h2 className="text-lg font-semibold">Ride a Bicycle</h2>
+        <div className="bg-white rounded-lg border text-[15px]">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+              <BadgeCheck className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">RIDE A BICYCLE</h2>
           </div>
           <div className="p-6 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -788,10 +823,12 @@ export const KRCCFormDetail: React.FC = () => {
 
       {/* Operate MHE */}
       {mhe && (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
-            <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-            <h2 className="text-lg font-semibold">Operate MHE</h2>
+        <div className="bg-white rounded-lg border text-[15px]">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+              <BadgeCheck className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">OPERATE MHE</h2>
           </div>
           <div className="p-6 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -805,10 +842,12 @@ export const KRCCFormDetail: React.FC = () => {
 
       {/* None of the Above */}
       {noneOfTheAbove && (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
-            <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-            <h2 className="text-lg font-semibold">None of the Above</h2>
+        <div className="bg-white rounded-lg border text-[15px]">
+          <div className="flex p-4 items-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+              <BadgeCheck className="w-5 h-5 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">NONE OF THE ABOVE</h2>
           </div>
           <div className="p-6 pt-2">
             <p className="text-sm text-gray-700">User selected "None of the above"; no category-specific details provided.</p>

@@ -734,6 +734,8 @@ import WeeklyReport from "./components/WeeklyReport";
 import useRouteLogger from "./hooks/useRouteLogger";
 import { LocationAccountPage } from "./pages/master/LocationAccountPage";
 import LMCPage from "./pages/LMCPage";
+import { ChannelsLayout } from "./pages/ChannelsLayout";
+import DMConversation from "./pages/DMConversation";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1022,7 +1024,10 @@ function App() {
                   }
                 >
                   <Route index element={<Index />} />
-
+                  <Route path="/channels" element={<ChannelsLayout />}>
+                    <Route index element={<div className="flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]">Select a Chat/Group to view messages</div>} />
+                    <Route path="/channels/messages/:id" element={<DMConversation />} />
+                  </Route>
                   {/* Dashboard Routes */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route
@@ -1076,7 +1081,7 @@ function App() {
                     element={<EditApprovalMatrixDashboard />}
                   />
                   <Route
-                    path="/maintenance/pdf-download"
+                    path="/settings/account/report-setup"
                     element={<PDFDownloadPage />}
                   />
                   <Route
