@@ -19,7 +19,7 @@ import { StatusCard } from '@/components/maintenance/StatusCard';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { ScheduledTaskCalendar } from '@/components/maintenance/ScheduledTaskCalendar';
-import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { TaskSelectionPanel } from '@/components/TaskSelectionPanel';
 import { calendarService, CalendarEvent } from '@/services/calendarService';
 import { CalendarFilters } from '@/components/CalendarFilterModal';
 import { getToken } from '@/utils/auth';
@@ -664,15 +664,39 @@ export const ScheduledTaskDashboard = () => {
     }
   }, [activeTab]);
 
-  const selectionActions = [
-    { label: 'Assign Task', icon: Play },
-    { label: 'Change Status', icon: CheckCircle },
-    { label: 'Export Selected', icon: Download }
-  ];
-
   const handleClearSelection = () => {
     setSelectedTasks([]);
     setShowSelectionPanel(false);
+  };
+
+  // Get selected task objects with id and checklist
+  const selectedTaskObjects = taskData
+    .filter((task) => selectedTasks.includes(task.id))
+    .map((task) => ({
+      id: task.id,
+      checklist: task.checklist,
+    }));
+
+  // Task selection panel handlers
+  const handleSubmitTasks = () => {
+    console.log('Submit tasks clicked for', selectedTasks.length, 'tasks');
+    // Implement task submission logic here
+    // You can add navigation to a task submission page or open a modal
+    handleClearSelection();
+  };
+
+  const handleReassignTasks = () => {
+    console.log('Reassign tasks clicked for', selectedTasks.length, 'tasks');
+    // Implement task reassignment logic here
+    // You can add navigation to a reassignment page or open a modal
+    handleClearSelection();
+  };
+
+  const handleRescheduleTasks = () => {
+    console.log('Reschedule tasks clicked for', selectedTasks.length, 'tasks');
+    // Implement task rescheduling logic here
+    // You can add navigation to a rescheduling page or open a modal
+    handleClearSelection();
   };
 
   // Smart pagination rendering function (similar to AMC Dashboard)
@@ -968,6 +992,7 @@ export const ScheduledTaskDashboard = () => {
                   })}
                   enableSearch={true}
                   enableSelection={true}
+                  selectable={true}
                   enableExport={true}
                   hideTableSearch={false}
                   storageKey="scheduled-tasks-table"
@@ -1149,10 +1174,14 @@ export const ScheduledTaskDashboard = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Selection Panel */}
-      {showSelectionPanel && (
-        <SelectionPanel
-          actions={selectionActions}
+      {/* Task Selection Panel */}
+      {showSelectionPanel && selectedTasks.length > 0 && (
+        <TaskSelectionPanel
+          selectedCount={selectedTasks.length}
+          selectedTasks={selectedTaskObjects}
+          onSubmit={handleSubmitTasks}
+          onReassign={handleReassignTasks}
+          onReschedule={handleRescheduleTasks}
           onClearSelection={handleClearSelection}
         />
       )}
