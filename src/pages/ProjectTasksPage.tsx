@@ -1,7 +1,7 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { Edit, Eye, LogOut, Plus } from "lucide-react";
+import { Edit, Eye, Plus } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 

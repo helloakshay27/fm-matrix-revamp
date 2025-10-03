@@ -495,11 +495,15 @@ export const ProjectsDashboard = () => {
 
       <ProjectCreateModal
         openDialog={openFormDialog}
-        handleCloseDialog={() => setOpenFormDialog(false)}
+        handleCloseDialog={() => {
+          setOpenFormDialog(false);
+          setOpenDialog(false);
+        }}
         owners={owners}
         projectTypes={projectTypes}
         tags={tags}
         teams={teams}
+        fetchProjects={fetchData}
       />
     </div>
   );

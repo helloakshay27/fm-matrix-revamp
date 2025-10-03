@@ -307,6 +307,8 @@ const GanttChart = () => {
                         open: true, // Ensure milestone is expanded
                     });
 
+                    console.log(tasksData)
+
                     if (item.depends_on_id) {
                         linksData.push({
                             id: `link-milestone-${item.id}`,
