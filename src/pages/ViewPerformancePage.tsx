@@ -1,31 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
-import { toast } from 'sonner';
+import { toast, Toaster } from 'sonner';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from 'date-fns';
-import { Autocomplete, TextField } from '@mui/material';
+import { Autocomplete, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { ArrowLeft, Filter, Download, Calendar, BarChart3, Plus, X } from 'lucide-react';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 
-// Helper to get last month's start and end dates in yyyy-mm-dd and dd/mm/yyyy
-function getLastMonthRange() {
+// Helper to get current month's start and end dates in yyyy-mm-dd and dd/mm/yyyy
+function getCurrentMonthRange() {
   const now = new Date();
-  const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const lastDayLastMonth = new Date(firstDayThisMonth.getTime() - 1);
-  const firstDayLastMonth = new Date(lastDayLastMonth.getFullYear(), lastDayLastMonth.getMonth(), 1);
+  const firstDayCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDayCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  
   // Format as yyyy-mm-dd and dd/mm/yyyy
   const pad = (n: number) => n.toString().padStart(2, '0');
   const yyyy_mm_dd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const dd_mm_yyyy = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
   return {
-    start: yyyy_mm_dd(firstDayLastMonth),
-    end: yyyy_mm_dd(lastDayLastMonth),
-    startDMY: dd_mm_yyyy(firstDayLastMonth),
-    endDMY: dd_mm_yyyy(lastDayLastMonth),
+    start: yyyy_mm_dd(firstDayCurrentMonth),
+    end: yyyy_mm_dd(lastDayCurrentMonth),
+    startDMY: dd_mm_yyyy(firstDayCurrentMonth),
+    endDMY: dd_mm_yyyy(lastDayCurrentMonth),
   };
 }
 
@@ -49,19 +52,27 @@ function formatDMY(date: string) {
 
 export const ViewPerformancePage = () => {
   const location = useLocation();
-  // Get custom_form_code and asset_id from navigation state or query param
+  const navigate = useNavigate();
   const customFormCode = location.state?.formCode || location.state?.custom_form_code;
-  // asset_id will be selected from dropdown, but can default to first in task_options
 
-  // Date state
-  const lastMonth = getLastMonthRange();
-  const [startDate, setStartDate] = useState(lastMonth.start);
-  const [endDate, setEndDate] = useState(lastMonth.end);
+  // Date state - use current month instead of last month
+  const currentMonth = getCurrentMonthRange();
+  const [startDate, setStartDate] = useState(currentMonth.start);
+  const [endDate, setEndDate] = useState(currentMonth.end);
   const [selectedTaskId, setSelectedTaskId] = useState<string | number>('');
   const [dropdownOptions, setDropdownOptions] = useState<any[]>([]);
   const [performanceData, setPerformanceData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [tempFilters, setTempFilters] = useState({
+    startDate: currentMonth.start,
+    endDate: currentMonth.end,
+    selectedTaskId: ''
+  });
 
   // Date validation function - only for apply action
   const validateDatesOnApply = (start: string, end: string) => {
@@ -168,269 +179,600 @@ export const ViewPerformancePage = () => {
   };
 
   const handleReset = () => {
-    setStartDate(lastMonth.start);
-    setEndDate(lastMonth.end);
+    setStartDate(currentMonth.start);
+    setEndDate(currentMonth.end);
     if (dropdownOptions.length > 0) {
       setSelectedTaskId(dropdownOptions[0].task_of_id);
     }
-    fetchPerformance({ start: lastMonth.start, end: lastMonth.end, asset_id: dropdownOptions[0]?.task_of_id });
+    fetchPerformance({ start: currentMonth.start, end: currentMonth.end, asset_id: dropdownOptions[0]?.task_of_id });
   };
 
-  // Table data
+  // Table data - moved before useMemo hooks
   const tableData = performanceData?.table_data;
   const dateHeaders = tableData?.date_headers || [];
   const activities = tableData?.activities || [];
   const assetName = performanceData?.asset_name || '';
   const formName = performanceData?.form_name || '';
 
-  return (
-    <div className="p-6 mx-auto">
-      <div className="flex gap-4 mb-4 items-center">
-        <div className="flex flex-col w-48">
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label={
-                <span>
-                  Start Date *
-                </span>
-              }
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  variant: 'outlined',
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' }
-                    }
-                  }
-                }
-              }}
-              value={startDate ? new Date(startDate) : null}
-              onChange={handleStartDateChange}
-              maxDate={endDate ? new Date(endDate) : undefined}
-            />
-          </LocalizationProvider>
+  // Enhanced table columns for performance data
+  const performanceColumns = React.useMemo(() => {
+    const baseColumns = [
+      { key: 'assetName', label: 'Asset/Service Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+      { key: 'activity', label: 'Activity', sortable: true, hideable: true, draggable: true, defaultVisible: true }
+    ];
+    
+    const dateColumns = (dateHeaders || []).map((date: any, idx: number) => ({
+      key: `date_${idx}`,
+      label: date.date_formatted || date.date,
+      sortable: false,
+      hideable: true,
+      draggable: true,
+      defaultVisible: true
+    }));
+    
+    return [...baseColumns, ...dateColumns];
+  }, [dateHeaders]);
+
+  // Prepare data for enhanced table
+  const performanceTableData = React.useMemo(() => {
+    if (!activities || activities.length === 0) return [];
+    
+    const data = activities.map((activity: any, activityIdx: number) => {
+      const rowData: any = {
+        id: activityIdx.toString(),
+        assetName: assetName || '--',
+        activity: activity.label || '--'
+      };
+      
+      // Add date columns data
+      activity.date_data?.forEach((dateObj: any, dateIdx: number) => {
+        rowData[`date_${dateIdx}`] = dateObj.time_slot_data && dateObj.time_slot_data.length > 0
+          ? dateObj.time_slot_data.map((slot: any) => 
+              `${slot.time_slot}: ${slot.value ?? '-'}${slot.comment ? ` (${slot.comment})` : ''}`
+            ).join(', ')
+          : '-';
+      });
+      
+      return rowData;
+    });
+
+    // Add asset header row if data exists
+    if (data.length > 0) {
+      const headerRow: any = {
+        id: 'asset-header',
+        assetName: assetName || '--',
+        activity: '',
+        isHeaderRow: true
+      };
+      
+      // Fill date columns for header row
+      (dateHeaders || []).forEach((_, dateIdx: number) => {
+        headerRow[`date_${dateIdx}`] = '';
+      });
+      
+      return [headerRow, ...data];
+    }
+    
+    return data;
+  }, [activities, assetName, dateHeaders]);
+
+  const renderPerformanceCell = (item: any, columnKey: string) => {
+    if (item.isHeaderRow) {
+      if (columnKey === 'assetName') {
+        return <span className="font-bold text-center">{item[columnKey]}</span>;
+      }
+      return '';
+    }
+
+    if (columnKey === 'assetName') {
+      return '';
+    }
+    
+    if (columnKey.startsWith('date_')) {
+      const value = item[columnKey];
+      if (value === '-') return <span className="text-center">-</span>;
+      
+      return (
+        <div className="text-xs">
+          {value.split(', ').map((slot: string, idx: number) => (
+            <div key={idx} className="text-center">{slot}</div>
+          ))}
         </div>
-        
-        <div className="flex flex-col w-48">
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label="End Date *"
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  variant: 'outlined',
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' }
+      );
+    }
+    return item[columnKey] || '--';
+  };
+
+  // Export handler for performance data
+  const handlePerformanceExport = async () => {
+    if (!customFormCode || !selectedTaskId) {
+      toast.error('Missing form code or asset selection. Please ensure all fields are selected.', {
+        position: 'top-right',
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (!validateDatesOnApply(startDate, endDate)) {
+      return;
+    }
+
+    try {
+      const startDMY = formatDMY(startDate);
+      const endDMY = formatDMY(endDate);
+      
+      const exportUrl = `${API_CONFIG.BASE_URL}/pms/custom_forms/${customFormCode}/export_performance`;
+      const params = new URLSearchParams({
+        asset_id: selectedTaskId.toString(),
+        'q[start_date_gteq]': startDMY,
+        'q[start_date_lteq]': endDMY,
+        access_token: API_CONFIG.TOKEN || ''
+      });
+      
+      const fullUrl = `${exportUrl}?${params.toString()}`;
+      
+      const res = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, */*',
+        },
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Failed to export performance data: ${res.status} ${res.statusText}`);
+      }
+
+      const contentType = res.headers.get('content-type');
+      if (!contentType || (!contentType.includes('spreadsheet') && !contentType.includes('excel') && !contentType.includes('octet-stream'))) {
+        throw new Error('Server returned unexpected response format. Expected Excel file.');
+      }
+
+      const blob = await res.blob();
+      if (blob.size === 0) {
+        throw new Error('Export file is empty. No data available for the selected criteria.');
+      }
+
+      let filename = 'performance_export.xlsx';
+      const disposition = res.headers.get('content-disposition');
+      if (disposition && disposition.indexOf('filename=') !== -1) {
+        const filenameMatch = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '').trim();
+        }
+      }
+      
+      const link = document.createElement('a');
+      const url = window.URL.createObjectURL(blob);
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast.success('Performance data exported successfully!', {
+        position: 'top-right',
+        duration: 4000,
+      });
+      
+    } catch (e: any) {
+      console.error('Export error:', e);
+      toast.error(e.message || 'Export failed. Please try again.', {
+        position: 'top-right',
+        duration: 5000,
+      });
+    }
+  };
+
+  // Action panel handlers
+  const handleActionClick = () => {
+    setShowActionPanel((prev) => !prev);
+  };
+
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-2 sm:gap-3">
+      <Button 
+        onClick={handleActionClick}
+        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+      >
+        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+        Action
+      </Button>
+    </div>
+  );
+
+  const selectionActions = [
+    { label: 'View Details', icon: BarChart3, onClick: () => console.log('View details') },
+  ];
+
+  // Filter handlers
+  const handleOpenFilterModal = () => {
+    setTempFilters({
+      startDate,
+      endDate,
+      selectedTaskId: selectedTaskId.toString()
+    });
+    setShowFilterModal(true);
+  };
+
+  const handleApplyFilters = () => {
+    // Validate dates
+    if (!validateDatesOnApply(tempFilters.startDate, tempFilters.endDate)) {
+      return;
+    }
+    
+    if (!tempFilters.startDate || !tempFilters.endDate) {
+      toast.error('Please select both start and end dates.', {
+        position: 'top-right',
+        duration: 4000,
+      });
+      return;
+    }
+    
+    // Apply filters
+    setStartDate(tempFilters.startDate);
+    setEndDate(tempFilters.endDate);
+    setSelectedTaskId(tempFilters.selectedTaskId);
+    
+    fetchPerformance({ 
+      start: tempFilters.startDate, 
+      end: tempFilters.endDate, 
+      asset_id: tempFilters.selectedTaskId 
+    });
+    
+    setShowFilterModal(false);
+    
+    toast.success('Filters applied successfully!', {
+      position: 'top-right',
+      duration: 3000,
+    });
+  };
+
+  const handleResetFilters = () => {
+    const resetFilters = {
+      startDate: currentMonth.start,
+      endDate: currentMonth.end,
+      selectedTaskId: dropdownOptions.length > 0 ? dropdownOptions[0].task_of_id.toString() : ''
+    };
+    
+    setTempFilters(resetFilters);
+    setStartDate(resetFilters.startDate);
+    setEndDate(resetFilters.endDate);
+    setSelectedTaskId(resetFilters.selectedTaskId);
+    
+    fetchPerformance({ 
+      start: resetFilters.startDate, 
+      end: resetFilters.endDate, 
+      asset_id: resetFilters.selectedTaskId 
+    });
+    
+    setShowFilterModal(false);
+    
+    toast.info('Filters reset to default values.', {
+      position: 'top-right',
+      duration: 3000,
+    });
+  };
+
+  return (
+    <div className="p-2 sm:p-4 lg:p-6">
+      <Toaster position="top-right" richColors closeButton />
+      
+      {/* Header */}
+      <div className="mb-4 sm:mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Schedule List</span>
+        </button>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              {formName || 'Performance Checklist'}
+            </h1>
+            <div className="text-sm text-gray-600">
+              Form Code: {customFormCode} • Asset: {assetName || 'Not Selected'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Panel */}
+      {showActionPanel && (
+        <div className="mb-4">
+          <SelectionPanel
+            actions={selectionActions}
+            onClearSelection={() => setShowActionPanel(false)}
+          />
+        </div>
+      )}
+
+      {/* Performance Table */}
+      <Card className="w-full pt-8">
+        <CardContent>
+          {performanceTableData.length > 0 ? (
+            <EnhancedTable
+              data={performanceTableData}
+              columns={performanceColumns}
+              renderCell={renderPerformanceCell}
+              storageKey="performance-table"
+              emptyMessage="No performance data available"
+              enableSearch={true}
+              enableExport={true}
+              handleExport={handlePerformanceExport}
+              searchPlaceholder="Search activities..."
+              exportFileName="performance-data"
+              leftActions={renderCustomActions()}
+              onFilterClick={handleOpenFilterModal}
+              loading={loading}
+              loadingMessage="Loading performance data..."
+              selectedItems={selectedItems}
+              onSelectItem={(id, checked) => setSelectedItems(checked ? [...selectedItems, id] : selectedItems.filter(i => i !== id))}
+              onSelectAll={checked => setSelectedItems(checked ? performanceTableData.map(d => d.id) : [])}
+            />
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              {loading ? "Loading performance data..." : "No performance data available"}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Filter Modal */}
+      <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+        <DialogContent className="sm:max-w-md" id="performance-filter-modal-root">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFilterModal(false)}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Start Date */}
+            <div className="flex flex-col">
+              <TextField
+                label={
+                  <span>
+                    Start Date <span style={{ color: 'red' }}>*</span>
+                  </span>
+                }
+                id="startDate"
+                type="date"
+                fullWidth
+                variant="outlined"
+                value={tempFilters.startDate}
+                onChange={(e) => {
+                  const newStartDate = e.target.value;
+                  setTempFilters(prev => ({ ...prev, startDate: newStartDate }));
+                  
+                  // Auto-adjust end date if needed
+                  if (tempFilters.endDate && newStartDate && new Date(tempFilters.endDate) < new Date(newStartDate)) {
+                    setTempFilters(prev => ({ ...prev, endDate: newStartDate }));
+                    toast.info('End date has been automatically updated to match the start date.', {
+                      position: 'top-right',
+                      duration: 3000,
+                    });
+                  }
+
+                  // Auto-apply filter when date changes
+                  setTimeout(() => {
+                    if (newStartDate && tempFilters.endDate && tempFilters.selectedTaskId) {
+                      const adjustedEndDate = (tempFilters.endDate && newStartDate && new Date(tempFilters.endDate) < new Date(newStartDate)) 
+                        ? newStartDate 
+                        : tempFilters.endDate;
+                      
+                      setStartDate(newStartDate);
+                      setEndDate(adjustedEndDate);
+                      fetchPerformance({ 
+                        start: newStartDate, 
+                        end: adjustedEndDate, 
+                        asset_id: tempFilters.selectedTaskId 
+                      });
                     }
-                  },
-                  error: startDate && endDate && endDate < startDate,
-                  helperText: startDate && endDate && endDate < startDate
+                  }, 100);
+                }}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ 
+                  sx: {
+                    height: '40px',
+                    backgroundColor: '#fff',
+                    borderRadius: '4px',
+                    '& .MuiOutlinedInput-root': {
+                      height: '40px',
+                      fontSize: '14px',
+                      '& fieldset': {
+                        borderColor: '#ddd',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#C72030',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: '14px',
+                      '&.Mui-focused': {
+                        color: '#C72030',
+                      },
+                    },
+                  }
+                }}
+                sx={{ mt: 1 }}
+                placeholder="Select Start Date"
+                inputProps={{
+                  max: tempFilters.endDate || undefined,
+                }}
+              />
+            </div>
+            
+            {/* End Date */}
+            <div className="flex flex-col">
+              <TextField
+                label={
+                  <span>
+                    End Date <span style={{ color: 'red' }}>*</span>
+                  </span>
+                }
+                id="endDate"
+                type="date"
+                fullWidth
+                variant="outlined"
+                value={tempFilters.endDate}
+                onChange={(e) => {
+                  const newEndDate = e.target.value;
+                  setTempFilters(prev => ({ ...prev, endDate: newEndDate }));
+
+                  // Auto-apply filter when date changes
+                  setTimeout(() => {
+                    if (tempFilters.startDate && newEndDate && tempFilters.selectedTaskId) {
+                      setEndDate(newEndDate);
+                      fetchPerformance({ 
+                        start: tempFilters.startDate, 
+                        end: newEndDate, 
+                        asset_id: tempFilters.selectedTaskId 
+                      });
+                    }
+                  }, 100);
+                }}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ 
+                  sx: {
+                    height: '40px',
+                    backgroundColor: '#fff',
+                    borderRadius: '4px',
+                    '& .MuiOutlinedInput-root': {
+                      height: '40px',
+                      fontSize: '14px',
+                      '& fieldset': {
+                        borderColor: '#ddd',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#C72030',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontSize: '14px',
+                      '&.Mui-focused': {
+                        color: '#C72030',
+                      },
+                    },
+                  }
+                }}
+                sx={{ mt: 1 }}
+                placeholder="Select End Date"
+                inputProps={{
+                  min: tempFilters.startDate || undefined,
+                }}
+                error={tempFilters.startDate && tempFilters.endDate && tempFilters.endDate < tempFilters.startDate}
+                helperText={
+                  tempFilters.startDate && tempFilters.endDate && tempFilters.endDate < tempFilters.startDate
                     ? "End date cannot be before start date"
                     : ""
                 }
-              }}
-              value={endDate ? new Date(endDate) : null}
-              onChange={handleEndDateChange}
-              minDate={startDate ? new Date(startDate) : undefined}
-            />
-          </LocalizationProvider>
-        </div>
-
-        {/* Autocomplete for task/asset */}
-        <div className="flex flex-col w-64">
-          <Autocomplete
-            options={dropdownOptions}
-            getOptionLabel={(option) => option.name}
-            value={dropdownOptions.find(opt => opt.task_of_id.toString() === selectedTaskId.toString()) || null}
-            onChange={(_, value) => setSelectedTaskId(value ? value.task_of_id : '')}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Select Asset/Task *"
-                variant="outlined"
-                fullWidth
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: { xs: '36px', md: '45px' }
-                  }
-                }}
-                InputLabelProps={{ shrink: true }}
               />
-            )}
-            disablePortal
-            disabled={dropdownOptions.length === 0}
-          />
-        </div>
-        
-        <Button 
-          className="bg-green-600 text-white px-6" 
-          onClick={handleApply}
-        >
-          Apply
-        </Button>
-        
-        <Button className="bg-yellow-500 text-white px-6" onClick={handleReset}>Reset</Button>
+            </div>
 
-        <Button className="bg-[#3B82F6] text-white px-6" onClick={async () => {
-          if (!customFormCode || !selectedTaskId) {
-            toast.error('Missing form code or asset selection. Please ensure all fields are selected.', {
-              position: 'top-right',
-              duration: 4000,
-            });
-            return;
-          }
+            {/* Asset/Task Selection */}
+            <div className="flex flex-col">
+              <FormControl variant="outlined" sx={{ 
+                height: { xs: 28, sm: 36, md: 45 },
+                backgroundColor: 'white',
+                '& .MuiInputBase-input, & .MuiSelect-select': {
+                  padding: { xs: '8px', sm: '10px', md: '12px' },
+                  backgroundColor: 'white',
+                },
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'white',
+                }
+              }}>
+                <InputLabel id="asset-task-label" shrink>
+                  Select Asset/Task <span style={{ color: 'red' }}>*</span>
+                </InputLabel>
+                <Select
+                  native
+                  labelId="asset-task-label"
+                  label="Select Asset/Task *"
+                  displayEmpty
+                  value={tempFilters.selectedTaskId}
+                  onChange={(e) => {
+                    const newTaskId = e.target.value;
+                    setTempFilters(prev => ({ 
+                      ...prev, 
+                      selectedTaskId: newTaskId 
+                    }));
 
-          // Validate date range before export
-          if (!validateDatesOnApply(startDate, endDate)) {
-            return;
-          }
+                    // Auto-apply filter when asset changes
+                    setTimeout(() => {
+                      if (tempFilters.startDate && tempFilters.endDate && newTaskId) {
+                        setSelectedTaskId(newTaskId);
+                        fetchPerformance({ 
+                          start: tempFilters.startDate, 
+                          end: tempFilters.endDate, 
+                          asset_id: newTaskId 
+                        });
+                      }
+                    }, 100);
+                  }}
+                  disabled={dropdownOptions.length === 0}
+                  MenuProps={{
+                    disablePortal: true,
+                    container: () => document.getElementById('performance-filter-modal-root') || document.body
+                  }}
+                >
+                  <option value="">Select Asset/Task</option>
+                  {dropdownOptions && dropdownOptions.map(option => (
+                    <option key={option.task_of_id} value={option.task_of_id.toString()}>
+                      {option.name}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+              {dropdownOptions.length === 0 && (
+                <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                  No assets/tasks available...
+                </Typography>
+              )}
+            </div>
 
-          try {
-            // Use current date range in dd/mm/yyyy
-            const startDMY = formatDMY(startDate);
-            const endDMY = formatDMY(endDate);
-            
-            // Build the export URL with proper encoding
-            const exportUrl = `${API_CONFIG.BASE_URL}/pms/custom_forms/${customFormCode}/export_performance`;
-            const params = new URLSearchParams({
-              asset_id: selectedTaskId.toString(),
-              'q[start_date_gteq]': startDMY,
-              'q[start_date_lteq]': endDMY,
-              access_token: API_CONFIG.TOKEN || ''
-            });
-            
-            const fullUrl = `${exportUrl}?${params.toString()}`;
-            
-            console.log('Export URL:', fullUrl); // Debug log
-            
-            const res = await fetch(fullUrl, {
-              method: 'GET',
-              headers: {
-                'Authorization': getAuthHeader(),
-                'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, */*',
-              },
-            });
-            
-            console.log('Export response status:', res.status); // Debug log
-            console.log('Export response headers:', Object.fromEntries(res.headers.entries())); // Debug log
-            
-            if (!res.ok) {
-              const errorText = await res.text();
-              console.error('Export error response:', errorText);
-              throw new Error(`Failed to export performance data: ${res.status} ${res.statusText}`);
-            }
-
-            // Check if response is actually a file
-            const contentType = res.headers.get('content-type');
-            console.log('Content-Type:', contentType); // Debug log
-            
-            if (!contentType || (!contentType.includes('spreadsheet') && !contentType.includes('excel') && !contentType.includes('octet-stream'))) {
-              const responseText = await res.text();
-              console.error('Unexpected response format:', responseText);
-              throw new Error('Server returned unexpected response format. Expected Excel file.');
-            }
-
-            const blob = await res.blob();
-            console.log('Blob size:', blob.size); // Debug log
-            
-            if (blob.size === 0) {
-              throw new Error('Export file is empty. No data available for the selected criteria.');
-            }
-
-            // Try to get filename from content-disposition header
-            let filename = 'performance_export.xlsx';
-            const disposition = res.headers.get('content-disposition');
-            if (disposition && disposition.indexOf('filename=') !== -1) {
-              const filenameMatch = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-              if (filenameMatch && filenameMatch[1]) {
-                filename = filenameMatch[1].replace(/['"]/g, '').trim();
-              }
-            }
-            
-            // Create and trigger download
-            const link = document.createElement('a');
-            const url = window.URL.createObjectURL(blob);
-            link.href = url;
-            link.download = filename;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            
-            // Cleanup
-            setTimeout(() => {
-              document.body.removeChild(link);
-              window.URL.revokeObjectURL(url);
-            }, 100);
-            
-            toast.success('Performance data exported successfully!', {
-              position: 'top-right',
-              duration: 4000,
-            });
-            
-          } catch (e: any) {
-            console.error('Export error:', e);
-            toast.error(e.message || 'Export failed. Please try again.', {
-              position: 'top-right',
-              duration: 5000,
-            });
-          }
-        }}>Export</Button>
-      </div>
-      
-      {/* Remove the date error message display since we're using toast */}
-
-      <h2 className="text-xl font-bold mb-2 text-black">{formName || 'Performance Checklist'}</h2>
-      {loading && <div className="text-gray-500">Loading...</div>}
-      {error && <div className="text-red-500">{error}</div>}
-      <div className="overflow-x-auto">
-        <Table className="min-w-full border border-gray-300">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="bg-[#334155] text-center border-r border-gray-300">Asset/Service Name</TableHead>
-              <TableHead className="bg-[#334155] text-center border-r border-gray-300">Activity</TableHead>
-              {dateHeaders.map((date: any, idx: number) => (
-                <TableHead key={idx} className="bg-[#F3F4F6] text-gray-900 text-center border-r border-gray-300">{date.date_formatted || date.date}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {/* Asset row */}
-            <TableRow>
-              <TableCell className="border-r border-gray-300 text-center font-semibold">{assetName}</TableCell>
-              <TableCell className="border-r border-gray-300"></TableCell>
-              {dateHeaders.map((_, idx: number) => (
-                <TableCell key={idx} className="border-r border-gray-300"></TableCell>
-              ))}
-            </TableRow>
-            {/* Activities */}
-            {activities.map((activity: any, idx: number) => (
-              <TableRow key={idx}>
-                <TableCell className="border-r border-gray-300"></TableCell>
-                <TableCell className="border-r border-gray-300 text-left">{activity.label}</TableCell>
-                {activity.date_data.map((dateObj: any, dIdx: number) => (
-                  <TableCell key={dIdx} className="border-r border-gray-300">
-                    {/* If there are time slots, show value(s) */}
-                    {dateObj.time_slot_data && dateObj.time_slot_data.length > 0 ? (
-                      <div className="flex flex-col gap-1">
-                        {dateObj.time_slot_data.map((slot: any, sIdx: number) => (
-                          <div key={sIdx} className="text-xs">
-                            <span className="font-semibold">{slot.time_slot}:</span> {slot.value ?? '-'}
-                            {slot.comment && <span className="ml-1 text-gray-400">({slot.comment})</span>}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span>-</span>
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-10">
+              <Button
+                onClick={handleApplyFilters}
+                className="px-8 bg-[#C72030] text-white hover:bg-[#C72030]/90"
+              >
+                Apply Filters
+              </Button>
+              <Button
+                onClick={handleResetFilters}
+                variant="outline"
+                className="px-8 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+              >
+                Reset
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

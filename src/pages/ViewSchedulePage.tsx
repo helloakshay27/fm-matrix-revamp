@@ -979,7 +979,7 @@ export const ViewSchedulePage = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 pt-6">
+      {/* <div className="flex gap-3 pt-6">
         <Button
           onClick={() => navigate('/maintenance/schedule')}
           variant="outline"
@@ -987,7 +987,7 @@ export const ViewSchedulePage = () => {
         >
           Back to List
         </Button>
-      </div>
+      </div> */}
 
       {/* Set Approval Modal */}
       <SetApprovalModal

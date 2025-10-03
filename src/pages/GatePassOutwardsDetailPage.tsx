@@ -100,6 +100,8 @@ export const GatePassOutwardsDetailPage = () => {
         body: formData
       });
       if (res.ok) {
+        const responseData = await res.json();
+        
         // Fetch latest details and update state
         const updatedRes = await fetch(`${API_CONFIG.BASE_URL}/gate_passes/${gatePassData.id}.json`, {
           headers: {
@@ -120,8 +122,8 @@ export const GatePassOutwardsDetailPage = () => {
         });
         setHandoverView(handoverMap);
 
-        setIsReceiveModalOpen(true); // keep modal open to show filled data
-        setSelectedItemIndex(selectedItemIndex);
+        // Close modal and reset form
+        setIsReceiveModalOpen(false);
         setHandoverTo('');
         setReceivedDate('');
         setRemarks('');
@@ -129,9 +131,11 @@ export const GatePassOutwardsDetailPage = () => {
         setReceivedItems(prev => [...prev, selectedItemIndex]);
       } else {
         // Handle error
+        console.error('Failed to update material');
       }
     } catch (err) {
       // Handle error
+      console.error('Error updating material:', err);
     }
   };
 
@@ -215,22 +219,7 @@ export const GatePassOutwardsDetailPage = () => {
   ];
 
     // Render cell for EnhancedTable, especially for Updates column
-    const getStatusBadgeStyles = (status: string) => {
-    const normalizedStatus = status.toLowerCase();
-    switch (normalizedStatus) {
-      case 'pending':
-        return { backgroundColor: '#f5f2c9', color: '#000' };
-      case 'rejected':
-        return { backgroundColor: '#f5ccc6', color: '#000' };
-      case 'accepted':
-      case 'approved':
-        return { backgroundColor: '#c7ecd9', color: '#000' };
-      default:
-        return { backgroundColor: '#f3f4f6', color: '#000' };
-    }
-  };
-
-  const renderCell = (item: any, columnKey: string) => {
+    const renderCell = (item: any, columnKey: string) => {
       // Only show receive/handover buttons if returnable
       if (columnKey === "updates" && gatePassData.returnable === true) {
         const idx = item.updates;
@@ -631,75 +620,175 @@ export const GatePassOutwardsDetailPage = () => {
       <Dialog open={isReceiveModalOpen} onOpenChange={setIsReceiveModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Mark as Received</DialogTitle>
+            <DialogTitle>
+              {handoverView[selectedItemIndex ?? -1] ? "Material Handover Details" : "Mark as Received"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="handoverTo">Handover To</Label>
               <Input
                 id="handoverTo"
-                value={handoverTo}
+                value={handoverView[selectedItemIndex ?? -1] ? handoverView[selectedItemIndex ?? -1].handover_to || '' : handoverTo}
                 onChange={(e) => setHandoverTo(e.target.value)}
                 placeholder="Enter person name"
+                disabled={!!handoverView[selectedItemIndex ?? -1]}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="receivedDate">Received Date</Label>
               <Input
                 id="receivedDate"
-                type="date"
-                value={receivedDate}
+                type={handoverView[selectedItemIndex ?? -1] ? "text" : "date"}
+                value={
+                  handoverView[selectedItemIndex ?? -1]
+                    ? handoverView[selectedItemIndex ?? -1].recieved_date
+                      ? new Date(handoverView[selectedItemIndex ?? -1].recieved_date).toLocaleDateString()
+                      : ''
+                    : receivedDate
+                }
                 onChange={(e) => setReceivedDate(e.target.value)}
+                disabled={!!handoverView[selectedItemIndex ?? -1]}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="remarks">Remarks</Label>
               <Textarea
                 id="remarks"
-                value={remarks}
+                value={handoverView[selectedItemIndex ?? -1] ? handoverView[selectedItemIndex ?? -1].remarks || '' : remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 placeholder="Enter remarks"
                 rows={3}
+                disabled={!!handoverView[selectedItemIndex ?? -1]}
               />
             </div>
             <div className="space-y-2">
               <Label>Attachments</Label>
-              <div className="flex items-center space-x-2">
-                <Input
-                  type="file"
-                  multiple
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      setAttachments(Array.from(e.target.files));
-                    }
-                  }}
-                  className="hidden"
-                  id="attachment-input"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => document.getElementById('attachment-input')?.click()}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Choose Files
+              {handoverView[selectedItemIndex ?? -1] ? (
+                <div className="flex items-center flex-wrap gap-4">
+                  {(handoverView[selectedItemIndex ?? -1].attachments || []).length > 0 ? (
+                    handoverView[selectedItemIndex ?? -1].attachments.map((attachment: any) => {
+                      const url = attachment.document || attachment.url || `${API_CONFIG.BASE_URL}/attachments/${attachment.id}`;
+                      const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.document_file_name || '');
+                      const isPdf = /\.pdf$/i.test(attachment.document_file_name || '');
+                      const isExcel = /\.(xls|xlsx|csv)$/i.test(attachment.document_file_name || '');
+                      const isWord = /\.(doc|docx)$/i.test(attachment.document_file_name || '');
+                      const isDownloadable = isPdf || isExcel || isWord;
+
+                      return (
+                        <div
+                          key={attachment.id}
+                          className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                        >
+                          {isImage ? (
+                            <>
+                              <button
+                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                title="View"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    ...attachment,
+                                    url,
+                                    type: 'image'
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                                type="button"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <img
+                                src={url}
+                                alt={attachment.document_file_name || `Document_${attachment.id}`}
+                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    ...attachment,
+                                    url,
+                                    type: 'image'
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                              />
+                            </>
+                          ) : isPdf ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                              <FileText className="w-6 h-6" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                              <FileSpreadsheet className="w-6 h-6" />
+                            </div>
+                          ) : isWord ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                              <FileText className="w-6 h-6" />
+                            </div>
+                          ) : (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                              <File className="w-6 h-6" />
+                            </div>
+                          )}
+                          <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                            {attachment.document_file_name || `Document_${attachment.id}`}
+                          </span>
+                          {isDownloadable && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  ...attachment,
+                                  url,
+                                  type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
+                                });
+                                setIsModalOpen(true);
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <span className="text-gray-400">No attachments</span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Input
+                    type="file"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setAttachments(Array.from(e.target.files));
+                      }
+                    }}
+                    className="hidden"
+                    id="attachment-input"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('attachment-input')?.click()}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Choose Files
+                  </Button>
+                  <span className="text-sm text-gray-500">
+                    {attachments.length} file(s) selected
+                  </span>
+                </div>
+              )}
+            </div>
+            {!handoverView[selectedItemIndex ?? -1] && (
+              <div className="flex justify-center pt-4">
+                <Button onClick={handleSubmitReceive} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8">
+                  Submit
                 </Button>
-                <span className="text-sm text-gray-500">
-                  {attachments.length} file(s) selected
-                </span>
               </div>
-            </div>
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => setIsReceiveModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={() => {
-                console.log('Received:', { handoverTo, receivedDate, remarks, attachments });
-                setIsReceiveModalOpen(false);
-              }}>
-                Mark as Received
-              </Button>
-            </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
