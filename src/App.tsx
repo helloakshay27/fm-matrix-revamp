@@ -736,6 +736,9 @@ import { LocationAccountPage } from "./pages/master/LocationAccountPage";
 import LMCPage from "./pages/LMCPage";
 import { ChannelsLayout } from "./pages/ChannelsLayout";
 import DMConversation from "./pages/DMConversation";
+import { TaskSubmissionPage } from "./pages/TaskSubmissionPage";
+import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
+import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -808,6 +811,16 @@ function App() {
                     path="master/location/account"
                     element={<OpsAccountPage />}
                   />
+                     <Route
+                    path="admin/users"
+                    element={<AdminUsersDashboard />}
+                  />
+                   <Route
+                    path="admin/create-admin-user"
+                    element={<CreateAdminUserPage />}
+                  />
+
+
 
                   <Route
                     path="master/user/fm-users"
@@ -1461,6 +1474,11 @@ function App() {
                     path="/maintenance/task"
                     element={<ScheduledTaskDashboard />}
                   />
+                   <Route
+                    path="/maintenance/task/submit/:id"
+                    element={<TaskSubmissionPage />}
+                  />
+
                   <Route
                     path="/maintenance/task/details/:id"
                     element={<TaskDetailsPage />}
