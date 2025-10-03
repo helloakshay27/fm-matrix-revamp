@@ -586,6 +586,7 @@ import { AddressMasterPage } from "./pages/AddressMasterPage";
 
 // Import new master pages
 import { UnitMasterByDefaultPage } from "./pages/UnitMasterByDefaultPage";
+import { CommunicationTemplatePage } from "./pages/CommunicationTemplatePage";
 
 // Import Add Address page
 import { AddAddressPage } from "./pages/AddAddressPage";
@@ -1247,6 +1248,10 @@ function App() {
                   <Route
                     path="/master/unit-default"
                     element={<UnitMasterByDefaultPage />}
+                  />
+                  <Route
+                    path="/master/communication-template"
+                    element={<CommunicationTemplatePage />}
                   />
 
                   <Route

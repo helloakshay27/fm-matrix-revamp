@@ -75,6 +75,7 @@ import {
   Trash,
   ChartColumnIncreasing,
 } from "lucide-react";
+import { template } from "lodash";
 
 const navigationStructure = {
   Settings: {
@@ -399,6 +400,11 @@ const modulesByPackage = {
       name: "Inventory Type",
       icon: Package,
       href: "/master/inventory-type",
+    },
+    {
+      name: "Communication Template",
+      icon: FileSpreadsheet,
+      href: "/master/communication-template",
     },
     // {
     //   name: 'Inventory Sub Type',
