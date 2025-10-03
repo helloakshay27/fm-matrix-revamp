@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -78,6 +78,15 @@ const MobileLMCPage: React.FC = () => {
     const [circleMobileDialogOpen, setCircleMobileDialogOpen] = useState<boolean>(false);
     const mobileCircleSearchInputRef = useRef<HTMLInputElement>(null);
     const mobileCircleListRef = useRef<HTMLDivElement>(null);
+    // Perf / cache refs
+    const circleCacheRef = useRef<CircleOption[] | null>(null);
+    const userCacheRef = useRef<Map<string, UserOption>>(new Map());
+    const lastUsersQueryRef = useRef<string>('');
+    const usersAbortRef = useRef<AbortController | null>(null);
+    const prefetchScheduledRef = useRef<boolean>(false);
+    // UX state
+    const [initialLoading, setInitialLoading] = useState<boolean>(true);
+    const [toggleLoading, setToggleLoading] = useState<boolean>(false);
     // Token must come from URL only (supports both ?token=... and ?access_token=...)
     const authToken = searchParams.get('token') || searchParams.get('access_token') || '';
 
@@ -89,25 +98,30 @@ const MobileLMCPage: React.FC = () => {
     const STATIC_COMPANY_ID = '145';
 
     // Load circles using static company id
-    const loadCircles = async () => {
+    const loadCircles = useCallback(async () => {
         const companyId = STATIC_COMPANY_ID;
         try {
             setCirclesLoading(true);
+            if (circleCacheRef.current) {
+                setCircles(circleCacheRef.current);
+                return;
+            }
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
             const data = await authedGet(`https://${host}/pms/users/get_circles.json?company_id=${encodeURIComponent(companyId)}`, authToken);
             let list: CircleOption[] = [];
             if (Array.isArray(data)) list = data.map((c: any) => ({ id: String(c.id || c.circle_id || c.name), name: c.circle_name || c.name || c.circle || `Circle ${c.id}` }));
             else if (Array.isArray(data?.circles)) list = data.circles.map((c: any) => ({ id: String(c.id || c.circle_id || c.name), name: c.circle_name || c.name || c.circle || `Circle ${c.id}` }));
             setCircles(list);
+            circleCacheRef.current = list;
         } catch (e: any) {
             console.error('Failed to load circles', e);
             toast.error(e.message || 'Failed to load circles');
             setCircles([]);
         } finally { setCirclesLoading(false); }
-    };
+    }, [authToken, baseUrl]);
 
     // Load existing LMC manager mapping for the user from URL (if any)
-    const loadExistingMapping = async (userId: string) => {
+    const loadExistingMapping = useCallback(async (userId: string) => {
         try {
             setMappingLoading(true);
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
@@ -134,34 +148,30 @@ const MobileLMCPage: React.FC = () => {
             // If GET fails, treat as no existing mapping
             setHasExistingMapping(false);
         } finally { setMappingLoading(false); }
-    };
+    }, [authToken, baseUrl]);
 
     // Resolve a user's display name by ID via company_wise_users, if available
-    const resolveUserNameById = async (id: string) => {
+    const resolveUserNameById = useCallback(async (id: string) => {
+        if (!id) return;
+        if (userCacheRef.current.has(id)) {
+            const cached = userCacheRef.current.get(id)!;
+            setUsers(prev => prev.some(u => u.id === id) ? prev : [cached, ...prev]);
+            selectedUserOptionRef.current = cached;
+            return;
+        }
         setResolvingUserLoading(true);
         const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
-        const base = `https://${host}/pms/users/company_wise_users.json`;
         const companyId = localStorage.getItem('selectedCompanyId') || searchParams.get('company_id') || '';
-        const circleFilter = restrictByCircle && selectedCircle ? `q[lock_user_permissions_circle_id_eq]=${encodeURIComponent(selectedCircle)}` : '';
-        const companyParam = companyId ? `company_id=${encodeURIComponent(companyId)}` : '';
-        const glue = (...parts: string[]) => parts.filter(Boolean).join('&');
-        const candidates = [
-            `${base}?${glue(`ids[]=${encodeURIComponent(id)}`, circleFilter, companyParam)}`,
-            `${base}?${glue(`id=${encodeURIComponent(id)}`, circleFilter, companyParam)}`,
-            `${base}?${glue(`q[id_eq]=${encodeURIComponent(id)}`, circleFilter, companyParam)}`,
-            `${base}?${glue(`q[id_in][]=${encodeURIComponent(id)}`, circleFilter, companyParam)}`,
-        ];
+        const params: string[] = [`q[id_eq]=${encodeURIComponent(id)}`, 'q[employee_type_cont]=internal'];
+        if (restrictByCircle && selectedCircle) params.push(`q[lock_user_permissions_circle_id_eq]=${encodeURIComponent(selectedCircle)}`);
+        if (companyId) params.push(`company_id=${encodeURIComponent(companyId)}`);
+        const url = `https://${host}/pms/users/company_wise_users.json?${params.join('&')}`;
         let match: any = null;
-        for (const url of candidates) {
-            try {
-                const data = await authedGet(url, authToken);
-                const raw = Array.isArray(data?.users) ? data.users : (Array.isArray(data) ? data : []);
-                match = raw.find((u: any) => String(u.id) === String(id));
-                if (match) break;
-            } catch {
-                // try next variant
-            }
-        }
+        try {
+            const data = await authedGet(url, authToken);
+            const raw = Array.isArray(data?.users) ? data.users : (Array.isArray(data) ? data : []);
+            match = raw.find((u: any) => String(u.id) === String(id));
+        } catch { /* noop */ }
         if (!match) { setResolvingUserLoading(false); return; }
         const first = match.first_name || match.firstname || match.firstName || '';
         const last = match.last_name || match.lastname || match.lastName || '';
@@ -170,6 +180,7 @@ const MobileLMCPage: React.FC = () => {
         const display = fullFromParts || fallbackFull;
         const circleId = match.circle_id || match.circle || match.circleId;
         const resolved = { id: String(match.id), name: String(display), circle_id: circleId, email: match.email || null } as UserOption;
+        userCacheRef.current.set(resolved.id, resolved);
         setUsers(prev => {
             const idx = prev.findIndex(u => u.id === resolved.id);
             if (idx === -1) return [resolved, ...prev];
@@ -185,10 +196,10 @@ const MobileLMCPage: React.FC = () => {
             await resolveCircleNameById(String(circleId));
         }
         setResolvingUserLoading(false);
-    };
+    }, [authToken, baseUrl, restrictByCircle, selectedCircle, selectedUser]);
 
     // Resolve circle name by id via get_circles and select it in the dropdown (uses static company id)
-    const resolveCircleNameById = async (id: string) => {
+    const resolveCircleNameById = useCallback(async (id: string) => {
         try {
             setResolvingCircleLoading(true);
             mappedCircleIdRef.current = String(id);
@@ -210,11 +221,17 @@ const MobileLMCPage: React.FC = () => {
             setSelectedCircle(String(id));
             setCircles(prev => (prev.some(c => c.id === String(id)) ? prev : [{ id: String(id), name: `Circle ${id}` }, ...prev]));
         } finally { setResolvingCircleLoading(false); }
-    };
+    }, [authToken, baseUrl]);
 
     // Load users (optionally filtered by circle)
-    const loadUsers = async (circleId?: string, page: number = 1, append: boolean = false, search?: string) => {
+    const loadUsers = useCallback(async (circleId?: string, page: number = 1, append: boolean = false, search?: string) => {
         try {
+            const queryKey = JSON.stringify({ circle: restrictByCircle ? circleId || '' : 'ALL', page, search: search || '', append });
+            if (!append && lastUsersQueryRef.current === queryKey) return;
+            lastUsersQueryRef.current = queryKey;
+            if (usersAbortRef.current) { try { usersAbortRef.current.abort(); } catch { } }
+            const controller = new AbortController();
+            usersAbortRef.current = controller;
             if (append) setUsersAppendLoading(true);
             else setUsersLoading(true);
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
@@ -224,7 +241,11 @@ const MobileLMCPage: React.FC = () => {
             if (page && page > 1) params.push(`page=${page}`);
             if (search && search.trim()) params.push(`q[email_or_mobile_cont]=${encodeURIComponent(search.trim())}`);
             const url = params.length ? `${base}&${params.join('&')}` : base;
-            const data = await authedGet(url, authToken);
+            const data = await authedGet(url, authToken).catch((e) => {
+                if (controller.signal.aborted) return null;
+                throw e;
+            });
+            if (!data || controller.signal.aborted) return;
             const rawUsers = Array.isArray(data?.users) ? data.users : (Array.isArray(data) ? data : []);
             let mapped: UserOption[] = rawUsers.map((u: any) => {
                 const first = u.first_name || u.firstname || u.firstName || '';
@@ -245,6 +266,7 @@ const MobileLMCPage: React.FC = () => {
             if (restrictByCircle && circleId) {
                 mapped = mapped.filter(u => !u.circle_id || String(u.circle_id) === String(circleId));
             }
+            for (const u of mapped) userCacheRef.current.set(u.id, u as UserOption);
             setUsers(prev => {
                 if (!append) {
                     // Ensure currently selected user remains visible if not in freshly loaded page
@@ -271,7 +293,7 @@ const MobileLMCPage: React.FC = () => {
             if (append) setUsersAppendLoading(false);
             else setUsersLoading(false);
         }
-    };
+    }, [authToken, baseUrl, restrictByCircle, selectedUser]);
 
     // Keep a cached copy of the selected user's best-known option
     useEffect(() => {
@@ -280,16 +302,18 @@ const MobileLMCPage: React.FC = () => {
         if (opt) selectedUserOptionRef.current = opt;
     }, [selectedUser, users]);
 
-    // If the selected user's label is still a placeholder (e.g., "User #123"), try resolving it by ID
+    // If selected user label is placeholder attempt resolve (cached or network)
     useEffect(() => {
         if (!selectedUser) return;
-        const current = selectedUserOptionRef.current || users.find(u => u.id === selectedUser);
+        const current = selectedUserOptionRef.current || users.find(u => u.id === selectedUser) || userCacheRef.current.get(selectedUser);
         const name = current?.name || '';
         const isPlaceholder = !name || /^user\s*#?\s*\d+$/i.test(name) || name === `User #${selectedUser}`;
         if (isPlaceholder) {
             resolveUserNameById(selectedUser).catch(() => { /* noop */ });
+        } else {
+            selectedUserOptionRef.current = current || null;
         }
-    }, [selectedUser]);
+    }, [selectedUser, users, resolveUserNameById]);
 
     // Derive the best label to show for the selected user (avoid showing raw ID placeholders on mobile)
     const selectedUserBestLabel = useMemo(() => {
@@ -303,7 +327,16 @@ const MobileLMCPage: React.FC = () => {
     }, [selectedUser, users]);
 
     // Initial loads
-    useEffect(() => { loadCircles(); }, []);
+    useEffect(() => { loadCircles(); }, [loadCircles]);
+    // Finish initial loading once base data resolved
+    const firstLoadRef = useRef(true);
+    useEffect(() => {
+        if (!firstLoadRef.current) return;
+        if (!circlesLoading && !mappingLoading && !resolvingUserLoading && !resolvingCircleLoading) {
+            firstLoadRef.current = false;
+            setInitialLoading(false);
+        }
+    }, [circlesLoading, mappingLoading, resolvingUserLoading, resolvingCircleLoading]);
     // Keep restriction as-is; static company id ensures circles API works
     useEffect(() => {
         const companyId = STATIC_COMPANY_ID;
@@ -315,7 +348,7 @@ const MobileLMCPage: React.FC = () => {
         const u = searchParams.get('user_id') || '';
         setUrlUserId(u);
         if (u) loadExistingMapping(u);
-    }, [searchParams]);
+    }, [searchParams, loadExistingMapping]);
     useEffect(() => {
         // When restriction toggles off, fetch all users ignoring circle.
         if (!restrictByCircle) {
@@ -346,6 +379,15 @@ const MobileLMCPage: React.FC = () => {
             }
         }
     }, [restrictByCircle, selectedCircle]);
+
+    // Clear toggle loading when relevant async operations complete
+    useEffect(() => {
+        if (!toggleLoading) return;
+        if (!usersLoading && !usersAppendLoading && !resolvingUserLoading && !resolvingCircleLoading) {
+            const t = setTimeout(() => setToggleLoading(false), 150);
+            return () => clearTimeout(t);
+        }
+    }, [toggleLoading, usersLoading, usersAppendLoading, resolvingUserLoading, resolvingCircleLoading]);
 
     const handleRefresh = async () => {
         try {
@@ -445,7 +487,13 @@ const MobileLMCPage: React.FC = () => {
             const nextPage = usersPage + 1;
             const circleId = restrictByCircle ? selectedCircle || undefined : undefined;
             const q = userSearch.trim();
-            loadUsers(circleId, nextPage, true, q.length >= 3 ? q : undefined);
+            if (prefetchScheduledRef.current) return;
+            prefetchScheduledRef.current = true;
+            setTimeout(() => {
+                loadUsers(circleId, nextPage, true, q.length >= 3 ? q : undefined).finally(() => {
+                    prefetchScheduledRef.current = false;
+                });
+            }, 40);
         }
     };
 
@@ -456,21 +504,16 @@ const MobileLMCPage: React.FC = () => {
         const q = userSearch.trim();
         const qlen = q.length;
         const handler = setTimeout(() => {
-            // Only call server when query has 3+ characters
             if (qlen >= 3) {
                 setUsers([]); setUsersPage(1); setUsersTotalPages(1);
                 loadUsers(circleId, 1, false, q);
             } else if (qlen === 0) {
-                // When cleared, reload default list (no search)
                 setUsers([]); setUsersPage(1); setUsersTotalPages(1);
                 loadUsers(circleId, 1, false);
-            } else {
-                // For 1-2 characters, do not trigger server-side search; keep current list
             }
-        }, 350);
+        }, 400);
         return () => clearTimeout(handler);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userSearch]);
+    }, [userSearch, userDisabled, restrictByCircle, selectedCircle, loadUsers]);
 
     // Submit create/update mapping
     const handleSubmit = async () => {
@@ -498,7 +541,15 @@ const MobileLMCPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 sm:p-6 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 sm:p-6 flex items-center justify-center relative">
+            {initialLoading && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/85 backdrop-blur-sm">
+                    <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+                        <span className="text-sm font-medium text-gray-600">Initializing…</span>
+                    </div>
+                </div>
+            )}
             <div className="w-full max-w-md mx-auto">
                 <Card className="w-full shadow-lg border-0 bg-white/95 backdrop-blur">
                     <CardHeader className="text-center pb-4">
@@ -515,12 +566,16 @@ const MobileLMCPage: React.FC = () => {
                                 <Switch
                                     id="restrict-circle"
                                     checked={restrictByCircle}
-                                    onCheckedChange={setRestrictByCircle}
+                                    disabled={initialLoading}
+                                    onCheckedChange={(v) => { setRestrictByCircle(v); setToggleLoading(true); }}
                                     className="data-[state=checked]:bg-[#C72030]"
                                 />
-                                <Label htmlFor="restrict-circle" className="cursor-pointer text-sm sm:text-base font-medium">
+                                <Label htmlFor="restrict-circle" className="cursor-pointer text-sm sm:text-base font-medium select-none">
                                     Restrict by Circle
                                 </Label>
+                                {(toggleLoading || (usersLoading && !usersAppendLoading)) && (
+                                    <Loader2 className="w-4 h-4 animate-spin text-[#C72030]" />
+                                )}
                             </div>
                             <p className="text-xs text-gray-500 leading-relaxed">
                                 {restrictByCircle

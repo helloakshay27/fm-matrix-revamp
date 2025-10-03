@@ -4,7 +4,7 @@ import { TextField, InputAdornment, IconButton } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, User as UserIcon, ChevronRight, ChevronDown, Trash2, ArrowLeftRight, ShieldAlert } from 'lucide-react';
+import { X, User as UserIcon, ChevronRight, ChevronDown, Trash2, ArrowLeftRight, ShieldAlert, ArrowLeft, Users, UserMinus, AlertCircle } from 'lucide-react';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
@@ -485,29 +485,37 @@ export const MultipleUserDeletePage = () => {
     } as const;
 
     return (
-        <div className="p-6">
-            <div className="mb-4">
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-                    <TabsList className="grid grid-cols-2 bg-white border border-gray-200">
-                        <TabsTrigger value="single" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] border-none font-semibold">User Deletion</TabsTrigger>
-                        <TabsTrigger value="tree" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] border-none font-semibold">Multiple User Deletion</TabsTrigger>
-                    </TabsList>
+        <div className="p-4 sm:p-6">
+            {/* Top Header (consistent with ServiceDetailsPage) */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                <div>
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-1 hover:text-gray-800 mb-3 text-sm"
+                    >
+                        <ArrowLeft className="w-4 h-4" /> Back
+                    </button>
+                    <h1 className="text-2xl font-bold text-[#1a1a1a]">MULTIPLE USER DELETION</h1>
+                    <p className="text-sm text-gray-600 mt-1">Delete one or many users safely, optionally handling hierarchy.</p>
+                </div>
+            </div>
 
-                    <TabsContent value="single">
-                        <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-[#1a1a1a]">User Deletion</h1>
-                            <p className="text-sm text-gray-600 mt-1">
-                                Enter one or more Email addresses or Mobile numbers. Click "Add User" to add more.
-                            </p>
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full mb-4">
+                <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-lg h-auto p-0 text-sm border border-gray-200 shadow-sm">
+                    <TabsTrigger value="single" className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] px-3 py-2 border-r border-gray-200 last:border-r-0 text-sm">User Deletion</TabsTrigger>
+                    <TabsTrigger value="tree" className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] px-3 py-2 border-r border-gray-200 last:border-r-0 text-sm">Multiple User Deletion</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="single" className="pt-6">
+                    {/* IDENTIFIERS Section */}
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
+                        <div className="flex items-center p-4">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                                <Users className="w-6 h-6 text-[#C72030]" />
+                            </div>
+                            <h2 className="text-lg font-bold">IDENTIFIERS</h2>
                         </div>
-                        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-                            <CardHeader className='bg-[#F6F4EE] mb-4'>
-                                <CardTitle className="text-lg text-black flex items-center">
-                                    <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
-                                    IDENTIFIERS
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                        <div className="p-4 pt-0">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {entries.map((entry, idx) => {
                                         const errorMsg = getIdentifierError(entry.value);
@@ -555,19 +563,17 @@ export const MultipleUserDeletePage = () => {
                                     );})}
                                 </div>
 
-                                <div className="mt-4">
+                                <div className="mt-4 flex flex-wrap gap-3">
                                     <Button
                                         variant="outline"
                                         onClick={handleAddField}
-                                        className="text-[#C72030] border-[#C72030] bg-[#f6f4ee] hover:bg-[#f6f4ee]/80"
-                                    >
-                                        Add User
-                                    </Button>
+                                        className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+                                    >Add User</Button>
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </div>
+                    </div>
 
-                        <div className="flex gap-4 flex-wrap justify-center">
+                    <div className="flex gap-4 flex-wrap justify-center">
                             {(() => {
                                 const hasAny = entries.some(e => e.value.trim() !== '');
                                 const hasInvalid = entries.some(e => e.value.trim() !== '' && !isValidIdentifier(e.value));
@@ -584,7 +590,7 @@ export const MultipleUserDeletePage = () => {
                             })()}
                         </div>
 
-                        {confirmOpen && (
+                    {confirmOpen && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                                 <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
                                     <div className="p-4 border-b">
@@ -619,17 +625,18 @@ export const MultipleUserDeletePage = () => {
                             </div>
                         )}
 
-                        {(resultMessage || deletedUsers.length || skippedUsers.length || notFoundUsers.length || notDeletedDueToReportee.length) ? (
-                            <div className="mt-6 space-y-4 max-w-6xl mx-auto">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <Card className="border-[#D9D9D9] bg-white">
-                                        <CardHeader className="bg-[#F6F4EE]">
-                                            <CardTitle className="text-base flex items-center justify-between">
-                                                <span>Deleted Users</span>
-                                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{deletedUsers.length}</span>
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
+                    {(resultMessage || deletedUsers.length || skippedUsers.length || notFoundUsers.length || notDeletedDueToReportee.length) ? (
+                        <div className="mt-8 space-y-8 max-w-6xl mx-auto">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                                    <div className="flex items-center p-4">
+                                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                                            <UserMinus className="w-6 h-6 text-[#C72030]" />
+                                        </div>
+                                        <h3 className="text-base font-bold flex-1">DELETED USERS</h3>
+                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{deletedUsers.length}</span>
+                                    </div>
+                                    <div className="p-4 pt-0">
                                             {deletedUsers.length ? (
                                                 <div className="overflow-x-auto mt-2">
                                                     <table className="w-full text-sm">
@@ -654,17 +661,18 @@ export const MultipleUserDeletePage = () => {
                                             ) : (
                                                 <p className="text-sm text-gray-500">No users deleted.</p>
                                             )}
-                                        </CardContent>
-                                    </Card>
+                                    </div>
+                                </div>
 
-                                    <Card className="border-[#D9D9D9] bg-white">
-                                        <CardHeader className="bg-[#F6F4EE]">
-                                            <CardTitle className="text-base flex items-center justify-between">
-                                                <span>Not deleted user (Due to Internal)</span>
-                                                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{skippedUsers.length}</span>
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
+                                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                                    <div className="flex items-center p-4">
+                                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                                            <AlertCircle className="w-6 h-6 text-[#C72030]" />
+                                        </div>
+                                        <h3 className="text-base font-bold flex-1">NOT DELETED (INTERNAL)</h3>
+                                        <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{skippedUsers.length}</span>
+                                    </div>
+                                    <div className="p-4 pt-0">
                                             {skippedUsers.length ? (
                                                 <div className="overflow-x-auto mt-2">
                                                     <table className="w-full text-sm">
@@ -689,17 +697,18 @@ export const MultipleUserDeletePage = () => {
                                             ) : (
                                                 <p className="text-sm text-gray-500">No users skipped.</p>
                                             )}
-                                        </CardContent>
-                                    </Card>
+                                    </div>
+                                </div>
 
-                                    <Card className="border-[#D9D9D9] bg-white">
-                                        <CardHeader className="bg-[#F6F4EE]">
-                                            <CardTitle className="text-base flex items-center justify-between">
-                                                    <span>User Not Exist</span>
-                                                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{notFoundUsers.length}</span>
-                                                </CardTitle>
-                                            </CardHeader>
-                                        <CardContent>
+                                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                                    <div className="flex items-center p-4">
+                                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                                            <AlertCircle className="w-6 h-6 text-[#C72030]" />
+                                        </div>
+                                        <h3 className="text-base font-bold flex-1">USER NOT EXIST</h3>
+                                        <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{notFoundUsers.length}</span>
+                                    </div>
+                                    <div className="p-4 pt-0">
                                             {notFoundUsers.length ? (
                                                 <div className="overflow-x-auto mt-2">
                                                     <table className="w-full text-sm">
@@ -720,17 +729,18 @@ export const MultipleUserDeletePage = () => {
                                             ) : (
                                                 <p className="text-sm text-gray-500">All users matched.</p>
                                             )}
-                                        </CardContent>
-                                    </Card>
+                                    </div>
+                                </div>
 
-                                    <Card className="border-[#D9D9D9] bg-white">
-                                        <CardHeader className="bg-[#F6F4EE]">
-                                            <CardTitle className="text-base flex items-center justify-between">
-                                                <span>Not deleted due to reportee</span>
-                                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{notDeletedDueToReportee.length}</span>
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
+                                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                                    <div className="flex items-center p-4">
+                                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                                            <Users className="w-6 h-6 text-[#C72030]" />
+                                        </div>
+                                        <h3 className="text-base font-bold flex-1">NOT DELETED (REPORTEE)</h3>
+                                        <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{notDeletedDueToReportee.length}</span>
+                                    </div>
+                                    <div className="p-4 pt-0">
                                             {notDeletedDueToReportee.length ? (
                                                 <div className="overflow-x-auto mt-2">
                                                     <table className="w-full text-sm">
@@ -771,26 +781,22 @@ export const MultipleUserDeletePage = () => {
                                             ) : (
                                                 <p className="text-sm text-gray-500">No entries.</p>
                                             )}
-                                        </CardContent>
-                                    </Card>
+                                    </div>
                                 </div>
                             </div>
-                        ) : null}
-                    </TabsContent>
-
-                    <TabsContent value="tree">
-                        <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-[#1a1a1a]">Multiple User Deletion</h1>
-                            <p className="text-sm text-gray-600 mt-1">Fetch and display external user deletion by Email or Mobile.</p>
                         </div>
-                        <Card className="mb-4 border-[#D9D9D9] bg-[#F6F7F7]">
-                            <CardHeader className='bg-[#F6F4EE] mb-5'>
-                                <CardTitle className="text-lg text-black flex items-center">
-                                    <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
-                                    Identifier
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                    ) : null}
+                </TabsContent>
+
+                <TabsContent value="tree" className="pt-6">
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
+                        <div className="flex items-center p-4">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                                <Users className="w-6 h-6 text-[#C72030]" />
+                            </div>
+                            <h2 className="text-lg font-bold">IDENTIFIER</h2>
+                        </div>
+                        <div className="p-4 pt-0">
                                 <div className="grid grid-cols-1 gap-4">
                                     {(() => {
                                         const err = getIdentifierError(treeIdentifier);
@@ -823,7 +829,7 @@ export const MultipleUserDeletePage = () => {
                                     />
                                         );
                                     })()}
-                                    <div className="flex gap-3 items-center">
+                                    <div className="flex gap-3 items-start">
                                         <Button
                                             onClick={fetchHierarchy}
                                             disabled={!treeIdentifier.trim() || !!getIdentifierError(treeIdentifier) || treeLoading}
@@ -842,40 +848,40 @@ export const MultipleUserDeletePage = () => {
                                         )}
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                        </div>
+                    </div>
 
-                        {treeData ? (
-                            <Card className="border-[#D9D9D9] bg-white">
-                                <CardHeader className="bg-[#F6F4EE]">
-                                    <CardTitle className="text-base">Hierarchy</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {isTreeEmpty(treeData) ? (
-                                        <div className="text-sm text-gray-500 mt-5">No data</div>
-                                    ) : (
-                                        <div className="text-sm">
-                                            <TreeView
-                                                node={treeData}
-                                                expanded={expandedNodes}
-                                                onToggle={(id) => {
-                                                    setExpandedNodes((prev) => {
-                                                        const next = new Set(prev);
-                                                        if (next.has(id)) next.delete(id); else next.add(id);
-                                                        return next;
-                                                    });
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <div className="text-sm text-gray-500">{treeLoading ? 'Loading...' : 'No data yet. Enter either an email or mobile number and click Submit.'}</div>
-                        )}
-                    </TabsContent>
-                </Tabs>
-            </div>
+                    {treeData ? (
+                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div className="flex items-center p-4">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                                    <UserIcon className="w-6 h-6 text-[#C72030]" />
+                                </div>
+                                <h2 className="text-lg font-bold">HIERARCHY</h2>
+                            </div>
+                            <div className="p-4 pt-0 text-sm">
+                                {isTreeEmpty(treeData) ? (
+                                    <div className="text-gray-500 py-6">No data</div>
+                                ) : (
+                                    <TreeView
+                                        node={treeData}
+                                        expanded={expandedNodes}
+                                        onToggle={(id) => {
+                                            setExpandedNodes((prev) => {
+                                                const next = new Set(prev);
+                                                if (next.has(id)) next.delete(id); else next.add(id);
+                                                return next;
+                                            });
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-sm text-gray-500">{treeLoading ? 'Loading...' : 'No data yet. Enter an identifier and click Submit.'}</div>
+                    )}
+                </TabsContent>
+            </Tabs>
 
             {/* Modal 1: Choose reassign or delete hierarchy */}
             {showDeleteChoice && (
