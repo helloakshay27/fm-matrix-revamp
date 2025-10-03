@@ -308,18 +308,20 @@ const Section = memo(({
 const Field = memo(({
     label,
     value,
-    fullWidth = false
+    fullWidth = false,
+    className = "",
 }: {
     label: string;
     value: React.ReactNode;
-    fullWidth?: boolean
+    fullWidth?: boolean;
+    className?: string;
 }) => (
-    <div className={`flex ${fullWidth ? 'flex-col' : 'items-center'} gap-4 ${fullWidth ? 'mb-4' : ''}`}>
+    <div className={`flex ${fullWidth ? 'flex-col' : 'items-center'} gap-4 ${fullWidth ? 'mb-4' : ''} ${className}`}>
         <label className={`${fullWidth ? 'text-sm' : 'w-32 text-sm'} font-medium text-gray-700`}>
             {label}
         </label>
         {!fullWidth && <span className="text-sm">:</span>}
-        <span className={`text-sm text-gray-900 ${fullWidth ? 'mt-1' : 'flex-1'}`}>
+        <span className={`text-sm text-gray-900 ${fullWidth ? '' : "w-[200px] text-wrap break-words "} ${fullWidth ? 'mt-1' : 'flex-1'}`}>
             {value || '-'}
         </span>
     </div>
@@ -1457,11 +1459,19 @@ export const PermitDetails = () => {
                     setActiveSection={setActiveSection}
                 >
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="space-y-4">
+                        <div className="space-y-4 ">
                             <Field label="Permit ID" value={permitData.permit.id} />
                             <Field label="Reference No" value={permitData.permit.reference_number} />
                             <Field label="Permit Type" value={permitData.permit.permit_type} />
                             <Field label="Permit For" value={permitData.permit.permit_for} />
+                            {/* <Field
+                                label="Permit For"
+                                value={
+                                    <span className="break-words whitespace-normal">
+                                        {permitData.permit.permit_for}
+                                    </span>
+                                }
+                            /> */}
                             <Field label="Permit Status" value={
                                 <Badge className="text-white bg-blue-500">
                                     {permitData.permit.status}
@@ -1478,9 +1488,9 @@ export const PermitDetails = () => {
                             <Field label="Resume Date" value={formatDate(permitData.permit.resume_date)} />
                         </div>
                     </div>
-                    <div className="mt-6">
+                    <div className="mt-6 text-wrap break-words">
                         <Field label="Location Details" value={permitData.permit.location_details} fullWidth />
-                        <Field label="Comment" value={permitData.permit.comment || "No comments"} fullWidth />
+                        <Field label="Comment" value={permitData.permit.comment || "No comments"} fullWidth className="" />
                         <Field label="Rejection Reason" value={permitData.permit.rejection_reason || "None"} fullWidth />
                     </div>
                 </Section>

@@ -130,7 +130,7 @@ const permitColumns = [
   {
     key: 'status',
     label: 'Status',
-    sortable: true,
+    sortable: false,
     draggable: true,
     defaultVisible: true
   },
@@ -362,11 +362,13 @@ export const PermitToWorkDashboard = () => {
 
   // Format date for display
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
   // Refresh permits data
@@ -505,7 +507,7 @@ export const PermitToWorkDashboard = () => {
       case 'permit_type':
         return permit.permit_type;
       case 'permit_for':
-        return permit.permit_for;
+        return <div className="w-[200px] text-ellipsis overflow-hidden">{permit.permit_for}</div>;
       case 'requested_by':
         return permit.requested_by;
       case 'department_name':
