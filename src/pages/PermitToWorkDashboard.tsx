@@ -79,15 +79,22 @@ interface PermitCounts {
 // Column configuration for EnhancedTable
 const permitColumns = [
   {
+    key: 'srNo',
+    label: 'Sr. No.',
+    sortable: false,
+    draggable: false,
+    defaultVisible: true
+  },
+  {
     key: 'id',
-    label: 'Ref No.',
+    label: 'ID',
     sortable: true,
     draggable: true,
     defaultVisible: true
   },
   {
     key: 'reference_number',
-    label: 'ID',
+    label: 'Ref No',
     sortable: true,
     draggable: true,
     defaultVisible: true
@@ -485,6 +492,12 @@ export const PermitToWorkDashboard = () => {
   // Render cell content for EnhancedTable
   const renderCell = (permit: Permit, columnKey: string) => {
     switch (columnKey) {
+      case 'srNo': {
+        // Find index of permit in current page
+        const index = permits.findIndex(p => p.id === permit.id);
+        // Use 10 records per page for serial number calculation
+        return <span className="font-medium">{(currentPage - 1) * 10 + index + 1}</span>;
+      }
       case 'id':
         return <span className="font-medium">{permit.id}</span>;
       case 'reference_number':
@@ -755,7 +768,15 @@ export const PermitToWorkDashboard = () => {
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-4">
               <div className="text-sm text-gray-700">
-                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} results
+                {(() => {
+                  const pageSize = 10;
+                  const start = ((currentPage - 1) * pageSize) + 1;
+                  const end = Math.min(currentPage * pageSize, totalCount);
+                  if (totalCount === 0) {
+                    return "No results";
+                  }
+                  return `Showing ${start} to ${end} of ${totalCount} results`;
+                })()}
               </div>
               <Pagination>
                 <PaginationContent>
