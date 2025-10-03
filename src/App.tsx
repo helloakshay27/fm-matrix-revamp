@@ -90,6 +90,7 @@ import EcoFriendlyListPage from "./pages/EcoFriendlyListPage";
 // Import Task pages
 import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboard";
 import { TaskDetailsPage } from "./pages/TaskDetailsPage";
+import { JobSheetPage } from "./pages/JobSheetPage";
 
 // Import Utility pages
 import { UtilityDashboard } from "./pages/UtilityDashboard";
@@ -1484,6 +1485,11 @@ function App() {
                     element={<TaskDetailsPage />}
                   />
 
+                  <Route
+                    path="/maintenance/task/job-sheet/:id"
+                    element={<JobSheetPage />}
+                  />
+
                   {/* Safety Routes */}
                   <Route
                     path="/safety/incident"
@@ -2078,6 +2084,11 @@ function App() {
                   <Route
                     path="/maintenance/task/details/:id"
                     element={<TaskDetailsPage />}
+                  />
+
+                  <Route
+                    path="/maintenance/task/job-sheet/:id"
+                    element={<JobSheetPage />}
                   />
 
                   {/* Schedule Routes */}
@@ -2877,6 +2888,12 @@ function App() {
                     path="/maintenance/task/task-details/:id"
                     element={<TaskDetailsPage />}
                   />
+
+                  <Route
+                    path="/maintenance/task/job-sheet/:id"
+                    element={<JobSheetPage />}
+                  />
+
                   <Route path="*" element={<NotFound />} />
                 </Route>
 
