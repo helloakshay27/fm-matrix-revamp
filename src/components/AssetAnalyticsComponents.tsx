@@ -587,7 +587,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
         ].filter(Boolean);
 
         if (layout === 'vertical') {
-            return <div className="space-y-6">{charts}</div>;
+            return <div className="space-y-2">{charts}</div>;
         }
 
         if (layout === 'horizontal') {
@@ -596,7 +596,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
 
         // Default grid layout
         return (
-            <div className="space-y-6">
+            <div className="space-y-2">
                 {charts}
             </div>
         );
@@ -631,7 +631,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
 
 
 
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4  min-h-[calc(100vh-200px)]">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2  min-h-[calc(100vh-200px)]">
 
                 <div className="lg:col-span-8">
                     <div className={`space-y-6 ${className}`}>

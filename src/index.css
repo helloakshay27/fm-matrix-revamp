@@ -826,3 +826,100 @@ td div , td span, th div, th span {
 td div , td span, th div, td button, td a {
   padding-left: 2px !important;
 }
+
+/* ===========================================
+   GLOBAL CARD STYLES - FIGMA DESIGN
+   =========================================== */
+
+/* Card Header Styles */
+.figma-card-header {
+  border: 1px solid #D9D9D9 !important;
+  background: #F6F4EE !important;
+  padding: 16px 20px !important;
+  border-radius: 8px 8px 0 0 !important;
+  margin: 0 !important;
+}
+
+/* Card Header Icon Wrapper */
+.figma-card-icon-wrapper {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 55px !important;
+  background: rgba(196, 184, 157, 0.33) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Card Header Icon */
+.figma-card-icon {
+  color: #C72030 !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Card Header Title */
+.figma-card-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+  margin: 0 !important;
+}
+
+/* Card Content */
+.figma-card-content {
+  padding: 24px 20px !important;
+  background: white !important;
+  border: 1px solid #D9D9D9 !important;
+  border-top: none !important;
+  border-radius: 0 0 8px 8px !important;
+}
+
+/* Location Stepper Line */
+.location-stepper-line {
+  background: #C72030AD !important;
+  height: 2px !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+/* Location Step Dots */
+.location-step-dot {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background: #C72030 !important;
+  border: 2px solid white !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Task Info Grid Improvements */
+.task-info-enhanced {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 16px 32px !important;
+  font-size: 14px !important;
+}
+
+.task-info-row {
+  display: flex !important;
+  align-items: flex-start !important;
+}
+
+.task-info-label-enhanced {
+  color: #6b7280 !important;
+  min-width: 140px !important;
+  font-weight: 500 !important;
+}
+
+.task-info-separator-enhanced {
+  color: #6b7280 !important;
+  margin: 0 8px !important;
+}
+
+.task-info-value-enhanced {
+  color: #1f2937 !important;
+  font-weight: 600 !important;
+  flex: 1 !important;
+}

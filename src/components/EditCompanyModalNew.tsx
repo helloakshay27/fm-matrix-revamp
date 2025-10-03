@@ -94,7 +94,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
   const fetchCompanyDetails = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(getFullUrl(`/pms/company_setups/${companyId}.json`), {
+      const response = await fetch(getFullUrl(`/pms/company_setups/${companyId}/company_show.json`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
