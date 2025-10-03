@@ -745,6 +745,7 @@ export const CategoryTypeTab: React.FC = () => {
   const columns = [
     { key: 'srno', label: 'S.No.', sortable: false },
     { key: 'name', label: 'Category Type', sortable: true },
+    { key: 'assign_to_names', label: 'Assignee', sortable: false },
     { key: 'tat', label: 'Response Time', sortable: false },
     { key: 'category_email', label: 'Vendor Email', sortable: false },
     { key: 'icon_url', label: 'Icon', sortable: false },
@@ -759,6 +760,18 @@ export const CategoryTypeTab: React.FC = () => {
         return index + 1;
       case 'name':
         return item.name;
+      case 'assign_to_names':
+        if (item.complaint_worker && Array.isArray(item.complaint_worker.assign_to) && engineers.length > 0) {
+          const names = item.complaint_worker.assign_to
+            .map((id: string) => {
+              const engineer = engineers.find(e => e.id === Number(id));
+              return engineer ? engineer.full_name : null;
+            })
+            .filter(Boolean)
+            .join(', ');
+          return names || '--';
+        }
+        return '--';
       case 'tat':
         return item.tat || '--';
       case 'category_email':
