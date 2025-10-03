@@ -93,7 +93,7 @@ const onWeeklyDownload = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">REPORT PDF CENTER</h1>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">REPORT PDF GENERATOR</h1>
           <p className="text-sm text-gray-600 mt-1">Generate and download period based PDF or weekly summaries.</p>
         </div>
       </div>

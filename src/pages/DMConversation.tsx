@@ -1,3 +1,4 @@
+import Chats from "@/components/Chats";
 import { useState } from "react";
 import { useParams } from "react-router-dom"
 
@@ -5,6 +6,7 @@ const DMConversation = () => {
     const { id } = useParams();
 
     const [activeTab, setActiveTab] = useState("chat");
+    const [input, setInput] = useState("")
 
     return (
         <div className="flex flex-col h-[calc(100vh-112px)] w-[calc(100vw-32rem)] min-w-0 overflow-hidden">
@@ -46,11 +48,43 @@ const DMConversation = () => {
 
             <div className="flex-1 overflow-y-auto p-6">
                 {activeTab === "chat" && id && (
-                    <>Chat</>
+                    <Chats />
                 )}
                 {activeTab === "task" && <>Tasks</>}
                 {activeTab === "shared" && <>Shared</>}
             </div>
+
+            {
+                activeTab === 'chat' && (
+                    <div>
+                        <div className="w-[calc(100vw-32rem)] mx-auto px-6 py-6 flex items-center space-x-2">
+                            <div className="relative flex-1">
+                                <input
+                                    type="text"
+                                    placeholder="Type here and hit enter"
+                                    className="w-full bg-white rounded-full px-4 py-4 pr-10 text-sm focus:outline-none shadow-md"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                // onKeyDown={(e) => {
+                                //     if (e.key === "Enter") sendMessage(e);
+                                // }}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                className="text-gray-500 text-xl"
+                            >
+                                <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+                                    <path
+                                        d="M4.25 28.3332V19.8332L15.5833 16.9998L4.25 14.1665V5.6665L31.1667 16.9998L4.25 28.3332Z"
+                                        fill="#C72030"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                )
+            }
         </div>
     )
 }
