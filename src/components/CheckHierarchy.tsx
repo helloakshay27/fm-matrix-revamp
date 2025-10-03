@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { TextField, MenuItem } from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { getAuthHeader } from '@/config/apiConfig';
 import { ChevronRight, ChevronDown, User as UserIcon } from 'lucide-react';
@@ -44,6 +43,7 @@ const CheckHierarchy: React.FC = () => {
   const [treeData, setTreeData] = useState<TreeNode | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set());
   const [employeeType, setEmployeeType] = useState<'' | 'external' | 'internal'>('');
+  const [submitted, setSubmitted] = useState(false); // show hierarchy only after submit
 
   const descCount = useMemo(() => countDescendants(treeData), [treeData]);
 
@@ -82,6 +82,7 @@ const CheckHierarchy: React.FC = () => {
   const fetchHierarchy = useCallback(async () => {
   const raw = (treeIdentifier || '').trim();
   if (!raw || !employeeType) return;
+  setSubmitted(true); // mark that user submitted
     // Block submit if identifier is invalid
     if (identifierError) {
       toast.error(identifierError);
@@ -182,21 +183,23 @@ const CheckHierarchy: React.FC = () => {
   }, [treeData]);
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
+      {/* Page Title */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CHECK HIERARCHY LEVELS</h1>
-        <p className="text-sm text-gray-600 mt-1">Fetch and display external user hierarchy by Email or Mobile.</p>
+        <p className="text-sm text-gray-600 mt-1">Fetch and display user hierarchy using Email or Mobile.</p>
       </div>
 
-      <Card className="mb-4 border-[#D9D9D9] bg-[#F6F7F7]">
-        <CardHeader className='bg-[#F6F4EE] mb-5'>
-          <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
-            Identifier
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+      {/* Identifier Section */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
+        <div className="flex items-center p-4 mb-5">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+            <UserIcon className="w-6 h-6 text-[#C72030]" />
+          </div>
+          <h2 className="text-lg font-bold">IDENTIFIER</h2>
+        </div>
+        <div className="p-4 pt-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <TextField
               select
               label="Employee Type"
@@ -244,45 +247,64 @@ const CheckHierarchy: React.FC = () => {
                 spellCheck: 'false',
               }}
             />
-            <div className="flex gap-3 items-center">
+            <div className="flex gap-3 items-start">
               <Button
                 onClick={fetchHierarchy}
                 disabled={!treeIdentifier.trim() || !employeeType || treeLoading || Boolean(identifierError)}
-                className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6"
               >
                 {treeLoading ? 'Fetching...' : 'Submit'}
               </Button>
+              {treeIdentifier && !identifierError && (
+                <Button
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+                  onClick={() => { setTreeIdentifier(''); setTreeData(null); setSubmitted(false); }}
+                >
+                  Clear
+                </Button>
+              )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {treeData ? (
-        <Card className="border-[#D9D9D9] bg-white">
-          <CardHeader className="bg-[#F6F4EE]">
-            <CardTitle className="text-base">Hierarchy</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isTreeEmpty(treeData) ? (
-              <div className="text-sm text-gray-500 mt-5">No data</div>
-            ) : (
-              <div className="text-sm space-y-3">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-xs text-gray-600">Total nodes: {1 + descCount} • Descendants: {descCount}</div>
-                  <div className="flex gap-2 mt-5">
-                    <Button variant="outline" className="h-7 px-2 text-xs" onClick={expandAll}>Expand All</Button>
-                    <Button variant="outline" className="h-7 px-2 text-xs" onClick={collapseAll}>Collapse All</Button>
+      {/* Hierarchy Section */}
+      {submitted && (
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center p-4">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+              <UserIcon className="w-6 h-6 text-[#C72030]" />
+            </div>
+            <h2 className="text-lg font-bold">HIERARCHY</h2>
+          </div>
+          <div className="p-4 pt-0 text-sm">
+            {treeLoading && !treeData && (
+              <div className="text-gray-600 py-6">Loading hierarchy...</div>
+            )}
+            {!treeLoading && !treeData && (
+              <div className="text-gray-500 py-6">No data found for the provided identifier.</div>
+            )}
+            {treeData && (
+              isTreeEmpty(treeData) ? (
+                <div className="text-gray-500 py-6">No data</div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="text-xs text-gray-600">Total nodes: {1 + descCount} • Descendants: {descCount}</div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="h-8 px-3 text-xs border-gray-300 bg-white hover:bg-gray-50" onClick={expandAll}>Expand All</Button>
+                      <Button variant="outline" className="h-8 px-3 text-xs border-gray-300 bg-white hover:bg-gray-50" onClick={collapseAll}>Collapse All</Button>
+                    </div>
+                  </div>
+                  <div className="max-h-[60vh] overflow-auto pr-2">
+                    <TreeNodeItem node={treeData} depth={0} expanded={expandedNodes} onToggle={onToggleNode} />
                   </div>
                 </div>
-                <div className="max-h-[60vh] overflow-auto pr-2">
-                  <TreeNodeItem node={treeData} depth={0} expanded={expandedNodes} onToggle={onToggleNode} />
-                </div>
-              </div>
+              )
             )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="text-sm text-gray-500">{treeLoading ? 'Loading...' : 'No data yet. Enter either an email or mobile number and click Submit.'}</div>
+          </div>
+        </div>
       )}
     </div>
   );

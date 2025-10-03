@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft, FileText, User } from 'lucide-react';
 
 const fallback = {
   name: 'John Doe',
@@ -25,97 +25,73 @@ const TrainingDetailPage = () => {
   const user = { ...fallback, ...data };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header with back button */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Button>
+    <div className="p-4 sm:p-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1 hover:text-gray-800 mb-4 text-base"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">TRAINING DETAILS</h1>
+        </div>
       </div>
 
-      {/* Personal Details */}
-      <div className="bg-white rounded-lg border border-gray-200 mb-6">
-        <div className="flex items-center gap-3 p-4 border-b border-gray-200 bg-[#f6f4ee]">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">P</span>
+      {/* PERSONAL DETAILS */}
+      <div className="bg-white rounded-lg border text-[15px] mb-6">
+        <div className="flex p-4 items-center">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+            <User className="w-5 h-5 text-[#C72030]" />
           </div>
-          <h2 className="text-lg font-bold text-gray-900">Personal Details</h2>
+          <h2 className="text-lg font-bold">PERSONAL DETAILS</h2>
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-            <div>
-              <span className="text-gray-500 text-sm">Name</span>
-              <p className="text-gray-900 font-medium">{user.name}</p>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">Email Id</span>
-              <p className="text-gray-900 font-medium">{user.email}</p>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">Mobile Number</span>
-              <p className="text-gray-900 font-medium">{user.mobile}</p>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">User Type</span>
-              <p className="text-gray-900 font-medium">{user.user_type}</p>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">User Role</span>
-              <p className="text-gray-900 font-medium">{user.user_role}</p>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">Cluster</span>
-              <p className="text-gray-900 font-medium">{user.cluster}</p>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">Work Location</span>
-              <p className="text-gray-900 font-medium">{user.work_location}</p>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 text-[15px] p-4 gap-6">
+          <div className="space-y-3">
+            <div className="flex"><span className="text-gray-500 w-40">Name</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.name}</span></div>
+            <div className="flex"><span className="text-gray-500 w-40">Email</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium break-all">{user.email}</span></div>
+            <div className="flex"><span className="text-gray-500 w-40">Mobile</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.mobile}</span></div>
+            <div className="flex"><span className="text-gray-500 w-40">User Type</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.user_type}</span></div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex"><span className="text-gray-500 w-40">User Role</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.user_role}</span></div>
+            <div className="flex"><span className="text-gray-500 w-40">Cluster</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.cluster}</span></div>
+            <div className="flex"><span className="text-gray-500 w-40">Work Location</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.work_location}</span></div>
           </div>
         </div>
       </div>
 
-      {/* Training Details */}
-      <div className="bg-white rounded-lg border border-gray-200 mb-6">
-        <div className="flex items-center gap-3 p-4 border-b border-gray-200 bg-[#f6f4ee]">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">T</span>
+      {/* TRAINING DETAILS */}
+      <div className="bg-white rounded-lg border text-[15px] mb-6">
+        <div className="flex p-4 items-center">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+            <FileText className="w-5 h-5 text-[#C72030]" />
           </div>
-          <h2 className="text-lg font-bold text-gray-900">Training Details</h2>
+            <h2 className="text-lg font-bold">TRAINING DETAILS</h2>
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-            <div>
-              <span className="text-gray-500 text-sm">Training Name</span>
-              <p className="text-gray-900 font-medium">{user.training_name}</p>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">Training Type</span>
-              <p className="text-gray-900 font-medium">{user.training_type}</p>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 text-[15px] p-4 gap-6">
+          <div className="space-y-3">
+            <div className="flex"><span className="text-gray-500 w-40">Training Name</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.training_name}</span></div>
           </div>
-          <div className="mt-6">
-            <span className="text-gray-500 text-sm font-semibold">Attachments:</span>
-            <div className="mt-2">
+          <div className="space-y-3">
+            <div className="flex"><span className="text-gray-500 w-40">Training Type</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.training_type}</span></div>
+          </div>
+        </div>
+        <div className="p-4 pt-0">
+          <div className="flex"><span className="text-gray-500 w-40">Certificate</span><span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
               {user.training_type === 'External' && user.training_certificate ? (
                 <a
                   href={user.training_certificate}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-blue-600 hover:underline"
+                  className="text-[#C72030] hover:underline inline-flex items-center gap-1"
                 >
-                  <FileText className="w-4 h-4" />
-                  Training Certificate
+                  <FileText className="w-4 h-4" /> View Certificate
                 </a>
-              ) : (
-                <span className="text-gray-400">No certificate uploaded</span>
-              )}
-            </div>
+              ) : '—'}
+            </span>
           </div>
         </div>
       </div>

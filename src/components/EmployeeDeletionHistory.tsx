@@ -154,97 +154,104 @@ const EmployeeDeletionHistory: React.FC = () => {
     }, []);
 
     return (
-        <div className="bg-white rounded-lg border mt-6 ml-4 mr-4">
-            <div className="flex p-4 items-center bg-[#F6F4EE] justify-between">
-                <div className="flex items-center">
-                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                        <BoxIcon className="w-4 h-4" />
-                    </div>
-                    <h2 className="text-lg font-[700]">EMPLOYEE DELETION HISTORY</h2>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Input
-                        placeholder="Search by email..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-64 bg-white"
-                    />
-                    <Button variant="outline" size="sm" onClick={() => fetchData()} disabled={loading}>
-                        <RefreshCcw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh
-                    </Button>
-                </div>
+        <div className="p-4 sm:p-6">
+            {/* Page Title */}
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold text-[#1a1a1a]">EMPLOYEE DELETION HISTORY</h1>
+                <p className="text-sm text-gray-600 mt-1">Audit log of removed employees with related profile details.</p>
             </div>
 
-            <div className="p-4">
-                {loading && (
-                    <div className="text-gray-600 text-sm">Loading...</div>
-                )}
-                {error && (
-                    <div className="text-red-600 text-sm">{error}</div>
-                )}
-                {!loading && !error && rows.length === 0 && (
-                    <div className="text-gray-600 text-sm">No records available.</div>
-                )}
+            {/* Main Card */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 pb-2">
+                    <div className="flex items-center">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                            <BoxIcon className="w-6 h-6 text-[#C72030]" />
+                        </div>
+                        <h2 className="text-lg font-bold">DELETION LOG</h2>
+                    </div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <Input
+                            placeholder="Search by email..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-64 bg-white h-10"
+                        />
+                        <Button
+                            onClick={() => fetchData()}
+                            variant="outline"
+                            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 h-10"
+                            disabled={loading}
+                        >
+                            <RefreshCcw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </Button>
+                    </div>
+                </div>
+                <div className="px-4 pb-4 pt-0 text-[15px]">
+                    {loading && (
+                        <div className="text-gray-600 text-sm py-6">Loading...</div>
+                    )}
+                    {error && (
+                        <div className="text-red-600 text-sm py-6">{error}</div>
+                    )}
+                    {!loading && !error && rows.length === 0 && (
+                        <div className="text-gray-600 text-sm py-6">No records available.</div>
+                    )}
 
-                {!loading && !error && rows.length > 0 && (
-                    <div className="rounded-md border border-gray-200 shadow-sm">
-                        <div className="max-h-[520px] overflow-y-auto relative">
-                            <table className="min-w-full text-sm">
-                                <thead className="sticky top-0 z-10 bg-gray-100/95 backdrop-blur-sm">
-                                    <tr>
-                                        <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Serial Number</th>
-                                        <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Employee Name</th>
-                                        <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Deleted User Email</th>
-                                        <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Deleted Date</th>
-                                        <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Deleted By</th>
-
-                                        <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Employee Detail</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {rows.map((r, idx) => (
-                                        <tr key={r.id} className="hover:bg-gray-50">
-                                            <td className="p-4 align-middle whitespace-nowrap">{serialBase + idx + 1}</td>
-                                            <td className="p-4 align-middle whitespace-nowrap font-medium">{renderName(r)}</td>
-                                            <td className="p-4 align-middle whitespace-nowrap">{r.detail?.email || r.user_email || '—'}</td>
-                                            <td className="p-4 align-middle whitespace-nowrap">{formatDateTime(r.created_at)}</td>
-
-                                            <td className="p-4 align-middle whitespace-nowrap">{r.deleted_by_email || '—'}</td>
-
-                                            <td className="p-4 align-middle">
-                                                <button
-                                                    type="button"
-                                                    aria-label="View employee detail"
-                                                    className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
-                                                    onMouseEnter={() => handleHoverStart(r)}
-                                                    onMouseLeave={handleHoverEnd}
-                                                    onClick={() => openDetails(r)}
-                                                >
-                                                    <Eye className="w-4 h-4 text-gray-700" />
-                                                    View
-                                                </button>
-                                            </td>
+                    {!loading && !error && rows.length > 0 && (
+                        <div className="rounded-lg border border-gray-200 overflow-hidden">
+                            <div className="max-h-[60vh] overflow-y-auto relative">
+                                <table className="min-w-full text-sm">
+                                    <thead className="sticky top-0 z-10 bg-gray-100/95 backdrop-blur-sm">
+                                        <tr>
+                                            <th className="h-11 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Serial Number</th>
+                                            <th className="h-11 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Employee Name</th>
+                                            <th className="h-11 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Deleted User Email</th>
+                                            <th className="h-11 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Deleted Date</th>
+                                            <th className="h-11 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Deleted By</th>
+                                            <th className="h-11 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Employee Detail</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {rows.map((r, idx) => (
+                                            <tr key={r.id} className="hover:bg-gray-50">
+                                                <td className="p-4 align-middle whitespace-nowrap">{serialBase + idx + 1}</td>
+                                                <td className="p-4 align-middle whitespace-nowrap font-medium">{renderName(r)}</td>
+                                                <td className="p-4 align-middle whitespace-nowrap">{r.detail?.email || r.user_email || '—'}</td>
+                                                <td className="p-4 align-middle whitespace-nowrap">{formatDateTime(r.created_at)}</td>
+                                                <td className="p-4 align-middle whitespace-nowrap">{r.deleted_by_email || '—'}</td>
+                                                <td className="p-4 align-middle">
+                                                    <button
+                                                        type="button"
+                                                        aria-label="View employee detail"
+                                                        className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                                                        onMouseEnter={() => handleHoverStart(r)}
+                                                        onMouseLeave={handleHoverEnd}
+                                                        onClick={() => openDetails(r)}
+                                                    >
+                                                        <Eye className="w-4 h-4 text-gray-700" />
+                                                        View
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* Footer with simple pager (optional) */}
-                {!loading && !error && rows.length > 0 && (
-                    <div className="flex items-center justify-between mt-3 text-xs text-gray-600">
-                        <div>
-                            Page {page} of {totalPages} • Total {totalCount}
+                    {!loading && !error && rows.length > 0 && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 text-xs text-gray-600">
+                            <div>Page {page} of {totalPages} • Total {totalCount}</div>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" className="border-gray-300 bg-white hover:bg-gray-50" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</Button>
+                                <Button variant="outline" size="sm" className="border-gray-300 bg-white hover:bg-gray-50" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</Button>
+                            </div>
                         </div>
-                        <div className="flex gap-2">
-                            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</Button>
-                            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</Button>
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
             {/* Detail Dialog */}
             <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
