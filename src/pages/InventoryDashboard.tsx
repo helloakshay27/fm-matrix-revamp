@@ -463,11 +463,15 @@ export const InventoryDashboard = () => {
     if (name) newFilters['q[name_cont]'] = name;
     if (code) newFilters['q[code_cont]'] = code;
     if (category) newFilters['q[category_eq]'] = category;
-    if (criticality) {
-      if (criticality === "1") {
-        newFilters['q[criticality_eq]'] = "0";  // Critical items have value 0
-      } else {
-        newFilters['q[criticality_eq]'] = "2";  // Non-Critical items have value 2
+    if (criticality !== undefined && criticality !== null && criticality !== '') {
+      // Accept both numeric & string inputs; normalize then translate.
+      // UI semantics: 1 (or 'Critical') => Critical, 2 (or 'Non-Critical') => Non-Critical.
+      // Backend still expects legacy: 0 = Critical, 2 = Non-Critical.
+      const rawCrit = String(criticality).trim().toLowerCase();
+      if (['1', 'critical', '0'].includes(rawCrit)) {
+        newFilters['q[criticality_eq]'] = '1';
+      } else if (['2', 'non-critical', 'non_critical'].includes(rawCrit)) {
+        newFilters['q[criticality_eq]'] = '2';
       }
     }
     if (groupId) newFilters['q[pms_asset_pms_asset_group_id_eq]'] = groupId;
@@ -684,26 +688,20 @@ export const InventoryDashboard = () => {
     }
     if (columnKey === "criticality") {
       const raw = item.criticality;
-      let label = '-';
-      if (typeof raw === 'number') {
-        label = raw === 0 ? 'Critical' : raw === 2 ? 'Non-Critical' : '-';
-      } else if (typeof raw === 'string') {
+      // Normalise to numeric code: 1 = Critical, 2 = Non-Critical (backward compat: 0 also treated as Critical)
+      let code: number | null = null;
+      if (typeof raw === 'number') code = raw;
+      else if (typeof raw === 'string') {
         const v = raw.trim().toLowerCase();
-        if (v === '0' || v === 'critical') label = 'Critical';
-        else if (v === '2' || v === 'non-critical' || v === 'non_critical') label = 'Non-Critical';
-        else if (v !== '') label = raw || '-'; // Only show raw value if it's not empty
+        if (v === '1' || v === 'critical') code = 1;
+        else if (v === '2' || v === 'non-critical' || v === 'non_critical') code = 2;
+        else if (v === '0') code = 1; // legacy mapping (old API used 0 for Critical)
       }
-      // Handle the case where raw is exactly the API values
-      if (raw === 0 || raw === '0') {
-        label = 'Critical';
-      } else if (raw === 2 || raw === '2') {
-        label = 'Non-Critical';
-      }
+      if (code === 0) code = 1; // legacy safeguard
+      const label = code === 1 ? 'Critical' : code === 2 ? 'Non-Critical' : '-';
       const isCritical = label === 'Critical';
       return (
-        <span
-          className={`px-2 py-1 rounded text-xs ${isCritical ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
-        >
+        <span className={`px-2 py-1 rounded text-xs ${label === '-' ? 'bg-gray-50 text-gray-400' : isCritical ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
           {label}
         </span>
       );
