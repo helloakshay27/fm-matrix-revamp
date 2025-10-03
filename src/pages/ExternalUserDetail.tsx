@@ -174,31 +174,31 @@ export const ExternalUserDetail = () => {
           </TabsList>
 
           {/* PERSONAL INFORMATION */}
-            <TabsContent value="personal" className="p-4 sm:p-6 text-[15px]">
-              <div className="bg-white rounded-lg border text-[15px]">
-                <div className="flex p-4 items-center">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                    <UserCircle className="w-5 h-5 text-[#C72030]" />
-                  </div>
-                  <h2 className="text-lg font-bold">PERSONAL INFORMATION</h2>
+          <TabsContent value="personal" className="p-4 sm:p-6 text-[15px]">
+            <div className="bg-white rounded-lg border text-[15px]">
+              <div className="flex p-4 items-center">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                  <UserCircle className="w-5 h-5 text-[#C72030]" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 text-[15px] p-4 gap-6">
-                  <div className="space-y-3">
-                    <div className="flex"><span className="text-gray-500 w-28">First Name</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.firstname || '—'}</span></div>
-                    <div className="flex"><span className="text-gray-500 w-28">Last Name</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.lastname || '—'}</span></div>
-                    <div className="flex"><span className="text-gray-500 w-28">Employee ID</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.org_user_id || '—'}</span></div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex"><span className="text-gray-500 w-28">Email</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium break-all">{user.email || '—'}</span></div>
-                    <div className="flex"><span className="text-gray-500 w-28">Mobile</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.mobile || '—'}</span></div>
-                    <div className="flex"><span className="text-gray-500 w-28">Gender</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.gender || '—'}</span></div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex"><span className="text-gray-500 w-28">Designation</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.lock_user_permission?.designation || '—'}</span></div>
-                  </div>
+                <h2 className="text-lg font-bold">PERSONAL INFORMATION</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 text-[15px] p-4 gap-6">
+                <div className="space-y-3">
+                  <div className="flex"><span className="text-gray-500 w-28">First Name</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.firstname || '—'}</span></div>
+                  <div className="flex"><span className="text-gray-500 w-28">Last Name</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.lastname || '—'}</span></div>
+                  <div className="flex"><span className="text-gray-500 w-28">Employee ID</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.org_user_id || '—'}</span></div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex"><span className="text-gray-500 w-28">Email</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium break-all">{user.email || '—'}</span></div>
+                  <div className="flex"><span className="text-gray-500 w-28">Mobile</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.mobile || '—'}</span></div>
+                  <div className="flex"><span className="text-gray-500 w-28">Gender</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.gender || '—'}</span></div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex"><span className="text-gray-500 w-28">Designation</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.lock_user_permission?.designation || '—'}</span></div>
                 </div>
               </div>
-            </TabsContent>
+            </div>
+          </TabsContent>
 
           {/* OTHER INFORMATION */}
           <TabsContent value="other" className="p-4 sm:p-6 text-[15px]">
@@ -222,14 +222,18 @@ export const ExternalUserDetail = () => {
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Role</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.lock_user_permission?.role_name || '—'}</span></div>
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Employee Type</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.employee_type || '—'}</span></div>
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Created At</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{formatDateTime(user.created_at)}</span></div>
-                <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Line Manager Name</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium break-words">{user.report_to?.name || '—'}</span></div>
-                <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Line Manager Email</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium break-all">{user.report_to?.email || '—'}</span></div>
-                <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Line Manager Mobile</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.report_to?.mobile || '—'}</span></div>
+                <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Reporting Manager Name</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium break-words">{user.report_to?.name || '—'}</span></div>
+                <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Reporting Manager Email</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium break-all">{user.report_to?.email || '—'}</span></div>
+                <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Reporting Manager Mobile</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.report_to?.mobile || '—'}</span></div>
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">OTP</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.otp || '—'}</span></div>
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Registration Source</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.lock_user_permission?.registration_source || '—'}</span></div>
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Created By Name</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.created_by?.name || '—'}</span></div>
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Created By Email</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium break-all">{user.created_by?.email || '—'}</span></div>
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Created By Mobile</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.created_by?.mobile || '—'}</span></div>
+                <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">LMC Manager Name </span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.lmc_manager?.name || '—'}</span></div>
+                <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">LMC Manager Email </span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium break-all">{user.lmc_manager?.email || '—'}</span></div>
+                <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">LMC Manager Mobile </span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.lmc_manager?.mobile || '—'}</span></div>
+
               </div>
             </div>
           </TabsContent>
