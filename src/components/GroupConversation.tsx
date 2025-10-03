@@ -1,13 +1,12 @@
 import Chats from "@/components/Chats";
-import ChatTasks from "@/components/ChatTasks";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useAppDispatch } from "@/store/hooks";
-import { fetchConversation, fetchConversationMessages, sendMessage } from "@/store/slices/channelSlice";
+import { fetchConversation, fetchConversationMessages, fetchGroupConversation, sendMessage } from "@/store/slices/channelSlice";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
-const DMConversation = () => {
+const GroupConversation = () => {
     const { id } = useParams();
     const { isSidebarCollapsed } = useLayout();
     const dispatch = useAppDispatch();
@@ -18,16 +17,13 @@ const DMConversation = () => {
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState([]);
     const [conversation, setConversation] = useState({
-        receiver_name: "",
-        recipient_id: "",
-        sender_name: "",
-        sender_id: "",
+        name: "",
     });
 
     const fetchData = async () => {
         try {
             const response = await dispatch(
-                fetchConversation({ baseUrl, token, id })
+                fetchGroupConversation({ baseUrl, token, id })
             ).unwrap();
             setConversation(response);
         } catch (error) {
@@ -64,13 +60,13 @@ const DMConversation = () => {
         if (!input.trim()) return;
         const payload = {
             body: input,
-            conversation_id: id,
+            project_space_id: id,
         }
         try {
             const response = await dispatch(
                 sendMessage({ baseUrl, token, data: payload })
             ).unwrap();
-            setMessages([response, ...messages]);
+            setMessages([...messages, response]);
             setInput("");
         } catch (error) {
             console.log(error);
@@ -91,16 +87,14 @@ const DMConversation = () => {
                 <div>
                     <div className="flex items-center space-x-4">
                         <div className="w-10 h-10 rounded-full bg-[#F2EEE9] flex items-center justify-center text-[#C72030] font-semibold">
-                            {JSON.parse(localStorage.getItem("user"))?.id ===
-                                conversation?.sender_id
-                                ? conversation?.receiver_name[0]?.toUpperCase()
-                                : conversation?.sender_name[0]?.toUpperCase()}
+                            {
+                                conversation?.name?.[0]?.toUpperCase()
+                            }
                         </div>
                         <h2 className="text-lg font-medium text-black">
-                            {JSON.parse(localStorage.getItem("user"))?.id ===
-                                conversation?.sender_id
-                                ? conversation?.receiver_name
-                                : conversation?.sender_name}
+                            {
+                                conversation?.name
+                            }
                         </h2>
                     </div>
                     <div className="flex space-x-6 mt-2 ml-1 text-sm font-medium text-gray-500">
@@ -142,7 +136,7 @@ const DMConversation = () => {
 
             <div className="flex-1 overflow-y-auto p-6">
                 {activeTab === "chat" && id && <Chats messages={messages} onCreateTask={handleCreateTask} />}
-                {activeTab === "task" && <ChatTasks />}
+                {activeTab === "task" && <>Tasks</>}
                 {activeTab === "shared" && <>Shared</>}
             </div>
 
@@ -192,4 +186,4 @@ const DMConversation = () => {
     );
 };
 
-export default DMConversation;
+export default GroupConversation;
