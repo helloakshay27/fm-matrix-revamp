@@ -55,6 +55,11 @@ export const TaskSubmissionPage: React.FC = () => {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionStats, setSubmissionStats] = useState({
+    questionsAttended: 0,
+    negativeFeedback: 0,
+    ticketsRaised: 0,
+  });
 
   // File upload refs
   const beforePhotoRef = useRef<HTMLInputElement>(null);
@@ -199,6 +204,31 @@ export const TaskSubmissionPage: React.FC = () => {
   };
 
   const dynamicChecklist = getChecklistFromTaskDetails();
+
+  // Calculate dynamic stats for success modal
+  const calculateSubmissionStats = () => {
+    const totalQuestions = dynamicChecklist.length;
+    let negativeFeedback = 0;
+    let ticketsRaised = 0;
+
+    dynamicChecklist.forEach((item) => {
+      const answer = formData.checklist[item.id]?.value;
+      // Count "No" answers as negative feedback
+      if (answer === "No" || answer === "Poor" || answer === "Bad") {
+        negativeFeedback++;
+      }
+      // Count negative answers as potential tickets (simplified logic)
+      if (answer === "No") {
+        ticketsRaised++;
+      }
+    });
+
+    return {
+      questionsAttended: totalQuestions,
+      negativeFeedback,
+      ticketsRaised,
+    };
+  };
 
   // Get task name dynamically
   const getTaskName = () => {
@@ -692,20 +722,81 @@ export const TaskSubmissionPage: React.FC = () => {
 
       console.log("Submitting task with formatted payload:", submissionData);
 
-      // Call the API
-      await taskService.submitTaskResponse(submissionData);
+      // Call the API and handle response
+      const response = await taskService.submitTaskResponse(submissionData);
 
-      sonnerToast.dismiss(loadingToastId);
-      sonnerToast.success("Task submitted successfully!");
-      setShowSuccessModal(true);
-    } catch (error) {
+      // Check if response contains an application-level error (even with 200 status)
+      if (response && response.code === 500) {
+        // Handle application-level 500 error in successful HTTP response
+        let errorMessage = "Failed to submit task. Please try again.";
+        
+        if (response.error === "Task not available for submission") {
+          errorMessage = "This task is no longer available for submission. It may have been completed or cancelled.";
+        } else if (response.error) {
+          errorMessage = response.error;
+        }
+
+        sonnerToast.dismiss(loadingToastId);
+        sonnerToast.error(errorMessage, {
+          duration: 6000,
+        });
+        return; // Exit early, don't show success modal
+      }
+
+      // Only proceed with success flow if we get a successful response without errors
+      if (response) {
+        // Calculate stats and set them before showing the modal
+        const stats = calculateSubmissionStats();
+        setSubmissionStats(stats);
+
+        sonnerToast.dismiss(loadingToastId);
+        sonnerToast.success("Task submitted successfully!");
+        setShowSuccessModal(true);
+      }
+    } catch (error: any) {
       console.error("Task submission failed:", error);
       sonnerToast.dismiss(loadingToastId);
-      sonnerToast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to submit task. Please try again."
-      );
+
+      // Handle specific error scenarios
+      let errorMessage = "Failed to submit task. Please try again.";
+      
+      // Check for API response errors
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        
+        // Handle specific 500 error with "Task not available for submission"
+        if (errorData.code === 500 && errorData.error === "Task not available for submission") {
+          errorMessage = "This task is no longer available for submission. It may have been completed or cancelled.";
+        }
+        // Handle other structured API errors
+        else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        // Handle error messages from API
+        else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      }
+      // Handle network or other errors
+      else if (error?.message) {
+        if (error.message.includes("Network Error")) {
+          errorMessage = "Network connection failed. Please check your internet connection and try again.";
+        } else if (error.message.includes("timeout")) {
+          errorMessage = "Request timed out. Please try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      // Show error toast with specific message
+      sonnerToast.error(errorMessage, {
+        duration: 6000, // Show error longer than success messages
+      });
+
+      // Log additional error details for debugging
+      if (error?.response?.status) {
+        console.error(`API Error ${error.response.status}:`, error.response.data);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -782,7 +873,7 @@ export const TaskSubmissionPage: React.FC = () => {
                                   e.target.value
                                 )
                               }
-                              className="ml-4"
+                              className=""
                               sx={{
                                 "& .MuiOutlinedInput-root": {
                                   backgroundColor: "white",
@@ -807,7 +898,7 @@ export const TaskSubmissionPage: React.FC = () => {
                                   e.target.value
                                 )
                               }
-                              className="ml-4"
+                              className=""
                             >
                               {item.options?.map((option) => (
                                 <FormControlLabel
@@ -829,7 +920,7 @@ export const TaskSubmissionPage: React.FC = () => {
                           )}
 
                           {item.type === "checkbox" && (
-                            <div className="ml-4">
+                            <div className="">
                               {item.options?.map((option) => (
                                 <FormControlLabel
                                   key={option}
@@ -861,7 +952,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             </div>
                           )}
 
-                          <div className="ml-4">
+                          <div className="">
                             <TextField
                               placeholder="Add your comment..."
                               fullWidth
@@ -891,7 +982,7 @@ export const TaskSubmissionPage: React.FC = () => {
                           </div>
 
                           {formData.checklist[item.id]?.attachment && (
-                            <div className="ml-4">
+                            <div className="">
                               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
                                 <img
                                   src={URL.createObjectURL(
@@ -910,7 +1001,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             </div>
                           )}
 
-                          <div className="ml-4">
+                          <div className="">
                             <Button
                               variant="outline"
                               size="sm"
@@ -980,74 +1071,84 @@ export const TaskSubmissionPage: React.FC = () => {
                       </Typography>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {dynamicChecklist.map((item, index) => {
-                        const answer = formData.checklist[item.id]?.value;
-                        const comment = formData.checklist[item.id]?.comment;
-                        const attachment =
-                          formData.checklist[item.id]?.attachment;
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Help Text
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Activities
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Input
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Comments
+                            </th>
+                          
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Attachment
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {dynamicChecklist.map((item, index) => {
+                            const answer = formData.checklist[item.id]?.value;
+                            const comment = formData.checklist[item.id]?.comment;
+                            const attachment = formData.checklist[item.id]?.attachment;
+                            
+                            // Calculate score based on answer (similar to TaskDetailsPage logic)
+                            const calculateScore = () => {
+                              if (answer === "Yes") return "100";
+                              if (answer === "No") return "0";
+                              if (Array.isArray(answer) && answer.length > 0) return "75";
+                              return "-";
+                            };
 
-                        return (
-                          <div
-                            key={item.id}
-                            className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg"
-                          >
-                            <div
-                              className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                answer && (Array.isArray(answer) ? answer.length > 0 : answer !== "")
-                                  ? "bg-green-500" 
-                                  : "bg-gray-400"
-                              }`}
-                            >
-                              <span className="text-white text-xs font-bold">
-                                ✓
-                              </span>
-                            </div>
-                            <div className="flex-1">
-                              <Typography
-                                variant="body2"
-                                className="font-medium text-gray-900 mb-2"
-                              >
-                                {index + 1}. {item.question}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                className="text-gray-700 font-medium mb-2"
-                              >
-                                Answer:{" "}
-                                <span
-                                  className={`${
-                                    answer ? "text-green-600" : "text-gray-600"
-                                  }`}
-                                >
-                                  {Array.isArray(answer) 
-                                    ? answer.length > 0 
-                                      ? answer.join(", ") 
-                                      : "Not answered"
-                                    : answer || "Not answered"}
-                                </span>
-                              </Typography>
-                              {comment && (
-                                <Typography
-                                  variant="body2"
-                                  className="text-gray-600 mb-2"
-                                >
-                                  Comment: {comment}
-                                </Typography>
-                              )}
-                              {attachment && (
-                                <div className="mt-2">
-                                  <img
-                                    src={URL.createObjectURL(attachment)}
-                                    alt="Attachment"
-                                    className="w-16 h-16 object-cover rounded border border-gray-200"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                            return (
+                              <tr key={item.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs"></span>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs">{item.question}</span>
+                                </td>
+                                <td className="px-4 py-3 text-xs border-b border-gray-100">
+                                  <span className="text-xs">
+                                    {Array.isArray(answer) 
+                                      ? answer.length > 0 
+                                        ? answer.join(", ") 
+                                        : "-"
+                                      : answer || "-"}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs">{comment || "-"}</span>
+                                </td>
+  
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  {attachment ? (
+                                    <div className="flex items-center gap-2">
+                                      <img
+                                        src={URL.createObjectURL(attachment)}
+                                        alt="Attachment"
+                                        className="w-8 h-8 object-cover rounded border border-gray-200"
+                                      />
+                                      <span className="text-xs text-gray-600 truncate max-w-20">
+                                        {attachment.name}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs">-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </CardContent>
@@ -1299,7 +1400,7 @@ export const TaskSubmissionPage: React.FC = () => {
                                   e.target.value
                                 )
                               }
-                              className="ml-4"
+                              className=""
                               sx={{
                                 "& .MuiOutlinedInput-root": {
                                   backgroundColor: "white",
@@ -1324,7 +1425,7 @@ export const TaskSubmissionPage: React.FC = () => {
                                   e.target.value
                                 )
                               }
-                              className="ml-4"
+                              className=""
                             >
                               {item.options?.map((option) => (
                                 <FormControlLabel
@@ -1346,7 +1447,7 @@ export const TaskSubmissionPage: React.FC = () => {
                           )}
 
                           {item.type === "checkbox" && (
-                            <div className="ml-4">
+                            <div className="">
                               {item.options?.map((option) => (
                                 <FormControlLabel
                                   key={option}
@@ -1378,7 +1479,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             </div>
                           )}
 
-                          <div className="ml-4">
+                          <div className="">
                             <TextField
                               placeholder="Add your comment..."
                               fullWidth
@@ -1408,7 +1509,7 @@ export const TaskSubmissionPage: React.FC = () => {
                           </div>
 
                           {formData.checklist[item.id]?.attachment && (
-                            <div className="ml-4">
+                            <div className="">
                               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
                                 <img
                                   src={URL.createObjectURL(
@@ -1427,7 +1528,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             </div>
                           )}
 
-                          <div className="ml-4">
+                          <div className="">
                             <Button
                               variant="outline"
                               size="sm"
@@ -1578,7 +1679,7 @@ export const TaskSubmissionPage: React.FC = () => {
                           {item.type === "radio" && (
                             <RadioGroup
                               value={formData.checklist[item.id]?.value || ""}
-                              className="ml-4"
+                              className=""
                             >
                               {item.options?.map((option) => (
                                 <FormControlLabel
@@ -1601,7 +1702,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             </RadioGroup>
                           )}
 
-                          <div className="ml-4">
+                          <div className="">
                             <TextField
                               placeholder="Add your comment..."
                               fullWidth
@@ -1622,7 +1723,7 @@ export const TaskSubmissionPage: React.FC = () => {
                           </div>
 
                           {formData.checklist[item.id]?.attachment && (
-                            <div className="ml-4">
+                            <div className="">
                               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
                                 <img
                                   src={URL.createObjectURL(
@@ -1657,7 +1758,9 @@ export const TaskSubmissionPage: React.FC = () => {
                       <User className="figma-card-icon" />
                     </div>
                     <Typography variant="body1" className="figma-card-title">
-                      Info
+                      Pre-Post Inspection Info
+
+
                     </Typography>
                   </div>
                 </div>
@@ -1902,84 +2005,84 @@ export const TaskSubmissionPage: React.FC = () => {
                       </Typography>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {dynamicChecklist.map((item, index) => {
-                        const answer = formData.checklist[item.id]?.value;
-                        const comment = formData.checklist[item.id]?.comment;
-                        const attachment =
-                          formData.checklist[item.id]?.attachment;
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Help Text
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Activities
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Input
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Comments
+                            </th>
+                           
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Attachment
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {dynamicChecklist.map((item, index) => {
+                            const answer = formData.checklist[item.id]?.value;
+                            const comment = formData.checklist[item.id]?.comment;
+                            const attachment = formData.checklist[item.id]?.attachment;
+                            
+                            // Calculate score based on answer (similar to TaskDetailsPage logic)
+                            const calculateScore = () => {
+                              if (answer === "Yes") return "100";
+                              if (answer === "No") return "0";
+                              if (Array.isArray(answer) && answer.length > 0) return "75";
+                              return "-";
+                            };
 
-                        return (
-                          <div
-                            key={item.id}
-                            className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg"
-                          >
-                            <div
-                              className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                answer === "Yes"
-                                  ? "bg-green-500"
-                                  : answer === "No"
-                                  ? "bg-red-500"
-                                  : answer && (Array.isArray(answer) ? answer.length > 0 : answer !== "")
-                                  ? "bg-green-500"
-                                  : "bg-gray-400"
-                              }`}
-                            >
-                              <span className="text-white text-xs font-bold">
-                                ✓
-                              </span>
-                            </div>
-                            <div className="flex-1">
-                              <Typography
-                                variant="body2"
-                                className="font-medium text-gray-900 mb-2"
-                              >
-                                {index + 1}. {item.question}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                className="text-gray-700 font-medium mb-2"
-                              >
-                                Answer:{" "}
-                                <span
-                                  className={`${
-                                    answer === "Yes"
-                                      ? "text-green-600"
-                                      : answer === "No"
-                                      ? "text-red-600"
-                                      : answer && (Array.isArray(answer) ? answer.length > 0 : true)
-                                      ? "text-green-600"
-                                      : "text-gray-600"
-                                  }`}
-                                >
-                                  {Array.isArray(answer) 
-                                    ? answer.length > 0 
-                                      ? answer.join(", ") 
-                                      : "Not answered"
-                                    : answer || "Not answered"}
-                                </span>
-                              </Typography>
-                              {comment && (
-                                <Typography
-                                  variant="body2"
-                                  className="text-gray-600 mb-2"
-                                >
-                                  Comment: {comment}
-                                </Typography>
-                              )}
-                              {attachment && (
-                                <div className="mt-2">
-                                  <img
-                                    src={URL.createObjectURL(attachment)}
-                                    alt="Attachment"
-                                    className="w-16 h-16 object-cover rounded border border-gray-200"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                            return (
+                              <tr key={item.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs"></span>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs">{item.question}</span>
+                                </td>
+                                <td className="px-4 py-3 text-xs border-b border-gray-100">
+                                  <span className="text-xs">
+                                    {Array.isArray(answer) 
+                                      ? answer.length > 0 
+                                        ? answer.join(", ") 
+                                        : "-"
+                                      : answer || "-"}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs">{comment || "-"}</span>
+                                </td>
+                               
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  {attachment ? (
+                                    <div className="flex items-center gap-2">
+                                      <img
+                                        src={URL.createObjectURL(attachment)}
+                                        alt="Attachment"
+                                        className="w-8 h-8 object-cover rounded border border-gray-200"
+                                      />
+                                      <span className="text-xs text-gray-600 truncate max-w-20">
+                                        {attachment.name}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs">-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </CardContent>
@@ -2141,6 +2244,7 @@ export const TaskSubmissionPage: React.FC = () => {
         isOpen={showSuccessModal}
         onClose={handleSuccessClose}
         onViewDetails={handleSuccessClose}
+        stats={submissionStats}
       />
     </div>
   );
