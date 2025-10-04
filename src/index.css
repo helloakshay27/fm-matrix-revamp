@@ -17,6 +17,10 @@
   background-color: transparent !important;
 }
 
+
+body{
+      font-family: "Work Sans" !important;
+}
 @media (min-width: 640px) {
   [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
     height: 40px !important;
@@ -832,11 +836,20 @@ td div , td span, th div, td button, td a {
    =========================================== */
 
 /* Card Header Styles */
+
+
+.css-rizt0-MuiTypography-root {
+      font-family: "Work Sans" !important;
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.5;
+    letter-spacing: 0.00938em;
+}
+
 .figma-card-header {
-  border: 1px solid #D9D9D9 !important;
   background: #F6F4EE !important;
   padding: 16px 20px !important;
-  border-radius: 8px 8px 0 0 !important;
+  /* border-radius: 8px 8px 0 0 !important; */
   margin: 0 !important;
 }
 
@@ -870,7 +883,6 @@ td div , td span, th div, td button, td a {
 .figma-card-content {
   padding: 24px 20px !important;
   background: white !important;
-  border: 1px solid #D9D9D9 !important;
   border-top: none !important;
   border-radius: 0 0 8px 8px !important;
 }
