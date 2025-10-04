@@ -55,9 +55,9 @@ export const fetchConversation = createAsyncThunk(
 
 export const fetchConversationMessages = createAsyncThunk(
     "fetchConversationMessages",
-    async ({ baseUrl, token, id, per_page, page }: { baseUrl: string, token: string, id: string, per_page: number, page: number }, { rejectWithValue }) => {
+    async ({ baseUrl, token, id, per_page, page, param }: { baseUrl: string, token: string, id: string, per_page?: number, page?: number, param: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/messages.json?q[conversation_id_eq]=${id}&page=${page}&per_page=${per_page}`, {
+            const response = await axios.get(`https://${baseUrl}/messages.json?q[${param}]=${id}&page=${page}&per_page=${per_page}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -157,9 +157,15 @@ export const createChatTask = createAsyncThunk(
 
 export const fetchIndividualChatTasks = createAsyncThunk(
     "fetchIndividualChatTasks",
-    async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
+    async ({ baseUrl, token, id, param }: { baseUrl: string, token: string, id?: string, param?: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/task_managements.json?q[project_space_id_eq]=${id}`, {
+            let url = `https://${baseUrl}/task_managements.json`;
+
+            if (id && param) {
+                url += `?q[${param}]=${id}`;
+            }
+
+            const response = await axios.get(url, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }

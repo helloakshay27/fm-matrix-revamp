@@ -124,7 +124,7 @@ const NewConversationModal = ({
                 createConversation({ baseUrl, token, data: payload })
             ).unwrap();
             setNewConversationModal(false);
-            navigate(`/channels/messages/${response.id}`);
+            navigate(`/vas/channels/messages/${response.id}`);
         } catch (error) {
             console.log(error);
         }
@@ -149,7 +149,7 @@ const NewConversationModal = ({
         try {
             const response = await dispatch(createGroup({ baseUrl, token, data: payload })).unwrap();
             setNewConversationModal(false);
-            navigate(`/channels/groups/${response.id}`);
+            navigate(`/vas/channels/groups/${response.id}`);
         } catch (error) {
             console.log(error);
         }
