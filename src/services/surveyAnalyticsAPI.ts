@@ -3,22 +3,39 @@ import { API_CONFIG } from '@/config/apiConfig';
 // Real Survey Analytics API Response Interface
 export interface SurveyAnalyticsResponse {
   analytics: {
-    total_surveys: number;
-    total_responses: number;
-    positive_responses: number;
-    negative_responses: number;
-    neutral_responses: number;
-    complaints_count: number;
-    top_surveys: Array<{
+    // Core counts
+    total_surveys?: number;
+    total_responses?: number;
+    positive_responses?: number;
+    negative_responses?: number;
+    neutral_responses?: number;
+    complaints_count?: number;
+
+    // CSAT and timing
+    csat?: number;
+    avg_closure_days?: number;
+    avg_closure_time?: string;
+    tat_achieved?: number;
+
+    // Top surveys (legacy/new)
+    top_surveys?: Array<{
       survey_id: number;
       survey_name: string;
       response_count: number;
-      positive_responses: number;
-      negative_responses: number;
-      neutral_responses: number;
-      complaints_count: number;
+      positive_responses?: number;
+      negative_responses?: number;
+      neutral_responses?: number;
+      complaints_count?: number;
     }>;
-    most_raised_category: {
+
+    // New fields from analytics response
+    complaint_statuses?: Array<{ status: string; count: number }>;
+    icon_categories?: Array<{ icon_category: string; count: number }>;
+    emoji_options?: Array<{ option_id: number | null; option_name: string | null; count: number }>;
+    survey_responses?: Array<{ survey_id: number; survey_name: string; total_responses: number }>;
+
+    // Optional legacy field
+    most_raised_category?: {
       category_key: string;
       category_label: string;
       complaint_count: number;

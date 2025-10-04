@@ -19,7 +19,7 @@
 
 
 body{
-      font-family: "Work Sans" !important;
+      /* font-family: "Work Sans" !important; */
 }
 @media (min-width: 640px) {
   [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
@@ -839,7 +839,7 @@ td div , td span, th div, td button, td a {
 
 
 .css-rizt0-MuiTypography-root {
-      font-family: "Work Sans" !important;
+      /* font-family: "Work Sans" !important; */
     font-weight: 400;
     font-size: 1rem;
     line-height: 1.5;

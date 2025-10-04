@@ -430,7 +430,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
         <DialogContent className="max-w-lg bg-white z-50">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">
-              Bulk Reschedule Tasks
+              Bulk Reschedule 
             </DialogTitle>
             <p className="text-sm text-gray-600 mt-2">
               Reschedule {selectedTasks.length} selected task(s)
@@ -501,7 +501,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-center gap-3 pt-4 border-t">
               <Button
                 variant="outline"
                 onClick={() => setShowRescheduleDialog(false)}
@@ -514,7 +514,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                 style={{ backgroundColor: '#C72030' }}
                 className="text-white hover:bg-[#C72030]/90 px-6"
               >
-                Reschedule Tasks
+                Reschedule 
               </Button>
             </div>
           </div>
@@ -575,7 +575,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
               </FormControl>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-center gap-3 pt-4 border-t">
               <Button
                 variant="outline"
                 onClick={() => setShowReassignDialog(false)}
@@ -589,7 +589,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                 className="text-white hover:bg-[#C72030]/90 px-6"
                 disabled={!reassignData.assignedUserId || loadingUsers}
               >
-                Reassign Tasks
+                Reassign 
               </Button>
             </div>
           </div>
