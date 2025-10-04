@@ -789,7 +789,7 @@ export const SurveyMappingDetailsPage = () => {
               </TabsTrigger>
             ))}
           </TabsList> */}
-          <TabsList className="grid w-full grid-cols-4 bg-white border border-gray-200">
+          <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
   {[
     {
       label: "Survey Information",
@@ -846,10 +846,10 @@ export const SurveyMappingDetailsPage = () => {
       //   </svg>
       // ),
     },
-    {
-      label: "Logs",
-      value: "logs",
-    },
+    // {
+    //   label: "Logs",
+    //   value: "logs",
+    // },
   ].map((tab) => (
     <TabsTrigger
       key={tab.value}
