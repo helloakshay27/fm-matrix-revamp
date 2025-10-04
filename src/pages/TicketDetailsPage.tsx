@@ -114,10 +114,10 @@ const formatTicketAgeing = (ageingMinutes: number): string => {
 // Helper function to calculate balance TAT
 const calculateBalanceTAT = (tatTime: string | null | undefined, tatMinutes: number | null | undefined): { value: string; isExceeded: boolean; exceededBy: string } => {
   if (!tatTime) {
-    return { 
-      value: tatMinutes ? formatMinutesToDDHHMM(tatMinutes) : '00:00:00', 
-      isExceeded: false, 
-      exceededBy: '' 
+    return {
+      value: tatMinutes ? formatMinutesToDDHHMM(tatMinutes) : '00:00:00',
+      isExceeded: false,
+      exceededBy: ''
     };
   }
 
@@ -134,11 +134,11 @@ const calculateBalanceTAT = (tatTime: string | null | undefined, tatMinutes: num
       const hours = Math.floor((exceededMinutes % (24 * 60)) / 60);
       const mins = exceededMinutes % 60;
       const exceededTime = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-      
-      return { 
-        value: exceededTime, 
-        isExceeded: true, 
-        exceededBy: exceededTime 
+
+      return {
+        value: exceededTime,
+        isExceeded: true,
+        exceededBy: exceededTime
       };
     } else {
       // Time remaining
@@ -146,19 +146,19 @@ const calculateBalanceTAT = (tatTime: string | null | undefined, tatMinutes: num
       const hours = Math.floor((diffMinutes % (24 * 60)) / 60);
       const mins = diffMinutes % 60;
       const remainingTime = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-      
-      return { 
-        value: remainingTime, 
-        isExceeded: false, 
-        exceededBy: '' 
+
+      return {
+        value: remainingTime,
+        isExceeded: false,
+        exceededBy: ''
       };
     }
   } catch (error) {
     console.error('Error calculating balance TAT:', error);
-    return { 
-      value: tatMinutes ? formatMinutesToDDHHMM(tatMinutes) : '00:00:00', 
-      isExceeded: false, 
-      exceededBy: '' 
+    return {
+      value: tatMinutes ? formatMinutesToDDHHMM(tatMinutes) : '00:00:00',
+      isExceeded: false,
+      exceededBy: ''
     };
   }
 };
@@ -1233,7 +1233,18 @@ export const TicketDetailsPage = () => {
                           </span>
 
                           <span className="text-[12px] text-[#9CA3AF] mt-1">
-                            {`${ticketData.response_esc_name} - ${ticketData.response_escalate_to_user.join(',')}` || ticketData.escalation_response_name || 'N/A'}
+                            {(() => {
+                              const escalationName = ticketData.response_esc_name || '';
+                              const escalationUsers = Array.isArray(ticketData.response_escalate_to_user) && ticketData.response_escalate_to_user.length > 0
+                                ? ticketData.response_escalate_to_user.filter(user => user !== null && user !== undefined && user !== '').join(', ')
+                                : '';
+
+                              if (escalationName && escalationUsers) {
+                                return `${escalationName} - ${escalationUsers}`;
+                              } else {
+                                return ''
+                              }
+                            })()}
                           </span>
                         </div>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
@@ -1279,7 +1290,18 @@ export const TicketDetailsPage = () => {
                             {formatMinutesToDDHHMM(ticketData.balance_resolution_tat)}
                           </span>
                           <span className="text-[12px] text-[#9CA3AF] mt-1">
-                            {`${ticketData.resolution_esc_name} - ${ticketData.resolution_escalate_to_user.join(', ')}` || ticketData.escalation_resolution_name || 'N/A'}
+                            {(() => {
+                              const escalationName = ticketData.resolution_esc_name || '';
+                              const escalationUsers = Array.isArray(ticketData.resolution_escalate_to_user) && ticketData.resolution_escalate_to_user.length > 0
+                                ? ticketData.resolution_escalate_to_user.filter(user => user !== null && user !== undefined && user !== '').join(', ')
+                                : '';
+
+                              if (escalationName && escalationUsers) {
+                                return `${escalationName} - ${escalationUsers}`;
+                              } else {
+                                return ''
+                              }
+                            })()}
                           </span>
                         </div>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
@@ -1325,7 +1347,18 @@ export const TicketDetailsPage = () => {
                             {formatMinutesToDDHHMM(ticketData.golden_resp_time_minutes)}
                           </p>
                           <p className="text-[12px] text-[#9CA3AF] mt-1">
-                            {`${ticketData.golden_esc_name} - ${ticketData.golden_escalate_to_user.join(",")}` || 'N/A'}
+                            {(() => {
+                              const escalationName = ticketData.golden_esc_name || '';
+                              const escalationUsers = Array.isArray(ticketData.golden_escalate_to_user) && ticketData.golden_escalate_to_user.length > 0
+                                ? ticketData.golden_escalate_to_user.filter(user => user !== null && user !== undefined && user !== '').join(', ')
+                                : '';
+
+                              if (escalationName && escalationUsers) {
+                                return `${escalationName} - ${escalationUsers}`;
+                              } else {
+                                return ''
+                              }
+                            })()}
                           </p>
                         </div>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
@@ -2122,8 +2155,8 @@ export const TicketDetailsPage = () => {
                           onClick={handleSubmitCostApproval}
                           disabled={submittingCostApproval}
                           className={`bg-[#C72030] text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
-                              ? 'opacity-50 cursor-not-allowed'
-                              : 'hover:bg-[#A01828]'
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'hover:bg-[#A01828]'
                             }`}
                         >
                           {submittingCostApproval ? 'Submitting...' : 'Submit Cost Approval'}
@@ -2164,62 +2197,62 @@ export const TicketDetailsPage = () => {
                                     </td>
                                     <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                       <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L1 === 'Approved'
-                                          ? 'bg-green-100 text-green-700'
-                                          : request.approvals?.L1 === 'Rejected'
-                                            ? 'bg-red-100 text-red-700'
-                                            : 'bg-gray-100 text-gray-600'
+                                        ? 'bg-green-100 text-green-700'
+                                        : request.approvals?.L1 === 'Rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
                                         }`}>
                                         {request.approvals?.L1 || '-'}
                                       </span>
                                     </td>
                                     <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                       <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L2 === 'Approved'
-                                          ? 'bg-green-100 text-green-700'
-                                          : request.approvals?.L2 === 'Rejected'
-                                            ? 'bg-red-100 text-red-700'
-                                            : 'bg-gray-100 text-gray-600'
+                                        ? 'bg-green-100 text-green-700'
+                                        : request.approvals?.L2 === 'Rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
                                         }`}>
                                         {request.approvals?.L2 || '-'}
                                       </span>
                                     </td>
                                     <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                       <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L3 === 'Approved'
-                                          ? 'bg-green-100 text-green-700'
-                                          : request.approvals?.L3 === 'Rejected'
-                                            ? 'bg-red-100 text-red-700'
-                                            : 'bg-gray-100 text-gray-600'
+                                        ? 'bg-green-100 text-green-700'
+                                        : request.approvals?.L3 === 'Rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
                                         }`}>
                                         {request.approvals?.L3 || '-'}
                                       </span>
                                     </td>
                                     <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                       <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L4 === 'Approved'
-                                          ? 'bg-green-100 text-green-700'
-                                          : request.approvals?.L4 === 'Rejected'
-                                            ? 'bg-red-100 text-red-700'
-                                            : 'bg-gray-100 text-gray-600'
+                                        ? 'bg-green-100 text-green-700'
+                                        : request.approvals?.L4 === 'Rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
                                         }`}>
                                         {request.approvals?.L4 || '-'}
                                       </span>
                                     </td>
                                     <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                       <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L5 === 'Approved'
-                                          ? 'bg-green-100 text-green-700'
-                                          : request.approvals?.L5 === 'Rejected'
-                                            ? 'bg-red-100 text-red-700'
-                                            : 'bg-gray-100 text-gray-600'
+                                        ? 'bg-green-100 text-green-700'
+                                        : request.approvals?.L5 === 'Rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
                                         }`}>
                                         {request.approvals?.L5 || '-'}
                                       </span>
                                     </td>
                                     <td className="px-4 py-3 border border-[#E5E2DC]">
                                       <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
-                                          ? 'bg-yellow-100 text-yellow-700'
-                                          : request.master_status === 'Approved'
-                                            ? 'bg-green-100 text-green-700'
-                                            : request.master_status === 'Rejected'
-                                              ? 'bg-red-100 text-red-700'
-                                              : 'bg-gray-100 text-gray-700'
+                                        ? 'bg-yellow-100 text-yellow-700'
+                                        : request.master_status === 'Approved'
+                                          ? 'bg-green-100 text-green-700'
+                                          : request.master_status === 'Rejected'
+                                            ? 'bg-red-100 text-red-700'
+                                            : 'bg-gray-100 text-gray-700'
                                         }`}>
                                         {request.master_status}
                                       </span>
@@ -2974,8 +3007,8 @@ export const TicketDetailsPage = () => {
                         onClick={handleSubmitComment}
                         disabled={submittingComment}
                         className={`bg-[#C72030] text-white text-[12px] font-medium px-6 py-2 transition-colors ${submittingComment
-                            ? 'opacity-50 cursor-not-allowed'
-                            : 'hover:bg-[#A01828]'
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'hover:bg-[#A01828]'
                           }`}
                       >
                         {submittingComment ? 'Submitting...' : 'Submit Comment'}
@@ -3883,8 +3916,8 @@ export const TicketDetailsPage = () => {
                       onClick={handleSubmitCostApproval}
                       disabled={submittingCostApproval}
                       className={`bg-[#C72030] text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:bg-[#A01828]'
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-[#A01828]'
                         }`}
                     >
                       {submittingCostApproval ? 'Submitting...' : 'Submit Cost Approval'}
@@ -3925,62 +3958,62 @@ export const TicketDetailsPage = () => {
                                 </td>
                                 <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                   <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L1 === 'Approved'
-                                      ? 'bg-green-100 text-green-700'
-                                      : request.approvals?.L1 === 'Rejected'
-                                        ? 'bg-red-100 text-red-700'
-                                        : 'bg-gray-100 text-gray-600'
+                                    ? 'bg-green-100 text-green-700'
+                                    : request.approvals?.L1 === 'Rejected'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-gray-100 text-gray-600'
                                     }`}>
                                     {request.approvals?.L1 || '-'}
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                   <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L2 === 'Approved'
-                                      ? 'bg-green-100 text-green-700'
-                                      : request.approvals?.L2 === 'Rejected'
-                                        ? 'bg-red-100 text-red-700'
-                                        : 'bg-gray-100 text-gray-600'
+                                    ? 'bg-green-100 text-green-700'
+                                    : request.approvals?.L2 === 'Rejected'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-gray-100 text-gray-600'
                                     }`}>
                                     {request.approvals?.L2 || '-'}
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                   <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L3 === 'Approved'
-                                      ? 'bg-green-100 text-green-700'
-                                      : request.approvals?.L3 === 'Rejected'
-                                        ? 'bg-red-100 text-red-700'
-                                        : 'bg-gray-100 text-gray-600'
+                                    ? 'bg-green-100 text-green-700'
+                                    : request.approvals?.L3 === 'Rejected'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-gray-100 text-gray-600'
                                     }`}>
                                     {request.approvals?.L3 || '-'}
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                   <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L4 === 'Approved'
-                                      ? 'bg-green-100 text-green-700'
-                                      : request.approvals?.L4 === 'Rejected'
-                                        ? 'bg-red-100 text-red-700'
-                                        : 'bg-gray-100 text-gray-600'
+                                    ? 'bg-green-100 text-green-700'
+                                    : request.approvals?.L4 === 'Rejected'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-gray-100 text-gray-600'
                                     }`}>
                                     {request.approvals?.L4 || '-'}
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                   <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L5 === 'Approved'
-                                      ? 'bg-green-100 text-green-700'
-                                      : request.approvals?.L5 === 'Rejected'
-                                        ? 'bg-red-100 text-red-700'
-                                        : 'bg-gray-100 text-gray-600'
+                                    ? 'bg-green-100 text-green-700'
+                                    : request.approvals?.L5 === 'Rejected'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-gray-100 text-gray-600'
                                     }`}>
                                     {request.approvals?.L5 || '-'}
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 border border-[#E5E2DC]">
                                   <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
-                                      ? 'bg-yellow-100 text-yellow-700'
-                                      : request.master_status === 'Approved'
-                                        ? 'bg-green-100 text-green-700'
-                                        : request.master_status === 'Rejected'
-                                          ? 'bg-red-100 text-red-700'
-                                          : 'bg-gray-100 text-gray-700'
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : request.master_status === 'Approved'
+                                      ? 'bg-green-100 text-green-700'
+                                      : request.master_status === 'Rejected'
+                                        ? 'bg-red-100 text-red-700'
+                                        : 'bg-gray-100 text-gray-700'
                                     }`}>
                                     {request.master_status}
                                   </span>
@@ -4735,8 +4768,8 @@ export const TicketDetailsPage = () => {
                     onClick={handleSubmitComment}
                     disabled={submittingComment}
                     className={`bg-[#C72030] text-white text-[12px] font-medium px-6 py-2 transition-colors ${submittingComment
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-[#A01828]'
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:bg-[#A01828]'
                       }`}
                   >
                     {submittingComment ? 'Submitting...' : 'Submit Comment'}
