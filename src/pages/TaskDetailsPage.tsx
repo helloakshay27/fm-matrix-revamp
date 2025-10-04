@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, X, FileText, User, MapPin, Eye, Edit, Star, Trash2 } from 'lucide-react';
+import { ArrowLeft, X, FileText, User, MapPin, Eye, Edit, Star, Trash2, Flag } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast as sonnerToast } from "sonner";
@@ -938,7 +938,11 @@ export const TaskDetailsPage = () => {
                               onClick={() => handleTicketFlag(ticketData.id, ticketData.is_flagged)}
                               title={ticketData.is_flagged ? "Remove flag" : "Flag ticket"}
                             >
-                              🚩
+                              <Flag className={`w-4 h-4 transition-all duration-200 ${
+                                ticketData.is_flagged 
+                                  ? 'text-red-500 fill-red-500' 
+                                  : 'text-gray-600'
+                              }`} />
                             </button>
                             <button 
                               className={`p-1 hover:bg-gray-100 rounded transition-colors ${
@@ -947,7 +951,11 @@ export const TaskDetailsPage = () => {
                               onClick={() => handleTicketGoldenTicket(ticketData.id, ticketData.is_golden_ticket)}
                               title={ticketData.is_golden_ticket ? "Remove golden ticket" : "Mark as golden ticket"}
                             >
-                              <Star className="w-4 h-4" />
+                              <Star className={`w-4 h-4 transition-all duration-200 hover:scale-110 ${
+                                ticketData.is_golden_ticket
+                                  ? 'text-yellow-500 fill-yellow-500'
+                                  : 'text-gray-600'
+                              }`} />
                             </button>
                           </div>
                         </TableCell>
@@ -1042,7 +1050,8 @@ export const TaskDetailsPage = () => {
                   </Table>
                 </div>
 
-               
+                {/* Additional Ticket Information */}
+              
                 </>
               ) : (
                 <div className="text-center py-8">
