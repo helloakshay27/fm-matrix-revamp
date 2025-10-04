@@ -249,7 +249,7 @@ export const TaskSubmissionPage: React.FC = () => {
   const isStepDataValid = (step: number): boolean => {
     const apiSteps = taskDetails?.steps;
     
-    if (apiSteps === 0) {
+    if (apiSteps === 1) {
       // Single step workflow validation
       switch (step) {
         case 1: // Checkpoint
@@ -292,7 +292,7 @@ export const TaskSubmissionPage: React.FC = () => {
   const generateSteps = (): TaskSubmissionStep[] => {
     const apiSteps = taskDetails?.steps ; // Default to 3 for backward compatibility
     
-    if (apiSteps === 0) {
+    if (apiSteps === 1) {
       // Single step workflow: Only Checkpoint and Preview
       return [
         {
@@ -455,7 +455,7 @@ export const TaskSubmissionPage: React.FC = () => {
   const validateCurrentStep = () => {
     const apiSteps = taskDetails?.steps;
     
-    if (apiSteps === 0) {
+    if (apiSteps === 1) {
       // Single step workflow validation
       switch (currentStep) {
         case 1: // Checkpoint
@@ -627,7 +627,7 @@ export const TaskSubmissionPage: React.FC = () => {
   const renderStepContent = () => {
     const apiSteps = taskDetails?.steps;
     
-    if (apiSteps === 0) {
+    if (apiSteps === 1) {
       // Single step workflow rendering
       switch (currentStep) {
         case 1: // Checkpoint
