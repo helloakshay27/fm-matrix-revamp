@@ -17,6 +17,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { X } from "lucide-react";
 import { Button } from "./ui/button";
+import { useLocation } from "react-router-dom";
 
 const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -32,6 +33,7 @@ interface User {
 }
 
 interface FormData {
+    title: string;
     description: string;
     priority: string;
     assignTo: string;
@@ -47,7 +49,8 @@ interface CreateChatTaskProps {
     setOpenTaskModal: (open: boolean) => void;
     onCreateTask?: (data) => void;
     message?: { id: string; body: string };
-    id: string;
+    id?: string;
+    fetchTasks?: () => void;
 }
 
 const CreateChatTask = ({
@@ -55,11 +58,14 @@ const CreateChatTask = ({
     setOpenTaskModal,
     onCreateTask,
     message,
-    id
+    id,
+    fetchTasks,
 }: CreateChatTaskProps) => {
     const dispatch = useAppDispatch();
+    const path = useLocation().pathname;
     const [users, setUsers] = useState<User[]>([]);
     const [formData, setFormData] = useState<FormData>({
+        title: "",
         description: "",
         priority: "",
         assignTo: "",
@@ -69,6 +75,8 @@ const CreateChatTask = ({
         observers: [],
         focusMode: false,
     });
+
+
 
     const fetchInternalUsers = async () => {
         try {
@@ -83,7 +91,7 @@ const CreateChatTask = ({
         fetchInternalUsers();
 
         if (message?.body) {
-            setFormData((prev) => ({ ...prev, description: message.body }));
+            setFormData((prev) => ({ ...prev, title: message.body }));
         }
     }, [message]);
 
@@ -94,7 +102,7 @@ const CreateChatTask = ({
     const handleSubmit = async () => {
         const submissionData = {
             task_management: {
-                title: "Chat Task",
+                title: formData.title,
                 description: formData.description,
                 priority: formData.priority,
                 responsible_person_id: formData.assignTo,
@@ -103,12 +111,14 @@ const CreateChatTask = ({
                 estimated_min: formData.estMinutes,
                 observer_ids: formData.observers,
                 focus_mode: formData.focusMode,
-                project_space_id: id
+                ...(id && path.includes("messages") && { conversation_id: id }),
+                ...(id && path.includes("groups") && { project_space_id: id }),
             }
         };
 
         await onCreateTask?.(submissionData);
         setFormData({
+            title: "",
             description: "",
             priority: "",
             assignTo: "",
@@ -119,6 +129,7 @@ const CreateChatTask = ({
             focusMode: false,
         });
         setOpenTaskModal(false);
+        fetchTasks?.();
     };
 
     return (
@@ -152,6 +163,18 @@ const CreateChatTask = ({
                 </div>
 
                 <div className="space-y-6 mt-4">
+                    <div className="grid grid-cols-1 gap-6">
+                        <TextField
+                            label="Title"
+                            placeholder="Enter title"
+                            fullWidth
+                            variant="outlined"
+                            value={formData.title}
+                            onChange={(e) => handleChange("title", e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: fieldStyles }}
+                        />
+                    </div>
                     <div className="grid grid-cols-1 gap-6">
                         <TextField
                             label="Description"

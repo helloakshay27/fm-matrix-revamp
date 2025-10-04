@@ -304,14 +304,68 @@ export const TaskDetailsPage = () => {
 
   // --- API Action Handlers ---
   
+  // Helper function to refresh ticket data
+  const refreshTicketData = async () => {
+    if (taskDetails?.id) {
+      try {
+        const ticketResponse = await ticketManagementAPI.getTicketsByTaskOccurrenceId(taskDetails.id.toString());
+        if (ticketResponse?.complaints && ticketResponse.complaints.length > 0) {
+          const ticket = ticketResponse.complaints[0];
+          setTicketData({
+            id: ticket.id,
+            ticket_number: ticket.ticket_number,
+            heading: ticket.heading,
+            category_type: ticket.category_type,
+            sub_category_type: ticket.sub_category_type,
+            posted_by: ticket.posted_by,
+            is_flagged: ticket.is_flagged,
+            is_golden_ticket: ticket.is_golden_ticket,
+            priority: ticket.priority,
+            issue_status: ticket.issue_status,
+            department_name: ticket.department_name,
+            assigned_to: ticket.assigned_to,
+            created_at: ticket.created_at,
+            updated_at: ticket.updated_at,
+            building_name: ticket.building_name,
+            floor_name: ticket.floor_name,
+            site_name: ticket.site_name,
+            pms_site_name: ticket.pms_site_name,
+            complaint_type: ticket.complaint_type,
+            issue_type: ticket.issue_type,
+            color_code: ticket.color_code,
+            updated_by: ticket.updated_by,
+            priority_status: ticket.priority_status,
+            effective_priority: ticket.effective_priority,
+            schedule_type: ticket.schedule_type,
+            service_or_asset: ticket.service_or_asset,
+            asset_or_service_name: ticket.asset_or_service_name,
+            response_escalation: ticket.response_escalation,
+            resolution_escalation: ticket.resolution_escalation,
+            response_tat: ticket.response_tat,
+            resolution_tat: ticket.resolution_tat,
+            escalation_response_name: ticket.escalation_response_name,
+            escalation_resolution_name: ticket.escalation_resolution_name,
+            status: ticket.status,
+            unit_name: ticket.unit_name,
+            complaint_logs: ticket.complaint_logs || [],
+            documents: ticket.documents || [],
+            faqs: ticket.faqs || []
+          });
+        }
+      } catch (refreshError) {
+        console.error('Failed to refresh ticket data:', refreshError);
+      }
+    }
+  };
+  
   const handleTicketFlag = async (ticketId: number, currentFlagStatus: boolean) => {
     try {
       const response = await ticketManagementAPI.markAsFlagged([ticketId]);
       
-      // Update local ticket state
-      setTicketData((prev: any) => prev ? { ...prev, is_flagged: !currentFlagStatus } : prev);
-      
       sonnerToast.success(response.message || `Ticket ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully`);
+      
+      // Refresh ticket data to ensure consistency with server
+      await refreshTicketData();
     } catch (error) {
       console.error('Flag action failed:', error);
       sonnerToast.error("Failed to flag ticket");
@@ -322,10 +376,10 @@ export const TaskDetailsPage = () => {
     try {
       const response = await ticketManagementAPI.markAsGoldenTicket([ticketId]);
       
-      // Update local ticket state
-      setTicketData((prev: any) => prev ? { ...prev, is_golden_ticket: !currentGoldenStatus } : prev);
-      
       sonnerToast.success(response.message || `Golden Ticket ${!currentGoldenStatus ? 'marked' : 'unmarked'} successfully!`);
+      
+      // Refresh ticket data to ensure consistency with server
+      await refreshTicketData();
     } catch (error) {
       console.error('Golden ticket action failed:', error);
       sonnerToast.error("Failed to mark as golden ticket");
@@ -778,7 +832,7 @@ export const TaskDetailsPage = () => {
                 )}
                 {taskDetails?.task_details?.performed_by && (
                   <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Performed By</span>
+                    <span className="task-info-label-enhanced">Completed By</span>
                     <span className="task-info-separator-enhanced">:</span>
                     <span className="task-info-value-enhanced">
                       {taskDetails.task_details.performed_by}

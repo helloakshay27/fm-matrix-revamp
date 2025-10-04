@@ -1911,19 +1911,25 @@ export const TicketDetailsPage = () => {
                                   </span>
                                 }
                                 placeholder="Enter Cost"
-                                type="number"
+                                type="text"
                                 fullWidth
                                 value={row.cost}
                                 onChange={e => {
                                   const value = e.target.value;
-                                  if (Number(value) < 0) return;
-                                  setCostRows(prev =>
-                                    prev.map(r => r.id === row.id ? { ...r, cost: value } : r)
-                                  );
-                                }}
-                                inputProps={{
-                                  min: 0,
-                                  onWheel: (e) => (e.target as HTMLInputElement).blur(),
+                                  // Allow empty string
+                                  if (value === '') {
+                                    setCostRows(prev =>
+                                      prev.map(r => r.id === row.id ? { ...r, cost: value } : r)
+                                    );
+                                    return;
+                                  }
+                                  // Validate: allow only numbers and up to 2 decimal places
+                                  const regex = /^\d*\.?\d{0,2}$/;
+                                  if (regex.test(value) && Number(value) >= 0) {
+                                    setCostRows(prev =>
+                                      prev.map(r => r.id === row.id ? { ...r, cost: value } : r)
+                                    );
+                                  }
                                 }}
                                 sx={{
                                   '& .MuiInputBase-root': {
@@ -2068,52 +2074,58 @@ export const TicketDetailsPage = () => {
                             </div>
 
                             {/* Right Column (Description) */}
-                            <TextField
-                              label={
-                                <span style={{ fontSize: '14px' }}>
-                                  Description <span style={{ color: "red" }}>*</span>
-                                </span>
-                              }
-                              placeholder="Enter Description"
-                              fullWidth
-                              multiline
-                              minRows={6}
-                              value={row.description}
-                              onChange={e =>
-                                setCostRows(prev =>
-                                  prev.map(r => r.id === row.id ? { ...r, description: e.target.value } : r)
-                                )
-                              }
-                              sx={{
-                                '& .MuiInputBase-root': {
-                                  backgroundColor: '#F2F2F2',
-                                  borderRadius: '4px',
-                                },
-                                '& .MuiOutlinedInput-root': {
-                                  '& fieldset': {
-                                    borderColor: '#DAD7D0',
+                            <div className="space-y-4">
+                              <TextField
+                          label={
+                            <span style={{ fontSize: '14px' }}>
+                              Description <span style={{ color: "red" }}>*</span>
+                            </span>
+                          }
+                          placeholder="Enter Description"
+                          fullWidth
+                          multiline
+                          minRows={6}
+                          value={row.description}
+                          onChange={e =>
+                            setCostRows(prev =>
+                              prev.map(r => r.id === row.id ? { ...r, description: e.target.value } : r)
+                            )
+                          }
+                          sx={{
+                            '&.MuiFormControl-root': {
+                                    marginTop: '0 !important',
+                                    marginBottom: '0 !important',
                                   },
-                                  '&:hover fieldset': {
-                                    borderColor: '#C72030',
-                                  },
-                                  '&.Mui-focused fieldset': {
-                                    borderColor: '#C72030',
-                                  },
-                                },
-                                '& textarea': {
-                                  width: "100% !important",
-                                  resize: "both",
-                                  overflow: "auto",
-                                  boxSizing: "border-box",
-                                  display: "block",
-                                  fontSize: '14px',
-                                  padding: '10px 12px',
-                                },
-                                '& textarea[aria-hidden="true"]': {
-                                  display: "none !important",
-                                },
-                              }}
-                            />
+                            '& .MuiInputBase-root': {
+                              backgroundColor: '#F2F2F2',
+                              borderRadius: '4px',
+                            },
+                            '& .MuiOutlinedInput-root': {
+                              '& fieldset': {
+                                borderColor: '#DAD7D0',
+                              },
+                              '&:hover fieldset': {
+                                borderColor: '#C72030',
+                              },
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#C72030',
+                              },
+                            },
+                            '& textarea': {
+                              width: "100% !important",
+                              resize: "both",
+                              overflow: "auto",
+                              boxSizing: "border-box",
+                              display: "block",
+                              fontSize: '14px',
+                              padding: '10px 12px',
+                            },
+                            '& textarea[aria-hidden="true"]': {
+                              display: "none !important",
+                            },
+                          }}
+                        />
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -2176,7 +2188,7 @@ export const TicketDetailsPage = () => {
                                       {request.id}
                                     </td>
                                     <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A] font-semibold">
-                                      ₹{request.amount}
+                                      ₹{parseFloat(request.amount || '0').toFixed(2)}
                                     </td>
                                     <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
                                       {request.comment || '-'}
@@ -3358,20 +3370,20 @@ export const TicketDetailsPage = () => {
               <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-y-6 md:gap-y-8 gap-x-8 text-[12px]">
                   {[
-                    { label: 'Asset Name', value: ticketData.asset_or_service_name || '—' },
-                    { label: 'Group', value: ticketData.asset_group || '—' },
-                    { label: 'Status', value: ticketData.amc?.amc_status || '—' },
+                    { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
+                    { label: 'Group', value: ticketData.asset_group || '-' },
+                    { label: 'Status', value: ticketData.amc?.amc_status || '-' },
                     { label: 'Criticality', value: ticketData.asset_criticality ? 'Critical' : 'Non Critical' },
 
-                    { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '—' },
-                    { label: 'Sub group', value: ticketData.asset_sub_group || '—' },
-                    { label: 'AMC Status', value: ticketData.amc?.amc_status || '—' },
+                    { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
+                    { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
+                    { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
                     { label: 'Under Warranty', value: ticketData.warranty ? 'Yes' : 'No' },
 
-                    { label: 'Category', value: ticketData.asset_type_category || '—' },
-                    { label: 'Allocated', value: ticketData.assigned_to || '—' },
+                    { label: 'Category', value: ticketData.asset_type_category || '-' },
+                    { label: 'Allocated', value: ticketData.assigned_to || '-' },
                     { label: 'AMC Type', value: 'Comprehensive' }, // Not provided in API
-                    { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : 'N/A' },
+                    { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
                   ].map(field => (
                     <div key={field.label} className="flex flex-col">
                       <span className="text-[14px] tracking-wide text-[#6B6B6B] mb-1">
@@ -3577,251 +3589,258 @@ export const TicketDetailsPage = () => {
 
             {/* Cost Involve */}
             <Card className="w-full bg-white rounded-lg shadow-sm border">
-              <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9] rounded-t-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <DollarSign className="w-6 h-6 text-[#C72030]" />
+                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9] rounded-t-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <DollarSign className="w-6 h-6 text-[#C72030]" />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Cost Involve
+                      </h3>
+                    </div>
+
+                    {/* Slider Toggle (Yes / No) */}
+                    <div className="flex items-center gap-2 text-[11px] font-medium select-none">
+                      <span className={costInvolveEnabled ? "text-[#1A1A1A]" : "text-gray-400"}>
+                        Yes
+                      </span>
+                      <div
+                        role="switch"
+                        aria-checked={costInvolveEnabled}
+                        aria-label={costInvolveEnabled ? "Deactivate cost involve" : "Activate cost involve"}
+                        tabIndex={0}
+                        onClick={() => setCostInvolveEnabled(v => !v)}
+                        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCostInvolveEnabled(v => !v)}
+                        className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C72030] ${costInvolveEnabled ? 'bg-[#C72030]' : 'bg-gray-300'}`}
+                      >
+                        <span
+                          className={`inline-block w-4 h-4 transform bg-white rounded-full shadow transition-transform ${costInvolveEnabled ? 'translate-x-6' : 'translate-x-1'}`}
+                        />
+                      </div>
+                      <span className={!costInvolveEnabled ? "text-[#1A1A1A]" : "text-gray-400"}>
+                        No
+                      </span>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold uppercase text-black">
-                    Cost Involve
-                  </h3>
-                </div>
 
-                {/* Slider Toggle (Yes / No) */}
-                <div className="flex items-center gap-2 text-[11px] font-medium select-none">
-                  <span className={costInvolveEnabled ? "text-[#1A1A1A]" : "text-gray-400"}>
-                    Yes
-                  </span>
-                  <div
-                    role="switch"
-                    aria-checked={costInvolveEnabled}
-                    aria-label={costInvolveEnabled ? "Deactivate cost involve" : "Activate cost involve"}
-                    tabIndex={0}
-                    onClick={() => setCostInvolveEnabled(v => !v)}
-                    onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCostInvolveEnabled(v => !v)}
-                    className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C72030] ${costInvolveEnabled ? 'bg-[#C72030]' : 'bg-gray-300'}`}
-                  >
-                    <span
-                      className={`inline-block w-4 h-4 transform bg-white rounded-full shadow transition-transform ${costInvolveEnabled ? 'translate-x-6' : 'translate-x-1'}`}
-                    />
-                  </div>
-                  <span className={!costInvolveEnabled ? "text-[#1A1A1A]" : "text-gray-400"}>
-                    No
-                  </span>
-                </div>
-              </div>
-
-              {/* Body (rendered only when active) */}
-              {costInvolveEnabled && (
-                <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-4 sm:px-5 pt-4 pb-6">
-                  {/* Form Rows */}
-                  {costRows.map((row) => (
-                    <div key={row.id} className="mb-6 last:mb-0">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Left Column */}
-                        <div className="space-y-4">
-                          <TextField
-                            label={
-                              <span style={{ fontSize: '14px' }}>
-                                Quotation <span style={{ color: "red" }}>*</span>
-                              </span>
-                            }
-                            placeholder="Enter Quotation"
-                            fullWidth
-                            value={row.quotation}
-                            onChange={e =>
-                              setCostRows(prev =>
-                                prev.map(r => r.id === row.id ? { ...r, quotation: e.target.value } : r)
-                              )
-                            }
-                            sx={{
-                              '& .MuiInputBase-root': {
-                                backgroundColor: '#F2F2F2',
-                                borderRadius: '4px',
-                              },
-                              '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                  borderColor: '#DAD7D0',
-                                },
-                                '&:hover fieldset': {
-                                  borderColor: '#C72030',
-                                },
-                                '&.Mui-focused fieldset': {
-                                  borderColor: '#C72030',
-                                },
-                              },
-                              '& .MuiInputBase-input': {
-                                fontSize: '14px',
-                                padding: '10px 12px',
-                              },
-                            }}
-                          />
-
-                          <TextField
-                            label={
-                              <span style={{ fontSize: '14px' }}>
-                                Cost <span style={{ color: "red" }}>*</span>
-                              </span>
-                            }
-                            placeholder="Enter Cost"
-                            type="number"
-                            fullWidth
-                            value={row.cost}
-                            onChange={e => {
-                              const value = e.target.value;
-                              if (Number(value) < 0) return;
-                              setCostRows(prev =>
-                                prev.map(r => r.id === row.id ? { ...r, cost: value } : r)
-                              );
-                            }}
-                            inputProps={{
-                              min: 0,
-                              onWheel: (e) => (e.target as HTMLInputElement).blur(),
-                            }}
-                            sx={{
-                              '& .MuiInputBase-root': {
-                                backgroundColor: '#F2F2F2',
-                                borderRadius: '4px',
-                              },
-                              '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                  borderColor: '#DAD7D0',
-                                },
-                                '&:hover fieldset': {
-                                  borderColor: '#C72030',
-                                },
-                                '&.Mui-focused fieldset': {
-                                  borderColor: '#C72030',
-                                },
-                              },
-                              '& .MuiInputBase-input': {
-                                fontSize: '14px',
-                                padding: '10px 12px',
-                              },
-                            }}
-                          />
-                        </div>
-
-                        {/* Middle Column */}
-                        <div className="space-y-4">
-                          <FormControl
-                            fullWidth
-                            sx={{
-                              '& .MuiInputBase-root': {
-                                backgroundColor: '#F2F2F2',
-                                borderRadius: '4px',
-                              },
-                              '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                  borderColor: '#DAD7D0',
-                                },
-                                '&:hover fieldset': {
-                                  borderColor: '#C72030',
-                                },
-                                '&.Mui-focused fieldset': {
-                                  borderColor: '#C72030',
-                                },
-                              },
-                              '& .MuiInputBase-input': {
-                                fontSize: '14px',
-                                padding: '10px 12px',
-                              },
-                              '& .MuiInputLabel-root': {
-                                fontSize: '14px',
-                                '&.Mui-focused': {
-                                  color: '#C72030',
-                                },
-                              },
-                            }}
-                          >
-                            <InputLabel id={`vendor-label-${row.id}`}>
-                              <span style={{ fontSize: '14px' }}>
-                                Vendor <span style={{ color: "red" }}>*</span>
-                              </span>
-                            </InputLabel>
-                            <Select
-                              labelId={`vendor-label-${row.id}`}
-                              label="Vendor *"
-                              value={row.vendor_id}
-                              onChange={e => {
-                                const selectedVendorId = e.target.value;
-                                const selectedVendor = suppliers.find(s => s.id.toString() === selectedVendorId);
-                                setCostRows(prev =>
-                                  prev.map(r => r.id === row.id ? {
-                                    ...r,
-                                    vendor: selectedVendor?.company_name || '',
-                                    vendor_id: selectedVendorId
-                                  } : r)
-                                );
-                              }}
-                              disabled={loadingSuppliers}
-                              displayEmpty
-                            >
-                              <MenuItem value="">
-                                <span style={{ color: '#aaa' }}>
-                                  {loadingSuppliers ? 'Loading vendors...' : 'Select Vendor'}
-                                </span>
-                              </MenuItem>
-                              {suppliers.map((supplier) => (
-                                <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                                  {supplier.company_name || supplier.email}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-
-                          {/* File Input for Attachments */}
-                          <div>
-                            <input
-                              type="file"
-                              id={`cost-file-input-${row.id}`}
-                              multiple
-                              accept="image/*,.pdf,.doc,.docx"
-                              onChange={(e) => handleCostAttachmentChange(row.id, e)}
-                              style={{ display: 'none' }}
-                            />
-                            <label htmlFor={`cost-file-input-${row.id}`}>
-                              <MuiButton
-                                variant="outlined"
-                                component="span"
+                  {/* Body (rendered only when active) */}
+                  {costInvolveEnabled && (
+                    <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-4 sm:px-5 pt-4 pb-6">
+                      {/* Form Rows */}
+                      {costRows.map((row) => (
+                        <div key={row.id} className="mb-6 last:mb-0">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Left Column */}
+                            <div className="space-y-4">
+                              <TextField
+                                label={
+                                  <span style={{ fontSize: '14px' }}>
+                                    Quotation <span style={{ color: "red" }}>*</span>
+                                  </span>
+                                }
+                                placeholder="Enter Quotation"
                                 fullWidth
-                                startIcon={<Paperclip className="w-4 h-4" />}
+                                value={row.quotation}
+                                onChange={e =>
+                                  setCostRows(prev =>
+                                    prev.map(r => r.id === row.id ? { ...r, quotation: e.target.value } : r)
+                                  )
+                                }
                                 sx={{
-                                  borderColor: '#DAD7D0',
-                                  color: '#1A1A1A',
-                                  textTransform: 'none',
-                                  fontFamily: 'Work Sans, sans-serif',
-                                  fontWeight: 500,
-                                  borderRadius: '4px',
-                                  padding: '10px 12px',
-                                  backgroundColor: '#F2F2F2',
-                                  justifyContent: 'flex-start',
-                                  fontSize: '14px',
-                                  '&:hover': {
-                                    borderColor: '#C72030',
+                                  '& .MuiInputBase-root': {
                                     backgroundColor: '#F2F2F2',
+                                    borderRadius: '4px',
+                                  },
+                                  '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                      borderColor: '#DAD7D0',
+                                    },
+                                    '&:hover fieldset': {
+                                      borderColor: '#C72030',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                      borderColor: '#C72030',
+                                    },
+                                  },
+                                  '& .MuiInputBase-input': {
+                                    fontSize: '14px',
+                                    padding: '10px 12px',
+                                  },
+                                }}
+                              />
+
+                              <TextField
+                                label={
+                                  <span style={{ fontSize: '14px' }}>
+                                    Cost <span style={{ color: "red" }}>*</span>
+                                  </span>
+                                }
+                                placeholder="Enter Cost"
+                                type="text"
+                                fullWidth
+                                value={row.cost}
+                                onChange={e => {
+                                  const value = e.target.value;
+                                  // Allow empty string
+                                  if (value === '') {
+                                    setCostRows(prev =>
+                                      prev.map(r => r.id === row.id ? { ...r, cost: value } : r)
+                                    );
+                                    return;
+                                  }
+                                  // Validate: allow only numbers and up to 2 decimal places
+                                  const regex = /^\d*\.?\d{0,2}$/;
+                                  if (regex.test(value) && Number(value) >= 0) {
+                                    setCostRows(prev =>
+                                      prev.map(r => r.id === row.id ? { ...r, cost: value } : r)
+                                    );
+                                  }
+                                }}
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    backgroundColor: '#F2F2F2',
+                                    borderRadius: '4px',
+                                  },
+                                  '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                      borderColor: '#DAD7D0',
+                                    },
+                                    '&:hover fieldset': {
+                                      borderColor: '#C72030',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                      borderColor: '#C72030',
+                                    },
+                                  },
+                                  '& .MuiInputBase-input': {
+                                    fontSize: '14px',
+                                    padding: '10px 12px',
+                                  },
+                                }}
+                              />
+                            </div>
+
+                            {/* Middle Column */}
+                            <div className="space-y-4">
+                              <FormControl
+                                fullWidth
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    backgroundColor: '#F2F2F2',
+                                    borderRadius: '4px',
+                                  },
+                                  '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                      borderColor: '#DAD7D0',
+                                    },
+                                    '&:hover fieldset': {
+                                      borderColor: '#C72030',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                      borderColor: '#C72030',
+                                    },
+                                  },
+                                  '& .MuiInputBase-input': {
+                                    fontSize: '14px',
+                                    padding: '10px 12px',
+                                  },
+                                  '& .MuiInputLabel-root': {
+                                    fontSize: '14px',
+                                    '&.Mui-focused': {
+                                      color: '#C72030',
+                                    },
                                   },
                                 }}
                               >
-                                {row.attachmentFiles.length > 0
-                                  ? `${row.attachmentFiles.length} file(s) selected`
-                                  : 'Choose Attachments'}
-                              </MuiButton>
-                            </label>
-                            {row.attachmentFiles.length > 0 && (
-                              <div className="mt-2 text-[11px] text-gray-600">
-                                {row.attachmentFiles.map((file, idx) => (
-                                  <div key={idx} className="truncate">
-                                    • {file.name} ({(file.size / 1024).toFixed(2)} KB)
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                                <InputLabel id={`vendor-label-${row.id}`}>
+                                  <span style={{ fontSize: '14px' }}>
+                                    Vendor <span style={{ color: "red" }}>*</span>
+                                  </span>
+                                </InputLabel>
+                                <Select
+                                  labelId={`vendor-label-${row.id}`}
+                                  label="Vendor *"
+                                  value={row.vendor_id}
+                                  onChange={e => {
+                                    const selectedVendorId = e.target.value;
+                                    const selectedVendor = suppliers.find(s => s.id.toString() === selectedVendorId);
+                                    setCostRows(prev =>
+                                      prev.map(r => r.id === row.id ? {
+                                        ...r,
+                                        vendor: selectedVendor?.company_name || '',
+                                        vendor_id: selectedVendorId
+                                      } : r)
+                                    );
+                                  }}
+                                  disabled={loadingSuppliers}
+                                  displayEmpty
+                                >
+                                  <MenuItem value="">
+                                    <span style={{ color: '#aaa' }}>
+                                      {loadingSuppliers ? 'Loading vendors...' : 'Select Vendor'}
+                                    </span>
+                                  </MenuItem>
+                                  {suppliers.map((supplier) => (
+                                    <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                                      {supplier.company_name || supplier.email}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
 
-                        {/* Right Column (Description) */}
-                        <TextField
+                              {/* File Input for Attachments */}
+                              <div>
+                                <input
+                                  type="file"
+                                  id={`cost-file-input-${row.id}`}
+                                  multiple
+                                  accept="image/*,.pdf,.doc,.docx"
+                                  onChange={(e) => handleCostAttachmentChange(row.id, e)}
+                                  style={{ display: 'none' }}
+                                />
+                                <label htmlFor={`cost-file-input-${row.id}`}>
+                                  <MuiButton
+                                    variant="outlined"
+                                    component="span"
+                                    fullWidth
+                                    startIcon={<Paperclip className="w-4 h-4" />}
+                                    sx={{
+                                      borderColor: '#DAD7D0',
+                                      color: '#1A1A1A',
+                                      textTransform: 'none',
+                                      fontFamily: 'Work Sans, sans-serif',
+                                      fontWeight: 500,
+                                      borderRadius: '4px',
+                                      padding: '10px 12px',
+                                      backgroundColor: '#F2F2F2',
+                                      justifyContent: 'flex-start',
+                                      fontSize: '14px',
+                                      '&:hover': {
+                                        borderColor: '#C72030',
+                                        backgroundColor: '#F2F2F2',
+                                      },
+                                    }}
+                                  >
+                                    {row.attachmentFiles.length > 0
+                                      ? `${row.attachmentFiles.length} file(s) selected`
+                                      : 'Choose Attachments'}
+                                  </MuiButton>
+                                </label>
+                                {row.attachmentFiles.length > 0 && (
+                                  <div className="mt-2 text-[11px] text-gray-600">
+                                    {row.attachmentFiles.map((file, idx) => (
+                                      <div key={idx} className="truncate">
+                                        • {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Right Column (Description) */}
+                            <div className="space-y-4">
+                              <TextField
                           label={
                             <span style={{ fontSize: '14px' }}>
                               Description <span style={{ color: "red" }}>*</span>
@@ -3838,6 +3857,10 @@ export const TicketDetailsPage = () => {
                             )
                           }
                           sx={{
+                            '&.MuiFormControl-root': {
+                                    marginTop: '0 !important',
+                                    marginBottom: '0 !important',
+                                  },
                             '& .MuiInputBase-root': {
                               backgroundColor: '#F2F2F2',
                               borderRadius: '4px',
@@ -3867,160 +3890,161 @@ export const TicketDetailsPage = () => {
                             },
                           }}
                         />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Add / Remove Row Buttons */}
+                      <div className="flex justify-end gap-4 mt-4 pr-2">
+                        <button
+                          type="button"
+                          onClick={addCostRow}
+                          className="text-[#C72030] text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2"
+                          title="Add Row"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={removeCostRow}
+                          disabled={costRows.length <= 1}
+                          className={`text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2 ${costRows.length <= 1 ? 'opacity-50 cursor-not-allowed' : 'text-[#C72030]'
+                            }`}
+                          title="Remove Row"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Submit Cost Approval Button */}
+                      <div className="flex justify-center mt-6">
+                        <button
+                          type="button"
+                          onClick={handleSubmitCostApproval}
+                          disabled={submittingCostApproval}
+                          className={`bg-[#C72030] text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'hover:bg-[#A01828]'
+                            }`}
+                        >
+                          {submittingCostApproval ? 'Submitting...' : 'Submit Cost Approval'}
+                        </button>
+                      </div>
+
+                      {/* Table - Display actual requests data from API */}
+                      <div className="mt-6 border border-[#D9D9D9] rounded-lg overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full text-[11px]">
+                            <thead>
+                              <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
+                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5', 'Status'].map(h => (
+                                  <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
+                                    {h}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {ticketData.requests && ticketData.requests.length > 0 ? (
+                                ticketData.requests.map(request => (
+                                  <tr key={request.id} className="bg-white even:bg-[#FAFAF9] hover:bg-[#F6F4EE] transition-colors">
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A] font-medium">
+                                      {request.id}
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A] font-semibold">
+                                      ₹{parseFloat(request.amount || '0').toFixed(2)}
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
+                                      {request.comment || '-'}
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
+                                      {request.created_on}
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
+                                      {request.created_by}
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L1 === 'Approved'
+                                        ? 'bg-green-100 text-green-700'
+                                        : request.approvals?.L1 === 'Rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                        {request.approvals?.L1 || '-'}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L2 === 'Approved'
+                                        ? 'bg-green-100 text-green-700'
+                                        : request.approvals?.L2 === 'Rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                        {request.approvals?.L2 || '-'}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L3 === 'Approved'
+                                        ? 'bg-green-100 text-green-700'
+                                        : request.approvals?.L3 === 'Rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                        {request.approvals?.L3 || '-'}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L4 === 'Approved'
+                                        ? 'bg-green-100 text-green-700'
+                                        : request.approvals?.L4 === 'Rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                        {request.approvals?.L4 || '-'}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L5 === 'Approved'
+                                        ? 'bg-green-100 text-green-700'
+                                        : request.approvals?.L5 === 'Rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                        {request.approvals?.L5 || '-'}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC]">
+                                      <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
+                                        ? 'bg-yellow-100 text-yellow-700'
+                                        : request.master_status === 'Approved'
+                                          ? 'bg-green-100 text-green-700'
+                                          : request.master_status === 'Rejected'
+                                            ? 'bg-red-100 text-red-700'
+                                            : 'bg-gray-100 text-gray-700'
+                                        }`}>
+                                        {request.master_status}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr className="bg-white">
+                                  <td colSpan={11} className="px-4 py-6 border border-[#E5E2DC] text-gray-500 text-center">
+                                    <div className="flex flex-col items-center gap-2">
+                                      <DollarSign className="w-8 h-8 text-gray-300" />
+                                      <span className="text-sm">No cost approval requests found</span>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
-                  ))}
-
-                  {/* Add / Remove Row Buttons */}
-                  <div className="flex justify-end gap-4 mt-4 pr-2">
-                    <button
-                      type="button"
-                      onClick={addCostRow}
-                      className="text-[#C72030] text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2"
-                      title="Add Row"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={removeCostRow}
-                      disabled={costRows.length <= 1}
-                      className={`text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2 ${costRows.length <= 1 ? 'opacity-50 cursor-not-allowed' : 'text-[#C72030]'
-                        }`}
-                      title="Remove Row"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Submit Cost Approval Button */}
-                  <div className="flex justify-center mt-6">
-                    <button
-                      type="button"
-                      onClick={handleSubmitCostApproval}
-                      disabled={submittingCostApproval}
-                      className={`bg-[#C72030] text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-[#A01828]'
-                        }`}
-                    >
-                      {submittingCostApproval ? 'Submitting...' : 'Submit Cost Approval'}
-                    </button>
-                  </div>
-
-                  {/* Table - Display actual requests data from API */}
-                  <div className="mt-6 border border-[#D9D9D9] rounded-lg overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full text-[11px]">
-                        <thead>
-                          <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
-                            {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5', 'Status'].map(h => (
-                              <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
-                                {h}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {ticketData.requests && ticketData.requests.length > 0 ? (
-                            ticketData.requests.map(request => (
-                              <tr key={request.id} className="bg-white even:bg-[#FAFAF9] hover:bg-[#F6F4EE] transition-colors">
-                                <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A] font-medium">
-                                  {request.id}
-                                </td>
-                                <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A] font-semibold">
-                                  ₹{request.amount}
-                                </td>
-                                <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
-                                  {request.comment || '-'}
-                                </td>
-                                <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
-                                  {request.created_on}
-                                </td>
-                                <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
-                                  {request.created_by}
-                                </td>
-                                <td className="px-4 py-3 border border-[#E5E2DC] text-center">
-                                  <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L1 === 'Approved'
-                                    ? 'bg-green-100 text-green-700'
-                                    : request.approvals?.L1 === 'Rejected'
-                                      ? 'bg-red-100 text-red-700'
-                                      : 'bg-gray-100 text-gray-600'
-                                    }`}>
-                                    {request.approvals?.L1 || '-'}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 border border-[#E5E2DC] text-center">
-                                  <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L2 === 'Approved'
-                                    ? 'bg-green-100 text-green-700'
-                                    : request.approvals?.L2 === 'Rejected'
-                                      ? 'bg-red-100 text-red-700'
-                                      : 'bg-gray-100 text-gray-600'
-                                    }`}>
-                                    {request.approvals?.L2 || '-'}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 border border-[#E5E2DC] text-center">
-                                  <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L3 === 'Approved'
-                                    ? 'bg-green-100 text-green-700'
-                                    : request.approvals?.L3 === 'Rejected'
-                                      ? 'bg-red-100 text-red-700'
-                                      : 'bg-gray-100 text-gray-600'
-                                    }`}>
-                                    {request.approvals?.L3 || '-'}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 border border-[#E5E2DC] text-center">
-                                  <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L4 === 'Approved'
-                                    ? 'bg-green-100 text-green-700'
-                                    : request.approvals?.L4 === 'Rejected'
-                                      ? 'bg-red-100 text-red-700'
-                                      : 'bg-gray-100 text-gray-600'
-                                    }`}>
-                                    {request.approvals?.L4 || '-'}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 border border-[#E5E2DC] text-center">
-                                  <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L5 === 'Approved'
-                                    ? 'bg-green-100 text-green-700'
-                                    : request.approvals?.L5 === 'Rejected'
-                                      ? 'bg-red-100 text-red-700'
-                                      : 'bg-gray-100 text-gray-600'
-                                    }`}>
-                                    {request.approvals?.L5 || '-'}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 border border-[#E5E2DC]">
-                                  <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
-                                    ? 'bg-yellow-100 text-yellow-700'
-                                    : request.master_status === 'Approved'
-                                      ? 'bg-green-100 text-green-700'
-                                      : request.master_status === 'Rejected'
-                                        ? 'bg-red-100 text-red-700'
-                                        : 'bg-gray-100 text-gray-700'
-                                    }`}>
-                                    {request.master_status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr className="bg-white">
-                              <td colSpan={11} className="px-4 py-6 border border-[#E5E2DC] text-gray-500 text-center">
-                                <div className="flex flex-col items-center gap-2">
-                                  <DollarSign className="w-8 h-8 text-gray-300" />
-                                  <span className="text-sm">No cost approval requests found</span>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Card>
+                  )}
+                </Card>
 
             {/* Ticket Closure (Figma-aligned) */}
             <Card className="w-full bg-white rounded-lg shadow-sm border">
@@ -4198,9 +4222,7 @@ export const TicketDetailsPage = () => {
                   <div className="flex items-start text-[12px]">
                     <span className="w-[120px] text-[#6B6B6B]">Review Date</span>
                     <span className="ml-4 font-semibold text-[#1A1A1A]">
-                      {ticketData.review_date
-                        ? formatDate(ticketData.review_date)
-                        : '-'}
+                      {ticketData.review_tracking ? ticketData.review_tracking : '-'}
                     </span>
                   </div>
                   <div>
@@ -5679,7 +5701,7 @@ export const TicketDetailsPage = () => {
                           {request.id || `REQ-${index + 1}`}
                         </TableCell>
                         <TableCell>
-                          {request.amount || "Not Provided"}
+                          ₹{parseFloat(request.amount || '0').toFixed(2)}
                         </TableCell>
                         <TableCell>
                           {request.comment || "No comments"}

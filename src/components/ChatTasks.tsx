@@ -3,7 +3,7 @@ import { EnhancedTable } from './enhanced-table/EnhancedTable';
 import { useAppDispatch } from '@/store/hooks';
 import { toast } from 'sonner';
 import { fetchIndividualChatTasks } from '@/store/slices/channelSlice';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
 const columns = [
     {
@@ -32,8 +32,19 @@ const columns = [
     },
 ];
 
+const formattedData = (data) => {
+    return data.map((item) => ({
+        id: item.id,
+        title: item.title,
+        responsible: item.responsible_person.name,
+        duration: item.duration,
+        endDate: item.target_date,
+    }));
+}
+
 const ChatTasks = () => {
     const { id } = useParams();
+    const path = useLocation().pathname;
     const dispatch = useAppDispatch();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
@@ -41,9 +52,10 @@ const ChatTasks = () => {
     const [tasks, setTasks] = useState([])
 
     const getChatTasks = async () => {
+        const param = path.includes('messages') ? 'conversation_id_eq' : 'project_space_id_eq';
         try {
-            const response = await dispatch(fetchIndividualChatTasks({ baseUrl, token, id })).unwrap();
-            setTasks(response)
+            const response = await dispatch(fetchIndividualChatTasks({ baseUrl, token, id, param })).unwrap();
+            setTasks(formattedData(response))
         } catch (error) {
             console.log(error)
             toast.error(error)
@@ -57,14 +69,14 @@ const ChatTasks = () => {
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
             case 'title':
-                return <span className="font-normal text-black">{item[columnKey]}</span>;
+                return <div className="font-normal text-black max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">{item[columnKey]}</div>;
             case 'responsible':
             case 'endDate':
-                return <span className="italic text-gray-600">{item[columnKey]}</span>;
+                return <span className="text-gray-600">{item[columnKey]}</span>;
             case 'duration':
                 return (
-                    <div className="inline-block bg-gray-100 text-gray-600 italic px-4 py-2 rounded-sm">
-                        {item[columnKey]}
+                    <div className="inline-block px-4 py-2 rounded-sm">
+                        {item[columnKey] ? `${item[columnKey]} hours` : '-'}
                     </div>
                 );
             default:

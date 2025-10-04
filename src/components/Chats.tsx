@@ -16,7 +16,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ClipboardPlus, X } from "lucide-react";
+import { ClipboardPlus, FileText, X } from "lucide-react";
 import CreateChatTask from "./CreateChatTask";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -24,11 +24,10 @@ import { createChatTask } from "@/store/slices/channelSlice";
 import { useParams } from "react-router-dom";
 
 const Chats = ({ messages }) => {
-    const { id } = useParams()
+    const { id } = useParams();
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
-
     const bottomRef = useRef(null);
 
     const [selectedMessage, setSelectedMessage] = useState(null);
@@ -42,13 +41,92 @@ const Chats = ({ messages }) => {
 
     const handleCreateTask = async (payload) => {
         try {
-            await dispatch(createChatTask({ baseUrl, token, data: payload })).unwrap();
+            await dispatch(
+                createChatTask({ baseUrl, token, data: payload })
+            ).unwrap();
             toast.success("Chat task created successfully");
             setOpenTaskModal(false);
         } catch (error) {
-            console.log(error)
-            toast.error(error)
+            console.log(error);
+            toast.error(error);
         }
+    };
+
+    const renderAttachments = (attachments) => {
+        if (!attachments || attachments.length === 0) return null;
+
+        const imageFiles = attachments.filter((a) =>
+            a?.content_type?.startsWith("image/")
+        );
+        const otherFiles = attachments.filter(
+            (a) => !a?.content_type?.startsWith("image/")
+        );
+
+        return (
+            <div className="mt-2 space-y-2">
+                {/* 🖼️ Image Grid */}
+                {imageFiles.length > 0 && (
+                    <div
+                        className={`grid gap-2 ${imageFiles.length === 1
+                            ? "grid-cols-1"
+                            : imageFiles.length === 2
+                                ? "grid-cols-2"
+                                : "grid-cols-2"
+                            }`}
+                    >
+                        {imageFiles.slice(0, 4).map((file, i) => {
+                            const url = file?.url || file;
+                            const name = file?.filename || url?.split("/").pop();
+                            const extraCount =
+                                imageFiles.length > 4 ? imageFiles.length - 4 : 0;
+
+                            return (
+                                <div
+                                    key={i}
+                                    className="relative group overflow-hidden rounded-lg shadow-sm border border-gray-200"
+                                >
+                                    <a href={url} target="_blank" rel="noopener noreferrer">
+                                        <img
+                                            src={url}
+                                            alt={name}
+                                            className="object-cover w-full h-32 sm:h-40 transition-transform duration-200 group-hover:scale-105"
+                                        />
+                                        {i === 3 && extraCount > 0 && (
+                                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white font-medium text-lg">
+                                                +{extraCount} more
+                                            </div>
+                                        )}
+                                    </a>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* 📄 File Attachments */}
+                {otherFiles.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                        {otherFiles.map((file, i) => {
+                            const url = file?.url || file;
+                            const name = file?.filename || url?.split("/").pop();
+
+                            return (
+                                <a
+                                    key={i}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 border border-gray-200 transition"
+                                >
+                                    <FileText className="w-4 h-4 text-gray-600" />
+                                    <span className="truncate max-w-[150px]">{name}</span>
+                                </a>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        );
     };
 
     return (
@@ -79,8 +157,18 @@ const Chats = ({ messages }) => {
                                             {(message.user_name || "U")[0].toUpperCase()}
                                         </div>
                                     )}
-                                    <div className="bg-white rounded-2xl px-4 py-2 text-sm shadow max-w-xs">
-                                        {message.body}
+                                    <div
+                                        className={`rounded-2xl px-4 py-2 text-sm shadow max-w-xs bg-white`}
+                                    >
+                                        {renderAttachments(message.attachments)}
+                                        {message.body && (
+                                            <div
+                                                className={`whitespace-pre-line break-words ${message.attachments?.length > 0 ? "mt-2" : ""
+                                                    }`}
+                                            >
+                                                {message.body}
+                                            </div>
+                                        )}
                                     </div>
                                     {isMe && (
                                         <div className="w-8 h-8 rounded-full bg-[#F2EEE9] text-[#C72030] text-sm flex items-center justify-center mt-[2px]">
@@ -136,7 +224,7 @@ const Chats = ({ messages }) => {
                         <Button
                             onClick={() => {
                                 setSelectedMessage(null);
-                                setOpenTaskModal(true); // 👈 open MUI modal instead
+                                setOpenTaskModal(true);
                             }}
                         >
                             Yes
