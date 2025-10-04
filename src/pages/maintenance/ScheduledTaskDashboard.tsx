@@ -865,7 +865,7 @@ export const ScheduledTaskDashboard = () => {
 
         <TabsContent value="list" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Quick Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
             {statusCards.map((card, index) => {
               const getStatusCount = (status: string) => {
                 switch (status) {
@@ -881,25 +881,19 @@ export const ScheduledTaskDashboard = () => {
               return (
                 <div
                   key={index}
-                  className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer transition-all duration-200 ${selectedStatus === card.status
-                    ? 'bg-[#e6e2da] hover:bg-[#e6e2da]'
-                    : 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
-                    }`}
+                  className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
+                    selectedStatus === card.status ? 'shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]' : ''
+                  }`}
                   onClick={() => handleStatusCardClick(card.status)}
                 >
-                  <div className={`w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 ${selectedStatus === card.status ? 'bg-[#C4B89D54]' : 'bg-[#C4B89D54]'
-                    }`}>
-                    <card.icon
-                      className="w-4 h-4 sm:w-6 sm:h-6"
-                      style={{ color: selectedStatus === card.status ? '#C72030' : '#C72030' }}
-                    />
+                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                    <card.icon className="w-6 h-6 text-[#C72030]" />
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                  <div>
+                    <div className="text-2xl font-semibold text-[#1A1A1A]">
                       {getStatusCount(card.status)}
                     </div>
-                    <div className={`text-xs sm:text-sm font-medium leading-tight ${selectedStatus === card.status ? 'text-muted-foreground' : 'text-muted-foreground'
-                      }`}>
+                    <div className="text-sm font-medium text-[#1A1A1A]">
                       {card.title}
                     </div>
                   </div>
