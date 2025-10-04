@@ -294,9 +294,11 @@ export const TaskSubmissionPage: React.FC = () => {
       switch (step) {
         case 1: // Checkpoint
           return dynamicChecklist.every((item) => {
-            const answer = formData.checklist[item.id]?.value;
-            // Check if there's any value (not empty string, not empty array)
-            return answer && answer !== "" && (!Array.isArray(answer) || answer.length > 0);
+            if (item.required) {
+              const answer = formData.checklist[item.id]?.value;
+              return answer && answer !== "" && (!Array.isArray(answer) || answer.length > 0);
+            }
+            return true; // Non-required items are always valid
           });
         case 2: // Preview
           return true;
@@ -312,9 +314,9 @@ export const TaskSubmissionPage: React.FC = () => {
           return dynamicChecklist.every((item) => {
             if (item.required) {
               const answer = formData.checklist[item.id]?.value;
-              return answer && (!Array.isArray(answer) || answer.length > 0);
+              return answer && answer !== "" && (!Array.isArray(answer) || answer.length > 0);
             }
-            return true;
+            return true; // Non-required items are always valid
           });
         case 3:
           return !!formData.afterPhoto;
@@ -380,8 +382,11 @@ export const TaskSubmissionPage: React.FC = () => {
   const steps: TaskSubmissionStep[] = generateSteps();
 
   const handleStepClick = (stepId: number) => {
-    // Allow navigation to completed steps or current step
-    if (stepId <= Math.max(...completedSteps, currentStep)) {
+    // Allow navigation to completed steps or current step, or next step if current is valid
+    const maxAccessibleStep = Math.max(...completedSteps, currentStep);
+    const canProceedToNext = currentStep < steps.length && isStepDataValid(currentStep);
+    
+    if (stepId <= maxAccessibleStep || (stepId === currentStep + 1 && canProceedToNext)) {
       setCurrentStep(stepId);
     }
   };
@@ -409,6 +414,22 @@ export const TaskSubmissionPage: React.FC = () => {
       setFormData((prev) => ({ ...prev, checklist: initialChecklist }));
     }
   }, [taskDetails]);
+
+  // Auto-mark steps as completed when they have valid data
+  useEffect(() => {
+    const newCompletedSteps: number[] = [];
+    
+    steps.forEach((step) => {
+      if (step.id < currentStep && isStepDataValid(step.id)) {
+        newCompletedSteps.push(step.id);
+      }
+    });
+
+    setCompletedSteps((prev) => {
+      const combined = [...new Set([...prev, ...newCompletedSteps])];
+      return combined;
+    });
+  }, [formData, currentStep, steps]);
 
   // Fetch task details
   useEffect(() => {
@@ -504,17 +525,18 @@ export const TaskSubmissionPage: React.FC = () => {
           console.log("Current form data:", formData.checklist);
           
           for (const item of dynamicChecklist) {
-            console.log(`Checking item: ${item.question}, required: ${item.required}`);
-            const answer = formData.checklist[item.id]?.value;
-            console.log(`Answer for ${item.id}:`, answer);
-            
-            // For now, let's make validation less strict - only check if there's any value
-            // if (!answer || answer === "" || (Array.isArray(answer) && answer.length === 0)) {
-            //   sonnerToast.error(
-            //     `Required Field. Please answer: ${item.question}`
-            //   );
-            //   return false;
-            // }
+            if (item.required) {
+              console.log(`Checking required item: ${item.question}`);
+              const answer = formData.checklist[item.id]?.value;
+              console.log(`Answer for ${item.id}:`, answer);
+              
+              if (!answer || answer === "" || (Array.isArray(answer) && answer.length === 0)) {
+                sonnerToast.error(
+                  `Required Field. Please answer: ${item.question}`
+                );
+                return false;
+              }
+            }
           }
           break;
         case 2: // Preview
@@ -538,17 +560,18 @@ export const TaskSubmissionPage: React.FC = () => {
           console.log("Current form data:", formData.checklist);
           
           for (const item of dynamicChecklist) {
-            console.log(`Checking item: ${item.question}, required: ${item.required}`);
-            const answer = formData.checklist[item.id]?.value;
-            console.log(`Answer for ${item.id}:`, answer);
-            
-            // For now, let's make validation less strict - only check if there's any value
-            // if (!answer || answer === "" || (Array.isArray(answer) && answer.length === 0)) {
-            //   sonnerToast.error(
-            //     `Required Field. Please answer: ${item.question}`
-            //   );
-            //   return false;
-            // }
+            if (item.required) {
+              console.log(`Checking required item: ${item.question}`);
+              const answer = formData.checklist[item.id]?.value;
+              console.log(`Answer for ${item.id}:`, answer);
+              
+              if (!answer || answer === "" || (Array.isArray(answer) && answer.length === 0)) {
+                sonnerToast.error(
+                  `Required Field. Please answer: ${item.question}`
+                );
+                return false;
+              }
+            }
           }
           break;
         case 3:
@@ -731,6 +754,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             className="font-medium text-gray-900"
                           >
                             {index + 1}. {item.question}
+                            {item.required && <span className="text-red-500 ml-1">*</span>}
                           </Typography>
 
                           {item.type === "text" && (
@@ -802,6 +826,39 @@ export const TaskSubmissionPage: React.FC = () => {
                                 />
                               ))}
                             </RadioGroup>
+                          )}
+
+                          {item.type === "checkbox" && (
+                            <div className="ml-4">
+                              {item.options?.map((option) => (
+                                <FormControlLabel
+                                  key={option}
+                                  control={
+                                    <Checkbox
+                                      checked={
+                                        Array.isArray(formData.checklist[item.id]?.value) &&
+                                        formData.checklist[item.id].value.includes(option)
+                                      }
+                                      onChange={(e) => {
+                                        const currentValues = Array.isArray(formData.checklist[item.id]?.value)
+                                          ? formData.checklist[item.id].value
+                                          : [];
+                                        const newValues = e.target.checked
+                                          ? [...currentValues, option]
+                                          : currentValues.filter((v: string) => v !== option);
+                                        handleChecklistChange(item.id, "value", newValues);
+                                      }}
+                                      sx={{
+                                        color: "#C72030",
+                                        "&.Mui-checked": { color: "#C72030" },
+                                      }}
+                                    />
+                                  }
+                                  label={option}
+                                  className="block mb-1"
+                                />
+                              ))}
+                            </div>
                           )}
 
                           <div className="ml-4">
@@ -937,7 +994,9 @@ export const TaskSubmissionPage: React.FC = () => {
                           >
                             <div
                               className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                answer ? "bg-green-500" : "bg-gray-400"
+                                answer && (Array.isArray(answer) ? answer.length > 0 : answer !== "")
+                                  ? "bg-green-500" 
+                                  : "bg-gray-400"
                               }`}
                             >
                               <span className="text-white text-xs font-bold">
@@ -961,7 +1020,11 @@ export const TaskSubmissionPage: React.FC = () => {
                                     answer ? "text-green-600" : "text-gray-600"
                                   }`}
                                 >
-                                  {answer || "Not answered"}
+                                  {Array.isArray(answer) 
+                                    ? answer.length > 0 
+                                      ? answer.join(", ") 
+                                      : "Not answered"
+                                    : answer || "Not answered"}
                                 </span>
                               </Typography>
                               {comment && (
@@ -1047,16 +1110,8 @@ export const TaskSubmissionPage: React.FC = () => {
                                   <InputLabel>Enter Your Name</InputLabel>
                                   <MuiSelect
                                     value={getAssignedUserName()}
-                                    onChange={(e) =>
-                                      setFormData((prev) => ({
-                                        ...prev,
-                                        beforePhotoName: e.target.value,
-                                      }))
-                                    }
                                     label="Enter Your Name"
-                                    disabled={
-                                      currentStep > 1 && !steps[0].active
-                                    }
+                                    disabled={true}
                                   >
                                     <MenuItem value={getAssignedUserName()}>
                                       {getAssignedUserName()}
@@ -1170,16 +1225,13 @@ export const TaskSubmissionPage: React.FC = () => {
                           >
                             <InputLabel>Enter Your Name</InputLabel>
                             <MuiSelect
-                              value={
-                                formData.beforePhotoName || "Abdul Ghaffar"
-                              }
+                              value={getAssignedUserName()}
                               label="Enter Your Name"
                               disabled
                             >
-                              <MenuItem value="Abdul Ghaffar">
-                                Abdul Ghaffar
+                              <MenuItem value={getAssignedUserName()}>
+                                {getAssignedUserName()}
                               </MenuItem>
-                              <MenuItem value="John Doe">John Doe</MenuItem>
                             </MuiSelect>
                           </FormControl>
                         </div>
@@ -1219,7 +1271,48 @@ export const TaskSubmissionPage: React.FC = () => {
                             className="font-medium text-gray-900"
                           >
                             {index + 1}. {item.question}
+                            {item.required && <span className="text-red-500 ml-1">*</span>}
                           </Typography>
+
+                          {item.type === "text" && (
+                            <TextField
+                              placeholder="Enter your value..."
+                              fullWidth
+                              variant="outlined"
+                              type={
+                                item.question
+                                  .toLowerCase()
+                                  .includes("voltage") ||
+                                item.question
+                                  .toLowerCase()
+                                  .includes("current") ||
+                                item.question.toLowerCase().includes("power") ||
+                                item.question.toLowerCase().includes("time")
+                                  ? "number"
+                                  : "text"
+                              }
+                              value={formData.checklist[item.id]?.value || ""}
+                              onChange={(e) =>
+                                handleChecklistChange(
+                                  item.id,
+                                  "value",
+                                  e.target.value
+                                )
+                              }
+                              className="ml-4"
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  backgroundColor: "white",
+                                  "& fieldset": {
+                                    borderColor: "#D1D5DB",
+                                  },
+                                  "&:hover fieldset": {
+                                    borderColor: "#9CA3AF",
+                                  },
+                                },
+                              }}
+                            />
+                          )}
 
                           {item.type === "radio" && (
                             <RadioGroup
@@ -1250,6 +1343,39 @@ export const TaskSubmissionPage: React.FC = () => {
                                 />
                               ))}
                             </RadioGroup>
+                          )}
+
+                          {item.type === "checkbox" && (
+                            <div className="ml-4">
+                              {item.options?.map((option) => (
+                                <FormControlLabel
+                                  key={option}
+                                  control={
+                                    <Checkbox
+                                      checked={
+                                        Array.isArray(formData.checklist[item.id]?.value) &&
+                                        formData.checklist[item.id].value.includes(option)
+                                      }
+                                      onChange={(e) => {
+                                        const currentValues = Array.isArray(formData.checklist[item.id]?.value)
+                                          ? formData.checklist[item.id].value
+                                          : [];
+                                        const newValues = e.target.checked
+                                          ? [...currentValues, option]
+                                          : currentValues.filter((v: string) => v !== option);
+                                        handleChecklistChange(item.id, "value", newValues);
+                                      }}
+                                      sx={{
+                                        color: "#C72030",
+                                        "&.Mui-checked": { color: "#C72030" },
+                                      }}
+                                    />
+                                  }
+                                  label={option}
+                                  className="block mb-1"
+                                />
+                              ))}
+                            </div>
                           )}
 
                           <div className="ml-4">
@@ -1390,16 +1516,13 @@ export const TaskSubmissionPage: React.FC = () => {
                           >
                             <InputLabel>Enter Your Name</InputLabel>
                             <MuiSelect
-                              value={
-                                formData.beforePhotoName || "Abdul Ghaffar"
-                              }
+                              value={getAssignedUserName()}
                               label="Enter Your Name"
                               disabled
                             >
-                              <MenuItem value="Abdul Ghaffar">
-                                Abdul Ghaffar
+                              <MenuItem value={getAssignedUserName()}>
+                                {getAssignedUserName()}
                               </MenuItem>
-                              <MenuItem value="John Doe">John Doe</MenuItem>
                             </MuiSelect>
                           </FormControl>
                         </div>
@@ -1572,26 +1695,13 @@ export const TaskSubmissionPage: React.FC = () => {
                                 >
                                   <InputLabel>Enter Your Name</InputLabel>
                                   <MuiSelect
-                                    value={
-                                      formData.afterPhotoName ||
-                                      formData.beforePhotoName ||
-                                      ""
-                                    }
-                                    onChange={(e) =>
-                                      setFormData((prev) => ({
-                                        ...prev,
-                                        afterPhotoName: e.target.value,
-                                      }))
-                                    }
+                                    value={getAssignedUserName()}
                                     label="Enter Your Name"
-                                    disabled={
-                                      currentStep > 3 && !steps[2].active
-                                    }
+                                    disabled={true}
                                   >
                                     <MenuItem value={getAssignedUserName()}>
                                       {getAssignedUserName()}
                                     </MenuItem>
-                                  
                                   </MuiSelect>
                                 </FormControl>
                               </div>
@@ -1810,6 +1920,8 @@ export const TaskSubmissionPage: React.FC = () => {
                                   ? "bg-green-500"
                                   : answer === "No"
                                   ? "bg-red-500"
+                                  : answer && (Array.isArray(answer) ? answer.length > 0 : answer !== "")
+                                  ? "bg-green-500"
                                   : "bg-gray-400"
                               }`}
                             >
@@ -1835,10 +1947,16 @@ export const TaskSubmissionPage: React.FC = () => {
                                       ? "text-green-600"
                                       : answer === "No"
                                       ? "text-red-600"
+                                      : answer && (Array.isArray(answer) ? answer.length > 0 : true)
+                                      ? "text-green-600"
                                       : "text-gray-600"
                                   }`}
                                 >
-                                  {answer || "Not answered"}
+                                  {Array.isArray(answer) 
+                                    ? answer.length > 0 
+                                      ? answer.join(", ") 
+                                      : "Not answered"
+                                    : answer || "Not answered"}
                                 </span>
                               </Typography>
                               {comment && (
@@ -1963,8 +2081,16 @@ export const TaskSubmissionPage: React.FC = () => {
 
       <div className="text-center mt-6 mb-4">
         <Typography variant="body2" className="text-gray-600">
-          You've completed {Math.max(...completedSteps, 0)} out of{" "}
-          {steps.length} steps.
+          You've completed {completedSteps.length} out of{" "}
+          {steps.length} steps. 
+          {dynamicChecklist.length > 0 && (
+            <span className="ml-2">
+              ({Math.round((Object.keys(formData.checklist).filter(key => {
+                const item = formData.checklist[key];
+                return item.value && (Array.isArray(item.value) ? item.value.length > 0 : item.value !== "");
+              }).length / dynamicChecklist.length) * 100)}% checklist completed)
+            </span>
+          )}
         </Typography>
       </div>
 
