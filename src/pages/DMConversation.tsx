@@ -6,11 +6,12 @@ import { useAppDispatch } from "@/store/hooks";
 import { fetchConversation, fetchConversationMessages, sendMessage } from "@/store/slices/channelSlice";
 import { Paperclip, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const DMConversation = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const { isSidebarCollapsed } = useLayout();
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem("baseUrl");
@@ -136,10 +137,10 @@ const DMConversation = () => {
                     </div>
                 </div>
 
-                {/* <button className="text-sm flex items-center space-x-1">
+                <button className="text-sm flex items-center space-x-1" onClick={() => navigate('/vas/channels')}>
                     <span className="text-xl text-black">&larr;</span>
                     <span className="text-[#C72030]">Back</span>
-                </button> */}
+                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">

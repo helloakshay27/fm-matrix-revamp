@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, X, FileText, User, MapPin, Eye, Edit, Star, Trash2, Flag } from 'lucide-react';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast as sonnerToast } from "sonner";
@@ -511,6 +513,184 @@ export const TaskDetailsPage = () => {
     }
   };
 
+  // Activity table columns configuration
+  const activityColumns: ColumnConfig[] = [
+    { key: 'helpText', label: 'Help Text', sortable: true, defaultVisible: true },
+    { key: 'activities', label: 'Activities', sortable: true, defaultVisible: true },
+    { key: 'input', label: 'Input', sortable: true, defaultVisible: true },
+    { key: 'comments', label: 'Comments', sortable: true, defaultVisible: true },
+    { key: 'weightage', label: 'Weightage', sortable: true, defaultVisible: true },
+    { key: 'rating', label: 'Rating', sortable: true, defaultVisible: true },
+    { key: 'score', label: 'Score', sortable: true, defaultVisible: true },
+  ];
+
+  // Ticket table columns configuration
+  const ticketColumns: ColumnConfig[] = [
+    { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
+    { key: 'ticket_number', label: 'Ticket ID', sortable: true, defaultVisible: true },
+    { key: 'heading', label: 'Description', sortable: true, defaultVisible: true },
+    { key: 'issue_type', label: 'Type', sortable: true, defaultVisible: true },
+    { key: 'category', label: 'Category', sortable: true, defaultVisible: true },
+    { key: 'priority', label: 'Priority', sortable: true, defaultVisible: true },
+    { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+    { key: 'posted_by', label: 'Created By', sortable: true, defaultVisible: true },
+    { key: 'assigned_to', label: 'Assigned To', sortable: true, defaultVisible: true },
+    { key: 'location', label: 'Location', sortable: true, defaultVisible: true },
+    { key: 'escalation', label: 'Escalation', sortable: true, defaultVisible: true },
+    { key: 'created_at', label: 'Created', sortable: true, defaultVisible: true },
+  ];
+
+  // Activity table cell renderer
+  const renderActivityCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'helpText':
+        return <span className="text-xs">{item.helpText}</span>;
+      case 'activities':
+        return <span className="text-xs">{item.activities}</span>;
+      case 'input':
+        return <span className="text-xs">{Array.isArray(item.input) ? item.input.join(', ') : item.input}</span>;
+      case 'comments':
+        return <span className="text-xs">{item.comments}</span>;
+      case 'weightage':
+        return <span className="text-xs">{item.weightage}</span>;
+      case 'rating':
+        return <span className="text-xs">{item.rating}</span>;
+      case 'score':
+        return <span className="text-xs">{item.score}</span>;
+      default:
+        return item[columnKey] || '-';
+    }
+  };
+
+  // Ticket table cell renderer
+  const renderTicketCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'actions':
+        return (
+          <div className="flex items-center gap-1">
+            <button 
+              className="p-1 hover:bg-gray-100 rounded"
+              onClick={() => handleTicketView(item.ticket_number)}
+              title="View ticket details"
+            >
+              <Eye className="w-4 h-4 text-gray-600" />
+            </button>
+            <button 
+              className={`p-1 hover:bg-gray-100 rounded transition-colors ${
+                item.is_flagged ? 'text-red-500 hover:text-red-600' : 'text-gray-400 hover:text-red-400'
+              }`}
+              onClick={() => handleTicketFlag(item.id, item.is_flagged)}
+              title={item.is_flagged ? "Remove flag" : "Flag ticket"}
+            >
+              <Flag className={`w-4 h-4 transition-all duration-200 ${
+                item.is_flagged 
+                  ? 'text-red-500 fill-red-500' 
+                  : 'text-gray-600'
+              }`} />
+            </button>
+            <button 
+              className={`p-1 hover:bg-gray-100 rounded transition-colors ${
+                item.is_golden_ticket ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-yellow-400'
+              }`}
+              onClick={() => handleTicketGoldenTicket(item.id, item.is_golden_ticket)}
+              title={item.is_golden_ticket ? "Remove golden ticket" : "Mark as golden ticket"}
+            >
+              <Star className={`w-4 h-4 transition-all duration-200 hover:scale-110 ${
+                item.is_golden_ticket
+                  ? 'text-yellow-500 fill-yellow-500'
+                  : 'text-gray-600'
+              }`} />
+            </button>
+          </div>
+        );
+      case 'ticket_number':
+        return <span className="text-xs font-medium">{item.ticket_number}</span>;
+      case 'heading':
+        return <span className="text-xs">{item.heading || 'N/A'}</span>;
+      case 'issue_type':
+        return (
+          <Badge className="px-2 py-1 text-xs bg-blue-100 text-blue-700">
+            {item.issue_type || 'N/A'}
+          </Badge>
+        );
+      case 'category':
+        return (
+          <div className="space-y-1">
+            <div className="font-medium text-xs">{item.category_type || 'N/A'}</div>
+            {item.sub_category_type && (
+              <div className="text-gray-500 text-xs">{item.sub_category_type}</div>
+            )}
+          </div>
+        );
+      case 'priority':
+        return (
+          <div className="space-y-1">
+            <Badge className={`px-2 py-1 text-xs ${
+              item.priority === 'P1' ? 'bg-red-100 text-red-700' :
+              item.priority === 'P2' ? 'bg-yellow-100 text-yellow-700' :
+              item.priority === 'P3' ? 'bg-green-100 text-green-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {item.priority || 'N/A'}
+            </Badge>
+            <div className="text-xs text-gray-500">{item.priority_status || 'N/A'}</div>
+          </div>
+        );
+      case 'status':
+        return (
+          <Badge 
+            className="px-2 py-1 text-xs text-white"
+            style={{ 
+              backgroundColor: item.status?.color_code || item.color_code || '#60A8C0',
+              color: 'white'
+            }}
+          >
+            {item.status?.name || item.issue_status || 'N/A'}
+          </Badge>
+        );
+      case 'posted_by':
+        return <span className="text-xs">{item.posted_by || 'N/A'}</span>;
+      case 'assigned_to':
+        return (
+          <div className="space-y-1">
+            <div className="font-medium text-xs">{item.assigned_to || 'N/A'}</div>
+            <div className="text-gray-500 text-xs">{item.department_name || 'N/A'}</div>
+          </div>
+        );
+      case 'location':
+        return (
+          <div className="space-y-1">
+            <div className="font-medium text-xs">{item.pms_site_name || item.site_name || 'N/A'}</div>
+            <div className="text-gray-500 text-xs">
+              {item.building_name && `${item.building_name}`}
+              {item.floor_name && ` - ${item.floor_name}`}
+            </div>
+          </div>
+        );
+      case 'escalation':
+        return (
+          <div className="space-y-1">
+            <div className={`text-xs px-2 py-1 rounded ${
+              item.response_escalation === 'Breached' ? 'bg-red-100 text-red-700' :
+              'bg-green-100 text-green-700'
+            }`}>
+              Response: {item.response_escalation || 'N/A'}
+            </div>
+            <div className={`text-xs px-2 py-1 rounded ${
+              item.resolution_escalation === 'Breached' ? 'bg-red-100 text-red-700' :
+              'bg-green-100 text-green-700'
+            }`}>
+              Resolution: {item.resolution_escalation || 'N/A'}
+            </div>
+          </div>
+        );
+      case 'created_at':
+        return <span className="text-xs">{formatDate(item.created_at)}</span>;
+      default:
+        return item[columnKey] || '-';
+    }
+  };
+
   // --- UI ---
 
   if (loading) {
@@ -938,54 +1118,17 @@ export const TaskDetailsPage = () => {
                     <h4 className="text-sm font-medium text-gray-700 mb-3 bg-gray-100 px-3 py-2 rounded">
                       {taskDetails?.task_details?.task_name || 'Checklist Items'}
                     </h4>
-                    <div className="overflow-x-auto">
-                      <Table className="w-full">
-                        <TableHeader>
-                          <TableRow className="bg-gray-50">
-                            <TableHead className="text-xs font-medium text-gray-600">Help Text</TableHead>
-                            <TableHead className="text-xs font-medium text-gray-600">Activities</TableHead>
-                            <TableHead className="text-xs font-medium text-gray-600">Input</TableHead>
-                            <TableHead className="text-xs font-medium text-gray-600">Comments</TableHead>
-                            <TableHead className="text-xs font-medium text-gray-600">Weightage</TableHead>
-                            <TableHead className="text-xs font-medium text-gray-600">Rating</TableHead>
-                            <TableHead className="text-xs font-medium text-gray-600">Score</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {(taskDetails?.activity?.resp || []).map((item: any, index: number) => (
-                            <TableRow key={item.name || index}>
-                              <TableCell className="text-xs">
-                                {item.hint || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {item.label || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {item.userData && item.userData.length > 0 
-                                  ? item.userData.join(', ')
-                                  : '-'
-                                }
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {item.comment || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {item.weightage || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {item.rating || '-'}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {item.score || '-'}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                    <EnhancedTable
+                      data={getActivityData()}
+                      columns={activityColumns}
+                      renderCell={renderActivityCell}
+                      storageKey="task-activity-table"
+                      emptyMessage="No activities found for this task."
+                      hideTableExport={true}
+                      hideTableSearch={true}
+                      hideColumnsButton={true}
+                    />
                   </div>
-
-                
                 </div>
               ) : (
                 <p className="text-gray-500 text-center py-8">
@@ -1012,159 +1155,16 @@ export const TaskDetailsPage = () => {
                   <p className="text-gray-500 text-sm">Loading ticket details...</p>
                 </div>
               ) : ticketData ? (
-                <>
-                  <div className="overflow-x-auto">
-                    <Table className="w-full">
-                      <TableHeader>
-                        <TableRow className="bg-gray-50">
-                          <TableHead className="text-xs font-medium text-gray-600 w-20">Action</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Ticket ID</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Description</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Type</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Category</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Priority</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Status</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Created By</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Assigned To</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Location</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Escalation</TableHead>
-                          <TableHead className="text-xs font-medium text-gray-600">Created</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                    <TableBody>
-                      <TableRow className="hover:bg-gray-50">
-                        <TableCell className="text-xs">
-                          <div className="flex items-center gap-1">
-                            <Checkbox className="w-4 h-4" />
-                            <button 
-                              className="p-1 hover:bg-gray-100 rounded"
-                              onClick={() => handleTicketView(ticketData.ticket_number)}
-                              title="View ticket details"
-                            >
-                              <Eye className="w-4 h-4 text-gray-600" />
-                            </button>
-                            <button 
-                              className={`p-1 hover:bg-gray-100 rounded transition-colors ${
-                                ticketData.is_flagged ? 'text-red-500 hover:text-red-600' : 'text-gray-400 hover:text-red-400'
-                              }`}
-                              onClick={() => handleTicketFlag(ticketData.id, ticketData.is_flagged)}
-                              title={ticketData.is_flagged ? "Remove flag" : "Flag ticket"}
-                            >
-                              <Flag className={`w-4 h-4 transition-all duration-200 ${
-                                ticketData.is_flagged 
-                                  ? 'text-red-500 fill-red-500' 
-                                  : 'text-gray-600'
-                              }`} />
-                            </button>
-                            <button 
-                              className={`p-1 hover:bg-gray-100 rounded transition-colors ${
-                                ticketData.is_golden_ticket ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-yellow-400'
-                              }`}
-                              onClick={() => handleTicketGoldenTicket(ticketData.id, ticketData.is_golden_ticket)}
-                              title={ticketData.is_golden_ticket ? "Remove golden ticket" : "Mark as golden ticket"}
-                            >
-                              <Star className={`w-4 h-4 transition-all duration-200 hover:scale-110 ${
-                                ticketData.is_golden_ticket
-                                  ? 'text-yellow-500 fill-yellow-500'
-                                  : 'text-gray-600'
-                              }`} />
-                            </button>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs font-medium">
-                          {ticketData.ticket_number}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {ticketData.heading || 'N/A'}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <Badge className="px-2 py-1 text-xs bg-blue-100 text-blue-700">
-                            {ticketData.issue_type || 'N/A'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <div className="space-y-1">
-                            <div className="font-medium">{ticketData.category_type || 'N/A'}</div>
-                            {ticketData.sub_category_type && (
-                              <div className="text-gray-500 text-xs">
-                                {ticketData.sub_category_type}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <div className="space-y-1">
-                            <Badge className={`px-2 py-1 text-xs ${
-                              ticketData.priority === 'P1' ? 'bg-red-100 text-red-700' :
-                              ticketData.priority === 'P2' ? 'bg-yellow-100 text-yellow-700' :
-                              ticketData.priority === 'P3' ? 'bg-green-100 text-green-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
-                              {ticketData.priority || 'N/A'}
-                            </Badge>
-                            <div className="text-xs text-gray-500">
-                              {ticketData.priority_status || 'N/A'}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <Badge 
-                            className="px-2 py-1 text-xs text-white"
-                            style={{ 
-                              backgroundColor: ticketData.status?.color_code || ticketData.color_code || '#60A8C0',
-                              color: 'white'
-                            }}
-                          >
-                            {ticketData.status?.name || ticketData.issue_status || 'N/A'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {ticketData.posted_by || 'N/A'}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <div className="space-y-1">
-                            <div className="font-medium">{ticketData.assigned_to || 'N/A'}</div>
-                            <div className="text-gray-500 text-xs">
-                              {ticketData.department_name || 'N/A'}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <div className="space-y-1">
-                            <div className="font-medium">{ticketData.pms_site_name || ticketData.site_name || 'N/A'}</div>
-                            <div className="text-gray-500 text-xs">
-                              {ticketData.building_name && `${ticketData.building_name}`}
-                              {ticketData.floor_name && ` - ${ticketData.floor_name}`}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <div className="space-y-1">
-                            <div className={`text-xs px-2 py-1 rounded ${
-                              ticketData.response_escalation === 'Breached' ? 'bg-red-100 text-red-700' :
-                              'bg-green-100 text-green-700'
-                            }`}>
-                              Response: {ticketData.response_escalation || 'N/A'}
-                            </div>
-                            <div className={`text-xs px-2 py-1 rounded ${
-                              ticketData.resolution_escalation === 'Breached' ? 'bg-red-100 text-red-700' :
-                              'bg-green-100 text-green-700'
-                            }`}>
-                              Resolution: {ticketData.resolution_escalation || 'N/A'}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {formatDate(ticketData.created_at)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {/* Additional Ticket Information */}
-              
-                </>
+                <EnhancedTable
+                  data={[ticketData]}
+                  columns={ticketColumns}
+                  renderCell={renderTicketCell}
+                  storageKey="task-ticket-table"
+                  emptyMessage="No tickets found for this task."
+                  hideTableExport={true}
+                  hideTableSearch={true}
+                  hideColumnsButton={true}
+                />
               ) : (
                 <div className="text-center py-8">
                   <p className="text-gray-500">No tickets found for this task.</p>
