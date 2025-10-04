@@ -995,7 +995,7 @@ export const TaskDetailsPage = () => {
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Check-in With Before/After Photograph</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Check-in With <br /> Before/After Photograph</span>
                   <span className="task-info-separator-enhanced">:</span>
                   <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     <Badge className={taskDetails?.before_after_enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
