@@ -35,6 +35,8 @@ export interface TaskFilters {
   assetSubGroupId?: string;
   supplierId?: string;
   showAll?: boolean;
+  searchChecklist?: string;
+  searchTaskId?: string;
 }
 
 const fieldStyles = {

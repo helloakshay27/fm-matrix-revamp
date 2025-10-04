@@ -78,6 +78,10 @@ export const TaskAdvancedFilterDialog: React.FC<TaskAdvancedFilterDialogProps> =
       assignedTo: '',
       supplier: ''
     });
+    setLocalDateFrom('');
+    setLocalDateTo('');
+    setLocalSearchTaskId('');
+    setLocalSearchChecklist('');
   };
 
   const handleSelectChange = (field: keyof Filters) => (event: SelectChangeEvent<string>) => {
