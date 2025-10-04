@@ -460,7 +460,7 @@ export const TaskDetailsPage = () => {
                     variant="outline"
                     className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
                   >
-                    Job Sheet Modal
+                    Job Sheet 
                   </Button>
                 </>
               )}
