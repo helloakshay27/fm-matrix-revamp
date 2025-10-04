@@ -6,6 +6,17 @@ export interface TaskOccurrence {
   start_date: string;
   created_at: string;
   updated_at: string;
+  steps?: number; // Number of steps for the task workflow
+  checklist?: string; // Task checklist name
+  asset?: string; // Asset code
+  asset_id?: number; // Asset ID
+  asset_code?: string; // Asset code
+  assigned_to_name?: string; // Assigned user names
+  asset_path?: string; // Asset location path
+  checklist_questions?: any[]; // Direct checklist questions from API
+  grouped_questions?: any[]; // Grouped questions from API
+  bef_sub_attachment?: string | null; // Before submission attachment
+  aft_sub_attachment?: string | null; // After submission attachment
   task_details: {
     id: number;
     task_name: string;
@@ -152,6 +163,16 @@ export const taskService = {
       return response.data.task_occurrence;
     } catch (error) {
       console.error('Error fetching task details:', error);
+      throw error;
+    }
+  },
+
+  async getTaskSubmissionDetails(id: string): Promise<any> {
+    try {
+      const response = await apiClient.get(`/pms/asset_task_occurrences/${id}.json?require_grouping=true`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching task submission details:', error);
       throw error;
     }
   },

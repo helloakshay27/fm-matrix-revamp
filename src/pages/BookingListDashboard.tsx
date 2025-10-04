@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Plus, Filter, Download, X, Loader2, CalendarIcon } from 'lucide-react';
+import { Eye, Plus, Download, X, Loader2, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from "@/components/ui/calendar";
@@ -21,29 +21,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-
-const exportColumns = [
-  { id: 'selectAll', label: 'Select All' },
-  { id: 'id', label: 'Id' },
-  { id: 'centreName', label: 'Centre Name' },
-  { id: 'bookedBy', label: 'Booked By' },
-  { id: 'bookedFor', label: 'Booked For' },
-  { id: 'companyName', label: 'Company Name' },
-  { id: 'facility', label: 'Facility' },
-  { id: 'scheduledOn', label: 'Scheduled On' },
-  { id: 'slot', label: 'Slot' },
-  { id: 'duration', label: 'Duration (Minutes)' },
-  { id: 'bookingStatus', label: 'Booking Status' },
-  { id: 'perSlotCharge', label: 'Per Slot Charge' },
-  { id: 'amountPaid', label: 'Amount Paid' },
-  { id: 'paymentStatus', label: 'Payment Status' },
-  { id: 'paymentType', label: 'Payment Type' },
-  { id: 'bookedOn', label: 'Booked On' },
-  { id: 'source', label: 'Source' },
-  { id: 'comment', label: 'Comment' },
-];
 
 const enhancedTableColumns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, draggable: true },

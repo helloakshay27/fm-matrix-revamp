@@ -206,7 +206,7 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
   return (
     <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 2 }}>
-        Add Injury
+        <h1 className="font-bold text-xl">Add Injury</h1>
         <Button
           variant="ghost"
           size="sm"

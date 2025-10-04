@@ -90,6 +90,7 @@ import EcoFriendlyListPage from "./pages/EcoFriendlyListPage";
 // Import Task pages
 import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboard";
 import { TaskDetailsPage } from "./pages/TaskDetailsPage";
+import { JobSheetPage } from "./pages/JobSheetPage";
 
 // Import Utility pages
 import { UtilityDashboard } from "./pages/UtilityDashboard";
@@ -586,6 +587,7 @@ import { AddressMasterPage } from "./pages/AddressMasterPage";
 
 // Import new master pages
 import { UnitMasterByDefaultPage } from "./pages/UnitMasterByDefaultPage";
+import { CommunicationTemplatePage } from "./pages/CommunicationTemplatePage";
 
 // Import Add Address page
 import { AddAddressPage } from "./pages/AddAddressPage";
@@ -736,6 +738,11 @@ import { LocationAccountPage } from "./pages/master/LocationAccountPage";
 import LMCPage from "./pages/LMCPage";
 import { ChannelsLayout } from "./pages/ChannelsLayout";
 import DMConversation from "./pages/DMConversation";
+import { TaskSubmissionPage } from "./pages/TaskSubmissionPage";
+import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
+import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
+import GroupConversation from "./components/GroupConversation";
+import ChannelTasksAll from "./pages/ChannelTasksAll";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -808,6 +815,16 @@ function App() {
                     path="master/location/account"
                     element={<OpsAccountPage />}
                   />
+                  <Route
+                    path="admin/users"
+                    element={<AdminUsersDashboard />}
+                  />
+                  <Route
+                    path="admin/create-admin-user"
+                    element={<CreateAdminUserPage />}
+                  />
+
+
 
                   <Route
                     path="master/user/fm-users"
@@ -1025,9 +1042,15 @@ function App() {
                 >
                   <Route index element={<Index />} />
                   <Route path="/channels" element={<ChannelsLayout />}>
-                    <Route index element={<div className="flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]">Select a Chat/Group to view messages</div>} />
+                    <Route index element={
+                      <div className={`flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]`}>
+                        Select a Chat/Group to view messages
+                      </div>
+                    } />
                     <Route path="/channels/messages/:id" element={<DMConversation />} />
+                    <Route path="/channels/groups/:id" element={<GroupConversation />} />
                   </Route>
+                  <Route path="/channels/tasks" element={<ChannelTasksAll />} />
                   {/* Dashboard Routes */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route
@@ -1248,6 +1271,10 @@ function App() {
                     path="/master/unit-default"
                     element={<UnitMasterByDefaultPage />}
                   />
+                  <Route
+                    path="/master/communication-template"
+                    element={<CommunicationTemplatePage />}
+                  />
 
                   <Route
                     path="/master/user/occupant-users/add"
@@ -1462,8 +1489,18 @@ function App() {
                     element={<ScheduledTaskDashboard />}
                   />
                   <Route
+                    path="/maintenance/task/submit/:id"
+                    element={<TaskSubmissionPage />}
+                  />
+
+                  <Route
                     path="/maintenance/task/details/:id"
                     element={<TaskDetailsPage />}
+                  />
+
+                  <Route
+                    path="/maintenance/task/job-sheet/:id"
+                    element={<JobSheetPage />}
                   />
 
                   {/* Safety Routes */}
@@ -2060,6 +2097,11 @@ function App() {
                   <Route
                     path="/maintenance/task/details/:id"
                     element={<TaskDetailsPage />}
+                  />
+
+                  <Route
+                    path="/maintenance/task/job-sheet/:id"
+                    element={<JobSheetPage />}
                   />
 
                   {/* Schedule Routes */}
@@ -2859,6 +2901,12 @@ function App() {
                     path="/maintenance/task/task-details/:id"
                     element={<TaskDetailsPage />}
                   />
+
+                  <Route
+                    path="/maintenance/task/job-sheet/:id"
+                    element={<JobSheetPage />}
+                  />
+
                   <Route path="*" element={<NotFound />} />
                 </Route>
 

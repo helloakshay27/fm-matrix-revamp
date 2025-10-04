@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, FileText, Star, Flag, Paperclip, Download, Eye, ChevronDown, ChevronUp, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, FileSpreadsheet, X, Edit, FileIcon, Check, Minus, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, Star, Flag, Paperclip, Download, Eye, ChevronDown, ChevronUp, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, File, FileSpreadsheet, X, Edit, FileIcon, Check, Minus, MessageSquare, Ticket } from 'lucide-react';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import FormControl from '@mui/material/FormControl';
@@ -13,6 +13,8 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import { TextField } from '@mui/material';
+import { Button as MuiButton } from '@mui/material';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
 const fieldStyles = {
   height: '40px',
@@ -39,6 +41,76 @@ const fieldStyles = {
   },
 };
 
+const formatMinutesToDDHHMM = (minutes: number | null | undefined): string => {
+  if (!minutes || minutes === 0 || minutes === null || minutes === undefined) return '00:00:00';
+
+  const totalMinutes = Math.abs(minutes);
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const mins = totalMinutes % 60;
+
+  return `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+};
+
+const formatTicketAgeingToDDHHMM = (ageingString: string | null | undefined): string => {
+  if (!ageingString) return '00:00:00';
+
+  // If it's already in the format "52 hour 20 min", parse it
+  const hourMatch = ageingString.match(/(\d+)\s*hour/i);
+  const minMatch = ageingString.match(/(\d+)\s*min/i);
+
+  if (hourMatch || minMatch) {
+    const hours = hourMatch ? parseInt(hourMatch[1]) : 0;
+    const mins = minMatch ? parseInt(minMatch[1]) : 0;
+    const totalMinutes = hours * 60 + mins;
+
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const remainingHours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const remainingMins = totalMinutes % 60;
+
+    return `${String(days).padStart(2, '0')}:${String(remainingHours).padStart(2, '0')}:${String(remainingMins).padStart(2, '0')}`;
+  }
+
+  // If it's in minutes format, convert it
+  const minutesValue = parseInt(ageingString);
+  if (!isNaN(minutesValue)) {
+    return formatMinutesToDDHHMM(minutesValue);
+  }
+
+  return '00:00:00';
+};
+
+// Add function to format response/resolution time if needed
+const formatTimeToDDHHMM = (timeString: string | null | undefined): string => {
+  if (!timeString) return '00:00:00';
+
+  // If already in HH:MM:SS format, convert to DD:HH:MM
+  const parts = timeString.split(':');
+  if (parts.length === 3) {
+    const hours = parseInt(parts[0]);
+    const minutes = parseInt(parts[1]);
+    const seconds = parseInt(parts[2]);
+
+    const totalMinutes = hours * 60 + minutes;
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const remainingHours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const remainingMins = totalMinutes % 60;
+
+    return `${String(days).padStart(2, '0')}:${String(remainingHours).padStart(2, '0')}:${String(remainingMins).padStart(2, '0')}`;
+  }
+
+  return '00:00:00';
+};
+
+const formatTicketAgeing = (ageingMinutes: number): string => {
+  if (!ageingMinutes || ageingMinutes === 0) return '00:00';
+
+  const hours = Math.floor(ageingMinutes / 60);
+  const minutes = ageingMinutes % 60;
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+};
+
 export const TicketDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -49,16 +121,53 @@ export const TicketDetailsPage = () => {
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
   const [costInvolveEnabled, setCostInvolveEnabled] = useState<boolean>(false);
+  const [currentAgeing, setCurrentAgeing] = useState<number>(0);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [communicationTemplates, setCommunicationTemplates] = useState<Array<{
+    id: number;
+    identifier: string;
+    identifier_action: string;
+    body: string;
+    resource_id: number;
+    resource_type: string;
+    active: boolean;
+  }>>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<number | string>("");
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [internalCommentText, setInternalCommentText] = useState("");
+  const [customerAttachments, setCustomerAttachments] = useState<File[]>([]);
+  const [internalAttachments, setInternalAttachments] = useState<File[]>([]);
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [responsiblePersons, setResponsiblePersons] = useState<Array<{
+  id: number;
+  employee_type: string;
+  full_name: string;
+}>>([]);
+const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false);
+
+  const [suppliers, setSuppliers] = useState<Array<{
+    id: number;
+    company_name: string;
+    email: string;
+  }>>([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+
   const [costRows, setCostRows] = useState<Array<{
     id: number;
     quotation: string;
     vendor: string;
+    vendor_id: string;
     description: string;
     cost: string;
     attachment: string;
+    attachmentFiles: File[];
   }>>([
-    { id: 1, quotation: '', vendor: '', description: '', cost: '', attachment: '' }
+    { id: 1, quotation: '', vendor: '', vendor_id: '', description: '', cost: '', attachment: '', attachmentFiles: [] }
   ]);
+
+  const [submittingCostApproval, setSubmittingCostApproval] = useState(false);
 
   // (Add handlers near other handlers)
   const addCostRow = () => {
@@ -66,9 +175,11 @@ export const TicketDetailsPage = () => {
       id: Date.now(),
       quotation: '',
       vendor: '',
+      vendor_id: '',
       description: '',
       cost: '',
-      attachment: ''
+      attachment: '',
+      attachmentFiles: []
     }]);
   };
   const removeCostRow = () => {
@@ -162,6 +273,124 @@ export const TicketDetailsPage = () => {
     fetchTicketDetails();
   }, [id]);
 
+  // Fetch communication templates
+  useEffect(() => {
+    const fetchCommunicationTemplates = async () => {
+      try {
+        setLoadingTemplates(true);
+        const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        const url = `https://${baseUrl}${API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES}`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Communication templates response:', data);
+        // The API returns an array directly
+        setCommunicationTemplates(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching communication templates:', err);
+        toast.error('Failed to load communication templates');
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
+    fetchCommunicationTemplates();
+  }, []);
+
+  // Fetch responsible persons
+  useEffect(() => {
+    const fetchResponsiblePersons = async () => {
+      try {
+        setLoadingResponsiblePersons(true);
+        const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        const url = `https://${baseUrl}/pms/users/get_escalate_to_users.json`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Responsible persons response:', data);
+        setResponsiblePersons(data.users || []);
+      } catch (err) {
+        console.error('Error fetching responsible persons:', err);
+        toast.error('Failed to load responsible persons');
+      } finally {
+        setLoadingResponsiblePersons(false);
+      }
+    };
+
+    fetchResponsiblePersons();
+  }, []);
+
+  // Fetch suppliers
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        setLoadingSuppliers(true);
+        const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        const url = `https://${baseUrl}${API_CONFIG.ENDPOINTS.SUPPLIERS}`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Suppliers response:', data);
+        // API returns pms_suppliers array
+        setSuppliers(Array.isArray(data.pms_suppliers) ? data.pms_suppliers : []);
+      } catch (err) {
+        console.error('Error fetching suppliers:', err);
+        toast.error('Failed to load suppliers');
+      } finally {
+        setLoadingSuppliers(false);
+      }
+    };
+
+    fetchSuppliers();
+  }, []);
+
+  // Add useEffect to initialize and update ageing
+  useEffect(() => {
+    if (ticketData?.ticket_ageing_minutes) {
+      setCurrentAgeing(ticketData.ticket_ageing_minutes);
+
+      // Update ageing every minute
+      const interval = setInterval(() => {
+        setCurrentAgeing(prev => prev + 1);
+      }, 60000); // 60000ms = 1 minute
+
+      return () => clearInterval(interval);
+    }
+  }, [ticketData?.ticket_ageing_minutes]);
+
   const handleBackToList = () => {
     navigate(-1);
   };
@@ -229,6 +458,224 @@ export const TicketDetailsPage = () => {
     // });
   };
 
+  // Handle file selection for customer comments
+  const handleCustomerFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      setCustomerAttachments(Array.from(files));
+    }
+  };
+
+  // Handle file selection for internal comments
+  const handleInternalFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      setInternalAttachments(Array.from(files));
+    }
+  };
+
+  // Submit comment handler
+  const handleSubmitComment = async () => {
+    if (!id) {
+      toast.error('Ticket ID not found');
+      return;
+    }
+
+    // Validate that at least one comment is provided
+    if (!commentText.trim() && !internalCommentText.trim()) {
+      toast.error('Please enter at least one comment');
+      return;
+    }
+
+    try {
+      setSubmittingComment(true);
+      
+      // Get user ID from localStorage or auth context
+      const userId = localStorage.getItem('userId') || ''; // You may need to adjust this based on your auth setup
+      
+      if (!userId) {
+        toast.error('User ID not found. Please log in again.');
+        return;
+      }
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('complaint_log[complaint_id]', id);
+      formData.append('complaint_log[changed_by]', userId);
+      
+      // Add customer comment if provided
+      if (commentText.trim()) {
+        formData.append('complaint_log[comment]', commentText.trim());
+        // Add customer attachments
+        customerAttachments.forEach((file) => {
+          formData.append('complaint_comment[docs][]', file);
+        });
+      }
+      
+      // Add internal comment if provided
+      if (internalCommentText.trim()) {
+        formData.append('complaint_log[internal_comment]', internalCommentText.trim());
+        // Add internal attachments
+        internalAttachments.forEach((file) => {
+          formData.append('internal_complaint_comment[docs][]', file);
+        });
+      }
+
+      // Make API call
+      const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const url = `https://${baseUrl}${API_CONFIG.ENDPOINTS.UPDATE_TICKET}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+          // Note: Don't set Content-Type header when using FormData, browser will set it automatically with boundary
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Comment submitted successfully:', data);
+      
+      toast.success('Comment submitted successfully!');
+      
+      // Clear form
+      setCommentText('');
+      setInternalCommentText('');
+      setSelectedTemplate('');
+      setCustomerAttachments([]);
+      setInternalAttachments([]);
+      
+      // Refresh ticket data to show new comment
+      const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
+      setTicketData(ticketDetails);
+      
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit comment. Please try again.');
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  // Handle cost approval file change
+  const handleCostAttachmentChange = (rowId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      setCostRows(prev =>
+        prev.map(r => r.id === rowId ? { ...r, attachmentFiles: Array.from(files) } : r)
+      );
+    }
+  };
+
+  // Submit cost approval handler
+  const handleSubmitCostApproval = async () => {
+    if (!id) {
+      toast.error('Ticket ID not found');
+      return;
+    }
+
+    // Validate that all required fields are filled
+    const invalidRows = costRows.filter(row => 
+      !row.cost.trim() || !row.description.trim()
+    );
+
+    if (invalidRows.length > 0) {
+      toast.error('Please fill in all required fields (Cost and Description)');
+      return;
+    }
+
+    try {
+      setSubmittingCostApproval(true);
+
+      // Create FormData
+      const formData = new FormData();
+      
+      // Add complaint_id (single value)
+      formData.append('complaint_id', id);
+
+      // Add each cost approval with array indices
+      costRows.forEach((row, index) => {
+        formData.append(`cost_approvals[${index}][cost]`, row.cost);
+        formData.append(`cost_approvals[${index}][comment]`, row.description);
+        
+        // Add vendor_id if selected
+        if (row.vendor_id) {
+          formData.append(`cost_approvals[${index}][vendor_id]`, row.vendor_id);
+        }
+        
+        // Add quotation if provided
+        if (row.quotation.trim()) {
+          formData.append(`cost_approvals[${index}][quotation]`, row.quotation);
+        }
+        
+        // Add attachment (single file) for this row
+        if (row.attachmentFiles.length > 0) {
+          formData.append(`cost_approvals[${index}][attachment]`, row.attachmentFiles[0]);
+        }
+      });
+
+      // Make API call
+      const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const url = `https://${baseUrl}${API_CONFIG.ENDPOINTS.COST_APPROVALS_CREATE}`;
+
+      console.log('Submitting cost approval to:', url);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+          // Don't set Content-Type, browser will set it with boundary for FormData
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Cost approval submitted successfully:', data);
+      
+      toast.success('Cost approval submitted successfully!');
+      
+      // Reset cost rows to initial state
+      setCostRows([
+        { id: 1, quotation: '', vendor: '', vendor_id: '', description: '', cost: '', attachment: '', attachmentFiles: [] }
+      ]);
+      
+      // Refresh ticket data
+      const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
+      setTicketData(ticketDetails);
+      
+    } catch (error) {
+      console.error('Error submitting cost approval:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit cost approval. Please try again.');
+    } finally {
+      setSubmittingCostApproval(false);
+    }
+  };
+
+  // Add useEffect to initialize and update ageing
+  useEffect(() => {
+    if (ticketData?.ticket_ageing_minutes) {
+      setCurrentAgeing(ticketData.ticket_ageing_minutes);
+
+      // Update ageing every minute
+      const interval = setInterval(() => {
+        setCurrentAgeing(prev => prev + 1);
+      }, 60000); // 60000ms = 1 minute
+
+      return () => clearInterval(interval);
+    }
+  }, [ticketData?.ticket_ageing_minutes]);
+
   if (loading) {
     return (
       <div className="p-6 bg-white min-h-screen">
@@ -251,31 +698,61 @@ export const TicketDetailsPage = () => {
     );
   }
 
-  if (error || !ticketData) {
-    return (
-      <div className="p-6 bg-white min-h-screen">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-red-600">{error || 'Ticket not found'}</div>
-        </div>
-      </div>
-    );
-  }
+  console.log("ticketData:-", ticketData);
 
   // Process complaint logs for table display
   const complaintLogs = ticketData?.complaint_logs || [];
 
   const tatGridRows = [
     [
-      { label: 'Response TAT', value: hasData(ticketData.response_tat) ? ticketData.response_tat : 'DD:HH:MM' },
-      { label: 'Balance TAT', value: 'DD:HH:MM' },
-      { label: 'Escalation', value: 'E1 Abdul Ghaffar' },
+      {
+        label: 'Response TAT',
+        value: hasData(ticketData.response_tat)
+          ? formatMinutesToDDHHMM(ticketData.response_tat) // Already in minutes, no conversion needed
+          : '00:00:00'
+      },
+      {
+        label: 'Balance TAT',
+        value: hasData(ticketData.balance_reponse_tat)
+          ? formatMinutesToDDHHMM(ticketData.balance_reponse_tat) // Already in minutes
+          : '00:00:00'
+      },
+      {
+        label: 'Escalation',
+        value: ticketData.response_escalation || 'N/A'
+      },
     ],
     [
-      { label: 'Resolution TAT', value: hasData(ticketData.resolution_tat) ? ticketData.resolution_tat : 'DD:HH:MM' },
-      { label: 'Balance TAT', value: 'DD:HH:MM' },
-      { label: 'Escalation', value: 'E1 Abdul Ghaffar' },
+      {
+        label: 'Resolution TAT',
+        value: hasData(ticketData.resolution_tat)
+          ? formatMinutesToDDHHMM(ticketData.resolution_tat) // Already in minutes, no conversion needed
+          : '00:00:00'
+      },
+      {
+        label: 'Balance TAT',
+        value: hasData(ticketData.balance_resolution_tat)
+          ? formatMinutesToDDHHMM(ticketData.balance_resolution_tat) // Already in minutes
+          : '00:00:00'
+      },
+      {
+        label: 'Escalation',
+        value: ticketData.resolution_escalation || 'N/A'
+      },
     ],
   ];
+
+  // Helper function to find the matched responsible person
+  const getResponsiblePersonValue = () => {
+    if (!ticketData?.responsible_person) return '';
+    
+    // Try to find exact match by full_name
+    const matchedPerson = responsiblePersons.find(
+      person => person.full_name === ticketData.responsible_person
+    );
+    
+    return matchedPerson ? matchedPerson.id.toString() : ticketData.responsible_person;
+  };
 
   return (
     <div className="p-4 sm:p-6 min-h-screen">
@@ -471,14 +948,13 @@ export const TicketDetailsPage = () => {
                               "Assignee",
                               "Response TAT",
                               "Resolution TAT",
-                              <div key="red-flag" className="flex items-center justify-center w-full">
+                              <div key="red-flag" className="flex items-center justify-center w-full gap-1">
                                 Red Flag
-                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="16" style={{ marginLeft: "4px" }} viewBox="0 0 13 16" fill="none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="16" viewBox="0 0 13 16" fill="none">
                                   <path d="M1 8.5V15.5C1 15.642 0.952 15.7607 0.856 15.856C0.76 15.9513 0.641 15.9993 0.499 16C0.357 16.0007 0.238333 15.9527 0.143 15.856C0.0476668 15.7593 0 15.6407 0 15.5V1.308C0 1.07934 0.0773332 0.887338 0.232 0.732004C0.386667 0.576671 0.578667 0.499338 0.808 0.500004H6.521C6.71433 0.500004 6.887 0.559004 7.039 0.677004C7.191 0.795004 7.28567 0.951671 7.323 1.147L7.593 2.5H12.193C12.4217 2.5 12.6133 2.57667 12.768 2.73C12.9227 2.88334 13 3.07334 13 3.3V9.7C13 9.92667 12.9227 10.1167 12.768 10.27C12.6133 10.4233 12.4213 10.5 12.192 10.5H8.48C8.28667 10.5 8.114 10.441 7.962 10.323C7.81 10.205 7.71533 10.0483 7.678 9.853L7.407 8.5H1Z" fill="#C72030" />
                                 </svg>
-
                               </div>,
-                              <div key="golden-ticket" className="flex items-center justify-center gap-1">
+                              <div key="golden-ticket" className="flex items-center justify-center w-full gap-1">
                                 Golden Ticket
                                 <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
                                   <path d="M10.5005 3L8.54219 7.8L3.36719 8.18333L7.33385 11.5333L6.09219 16.5667L10.5005 13.8333L14.9089 16.5667L13.6672 11.5333L17.6339 8.18333L12.4589 7.8L10.5005 3Z" fill="#CCC500" stroke="#CCC500" strokeLinecap="round" strokeLinejoin="round" />
@@ -488,10 +964,12 @@ export const TicketDetailsPage = () => {
                             ].map((header, idx) => (
                               <th
                                 key={idx}
-                                className="p-4 text-center text-black font-semibold text-lg border border-gray-300"
-                                style={{ backgroundColor: "#EDEAE3", textAlign: "center" }}
+                                className="p-4 border border-gray-300"
+                                style={{ backgroundColor: "#EDEAE3" }}
                               >
-                                {header}
+                                <div className="flex items-center justify-center text-black font-semibold text-lg">
+                                  {header}
+                                </div>
                               </th>
                             ))}
                           </tr>
@@ -520,21 +998,21 @@ export const TicketDetailsPage = () => {
                               )}
                             </td>
                             <td className="p-4 text-center border border-gray-300 bg-white">
-                              {ticketData?.priority === 'High' || ticketData?.priority === 'Critical' ? (
+                              {ticketData?.is_flagged ? (
                                 <Check className="w-6 h-6 text-green-600 mx-auto" />
                               ) : (
                                 <X className="w-6 h-6 text-red-500 mx-auto" />
                               )}
                             </td>
                             <td className="p-4 text-center border border-gray-300 bg-white">
-                              {ticketData?.issue_status === 'Closed' && ticketData?.priority === 'High' ? (
+                              {ticketData?.is_golden_ticket ? (
                                 <Check className="w-6 h-6 text-green-600 mx-auto" />
                               ) : (
                                 <X className="w-6 h-6 text-red-500 mx-auto" />
                               )}
                             </td>
                             <td className="p-4 text-center border border-gray-300 bg-white">
-                              {ticketData?.documents.length > 0 ? (
+                              {ticketData?.documents?.length > 0 ? (
                                 <Check className="w-6 h-6 text-green-600 mx-auto" />
                               ) : (
                                 <X className="w-6 h-6 text-red-500 mx-auto" />
@@ -557,46 +1035,25 @@ export const TicketDetailsPage = () => {
                         className="flex items-center justify-center rounded-lg mr-4"
                         style={{ background: "#EDEAE3", width: 62, height: 62 }}
                       >
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="#C72030"
-                            strokeWidth="1.5"
-                          />
-                          <path
-                            d="M12 6v6l4 2"
-                            stroke="#C72030"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
+                        <Ticket className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
                       <div className="flex flex-col justify-center">
                         <span
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          00:00:00
+                          {ticketData.ticket_ageing_minutes
+                            ? formatMinutesToDDHHMM(ticketData.ticket_ageing_minutes)
+                            : formatTicketAgeingToDDHHMM(ticketData.ticket_ageing)
+                          }
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Ticket Ageing
                         </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          E1 - Abdul Ghaffar
-                        </span>
                       </div>
                     </div>
 
-                    {/* Response TAT */}
+                    {/* Response TAT */} 
                     <div
                       className="border bg-[#F6F4EE] flex items-center p-4"
                       style={{ height: "132px", width: "auto" }}
@@ -615,12 +1072,12 @@ export const TicketDetailsPage = () => {
                           <path
                             d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
                             stroke="#C72030"
-                            strokeWidth="1.5"
+                            strokeWidth="2"
                           />
                           <path
                             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
                             stroke="#C72030"
-                            strokeWidth="1.5"
+                            strokeWidth="2"
                           />
                         </svg>
                       </div>
@@ -629,13 +1086,10 @@ export const TicketDetailsPage = () => {
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          00:00:00
+                          {formatMinutesToDDHHMM(ticketData.response_tat)}
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Response TAT
-                        </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          E1 - Abdul Ghaffar
                         </span>
                       </div>
                     </div>
@@ -659,12 +1113,12 @@ export const TicketDetailsPage = () => {
                           <path
                             d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
                             stroke="#C72030"
-                            strokeWidth="1.5"
+                            strokeWidth="2"
                           />
                           <path
                             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
                             stroke="#C72030"
-                            strokeWidth="1.5"
+                            strokeWidth="2"
                           />
                         </svg>
                       </div>
@@ -673,13 +1127,10 @@ export const TicketDetailsPage = () => {
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          00:00:00
+                          {formatTimeToDDHHMM(ticketData.resolution_time)}
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Resolution TAT
-                        </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          E1 - Abdul Ghaffar
                         </span>
                       </div>
                     </div>
@@ -693,41 +1144,23 @@ export const TicketDetailsPage = () => {
                         className="flex items-center justify-center rounded-lg mr-4"
                         style={{ background: "#EDEAE3", width: 62, height: 62 }}
                       >
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="#C72030"
-                            strokeWidth="1.5"
-                          />
-                          <path
-                            d="m12 6 0 6 4 2"
-                            stroke="#C72030"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
+                        <Ticket className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
-                      <div className="flex flex-col justify-center">
-                        <span
-                          className="font-semibold text-[#1A1A1A]"
-                          style={{ fontSize: 24 }}
-                        >
-                          00:00:00
+                      <div className="flex flex-col justify-center w-full">
+                        <div className="flex justify-between w-full">
+                          <span
+                            className="font-semibold text-[#1A1A1A]"
+                            style={{ fontSize: 24 }}
+                          >
+                            {formatMinutesToDDHHMM(ticketData.balance_reponse_tat)}
+                          </span>
+
+                        <span className="text-[12px] text-[#9CA3AF] mt-1">
+                          {`${ticketData.response_esc_name} - ${ticketData.response_escalate_to_user.join(',')}` || ticketData.escalation_response_name || 'N/A'}
                         </span>
+                        </div>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Response Escalation
-                        </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          E1 - Abdul Ghaffar
                         </span>
                       </div>
                     </div>
@@ -751,27 +1184,29 @@ export const TicketDetailsPage = () => {
                           <path
                             d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
                             stroke="#C72030"
-                            strokeWidth="1.5"
+                            strokeWidth="2"
                           />
                           <path
                             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
                             stroke="#C72030"
-                            strokeWidth="1.5"
+                            strokeWidth="2"
                           />
                         </svg>
                       </div>
-                      <div className="flex flex-col justify-center">
-                        <span
-                          className="font-semibold text-[#1A1A1A]"
-                          style={{ fontSize: 24 }}
-                        >
-                          00:00:00
-                        </span>
-                        <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-                          Resolution Escalation
+                      <div className="flex flex-col justify-center w-full">
+                        <div className="flex justify-between w-full">
+                          <span
+                            className="font-semibold text-[#1A1A1A]"
+                            style={{ fontSize: 24 }}
+                          >
+                          {formatMinutesToDDHHMM(ticketData.balance_resolution_tat)}
                         </span>
                         <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          E1 - Abdul Ghaffar
+                          {`${ticketData.resolution_esc_name} - ${ticketData.resolution_escalate_to_user.join(', ')}` || ticketData.escalation_resolution_name || 'N/A'}
+                        </span>
+                        </div>
+                        <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+                          Resolution Escalation
                         </span>
                       </div>
                     </div>
@@ -795,27 +1230,29 @@ export const TicketDetailsPage = () => {
                           <path
                             d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
                             stroke="#C72030"
-                            strokeWidth="1.5"
+                            strokeWidth="2"
                           />
                           <path
                             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
                             stroke="#C72030"
-                            strokeWidth="1.5"
+                            strokeWidth="2"
                           />
                         </svg>
                       </div>
-                      <div className="flex flex-col justify-center">
-                        <span
+                      <div className="flex flex-col justify-center w-full">
+                        <div className="flex justify-between w-full">
+                        <p
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          00:00:00
-                        </span>
+                          {formatMinutesToDDHHMM(ticketData.golden_resp_time_minutes)}
+                        </p>
+                          <p className="text-[12px] text-[#9CA3AF] mt-1">
+                          {`${ticketData.golden_esc_name} - ${ticketData.golden_escalate_to_user.join(",")}` || 'N/A'}
+                        </p>
+                        </div>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Golden Ticket Escalation
-                        </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          E1 - Abdul Ghaffar
                         </span>
                       </div>
                     </div>
@@ -977,7 +1414,8 @@ export const TicketDetailsPage = () => {
                     hasData(ticketData.priority_status) ||
                     hasData(ticketData.effective_priority) ||
                     hasData(ticketData.assigned_to) ? (
-                    /* Ticket Information Card */
+
+
                     <Card className="w-full">
                       <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
@@ -993,20 +1431,26 @@ export const TicketDetailsPage = () => {
                             <div className="">
                               <div className="flex items-start mb-4">
                                 <span className="text-gray-500 min-w-[140px]" style={{ fontSize: '14px' }}>Description</span>
-                                <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>The air conditioner is not functioning properly it is not cooling, turning on, or responding to controls. Immediate inspection and servicing are required. The air conditioner is not functioning properly it is not cooling, turning on.</span>
+                                <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
+                                  {ticketData.heading || 'No description available'}
+                                </span>
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="">
                                   <div className="flex items-start mb-4">
                                     <span className="text-gray-500 min-w-[140px]" style={{ fontSize: '14px' }}>Category</span>
-                                    <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>Washroom</span>
+                                    <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
+                                      {ticketData.category_type || 'N/A'}
+                                    </span>
                                   </div>
                                   <div className="flex items-start mb-4">
                                     <span className="text-gray-500 min-w-[140px]" style={{ fontSize: '14px' }}>Sub Category</span>
-                                    <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>Washroom</span>
+                                    <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
+                                      {ticketData.sub_category_type || 'N/A'}
+                                    </span>
                                   </div>
                                 </div>
-                                <div className="bg-white rounded-md p-3" style={{ width: '75%' }}>
+                                <div className="bg-white p-3" style={{ width: '75%', borderRadius: '4px' }}>
                                   <div className="grid grid-cols-3 gap-x-10 gap-y-4">
                                     {tatGridRows.flat().map((cell, idx) => (
                                       <div key={idx} className="flex ">
@@ -1024,96 +1468,101 @@ export const TicketDetailsPage = () => {
                             </div>
                           </div>
                           <div style={{ textAlign: 'center', marginLeft: '40px' }}>
-                            <button className='w-full py-1 bg-black rounded-full text-white mb-2'>open</button>
+                            <button className='w-full py-1 bg-black rounded-full text-white mb-2 text-xs px-3'>
+                              {ticketData.issue_status || 'N/A'}
+                            </button>
                             <div className='mb-2'>
-                              <button className='w-full py-1 bg-[#FFCFCF] rounded-full text-white'>p1</button>
+                              <button className='w-full py-1 bg-[#FFCFCF] rounded-full text-[#C72030] text-xs px-3 font-semibold'>
+                                {ticketData.priority || 'N/A'}
+                              </button>
                             </div>
                             <div className="flex mb-2">
                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <mask id="mask0_9118_15345" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="2" y="0" width="20" height="23">
-                                  <path d="M12 21.9995C16.6945 21.9995 20.5 18.194 20.5 13.4995C20.5 8.80501 16.6945 4.99951 12 4.99951C7.3055 4.99951 3.5 8.80501 3.5 13.4995C3.5 18.194 7.3055 21.9995 12 21.9995Z" fill="white" stroke="white" stroke-width="2" stroke-linejoin="round" />
-                                  <path d="M15.5 1.99951H8.5M19 4.99951L17.5 6.49951" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                  <path d="M12 9V13.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                  <path d="M12 21.9995C16.6945 21.9995 20.5 18.194 20.5 13.4995C20.5 8.80501 16.6945 4.99951 12 4.99951C7.3055 4.99951 3.5 8.80501 3.5 13.4995C3.5 18.194 7.3055 21.9995 12 21.9995Z" fill="white" stroke="white" strokeWidth="2" strokeLinejoin="round" />
+                                  <path d="M15.5 1.99951H8.5M19 4.99951L17.5 6.49951" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  <path d="M12 9V13.5" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </mask>
                                 <g mask="url(#mask0_9118_15345)">
                                   <path d="M0 0H24V24H0V0Z" fill="#434343" />
                                 </g>
                               </svg>
                               <span style={{ fontSize: 16, fontWeight: 600 }} className="text-black ml-1">
-                                09:06
+                                {formatTicketAgeing(currentAgeing)}
                               </span>
                             </div>
                             <div className="flex justify-center items-center gap-2 mb-2">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 16 18" fill="none">
+                              {ticketData.golden_esc_name !== '' && (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 16 18" fill="none">
                                 <path d="M12.36 9.76C14.31 10.42 16 11.5 16 13V18H0V13C0 11.5 1.69 10.42 3.65 9.76L4.27 11L4.5 11.5C3 11.96 1.9 12.62 1.9 13V16.1H6.12L7 11.03L6.06 9.15C6.68 9.08 7.33 9.03 8 9.03C8.67 9.03 9.32 9.08 9.94 9.15L9 11.03L9.88 16.1H14.1V13C14.1 12.62 13 11.96 11.5 11.5L11.73 11L12.36 9.76ZM8 2C6.9 2 6 2.9 6 4C6 5.1 6.9 6 8 6C9.1 6 10 5.1 10 4C10 2.9 9.1 2 8 2ZM8 8C5.79 8 4 6.21 4 4C4 1.79 5.79 0 8 0C10.21 0 12 1.79 12 4C12 6.21 10.21 8 8 8Z" fill="black" />
-                              </svg>
-                              <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
-                                <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
-                                <path d="M17.6229 19.896C17.6103 19.896 17.5977 19.8926 17.5864 19.8862L10.998 16.0584L4.40068 19.8732C4.38954 19.8795 4.37736 19.8826 4.36471 19.8826C4.35021 19.8826 4.3357 19.879 4.32352 19.8696C4.30055 19.8541 4.2901 19.8267 4.2966 19.8006L6.05905 12.6117L0.235078 7.77705C0.213845 7.75947 0.205725 7.73112 0.214311 7.7052C0.223361 7.67996 0.247029 7.66172 0.275107 7.65972L7.95284 7.04474L10.9502 0.241834C10.9614 0.216923 10.9866 0.200684 11.0147 0.200684C11.0147 0.200684 11.0147 0.200684 11.0149 0.200684C11.0432 0.200684 11.0685 0.217032 11.0794 0.241943L14.062 7.05063L21.7385 7.68085C21.7665 7.68307 21.7902 7.70121 21.7992 7.72701C21.8076 7.75281 21.7994 7.78105 21.7783 7.7984L15.9439 12.6213L17.6909 19.8137C17.6973 19.8397 17.6862 19.8674 17.6638 19.883C17.6512 19.8916 17.6371 19.896 17.6229 19.896Z" fill="url(#paint1_linear_9118_15308)" />
-                                <path d="M7.99743 7.10811L11.0112 0.268066L14.0103 7.11412L21.7291 7.7479L15.8627 12.5975L17.6192 19.8291L10.9944 15.9802L4.36114 19.8159L6.13322 12.5877L0.277344 7.72644L7.99743 7.10811Z" fill="url(#paint2_linear_9118_15308)" />
-                                <path d="M11.1891 11.551C11.1439 11.4959 11.0748 11.4633 11.0016 11.4633C11.0013 11.4633 11.0013 11.4633 11.0009 11.4633C10.928 11.4633 10.8587 11.4956 10.8138 11.5507L8.37693 14.534L10.5906 11.395C10.6317 11.3368 10.6425 11.2637 10.6201 11.197C10.5972 11.1303 10.5441 11.0772 10.4752 11.053L6.76172 9.75321L10.5606 10.8015C10.5824 10.8077 10.6044 10.8107 10.6263 10.8107C10.6762 10.8107 10.7253 10.7958 10.7663 10.7672C10.8257 10.7258 10.8619 10.6606 10.8644 10.5904L11.0063 6.80371L11.1405 10.5907C11.143 10.6611 11.179 10.7263 11.2382 10.7677C11.2793 10.7962 11.3287 10.8113 11.3782 10.8113C11.4 10.8113 11.4222 10.8084 11.4438 10.8026L15.245 9.76189L11.5286 11.054C11.4599 11.0783 11.4064 11.1311 11.3835 11.1977C11.3608 11.2647 11.3714 11.3376 11.4124 11.396L13.6195 14.5391L11.1891 11.551Z" fill="white" />
-                                <path d="M10.6435 10.0628L8.08027 6.91957L11.0111 0.267578L10.6435 10.0628ZM21.7289 7.74752H21.7291L14.2765 7.13554L11.9655 10.4201L21.7289 7.74752ZM9.90642 11.0964L0.277344 7.72606L5.98598 12.4647L9.90642 11.0964ZM11.961 11.7709L17.6192 19.8288L15.9261 12.8597L11.961 11.7709ZM4.36114 19.8153L10.7915 16.0971L10.6454 12.1225L4.36114 19.8153Z" fill="url(#paint3_linear_9118_15308)" />
-                                <path d="M11.3577 10.0658L11.0112 0.267578L13.9241 6.91623L11.3577 10.0658ZM7.72152 7.12998L0.277344 7.72606L10.0372 10.4191L7.72152 7.12998ZM21.7289 7.74752L12.0992 11.0962L16.0235 12.464L21.7289 7.74752ZM11.2154 16.1082L17.6191 19.8288L11.3594 12.1331L11.2154 16.1082ZM10.0325 11.7743L6.06523 12.8657L4.36126 19.8154V19.8152L10.0325 11.7743Z" fill="url(#paint4_linear_9118_15308)" />
-                                <defs>
-                                  <radialGradient id="paint0_radial_9118_15308" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11.0059 10.0489) scale(10.7481 10.3019)">
-                                    <stop stop-color="#D08B01" />
-                                    <stop offset="0.5758" stop-color="#F2B145" />
-                                    <stop offset="1" stop-color="#F8F3BC" />
-                                  </radialGradient>
-                                  <linearGradient id="paint1_linear_9118_15308" x1="0.211178" y1="10.0483" x2="21.8026" y2="10.0483" gradientUnits="userSpaceOnUse">
-                                    <stop stop-color="#F6DB89" />
-                                    <stop offset="1" stop-color="#F8F7DA" />
-                                  </linearGradient>
-                                  <linearGradient id="paint2_linear_9118_15308" x1="0.277344" y1="10.0486" x2="21.7291" y2="10.0486" gradientUnits="userSpaceOnUse">
-                                    <stop stop-color="#ED9017" />
-                                    <stop offset="0.1464" stop-color="#F09F23" />
-                                    <stop offset="0.4262" stop-color="#F6C642" />
-                                    <stop offset="0.4945" stop-color="#F8D04A" />
-                                    <stop offset="1" stop-color="#F6E6B5" />
-                                  </linearGradient>
-                                  <linearGradient id="paint3_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7291" y2="10.0482" gradientUnits="userSpaceOnUse">
-                                    <stop stop-color="#ED9017" />
-                                    <stop offset="0.1464" stop-color="#F09F23" />
-                                    <stop offset="0.4262" stop-color="#F6C642" />
-                                    <stop offset="0.4945" stop-color="#F8D04A" />
-                                    <stop offset="1" stop-color="#F6E6B5" />
-                                  </linearGradient>
-                                  <linearGradient id="paint4_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7288" y2="10.0482" gradientUnits="userSpaceOnUse">
-                                    <stop stop-color="#DF8D00" />
-                                    <stop offset="0.0848" stop-color="#FFD006" />
-                                    <stop offset="0.2242" stop-color="#F4AD06" />
-                                    <stop offset="0.85" stop-color="#F4AD06" />
-                                    <stop offset="0.8777" stop-color="#F2A807" />
-                                    <stop offset="0.9093" stop-color="#EC9B09" />
-                                    <stop offset="0.9428" stop-color="#E2840D" />
-                                    <stop offset="0.9773" stop-color="#D46412" />
-                                    <stop offset="1" stop-color="#C94B16" />
-                                  </linearGradient>
-                                </defs>
-                              </svg>
-                              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
-                                <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
-                              </svg>
-
+                              </svg>)}
+                              {ticketData.is_golden_ticket && (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
+                                  <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
+                                  <path d="M17.6229 19.896C17.6103 19.896 17.5977 19.8926 17.5864 19.8862L10.998 16.0584L4.40068 19.8732C4.38954 19.8795 4.37736 19.8826 4.36471 19.8826C4.35021 19.8826 4.3357 19.879 4.32352 19.8696C4.30055 19.8541 4.2901 19.8267 4.2966 19.8006L6.05905 12.6117L0.235078 7.77705C0.213845 7.75947 0.205725 7.73112 0.214311 7.7052C0.223361 7.67996 0.247029 7.66172 0.275107 7.65972L7.95284 7.04474L10.9502 0.241834C10.9614 0.216923 10.9866 0.200684 11.0147 0.200684C11.0147 0.200684 11.0147 0.200684 11.0149 0.200684C11.0432 0.200684 11.0685 0.217032 11.0794 0.241943L14.062 7.05063L21.7385 7.68085C21.7665 7.68307 21.7902 7.70121 21.7992 7.72701C21.8076 7.75281 21.7994 7.78105 21.7783 7.7984L15.9439 12.6213L17.6909 19.8137C17.6973 19.8397 17.6862 19.8674 17.6638 19.883C17.6512 19.8916 17.6371 19.896 17.6229 19.896Z" fill="url(#paint1_linear_9118_15308)" />
+                                  <path d="M7.99743 7.10811L11.0112 0.268066L14.0103 7.11412L21.7291 7.7479L15.8627 12.5975L17.6192 19.8291L10.9944 15.9802L4.36114 19.8159L6.13322 12.5877L0.277344 7.72644L7.99743 7.10811Z" fill="url(#paint2_linear_9118_15308)" />
+                                  <path d="M11.1891 11.551C11.1439 11.4959 11.0748 11.4633 11.0016 11.4633C11.0013 11.4633 11.0013 11.4633 11.0009 11.4633C10.928 11.4633 10.8587 11.4956 10.8138 11.5507L8.37693 14.534L10.5906 11.395C10.6317 11.3368 10.6425 11.2637 10.6201 11.197C10.5972 11.1303 10.5441 11.0772 10.4752 11.053L6.76172 9.75321L10.5606 10.8015C10.5824 10.8077 10.6044 10.8107 10.6263 10.8107C10.6762 10.8107 10.7253 10.7958 10.7663 10.7672C10.8257 10.7258 10.8619 10.6606 10.8644 10.5904L11.0063 6.80371L11.1405 10.5907C11.143 10.6611 11.179 10.7263 11.2382 10.7677C11.2793 10.7962 11.3287 10.8113 11.3782 10.8113C11.4 10.8113 11.4222 10.8084 11.4438 10.8026L15.245 9.76189L11.5286 11.054C11.4599 11.0783 11.4064 11.1311 11.3835 11.1977C11.3608 11.2647 11.3714 11.3376 11.4124 11.396L13.6195 14.5391L11.1891 11.551Z" fill="white" />
+                                  <path d="M10.6435 10.0628L8.08027 6.91957L11.0111 0.267578L10.6435 10.0628ZM21.7289 7.74752H21.7291L14.2765 7.13554L11.9655 10.4201L21.7289 7.74752ZM9.90642 11.0964L0.277344 7.72606L5.98598 12.4647L9.90642 11.0964ZM11.961 11.7709L17.6192 19.8288L15.9261 12.8597L11.961 11.7709ZM4.36114 19.8153L10.7915 16.0971L10.6454 12.1225L4.36114 19.8153Z" fill="url(#paint3_linear_9118_15308)" />
+                                  <path d="M11.3577 10.0658L11.0112 0.267578L13.9241 6.91623L11.3577 10.0658ZM7.72152 7.12998L0.277344 7.72606L10.0372 10.4191L7.72152 7.12998ZM21.7289 7.74752L12.0992 11.0962L16.0235 12.464L21.7289 7.74752ZM11.2154 16.1082L17.6191 19.8288L11.3594 12.1331L11.2154 16.1082ZM10.0325 11.7743L6.06523 12.8657L4.36126 19.8154V19.8152L10.0325 11.7743Z" fill="url(#paint4_linear_9118_15308)" />
+                                  <defs>
+                                    <radialGradient id="paint0_radial_9118_15308" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11.0059 10.0489) scale(10.7481 10.3019)">
+                                      <stop stopColor="#D08B01" />
+                                      <stop offset="0.5758" stopColor="#F2B145" />
+                                      <stop offset="1" stopColor="#F8F3BC" />
+                                    </radialGradient>
+                                    <linearGradient id="paint1_linear_9118_15308" x1="0.211178" y1="10.0483" x2="21.8026" y2="10.0483" gradientUnits="userSpaceOnUse">
+                                      <stop stopColor="#F6DB89" />
+                                      <stop offset="1" stopColor="#F8F7DA" />
+                                    </linearGradient>
+                                    <linearGradient id="paint2_linear_9118_15308" x1="0.277344" y1="10.0486" x2="21.7291" y2="10.0486" gradientUnits="userSpaceOnUse">
+                                      <stop stopColor="#ED9017" />
+                                      <stop offset="0.1464" stopColor="#F09F23" />
+                                      <stop offset="0.4262" stopColor="#F6C642" />
+                                      <stop offset="0.4945" stopColor="#F8D04A" />
+                                      <stop offset="1" stopColor="#F6E6B5" />
+                                    </linearGradient>
+                                    <linearGradient id="paint3_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7291" y2="10.0482" gradientUnits="userSpaceOnUse">
+                                      <stop stopColor="#ED9017" />
+                                      <stop offset="0.1464" stopColor="#F09F23" />
+                                      <stop offset="0.4262" stopColor="#F6C642" />
+                                      <stop offset="0.4945" stopColor="#F8D04A" />
+                                      <stop offset="1" stopColor="#F6E6B5" />
+                                    </linearGradient>
+                                    <linearGradient id="paint4_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7288" y2="10.0482" gradientUnits="userSpaceOnUse">
+                                      <stop stopColor="#DF8D00" />
+                                      <stop offset="0.0848" stopColor="#FFD006" />
+                                      <stop offset="0.2242" stopColor="#F4AD06" />
+                                      <stop offset="0.85" stopColor="#F4AD06" />
+                                      <stop offset="0.8777" stopColor="#F2A807" />
+                                      <stop offset="0.9093" stopColor="#EC9B09" />
+                                      <stop offset="0.9428" stopColor="#E2840D" />
+                                      <stop offset="0.9773" stopColor="#D46412" />
+                                      <stop offset="1" stopColor="#C94B16" />
+                                    </linearGradient>
+                                  </defs>
+                                </svg>
+                              )}
+                              {ticketData.is_flagged && (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
+                                  <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
+                                </svg>
+                              )}
                             </div>
                           </div>
-
                         </div>
-
                       </div>
                       <CardContent className="pt-6">
                         {[
                           [
-                            { label: 'Issue Type', value: hasData(ticketData.issue_type) ? ticketData.issue_type : 'Complain' },
-                            { label: 'Assigned To', value: hasData(ticketData.assigned_to) ? ticketData.assigned_to : 'Abdul Ghaffar' },
-                            { label: 'Behalf Of', value: hasData(ticketData.behalf_of) ? ticketData.behalf_of : 'Samuel (Occupant)' },
-                            { label: 'Association', value: hasData(ticketData.association) ? ticketData.association : 'Asset' },
+                            { label: 'Issue Type', value: ticketData.issue_type || 'N/A' },
+                            { label: 'Assigned To', value: ticketData.assigned_to || 'N/A' },
+                            { label: 'Behalf Of', value: ticketData.on_behalf_of || 'N/A' },
+                            { label: 'Association', value: ticketData.service_or_asset || 'N/A' },
                           ],
                           [
-                            { label: 'Created By', value: hasData(ticketData.created_by_name) ? ticketData.created_by_name : 'Abdul Ghaffar' },
-                            { label: 'Updated By', value: hasData(ticketData.updated_by) ? ticketData.updated_by : 'Abdul Ghaffar' },
-                            { label: 'Mode', value: hasData(ticketData.complaint_mode) ? ticketData.complaint_mode : 'App' },
-                            { label: 'Identification', value: hasData(ticketData.identification) ? ticketData.identification : 'Reactive / Proactive' },
+                            { label: 'Created By', value: ticketData.created_by_name || 'N/A' },
+                            { label: 'Updated By', value: ticketData.updated_by || 'N/A' },
+                            { label: 'Mode', value: ticketData.complaint_mode || 'N/A' },
+                            { label: 'Identification', value: ticketData.proactive_reactive || 'N/A' },
                           ],
                         ].map((row, rIdx) => (
                           <div
@@ -1138,6 +1587,7 @@ export const TicketDetailsPage = () => {
                         ))}
                       </CardContent>
                     </Card>
+
                   ) : (
                     /* No Data Available Message */
                     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -1153,82 +1603,44 @@ export const TicketDetailsPage = () => {
                   )}
                 </div>
 
-                {/* Location Details */}
                 <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Location Details
-                    </h3>
-                  </div>
-
-                  <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="relative w-full px-4">
-                      <div
-                        className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
-                        style={{
-                          left: `calc(9%)`,
-                          right: `calc(9%)`,
-                        }}
-                      />
-
-                      <div className="flex justify-between items-start relative z-10">
-                        {[
-                          { label: "Site", value: ticketData.site_name || "NA" },
-                          { label: "Building", value: ticketData.building_name || "NA" },
-                          { label: "Wing", value: ticketData.wing_name || "NA" },
-                          { label: "Floor", value: ticketData.floor_name || "NA" },
-                          { label: "Area", value: ticketData.area_name || "NA" },
-                          { label: "Room", value: ticketData.room_name || "NA" },
-                        ].map((item, index) => (
-                          <div
-                            key={index}
-                            className="flex flex-col items-center w-full text-center"
-                          >
-                            <div className="text-sm text-gray-500 mb-2 mt-1">
-                              {item.label}
-                            </div>
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-1" />
-                            <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
-                              {item.value}
-                            </div>
-                          </div>
-                        ))}
+                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <ClipboardList className="w-6 h-6 text-[#C72030]" />
                       </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Association
+                      </h3>
                     </div>
-                  </div>
-                </div>
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] px-5 py-3 border border-[#D9D9D9] rounded-t-lg">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <ClipboardList className="w-4 h-4 text-[#C72030]" />
-                    </div>
-                    <h3 className="text-sm font-semibold tracking-wide text-[#1A1A1A]">
-                      Association
-                    </h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                      onClick={handleUpdate}
+                    >
+                      <Edit className="w-4 h-4 mr-1" /> Edit
+                    </Button>
                   </div>
 
                   {/* Body */}
                   <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-y-6 md:gap-y-8 gap-x-8 text-[12px]">
                       {[
-                        { label: 'Asset Name', value: ticketData.asset_name || '—' },
+                        { label: 'Asset Name', value: ticketData.asset_or_service_name || '—' },
                         { label: 'Group', value: ticketData.asset_group || '—' },
-                        { label: 'Status', value: ticketData.asset_status || '—' },
-                        { label: 'Criticality', value: ticketData.asset_criticality || 'Critical/Non critical' },
+                        { label: 'Status', value: ticketData.amc?.amc_status || '—' },
+                        { label: 'Criticality', value: ticketData.asset_criticality ? 'Critical' : 'Non Critical' },
 
-                        { label: 'Asset ID', value: ticketData.asset_id || '—' },
+                        { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '—' },
                         { label: 'Sub group', value: ticketData.asset_sub_group || '—' },
-                        { label: 'AMC Status', value: ticketData.asset_amc_status || 'Active/Inactive' },
-                        { label: 'Under Warranty', value: hasData(ticketData.asset_under_warranty) ? ticketData.asset_under_warranty : 'Yes/No' },
+                        { label: 'AMC Status', value: ticketData.amc?.amc_status || '—' },
+                        { label: 'Under Warranty', value: ticketData.warranty ? 'Yes' : 'No' },
 
-                        { label: 'Category', value: ticketData.asset_category || '—' },
-                        { label: 'Allocated', value: hasData(ticketData.asset_allocated) ? ticketData.asset_allocated : '—' },
-                        { label: 'AMC Type', value: ticketData.asset_amc_type || 'Comprehensive' },
-                        { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry || 'DD/MM/YYYY' },
+                        { label: 'Category', value: ticketData.asset_type_category || '—' },
+                        { label: 'Allocated', value: ticketData.assigned_to || '—' },
+                        { label: 'AMC Type', value: 'Comprehensive' }, // Not provided in API
+                        { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : 'N/A' },
                       ].map(field => (
                         <div key={field.label} className="flex flex-col">
                           <span className="text-[14px] tracking-wide text-[#6B6B6B] mb-1">
@@ -1253,7 +1665,9 @@ export const TicketDetailsPage = () => {
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Ticket Management
                       </h3>
-                      <span className="w-2 h-2 rounded-full bg-[#4BE2B9]" />
+                      {ticketData.closure_date === null || ticketData.closure_date === undefined || ticketData.closure_date === '' && (
+                        <span className="w-2 h-2 rounded-full bg-[#4BE2B9]" />
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -1329,524 +1743,1198 @@ export const TicketDetailsPage = () => {
 
                   {/* Body (consistent background / border like Location card) */}
                   <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    {(() => {
-                      const mgmtFields = [
-                        { label: 'Update Status', value: ticketData.issue_status || 'Pending' },
-                        { label: 'Severity', value: ticketData.severity || 'Major/Minor' },
-                        { label: 'Select Vendor', value: ticketData.vendor_name || 'Abdul Ghaffar' },
-                        { label: 'Assigned To', value: ticketData.assigned_to || 'Abdul Ghaffar' },
-                        { label: 'Source', value: ticketData.association || 'Asset' },
+    {(() => {
+      const mgmtFields = [
+        { label: 'Update Status', value: ticketData.issue_status || 'Pending' },
+        { label: 'Severity', value: ticketData.severity || '-' },
+        { label: 'Select Vendor', value: ticketData.vendors && ticketData.vendors.length > 0 ? ticketData.vendors.map(v => v.name || v).join(', ') : '-' },
+        { label: 'Assigned To', value: ticketData.assigned_to || '-' },
+        { label: 'Source', value: ticketData.asset_service || 'Asset' },
 
-                        { label: 'Expected Visit Date', value: formatDate(ticketData.expected_visit_date) },
-                        { label: 'Expected Completion Date', value: formatDate(ticketData.expected_completion_date) },
-                        { label: 'Scope', value: ticketData.scope || 'Maintenance/Project' },
-                        { label: 'Mode', value: ticketData.complaint_mode || 'App' },
-                        { label: 'Identification', value: ticketData.identification || 'Reactive / Proactive' },
-                      ];
+        { label: 'Expected Visit Date', value: ticketData.visit_date ? formatDate(ticketData.visit_date) : '-' },
+        { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
+        { label: 'Scope', value: ticketData.issue_related_to || 'FM' },
+        { label: 'Mode', value: ticketData.complaint_mode || 'App' },
+        { label: 'Identification', value: ticketData.proactive_reactive || 'Proactive' },
+      ];
 
-                      // Split into two vertical columns
-                      const midpoint = Math.ceil(mgmtFields.length / 2);
-                      const colA = mgmtFields.slice(0, midpoint);
-                      const colB = mgmtFields.slice(midpoint);
+      // Split into two vertical columns
+      const midpoint = Math.ceil(mgmtFields.length / 2);
+      const colA = mgmtFields.slice(0, midpoint);
+      const colB = mgmtFields.slice(midpoint);
 
-                      return (
-                        <div className="flex flex-col lg:flex-row gap-10">
-                          {/* Left: two vertical columns of key/value pairs */}
-                          <div className="flex-1 flex gap-16">
-                            {[colA, colB].map((col, ci) => (
-                              <div key={ci} className="flex flex-col gap-4 min-w-[210px]">
-                                {col.map(f => (
-                                  <div key={f.label} className="flex text-[14px] leading-snug">
-                                    <span className="text-[#6B6B6B] w-[120px] shrink-0">
-                                      {f.label}
-                                    </span>
-                                    <span className="ml-2 text-[14px] font-semibold text-[#1A1A1A]">
-                                      {f.value}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Right: Root Cause + Notes (stacked) */}
-                          <div className="w-full lg:w-[38%] flex flex-col gap-8">
-                            <div className="flex flex-col">
-                              <FormControl
-                                fullWidth
-                                variant="outlined"
-                                sx={fieldStyles}
-                              >
-                                <InputLabel shrink>Root Cause Analysis</InputLabel>
-                                <Select
-                                  label="Root Cause Analysis"
-                                  notched
-                                  displayEmpty
-                                  value={ticketData.root_cause || ''}
-                                  onChange={() => { }}
-                                >
-                                  <MenuItem value="">Select Root Cause Analysis</MenuItem>
-                                  <MenuItem value="Pipe broken">Pipe broken</MenuItem>
-                                  <MenuItem value="Short circuit">Short circuit</MenuItem>
-                                  <MenuItem value="Transformer breakdown">Transformer breakdown</MenuItem>
-                                  <MenuItem value="Short circuit">Short circuit</MenuItem>
-                                </Select>
-                              </FormControl>
-                            </div>
-
-                            <div className="flex flex-col">
-                              <span className="text-[11px] tracking-wide text-[#6B6B6B] mb-1">
-                                Additional Notes
-                              </span>
-                              <div className="text-[12.5px] font-medium text-[#1A1A1A] leading-[16px] max-h-32 overflow-auto pr-1">
-                                {ticketData.heading ||
-                                  'The Air Conditioner Is Not Functioning Properly It Is Not Cooling, Turning On, Or Responding To Controls. Immediate Inspection And Servicing Are Required.'}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
+      return (
+        <div className="flex flex-col lg:flex-row gap-10">
+          {/* Left: two vertical columns of key/value pairs */}
+          <div className="flex-1 flex gap-16">
+            {[colA, colB].map((col, ci) => (
+              <div key={ci} className="flex flex-col gap-4 min-w-[210px]">
+                {col.map(f => (
+                  <div key={f.label} className="flex text-[14px] leading-snug">
+                    <span className="text-[#6B6B6B] w-[120px] shrink-0">
+                      {f.label}
+                    </span>
+                    <span className="ml-2 text-[14px] font-semibold text-[#1A1A1A]">
+                      {f.value}
+                    </span>
                   </div>
-                </Card>
+                ))}
+              </div>
+            ))}
+          </div>
 
+          {/* Right: Root Cause + Notes (stacked) */}
+          <div className="w-full lg:w-[38%] flex flex-col gap-8">
+            <div className="flex flex-col">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={fieldStyles}
+              >
+                <InputLabel shrink>Root Cause Analysis</InputLabel>
+                <Select
+                  label="Root Cause Analysis"
+                  notched
+                  displayEmpty
+                  value={ticketData.root_cause || ''}
+                  onChange={() => { }}
+                >
+                  <MenuItem value="">
+                    <span style={{ color: '#aaa' }}>Select Root Cause Analysis</span>
+                  </MenuItem>
+                  {communicationTemplates
+                    .filter(template => template.identifier === "Root Cause Analysis")
+                    .map((template) => (
+                      <MenuItem key={template.id} value={template.identifier_action}>
+                        {template.identifier_action}
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+              
+              {/* Show selected root cause description from template body */}
+              {ticketData.root_cause && (
+                <div className="mt-2" style={{ fontSize: '14px', fontWeight: 'medium'}}>
+                  {(() => {
+                    const matchedTemplate = communicationTemplates.find(
+                      template => template.identifier === "Root Cause Analysis" && 
+                                 template.identifier_action === ticketData.root_cause
+                    );
+                    return matchedTemplate?.body || ticketData.root_cause;
+                  })()}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[11px] tracking-wide text-[#6B6B6B] mb-1">
+                Additional Notes
+              </span>
+              <div className="text-[12.5px] font-medium text-[#1A1A1A] leading-[16px] max-h-32 overflow-auto pr-1">
+                {ticketData.notes || 
+                 ticketData.heading ||
+                 ticketData.text ||
+                 'No additional notes available'}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    })()}
+  </div>
+</Card>
+
+                {/* Cost Involve */}
                 <Card className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] px-5 py-3 border border-[#D9D9D9] rounded-t-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <DollarSign className="w-4 h-4 text-[#C72030]" />
-                      </div>
-                      <h3 className="text-sm font-semibold tracking-wide text-[#1A1A1A]">
-                        Cost Involve
-                      </h3>
-                    </div>
+  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9] rounded-t-lg">
+    <div className="flex items-center gap-3">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+        <DollarSign className="w-6 h-6 text-[#C72030]" />
+      </div>
+      <h3 className="text-lg font-semibold uppercase text-black">
+        Cost Involve
+      </h3>
+    </div>
 
-                    {/* Slider Toggle (Yes / No) */}
-                    <div className="flex items-center gap-2 text-[11px] font-medium select-none">
-                      <span className={costInvolveEnabled ? "text-[#1A1A1A]" : "text-gray-400"}>
-                        Yes
-                      </span>
-                      <div
-                        role="switch"
-                        aria-checked={costInvolveEnabled}
-                        aria-label={costInvolveEnabled ? "Deactivate cost involve" : "Activate cost involve"}
-                        tabIndex={0}
-                        onClick={() => setCostInvolveEnabled(v => !v)}
-                        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCostInvolveEnabled(v => !v)}
-                        className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C72030] ${costInvolveEnabled ? 'bg-[#C72030]' : 'bg-gray-300'}`}
-                      >
-                        <span
-                          className={`inline-block w-4 h-4 transform bg-white rounded-full shadow transition-transform ${costInvolveEnabled ? 'translate-x-6' : 'translate-x-1'}`}
-                        />
+    {/* Slider Toggle (Yes / No) */}
+    <div className="flex items-center gap-2 text-[11px] font-medium select-none">
+      <span className={costInvolveEnabled ? "text-[#1A1A1A]" : "text-gray-400"}>
+        Yes
+      </span>
+      <div
+        role="switch"
+        aria-checked={costInvolveEnabled}
+        aria-label={costInvolveEnabled ? "Deactivate cost involve" : "Activate cost involve"}
+        tabIndex={0}
+        onClick={() => setCostInvolveEnabled(v => !v)}
+        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCostInvolveEnabled(v => !v)}
+        className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C72030] ${costInvolveEnabled ? 'bg-[#C72030]' : 'bg-gray-300'}`}
+      >
+        <span
+          className={`inline-block w-4 h-4 transform bg-white rounded-full shadow transition-transform ${costInvolveEnabled ? 'translate-x-6' : 'translate-x-1'}`}
+        />
+      </div>
+      <span className={!costInvolveEnabled ? "text-[#1A1A1A]" : "text-gray-400"}>
+        No
+      </span>
+    </div>
+  </div>
+
+  {/* Body (rendered only when active) */}
+  {costInvolveEnabled && (
+    <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-4 sm:px-5 pt-4 pb-6">
+      {/* Form Rows */}
+      {costRows.map((row) => (
+        <div key={row.id} className="mb-6 last:mb-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Left Column */}
+            <div className="space-y-4">
+              <TextField
+                label={
+                  <span style={{ fontSize: '14px' }}>
+                    Quotation <span style={{ color: "red" }}>*</span>
+                  </span>
+                }
+                placeholder="Enter Quotation"
+                fullWidth
+                value={row.quotation}
+                onChange={e =>
+                  setCostRows(prev =>
+                    prev.map(r => r.id === row.id ? { ...r, quotation: e.target.value } : r)
+                  )
+                }
+                sx={{
+                  '& .MuiInputBase-root': {
+                    backgroundColor: '#F2F2F2',
+                    borderRadius: '4px',
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#DAD7D0',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    fontSize: '14px',
+                    padding: '10px 12px',
+                  },
+                }}
+              />
+              
+              <TextField
+                label={
+                  <span style={{ fontSize: '14px' }}>
+                    Cost <span style={{ color: "red" }}>*</span>
+                  </span>
+                }
+                placeholder="Enter Cost"
+                type="number"
+                fullWidth
+                value={row.cost}
+                onChange={e => {
+                  const value = e.target.value;
+                  if (Number(value) < 0) return;
+                  setCostRows(prev =>
+                    prev.map(r => r.id === row.id ? { ...r, cost: value } : r)
+                  );
+                }}
+                inputProps={{
+                  min: 0,
+                  onWheel: (e) => (e.target as HTMLInputElement).blur(),
+                }}
+                sx={{
+                  '& .MuiInputBase-root': {
+                    backgroundColor: '#F2F2F2',
+                    borderRadius: '4px',
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#DAD7D0',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    fontSize: '14px',
+                    padding: '10px 12px',
+                  },
+                }}
+              />
+            </div>
+
+            {/* Middle Column */}
+            <div className="space-y-4">
+              <FormControl
+                fullWidth
+                sx={{
+                  '& .MuiInputBase-root': {
+                    backgroundColor: '#F2F2F2',
+                    borderRadius: '4px',
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#DAD7D0',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    fontSize: '14px',
+                    padding: '10px 12px',
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontSize: '14px',
+                    '&.Mui-focused': {
+                      color: '#C72030',
+                    },
+                  },
+                }}
+              >
+                <InputLabel id={`vendor-label-${row.id}`}>
+                  <span style={{ fontSize: '14px' }}>
+                    Vendor <span style={{ color: "red" }}>*</span>
+                  </span>
+                </InputLabel>
+                <Select
+                  labelId={`vendor-label-${row.id}`}
+                  label="Vendor *"
+                  value={row.vendor_id}
+                  onChange={e => {
+                    const selectedVendorId = e.target.value;
+                    const selectedVendor = suppliers.find(s => s.id.toString() === selectedVendorId);
+                    setCostRows(prev =>
+                      prev.map(r => r.id === row.id ? { 
+                        ...r, 
+                        vendor: selectedVendor?.company_name || '',
+                        vendor_id: selectedVendorId
+                      } : r)
+                    );
+                  }}
+                  disabled={loadingSuppliers}
+                  displayEmpty
+                >
+                  <MenuItem value="">
+                    <span style={{ color: '#aaa' }}>
+                      {loadingSuppliers ? 'Loading vendors...' : 'Select Vendor'}
+                    </span>
+                  </MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                      {supplier.company_name || supplier.email}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              {/* File Input for Attachments */}
+              <div>
+                <input
+                  type="file"
+                  id={`cost-file-input-${row.id}`}
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={(e) => handleCostAttachmentChange(row.id, e)}
+                  style={{ display: 'none' }}
+                />
+                <label htmlFor={`cost-file-input-${row.id}`}>
+                  <MuiButton
+                    variant="outlined"
+                    component="span"
+                    fullWidth
+                    startIcon={<Paperclip className="w-4 h-4" />}
+                    sx={{
+                      borderColor: '#DAD7D0',
+                      color: '#1A1A1A',
+                      textTransform: 'none',
+                      fontFamily: 'Work Sans, sans-serif',
+                      fontWeight: 500,
+                      borderRadius: '4px',
+                      padding: '10px 12px',
+                      backgroundColor: '#F2F2F2',
+                      justifyContent: 'flex-start',
+                      fontSize: '14px',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: '#F2F2F2',
+                      },
+                    }}
+                  >
+                    {row.attachmentFiles.length > 0 
+                      ? `${row.attachmentFiles.length} file(s) selected` 
+                      : 'Choose Attachments'}
+                  </MuiButton>
+                </label>
+                {row.attachmentFiles.length > 0 && (
+                  <div className="mt-2 text-[11px] text-gray-600">
+                    {row.attachmentFiles.map((file, idx) => (
+                      <div key={idx} className="truncate">
+                        • {file.name} ({(file.size / 1024).toFixed(2)} KB)
                       </div>
-                      <span className={!costInvolveEnabled ? "text-[#1A1A1A]" : "text-gray-400"}>
-                        No
-                      </span>
-                    </div>
+                    ))}
                   </div>
+                )}
+              </div>
+            </div>
 
-                  {/* Body (rendered only when active) */}
-                  {costInvolveEnabled && (
-                    <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-4 sm:px-5 pt-4 pb-6">
-                      {/* Form Rows */}
-                      {costRows.map((row) => (
-                        <div key={row.id} className="mb-4 last:mb-0">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* Left Column */}
-                            <div className="space-y-4">
-                              <div className="bg-[#F2F2F2] border border-[#DAD7D0] px-2 pt-1 pb-2">
-                                <label className="block text-[10px] tracking-wide text-[#5B5B5B] mb-0.5">
-                                  Quotation
-                                </label>
-                                <input
-                                  className="w-full h-8 px-2 text-[11px] bg-transparent outline-none"
-                                  placeholder="Enter Quotation 1"
-                                  value={row.quotation}
-                                  onChange={e =>
-                                    setCostRows(prev =>
-                                      prev.map(r => r.id === row.id ? { ...r, quotation: e.target.value } : r)
-                                    )
-                                  }
-                                />
-                              </div>
-                              <div className="bg-[#F2F2F2] border border-[#DAD7D0] px-2 pt-1 pb-2">
-                                <label className="block text-[10px] tracking-wide text-[#5B5B5B] mb-0.5">
-                                  Cost
-                                </label>
-                                <input
-                                  className="w-full h-8 px-2 text-[11px] bg-transparent outline-none"
-                                  placeholder="Enter Cost"
-                                  value={row.cost}
-                                  onChange={e =>
-                                    setCostRows(prev =>
-                                      prev.map(r => r.id === row.id ? { ...r, cost: e.target.value } : r)
-                                    )
-                                  }
-                                />
-                              </div>
-                            </div>
+            {/* Right Column (Description) */}
+            <TextField
+              label={
+                <span style={{ fontSize: '14px' }}>
+                  Description <span style={{ color: "red" }}>*</span>
+                </span>
+              }
+              placeholder="Enter Description"
+              fullWidth
+              multiline
+              minRows={6}
+              value={row.description}
+              onChange={e =>
+                setCostRows(prev =>
+                  prev.map(r => r.id === row.id ? { ...r, description: e.target.value } : r)
+                )
+              }
+              sx={{
+                '& .MuiInputBase-root': {
+                  backgroundColor: '#F2F2F2',
+                  borderRadius: '4px',
+                },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#DAD7D0',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#C72030',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
+                },
+                '& textarea': {
+                  width: "100% !important",
+                  resize: "both",
+                  overflow: "auto",
+                  boxSizing: "border-box",
+                  display: "block",
+                  fontSize: '14px',
+                  padding: '10px 12px',
+                },
+                '& textarea[aria-hidden="true"]': {
+                  display: "none !important",
+                },
+              }}
+            />
+          </div>
+        </div>
+      ))}
 
-                            {/* Middle Column */}
-                            <div className="space-y-4">
-                              <div className="bg-[#F2F2F2] border border-[#DAD7D0] px-2 pt-1 pb-2">
-                                <label className="block text-[10px] tracking-wide text-[#5B5B5B] mb-0.5">
-                                  Vendor
-                                </label>
-                                <input
-                                  className="w-full h-8 px-2 text-[11px] bg-transparent outline-none"
-                                  placeholder="Enter Vendor"
-                                  value={row.vendor}
-                                  onChange={e =>
-                                    setCostRows(prev =>
-                                      prev.map(r => r.id === row.id ? { ...r, vendor: e.target.value } : r)
-                                    )
-                                  }
-                                />
-                              </div>
-                              <div className="bg-[#F2F2F2] border border-[#DAD7D0] px-2 pt-1 pb-2">
-                                <label className="block text-[10px] tracking-wide text-[#5B5B5B] mb-0.5">
-                                  Attachment
-                                </label>
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    className="w-full h-8 px-2 text-[11px] bg-transparent outline-none"
-                                    placeholder="Attachment"
-                                    value={row.attachment}
-                                    onChange={e =>
-                                      setCostRows(prev =>
-                                        prev.map(r => r.id === row.id ? { ...r, attachment: e.target.value } : r)
-                                      )
-                                    }
-                                  />
-                                  <Paperclip className="w-4 h-4 text-gray-500" />
-                                </div>
-                              </div>
-                            </div>
+      {/* Add / Remove Row Buttons */}
+      <div className="flex justify-end gap-4 mt-4 pr-2">
+        <button
+          type="button"
+          onClick={addCostRow}
+          className="text-[#C72030] text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2"
+          title="Add Row"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={removeCostRow}
+          disabled={costRows.length <= 1}
+          className={`text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2 ${
+            costRows.length <= 1 ? 'opacity-50 cursor-not-allowed' : 'text-[#C72030]'
+          }`}
+          title="Remove Row"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+      </div>
 
-                            {/* Right Column (Description) */}
-                            <div className="bg-[#F2F2F2] border border-[#DAD7D0] px-2 pt-1 pb-2 md:row-span-2">
-                              <label className="block text-[10px] tracking-wide text-[#5B5B5B] mb-0.5">
-                                Description
-                              </label>
-                              <textarea
-                                rows={5}
-                                className="w-full resize-none text-[11px] leading-snug bg-transparent outline-none px-1"
-                                placeholder="Enter Description"
-                                value={row.description}
-                                onChange={e =>
-                                  setCostRows(prev =>
-                                    prev.map(r => r.id === row.id ? { ...r, description: e.target.value } : r)
-                                  )
-                                }
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+      {/* Submit Cost Approval Button */}
+      <div className="flex justify-center mt-6">
+        <button
+          type="button"
+          onClick={handleSubmitCostApproval}
+          disabled={submittingCostApproval}
+          className={`bg-[#C72030] text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${
+            submittingCostApproval 
+              ? 'opacity-50 cursor-not-allowed' 
+              : 'hover:bg-[#A01828]'
+          }`}
+        >
+          {submittingCostApproval ? 'Submitting...' : 'Submit Cost Approval'}
+        </button>
+      </div>
 
-                      {/* Add / Remove Row Buttons */}
-                      <div className="flex justify-end gap-4 mt-2 pr-2">
-                        <button
-                          type="button"
-                          onClick={addCostRow}
-                          className="text-[#C72030] text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-1"
-                          title="Add Row"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={removeCostRow}
-                          className="text-[#C72030] text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-1"
-                          title="Remove Row"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Table */}
-                      <div className="mt-4 border border-[#D9D9D9]">
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full text-[11px]">
-                            <thead>
-                              <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
-                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5'].map(h => (
-                                  <th key={h} className="px-4 py-2 text-left border border-[#D2CEC4] whitespace-nowrap">
-                                    {h}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {costRows.map(r => (
-                                <tr key={r.id} className="bg-white even:bg-[#FAFAF9]">
-                                  {Array.from({ length: 10 }).map((_, i) =>
-                                    <td key={i} className="px-4 py-2 border border-[#E5E2DC] text-gray-500 text-center">-</td>
-                                  )}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
+      {/* Table - Display actual requests data from API */}
+      <div className="mt-6 border border-[#D9D9D9] rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-[11px]">
+            <thead>
+              <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
+                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5', 'Status'].map(h => (
+                  <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {ticketData.requests && ticketData.requests.length > 0 ? (
+                ticketData.requests.map(request => (
+                  <tr key={request.id} className="bg-white even:bg-[#FAFAF9] hover:bg-[#F6F4EE] transition-colors">
+                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A] font-medium">
+                      {request.id}
+                    </td>
+                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A] font-semibold">
+                      ₹{request.amount}
+                    </td>
+                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
+                      {request.comment || '-'}
+                    </td>
+                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
+                      {request.created_on}
+                    </td>
+                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
+                      {request.created_by}
+                    </td>
+                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${
+                        request.approvals?.L1 === 'Approved' 
+                          ? 'bg-green-100 text-green-700' 
+                          : request.approvals?.L1 === 'Rejected'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {request.approvals?.L1 || '-'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${
+                        request.approvals?.L2 === 'Approved' 
+                          ? 'bg-green-100 text-green-700' 
+                          : request.approvals?.L2 === 'Rejected'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {request.approvals?.L2 || '-'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${
+                        request.approvals?.L3 === 'Approved' 
+                          ? 'bg-green-100 text-green-700' 
+                          : request.approvals?.L3 === 'Rejected'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {request.approvals?.L3 || '-'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${
+                        request.approvals?.L4 === 'Approved' 
+                          ? 'bg-green-100 text-green-700' 
+                          : request.approvals?.L4 === 'Rejected'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {request.approvals?.L4 || '-'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${
+                        request.approvals?.L5 === 'Approved' 
+                          ? 'bg-green-100 text-green-700' 
+                          : request.approvals?.L5 === 'Rejected'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {request.approvals?.L5 || '-'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 border border-[#E5E2DC]">
+                      <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${
+                        request.master_status === 'Pending' 
+                          ? 'bg-yellow-100 text-yellow-700' 
+                          : request.master_status === 'Approved'
+                          ? 'bg-green-100 text-green-700'
+                          : request.master_status === 'Rejected'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        {request.master_status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr className="bg-white">
+                  <td colSpan={11} className="px-4 py-6 border border-[#E5E2DC] text-gray-500 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <DollarSign className="w-8 h-8 text-gray-300" />
+                      <span className="text-sm">No cost approval requests found</span>
                     </div>
-                  )}
-                </Card>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )}
+</Card>
 
                 {/* Ticket Closure (Figma-aligned) */}
                 <Card className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        Ticket Closure
-                      </h3>
+  {/* Header */}
+  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+    <div className="flex items-center gap-3">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+      </div>
+      <h3 className="text-lg font-semibold uppercase text-black">
+        Ticket Closure
+      </h3>
+    </div>
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+      onClick={handleUpdate}
+    >
+      <Edit className="w-4 h-4 mr-1" /> Edit
+    </Button>
+  </div>
+
+  {/* Body */}
+  <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
+    {/* Two row / two column panels */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Preventive Action */}
+      <div className="bg-[#F6F6F4] border border-[#E7E4DD] p-4">
+        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+          <InputLabel shrink>Preventive Action</InputLabel>
+          <Select
+            label="Preventive Action"
+            notched
+            displayEmpty
+            value={ticketData.preventive_action || ''}
+            onChange={() => { }}
+          >
+            <MenuItem value="">
+              <span style={{ color: '#aaa' }}>Select Preventive Action</span>
+            </MenuItem>
+            {communicationTemplates
+              .filter(template => template.identifier === "Preventive Action")
+              .map((template) => (
+                <MenuItem key={template.id} value={template.identifier_action}>
+                  {template.identifier_action}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
+          <p style={!ticketData.preventive_action ? { fontSize: '14px', fontWeight: 'medium'} : {}}>
+            {(() => {
+              const matchedTemplate = communicationTemplates.find(
+                template => template.identifier === "Preventive Action" && 
+                           template.identifier_action === ticketData.preventive_action
+              );
+              return matchedTemplate?.body || ticketData.preventive_action || 'No preventive action description available';
+            })()}
+          </p>
+        </div>
+      </div>
+
+      {/* Short-term Impact */}
+      <div className="bg-[#F6F6F4] border border-[#E7E4DD] p-4">
+        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+          <InputLabel shrink>Short-term Impact</InputLabel>
+          <Select
+            label="Short-term Impact"
+            notched
+            displayEmpty
+            value={ticketData.short_term_impact || ''}
+            onChange={() => { }}
+          >
+            <MenuItem value="">
+              <span style={{ color: '#aaa' }}>Select Short-term Impact</span>
+            </MenuItem>
+            {communicationTemplates
+              .filter(template => template.identifier === "Short-term Impact")
+              .map((template) => (
+                <MenuItem key={template.id} value={template.identifier_action}>
+                  {template.identifier_action}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
+          <p style={!ticketData.short_term_impact ? { fontSize: '14px', fontWeight: 'medium'} : {}}>
+            {(() => {
+              const matchedTemplate = communicationTemplates.find(
+                template => template.identifier === "Short-term Impact" && 
+                           template.identifier_action === ticketData.short_term_impact
+              );
+              return matchedTemplate?.body || ticketData.short_term_impact || 'No short-term impact description available';
+            })()}
+          </p>
+        </div>
+      </div>
+
+      {/* Corrective Action */}
+      <div className="bg-[#F6F6F4] border border-[#E7E4DD] p-4">
+        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+          <InputLabel shrink>Corrective Action</InputLabel>
+          <Select
+            label="Corrective Action"
+            notched
+            displayEmpty
+            value={ticketData.corrective_action || ''}
+            onChange={() => { }}
+          >
+            <MenuItem value="">
+              <span style={{ color: '#aaa' }}>Select Corrective Action</span>
+            </MenuItem>
+            {communicationTemplates
+              .filter(template => template.identifier === "Corrective Action")
+              .map((template) => (
+                <MenuItem key={template.id} value={template.identifier_action}>
+                  {template.identifier_action}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
+          <p style={!ticketData.corrective_action ? { fontSize: '14px', fontWeight: 'medium'} : {}}>
+            {(() => {
+              const matchedTemplate = communicationTemplates.find(
+                template => template.identifier === "Corrective Action" && 
+                           template.identifier_action === ticketData.corrective_action
+              );
+              return matchedTemplate?.body || ticketData.corrective_action || 'No corrective action description available';
+            })()}
+          </p>
+        </div>
+      </div>
+
+      {/* Long-term Impact */}
+      <div className="bg-[#F6F6F4] border border-[#E7E4DD] p-4">
+        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+          <InputLabel shrink>Long-term Impact</InputLabel>
+          <Select
+            label="Long-term Impact"
+            notched
+            displayEmpty
+            value={ticketData.impact || ''}
+            onChange={() => { }}
+          >
+            <MenuItem value="">
+              <span style={{ color: '#aaa' }}>Select Long-term Impact</span>
+            </MenuItem>
+            {communicationTemplates
+              .filter(template => template.identifier === "Long-term Impact")
+              .map((template) => (
+                <MenuItem key={template.id} value={template.identifier_action}>
+                  {template.identifier_action}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
+          <p style={!ticketData.impact ? { fontSize: '14px', fontWeight: 'medium'} : {}}>
+            {(() => {
+              const matchedTemplate = communicationTemplates.find(
+                template => template.identifier === "Long-term Impact" && 
+                           template.identifier_action === ticketData.impact
+              );
+              return matchedTemplate?.body || ticketData.impact || 'No long-term impact description available';
+            })()}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* Bottom Row: Review Date & Responsible Person */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+      <div className="flex items-start text-[12px]">
+        <span className="w-[120px] text-[#6B6B6B]">Review Date</span>
+        <span className="ml-4 font-semibold text-[#1A1A1A]">
+          {ticketData.review_date
+            ? formatDate(ticketData.review_date)
+            : '-'}
+        </span>
+      </div>
+      <div>
+        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+  <InputLabel shrink>Responsible Person</InputLabel>
+  <Select
+    label="Responsible Person"
+    notched
+    displayEmpty
+    value={getResponsiblePersonValue()}
+    onChange={() => { }}
+    disabled={loadingResponsiblePersons}
+  >
+    <MenuItem value="">
+      <span style={{ color: '#aaa' }}>
+        {loadingResponsiblePersons ? 'Loading...' : 'Select Responsible Person'}
+      </span>
+    </MenuItem>
+    {responsiblePersons.map((person) => (
+      <MenuItem key={person.id} value={person.id.toString()}>
+        {person.full_name}
+        {person.employee_type && (
+          <span style={{ color: '#999', fontSize: '11px', marginLeft: '8px' }}>
+            ({person.employee_type})
+          </span>
+        )}
+      </MenuItem>
+    ))}
+  </Select>
+  
+  {/* Show current value if it doesn't match any option */}
+  {ticketData.responsible_person && 
+   !responsiblePersons.find(p => p.full_name === ticketData.responsible_person) && (
+    <div className="mt-1 text-[11px] text-[#6B6B6B] italic">
+      Current: {ticketData.responsible_person}
+    </div>
+  )}
+</FormControl>
+      </div>
+    </div>
+  </div>
+</Card>
+
+                <div className="w-full bg-white rounded-lg shadow-sm border">
+                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                      onClick={handleUpdate}
-                    >
-                      <Edit className="w-4 h-4 mr-1" /> Edit
-                    </Button>
+                    <h3 className="text-lg font-semibold uppercase text-black">
+                      Location Details
+                    </h3>
                   </div>
 
-                  {/* Body */}
-                  <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
-                    {/* Two row / two column panels */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {/* Preventive Action */}
-                      <div className="bg-[#F6F6F4] border border-[#E7E4DD] p-4">
-                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                          <InputLabel shrink>Preventive Action</InputLabel>
-                          <Select
-                            label="Preventive Action"
-                            notched
-                            displayEmpty
-                            value={ticketData.preventive_action || ''}
-                            onChange={() => { }}
-                          >
-                            <MenuItem value="">Select Preventive Action</MenuItem>
-                            <MenuItem value="General Cleaning">General Cleaning</MenuItem>
-                            <MenuItem value="Filter Replacement">Filter Replacement</MenuItem>
-                          </Select>
-                        </FormControl>
-                        <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
-                          <p>
-                            {ticketData.preventive_action_description ||
-                              'The Air Conditioner Is Not Functioning Properly It Is Not Cooling, Turning On, Or Responding To Controls. Immediate Inspection And Servicing Are Required.'}
-                          </p>
-                        </div>
-                      </div>
+                  <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                    <div className="relative w-full px-4">
+                      <div
+                        className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
+                        style={{
+                          left: `calc(9%)`,
+                          right: `calc(9%)`,
+                        }}
+                      />
 
-                      {/* Short-term Impact */}
-                      <div className="bg-[#F6F6F4] border border-[#E7E4DD] p-4">
-                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                          <InputLabel shrink>Short-term Impact</InputLabel>
-                          <Select
-                            label="Short-term Impact"
-                            notched
-                            displayEmpty
-                            value={ticketData.short_term_impact || ''}
-                            onChange={() => { }}
+                      <div className="flex justify-between items-start relative z-10">
+                        {[
+                          { label: "Site", value: ticketData.site_name || "-" },
+                          { label: "Building", value: ticketData.building_name || "-" },
+                          { label: "Wing", value: ticketData.wing_name || "-" },
+                          { label: "Floor", value: ticketData.floor_name || "-" },
+                          { label: "Area", value: ticketData.area_name || "-" },
+                          { label: "Room", value: ticketData.room_name || "-" },
+                        ].map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex flex-col items-center w-full text-center"
                           >
-                            <MenuItem value="">Select Short-term Impact</MenuItem>
-                            <MenuItem value="Minor Downtime">Minor Downtime</MenuItem>
-                            <MenuItem value="Service Interruption">Service Interruption</MenuItem>
-                          </Select>
-                        </FormControl>
-                        <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
-                          <p>
-                            {ticketData.short_term_impact_desc ||
-                              'The Air Conditioner Is Not Functioning Properly It Is Not Cooling, Turning On, Or Responding To Controls. Immediate Inspection And Servicing Are Required.'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Corrective Action */}
-                      <div className="bg-[#F6F6F4] border border-[#E7E4DD] p-4">
-                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                          <InputLabel shrink>Corrective Action</InputLabel>
-                          <Select
-                            label="Corrective Action"
-                            notched
-                            displayEmpty
-                            value={ticketData.corrective_action || ''}
-                            onChange={() => { }}
-                          >
-                            <MenuItem value="">Select Corrective Action</MenuItem>
-                            <MenuItem value="Gas Refill">Gas Refill</MenuItem>
-                            <MenuItem value="Component Replacement">Component Replacement</MenuItem>
-                          </Select>
-                        </FormControl>
-                        <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
-                          <p>
-                            {ticketData.corrective_action_description ||
-                              'The Air Conditioner Is Not Functioning Properly It Is Not Cooling, Turning On, Or Responding To Controls. Immediate Inspection And Servicing Are Required.'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Long-term Impact */}
-                      <div className="bg-[#F6F6F4] border border-[#E7E4DD] p-4">
-                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                          <InputLabel shrink>Long-term Impact</InputLabel>
-                          <Select
-                            label="Long-term Impact"
-                            notched
-                            displayEmpty
-                            value={ticketData.long_term_impact || ''}
-                            onChange={() => { }}
-                          >
-                            <MenuItem value="">Select Long-term Impact</MenuItem>
-                            <MenuItem value="Lifecycle Reduction">Lifecycle Reduction</MenuItem>
-                            <MenuItem value="High Energy Usage">High Energy Usage</MenuItem>
-                          </Select>
-                        </FormControl>
-                        <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
-                          <p>
-                            {ticketData.long_term_impact_desc ||
-                              'The Air Conditioner Is Not Functioning Properly It Is Not Cooling, Turning On, Or Responding To Controls. Immediate Inspection And Servicing Are Required.'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bottom Row: Review Date & Responsible Person */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                      <div className="flex items-start text-[12px]">
-                        <span className="w-[120px] text-[#6B6B6B]">Review Date</span>
-                        <span className="ml-4 font-semibold text-[#1A1A1A]">
-                          {ticketData.review_date
-                            ? formatDate(ticketData.review_date)
-                            : 'DD/MM/YYYY'}
-                        </span>
-                      </div>
-                      <div>
-                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                          <InputLabel shrink>Responsible Person</InputLabel>
-                          <Select
-                            label="Responsible Person"
-                            notched
-                            displayEmpty
-                            value={ticketData.responsible_person || ''}
-                            onChange={() => { }}
-                          >
-                            <MenuItem value="">Select Responsible Person</MenuItem>
-                            <MenuItem value="Abdul Ghaffar">Abdul Ghaffar</MenuItem>
-                            <MenuItem value="Samuel">Samuel</MenuItem>
-                          </Select>
-                        </FormControl>
+                            <div className="text-sm text-gray-500 mb-2 mt-1">
+                              {item.label}
+                            </div>
+                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
+                            <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
+                              {item.value}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
-                </Card>
+                </div>
 
                 {ticketData.documents && (
                   <Card className="w-full bg-white rounded-lg shadow-sm border">
                     {/* Header */}
-                    <div className="flex items-center gap-2 bg-[#F6F4EE] px-4 py-2 border border-[#D9D9D9] rounded-t-lg">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <Paperclip className="w-3.5 h-3.5 text-[#C72030]" />
+                    <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <Paperclip className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
-                      <h3 className="text-[12px] font-semibold tracking-wide text-[#1A1A1A]">
+                      <h3 className="text-lg font-semibold uppercase text-black">
                         Attachments
                       </h3>
                     </div>
 
                     {/* Body */}
-                    <div className="bg-[#FAFAF8] border border-t-0 border-[#D9D9D9] p-4">
-                      {ticketData.documents.length > 0 ? (
-                        <div className="flex flex-wrap gap-4">
-                          {ticketData.documents.map((doc, idx) => {
-                            const rawUrl =
-                              doc.document ||
-                              doc.document_url ||
-                              doc.url ||
-                              doc.attachment_url ||
-                              '';
-                            const ext =
-                              rawUrl.split('.').pop()?.toLowerCase() ||
-                              doc.doctype?.split('/').pop()?.toLowerCase() ||
-                              '';
-                            const isImg =
-                              ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext) ||
-                              (doc.doctype || '').startsWith('image/');
+                    <CardContent className="pt-4 bg-[#FAFAF8] border border-t-0 border-[#D9D9D9]">
+                      {Array.isArray(ticketData.documents) && ticketData.documents.length > 0 ? (
+                        <div className="flex items-center flex-wrap gap-4">
+                          {ticketData.documents.map((attachment: any, idx: number) => {
+                            const url = attachment.document || attachment.document_url || attachment.url || attachment.attachment_url || '';
+                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                            const isPdf = /\.pdf$/i.test(url) || attachment.doctype === 'application/pdf';
+                            const isExcel = /\.(xls|xlsx|csv)$/i.test(url) ||
+                              attachment.doctype?.includes('spreadsheet') ||
+                              attachment.doctype?.includes('excel');
+                            const isWord = /\.(doc|docx)$/i.test(url) ||
+                              attachment.doctype?.includes('document') ||
+                              attachment.doctype?.includes('word');
+                            const isDownloadable = isPdf || isExcel || isWord || isImage;
 
                             return (
-                              <button
-                                key={doc.id || idx}
-                                type="button"
-                                onClick={() => {
-                                  if (isImg && rawUrl) {
-                                    setPreviewImage({
-                                      url: rawUrl,
-                                      name: `Attachment_${doc.id || idx + 1}.${ext || 'file'}`,
-                                      document: doc
-                                    });
-                                    setShowImagePreview(true);
-                                  }
-                                }}
-                                className="group outline-none"
+                              <div
+                                key={attachment.id || idx}
+                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                               >
-                                <div className="w-[116px] h-[116px] bg-white border border-[#D3CEC4] overflow-hidden relative flex items-center justify-center">
-                                  {isImg ? (
+                                {isImage ? (
+                                  <>
+                                    <button
+                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                      title="View"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          ...attachment,
+                                          url,
+                                          type: 'image'
+                                        });
+                                        setIsModalOpen(true);
+                                      }}
+                                      type="button"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
                                     <img
-                                      src={rawUrl}
-                                      alt=""
-                                      className="w-full h-full object-cover transition-transform group-hover:scale-[1.03]"
+                                      src={url}
+                                      alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
+                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          ...attachment,
+                                          url,
+                                          type: 'image'
+                                        });
+                                        setIsModalOpen(true);
+                                      }}
                                       onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
-                                        (
-                                          (e.target as HTMLImageElement)
-                                            .nextSibling as HTMLElement
-                                        ).style.display = 'flex';
                                       }}
                                     />
-                                  ) : (
-                                    <div className="flex flex-col items-center justify-center text-[#5F5F5F] text-[10px] leading-tight gap-2 w-full h-full">
-                                      <FileText className="w-6 h-6 text-[#8A8A8A]" />
-                                      <span className="px-2 break-all">
-                                        {`File_${doc.id || idx + 1}.${ext || 'file'}`}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {/* Fallback */}
-                                  <div
-                                    className="hidden absolute inset-0 items-center justify-center text-[10px] text-gray-500 bg-white"
-                                  >
-                                    <FileText className="w-6 h-6 mb-1" />
-                                    Unavailable
+                                  </>
+                                ) : isPdf ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
                                   </div>
-                                </div>
-                              </button>
+                                ) : isExcel ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                    <FileSpreadsheet className="w-6 h-6" />
+                                  </div>
+                                ) : isWord ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                    <File className="w-6 h-6" />
+                                  </div>
+                                )}
+                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                  {attachment.document_name ||
+                                    attachment.document_file_name ||
+                                    url.split('/').pop() ||
+                                    `Document_${attachment.id || idx + 1}`}
+                                </span>
+                                {isDownloadable && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                    onClick={async () => {
+                                      console.log('📎 Download attempt:', {
+                                        id: attachment.id,
+                                        doctype: attachment.doctype,
+                                        url
+                                      });
+
+                                      if (!attachment.id) {
+                                        toast.error('Unable to download: No document ID found');
+                                        return;
+                                      }
+
+                                      try {
+                                        const { API_CONFIG } = await import('@/config/apiConfig');
+                                        const baseUrl = API_CONFIG.BASE_URL;
+                                        const token = localStorage.getItem('token');
+
+                                        const cleanBaseUrl = baseUrl
+                                          .replace(/^https?:\/\//, '')
+                                          .replace(/\/$/, '');
+                                        const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${attachment.id}?show_file=true`;
+
+                                        console.log('🔗 Download URL:', downloadUrl);
+
+                                        const response = await fetch(downloadUrl, {
+                                          method: 'GET',
+                                          headers: {
+                                            Authorization: `Bearer ${token}`,
+                                            Accept: '*/*',
+                                          },
+                                          mode: 'cors',
+                                        });
+
+                                        if (response.ok) {
+                                          const blob = await response.blob();
+                                          const fileExtension =
+                                            attachment.doctype?.split('/').pop() ||
+                                            url.split('.').pop()?.toLowerCase() ||
+                                            'file';
+                                          const documentName = `document_${attachment.id}.${fileExtension}`;
+
+                                          const downloadLink = window.URL.createObjectURL(blob);
+                                          const link = window.document.createElement('a');
+                                          link.href = downloadLink;
+                                          link.download = documentName;
+                                          link.style.display = 'none';
+                                          window.document.body.appendChild(link);
+                                          link.click();
+
+                                          setTimeout(() => {
+                                            window.document.body.removeChild(link);
+                                            window.URL.revokeObjectURL(downloadLink);
+                                          }, 100);
+
+                                          toast.success('File downloaded successfully');
+                                        } else {
+                                          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                        }
+                                      } catch (error) {
+                                        console.error('Error downloading file:', error);
+                                        toast.error(`Failed to download file: ${error.message}`);
+                                      }
+                                    }}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
                             );
                           })}
                         </div>
                       ) : (
-                        <div className="text-xs text-gray-400">No attachments</div>
+                        <p className="text-xs text-gray-400">No attachments</p>
                       )}
-                    </div>
+                    </CardContent>
                   </Card>
+                )}
+
+                {isModalOpen && selectedDoc && (
+                  <div
+                    className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    <div
+                      className="max-w-4xl max-h-[90vh] bg-white rounded-lg p-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold truncate">
+                          {selectedDoc.document_name ||
+                            selectedDoc.document_file_name ||
+                            selectedDoc.url?.split('/').pop() ||
+                            `Document_${selectedDoc.id}`}
+                        </h3>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              if (!selectedDoc.id) {
+                                toast.error('Unable to download: No document ID found');
+                                return;
+                              }
+
+                              try {
+                                const { API_CONFIG } = await import('@/config/apiConfig');
+                                const baseUrl = API_CONFIG.BASE_URL;
+                                const token = localStorage.getItem('token');
+
+                                const cleanBaseUrl = baseUrl
+                                  .replace(/^https?:\/\//, '')
+                                  .replace(/\/$/, '');
+                                const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${selectedDoc.id}?show_file=true`;
+
+                                const response = await fetch(downloadUrl, {
+                                  method: 'GET',
+                                  headers: {
+                                    Authorization: `Bearer ${token}`,
+                                    Accept: '*/*',
+                                  },
+                                  mode: 'cors',
+                                });
+
+                                if (response.ok) {
+                                  const blob = await response.blob();
+                                  const fileExtension =
+                                    selectedDoc.doctype?.split('/').pop() ||
+                                    selectedDoc.url?.split('.').pop()?.toLowerCase() ||
+                                    'file';
+                                  const documentName = `document_${selectedDoc.id}.${fileExtension}`;
+
+                                  const url = window.URL.createObjectURL(blob);
+                                  const link = window.document.createElement('a');
+                                  link.href = url;
+                                  link.download = documentName;
+                                  link.style.display = 'none';
+                                  window.document.body.appendChild(link);
+                                  link.click();
+
+                                  setTimeout(() => {
+                                    window.document.body.removeChild(link);
+                                    window.URL.revokeObjectURL(url);
+                                  }, 100);
+
+                                  toast.success('File downloaded successfully');
+                                } else {
+                                  throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                }
+                              } catch (error) {
+                                console.error('Error downloading file:', error);
+                                toast.error(`Failed to download: ${error.message}`);
+                              }
+                            }}
+                          >
+                            <Download className="w-4 h-4 mr-1" />
+                            Download
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsModalOpen(false)}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Close
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="max-h-[70vh] overflow-auto">
+                        {selectedDoc.type === 'image' ? (
+                          <img
+                            src={selectedDoc.url}
+                            alt={selectedDoc.document_name || 'Document'}
+                            className="max-w-full h-auto rounded-md"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              (target.nextSibling as HTMLElement).style.display = 'block';
+                            }}
+                          />
+                        ) : (
+                          <div className="text-center py-8">
+                            <FileText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                            <p className="text-gray-600 mb-4">
+                              Preview not available for this file type
+                            </p>
+                            <Button
+                              onClick={async () => {
+                                // Same download logic as above
+                                if (!selectedDoc.id) {
+                                  toast.error('Unable to download: No document ID found');
+                                  return;
+                                }
+
+                                try {
+                                  const { API_CONFIG } = await import('@/config/apiConfig');
+                                  const baseUrl = API_CONFIG.BASE_URL;
+                                  const token = localStorage.getItem('token');
+
+                                  const cleanBaseUrl = baseUrl
+                                    .replace(/^https?:\/\//, '')
+                                    .replace(/\/$/, '');
+                                  const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${selectedDoc.id}?show_file=true`;
+
+                                  const response = await fetch(downloadUrl, {
+                                    method: 'GET',
+                                    headers: {
+                                      Authorization: `Bearer ${token}`,
+                                      Accept: '*/*',
+                                    },
+                                    mode: 'cors',
+                                  });
+
+                                  if (response.ok) {
+                                    const blob = await response.blob();
+                                    const fileExtension =
+                                      selectedDoc.doctype?.split('/').pop() ||
+                                      selectedDoc.url?.split('.').pop()?.toLowerCase() ||
+                                      'file';
+                                    const documentName = `document_${selectedDoc.id}.${fileExtension}`;
+
+                                    const url = window.URL.createObjectURL(blob);
+                                    const link = window.document.createElement('a');
+                                    link.href = url;
+                                    link.download = documentName;
+                                    link.style.display = 'none';
+                                    window.document.body.appendChild(link);
+                                    link.click();
+
+                                    setTimeout(() => {
+                                      window.document.body.removeChild(link);
+                                      window.URL.revokeObjectURL(url);
+                                    }, 100);
+
+                                    toast.success('File downloaded successfully');
+                                  } else {
+                                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                  }
+                                } catch (error) {
+                                  console.error('Error downloading file:', error);
+                                  toast.error(`Failed to download: ${error.message}`);
+                                }
+                              }}
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Download File
+                            </Button>
+                          </div>
+                        )}
+                        <div className="hidden text-center py-8 text-gray-500">
+                          Failed to load preview
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 <Card className="w-full bg-white rounded-lg shadow-sm border">
                   {/* Header */}
-                  <div className="flex items-center gap-2 bg-[#F6F4EE] px-4 py-3 border-b border-[#E8E3D8]">
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <MessageSquare className="w-3.5 h-3.5 text-[#C72030]" />
+                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <MessageSquare className="w-6 h-6" style={{ color: '#C72030' }} />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Comments
+                      </h3>
                     </div>
-                    <h3 className="text-[13px] font-medium text-[#2C2C2C]">Comments</h3>
                   </div>
 
                   {/* Body */}
-                  <div className="bg-[#FAFAF8] ">
-                    <div className="flex flex-col md:flex-row gap-3">
+                  <div className="bg-[#FAFAF8]">
+                    <div className="flex flex-col md:flex-row gap-3 ">
                       {/* Internal Comments Section */}
                       <div className="flex-1">
                         <div className="bg-white w-full text-center py-0.5">
@@ -1855,18 +2943,53 @@ export const TicketDetailsPage = () => {
                         {/* Comment Input */}
                         <div className="mb-4 mt-4 ml-2">
                           <textarea
-                            className="w-full min-h-[100px] px-3 py-2 text-[11px] bg-white border border-[#D9D9D9] rounded resize-vertical focus:outline-none focus:border-[#C72030]"
-                            placeholder="Add your comment..."
+                            className="w-full min-h-[100px] mb-4 px-3 py-2 text-[11px] bg-white border border-[#D9D9D9] rounded resize-vertical focus:outline-none focus:border-[#C72030]"
+                            placeholder="Add your internal comment..."
+                            value={internalCommentText}
+                            onChange={(e) => setInternalCommentText(e.target.value)}
                           />
+                          {/* Show selected files */}
+                          {internalAttachments.length > 0 && (
+                            <div className="mb-2 text-[11px] text-gray-600">
+                              <strong>Selected files:</strong>
+                              <ul className="list-disc pl-5">
+                                {internalAttachments.map((file, idx) => (
+                                  <li key={idx}>{file.name} ({(file.size / 1024).toFixed(2)} KB)</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {/* Add Attachment Button */}
+                          <input
+                            type="file"
+                            id="internal-file-input"
+                            multiple
+                            accept="image/*,.pdf,.doc,.docx"
+                            onChange={handleInternalFileChange}
+                            style={{ display: 'none' }}
+                          />
+                          <MuiButton
+                            variant="outlined"
+                            component="label"
+                            htmlFor="internal-file-input"
+                            sx={{
+                              borderColor: '#C72030',
+                              color: '#C72030',
+                              textTransform: 'none',
+                              fontFamily: 'Work Sans, sans-serif',
+                              fontWeight: 500,
+                              borderRadius: '0',
+                              padding: '8px 16px',
+                              '&:hover': {
+                                borderColor: '#B8252F',
+                                backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                              },
+                            }}
+                          >
+                            Add Attachment ({internalAttachments.length})
+                          </MuiButton>
                         </div>
 
-                        {/* Add Attachment Button */}
-                        <button
-                          type="button"
-                          className="text-[#C72030] text-[11px] font-medium border border-[#C72030] rounded px-3 py-1.5 hover:bg-[#C72030] hover:text-white transition-colors"
-                        >
-                          Add Attachment
-                        </button>
                       </div>
 
                       {/* Customer Comments Section */}
@@ -1880,122 +3003,224 @@ export const TicketDetailsPage = () => {
 
                           {/* Template Dropdown */}
                           <div className="mb-3">
-                           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-            <InputLabel shrink>Template</InputLabel>
-            <Select
-              label="Template"
-              notched
-              displayEmpty
-              defaultValue=""
-              sx={{
-                fontSize: '11px',
-                height: '40px',
-              }}
-            >
-              <MenuItem value="">
-                <span style={{ color: '#aaa' }}>Select Template</span>
-              </MenuItem>
-              <MenuItem value="template1">Template 1</MenuItem>
-              <MenuItem value="template2">Template 2</MenuItem>
-            </Select>
-          </FormControl>
+                            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                              <InputLabel shrink>Template</InputLabel>
+                              <Select
+                                label="Template"
+                                notched
+                                displayEmpty
+                                value={selectedTemplate}
+                                onChange={(e) => {
+                                  const templateId = e.target.value;
+                                  setSelectedTemplate(templateId);
+                                  // Auto-populate the textarea with the selected template's body
+                                  if (templateId) {
+                                    const selectedTemplateData = communicationTemplates.find(t => t.id === templateId);
+                                    setCommentText(selectedTemplateData?.body || '');
+                                  } else {
+                                    setCommentText('');
+                                  }
+                                }}
+                                disabled={loadingTemplates}
+                                sx={{
+                                  fontSize: '11px',
+                                  height: '40px',
+                                }}
+                              >
+                                <MenuItem value="">
+                                  <span style={{ color: '#aaa' }}>
+                                    {loadingTemplates ? 'Loading templates...' : 'Select Template'}
+                                  </span>
+                                </MenuItem>
+                                {communicationTemplates.map((template) => (
+                                  <MenuItem key={template.id} value={template.id}>
+                                    {template.identifier_action}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
                           </div>
 
                           {/* Comment Input */}
                           <div className="mb-4">
                             <textarea
                               className="w-full min-h-[100px] px-3 py-2 text-[11px] bg-white border border-[#D9D9D9] rounded resize-vertical focus:outline-none focus:border-[#C72030]"
-                              placeholder="Add your comment..."
+                              placeholder="Add your customer comment..."
+                              value={commentText}
+                              onChange={(e) => setCommentText(e.target.value)}
                             />
                           </div>
                         </div>
+                        {/* Show selected files */}
+                        {customerAttachments.length > 0 && (
+                          <div className="mb-2 text-[11px] text-gray-600 mr-2">
+                            <strong>Selected files:</strong>
+                            <ul className="list-disc pl-5">
+                              {customerAttachments.map((file, idx) => (
+                                <li key={idx}>{file.name} ({(file.size / 1024).toFixed(2)} KB)</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                         {/* Add Attachment Button */}
-                        <button
-                          type="button"
-                          className="text-[#C72030] text-[11px] font-medium border border-[#C72030] rounded px-3 py-1.5 hover:bg-[#C72030] hover:text-white transition-colors"
+                        <input
+                          type="file"
+                          id="customer-file-input"
+                          multiple
+                          accept="image/*,.pdf,.doc,.docx"
+                          onChange={handleCustomerFileChange}
+                          style={{ display: 'none' }}
+                        />
+                        <MuiButton
+                          variant="outlined"
+                          component="label"
+                          htmlFor="customer-file-input"
+                          sx={{
+                            borderColor: '#C72030',
+                            color: '#C72030',
+                            textTransform: 'none',
+                            fontFamily: 'Work Sans, sans-serif',
+                            fontWeight: 500,
+                            borderRadius: '0',
+                            padding: '8px 16px',
+                            '&:hover': {
+                              borderColor: '#B8252F',
+                              backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                            },
+                          }}
                         >
-                          Add Attachment
-                        </button>
+                          Add Attachment ({customerAttachments.length})
+                        </MuiButton>
                       </div>
                     </div>
 
                     {/* Submit Comment Button (centered) */}
-                    <div className="flex justify-center mt-6">
+                    <div className="flex justify-center mt-6 pb-6">
                       <button
                         type="button"
-                        className="bg-[#C72030] text-white text-[12px] font-medium px-6 py-2 rounded hover:bg-[#A01828] transition-colors"
+                        onClick={handleSubmitComment}
+                        disabled={submittingComment}
+                        className={`bg-[#C72030] text-white text-[12px] font-medium px-6 py-2 transition-colors ${
+                          submittingComment 
+                            ? 'opacity-50 cursor-not-allowed' 
+                            : 'hover:bg-[#A01828]'
+                        }`}
                       >
-                        Submit Comment
+                        {submittingComment ? 'Submitting...' : 'Submit Comment'}
                       </button>
                     </div>
                   </div>
                 </Card>
 
                 {/* Logs Card – Adjusted Alignment */}
-<Card className="w-full bg-white rounded-lg shadow-sm border">
-  {/* Header */}
-  <div className="flex items-center gap-2 bg-[#F6F4EE] h-10 px-4 border-b border-[#E8E3D8]">
-    <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-      <History className="w-3.5 h-3.5 text-[#C72030]" />
-    </div>
-    <h3 className="text-[12px] font-medium text-[#2C2C2C]">Logs</h3>
-  </div>
-
-  {/* Body */}
-  <div className="bg-[#FAFAF8] relative px-6 pt-6 pb-8">
-    {complaintLogs.length === 0 ? (
-      <div className="text-xs text-gray-400">No logs available</div>
-    ) : (
-      (() => {
-        const sorted = [...complaintLogs].sort(
-          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
-
-        return (
-          <div className="relative">
-            {/* Vertical Progress Line */}
-            <div className="absolute left-[12px] top-0 bottom-0 w-[2px] bg-[#C72030]" />
-
-            <div className="space-y-6">
-              {sorted.map((log, i) => {
-                return (
-                  <div key={log.id || i} className="relative flex gap-3">
-                    {/* Dot aligned exactly on line */}
-                    <div className="relative">
-                      <span
-                        className={`block w-3 h-3 rounded-full border-2 ml-2 bg-[#C72030] border-[#C72030]`}
-                      />
-                    </div>
-
-                    {/* Log Content */}
-                    <div className="ml-1 text-[12px] leading-snug">
-                      <div>
-                        <span className="text-[#6B6B6B] mr-1">
-                          {formatLogTime(log.created_at)}
-                        </span>
-                        {log.log_status && (
-                          <span className="font-semibold text-[#1A1A1A]">
-                            {log.log_status}
-                          </span>
-                        )}
-                        {log.log_by && (
-                          <span className="ml-1 text-[#1A1A1A]">By {log.log_by}</span>
-                        )}
+                <Card className="w-full bg-white rounded-lg shadow-sm border">
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <div className="w-6 h-6">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 18 26" fill="none">
+                            <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M5 8.09082H13M5 13.0908H9" stroke="#C72030" stroke-width="2" stroke-linecap="round" />
+                          </svg>
+                        </div>
                       </div>
-                      {log.log_comment && (
-                        <div className="mt-0.5 text-[#2C2C2C]">{log.log_comment}</div>
-                      )}
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Logs
+                      </h3>
                     </div>
                   </div>
-                );
-              })}
+
+                  {/* Body */}
+                  <div className="bg-[#FAFAF8] relative px-6 pt-6 pb-8">
+  {complaintLogs.length === 0 ? (
+    <div className="text-xs text-gray-400">No logs available</div>
+  ) : (
+    (() => {
+      const sorted = [...complaintLogs].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+
+      return (
+        <>
+          <div className="relative">
+            {/* Vertical Progress Line */}
+            <div className="flex ml-1 mt-[-10px] mb-8 items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="26" viewBox="0 0 18 26" fill="none">
+                <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M5 8.09082H13M5 13.0908H9" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <h4 style={{ marginLeft: '8px', fontWeight: '500', color: '#C72030' }}>Logs</h4>
+            </div>
+            
+            {/* Container for dots and line */}
+            <div className="relative">
+              {/* Vertical line - stops before the last dot */}
+              {sorted.length > 1 && (
+                <div 
+                  className="absolute left-[13px] top-0 w-[2px] bg-[#C72030]" 
+                  style={{ 
+                    height: `calc(100% - ${sorted.length > 0 ? '48px' : '0px'})` 
+                  }}
+                />
+              )}
+
+              <div className="space-y-6">
+                {sorted.map((log, i) => {
+                  const isLast = i === sorted.length - 1;
+                  
+                  return (
+                    <div key={log.id || i} className="relative flex gap-3">
+                      {/* Dot aligned exactly on line */}
+                      <div className="relative">
+                        <span
+                          className={`block w-3 h-3 rounded-full border-2 ml-2 bg-[#C72030] border-[#C72030]`}
+                        />
+                      </div>
+
+                      {/* Log Content */}
+                      <div className="ml-1 text-[12px] leading-snug">
+                        {/* Date on top */}
+                        <div className="text-[#1A1A1A] text-[16px] font-semibold mb-1">
+                          {formatLogDate(log.created_at)}
+                        </div>
+                        
+                        {/* Time, Status, and By on same line */}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[#6B6B6B] text-[12px]">
+                            {formatLogTime(log.created_at)}
+                          </span>
+                          <span className="font-semibold text-[#1A1A1A] text-[16px]">
+                            {log.log_status === null || log.log_status === undefined || log.log_status === '' ? 'Status Changed' : log.log_status}
+                          </span>
+                          {log.log_by && (
+                            <span className="text-[#1A1A1A] text-[16px]">
+                              By <span className="text-[#1A1A1A]">{log.log_by}</span>
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Comment below */}
+                        {log.log_comment && (
+                          <div className="text-[#2C2C2C] text-[16px] leading-[20px]">
+                            {log.log_comment}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        );
-      })()
-    )}
-  </div>
-</Card>
+        </>
+      );
+    })()
+  )}
+</div>
+                </Card>
 
 
               </TabsContent>
@@ -2141,8 +3366,8 @@ export const TicketDetailsPage = () => {
                   </CardContent>
                 </Card>
 
-                
-                
+
+
               ) : (
                 /* No Data Available Message */
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -2158,137 +3383,137 @@ export const TicketDetailsPage = () => {
               )}
 
               <Card className="w-full">
-                  <CardHeader className="pb-4 lg:pb-6">
-                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
-                        <User className="w-6 h-6 text-[#C72030]" />
-                      </div>
-                      <span>CREATOR INFORMATION</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                      {hasData(ticketData.posted_by) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Posted By</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.posted_by}</span>
-                        </div>
-                      )}
-                      {hasData(ticketData.id_society) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Society</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.id_society}</span>
-                        </div>
-                      )}
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                      <User className="w-6 h-6 text-[#C72030]" />
                     </div>
-                  </CardContent>
-                </Card>
-                <Card className="w-full">
-                  <CardHeader className="pb-4 lg:pb-6">
-                    <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
-                        <PlusCircle className="w-6 h-6 text-[#C72030]" />
+                    <span>CREATOR INFORMATION</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    {hasData(ticketData.posted_by) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Posted By</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{ticketData.posted_by}</span>
                       </div>
-                      <span>ADDITIONAL INFORMATION</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 text-sm">
-                      {hasData(ticketData.corrective_action) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Corrective Action</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium" title={ticketData.corrective_action}>
-                            {truncateWithEllipsis(ticketData.corrective_action, 5)}
-                          </span>
-                        </div>
-                      )}
-                      {hasData(ticketData.preventive_action) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Preventive Action</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium" title={ticketData.preventive_action}>
-                            {truncateWithEllipsis(ticketData.preventive_action, 5)}
-                          </span>
-                        </div>
-                      )}
-                      {hasData(ticketData.root_cause) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Root Cause</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium" title={ticketData.root_cause}>
-                            {truncateWithEllipsis(ticketData.root_cause, 5)}
-                          </span>
-                        </div>
-                      )}
-                      {hasData(ticketData.response_tat) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Response TAT</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.response_tat}</span>
-                        </div>
-                      )}
-                      {hasData(ticketData.ticket_urgency) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Ticket Urgency</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.ticket_urgency}</span>
-                        </div>
-                      )}
-                      {hasData(ticketData.responsible_person) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Responsible Person</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.responsible_person}</span>
-                        </div>
-                      )}
-                      {hasData(ticketData.asset_service) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Asset Service</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.asset_service}</span>
-                        </div>
-                      )}
-                      {hasData(ticketData.resolution_tat) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Resolution TAT</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.resolution_tat}</span>
-                        </div>
-                      )}
-                      {hasData(ticketData.task_id) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Task ID</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.task_id}</span>
-                        </div>
-                      )}
-                      {hasData(ticketData.asset_service_location) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Asset/Service Location</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.asset_service_location}</span>
-                        </div>
-                      )}
-                      {hasData(ticketData.resolution_time) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Resolution Time</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{ticketData.resolution_time}</span>
-                        </div>
-                      )}
-                      {(hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name)) && (
-                        <div className="flex items-center">
-                          <span className="text-gray-500 min-w-[140px]">Escalation Tracking</span>
-                          <span className="text-gray-500 mx-2">:</span>
-                          <span className="text-gray-900 font-medium">{`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`.replace(/^,\s*|,\s*$/g, '')}</span>
-                        </div>
-                      )}
+                    )}
+                    {hasData(ticketData.id_society) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Society</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{ticketData.id_society}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                      <PlusCircle className="w-6 h-6 text-[#C72030]" />
                     </div>
-                  </CardContent>
-                </Card>
+                    <span>ADDITIONAL INFORMATION</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 text-sm">
+                    {hasData(ticketData.corrective_action) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Corrective Action</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium" title={ticketData.corrective_action}>
+                          {truncateWithEllipsis(ticketData.corrective_action, 5)}
+                        </span>
+                      </div>
+                    )}
+                    {hasData(ticketData.preventive_action) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Preventive Action</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium" title={ticketData.preventive_action}>
+                          {truncateWithEllipsis(ticketData.preventive_action, 5)}
+                        </span>
+                      </div>
+                    )}
+                    {hasData(ticketData.root_cause) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Root Cause</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium" title={ticketData.root_cause}>
+                          {truncateWithEllipsis(ticketData.root_cause, 5)}
+                        </span>
+                      </div>
+                    )}
+                    {hasData(ticketData.response_tat) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Response TAT</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{ticketData.response_tat}</span>
+                      </div>
+                    )}
+                    {hasData(ticketData.ticket_urgency) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Ticket Urgency</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{ticketData.ticket_urgency}</span>
+                      </div>
+                    )}
+                    {hasData(ticketData.responsible_person) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Responsible Person</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{ticketData.responsible_person}</span>
+                      </div>
+                    )}
+                    {hasData(ticketData.asset_service) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Asset Service</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{ticketData.asset_service}</span>
+                      </div>
+                    )}
+                    {hasData(ticketData.resolution_tat) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Resolution TAT</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{ticketData.resolution_tat}</span>
+                      </div>
+                    )}
+                    {hasData(ticketData.task_id) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Task ID</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{ticketData.task_id}</span>
+                      </div>
+                    )}
+                    {hasData(ticketData.asset_service_location) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Asset/Service Location</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{ticketData.asset_service_location}</span>
+                      </div>
+                    )}
+                    {hasData(ticketData.resolution_time) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Resolution Time</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{ticketData.resolution_time}</span>
+                      </div>
+                    )}
+                    {(hasData(ticketData.escalation_response_name) || hasData(ticketData.escalation_resolution_name)) && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 min-w-[140px]">Escalation Tracking</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{`${ticketData.escalation_response_name || ''}, ${ticketData.escalation_resolution_name || ''}`.replace(/^,\s*|,\s*$/g, '')}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Location Details */}
@@ -2314,12 +3539,12 @@ export const TicketDetailsPage = () => {
 
                   <div className="flex justify-between items-start relative z-10">
                     {[
-                      { label: "Site", value: ticketData.site_name || "NA" },
-                      { label: "Building", value: ticketData.building_name || "NA" },
-                      { label: "Wing", value: ticketData.wing_name || "NA" },
-                      { label: "Floor", value: ticketData.floor_name || "NA" },
-                      { label: "Area", value: ticketData.area_name || "NA" },
-                      { label: "Room", value: ticketData.room_name || "NA" },
+                      { label: "Site", value: ticketData.site_name || "-" },
+                      { label: "Building", value: ticketData.building_name || "-" },
+                      { label: "Wing", value: ticketData.wing_name || "-" },
+                      { label: "Floor", value: ticketData.floor_name || "-" },
+                      { label: "Area", value: ticketData.area_name || "-" },
+                      { label: "Room", value: ticketData.room_name || "-" },
                     ].map((item, index) => (
                       <div
                         key={index}
@@ -2381,12 +3606,12 @@ export const TicketDetailsPage = () => {
                       <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
                         {ticketData.created_at
                           ? new Date(ticketData.created_at).toLocaleDateString()
-                          : ticketData.created_date || "NA"}
+                          : ticketData.created_date || "-"}
                       </div>
                       <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-right">
                         {ticketData.updated_at
                           ? new Date(ticketData.updated_at).toLocaleDateString()
-                          : "NA"}
+                          : "-"}
                       </div>
                     </div>
                   </div>
@@ -2395,12 +3620,12 @@ export const TicketDetailsPage = () => {
             </div>
           </TabsContent>
 
-          
 
-          
+
+
           <TabsContent value="creator-info" className="p-4 sm:p-6">
             <div className="space-y-6">
-             
+
               {hasData(ticketData.posted_by) ||
                 hasData(ticketData.id_society) ? (
                 /* Creator Information Card */
@@ -2433,7 +3658,7 @@ export const TicketDetailsPage = () => {
                   </CardContent>
                 </Card>
               ) : (
-               
+
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <User className="w-16 h-16 text-gray-300 mb-4" />
                   <h3 className="text-lg font-medium text-gray-500 mb-2">
@@ -2647,7 +3872,7 @@ export const TicketDetailsPage = () => {
           {/* Additional Info Tab */}
           <TabsContent value="additional-info" className="p-4 sm:p-6">
             <div className="space-y-6">
-           
+
               {hasData(ticketData.corrective_action) ||
                 hasData(ticketData.preventive_action) ||
                 hasData(ticketData.root_cause) ||
@@ -2767,7 +3992,7 @@ export const TicketDetailsPage = () => {
                   </CardContent>
                 </Card>
               ) : (
-               
+
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <PlusCircle className="w-16 h-16 text-gray-300 mb-4" />
                   <h3 className="text-lg font-medium text-gray-500 mb-2">
@@ -3215,17 +4440,17 @@ export const TicketDetailsPage = () => {
                         <TableCell>
                           {request.created_by || "Not Provided"}
                         </TableCell>
-                        <TableCell>{request.approvals?.L1 || "Na"}</TableCell>
-                        <TableCell>{request.approvals?.L2 || "Na"}</TableCell>
-                        <TableCell>{request.approvals?.L3 || "Na"}</TableCell>
-                        <TableCell>{request.approvals?.L4 || "Na"}</TableCell>
-                        <TableCell>{request.approvals?.L5 || "Na"}</TableCell>
+                        <TableCell>{request.approvals?.L1 || "-"}</TableCell>
+                        <TableCell>{request.approvals?.L2 || "-"}</TableCell>
+                        <TableCell>{request.approvals?.L3 || "-"}</TableCell>
+                        <TableCell>{request.approvals?.L4 || "-"}</TableCell>
+                        <TableCell>{request.approvals?.L5 || "-"}</TableCell>
                         <TableCell>
                           <Badge className="bg-yellow-100 text-yellow-700">
                             {request.master_status || "Pending"}
                           </Badge>
                         </TableCell>
-                        <TableCell>{request.cancelled_by || "NA"}</TableCell>
+                        <TableCell>{request.cancelled_by || "-"}</TableCell>
                         <TableCell>
                           <Button
                             variant="outline"
