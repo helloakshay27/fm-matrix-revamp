@@ -18,6 +18,12 @@ import {
   Ticket,
   Filter,
   Download,
+  Eye,
+  PieChart,
+  Smile,
+  ChevronRight,
+  ChevronLeft,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +46,7 @@ import { surveyApi, SurveyResponseData } from "@/services/surveyApi";
 import { SurveyAnalyticsCard } from "@/components/SurveyAnalyticsCard";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { toast } from "sonner";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import {
   ResponsiveContainer,
   BarChart,
@@ -51,6 +58,10 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { EmojiEmotions, QuestionMark, QuestionMarkRounded } from "@mui/icons-material";
+import TabularResponseDetailsPage from "./TabularResponseDetailsPage";
+// Recharts imported above
+// import TabularResponseDetailsPage from "./TabularResponseDetailsPage";
 
 // New interfaces for response list API
 interface ResponseAnswer {
@@ -148,6 +159,9 @@ interface SurveyDetail {
   survey_id: number;
   survey_name: string;
   questions: SurveyQuestion[];
+  positive_responses?: number;
+  negative_responses?: number;
+  csat?: number;
 }
 
 interface SurveyDetailsResponse {
@@ -213,6 +227,14 @@ interface SurveyResponseFilters {
     from?: Date;
     to?: Date;
   };
+  // Selected mapping (location) to filter summary analytics by mapping_id
+  locationMappingId?: string;
+  siteId?: string;
+  buildingId?: string;
+  wingId?: string;
+  areaId?: string;
+  floorId?: string;
+  roomId?: string;
   building?: string;
   wing?: string;
   area?: string;
@@ -223,6 +245,37 @@ interface SurveyResponseFilters {
   category?: string;
   hasTickets?: boolean;
   assignee?: string;
+}
+
+// Location interfaces for dropdowns
+interface SiteItem {
+  id: number;
+  name: string;
+}
+
+interface BuildingItem {
+  id: number;
+  name: string;
+}
+
+interface WingItem {
+  id: number;
+  name: string;
+}
+
+interface AreaItem {
+  id: number;
+  name: string;
+}
+
+interface FloorItem {
+  id: number;
+  name: string;
+}
+
+interface RoomItem {
+  id: number;
+  name: string;
 }
 
 export const SurveyResponseDetailPage = () => {
@@ -236,10 +289,10 @@ export const SurveyResponseDetailPage = () => {
     useState<SurveyDetailsResponse | null>(null);
   const [responseListData, setResponseListData] =
     useState<ResponseListData | null>(null);
-  
+
   // Store original unfiltered data for summary tab reset functionality
   const [originalSurveyData, setOriginalSurveyData] = useState<SurveyDetail | null>(null);
-  const [originalSurveyDetailsData, setOriginalSurveyDetailsData] = 
+  const [originalSurveyDetailsData, setOriginalSurveyDetailsData] =
     useState<SurveyDetailsResponse | null>(null);
 
   // Filter states - separate for each tab
@@ -260,6 +313,395 @@ export const SurveyResponseDetailPage = () => {
   const [tabularFormFilters, setTabularFormFilters] =
     useState<SurveyResponseFilters>({});
 
+  // Summary filter: Location dropdown options (mapping list)
+  type LocationMapping = { mapping_id: number; location_path: string };
+  const [locationOptions, setLocationOptions] = useState<LocationMapping[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+
+  // Tabular filter: Location dropdown data and loading states
+  const [sites, setSites] = useState<SiteItem[]>([]);
+  const [buildings, setBuildings] = useState<BuildingItem[]>([]);
+  const [wings, setWings] = useState<WingItem[]>([]);
+  const [areas, setAreas] = useState<AreaItem[]>([]);
+  const [floors, setFloors] = useState<FloorItem[]>([]);
+  const [rooms, setRooms] = useState<RoomItem[]>([]);
+
+  const [loadingSites, setLoadingSites] = useState(false);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [loadingWings, setLoadingWings] = useState(false);
+  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [loadingFloors, setLoadingFloors] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+
+  const fetchLocationOptions = useCallback(async () => {
+    if (!surveyId) return;
+    try {
+      setLoadingLocations(true);
+      const baseUrl = getFullUrl('/pms/admin/snag_checklists/mapping_dropdown.json');
+      const url = new URL(baseUrl);
+      url.searchParams.append('survey_id', surveyId);
+      // Use token from API_CONFIG
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('token', API_CONFIG.TOKEN);
+      }
+
+      const res = await fetch(url.toString(), { method: 'GET' });
+      if (!res.ok) throw new Error(`Failed to fetch locations: ${res.status}`);
+      const data = await res.json();
+      const mappings: LocationMapping[] = Array.isArray(data?.mappings) ? data.mappings : [];
+      setLocationOptions(mappings);
+    } catch (e) {
+      console.error('Error fetching location options:', e);
+      toast.error('Failed to load locations');
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, [surveyId]);
+
+  // Load locations when opening the filter modal on the Summary tab
+  useEffect(() => {
+    if (showFilterModal && activeFilterTab === 'summary') {
+      fetchLocationOptions();
+    }
+  }, [showFilterModal, activeFilterTab, fetchLocationOptions]);
+
+  // Tabular filter: API fetch functions
+  const fetchSitesForTabular = useCallback(async () => {
+    try {
+      setLoadingSites(true);
+      const baseUrl = getFullUrl('/pms/sites.json');
+      const url = new URL(baseUrl);
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('token', API_CONFIG.TOKEN);
+      }
+
+      const response = await fetch(url.toString(), { method: 'GET' });
+      if (!response.ok) throw new Error(`Failed to fetch sites: ${response.status}`);
+      const data = await response.json();
+      const sitesData = Array.isArray(data?.sites) ? data.sites : [];
+      setSites(sitesData);
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+      toast.error('Failed to load sites');
+    } finally {
+      setLoadingSites(false);
+    }
+  }, []);
+
+  const fetchBuildingsForTabular = useCallback(async (siteId: string) => {
+    if (!siteId) {
+      setBuildings([]);
+      return;
+    }
+
+    try {
+      setLoadingBuildings(true);
+      const baseUrl = getFullUrl(`/pms/sites/${siteId}/buildings.json`);
+      const url = new URL(baseUrl);
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('token', API_CONFIG.TOKEN);
+      }
+
+      const response = await fetch(url.toString(), { method: 'GET' });
+      if (!response.ok) throw new Error(`Failed to fetch buildings: ${response.status}`);
+      const data = await response.json();
+      const buildingsData = Array.isArray(data?.buildings) ? data.buildings : [];
+      setBuildings(buildingsData);
+    } catch (error) {
+      console.error('Error fetching buildings:', error);
+      toast.error('Failed to load buildings');
+    } finally {
+      setLoadingBuildings(false);
+    }
+  }, []);
+
+  const fetchWingsForTabular = useCallback(async (buildingId: string) => {
+    if (!buildingId) {
+      setWings([]);
+      return;
+    }
+
+    try {
+      setLoadingWings(true);
+      const baseUrl = getFullUrl(`/pms/buildings/${buildingId}/wings.json`);
+      const url = new URL(baseUrl);
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('token', API_CONFIG.TOKEN);
+      }
+
+      const response = await fetch(url.toString(), { method: 'GET' });
+      if (!response.ok) throw new Error(`Failed to fetch wings: ${response.status}`);
+      const data = await response.json();
+      const wingsData = Array.isArray(data) 
+        ? data.map((item: any) => item.wings).filter(Boolean)
+        : [];
+      setWings(wingsData);
+    } catch (error) {
+      console.error('Error fetching wings:', error);
+      toast.error('Failed to load wings');
+    } finally {
+      setLoadingWings(false);
+    }
+  }, []);
+
+  const fetchAreasForTabular = useCallback(async (wingId: string) => {
+    if (!wingId) {
+      setAreas([]);
+      return;
+    }
+
+    try {
+      setLoadingAreas(true);
+      const baseUrl = getFullUrl(`/pms/wings/${wingId}/areas.json`);
+      const url = new URL(baseUrl);
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('token', API_CONFIG.TOKEN);
+      }
+
+      const response = await fetch(url.toString(), { method: 'GET' });
+      if (!response.ok) throw new Error(`Failed to fetch areas: ${response.status}`);
+      const data = await response.json();
+      const areasData = Array.isArray(data?.areas) ? data.areas : [];
+      setAreas(areasData);
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+      toast.error('Failed to load areas');
+    } finally {
+      setLoadingAreas(false);
+    }
+  }, []);
+
+  const fetchFloorsForTabular = useCallback(async (areaId: string) => {
+    if (!areaId) {
+      setFloors([]);
+      return;
+    }
+
+    try {
+      setLoadingFloors(true);
+      const baseUrl = getFullUrl(`/pms/areas/${areaId}/floors.json`);
+      const url = new URL(baseUrl);
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('token', API_CONFIG.TOKEN);
+      }
+
+      const response = await fetch(url.toString(), { method: 'GET' });
+      if (!response.ok) throw new Error(`Failed to fetch floors: ${response.status}`);
+      const data = await response.json();
+      const floorsData = Array.isArray(data?.floors) ? data.floors : [];
+      setFloors(floorsData);
+    } catch (error) {
+      console.error('Error fetching floors:', error);
+      toast.error('Failed to load floors');
+    } finally {
+      setLoadingFloors(false);
+    }
+  }, []);
+
+  const fetchRoomsForTabular = useCallback(async (floorId: string) => {
+    if (!floorId) {
+      setRooms([]);
+      return;
+    }
+
+    try {
+      setLoadingRooms(true);
+      const baseUrl = getFullUrl(`/pms/floors/${floorId}/rooms.json`);
+      const url = new URL(baseUrl);
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('token', API_CONFIG.TOKEN);
+      }
+
+      const response = await fetch(url.toString(), { method: 'GET' });
+      if (!response.ok) throw new Error(`Failed to fetch rooms: ${response.status}`);
+      const data = await response.json();
+      const roomsData = Array.isArray(data)
+        ? data.map((item: any) => item.rooms).filter(Boolean)
+        : [];
+      setRooms(roomsData);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+      toast.error('Failed to load rooms');
+    } finally {
+      setLoadingRooms(false);
+    }
+  }, []);
+
+  // Load sites when opening the filter modal on both Summary and Tabular tabs
+  useEffect(() => {
+    if (showFilterModal && (activeFilterTab === 'tabular' || activeFilterTab === 'summary')) {
+      fetchSitesForTabular();
+    }
+  }, [showFilterModal, activeFilterTab, fetchSitesForTabular]);
+
+  // Handle location dependencies for tabular filter
+  useEffect(() => {
+    if (tabularFormFilters.siteId) {
+      fetchBuildingsForTabular(tabularFormFilters.siteId);
+    } else {
+      setBuildings([]);
+      // Reset dependent fields
+      setTabularFormFilters(prev => ({
+        ...prev,
+        buildingId: undefined,
+        wingId: undefined,
+        areaId: undefined,
+        floorId: undefined,
+        roomId: undefined,
+      }));
+    }
+  }, [tabularFormFilters.siteId, fetchBuildingsForTabular]);
+
+  useEffect(() => {
+    if (tabularFormFilters.buildingId) {
+      fetchWingsForTabular(tabularFormFilters.buildingId);
+    } else {
+      setWings([]);
+      setTabularFormFilters(prev => ({
+        ...prev,
+        wingId: undefined,
+        areaId: undefined,
+        floorId: undefined,
+        roomId: undefined,
+      }));
+    }
+  }, [tabularFormFilters.buildingId, fetchWingsForTabular]);
+
+  useEffect(() => {
+    if (tabularFormFilters.wingId) {
+      fetchAreasForTabular(tabularFormFilters.wingId);
+    } else {
+      setAreas([]);
+      setTabularFormFilters(prev => ({
+        ...prev,
+        areaId: undefined,
+        floorId: undefined,
+        roomId: undefined,
+      }));
+    }
+  }, [tabularFormFilters.wingId, fetchAreasForTabular]);
+
+  useEffect(() => {
+    if (tabularFormFilters.areaId) {
+      fetchFloorsForTabular(tabularFormFilters.areaId);
+    } else {
+      setFloors([]);
+      setTabularFormFilters(prev => ({
+        ...prev,
+        floorId: undefined,
+        roomId: undefined,
+      }));
+    }
+  }, [tabularFormFilters.areaId, fetchFloorsForTabular]);
+
+  useEffect(() => {
+    if (tabularFormFilters.floorId) {
+      fetchRoomsForTabular(tabularFormFilters.floorId);
+    } else {
+      setRooms([]);
+      setTabularFormFilters(prev => ({
+        ...prev,
+        roomId: undefined,
+      }));
+    }
+  }, [tabularFormFilters.floorId, fetchRoomsForTabular]);
+
+  // Handle location dependencies for summary filter
+  useEffect(() => {
+    if (summaryFormFilters.siteId) {
+      fetchBuildingsForTabular(summaryFormFilters.siteId);
+    } else {
+      setBuildings([]);
+      // Reset dependent fields
+      setSummaryFormFilters(prev => ({
+        ...prev,
+        buildingId: undefined,
+        wingId: undefined,
+        areaId: undefined,
+        floorId: undefined,
+        roomId: undefined,
+      }));
+    }
+  }, [summaryFormFilters.siteId, fetchBuildingsForTabular]);
+
+  useEffect(() => {
+    if (summaryFormFilters.buildingId) {
+      fetchWingsForTabular(summaryFormFilters.buildingId);
+    } else {
+      setWings([]);
+      setSummaryFormFilters(prev => ({
+        ...prev,
+        wingId: undefined,
+        areaId: undefined,
+        floorId: undefined,
+        roomId: undefined,
+      }));
+    }
+  }, [summaryFormFilters.buildingId, fetchWingsForTabular]);
+
+  useEffect(() => {
+    if (summaryFormFilters.wingId) {
+      fetchAreasForTabular(summaryFormFilters.wingId);
+    } else {
+      setAreas([]);
+      setSummaryFormFilters(prev => ({
+        ...prev,
+        areaId: undefined,
+        floorId: undefined,
+        roomId: undefined,
+      }));
+    }
+  }, [summaryFormFilters.wingId, fetchAreasForTabular]);
+
+  useEffect(() => {
+    if (summaryFormFilters.areaId) {
+      fetchFloorsForTabular(summaryFormFilters.areaId);
+    } else {
+      setFloors([]);
+      setSummaryFormFilters(prev => ({
+        ...prev,
+        floorId: undefined,
+        roomId: undefined,
+      }));
+    }
+  }, [summaryFormFilters.areaId, fetchFloorsForTabular]);
+
+  useEffect(() => {
+    if (summaryFormFilters.floorId) {
+      fetchRoomsForTabular(summaryFormFilters.floorId);
+    } else {
+      setRooms([]);
+      setSummaryFormFilters(prev => ({
+        ...prev,
+        roomId: undefined,
+      }));
+    }
+  }, [summaryFormFilters.floorId, fetchRoomsForTabular]);
+
+  // Field styles for MUI components (memoized to prevent re-renders)
+  const fieldStyles = useMemo(() => ({
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  }), []);
+
+  const selectMenuProps = useMemo(() => ({
+    PaperProps: {
+      style: {
+        maxHeight: 224,
+        backgroundColor: 'white',
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        zIndex: 9999,
+      },
+    },
+    disablePortal: false,
+    disableAutoFocus: true,
+    disableEnforceFocus: true,
+  }), []);
+
   const [filteredTabularData, setFilteredTabularData] = useState<
     TabularResponseData[]
   >([]);
@@ -271,6 +713,10 @@ export const SurveyResponseDetailPage = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFromDate, setExportFromDate] = useState("");
   const [exportToDate, setExportToDate] = useState("");
+
+  // Inline Tabular details state
+  const [selectedTabularResponseId, setSelectedTabularResponseId] = useState<string | null>(null);
+  const tabularDetailsRef = useRef<HTMLDivElement | null>(null);
 
   // Helper component for truncated text with tooltip
   const TruncatedText = ({
@@ -339,7 +785,7 @@ export const SurveyResponseDetailPage = () => {
 
   // API function to fetch survey details using the new endpoint
   const fetchSurveyDetails = useCallback(
-    async (surveyId: string, fromDate?: Date, toDate?: Date) => {
+    async (surveyId: string, fromDate?: Date, toDate?: Date, mappingId?: string) => {
       try {
         // Validate survey ID
         if (!surveyId || surveyId.trim() === "") {
@@ -364,6 +810,11 @@ export const SurveyResponseDetailPage = () => {
         if (toDate) {
           const toDateStr = toDate.toISOString().split("T")[0]; // Format: YYYY-MM-DD
           urlWithParams.searchParams.append("to_date", toDateStr);
+        }
+
+        // Add mapping filter if provided
+        if (mappingId && mappingId.trim() !== "") {
+          urlWithParams.searchParams.append("mapping_id", mappingId.trim());
         }
 
         // Add access_token from API_CONFIG if available
@@ -556,15 +1007,50 @@ export const SurveyResponseDetailPage = () => {
   const getSummaryFilteredResponseData = useCallback(() => {
     if (!responseListData?.responses) return [];
 
-    // If no date filters are applied, return all responses
-    if (
-      !summaryCurrentFilters.dateRange?.from &&
-      !summaryCurrentFilters.dateRange?.to
-    ) {
-      return responseListData.responses;
-    }
-
     return responseListData.responses.filter((response: SurveyResponse) => {
+      // Apply location hierarchy filters
+      if (summaryCurrentFilters.siteId) {
+        const selectedSite = sites.find(s => s.id?.toString() === summaryCurrentFilters.siteId);
+        if (!selectedSite || response.location?.site_name !== selectedSite.name) {
+          return false;
+        }
+      }
+
+      if (summaryCurrentFilters.buildingId) {
+        const selectedBuilding = buildings.find(b => b.id?.toString() === summaryCurrentFilters.buildingId);
+        if (!selectedBuilding || response.location?.building_name !== selectedBuilding.name) {
+          return false;
+        }
+      }
+
+      if (summaryCurrentFilters.wingId) {
+        const selectedWing = wings.find(w => w.id?.toString() === summaryCurrentFilters.wingId);
+        if (!selectedWing || response.location?.wing_name !== selectedWing.name) {
+          return false;
+        }
+      }
+
+      if (summaryCurrentFilters.areaId) {
+        const selectedArea = areas.find(a => a.id?.toString() === summaryCurrentFilters.areaId);
+        if (!selectedArea || response.location?.area_name !== selectedArea.name) {
+          return false;
+        }
+      }
+
+      if (summaryCurrentFilters.floorId) {
+        const selectedFloor = floors.find(f => f.id?.toString() === summaryCurrentFilters.floorId);
+        if (!selectedFloor || response.location?.floor_name !== selectedFloor.name) {
+          return false;
+        }
+      }
+
+      if (summaryCurrentFilters.roomId) {
+        const selectedRoom = rooms.find(r => r.id?.toString() === summaryCurrentFilters.roomId);
+        if (!selectedRoom || response.location?.room_name !== selectedRoom.name) {
+          return false;
+        }
+      }
+
       // Check if this response falls within the date range using response timestamp
       if (
         summaryCurrentFilters.dateRange?.from ||
@@ -587,7 +1073,22 @@ export const SurveyResponseDetailPage = () => {
 
       return true;
     });
-  }, [responseListData, summaryCurrentFilters.dateRange]);
+  }, [
+    responseListData, 
+    summaryCurrentFilters.dateRange, 
+    summaryCurrentFilters.siteId,
+    summaryCurrentFilters.buildingId,
+    summaryCurrentFilters.wingId,
+    summaryCurrentFilters.areaId,
+    summaryCurrentFilters.floorId,
+    summaryCurrentFilters.roomId,
+    sites,
+    buildings,
+    wings,
+    areas,
+    floors,
+    rooms
+  ]);
 
   // Helper function to filter responses by date range for tabular data
   const getTabularFilteredResponseData = useCallback(() => {
@@ -664,9 +1165,9 @@ export const SurveyResponseDetailPage = () => {
             totalResponses =
               question.options && question.options.length > 0
                 ? question.options.reduce(
-                    (sum, opt) => sum + (opt.response_count || 0),
-                    0
-                  )
+                  (sum, opt) => sum + (opt.response_count || 0),
+                  0
+                )
                 : 0;
           }
 
@@ -683,14 +1184,14 @@ export const SurveyResponseDetailPage = () => {
             name: questionName,
             value: totalResponses,
             color: [
-              "#C72030",
-              "#c6b692",
-              "#d8dcdd",
-              "#8B5CF6",
-              "#10B981",
-              "#F59E0B",
-              "#EF4444",
-              "#3B82F6",
+              "#C4B99D",
+              "#DAD6CA",
+              "#C4B99D",
+              "#DAD6CA",
+              "#C4B99D",
+              "#DAD6CA",
+              "#C4B99D",
+              "#DAD6CA",
             ][index % 8],
           };
         }
@@ -741,9 +1242,9 @@ export const SurveyResponseDetailPage = () => {
           const totalResponses =
             question.options && question.options.length > 0
               ? question.options.reduce(
-                  (sum, opt) => sum + (opt.response_count || 0),
-                  0
-                )
+                (sum, opt) => sum + (opt.response_count || 0),
+                0
+              )
               : 0;
 
           const questionName = question.question;
@@ -752,14 +1253,14 @@ export const SurveyResponseDetailPage = () => {
             name: questionName,
             value: totalResponses,
             color: [
-              "#C72030",
-              "#c6b692",
-              "#d8dcdd",
-              "#8B5CF6",
-              "#10B981",
-              "#F59E0B",
-              "#EF4444",
-              "#3B82F6",
+              "#C4B99D",
+              "#DAD6CA",
+              "#C4B99D",
+              "#DAD6CA",
+              "#C4B99D",
+              "#DAD6CA",
+              "#C4B99D",
+              "#DAD6CA",
             ][index % 8],
           };
         }
@@ -804,14 +1305,171 @@ export const SurveyResponseDetailPage = () => {
     return fallbackData;
   };
 
+  // Prepare pie chart data for overall Yes/No response distribution
+  const getOverallResponseDistribution = () => {
+    // Get filtered response data based on summary filters
+    const filteredResponses = getSummaryFilteredResponseData();
+
+    let yesCount = 0;
+    let noCount = 0;
+
+    // Count Yes/No responses from all questions
+    filteredResponses.forEach((response: SurveyResponse) => {
+      response.answers?.forEach((answer: ResponseAnswer) => {
+        if (answer.option_name) {
+          const optionName = answer.option_name.toLowerCase();
+          if (optionName === 'yes') {
+            yesCount++;
+          } else if (optionName === 'no') {
+            noCount++;
+          }
+        }
+      });
+    });
+
+    // If no Yes/No responses found, fallback to survey details data
+    if (yesCount === 0 && noCount === 0 && surveyDetailsData?.survey_details?.surveys?.[0]?.questions) {
+      const questions = surveyDetailsData.survey_details.surveys[0].questions;
+
+      questions.forEach((question: SurveyQuestion) => {
+        question.options?.forEach((option: SurveyOption) => {
+          const optionName = option.option.toLowerCase();
+          if (optionName === 'yes') {
+            yesCount += option.response_count || 0;
+          } else if (optionName === 'no') {
+            noCount += option.response_count || 0;
+          }
+        });
+      });
+    }
+
+    // Create the distribution data with specified colors
+    const distributionData = [];
+
+    if (yesCount > 0) {
+      distributionData.push({
+        name: "Yes",
+        value: yesCount,
+        color: "#C4B99D"
+      });
+    }
+
+    if (noCount > 0) {
+      distributionData.push({
+        name: "No",
+        value: noCount,
+        color: "#DAD6CA"
+      });
+    }
+
+    // If no data found, return placeholder
+    if (distributionData.length === 0) {
+      return [
+        {
+          name: "No data available",
+          value: 1,
+          color: "#E5E5E5"
+        }
+      ];
+    }
+
+    return distributionData;
+  };
+
+  // Get emoji response data for all questions that have emoji-type responses
+  const getEmojiResponseData = () => {
+    // Get filtered response data based on summary filters
+    const filteredResponses = getSummaryFilteredResponseData();
+
+    const emojiData: Array<{
+      emoji: string;
+      name: string;
+      count: number;
+      percentage: number;
+    }> = [];
+
+    // Define emoji mapping
+    const emojiMap: { [key: string]: string } = {
+      'very_satisfied': '😀', 'satisfied': '😊', 'neutral': '😐',
+      'dissatisfied': '😞', 'very_dissatisfied': '😢',
+      'very_happy': '😀', 'happy': '😊', 'okay': '😐',
+      'sad': '😞', 'very_sad': '😢',
+      'excellent': '😀', 'good': '😊', 'average': '😐',
+      'poor': '😞', 'terrible': '😢',
+      'amazing': '😀', 'awesome': '😀', 'fantastic': '😀',
+      'bad': '😞', 'awful': '😢', 'horrible': '😢'
+    };
+
+    const responseCounts: { [key: string]: number } = {};
+
+    // Count responses from filtered data
+    filteredResponses.forEach((response: SurveyResponse) => {
+      response.answers?.forEach((answer: ResponseAnswer) => {
+        if (answer.option_name) {
+          const optionKey = answer.option_name.toLowerCase().replace(/\s+/g, '_');
+          responseCounts[optionKey] = (responseCounts[optionKey] || 0) + 1;
+        }
+      });
+    });
+
+    // If no responses found in filtered data, fallback to survey details data
+    if (Object.keys(responseCounts).length === 0 && surveyDetailsData?.survey_details?.surveys?.[0]?.questions) {
+      const questions = surveyDetailsData.survey_details.surveys[0].questions;
+
+      questions.forEach((question: SurveyQuestion) => {
+        question.options?.forEach((option: SurveyOption) => {
+          const optionKey = option.option.toLowerCase().replace(/\s+/g, '_');
+          if (emojiMap[optionKey]) {
+            responseCounts[optionKey] = (responseCounts[optionKey] || 0) + (option.response_count || 0);
+          }
+        });
+      });
+    }
+
+    // Convert to emoji data format
+    const totalResponses = Object.values(responseCounts).reduce((sum, count) => sum + count, 0);
+
+    Object.entries(responseCounts).forEach(([optionKey, count]) => {
+      let emoji = emojiMap[optionKey];
+
+      // Try partial matching if exact match not found
+      if (!emoji) {
+        for (const [key, value] of Object.entries(emojiMap)) {
+          if (optionKey.includes(key) || key.includes(optionKey)) {
+            emoji = value;
+            break;
+          }
+        }
+      }
+
+      if (emoji && count > 0) {
+        // Convert option key back to readable name
+        const name = optionKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const percentage = totalResponses > 0 ? Math.round((count / totalResponses) * 100) : 0;
+
+        emojiData.push({
+          emoji,
+          name,
+          count,
+          percentage
+        });
+      }
+    });
+
+    // Sort by count (descending)
+    emojiData.sort((a, b) => b.count - a.count);
+
+    return emojiData;
+  };
+
   // Helper function to get standardized emoji options
   const getStandardizedEmojiOptions = (actualOptions: SurveyOption[]) => {
     const standardOptions = [
-      { name: "Amazing", value: 0, color: "#C72030" },
-      { name: "Good", value: 0, color: "#C72030" },
-      { name: "Okay", value: 0, color: "#C72030" },
-      { name: "Bad", value: 0, color: "#C72030" },
-      { name: "Terrible", value: 0, color: "#C72030" },
+      { name: "Amazing", value: 0, color: "#C4AE9D" },
+      { name: "Good", value: 0, color: "#C4AE9D" },
+      { name: "Okay", value: 0, color: "#C4AE9D" },
+      { name: "Bad", value: 0, color: "#C4AE9D" },
+      { name: "Terrible", value: 0, color: "#C4AE9D" },
     ];
 
     // Map actual responses to standard options
@@ -852,11 +1510,11 @@ export const SurveyResponseDetailPage = () => {
   // Helper function to get standardized rating options
   const getStandardizedRatingOptions = (actualOptions: SurveyOption[]) => {
     const standardOptions = [
-      { name: "5 stars", value: 0, color: "#C72030" },
-      { name: "4 stars", value: 0, color: "#C72030" },
-      { name: "3 stars", value: 0, color: "#C72030" },
-      { name: "2 stars", value: 0, color: "#C72030" },
-      { name: "1 stars", value: 0, color: "#C72030" },
+      { name: "5 stars", value: 0, color: "#C4AE9D" },
+      { name: "4 stars", value: 0, color: "#C4AE9D" },
+      { name: "3 stars", value: 0, color: "#C4AE9D" },
+      { name: "2 stars", value: 0, color: "#C4AE9D" },
+      { name: "1 stars", value: 0, color: "#C4AE9D" },
     ];
 
     // Map actual responses to standard options
@@ -985,14 +1643,14 @@ export const SurveyResponseDetailPage = () => {
               let color: string;
               if (responseCount > 0) {
                 color = [
-                  "#C72030",
+                  "#D5DBDB",
                   "#c6b692",
                   "#d8dcdd",
-                  "#8B5CF6",
-                  "#10B981",
-                  "#F59E0B",
-                  "#EF4444",
-                  "#3B82F6",
+                  "#c6b692",
+                  "#c6b692",
+                  "#D5DBDB",
+                  "#c6b692",
+                  "#D5DBDB",
                 ][index % 8];
               } else {
                 color = "#E5E5E5";
@@ -1037,10 +1695,10 @@ export const SurveyResponseDetailPage = () => {
         // Use original data if no filters applied
         // Only use standardized data for questions that actually use bar charts
         const useBarChart = shouldUseBarChart(questionId);
-        
+
         if (useBarChart) {
           const questionType = getQuestionType(question.options);
-          
+
           if (questionType === "rating") {
             console.log(
               `🎯 Using standardized rating options for question ${questionId}`
@@ -1061,14 +1719,14 @@ export const SurveyResponseDetailPage = () => {
             if (option.response_count > 0) {
               // Use varied colors for regular questions
               color = [
-                "#C72030",
-                "#c6b692",
-                "#d8dcdd",
-                "#8B5CF6",
-                "#10B981",
-                "#F59E0B",
-                "#EF4444",
-                "#3B82F6",
+                 "#D5DBDB",
+                  "#c6b692",
+                  "#d8dcdd",
+                  "#c6b692",
+                  "#c6b692",
+                  "#D5DBDB",
+                  "#c6b692",
+                  "#D5DBDB",
               ][index % 8];
             } else {
               color = "#E5E5E5";
@@ -1109,7 +1767,7 @@ export const SurveyResponseDetailPage = () => {
     const responseAnswer = filteredResponses
       .flatMap(response => response.answers || [])
       .find(answer => answer.question_id === questionId);
-    
+
     if (responseAnswer?.answer_type) {
       if (responseAnswer.answer_type === "emoji") {
         return {
@@ -1118,7 +1776,7 @@ export const SurveyResponseDetailPage = () => {
         };
       } else if (responseAnswer.answer_type === "rating") {
         return {
-          xAxisLabel: "Star Rating", 
+          xAxisLabel: "Star Rating",
           yAxisLabel: "Number of Responses"
         };
       }
@@ -1146,7 +1804,7 @@ export const SurveyResponseDetailPage = () => {
         }
       }
     }
-    
+
     // Default labels for non-bar chart questions
     return {
       xAxisLabel: undefined,
@@ -1161,11 +1819,11 @@ export const SurveyResponseDetailPage = () => {
     const responseAnswer = filteredResponses
       .flatMap(response => response.answers || [])
       .find(answer => answer.question_id === questionId);
-    
+
     if (responseAnswer?.answer_type) {
       // Only use bar chart for emoji and rating questions, exclude multiple choice
       const useBarChart = responseAnswer.answer_type === "emoji" || responseAnswer.answer_type === "rating";
-      
+
       if (useBarChart) {
         console.log(
           `🎯 Found ${responseAnswer.answer_type} question ${questionId}: "${responseAnswer.question_name}"`
@@ -1175,7 +1833,7 @@ export const SurveyResponseDetailPage = () => {
           `🚫 Excluding ${responseAnswer.answer_type} question ${questionId} from bar chart: "${responseAnswer.question_name}"`
         );
       }
-      
+
       return useBarChart;
     }
 
@@ -1430,13 +2088,13 @@ export const SurveyResponseDetailPage = () => {
         response_id: responseId.toString(),
         date_time: response.responded_time
           ? new Date(response.responded_time).toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
           : "",
         building: response.location?.building_name || "",
         wing: response.location?.wing_name || "",
@@ -1483,7 +2141,7 @@ export const SurveyResponseDetailPage = () => {
                 questionType === "-"
                   ? "-"
                   : questionType.charAt(0).toUpperCase() +
-                    questionType.slice(1);
+                  questionType.slice(1);
 
               // Question Dynamic - use ans_descr for emoji/smiley/rating, option_name for multiple
               let answerValue = "-";
@@ -1618,9 +2276,8 @@ export const SurveyResponseDetailPage = () => {
                       hour12: false,
                     }
                   ),
-                  location: `${response.location?.building_name || ""}, ${
-                    response.location?.wing_name || ""
-                  }`,
+                  location: `${response.location?.building_name || ""}, ${response.location?.wing_name || ""
+                    }`,
                 });
               }
             });
@@ -1635,6 +2292,12 @@ export const SurveyResponseDetailPage = () => {
   // Get dynamic columns for tabular data
   const getTabularColumns = () => {
     const baseColumns = [
+      {
+        key: "action",
+        label: "Action",
+        defaultVisible: true,
+        sortable: true,
+      },
       {
         key: "response_id",
         label: "Response Id",
@@ -1927,8 +2590,8 @@ export const SurveyResponseDetailPage = () => {
       setLocalFromDate(
         activeFormFilters.dateRange?.from
           ? new Date(activeFormFilters.dateRange.from)
-              .toISOString()
-              .split("T")[0]
+            .toISOString()
+            .split("T")[0]
           : ""
       );
       setLocalToDate(
@@ -2074,13 +2737,13 @@ export const SurveyResponseDetailPage = () => {
     }
 
     // Initialize export dates with current tabular filters or empty
-    setExportFromDate(tabularCurrentFilters.dateRange?.from 
-      ? new Date(tabularCurrentFilters.dateRange.from).toISOString().split("T")[0] 
+    setExportFromDate(tabularCurrentFilters.dateRange?.from
+      ? new Date(tabularCurrentFilters.dateRange.from).toISOString().split("T")[0]
       : "");
-    setExportToDate(tabularCurrentFilters.dateRange?.to 
-      ? new Date(tabularCurrentFilters.dateRange.to).toISOString().split("T")[0] 
+    setExportToDate(tabularCurrentFilters.dateRange?.to
+      ? new Date(tabularCurrentFilters.dateRange.to).toISOString().split("T")[0]
       : "");
-    
+
     setShowExportModal(true);
   }, [surveyId, tabularCurrentFilters]);
 
@@ -2130,11 +2793,11 @@ export const SurveyResponseDetailPage = () => {
       // Create a temporary link element and trigger download
       const link = document.createElement("a");
       link.href = exportUrl.toString();
-      
+
       // Create a more descriptive filename with date range if filters are applied
       let filename = `survey_responses_${surveyId}`;
       if (exportFromDate || exportToDate) {
-        const fromStr = exportFromDate 
+        const fromStr = exportFromDate
           ? new Date(exportFromDate).toLocaleDateString('en-GB').replace(/\//g, '-')
           : 'start';
         const toStr = exportToDate
@@ -2145,17 +2808,17 @@ export const SurveyResponseDetailPage = () => {
         filename += '_all_data';
       }
       filename += '.xlsx';
-      
+
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      const dateRangeText = (exportFromDate || exportToDate) 
-        ? ' for selected date range' 
+      const dateRangeText = (exportFromDate || exportToDate)
+        ? ' for selected date range'
         : ' (all data)';
       toast.success(`Export initiated successfully${dateRangeText}`);
-      
+
       // Close the modal
       setShowExportModal(false);
     } catch (error) {
@@ -2170,7 +2833,7 @@ export const SurveyResponseDetailPage = () => {
 
       // Refetch survey details with the new date filters for summary tab
       await refetchSurveyDetailsWithFilters(summaryFormFilters);
-      
+
       // Show success toast for summary filters
       toast.success("Summary filters applied successfully");
     } else {
@@ -2186,7 +2849,7 @@ export const SurveyResponseDetailPage = () => {
       setFilteredTicketData(
         applyFiltersToTicketData(baseTicketData, tabularFormFilters)
       );
-      
+
       // Show success toast for tabular filters
       toast.success("Tabular filters applied successfully");
     }
@@ -2211,7 +2874,7 @@ export const SurveyResponseDetailPage = () => {
         setSurveyData(originalSurveyData);
         setSurveyDetailsData(originalSurveyDetailsData);
       }
-      
+
       // Show success toast for summary filter reset
       toast.success("Summary filters cleared successfully");
     } else {
@@ -2219,7 +2882,7 @@ export const SurveyResponseDetailPage = () => {
       setTabularFormFilters({});
       setFilteredTabularData([]);
       setFilteredTicketData([]);
-      
+
       // Show success toast for tabular filter reset
       toast.success("Tabular filters cleared successfully");
     }
@@ -2233,6 +2896,12 @@ export const SurveyResponseDetailPage = () => {
         : tabularCurrentFilters;
     let count = 0;
     if (filters.dateRange?.from || filters.dateRange?.to) count++;
+    if (filters.siteId) count++;
+    if (filters.buildingId) count++;
+    if (filters.wingId) count++;
+    if (filters.areaId) count++;
+    if (filters.floorId) count++;
+    if (filters.roomId) count++;
     if (filters.building) count++;
     if (filters.wing) count++;
     if (filters.area) count++;
@@ -2279,6 +2948,24 @@ export const SurveyResponseDetailPage = () => {
     }
     return getTicketData();
   }, [tabularCurrentFilters, filteredTicketData, getTicketData]);
+
+  // Helper functions to calculate ticket statistics
+  const getTicketStatistics = useCallback(() => {
+    const ticketData = getDisplayTicketData();
+    const totalTickets = ticketData.length;
+    const openTickets = ticketData.filter(ticket => 
+      ticket.status && ticket.status.toLowerCase() !== 'closed' && ticket.status.toLowerCase() !== 'resolved'
+    ).length;
+    const closedTickets = ticketData.filter(ticket => 
+      ticket.status && (ticket.status.toLowerCase() === 'closed' || ticket.status.toLowerCase() === 'resolved')
+    ).length;
+
+    return {
+      totalTickets,
+      openTickets,
+      closedTickets
+    };
+  }, [getDisplayTicketData]);
 
   // Export Modal Component
   const ExportModal = useMemo(() => (
@@ -2360,87 +3047,401 @@ export const SurveyResponseDetailPage = () => {
     </Dialog>
   ), [showExportModal, exportFromDate, exportToDate, handleConfirmExport]);
 
-  // Filter Modal Component - Memoized to prevent unnecessary re-renders
+  // Filter Modal Component - Enhanced with location details for tabular tab
   const FilterModal = useMemo(
     () => (
-      <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
-        <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                Filter Survey Responses
-                {hasActiveFilters() && (
-                  <span className="bg-[#C72030] text-white text-xs px-2 py-1 rounded-full">
-                    {getActiveFiltersCount()}
-                  </span>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowFilterModal(false)}
-                className="h-6 w-6 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogTitle>
+      <Dialog open={showFilterModal} onOpenChange={setShowFilterModal} modal={false}>
+        <DialogContent className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto" aria-describedby="survey-filter-dialog-description">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <DialogTitle className="text-lg font-semibold text-gray-900">FILTER BY</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFilterModal(false)}
+              className="h-6 w-6 p-0 hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <div id="survey-filter-dialog-description" className="sr-only">
+              Filter survey responses by date range and location details
+            </div>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* Date Range Filter */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-700">
-                  {activeFilterTab === "summary"
-                    ? "Filter Summary Data"
-                    : "Filter Tabular Data"}
-                </h3>
-                {/* <span className="text-xs text-gray-500">
-                  {activeFilterTab === "summary"
-                    ? "Apply date filters to survey analytics"
-                    : "Filter response records"}
-                </span> */}
+            {/* Date Range Section */}
+            <div>
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">
+                {activeFilterTab === "summary" ? "Summary Filters" : "Date Range"}
+              </h3>
+              <div className="grid grid-cols-2 gap-6">
+                <TextField
+                  label="From Date"
+                  type="date"
+                  value={localFromDate}
+                  onChange={handleFromDateChange}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+                <TextField
+                  label="To Date"
+                  type="date"
+                  value={localToDate}
+                  onChange={handleToDateChange}
+                  inputProps={{ min: minDateValue }}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs text-gray-500">From Date</Label>
-                  <Input
-                    type="date"
-                    value={localFromDate}
-                    onChange={handleFromDateChange}
-                    className="w-full"
-                    placeholder="Select start date"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs text-gray-500">To Date</Label>
-                  <Input
-                    type="date"
-                    value={localToDate}
-                    min={minDateValue}
-                    onChange={handleToDateChange}
-                    className="w-full"
-                    placeholder="Select end date"
-                  />
-                </div>
-              </div>
+
+
             </div>
+
+            {/* Summary Location Details Section */}
+            {activeFilterTab === "summary" && (
+              <div>
+                <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Site</InputLabel>
+                    <MuiSelect
+                      label="Site"
+                      value={summaryFormFilters.siteId ?? ""}
+                      onChange={(e) => setSummaryFormFilters(prev => ({ 
+                        ...prev, 
+                        siteId: e.target.value || undefined,
+                        buildingId: undefined,
+                        wingId: undefined,
+                        areaId: undefined,
+                        floorId: undefined,
+                        roomId: undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingSites}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Site</em></MenuItem>
+                      {sites.map((siteItem) => (
+                        <MenuItem key={siteItem.id} value={siteItem.id?.toString() || ''}>
+                          {siteItem.name || 'Unknown Site'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Building</InputLabel>
+                    <MuiSelect
+                      label="Building"
+                      value={summaryFormFilters.buildingId ?? ""}
+                      onChange={(e) => setSummaryFormFilters(prev => ({ 
+                        ...prev, 
+                        buildingId: e.target.value || undefined,
+                        wingId: undefined,
+                        areaId: undefined,
+                        floorId: undefined,
+                        roomId: undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingBuildings || !summaryFormFilters.siteId}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Building</em></MenuItem>
+                      {buildings.map((buildingItem) => (
+                        <MenuItem key={buildingItem.id} value={buildingItem.id?.toString() || ''}>
+                          {buildingItem.name || 'Unknown Building'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="grid grid-cols-2 gap-6 mt-4">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Wing</InputLabel>
+                    <MuiSelect
+                      label="Wing"
+                      value={summaryFormFilters.wingId ?? ""}
+                      onChange={(e) => setSummaryFormFilters(prev => ({ 
+                        ...prev, 
+                        wingId: e.target.value || undefined,
+                        areaId: undefined,
+                        floorId: undefined,
+                        roomId: undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingWings || !summaryFormFilters.buildingId}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Wing</em></MenuItem>
+                      {wings.map((wingItem) => (
+                        <MenuItem key={wingItem.id} value={wingItem.id?.toString() || ''}>
+                          {wingItem.name || 'Unknown Wing'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Area</InputLabel>
+                    <MuiSelect
+                      label="Area"
+                      value={summaryFormFilters.areaId ?? ""}
+                      onChange={(e) => setSummaryFormFilters(prev => ({ 
+                        ...prev, 
+                        areaId: e.target.value || undefined,
+                        floorId: undefined,
+                        roomId: undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingAreas || !summaryFormFilters.wingId}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Area</em></MenuItem>
+                      {areas.map((areaItem) => (
+                        <MenuItem key={areaItem.id} value={areaItem.id?.toString() || ''}>
+                          {areaItem.name || 'Unknown Area'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="grid grid-cols-2 gap-6 mt-4">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Floor</InputLabel>
+                    <MuiSelect
+                      label="Floor"
+                      value={summaryFormFilters.floorId ?? ""}
+                      onChange={(e) => setSummaryFormFilters(prev => ({ 
+                        ...prev, 
+                        floorId: e.target.value || undefined,
+                        roomId: undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingFloors || !summaryFormFilters.areaId}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Floor</em></MenuItem>
+                      {floors.map((floorItem) => (
+                        <MenuItem key={floorItem.id} value={floorItem.id?.toString() || ''}>
+                          {floorItem.name || 'Unknown Floor'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Room</InputLabel>
+                    <MuiSelect
+                      label="Room"
+                      value={summaryFormFilters.roomId ?? ""}
+                      onChange={(e) => setSummaryFormFilters(prev => ({ 
+                        ...prev, 
+                        roomId: e.target.value || undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingRooms || !summaryFormFilters.floorId}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Room</em></MenuItem>
+                      {rooms.map((roomItem) => (
+                        <MenuItem key={roomItem.id} value={roomItem.id?.toString() || ''}>
+                          {roomItem.name || 'Unknown Room'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+              </div>
+            )}
+
+            {/* Tabular Location Details Section */}
+            {activeFilterTab === "tabular" && (
+              <div>
+                <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="site-label" shrink>Site</InputLabel>
+                    <MuiSelect
+                      labelId="site-label"
+                      label="Site"
+                      value={tabularFormFilters.siteId ?? ""}
+                      onChange={(e) => setTabularFormFilters(prev => ({ 
+                        ...prev, 
+                        siteId: e.target.value || undefined,
+                        buildingId: undefined,
+                        wingId: undefined,
+                        areaId: undefined,
+                        floorId: undefined,
+                        roomId: undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingSites}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Site</em></MenuItem>
+                      {sites.map((siteItem) => (
+                        <MenuItem key={siteItem.id} value={siteItem.id?.toString() || ''}>
+                          {siteItem.name || 'Unknown Site'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="building-label" shrink>Building</InputLabel>
+                    <MuiSelect
+                      labelId="building-label"
+                      label="Building"
+                      value={tabularFormFilters.buildingId ?? ""}
+                      onChange={(e) => setTabularFormFilters(prev => ({ 
+                        ...prev, 
+                        buildingId: e.target.value || undefined,
+                        wingId: undefined,
+                        areaId: undefined,
+                        floorId: undefined,
+                        roomId: undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingBuildings || !tabularFormFilters.siteId}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Building</em></MenuItem>
+                      {buildings.map((buildingItem) => (
+                        <MenuItem key={buildingItem.id} value={buildingItem.id?.toString() || ''}>
+                          {buildingItem.name || 'Unknown Building'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="grid grid-cols-2 gap-6 mt-4">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="wing-label" shrink>Wing</InputLabel>
+                    <MuiSelect
+                      labelId="wing-label"
+                      label="Wing"
+                      value={tabularFormFilters.wingId ?? ""}
+                      onChange={(e) => setTabularFormFilters(prev => ({ 
+                        ...prev, 
+                        wingId: e.target.value || undefined,
+                        areaId: undefined,
+                        floorId: undefined,
+                        roomId: undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingWings || !tabularFormFilters.buildingId}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Wing</em></MenuItem>
+                      {wings.map((wingItem) => (
+                        <MenuItem key={wingItem.id} value={wingItem.id?.toString() || ''}>
+                          {wingItem.name || 'Unknown Wing'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="area-label" shrink>Area</InputLabel>
+                    <MuiSelect
+                      labelId="area-label"
+                      label="Area"
+                      value={tabularFormFilters.areaId ?? ""}
+                      onChange={(e) => setTabularFormFilters(prev => ({ 
+                        ...prev, 
+                        areaId: e.target.value || undefined,
+                        floorId: undefined,
+                        roomId: undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingAreas || !tabularFormFilters.wingId}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Area</em></MenuItem>
+                      {areas.map((areaItem) => (
+                        <MenuItem key={areaItem.id} value={areaItem.id?.toString() || ''}>
+                          {areaItem.name || 'Unknown Area'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="grid grid-cols-2 gap-6 mt-4">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="floor-label" shrink>Floor</InputLabel>
+                    <MuiSelect
+                      labelId="floor-label"
+                      label="Floor"
+                      value={tabularFormFilters.floorId ?? ""}
+                      onChange={(e) => setTabularFormFilters(prev => ({ 
+                        ...prev, 
+                        floorId: e.target.value || undefined,
+                        roomId: undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingFloors || !tabularFormFilters.areaId}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Floor</em></MenuItem>
+                      {floors.map((floorItem) => (
+                        <MenuItem key={floorItem.id} value={floorItem.id?.toString() || ''}>
+                          {floorItem.name || 'Unknown Floor'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="room-label" shrink>Room</InputLabel>
+                    <MuiSelect
+                      labelId="room-label"
+                      label="Room"
+                      value={tabularFormFilters.roomId ?? ""}
+                      onChange={(e) => setTabularFormFilters(prev => ({ 
+                        ...prev, 
+                        roomId: e.target.value || undefined,
+                      }))}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled={loadingRooms || !tabularFormFilters.floorId}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Room</em></MenuItem>
+                      {rooms.map((roomItem) => (
+                        <MenuItem key={roomItem.id} value={roomItem.id?.toString() || ''}>
+                          {roomItem.name || 'Unknown Room'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={handleClearFilters}
-              className="px-6"
+          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+            <Button 
+              variant="secondary" 
+              onClick={handleApplyFilters} 
+              className="flex-1 h-11"
+            >
+              Apply
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleClearFilters} 
+              className="flex-1 h-11"
             >
               Reset
-            </Button>
-            <Button
-              onClick={handleApplyFilters}
-              className="px-6 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-            >
-              Apply Filters
             </Button>
           </div>
         </DialogContent>
@@ -2448,8 +3449,6 @@ export const SurveyResponseDetailPage = () => {
     ),
     [
       showFilterModal,
-      hasActiveFilters,
-      getActiveFiltersCount,
       minDateValue,
       handleFromDateChange,
       handleToDateChange,
@@ -2458,6 +3457,28 @@ export const SurveyResponseDetailPage = () => {
       localFromDate,
       localToDate,
       activeFilterTab,
+      summaryFormFilters.siteId,
+      summaryFormFilters.buildingId,
+      summaryFormFilters.wingId,
+      summaryFormFilters.areaId,
+      summaryFormFilters.floorId,
+      summaryFormFilters.roomId,
+      tabularFormFilters,
+      setTabularFormFilters,
+      sites,
+      buildings,
+      wings,
+      areas,
+      floors,
+      rooms,
+      loadingSites,
+      loadingBuildings,
+      loadingWings,
+      loadingAreas,
+      loadingFloors,
+      loadingRooms,
+      fieldStyles,
+      selectMenuProps,
     ]
   );
 
@@ -2527,33 +3548,53 @@ export const SurveyResponseDetailPage = () => {
 
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            Survey Response Details - {surveyData.survey_name}
+            {surveyData.survey_name}
           </h1>
-          <div className="flex gap-2">
-            <div className="text-sm text-gray-600">
-              Total Responses:{" "}
-              <span className="text-[#C72030] font-medium">
-                {surveyData.questions?.reduce((sum, q) => {
-                  if (q.options && q.options.length > 0) {
-                    return (
-                      sum +
-                      (q.options.reduce(
-                        (optSum, opt) => optSum + opt.response_count,
-                        0
-                      ) || 0)
-                    );
-                  }
-                  return sum;
-                }, 0) || 0}
-              </span>
+          {activeTab === "summary" && (
+            <div className="flex items-center gap-2">
+              {/* <Button variant="outline" size="icon" title="Export">
+                <Download className="w-4 h-4" />
+              </Button> */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setActiveFilterTab("summary");
+                  setSummaryFormFilters(summaryCurrentFilters);
+                  setShowFilterModal(true);
+                }}
+                className="flex items-center gap-1 relative"
+              >
+                <Filter className="w-4 h-4" />
+                {Object.keys(summaryCurrentFilters).length > 0 && (
+                  <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-[#C72030] text-white rounded-full">
+                    {(() => {
+                      let count = 0;
+                      if (
+                        summaryCurrentFilters.dateRange?.from ||
+                        summaryCurrentFilters.dateRange?.to
+                      )
+                        count++;
+                      if (summaryCurrentFilters.siteId) count++;
+                      if (summaryCurrentFilters.buildingId) count++;
+                      if (summaryCurrentFilters.wingId) count++;
+                      if (summaryCurrentFilters.areaId) count++;
+                      if (summaryCurrentFilters.floorId) count++;
+                      if (summaryCurrentFilters.roomId) count++;
+                      return count;
+                    })()}
+                  </span>
+                )}
+              </Button>
             </div>
-          </div>
+          )}
         </div>
+
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className="">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
+          {/* <TabsList className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
             {[
               { label: "Summary", value: "summary" },
               { label: "Tabular", value: "tabular" },
@@ -2567,13 +3608,29 @@ export const SurveyResponseDetailPage = () => {
                 {tab.label}
               </TabsTrigger>
             ))}
+          </TabsList> */}
+          <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
+            {[
+              { label: "Survey Information", value: "summary" },
+              { label: "Tabular", value: "tabular" },
+              { label: "Tickets", value: "tickets" },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="group flex items-center justify-center gap-2 border-none font-semibold data-[state=active]:bg-[#EDEAE3] data-[state=inactive]:bg-white data-[state=inactive]:text-black data-[state=active]:text-[#C72030]"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
-          <TabsContent value="summary" className="p-3 sm:p-6">
+
+          <TabsContent value="summary" className="">
             {/* Summary Tab Header with Filter */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-800">
+              {/* <h2 className="text-lg font-semibold text-gray-800">
                 Survey Analytics Summary
-              </h2>
+              </h2> */}
               <div className="flex items-center gap-3">
                 {Object.keys(summaryCurrentFilters).length > 0 && (
                   <span className="text-sm text-gray-600">
@@ -2584,6 +3641,12 @@ export const SurveyResponseDetailPage = () => {
                         summaryCurrentFilters.dateRange?.to
                       )
                         count++;
+                      if (summaryCurrentFilters.siteId) count++;
+                      if (summaryCurrentFilters.buildingId) count++;
+                      if (summaryCurrentFilters.wingId) count++;
+                      if (summaryCurrentFilters.areaId) count++;
+                      if (summaryCurrentFilters.floorId) count++;
+                      if (summaryCurrentFilters.roomId) count++;
                       return count;
                     })()}{" "}
                     filter
@@ -2594,12 +3657,18 @@ export const SurveyResponseDetailPage = () => {
                         summaryCurrentFilters.dateRange?.to
                       )
                         count++;
+                      if (summaryCurrentFilters.siteId) count++;
+                      if (summaryCurrentFilters.buildingId) count++;
+                      if (summaryCurrentFilters.wingId) count++;
+                      if (summaryCurrentFilters.areaId) count++;
+                      if (summaryCurrentFilters.floorId) count++;
+                      if (summaryCurrentFilters.roomId) count++;
                       return count !== 1 ? "s" : "";
                     })()}{" "}
                     active
                   </span>
                 )}
-                <Button
+                {/* <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
@@ -2624,146 +3693,154 @@ export const SurveyResponseDetailPage = () => {
                       })()}
                     </span>
                   )}
-                </Button>
+                </Button> */}
               </div>
             </div>
 
             {/* Summary Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <Card>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              {/* Total Questions */}
+
+               <Card className="bg-[#F6F4EE]">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center">
-                      <List className="w-4 h-4" />
+                    <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <QuestionMark className="w-4 h-4 text-[#C72030]" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Total Questions</p>
-                      <p className="text-xl font-semibold">
+                      <p className="text-xl font-semibold text-[#C72030]">
+                        {surveyData.csat ? surveyData.csat.toFixed(2) : '0.00'}
+                      </p>
+                      <p className="text-sm text-gray-600">CSAT</p>
+                      {Object.keys(summaryCurrentFilters).length > 0 && (
+                        <p className="text-xs text-gray-500">Filtered data shown</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-[#F6F4EE]">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <QuestionMark className="w-4 h-4 text-[#C72030]" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold text-[#C72030]">
                         {surveyData.questions?.length || 0}
                       </p>
+                      <p className="text-sm text-gray-600">Total Questions</p>
                       {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">
-                          All questions shown
-                        </p>
+                        <p className="text-xs text-gray-500">Filtered data shown</p>
                       )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              {/* Positive */}
+              <Card className="bg-[#F6F4EE]">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center">
-                      <BarChart3 className="w-4 h-4" />
+                    <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <Smile className="w-5 h-5 text-[#C72030]" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">
-                        {Object.keys(summaryCurrentFilters).length > 0
-                          ? "Filtered Responses"
-                          : "Total Responses"}
+                      <p className="text-xl font-semibold text-[#C72030]">
+                        {surveyData.positive_responses || 0}
                       </p>
-                      <p className="text-xl font-semibold">
-                        {(() => {
-                          const filteredResponses =
-                            getSummaryFilteredResponseData();
-                          if (
-                            Object.keys(summaryCurrentFilters).length > 0 &&
-                            filteredResponses.length > 0
-                          ) {
-                            // Count total answers from filtered responses
-                            return filteredResponses.reduce(
-                              (total, response) => {
-                                return total + (response.answers?.length || 0);
-                              },
-                              0
-                            );
-                          }
-                          // Original count
-                          return (
-                            surveyData.questions?.reduce((sum, q) => {
-                              if (q.options && q.options.length > 0) {
-                                return (
-                                  sum +
-                                  (q.options.reduce(
-                                    (optSum, opt) =>
-                                      optSum + opt.response_count,
-                                    0
-                                  ) || 0)
-                                );
-                              }
-                              return sum;
-                            }, 0) || 0
-                          );
-                        })()}
-                      </p>
+                      <p className="text-sm text-gray-600">Positive</p>
                       {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">
-                          Based on date filter
-                        </p>
+                        <p className="text-xs text-gray-500">Filtered data shown</p>
                       )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center">
-                      <Activity className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {Object.keys(summaryCurrentFilters).length > 0
-                          ? "Filtered Responses"
-                          : "Survey Status"}
-                      </p>
-                      <p
-                        className={`text-xl font-semibold ${
-                          Object.keys(summaryCurrentFilters).length > 0
-                            ? "text-blue-600"
-                            : surveyData?.survey_status === 1 ||
-                              surveyData?.survey_status === true ||
-                              surveyData?.is_active === 1 ||
-                              surveyData?.is_active === true
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {Object.keys(summaryCurrentFilters).length > 0
-                          ? `${getSummaryFilteredResponseData().length} Records`
-                          : surveyData?.survey_status === 1 ||
-                            surveyData?.survey_status === true ||
-                            surveyData?.is_active === 1 ||
-                            surveyData?.is_active === true
-                          ? "Active"
-                          : "Inactive"}
-                      </p>
-                      {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">
-                          Matching criteria
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Negative */}
+              <Card className="bg-[#F6F4EE]">
+  <CardContent className="p-6">
+    <div className="flex items-center gap-3">
+      <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 22 22"
+          fill="none"
+        >
+          <path
+            d="M7.625 13.625C7.32833 13.625 7.03832 13.537 6.79165 13.3722C6.54498 13.2074 6.35272 12.9731 6.23919 12.699C6.12565 12.4249 6.09595 12.1233 6.15383 11.8324C6.2117 11.5414 6.35457 11.2741 6.56434 11.0643C6.77412 10.8546 7.0414 10.7117 7.33237 10.6538C7.62334 10.5959 7.92494 10.6256 8.19903 10.7392C8.47312 10.8527 8.70739 11.045 8.87221 11.2916C9.03703 11.5383 9.125 11.8283 9.125 12.125C9.125 12.5228 8.96697 12.9044 8.68566 13.1857C8.40436 13.467 8.02283 13.625 7.625 13.625ZM14.375 10.625C14.0783 10.625 13.7883 10.713 13.5416 10.8778C13.295 11.0426 13.1027 11.2769 12.9892 11.551C12.8757 11.8251 12.8459 12.1267 12.9038 12.4176C12.9617 12.7086 13.1046 12.9759 13.3143 13.1857C13.5241 13.3954 13.7914 13.5383 14.0824 13.5962C14.3733 13.6541 14.6749 13.6244 14.949 13.5108C15.2231 13.3973 15.4574 13.205 15.6222 12.9584C15.787 12.7117 15.875 12.4217 15.875 12.125C15.875 11.7272 15.717 11.3456 15.4357 11.0643C15.1544 10.783 14.7728 10.625 14.375 10.625ZM21.125 11C21.125 13.0025 20.5312 14.9601 19.4186 16.6251C18.3061 18.2902 16.7248 19.5879 14.8747 20.3543C13.0246 21.1206 10.9888 21.3211 9.02471 20.9305C7.06066 20.5398 5.25656 19.5755 3.84055 18.1595C2.42454 16.7435 1.46023 14.9393 1.06955 12.9753C0.678878 11.0112 0.879387 8.97543 1.64572 7.12533C2.41206 5.27523 3.70981 3.69392 5.37486 2.58137C7.0399 1.46882 8.99747 0.875 11 0.875C13.6844 0.877978 16.258 1.94567 18.1562 3.84383C20.0543 5.74199 21.122 8.3156 21.125 11ZM18.875 11C18.875 9.44247 18.4131 7.91992 17.5478 6.62488C16.6825 5.32985 15.4526 4.32049 14.0136 3.72445C12.5747 3.12841 10.9913 2.97246 9.46367 3.27632C7.93607 3.58017 6.53288 4.3302 5.43154 5.43153C4.3302 6.53287 3.58018 7.93606 3.27632 9.46366C2.97246 10.9913 3.12841 12.5747 3.72445 14.0136C4.32049 15.4526 5.32985 16.6825 6.62489 17.5478C7.91993 18.4131 9.44248 18.875 11 18.875C13.0879 18.8728 15.0896 18.0424 16.566 16.566C18.0424 15.0896 18.8728 13.0879 18.875 11ZM7.00063 8.5625L10.3756 10.8125C10.5605 10.9358 10.7778 11.0017 11 11.0017C11.2222 11.0017 11.4395 10.9358 11.6244 10.8125L14.9994 8.5625C15.248 8.39691 15.4207 8.13932 15.4794 7.84641C15.5381 7.5535 15.4781 7.24927 15.3125 7.00062C15.1469 6.75198 14.8893 6.57931 14.5964 6.52059C14.3035 6.46187 13.9993 6.52191 13.7506 6.6875L11 8.52313L8.24938 6.6875C8.00074 6.52191 7.6965 6.46187 7.40359 6.52059C7.11068 6.57931 6.8531 6.75198 6.6875 7.00062C6.52191 7.24927 6.46187 7.5535 6.52059 7.84641C6.57931 8.13932 6.75199 8.39691 7.00063 8.5625ZM13.4375 14.6675C12.6993 14.2312 11.8575 14.001 11 14.001C10.1425 14.001 9.30071 14.2312 8.5625 14.6675C8.42806 14.7378 8.30923 14.8346 8.21317 14.9521C8.11711 15.0695 8.04579 15.2052 8.00352 15.3509C7.96124 15.4966 7.94888 15.6494 7.96718 15.8C7.98547 15.9506 8.03405 16.096 8.10998 16.2273C8.18591 16.3587 8.28763 16.4733 8.40902 16.5644C8.5304 16.6554 8.66895 16.7209 8.81632 16.757C8.96369 16.7931 9.11684 16.7991 9.26656 16.7744C9.41627 16.7498 9.55946 16.6951 9.6875 16.6138C10.0837 16.3751 10.5375 16.2489 11 16.2489C11.4625 16.2489 11.9163 16.3751 12.3125 16.6138C12.4405 16.6951 12.5837 16.7498 12.7335 16.7744C12.8832 16.7991 13.0363 16.7931 13.1837 16.757C13.3311 16.7209 13.4696 16.6554 13.591 16.5644C13.7124 16.4733 13.8141 16.3587 13.89 16.2273C13.966 16.096 14.0145 15.9506 14.0328 15.8C14.0511 15.6494 14.0388 15.4966 13.9965 15.3509C13.9542 15.2052 13.8829 15.0695 13.7868 14.9521C13.6908 14.8346 13.5719 14.7378 13.4375 14.6675Z"
+            fill="#C72030"
+          />
+        </svg>
+      </div>
+      <div>
+        <p className="text-xl font-semibold text-[#C72030]">
+          {surveyData.negative_responses || 0}
+        </p>
+        <p className="text-sm text-gray-600">Negative</p>
+        {Object.keys(summaryCurrentFilters).length > 0 && (
+          <p className="text-xs text-gray-500">Filtered data shown</p>
+        )}
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
+
+              {/* Placeholder for 4th card (optional) */}
             </div>
 
-            {/* Overall Response Distribution */}
+            {/* Overall Question Response Distribution */}
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <BarChart3 className="h-4 w-4" />
+                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                    <QuestionMark className="h-2 w-2 text-[#C72030]" />
                   </div>
-                  OVERALL RESPONSE DISTRIBUTION
+                  <span>
+                    {/* OVERALL QUESTION RESPONSE DISTRIBUTION */}
+                    Q1.
+                    </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <SurveyAnalyticsCard
                   title="Overall Question Response Distribution"
+                  type="statusDistribution"
+                  data={typeof getResponseDistributionData === "function" ? getResponseDistributionData() : []}
+                  dateRange={{
+                    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                    endDate: new Date(),
+                  }}
+                  onDownload={typeof handleDownloadResponseChart === "function" ? handleDownloadResponseChart : undefined}
+                  customStyle={{
+                    pieChart: {
+                      outerRadius: 140,
+                      innerRadius: 90,
+                      height: 300,
+                    }
+                  }}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Overall Response Distribution */}
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                    <QuestionMark className="h-2 w-2 text-[#C72030]" />
+                  </div>
+                  {/* OVERALL RESPONSE DISTRIBUTION */}
+                  Q2.
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SurveyAnalyticsCard
+                  title="Rate Your Experience"
                   type="statusDistribution"
                   data={getResponseDistributionData()}
                   dateRange={{
@@ -2775,223 +3852,688 @@ export const SurveyResponseDetailPage = () => {
               </CardContent>
             </Card>
 
+            {/* Emoji Response Summary */}
+
+
             {/* Questions Response Details */}
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <List className="h-4 w-4" />
+                  <div className="w-8 h-8 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                     <QuestionMark className="h-2 w-2 text-[#C72030]" />
                   </div>
-                  QUESTION RESPONSE DETAILS 
-                  
+                  {/* QUESTION RESPONSE DETAILS */}
+                  <span>Q3.</span>
+
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {surveyData.questions.map((question: SurveyQuestion, index: number) => {
-                    const totalResponses =
-                      question.options?.reduce(
-                        (sum, opt) => sum + opt.response_count,
-                        0
-                      ) || 0;
-                    const responseTexts =
-                      question.options
-                        ?.filter((opt) => opt.response_count > 0)
-                        .map(
-                          (opt) =>
-                            `${opt.option} (${opt.response_count} responses)`
-                        ) || [];
+              {surveyData.questions.map((question: SurveyQuestion, index: number) => {
+                const totalResponses =
+                  question.options?.reduce(
+                    (sum, opt) => sum + opt.response_count,
+                    0
+                  ) || 0;
+                const responseTexts =
+                  question.options
+                    ?.filter((opt) => opt.response_count > 0)
+                    .map(
+                      (opt) =>
+                        `${opt.option} (${opt.response_count} responses)`
+                    ) || [];
 
-                    // Check if question has any options configured
-                    const hasOptions =
-                      question.options && question.options.length > 0;
+                // Check if question has any options configured
+                const hasOptions =
+                  question.options && question.options.length > 0;
 
-                    return (
-                      <div
-                        key={question.question_id}
-                        className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm"
-                      >
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="font-medium text-gray-800 mb-1 text-base">
-                              <span className="text-[#C72030] font-semibold mr-2">
-                                Q{index + 1}.
-                              </span>
-                              {question.question}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {hasOptions
-                                ? `${totalResponses} Responses`
-                                : "No options configured"}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Question Response Distribution Chart - Dynamic Type */}
-                        <div className="mb-4">
-                          <SurveyAnalyticsCard
-                            title={(() => {
-                              // Only show specific emoji/rating titles if shouldUseBarChart returns true
-                              const useBarChart = shouldUseBarChart(question.question_id);
-                              
-                              if (useBarChart) {
-                                const questionType = getQuestionType(
-                                  question.options || []
-                                );
-                                if (questionType === "rating") {
-                                  return "Rating Response";
-                                } else if (questionType === "emoji") {
-                                  return "Emoji Responses";
-                                }
-                              }
-                              
-                              // For all multiple choice questions (not using bar charts), show generic title
-                              return `Response Distribution: ${question.question.substring(
-                                0,
-                                50
-                              )}${
-                                question.question.length > 50 ? "..." : ""
-                              }`;
-                            })()}
-                            type={getChartType(question.question_id)}
-                            data={getQuestionOptionsData(question.question_id)}
-                            dateRange={{
-                              startDate: new Date(
-                                Date.now() - 30 * 24 * 60 * 60 * 1000
-                              ),
-                              endDate: new Date(),
-                            }}
-                            xAxisLabel={getAxisLabels(question.question_id).xAxisLabel}
-                            yAxisLabel={getAxisLabels(question.question_id).yAxisLabel}
-                            onDownload={() => {
-                              // console.log(
-                              //   `Download chart for question ${question.question_id}`
-                              // );
-                              toast.success(
-                                `Chart for question ${question.question_id} download initiated`
-                              );
-                            }}
-                          />
-                        </div>
+                return (
+                  <div
+                    key={question.question_id}
+                    className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-medium text-gray-800 mb-1 text-base">
+                          <span className="text-[#C72030] font-semibold mr-2">
+                            Q{index + 1}.
+                          </span>
+                          {question.question}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {hasOptions
+                            ? `${totalResponses} Responses`
+                            : "No options configured"}
+                        </p>
                       </div>
-                    );
-                  })}
+                    </div>
+
+                    {/* Question Response Distribution Chart - Dynamic Type */}
+                    <div className="mb-4">
+                      <SurveyAnalyticsCard
+                        title={(() => {
+                          // Only show specific emoji/rating titles if shouldUseBarChart returns true
+                          const useBarChart = shouldUseBarChart(question.question_id);
+
+                          if (useBarChart) {
+                            const questionType = getQuestionType(
+                              question.options || []
+                            );
+                            if (questionType === "rating") {
+                              return "Rating Response";
+                            } else if (questionType === "emoji") {
+                              return "Emoji Responses";
+                            }
+                          }
+
+                          // For all multiple choice questions (not using bar charts), show generic title
+                          return `Response Distribution: ${question.question.substring(
+                            0,
+                            50
+                          )}${question.question.length > 50 ? "..." : ""
+                            }`;
+                        })()}
+                        type={getChartType(question.question_id)}
+                        data={getQuestionOptionsData(question.question_id)}
+                        dateRange={{
+                          startDate: new Date(
+                            Date.now() - 30 * 24 * 60 * 60 * 1000
+                          ),
+                          endDate: new Date(),
+                        }}
+                        xAxisLabel={getAxisLabels(question.question_id).xAxisLabel}
+                        yAxisLabel={getAxisLabels(question.question_id).yAxisLabel}
+                        onDownload={() => {
+                          // console.log(
+                          //   `Download chart for question ${question.question_id}`
+                          // );
+                          toast.success(
+                            `Chart for question ${question.question_id} download initiated`
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="tabular" className="p-3 sm:p-6">
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Table className="h-4 w-4" />
+                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                    <QuestionMark className="h-4 w-4 text-[#C72030]" />
                   </div>
-                  SURVEY RESPONSES
+                  {/* EMOJI RESPONSE SUMMARY */}
+                  Q4.
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <EnhancedTaskTable
-                  data={getDisplayTabularData()}
-                  columns={getTabularColumns()}
-                  storageKey="survey-response-tabular-v2"
-                  exportFileName="survey-responses-tabular"
-                  enableSearch={true}
-                  searchPlaceholder="Search responses..."
-                  emptyMessage={
-                    !responseListData
-                      ? "Loading response data..."
-                      : `No response data available (${
-                          getTabularData().length
-                        } items processed)`
-                  }
-                  pagination={true}
-                  pageSize={10}
-                  className="border border-gray-200 rounded-lg"
-                  loading={isLoading}
-                  onFilterClick={handleFilterClick}
-                  rightActions={
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleTabularExport}
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      {/* Export */}
-                    </Button>
-                  }
-                  getItemId={(item: TabularResponseData) => item.id}
-                  renderCell={(
-                    item: TabularResponseData,
-                    columnKey: string
-                  ) => {
-                    const cellValue =
-                      item[columnKey as keyof TabularResponseData];
+                {(() => {
+                  const emojiData = getEmojiResponseData();
+                  
+                  // Define all standard emoji options
+                  const standardEmojis = [
+                    { name: "Amazing", emoji: "😀" },
+                    { name: "Good", emoji: "😊" },
+                    { name: "Okay", emoji: "😐" },
+                    { name: "Bad", emoji: "😞" },
+                    { name: "Terrible", emoji: "😢" }
+                  ];
+                  
+                  // Calculate total responses to get accurate percentages
+                  const totalResponses = emojiData.reduce((sum, item) => sum + item.count, 0);
+                  
+                  // Create display data with all emojis, showing 0% for missing ones
+                  const displayData = standardEmojis.map(standard => {
+                    const found = emojiData.find(item => 
+                      item.name.toLowerCase() === standard.name.toLowerCase()
+                    );
+                    
+                    return {
+                      emoji: standard.emoji,
+                      name: standard.name,
+                      count: found ? found.count : 0,
+                      percentage: found ? found.percentage : 0
+                    };
+                  });
 
-                    // Format the Answer Type column to capitalize properly
-                    if (columnKey === "category") {
-                      const answerType = cellValue as string;
-                      if (answerType === "multiple") return "Multiple";
-                      if (answerType === "rating") return "Rating";
-                      if (answerType === "emoji") return "Emoji";
-                      return answerType || "-";
-                    }
-
-                    // Special handling for Icon Category with truncation and hover
-                    if (
-                      columnKey === "icon_category" ||
-                      columnKey.startsWith("icon_category_")
-                    ) {
-                      const iconCategoryValue = cellValue as string;
-                      if (!iconCategoryValue || iconCategoryValue === "-") {
-                        return <span className="text-gray-400">-</span>;
-                      }
-                      return (
-                        <TruncatedText
-                          text={iconCategoryValue}
-                          maxLength={15}
-                          className="text-gray-900 font-medium"
-                        />
-                      );
-                    }
-
-                    // Special handling for Ticket ID - show full value with proper wrapping
-                    if (columnKey === "ticket_id") {
-                      const ticketValue = cellValue as string;
-                      if (!ticketValue || ticketValue === "-") {
-                        return <span className="text-gray-400">-</span>;
-                      }
-                      return (
-                        <div
-                          className="text-black-600 font-medium break-words text-xs leading-tight overflow-hidden"
-                          style={{
-                            maxWidth: "180px",
-                            minWidth: "140px",
-                            wordBreak: "break-all",
-                            whiteSpace: "normal",
-                            lineHeight: "1.2",
-                          }}
-                        >
-                          {ticketValue}
+                  return (
+                    <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                      <div className="text-center py-6">
+                        <div className="flex justify-center items-center gap-8 mb-4">
+                          {displayData.map((item, index) => (
+                            <div key={index} className="flex flex-col items-center">
+                              <div className="text-3xl mb-2">{item.emoji}</div>
+                              <div className="text-sm font-medium text-gray-700 mb-1">{item.name}</div>
+                              <div className="text-sm text-gray-600">
+                                {item.percentage}% ({item.count})
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      );
-                    }
+                      </div>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
 
-                    return cellValue || "-";
-                  }}
-                />
+            {/* Response Category with CSAT (Static) */}
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                    <QuestionMark className="h-4 w-4 text-[#C72030]" />
+                  </div>
+                  Q5.
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  // Static data to mirror the provided UI
+                  const totalResponses = 2;
+                  const skipped = 11;
+                  const rows: Array<{
+                    category: string;
+                    pct: number; // percentage of responses
+                    count: number; // raw count
+                    csat: number; // 0 means show '-'
+                  }> = [
+                      { category: "WC Cleaning", pct: 50, count: 1, csat: 2 },
+                      { category: "HBT Roll", pct: 0, count: 0, csat: 0 },
+                      { category: "Dirty Floor", pct: 0, count: 0, csat: 0 },
+                      { category: "Tissue Paper Missing", pct: 50, count: 1, csat: 1 },
+                      { category: "Washbasin area", pct: 0, count: 0, csat: 0 },
+                      { category: "Soap Missing", pct: 50, count: 1, csat: 2 },
+                    ];
+                  const maxCsat = Math.max(1, ...rows.map((r) => r.csat));
+
+                  return (
+                    <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                      <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
+                        <span>
+                          <span className="font-medium">Total Response:</span> {totalResponses}
+                        </span>
+                        <span>
+                          <span className="font-medium">Skipped:</span> {skipped}
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-t border-b border-gray-300">
+                              <th className="text-left font-semibold px-6 py-3 w-1/2">Response Category</th>
+                              <th className="text-left font-semibold px-6 py-3 w-1/4">Responses</th>
+                              <th className="text-left font-semibold px-6 py-3 w-1/4">CSAT</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((r, idx) => (
+                              <tr key={r.category} className={idx !== rows.length - 1 ? "border-b border-gray-300" : ""}>
+                                <td className="px-6 py-3 text-gray-800">{r.category}</td>
+                                <td className="px-6 py-3 text-gray-800">{r.pct}% ({r.count})</td>
+                                <td className="px-6 py-3 text-gray-800">
+                                  {r.csat > 0 ? (
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-20 h-3 bg-gray-200 rounded-sm overflow-hidden">
+                                        <div
+                                          className="h-3 bg-[#C72030]"
+                                          style={{ width: `${(r.csat / maxCsat) * 100}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-gray-800 text-sm">{r.csat}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400">-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+
+             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                <CardHeader className="bg-[#F6F4EE] mb-6">
+                  <CardTitle className="text-lg flex items-center">
+                    <div className="w-8 h-8 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                      <QuestionMark className="h-4 w-4 text-[#C72030]" />
+                    </div>
+                    Customer Satisfaction Score.
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    // Static data to mirror the provided UI
+                    const dateRangeText = "Aug 1, 2024 - Aug 31, 2024";
+                    type Row = {
+                      dateLabel: string;
+                      csat: number; // average score 0..5
+                      changePct: number; // compared to previous period
+                      negPct: number; negCount: number;
+                      posPct: number; posCount: number;
+                      total: number;
+                    };
+                    const rows: Row[] = [
+                      { dateLabel: "July 28, 2024", csat: 0, changePct: 0, negPct: 0, negCount: 0, posPct: 0, posCount: 0, total: 0 },
+                      { dateLabel: "Aug 4, 2024", csat: 5.0, changePct: 5, negPct: 0, negCount: 0, posPct: 100, posCount: 1, total: 1 },
+                      { dateLabel: "Aug 11, 2024", csat: 4.75, changePct: -0.25, negPct: 0, negCount: 0, posPct: 100, posCount: 4, total: 4 },
+                      { dateLabel: "Aug 18, 2024", csat: 4.0, changePct: -0.75, negPct: 25, negCount: 1, posPct: 75, posCount: 3, total: 4 },
+                      { dateLabel: "Aug 25, 2024", csat: 4.0, changePct: -0, negPct: 25, negCount: 1, posPct: 75, posCount: 3, total: 4 },
+                    ];
+
+                    // Simple stacked bars without external chart deps (match neutral + red look)
+                    const maxTotal = Math.max(1, ...rows.map(r => r.total));
+                    const BAR_AREA_HEIGHT = 240; // px for bar area
+                    const colorPositive = "#C4AE9D"; // taupe
+                    const colorNegative = "#C72030"; // red
+
+                    const ChangeTag = ({ value }: { value: number }) => {
+                      if (value > 0) {
+                        return (
+                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded border" style={{ background: "#E6F4EA", color: "#1E7E34", borderColor: "#B5DFCB" }}>
+                            +{value.toFixed(2)}%
+                          </span>
+                        );
+                      }
+                      if (value < 0) {
+                        return (
+                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded border" style={{ background: "#FCE8E6", color: "#C72030", borderColor: "#F5C2C7" }}>
+                            {value.toFixed(2)}%
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="ml-2 text-xs px-1.5 py-0.5 rounded border text-gray-600" style={{ background: "#F3F4F6", borderColor: "#E5E7EB" }}>
+                          -0%
+                        </span>
+                      );
+                    };
+
+                    return (
+                      <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                        {/* Date range */}
+                        <div className="px-6 pt-4 text-sm text-gray-700">{dateRangeText}</div>
+
+                        {/* Chart area (Recharts) */}
+                        <div className="px-6 pt-4 pb-6">
+                          <div className="bg-white" style={{ height: BAR_AREA_HEIGHT + 60 }}>
+                            <ResponsiveContainer width="100%" height={BAR_AREA_HEIGHT + 40}>
+                              <BarChart
+                                data={rows.map(r => ({
+                                  date: r.dateLabel,
+                                  Positive: r.posCount,
+                                  Negative: r.negCount,
+                                }))}
+                                margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
+                              >
+                                <CartesianGrid vertical={false} stroke="#E5E7EB" />
+                                <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6B7280' }} tickMargin={10} axisLine={{ stroke: '#9CA3AF' }} />
+                                <YAxis domain={[0, 11]} ticks={[0,2,4,6,8,10,11]} tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: '#9CA3AF' }} />
+                                <Tooltip formatter={(val: any, name: any) => [val, name]} />
+                                {/* Negative at bottom, Positive stacked above */}
+                                <Bar dataKey="Negative" stackId="a" fill="#C72030" radius={[0,0,0,0]} barSize={36} />
+                                <Bar dataKey="Positive" stackId="a" fill="#C4AE9D" radius={[0,0,0,0]} barSize={36} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+
+                        {/* Table */}
+                        <div className="px-6 pb-6">
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border border-gray-300">
+                                  <th className="text-left font-semibold px-6 py-3 w-1/4">&nbsp;</th>
+                                  <th className="text-left font-semibold px-6 py-3 w-1/4">CSAT</th>
+                                  <th className="text-left font-semibold px-6 py-3 w-1/4">Negative</th>
+                                  <th className="text-left font-semibold px-6 py-3 w-1/4">Positive</th>
+                                  <th className="text-left font-semibold px-6 py-3 w-[90px]">Total</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {rows.map((r, idx) => (
+                                  <tr key={r.dateLabel} className="border-x border-b border-gray-300">
+                                    <td className="px-6 py-3 text-gray-800">{r.dateLabel}</td>
+                                    <td className="px-6 py-3 text-gray-800">
+                                      {r.csat.toFixed(2)} <ChangeTag value={r.changePct} />
+                                    </td>
+                                    <td className="px-6 py-3 text-gray-800">{r.negPct}% ({r.negCount})</td>
+                                    <td className="px-6 py-3 text-gray-800">{r.posPct}% ({r.posCount})</td>
+                                    <td className="px-6 py-3 text-gray-800">{r.total}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+               <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                    <QuestionMark className="h-4 w-4 text-[#C72030]" />
+                  </div>
+                  Heat Map
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  // Static heatmap data to mirror the provided UI
+                  const totalResponses = 2;
+                  const skipped = 11;
+
+                  // Hours 0..23, formatted as 12 AM .. 11 PM
+                  const hours = Array.from({ length: 24 }, (_, h) => {
+                    const suffix = h < 12 ? "AM" : "PM";
+                    const hour12 = h % 12 === 0 ? 12 : h % 12;
+                    return `${hour12} ${suffix}`;
+                  });
+
+                  // Create 10 date columns to enable horizontal scroll
+                  const dates = Array.from({ length: 10 }, (_, i) => {
+                    return "01/10/2025"; // static label as per screenshot
+                  });
+
+                  // Some shaded cells (row, col) to look like the example
+                  const shaded: Array<[number, number, "dark" | "light"]> = [
+                    [9, 2, "dark"],
+                    [10, 1, "light"],
+                    [10, 2, "dark"],
+                    [10, 3, "dark"],
+                    [11, 5, "light"],
+                    [13, 2, "dark"],
+                    [14, 2, "dark"],
+                    [15, 6, "light"],
+                  ];
+                  const isShaded = (r: number, c: number) => {
+                    const hit = shaded.find(([rr, cc]) => rr === r && cc === c);
+                    if (!hit) return "";
+                    return hit[2] === "dark" ? "bg-[#BFCBD3]" : "bg-[#E4EAED]";
+                  };
+
+                  return (
+                    <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                      <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
+                        <span>
+                          <span className="font-medium">Total Response:</span> {totalResponses}
+                        </span>
+                        <span>
+                          <span className="font-medium">Skipped:</span> {skipped}
+                        </span>
+                      </div>
+
+                      {/* Grid + Time labels */}
+                      <div className="relative px-6 pb-6">
+                        <div className="flex items-start gap-2">
+                          {/* Y-axis time labels */}
+                          <div className="w-16 select-none">
+                            {/* Top spacer to align first grid row */}
+                            <div className="h-[36px]" />
+                            {hours.map((h, i) => (
+                              <div key={h + i} className="h-[36px] text-xs text-gray-600 flex items-center justify-end">
+                                {h}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Scrollable grid and date footer kept together so they stay in sync */}
+                          <div id="heatmap-scroll" className="overflow-x-auto border-l border-gray-300">
+                            <div className="inline-block">
+                              {/* Grid */}
+                              <div
+                                className="grid border-t border-r border-gray-300"
+                                style={{
+                                  gridTemplateColumns: `repeat(${dates.length}, 140px)`,
+                                  gridTemplateRows: `repeat(${hours.length}, 36px)`,
+                                  minWidth: `${dates.length * 140}px`,
+                                }}
+                              >
+                                {/* Column header spacer row */}
+                                {dates.map((_, ci) => (
+                                  <div key={"hdr-" + ci} className="border-b border-gray-300" />
+                                ))}
+
+                                {/* Cells */}
+                                {hours.map((_, ri) =>
+                                  dates.map((_, ci) => (
+                                    <div
+                                      key={`c-${ri}-${ci}`}
+                                      className={`border-b border-l border-gray-300 ${isShaded(ri, ci)}`}
+                                    />
+                                  ))
+                                )}
+                              </div>
+
+                              {/* Date labels row */}
+                              <div
+                                className="grid"
+                                style={{ gridTemplateColumns: `repeat(${dates.length}, 140px)` }}
+                              >
+                                {dates.map((d, ci) => (
+                                  <div key={"dl-" + ci} className="text-xs text-gray-600 py-3 text-center">
+                                    {d}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right arrow overlay to scroll */}
+                        <button
+                          type="button"
+                          aria-label="Scroll right"
+                          onClick={() => {
+                            const el = document.getElementById("heatmap-scroll");
+                            if (el) el.scrollBy({ left: 300, behavior: "smooth" });
+                          }}
+                          className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-600 hover:text-gray-800 shadow rounded-full p-1 border border-gray-200"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="tickets" className="p-3 sm:p-6">
+          <TabsContent value="tabular" className="">
+            {!selectedTabularResponseId ? (
+              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] mt-5">
+                <CardHeader className="bg-[#F6F4EE] mb-6">
+                  <CardTitle className="text-lg flex items-center">
+                    <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                      <FileText className="h-4 w-4 text-[#C72030]" />
+                    </div>
+                    SURVEY RESPONSES
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <EnhancedTaskTable
+                    data={getDisplayTabularData()}
+                    columns={getTabularColumns()}
+                    storageKey="survey-response-tabular-v2"
+                    exportFileName="survey-responses-tabular"
+                    enableSearch={true}
+                    searchPlaceholder="Search responses..."
+                    emptyMessage={
+                      !responseListData
+                        ? "Loading response data..."
+                        : `No response data available (${getTabularData().length} items processed)`
+                    }
+                    pagination={true}
+                    pageSize={10}
+                    className="border border-gray-200 rounded-lg"
+                    loading={isLoading}
+                    onFilterClick={handleFilterClick}
+                    rightActions={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleTabularExport}
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    }
+                    getItemId={(item: TabularResponseData) => item.id}
+                    renderCell={(item: TabularResponseData, columnKey: string) => {
+                      const cellValue =
+                        item[columnKey as keyof TabularResponseData];
+
+                      if (columnKey === "action") {
+                        return (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => {
+                              setActiveTab("tabular");
+                              setSelectedTabularResponseId(String(item.response_id));
+                            }}
+                          >
+                            <Eye className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+                          </Button>
+                        );
+                      }
+
+                      if (columnKey === "category") {
+                        const answerType = cellValue as string;
+                        if (answerType === "multiple") return "Multiple";
+                        if (answerType === "rating") return "Rating";
+                        if (answerType === "emoji") return "Emoji";
+                        return answerType || "-";
+                      }
+
+                      if (
+                        columnKey === "icon_category" ||
+                        columnKey.startsWith("icon_category_")
+                      ) {
+                        const iconCategoryValue = cellValue as string;
+                        if (!iconCategoryValue || iconCategoryValue === "-") {
+                          return <span className="text-gray-400">-</span>;
+                        }
+                        return (
+                          <TruncatedText
+                            text={iconCategoryValue}
+                            maxLength={15}
+                            className="text-gray-900 font-medium"
+                          />
+                        );
+                      }
+
+                      if (columnKey === "ticket_id") {
+                        const ticketValue = cellValue as string;
+                        if (!ticketValue || ticketValue === "-") {
+                          return <span className="text-gray-400">-</span>;
+                        }
+                        return (
+                          <div
+                            className="text-black-600 font-medium break-words text-xs leading-tight overflow-hidden"
+                            style={{
+                              maxWidth: "180px",
+                              minWidth: "140px",
+                              wordBreak: "break-all",
+                              whiteSpace: "normal",
+                              lineHeight: "1.2",
+                            }}
+                          >
+                            {ticketValue}
+                          </div>
+                        );
+                      }
+
+                      return cellValue || "-";
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <TabularResponseDetailsPage
+                inline
+                surveyIdProp={String(surveyId)}
+                responseIdProp={selectedTabularResponseId}
+                onBack={() => setSelectedTabularResponseId(null)}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="tickets" className="mt-5">
+            {/* Ticket Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* Total Tickets */}
+              <Card className="bg-[#F6F4EE]">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <Ticket className="w-5 h-5 text-[#C72030]" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold text-[#C72030]">
+                        {getTicketStatistics().totalTickets}
+                      </p>
+                      <p className="text-sm text-gray-600">Total Tickets</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Open Tickets */}
+              <Card className="bg-[#F6F4EE]">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <Activity className="w-5 h-5 text-[#C72030]" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold text-[#C72030]">
+                        {getTicketStatistics().openTickets}
+                      </p>
+                      <p className="text-sm text-gray-600">Open Tickets</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Closed Tickets */}
+              <Card className="bg-[#F6F4EE]">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <FileText className="w-5 h-5 text-[#C72030]" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold text-[#C72030]">
+                        {getTicketStatistics().closedTickets}
+                      </p>
+                      <p className="text-sm text-gray-600">Closed Tickets</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Ticket className="h-4 w-4" />
+                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                    <Ticket className="h-4 w-4 text-[#C72030]" />
                   </div>
                   SURVEY TICKETS
                 </CardTitle>
@@ -3056,6 +4598,9 @@ export const SurveyResponseDetailPage = () => {
                 />
               </CardContent>
             </Card>
+
+            {/* Heat Map (Static) */}
+           
           </TabsContent>
         </Tabs>
       </div>

@@ -747,6 +747,7 @@ import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
 import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
+import TabularResponseDetailsPage from "./pages/TabularResponseDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1821,6 +1822,10 @@ function App() {
                     element={<SurveyResponseDashboard />}
                   />
 
+                    <Route
+                    path="/maintenance/survey/response/:surveyId/:responseId"
+                    element={<TabularResponseDetailsPage />}
+                  />
                   {/* Finance Routes */}
                   <Route
                     path="/finance/material-pr"

@@ -10,8 +10,10 @@ import {
   Activity,
   ThumbsUp,
   ClipboardList,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -493,7 +495,7 @@ export const SurveyResponsePage = () => {
       const answerType =
         response.answers.length > 0 && response.answers[0].answer_type
           ? response.answers[0].answer_type
-          : "N/A";
+          : "-";
 
       // Get responded by from the first answer (or use the most recent one)
       const respondedBy =
@@ -522,32 +524,32 @@ export const SurveyResponsePage = () => {
           (location.site_name || response.site_name) &&
           (location.site_name || response.site_name).trim() !== ""
             ? location.site_name || response.site_name
-            : "N/A",
+            : "-",
         building_name:
           (location.building_name || response.building_name) &&
           (location.building_name || response.building_name).trim() !== ""
             ? location.building_name || response.building_name
-            : "N/A",
+            : "-",
         wing_name:
           (location.wing_name || response.wing_name) &&
           (location.wing_name || response.wing_name).trim() !== ""
             ? location.wing_name || response.wing_name
-            : "N/A",
+            : "-",
         floor_name:
           (location.floor_name || response.floor_name) &&
           (location.floor_name || response.floor_name).trim() !== ""
             ? location.floor_name || response.floor_name
-            : "N/A",
+            : "-",
         area_name:
           (location.area_name || response.area_name) &&
           (location.area_name || response.area_name).trim() !== ""
             ? location.area_name || response.area_name
-            : "N/A",
+            : "-",
         room_name:
           (location.room_name || response.room_name) &&
           (location.room_name || response.room_name).trim() !== ""
             ? location.room_name || response.room_name
-            : "N/A",
+            : "-",
         total_responses: response?.answers_count || 0,
         total_complaints: response?.complaints_count || 0,
         latest_response_date: latestResponseDate,
@@ -1014,7 +1016,7 @@ export const SurveyResponsePage = () => {
         return (
           <button
             onClick={() => handleViewDetails(item)}
-            className="text-gray-600 hover:text-[#C72030] transition-colors"
+            className="text-black hover:text-[#C72030] transition-colors"
           >
             <Eye className="w-4 h-4" />
           </button>
@@ -1022,9 +1024,9 @@ export const SurveyResponsePage = () => {
       // case 'survey_id':
       //   return item.survey_id;
       case "survey_name":
-        return item.survey_name || "N/A";
+        return item.survey_name || "-";
       case "site_name":
-        return item.site_name || "N/A";
+        return item.site_name || "-";
       case "building_name":
         return renderLocation(item.building_name);
       case "wing_name":
@@ -1065,7 +1067,7 @@ export const SurveyResponsePage = () => {
         // });
         return (
           <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
+            className={`px-3 py-1 text-xs font-medium ${
               item.active
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
@@ -1077,7 +1079,7 @@ export const SurveyResponsePage = () => {
       case "answer_type":
         return (
           <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            {item.answer_type || "N/A"}
+            {item.answer_type || "-"}
           </span>
         );
       case "responded_by":
@@ -1132,19 +1134,33 @@ export const SurveyResponsePage = () => {
     return count;
   };
 
-  // Helper: show only first location; show full value on hover with ellipsis
+  // Helper: show only first location; show full value on hover with styled badge
   const renderLocation = (value?: string) => {
     const safe = (value || "").trim();
-    if (!safe) return "N/A";
+    if (!safe) return "-";
     // Split by comma or pipe or slash common delimiters
     const parts = safe.split(/\s*,\s*|\s*\|\s*|\s*\/\s*/).filter(Boolean);
     const first = parts[0] || safe;
     const hasMore = parts.length > 1;
+    const additionalCount = parts.length - 1;
+    
     return (
-      <span title={safe} className="truncate inline-block max-w-[220px] align-middle">
-        {first}
-        {hasMore ? " ..." : ""}
-      </span>
+      <div className="flex items-center gap-2" title={safe}>
+        <span className="text-sm text-black truncate inline-block max-w-[180px] align-middle">
+          {first}
+        </span>
+        {hasMore && (
+          <span 
+            className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full"
+            style={{ 
+              backgroundColor: '#E6E0D3', 
+              color: '#C72030' 
+            }}
+          >
+            +{additionalCount}
+          </span>
+        )}
+      </div>
     );
   };
 
@@ -1208,7 +1224,7 @@ export const SurveyResponsePage = () => {
 
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200 mb-6">
+        {/* <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200 mb-6">
           <TabsTrigger
             value="list"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
@@ -1249,72 +1265,63 @@ export const SurveyResponsePage = () => {
             </svg>
             Analytics
           </TabsTrigger>
-        </TabsList>
+        </TabsList> */}
 
         {/* Tab Content */}
         <TabsContent value="list" className="mt-0">
-          {/* AMC List-Style Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-6">
+          {/* Survey Statistics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             {/* Active Surveys */}
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Activity
-                  className="w-4 h-4 sm:w-6 sm:h-6"
-                  style={{ color: "#C72030" }}
-                />
+            <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <Activity className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="flex flex-col min-w-0 justify-start">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
                   {getTotalActiveCount()}
                   {isLoading && (
                     <span className="ml-1 text-xs animate-pulse">...</span>
                   )}
                 </div>
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                <div className="text-sm font-medium text-[#1A1A1A]">
                   Active Surveys
-                </span>
+                </div>
               </div>
             </div>
 
             {/* Total Surveys */}
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <ClipboardList
-                  className="w-4 h-4 sm:w-6 sm:h-6"
-                  style={{ color: "#C72030" }}
-                />
+            <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <ClipboardList className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="flex flex-col min-w-0 justify-start">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
                   {getSurveyCount()}
                   {isLoading && (
                     <span className="ml-1 text-xs animate-pulse">...</span>
                   )}
                 </div>
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                <div className="text-sm font-medium text-[#1A1A1A]">
                   Total Surveys
-                </span>
+                </div>
               </div>
             </div>
 
             {/* Total Responses */}
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <ThumbsUp
-                  className="w-4 h-4 sm:w-6 sm:h-6"
-                  style={{ color: "#C72030" }}
-                />
+            <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <ThumbsUp className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="flex flex-col min-w-0 justify-start">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
                   {getTotalResponsesCount()}
                   {isLoading && (
                     <span className="ml-1 text-xs animate-pulse">...</span>
                   )}
                 </div>
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                <div className="text-sm font-medium text-[#1A1A1A]">
                   Total Responses
-                </span>
+                </div>
               </div>
             </div>
           </div>

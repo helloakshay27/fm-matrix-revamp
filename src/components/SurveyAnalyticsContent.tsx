@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 import { SurveyAnalyticsCard } from './SurveyAnalyticsCard';
+import SatisfactionBreakdownCard, { SatisfactionItem } from '@/components/SatisfactionBreakdownCard';
 import { SurveyAnalyticsFilterDialog } from './SurveyAnalyticsFilterDialog';
 import { RecentSurveysSidebar }  from './RecentSurveysSidebar';
 import { SurveySelector } from './SurveySelector';
@@ -180,30 +181,100 @@ export const SurveyAnalyticsContent = () => {
     ];
   };
 
+  // Build satisfaction breakdown items (5 emojis) using emoji_options when available.
+  // Known labels mapped to buckets: Terrible, Bad, Okay, Good, Excellent
+  const getSatisfactionItems = (): SatisfactionItem[] => {
+    const a = surveyAnalyticsData?.analytics;
+    const buckets = [0, 0, 0, 0, 0];
+
+    if (Array.isArray(a?.emoji_options) && a!.emoji_options.length > 0) {
+      const mapIndex = (name: string | null | undefined) => {
+        if (!name) return -1;
+        const n = name.trim().toLowerCase();
+        if (n.includes('terrible') || n.includes('worst')) return 0;
+        if (n === 'bad' || n.includes('poor') || n.includes('worse')) return 1;
+        if (n === 'okay' || n === 'ok' || n.includes('average') || n.includes('neutral')) return 2;
+        if (n === 'good') return 3;
+        if (n === 'excellent' || n.includes('great') || n.includes('awesome')) return 4;
+        return -1;
+      };
+      for (const opt of a!.emoji_options) {
+        const idx = mapIndex(opt.option_name);
+        if (idx >= 0) buckets[idx] += opt.count || 0;
+      }
+    }
+
+    const totalBuckets = buckets.reduce((s, v) => s + v, 0);
+    if (totalBuckets === 0) {
+      // Fallback to coarse mapping if we couldn't derive from emoji_options
+      const positive = a?.positive_responses || 0;
+      const negative = a?.negative_responses || 0;
+      const neutral = a?.neutral_responses || 0;
+      buckets[0] = negative; // 😫 Very Dissatisfied
+      buckets[2] = neutral;  // 😐 Neutral
+      buckets[4] = positive; // 😍 Very Satisfied
+    }
+
+    return [
+      { emoji: '😫', label: 'Very Dissatisfied', count: buckets[0] },
+      { emoji: '😕', label: 'Dissatisfied', count: buckets[1] },
+      { emoji: '😐', label: 'Neutral', count: buckets[2] },
+      { emoji: '🙂', label: 'Satisfied', count: buckets[3] },
+      { emoji: '😍', label: 'Very Satisfied', count: buckets[4] },
+    ];
+  };
+
   const getTypeWiseData = () => {
-    if (!surveyAnalyticsData?.analytics?.top_surveys) return [];
-    
-    return surveyAnalyticsData.analytics.top_surveys.map((survey, index) => {
-      const colors = ['#C72030', '#c6b692', '#d8dcdd', '#8B5CF6', '#10B981'];
-      return {
+    const colors = ['#C72030', '#c6b692', '#d8dcdd', '#8B5CF6', '#10B981', '#22C55E', '#F59E0B', '#3B82F6'];
+
+    const a = surveyAnalyticsData?.analytics;
+    if (!a) return [];
+
+    // Prefer new field survey_responses if available
+    if (Array.isArray(a.survey_responses) && a.survey_responses.length > 0) {
+      return a.survey_responses
+        .filter(sr => sr && sr.survey_name)
+        .map((sr, index) => ({
+          name: sr.survey_name,
+          value: sr.total_responses,
+          color: colors[index % colors.length],
+        }));
+    }
+
+    // Fallback to legacy top_surveys
+    if (Array.isArray(a.top_surveys) && a.top_surveys.length > 0) {
+      return a.top_surveys.map((survey, index) => ({
         name: survey.survey_name,
         value: survey.response_count,
-        color: colors[index % colors.length]
-      };
-    });
+        color: colors[index % colors.length],
+      }));
+    }
+
+    return [];
   };
 
   const getSummaryData = () => {
-    if (!surveyAnalyticsData?.analytics) return null;
-    
-    const { total_surveys, total_responses, complaints_count } = surveyAnalyticsData.analytics;
-    const response_rate = total_surveys > 0 ? ((total_responses / total_surveys) * 100).toFixed(1) : '0';
-    
+    const a = surveyAnalyticsData?.analytics;
+    if (!a) return null;
+
+    // Derive totals when missing
+    const derivedTotalSurveys = typeof a.total_surveys === 'number' && a.total_surveys > 0
+      ? a.total_surveys
+      : (Array.isArray(a.survey_responses) ? a.survey_responses.length : 0);
+
+    const total_surveys = derivedTotalSurveys;
+    const total_responses = a.total_responses ?? 0;
+    const complaints_count = a.complaints_count ?? 0;
+
+    const response_rate = total_surveys > 0
+      ? ((total_responses / total_surveys) * 100).toFixed(1)
+      : '0';
+
     return {
       total_surveys,
       total_responses,
       complaints_count,
-      response_rate: `${response_rate}%`
+      response_rate: `${response_rate}%`,
     };
   };
 
@@ -229,20 +300,20 @@ export const SurveyAnalyticsContent = () => {
         );
       case 'statusWise':
         return (
-          <SurveyAnalyticsCard
-            title="Survey Status Distribution"
-            data={getStatusWiseData()}
-            type="statusDistribution"
-            className="bg-white border border-gray-200 rounded-lg shadow-sm"
-            dateRange={commonDateRange}
-            // onDownload={() => {
-            //   console.log('Download status distribution');
-            //   toast({
-            //     title: "Success",
-            //     description: "Survey status distribution data downloaded successfully"
-            //   });
-            // }}
-          />
+          <div className="space-y-4">
+            <SurveyAnalyticsCard
+              title="Survey Status Distribution"
+              data={getStatusWiseData()}
+              type="statusDistribution"
+              className="bg-white border border-gray-200 rounded-lg shadow-sm"
+              dateRange={commonDateRange}
+            />
+            <SatisfactionBreakdownCard
+              title="Satisfaction Breakdown"
+              items={getSatisfactionItems()}
+              className="border border-gray-200 rounded-lg shadow-sm"
+            />
+          </div>
         );
       case 'typeWise':
         return (

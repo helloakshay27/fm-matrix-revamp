@@ -480,12 +480,26 @@ export const SurveyMappingDashboard = () => {
     const unique = [...new Set(allValues.filter((v): v is string => !!v && v.trim() !== ''))];
     const display = unique[0] || (fallback ?? '-') || '-';
     const hasMore = unique.length > 1;
+    const additionalCount = unique.length - 1;
     const title = unique.length > 0 ? unique.join(', ') : (display || '-');
+    
     return (
-      <span className="text-sm text-gray-600 truncate inline-block max-w-[220px] align-middle" title={title}>
-        {display}
-        {hasMore ? ' ...' : ''}
-      </span>
+      <div className="flex items-center gap-2" title={title}>
+        <span className="text-sm text-black truncate inline-block max-w-[180px] align-middle">
+          {display}
+        </span>
+        {hasMore && (
+          <span 
+            className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full"
+            style={{ 
+              backgroundColor: '#E6E0D3', 
+              color: '#C72030' 
+            }}
+          >
+            +{additionalCount}
+          </span>
+        )}
+      </div>
     );
   };
 
@@ -496,14 +510,14 @@ export const SurveyMappingDashboard = () => {
           <div className="flex justify-center items-center gap-2">
             <button 
               onClick={() => handleViewClick(item)}
-              className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+              className="p-1 text-black-600 hover:text-black-800 transition-colors"
               title="View"
             >
               <Eye className="w-4 h-4" />
             </button>
             <button 
               onClick={() => handleEditClick(item)}
-              className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+              className="p-1 text-black-600 hover:text-black-800 transition-colors"
               title="Edit"
             >
               <Edit className="w-4 h-4" />
@@ -511,9 +525,9 @@ export const SurveyMappingDashboard = () => {
           </div>
         );
       case 'survey_title':
-        return <span className="text-sm font-medium text-gray-900">{item.survey_title || item.survey_name}</span>;
+        return <span className="text-sm font-medium text-black">{item.survey_title || item.survey_name}</span>;
       case 'site_name':
-        return <span className="text-sm text-gray-600">{item.site_name}</span>;
+        return <span className="text-sm text-black">{item.site_name}</span>;
       case 'building_name': {
         const surveyData = allMappingsData.find(s => s.id === item.survey_id);
         const allBuildings = surveyData ? surveyData.mappings.map(m => m.building_name) : [item.building_name];
@@ -540,11 +554,11 @@ export const SurveyMappingDashboard = () => {
         return renderFirstWithHover(allRooms, item.room_name);
       }
       case 'check_type':
-        return <span className="text-sm text-gray-600 capitalize">{item.survey_check_type || '-'}</span>;
+        return <span className="text-sm text-black capitalize">{item.survey_check_type || '-'}</span>;
       case 'questions_count':
         return (
           <div
-            className="text-center text-sm text-gray-600"
+            className="text-center text-sm text-black"
             title={`${item.survey_questions_count || 0} Questions`}
           >
             {item.survey_questions_count || 0}
@@ -553,7 +567,7 @@ export const SurveyMappingDashboard = () => {
       case 'associations_count':
         return (
           <div
-            className="text-center text-sm text-gray-600"
+            className="text-center text-sm text-black"
             title={`${item.survey_no_of_associations || 0} Associations`}
           >
             {item.survey_no_of_associations || 0}
@@ -561,14 +575,14 @@ export const SurveyMappingDashboard = () => {
         );
       case 'ticket_category':
         return (
-          <span className="text-sm text-gray-600">{item.ticket_configs?.category || '-'}</span>
+          <span className="text-sm text-black">{item.ticket_configs?.category || '-'}</span>
         );
       case 'assigned_to':
         return (
-          <span className="text-sm text-gray-600">{item.ticket_configs?.assigned_to || '-'}</span>
+          <span className="text-sm text-black">{item.ticket_configs?.assigned_to || '-'}</span>
         );
       case 'created_by':
-        return <span className="text-sm text-gray-600">{item.created_by}</span>;
+        return <span className="text-sm text-black">{item.created_by}</span>;
       case 'status': {
         // Handle both boolean and number (0/1) status values
         const currentStatus = item.survey_active || item.active;
@@ -592,7 +606,7 @@ export const SurveyMappingDashboard = () => {
         );
       }
       case 'created_at':
-        return <span className="text-sm text-gray-600">{item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}</span>;
+        return <span className="text-sm text-black">{item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}</span>;
       case 'qr_code':
         return (
           <div className="flex justify-center">
@@ -609,14 +623,14 @@ export const SurveyMappingDashboard = () => {
                 />
               </button>
             ) : (
-              <span className="text-sm text-gray-600">-</span>
+              <span className="text-sm text-black">-</span>
             )}
           </div>
         );
       default: {
         // Fallback for any other columns
         const value = item[columnKey as keyof SurveyMapping];
-        return <span className="text-sm text-gray-600">{value !== null && value !== undefined ? String(value) : '-'}</span>;
+        return <span className="text-sm text-black">{value !== null && value !== undefined ? String(value) : '-'}</span>;
       }
     }
   };
