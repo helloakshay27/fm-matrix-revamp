@@ -306,7 +306,7 @@ const UpdateTicketsPage: React.FC = () => {
         serviceType: ticketData.service_type || "",
         externalPriority: ticketData.external_priority || "",
         preventiveAction: ticketData.preventive_action || "",
-        impact: ticketData.impact || "",
+        impact: ticketData.short_term_impact || "", // Map short_term_impact from API to impact field
         correction: ticketData.correction || "",
         rootCause: ticketData.root_cause || "",
         categoryType: matchingCategory?.id.toString() || "",
@@ -320,6 +320,7 @@ const UpdateTicketsPage: React.FC = () => {
         correctiveAction: ticketData.corrective_action || "",
         selectedAsset: "", // Will be set after fetching assets/services if needed
         selectedService: "", // Will be set after fetching assets/services if needed
+        longTermImpact: ticketData.impact || "", // Map impact from API to longTermImpact field
         associatedTo: {
           asset: ticketData.asset_service === "Asset",
           service: ticketData.asset_service === "Service",

@@ -105,7 +105,6 @@ const EditCommunicationTemplatePage = () => {
                       <MenuItem value="Short-term Impact">Short-term Impact</MenuItem>
                       <MenuItem value="Corrective Action">Corrective Action</MenuItem>
                       <MenuItem value="Long-term Impact">Long-term Impact</MenuItem>
-                      <MenuItem value="Responsible Person">Responsible Person</MenuItem>
                     </Select>
                   </FormControl>
                 )}
