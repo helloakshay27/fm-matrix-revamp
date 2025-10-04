@@ -1599,14 +1599,6 @@ export const TicketDetailsPage = () => {
                         Association
                       </h3>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                      onClick={handleUpdate}
-                    >
-                      <Edit className="w-4 h-4 mr-1" /> Edit
-                    </Button>
                   </div>
 
                   {/* Body */}
@@ -3360,14 +3352,6 @@ export const TicketDetailsPage = () => {
                     Association
                   </h3>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                  onClick={handleUpdate}
-                >
-                  <Edit className="w-4 h-4 mr-1" /> Edit
-                </Button>
               </div>
 
               {/* Body */}
