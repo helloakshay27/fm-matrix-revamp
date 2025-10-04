@@ -1138,40 +1138,45 @@ export const TaskDetailsPage = () => {
             </div>
           </Card>
 
-          {/* Ticket Details */}
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <FileText className="figma-card-icon" />
+          {/* Ticket Details - Show only for closed/completed status */}
+          {(() => {
+            const status = taskDetails?.task_details?.status?.value?.toLowerCase();
+            return ['closed', 'completed'].includes(status) && (
+              <Card className="w-full bg-transparent shadow-none border-none">
+                <div className="figma-card-header">
+                  <div className="flex items-center gap-3">
+                    <div className="figma-card-icon-wrapper">
+                      <FileText className="figma-card-icon" />
+                    </div>
+                    <h3 className="figma-card-title">Ticket Details</h3>
+                  </div>
                 </div>
-                <h3 className="figma-card-title">Ticket Details</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              {ticketLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#C72030] mx-auto mb-2"></div>
-                  <p className="text-gray-500 text-sm">Loading ticket details...</p>
+                <div className="figma-card-content">
+                  {ticketLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#C72030] mx-auto mb-2"></div>
+                      <p className="text-gray-500 text-sm">Loading ticket details...</p>
+                    </div>
+                  ) : ticketData ? (
+                    <EnhancedTable
+                      data={[ticketData]}
+                      columns={ticketColumns}
+                      renderCell={renderTicketCell}
+                      storageKey="task-ticket-table"
+                      emptyMessage="No tickets found for this task."
+                      hideTableExport={true}
+                      hideTableSearch={true}
+                      hideColumnsButton={true}
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No tickets found for this task.</p>
+                    </div>
+                  )}
                 </div>
-              ) : ticketData ? (
-                <EnhancedTable
-                  data={[ticketData]}
-                  columns={ticketColumns}
-                  renderCell={renderTicketCell}
-                  storageKey="task-ticket-table"
-                  emptyMessage="No tickets found for this task."
-                  hideTableExport={true}
-                  hideTableSearch={true}
-                  hideColumnsButton={true}
-                />
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No tickets found for this task.</p>
-                </div>
-              )}
-            </div>
-          </Card>
+              </Card>
+            );
+          })()}
         </div>
       </div>
 
