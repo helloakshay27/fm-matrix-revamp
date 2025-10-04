@@ -2161,7 +2161,7 @@ export const AddSchedulePage = () => {
           duration: 4000,
           style: {
             background: '#fff',
-            color:'black',
+            color: 'black',
             border: 'none',
           },
         });
@@ -3264,423 +3264,431 @@ export const AddSchedulePage = () => {
                 Schedule Setup
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 3 }}>
               {
-                formData.scheduleFor === 'Asset' && (<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                formData.scheduleFor === 'Asset' && (
+                  <Box>
+
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                   Checklist Type
-                </Typography>)}
+                </Typography>
+                <Box sx={{ mb: 3 }}>
+                {
+                  formData.scheduleFor === 'Asset' && (<RadioGroup
+                    row
+                    value={formData.checklistType}
+                    onChange={(e) => handleChecklistTypeChange(e.target.value)}
+                  >
+                    <FormControlLabel
+                      value="Individual"
+                      control={
+                        <Radio
+                          sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                        />
+                      }
+                      label="Individual"
+                    />
 
-                {/* Right side - Check-in with before/after photograph */}
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-      Check-in with before/after photograph
-    </Typography>
-    <RadioGroup
-      row
-      value={formData.checkInPhotograph || 'inactive'}
-      onChange={(e) => setFormData({ ...formData, checkInPhotograph: e.target.value })}
-    >
-      <FormControlLabel
-        value="active"
-        control={
-          <Radio
-            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-            disabled={stepIndex < activeStep && editingStep !== stepIndex}
-          />
-        }
-        label="Active"
-      />
-      <FormControlLabel
-        value="inactive"
-        control={
-          <Radio
-            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-            disabled={stepIndex < activeStep && editingStep !== stepIndex}
-          />
-        }
-        label="Inactive"
-      />
-    </RadioGroup>
-              {stepIndex < activeStep && (
-                <MuiButton
-                  variant="outlined"
-                  size="small"
-                  startIcon={<Edit />}
-                  onClick={() => handleStepClick(stepIndex)}
-                  sx={{
-                    color: '#C72030',
-                    borderColor: '#C72030',
-                    fontSize: '12px',
-                    padding: '4px 12px',
-                    minWidth: 'auto',
-                    '&:hover': {
-                      borderColor: '#C72030',
-                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                    }
-                  }}
-                >
-                  Edit
-                </MuiButton>
-              )}
-            </Box>
-            <Box sx={{ mb: 3 }}>
-              {
-                formData.scheduleFor === 'Asset' && (<RadioGroup
-                  row
-                  value={formData.checklistType}
-                  onChange={(e) => handleChecklistTypeChange(e.target.value)}
-                >
-                  <FormControlLabel
-                    value="Individual"
-                    control={
-                      <Radio
-                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                      />
-                    }
-                    label="Individual"
-                  />
+                    <FormControlLabel
+                      value="Asset Group"
+                      control={
+                        <Radio
+                          sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                        />
+                      }
+                      label="Asset Group"
+                    />
 
-                  <FormControlLabel
-                    value="Asset Group"
-                    control={
-                      <Radio
-                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                      />
-                    }
-                    label="Asset Group"
-                  />
-
-                  {/* <FormControlLabel 
+                    {/* <FormControlLabel 
                     value="Branching" 
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                     label="Branching" 
                   /> */}
-                </RadioGroup>)}
-            </Box>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-              {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
-              {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
-                <Box>
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
-                    <Select
-                      multiple
-                      label="Select Assets"
-                      notched
-                      displayEmpty
-                      value={formData.asset}
-                      onChange={e => handleAutocompleteChange('asset', assets.filter(asset => e.target.value.includes(asset.id.toString())))}
-                      renderValue={(selected) => {
-                        if (!selected || selected.length === 0) {
-                          return <span style={{ color: '#aaa' }}>Select Assets</span>;
-                        }
-                        return assets
-                          .filter(asset => selected.includes(asset.id.toString()))
-                          .map(asset => asset.name)
-                          .join(', ');
-                      }}
-                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.assets}
-                    >
-                      <MenuItem value="">Select Assets</MenuItem>
-                      {assets && assets.map((option) => (
-                        <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  {loading.assets && (
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                      Loading assets...
-                    </Typography>
-                  )}
-                </Box>
+                  </RadioGroup>)}
+              </Box>
+                  </Box>
               )}
 
-              {/* Service Dropdown - Show when scheduleFor is Service */}
-              {formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' && (
-                <Box>
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Select Services <span style={{ color: 'red' }}>*</span></InputLabel>
-                    <Select
-                      multiple
-                      label="Select Services"
-                      notched
-                      displayEmpty
-                      value={formData.service}
-                      onChange={e => handleAutocompleteChange('service', services.filter(service => e.target.value.includes(service.id.toString())))}
-                      renderValue={(selected) =>
-                        !selected || selected.length === 0
-                          ? <span style={{ color: '#aaa' }}>Select Services</span>
-                          : services
-                            .filter(service => selected.includes(service.id.toString()))
-                            .map(service => service.service_name)
-                            .join(', ')
+              {/* Right side - Check-in with before/after photograph */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'end', alignItems: 'end', gap: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  Check-in with before/after photograph
+                </Typography>
+                <RadioGroup
+                  style={{ marginTop: '-18px', marginRight: '-12px' }}
+                  row
+                  value={formData.checkInPhotograph || 'inactive'}
+                  onChange={(e) => setFormData({ ...formData, checkInPhotograph: e.target.value })}
+                >
+                  <FormControlLabel
+                    value="active"
+                    control={
+                      <Radio
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      />
+                    }
+                    label="Active"
+                  />
+                  <FormControlLabel
+                    value="inactive"
+                    control={
+                      <Radio
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      />
+                    }
+                    label="Inactive"
+                  />
+                </RadioGroup>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
                       }
-                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.services}
-                    >
-                      <MenuItem value="" disabled>Select Services</MenuItem>
-                      {services && services.map((option) => (
-                        <MenuItem key={option.id} value={option.id.toString()}>{option.service_name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  {loading.services && (
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                      Loading services...
-                    </Typography>
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
+              
+            </Box>
+              <Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+                  {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
+                  {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
+                    <Box>
+                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                        <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
+                        <Select
+                          multiple
+                          label="Select Assets"
+                          notched
+                          displayEmpty
+                          value={formData.asset}
+                          onChange={e => handleAutocompleteChange('asset', assets.filter(asset => e.target.value.includes(asset.id.toString())))}
+                          renderValue={(selected) => {
+                            if (!selected || selected.length === 0) {
+                              return <span style={{ color: '#aaa' }}>Select Assets</span>;
+                            }
+                            return assets
+                              .filter(asset => selected.includes(asset.id.toString()))
+                              .map(asset => asset.name)
+                              .join(', ');
+                          }}
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.assets}
+                        >
+                          <MenuItem value="">Select Assets</MenuItem>
+                          {assets && assets.map((option) => (
+                            <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      {loading.assets && (
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                          Loading assets...
+                        </Typography>
+                      )}
+                    </Box>
                   )}
-                </Box>
-              )}
 
-              {/* Conditional Asset Group Dropdown - Show for Asset Group and when scheduleFor is Asset */}
-              {formData.scheduleFor === 'Asset' && formData.checklistType === 'Asset Group' && (
-                <>
+                  {/* Service Dropdown - Show when scheduleFor is Service */}
+                  {formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' && (
+                    <Box>
+                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                        <InputLabel shrink>Select Services <span style={{ color: 'red' }}>*</span></InputLabel>
+                        <Select
+                          multiple
+                          label="Select Services"
+                          notched
+                          displayEmpty
+                          value={formData.service}
+                          onChange={e => handleAutocompleteChange('service', services.filter(service => e.target.value.includes(service.id.toString())))}
+                          renderValue={(selected) =>
+                            !selected || selected.length === 0
+                              ? <span style={{ color: '#aaa' }}>Select Services</span>
+                              : services
+                                .filter(service => selected.includes(service.id.toString()))
+                                .map(service => service.service_name)
+                                .join(', ')
+                          }
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.services}
+                        >
+                          <MenuItem value="" disabled>Select Services</MenuItem>
+                          {services && services.map((option) => (
+                            <MenuItem key={option.id} value={option.id.toString()}>{option.service_name}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      {loading.services && (
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                          Loading services...
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+
+                  {/* Conditional Asset Group Dropdown - Show for Asset Group and when scheduleFor is Asset */}
+                  {formData.scheduleFor === 'Asset' && formData.checklistType === 'Asset Group' && (
+                    <>
+                      <Box>
+                        <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                          <InputLabel shrink>Asset Group <span style={{ color: 'red' }}>*</span></InputLabel>
+                          <Select
+                            label="Asset Group"
+                            notched
+                            displayEmpty
+                            value={formData.assetGroup}
+                            onChange={e => handleAssetGroupChange(e.target.value)}
+                            disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.groups}
+                          >
+                            <MenuItem value="">Select Asset Group</MenuItem>
+                            {assetGroups && assetGroups.map((option) => (
+                              <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                        {loading.groups && (
+                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                            Loading asset groups...
+                          </Typography>
+                        )}
+                      </Box>
+
+                      {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
+                      {selectedAssetGroup && (
+                        <FormControl fullWidth>
+                          <InputLabel>
+                            Select Asset Sub-Groups <span style={{ color: 'red' }}>*</span>
+                          </InputLabel>
+                          <Select
+                            multiple
+                            value={formData.assetSubGroup}
+                            onChange={(e) => handleMultiSelectChange('assetSubGroup', e)}
+                            input={<OutlinedInput label="Select Asset Sub-Groups" />}
+                            renderValue={(selected) => (
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {selected.map((value) => {
+                                  const subGroup = assetSubGroups?.find(sg => sg.id.toString() === value);
+                                  return (
+                                    <Chip key={value} label={subGroup?.name || value} size="small" />
+                                  );
+                                })}
+                              </Box>
+                            )}
+                            disabled={loading.subGroups}
+                          >
+                            {assetSubGroups && assetSubGroups.map((subGroup) => (
+                              <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
+                                {subGroup.name}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                          {loading.subGroups && (
+                            <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                              Loading sub-groups...
+                            </Typography>
+                          )}
+                        </FormControl>
+                      )}
+                    </>
+                  )}
+
+                  {/* Assign To Type Selection */}
                   <Box>
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Asset Group <span style={{ color: 'red' }}>*</span></InputLabel>
+                      <InputLabel shrink>Assign To <span style={{ color: 'red' }}>*</span></InputLabel>
                       <Select
-                        label="Asset Group"
+                        label="Assign To"
                         notched
                         displayEmpty
-                        value={formData.assetGroup}
-                        onChange={e => handleAssetGroupChange(e.target.value)}
-                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.groups}
+                        value={formData.assignToType}
+                        onChange={e => setFormData({ ...formData, assignToType: e.target.value, selectedUsers: [], selectedGroups: [] })}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
                       >
-                        <MenuItem value="">Select Asset Group</MenuItem>
-                        {assetGroups && assetGroups.map((option) => (
-                          <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
-                        ))}
+                        <MenuItem value="">Select Assign To</MenuItem>
+                        <MenuItem value="user">User</MenuItem>
+                        <MenuItem value="group">Group</MenuItem>
                       </Select>
                     </FormControl>
-                    {loading.groups && (
-                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                        Loading asset groups...
-                      </Typography>
-                    )}
                   </Box>
 
-                  {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
-                  {selectedAssetGroup && (
-                    <FormControl fullWidth>
-                      <InputLabel>
-                        Select Asset Sub-Groups <span style={{ color: 'red' }}>*</span>
-                      </InputLabel>
+                  {/* Multi-select Users - Show when assignToType is 'user' */}
+                  {formData.assignToType === 'user' && (
+                    <Box>
+                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                        <InputLabel shrink>Select Users <span style={{ color: 'red' }}>*</span></InputLabel>
+                        <Select
+                          multiple
+                          label="Select Users"
+                          notched
+                          displayEmpty
+                          value={formData.selectedUsers}
+                          onChange={e => handleAutocompleteChange('selectedUsers', users.filter(user => e.target.value.includes(user.id.toString())))}
+                          renderValue={(selected) => {
+                            if (!selected || selected.length === 0) {
+                              return <span style={{ color: '#aaa' }}>Select Users</span>;
+                            }
+                            return users
+                              .filter(user => selected.includes(user.id.toString()))
+                              .map(user => user.full_name)
+                              .join(', ');
+                          }}
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
+                        >
+                          <MenuItem value="">Select Users</MenuItem>
+                          {users && users.map((option) => (
+                            <MenuItem key={option.id} value={option.id.toString()}>{option.full_name}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  )}
+
+                  {/* Multi-select Groups - Show when assignToType is 'group' */}
+                  {formData.assignToType === 'group' && (
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Select Groups <span style={{ color: 'red' }}>*</span></InputLabel>
                       <Select
                         multiple
-                        value={formData.assetSubGroup}
-                        onChange={(e) => handleMultiSelectChange('assetSubGroup', e)}
-                        input={<OutlinedInput label="Select Asset Sub-Groups" />}
-                        renderValue={(selected) => (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {selected.map((value) => {
-                              const subGroup = assetSubGroups?.find(sg => sg.id.toString() === value);
-                              return (
-                                <Chip key={value} label={subGroup?.name || value} size="small" />
-                              );
-                            })}
-                          </Box>
-                        )}
-                        disabled={loading.subGroups}
+                        label="Select Groups"
+                        notched
+                        displayEmpty
+                        value={formData.selectedGroups}
+                        onChange={(e) => handleMultiSelectChange('selectedGroups', e)}
+                        renderValue={(selected) => {
+                          if (!selected || selected.length === 0) {
+                            return <span style={{ color: '#aaa' }}>Select Groups</span>;
+                          }
+                          return groups
+                            .filter(group => selected.includes(group.id.toString()))
+                            .map(group => group.name)
+                            .join(', ');
+                        }}
+                        disabled={loading.groups}
                       >
-                        {assetSubGroups && assetSubGroups.map((subGroup) => (
-                          <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
-                            {subGroup.name}
+                        <MenuItem value="">Select Groups</MenuItem>
+                        {groups.map((group) => (
+                          <MenuItem key={group.id} value={group.id.toString()}>
+                            {group.name}
                           </MenuItem>
                         ))}
                       </Select>
-                      {loading.subGroups && (
+                      {loading.groups && (
                         <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                          Loading sub-groups...
+                          Loading groups...
                         </Typography>
                       )}
                     </FormControl>
                   )}
-                </>
-              )}
 
-              {/* Assign To Type Selection */}
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Assign To <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Assign To"
-                    notched
-                    displayEmpty
-                    value={formData.assignToType}
-                    onChange={e => setFormData({ ...formData, assignToType: e.target.value, selectedUsers: [], selectedGroups: [] })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Assign To</MenuItem>
-                    <MenuItem value="user">User</MenuItem>
-                    <MenuItem value="group">Group</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
+                  <Box>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Backup Assignee <span style={{ color: 'red' }}>*</span></InputLabel>
+                      <Select
+                        label="Backup Assignee"
+                        notched
+                        displayEmpty
+                        value={formData.backupAssignee}
+                        onChange={e => setFormData({ ...formData, backupAssignee: e.target.value })}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      >
+                        <MenuItem value="">Select Backup Assignee</MenuItem>
+                        {users && users.map((option) => (
+                          <MenuItem key={option.id} value={option.id.toString()}>{option.full_name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {loading.users && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Loading users...
+                      </Typography>
+                    )}
+                  </Box>
 
-              {/* Multi-select Users - Show when assignToType is 'user' */}
-              {formData.assignToType === 'user' && (
-                <Box>
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Select Users <span style={{ color: 'red' }}>*</span></InputLabel>
-                    <Select
-                      multiple
-                      label="Select Users"
-                      notched
-                      displayEmpty
-                      value={formData.selectedUsers}
-                      onChange={e => handleAutocompleteChange('selectedUsers', users.filter(user => e.target.value.includes(user.id.toString())))}
-                      renderValue={(selected) => {
-                        if (!selected || selected.length === 0) {
-                          return <span style={{ color: '#aaa' }}>Select Users</span>;
-                        }
-                        return users
-                          .filter(user => selected.includes(user.id.toString()))
-                          .map(user => user.full_name)
-                          .join(', ');
+                  {/* Plan Duration with conditional input */}
+                  <Box>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Plan Duration <span style={{ color: 'red' }}>*</span></InputLabel>
+                      <Select
+                        label="Plan Duration"
+                        notched
+                        displayEmpty
+                        value={formData.planDuration}
+                        onChange={e => setFormData({ ...formData, planDuration: e.target.value, planDurationValue: '' })}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      >
+                        <MenuItem value="">Select Plan Duration</MenuItem>
+                        <MenuItem value="minutes">Minutes</MenuItem>
+                        <MenuItem value="hour">Hour</MenuItem>
+                        <MenuItem value="day">Day</MenuItem>
+                        <MenuItem value="week">Week</MenuItem>
+                        <MenuItem value="month">Month</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+
+                  {/* Plan Duration Value Input - Show when duration type is selected */}
+                  {needsValueInput(formData.planDuration) && (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                      label={<span>Plan Duration ({formData.planDuration}) <span style={{ color: 'red' }}>*</span></span>}
+                      type="number"
+                      fullWidth
+                      value={formData.planDurationValue}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (Number(value) < 0) return;
+                        setFormData({ ...formData, planDurationValue: value });
                       }}
-                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
-                    >
-                      <MenuItem value="">Select Users</MenuItem>
-                      {users && users.map((option) => (
-                        <MenuItem key={option.id} value={option.id.toString()}>{option.full_name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-              )}
-
-              {/* Multi-select Groups - Show when assignToType is 'group' */}
-              {formData.assignToType === 'group' && (
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Select Groups <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    multiple
-                    label="Select Groups"
-                    notched
-                    displayEmpty
-                    value={formData.selectedGroups}
-                    onChange={(e) => handleMultiSelectChange('selectedGroups', e)}
-                    renderValue={(selected) => {
-                      if (!selected || selected.length === 0) {
-                        return <span style={{ color: '#aaa' }}>Select Groups</span>;
-                      }
-                      return groups
-                        .filter(group => selected.includes(group.id.toString()))
-                        .map(group => group.name)
-                        .join(', ');
-                    }}
-                    disabled={loading.groups}
-                  >
-                    <MenuItem value="">Select Groups</MenuItem>
-                    {groups.map((group) => (
-                      <MenuItem key={group.id} value={group.id.toString()}>
-                        {group.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {loading.groups && (
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                      Loading groups...
-                    </Typography>
+                      placeholder={`Enter number of ${formData.planDuration}`}
+                      inputProps={{
+                        min: 0,
+                        onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                      }}
+                    />
                   )}
-                </FormControl>
-              )}
 
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Backup Assignee <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Backup Assignee"
-                    notched
-                    displayEmpty
-                    value={formData.backupAssignee}
-                    onChange={e => setFormData({ ...formData, backupAssignee: e.target.value })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Backup Assignee</MenuItem>
-                    {users && users.map((option) => (
-                      <MenuItem key={option.id} value={option.id.toString()}>{option.full_name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {loading.users && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading users...
-                  </Typography>
-                )}
-              </Box>
+                  <Box>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Email Trigger Rule</InputLabel>
+                      <Select
+                        label="Email Trigger Rule"
+                        notched
+                        displayEmpty
+                        value={formData.emailTriggerRule}
+                        onChange={e => setFormData({ ...formData, emailTriggerRule: e.target.value })}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.emailRules}
+                      >
+                        <MenuItem value="">Select Email Trigger Rule</MenuItem>
+                        {emailRules.map(rule => (
+                          <MenuItem key={rule.id} value={rule.id.toString()}>{rule.rule_name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {loading.emailRules && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Loading email rules...
+                      </Typography>
+                    )}
+                  </Box>
 
-              {/* Plan Duration with conditional input */}
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Plan Duration <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Plan Duration"
-                    notched
-                    displayEmpty
-                    value={formData.planDuration}
-                    onChange={e => setFormData({ ...formData, planDuration: e.target.value, planDurationValue: '' })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Plan Duration</MenuItem>
-                    <MenuItem value="minutes">Minutes</MenuItem>
-                    <MenuItem value="hour">Hour</MenuItem>
-                    <MenuItem value="day">Day</MenuItem>
-                    <MenuItem value="week">Week</MenuItem>
-                    <MenuItem value="month">Month</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-
-              {/* Plan Duration Value Input - Show when duration type is selected */}
-              {needsValueInput(formData.planDuration) && (
-                <TextField
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-
-                  label={<span>Plan Duration ({formData.planDuration}) <span style={{ color: 'red' }}>*</span></span>}
-                  type="number"
-                  fullWidth
-                  value={formData.planDurationValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (Number(value) < 0) return;
-                    setFormData({ ...formData, planDurationValue: value });
-                  }}
-                  placeholder={`Enter number of ${formData.planDuration}`}
-                  inputProps={{
-                    min: 0,
-                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
-                  }}
-                />
-              )}
-
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Email Trigger Rule</InputLabel>
-                  <Select
-                    label="Email Trigger Rule"
-                    notched
-                    displayEmpty
-                    value={formData.emailTriggerRule}
-                    onChange={e => setFormData({ ...formData, emailTriggerRule: e.target.value })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.emailRules}
-                  >
-                    <MenuItem value="">Select Email Trigger Rule</MenuItem>
-                    {emailRules.map(rule => (
-                      <MenuItem key={rule.id} value={rule.id.toString()}>{rule.rule_name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {loading.emailRules && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading email rules...
-                  </Typography>
-                )}
-              </Box>
-
-              {/* <Box>
+                  {/* <Box>
                 <Autocomplete
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
@@ -3711,110 +3719,110 @@ export const AddSchedulePage = () => {
                 />
               </Box> */}
 
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Category"
-                    notched
-                    displayEmpty
-                    value={formData.category}
-                    onChange={e => setFormData({ ...formData, category: e.target.value })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Category</MenuItem>
-                    <MenuItem value="Technical">Technical</MenuItem>
-                    <MenuItem value="Non Technical">Non-Technical</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
+                  <Box>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
+                      <Select
+                        label="Category"
+                        notched
+                        displayEmpty
+                        value={formData.category}
+                        onChange={e => setFormData({ ...formData, category: e.target.value })}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      >
+                        <MenuItem value="">Select Category</MenuItem>
+                        <MenuItem value="Technical">Technical</MenuItem>
+                        <MenuItem value="Non Technical">Non-Technical</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
 
-              {/* Submission Time with conditional input */}
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Submission Time</InputLabel>
-                  <Select
-                    label="Submission Time"
-                    notched
-                    displayEmpty
-                    value={formData.submissionTime}
-                    onChange={e => setFormData({ ...formData, submissionTime: e.target.value, submissionTimeValue: '' })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Submission Time</MenuItem>
-                    <MenuItem value="minutes">Minutes</MenuItem>
-                    <MenuItem value="hour">Hour</MenuItem>
-                    <MenuItem value="day">Day</MenuItem>
-                    <MenuItem value="week">Week</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
+                  {/* Submission Time with conditional input */}
+                  <Box>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Submission Time</InputLabel>
+                      <Select
+                        label="Submission Time"
+                        notched
+                        displayEmpty
+                        value={formData.submissionTime}
+                        onChange={e => setFormData({ ...formData, submissionTime: e.target.value, submissionTimeValue: '' })}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      >
+                        <MenuItem value="">Select Submission Time</MenuItem>
+                        <MenuItem value="minutes">Minutes</MenuItem>
+                        <MenuItem value="hour">Hour</MenuItem>
+                        <MenuItem value="day">Day</MenuItem>
+                        <MenuItem value="week">Week</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
 
-              {/* Submission Time Value Input - Show when time type is selected */}
-              {needsValueInput(formData.submissionTime) && (
-                <TextField
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                  {/* Submission Time Value Input - Show when time type is selected */}
+                  {needsValueInput(formData.submissionTime) && (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                  label={<span>Submission Time ({formData.submissionTime}) <span style={{ color: 'red' }}>*</span></span>}
-                  type="number"
-                  fullWidth
-                  value={formData.submissionTimeValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (Number(value) < 0) return;
-                    setFormData({ ...formData, submissionTimeValue: value });
-                  }}
-                  inputProps={{
-                    min: 0,
-                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
-                  }}
-                  placeholder={`Enter number of ${formData.submissionTime}`}
-                />
-              )}
+                      label={<span>Submission Time ({formData.submissionTime}) <span style={{ color: 'red' }}>*</span></span>}
+                      type="number"
+                      fullWidth
+                      value={formData.submissionTimeValue}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (Number(value) < 0) return;
+                        setFormData({ ...formData, submissionTimeValue: value });
+                      }}
+                      inputProps={{
+                        min: 0,
+                        onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                      }}
+                      placeholder={`Enter number of ${formData.submissionTime}`}
+                    />
+                  )}
 
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Supervisors </InputLabel>
-                  <Select
-                    label="Supervisors"
-                    notched
-                    displayEmpty
-                    value={formData.supervisors}
-                    onChange={e => setFormData({ ...formData, supervisors: e.target.value })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
-                  >
-                    <MenuItem value="">Select Supervisors</MenuItem>
-                    {users && users.map(user => (
-                      <MenuItem key={user.id} value={user.id.toString()}>{user.full_name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {loading.users && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading users...
-                  </Typography>
-                )}
-              </Box>
+                  <Box>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Supervisors </InputLabel>
+                      <Select
+                        label="Supervisors"
+                        notched
+                        displayEmpty
+                        value={formData.supervisors}
+                        onChange={e => setFormData({ ...formData, supervisors: e.target.value })}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
+                      >
+                        <MenuItem value="">Select Supervisors</MenuItem>
+                        {users && users.map(user => (
+                          <MenuItem key={user.id} value={user.id.toString()}>{user.full_name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {loading.users && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Loading users...
+                      </Typography>
+                    )}
+                  </Box>
 
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Lock Overdue Task <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Lock Overdue Task"
-                    notched
-                    displayEmpty
-                    value={formData.lockOverdueTask}
-                    onChange={e => setFormData({ ...formData, lockOverdueTask: e.target.value })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Lock Status</MenuItem>
-                    <MenuItem value="true">Yes</MenuItem>
-                    <MenuItem value="false">No</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
+                  <Box>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Lock Overdue Task <span style={{ color: 'red' }}>*</span></InputLabel>
+                      <Select
+                        label="Lock Overdue Task"
+                        notched
+                        displayEmpty
+                        value={formData.lockOverdueTask}
+                        onChange={e => setFormData({ ...formData, lockOverdueTask: e.target.value })}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      >
+                        <MenuItem value="">Select Lock Status</MenuItem>
+                        <MenuItem value="true">Yes</MenuItem>
+                        <MenuItem value="false">No</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
 
-              {/* <Box>
+                  {/* <Box>
                 <Autocomplete
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
@@ -3857,134 +3865,134 @@ export const AddSchedulePage = () => {
                 />
               </Box> */}
 
-              {/* Grace Time with conditional input */}
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Grace Time <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Grace Time"
-                    notched
-                    displayEmpty
-                    value={formData.graceTime}
-                    onChange={e => setFormData({ ...formData, graceTime: e.target.value, graceTimeValue: '' })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Grace Time</MenuItem>
-                    <MenuItem value="minutes">Minutes</MenuItem>
-                    <MenuItem value="hour">Hour</MenuItem>
-                    <MenuItem value="day">Day</MenuItem>
-                    <MenuItem value="week">Week</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
+                  {/* Grace Time with conditional input */}
+                  <Box>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Grace Time <span style={{ color: 'red' }}>*</span></InputLabel>
+                      <Select
+                        label="Grace Time"
+                        notched
+                        displayEmpty
+                        value={formData.graceTime}
+                        onChange={e => setFormData({ ...formData, graceTime: e.target.value, graceTimeValue: '' })}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      >
+                        <MenuItem value="">Select Grace Time</MenuItem>
+                        <MenuItem value="minutes">Minutes</MenuItem>
+                        <MenuItem value="hour">Hour</MenuItem>
+                        <MenuItem value="day">Day</MenuItem>
+                        <MenuItem value="week">Week</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
 
-              {/* Grace Time Value Input - Show when time type is selected */}
-              {needsValueInput(formData.graceTime) && (
-                <TextField
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  label={
-                    <span>
-                      Grace Time ({formData.graceTime}) <span style={{ color: 'red' }}>*</span>
-                    </span>
-                  }
-                  type="number"
-                  fullWidth
-                  value={formData.graceTimeValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (Number(value) < 0) return;
-                    setFormData({ ...formData, graceTimeValue: value });
-                  }}
-                  inputProps={{
-                    min: 0,
-                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
-                  }}
-                  placeholder={`Enter number of ${formData.graceTime}`}
-                />
-              )}
+                  {/* Grace Time Value Input - Show when time type is selected */}
+                  {needsValueInput(formData.graceTime) && (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      label={
+                        <span>
+                          Grace Time ({formData.graceTime}) <span style={{ color: 'red' }}>*</span>
+                        </span>
+                      }
+                      type="number"
+                      fullWidth
+                      value={formData.graceTimeValue}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (Number(value) < 0) return;
+                        setFormData({ ...formData, graceTimeValue: value });
+                      }}
+                      inputProps={{
+                        min: 0,
+                        onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                      }}
+                      placeholder={`Enter number of ${formData.graceTime}`}
+                    />
+                  )}
 
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Supplier </InputLabel>
-                  <Select
-                    label="Supplier"
-                    notched
-                    displayEmpty
-                    value={formData.supplier}
-                    onChange={e => setFormData({ ...formData, supplier: e.target.value })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.suppliers}
-                  >
-                    <MenuItem value="">Select Supplier</MenuItem>
-                    {suppliers && suppliers.map(supplier => (
-                      <MenuItem key={supplier.id} value={supplier.id.toString()}>{supplier.name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {loading.suppliers && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading suppliers...
-                  </Typography>
-                )}
-              </Box>
+                  <Box>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Supplier </InputLabel>
+                      <Select
+                        label="Supplier"
+                        notched
+                        displayEmpty
+                        value={formData.supplier}
+                        onChange={e => setFormData({ ...formData, supplier: e.target.value })}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.suppliers}
+                      >
+                        <MenuItem value="">Select Supplier</MenuItem>
+                        {suppliers && suppliers.map(supplier => (
+                          <MenuItem key={supplier.id} value={supplier.id.toString()}>{supplier.name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {loading.suppliers && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Loading suppliers...
+                      </Typography>
+                    )}
+                  </Box>
 
-              <Box>
-                <TextField
-                  label={
-                    <span>
-                      Start Date <span style={{ color: 'red' }}>*</span>
-                    </span>
-                  }
-                  id="startFrom"
-                  type="date"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.startFrom}
-                  onChange={e => setFormData({ ...formData, startFrom: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                  placeholder="Select Start Date"
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  inputProps={{
-                    max: formData.endAt || undefined,
-                  }}
-                  error={Boolean(fieldErrors.startFrom)}
-                  helperText={fieldErrors.startFrom}
-                />
-              </Box>
+                  <Box>
+                    <TextField
+                      label={
+                        <span>
+                          Start Date <span style={{ color: 'red' }}>*</span>
+                        </span>
+                      }
+                      id="startFrom"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      value={formData.startFrom}
+                      onChange={e => setFormData({ ...formData, startFrom: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                      placeholder="Select Start Date"
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      inputProps={{
+                        max: formData.endAt || undefined,
+                      }}
+                      error={Boolean(fieldErrors.startFrom)}
+                      helperText={fieldErrors.startFrom}
+                    />
+                  </Box>
 
-              <Box>
-                <TextField
-                  label={
-                    <span>
-                      End Date <span style={{ color: 'red' }}>*</span>
-                    </span>
-                  }
-                  id="endAt"
-                  type="date"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.endAt}
-                  onChange={e => setFormData({ ...formData, endAt: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                  placeholder="Select End Date"
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  inputProps={{
-                    min: formData.startFrom || undefined,
-                  }}
-                  error={Boolean(fieldErrors.endAt) || (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom)}
-                  helperText={
-                    fieldErrors.endAt ||
-                    (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
-                      ? "End date cannot be before start date"
-                      : "")
-                  }
-                />
+                  <Box>
+                    <TextField
+                      label={
+                        <span>
+                          End Date <span style={{ color: 'red' }}>*</span>
+                        </span>
+                      }
+                      id="endAt"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      value={formData.endAt}
+                      onChange={e => setFormData({ ...formData, endAt: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                      placeholder="Select End Date"
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      inputProps={{
+                        min: formData.startFrom || undefined,
+                      }}
+                      error={Boolean(fieldErrors.endAt) || (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom)}
+                      helperText={
+                        fieldErrors.endAt ||
+                        (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
+                          ? "End date cannot be before start date"
+                          : "")
+                      }
+                    />
+                  </Box>
+                </Box>
               </Box>
-            </Box>
-            </Box>
           </SectionCard>
         );
 
