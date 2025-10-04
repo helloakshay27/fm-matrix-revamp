@@ -111,6 +111,58 @@ const formatTicketAgeing = (ageingMinutes: number): string => {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 };
 
+// Helper function to calculate balance TAT
+const calculateBalanceTAT = (tatTime: string | null | undefined, tatMinutes: number | null | undefined): { value: string; isExceeded: boolean; exceededBy: string } => {
+  if (!tatTime) {
+    return { 
+      value: tatMinutes ? formatMinutesToDDHHMM(tatMinutes) : '00:00:00', 
+      isExceeded: false, 
+      exceededBy: '' 
+    };
+  }
+
+  try {
+    const tatDate = new Date(tatTime);
+    const currentDate = new Date();
+    const diffMs = tatDate.getTime() - currentDate.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMinutes < 0) {
+      // Time exceeded
+      const exceededMinutes = Math.abs(diffMinutes);
+      const days = Math.floor(exceededMinutes / (24 * 60));
+      const hours = Math.floor((exceededMinutes % (24 * 60)) / 60);
+      const mins = exceededMinutes % 60;
+      const exceededTime = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      
+      return { 
+        value: exceededTime, 
+        isExceeded: true, 
+        exceededBy: exceededTime 
+      };
+    } else {
+      // Time remaining
+      const days = Math.floor(diffMinutes / (24 * 60));
+      const hours = Math.floor((diffMinutes % (24 * 60)) / 60);
+      const mins = diffMinutes % 60;
+      const remainingTime = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      
+      return { 
+        value: remainingTime, 
+        isExceeded: false, 
+        exceededBy: '' 
+      };
+    }
+  } catch (error) {
+    console.error('Error calculating balance TAT:', error);
+    return { 
+      value: tatMinutes ? formatMinutesToDDHHMM(tatMinutes) : '00:00:00', 
+      isExceeded: false, 
+      exceededBy: '' 
+    };
+  }
+};
+
 export const TicketDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -122,6 +174,7 @@ export const TicketDetailsPage = () => {
   const [activeTab, setActiveTab] = useState("details");
   const [costInvolveEnabled, setCostInvolveEnabled] = useState<boolean>(false);
   const [currentAgeing, setCurrentAgeing] = useState<number>(0);
+  const [balanceTATTrigger, setBalanceTATTrigger] = useState<number>(0); // State to trigger TAT re-calculation
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [communicationTemplates, setCommunicationTemplates] = useState<Array<{
@@ -676,6 +729,16 @@ export const TicketDetailsPage = () => {
     }
   }, [ticketData?.ticket_ageing_minutes]);
 
+  // Add useEffect to trigger balance TAT recalculation every minute
+  useEffect(() => {
+    // Update balance TAT every minute
+    const interval = setInterval(() => {
+      setBalanceTATTrigger(prev => prev + 1);
+    }, 60000); // 60000ms = 1 minute
+
+    return () => clearInterval(interval);
+  }, []);
+
   if (loading) {
     return (
       <div className="p-6 bg-white min-h-screen">
@@ -703,19 +766,23 @@ export const TicketDetailsPage = () => {
   // Process complaint logs for table display
   const complaintLogs = ticketData?.complaint_logs || [];
 
+  // Calculate balance TATs with exceeded check
+  const responseBalanceTAT = calculateBalanceTAT(ticketData.response_tat_time, ticketData.balance_reponse_tat);
+  const resolutionBalanceTAT = calculateBalanceTAT(ticketData.resolution_tat_time, ticketData.balance_resolution_tat);
+
   const tatGridRows = [
     [
       {
         label: 'Response TAT',
         value: hasData(ticketData.response_tat)
-          ? formatMinutesToDDHHMM(ticketData.response_tat) // Already in minutes, no conversion needed
+          ? formatMinutesToDDHHMM(ticketData.response_tat)
           : '00:00:00'
       },
       {
         label: 'Balance TAT',
-        value: hasData(ticketData.balance_reponse_tat)
-          ? formatMinutesToDDHHMM(ticketData.balance_reponse_tat) // Already in minutes
-          : '00:00:00'
+        value: responseBalanceTAT.value,
+        isExceeded: responseBalanceTAT.isExceeded,
+        exceededBy: responseBalanceTAT.exceededBy
       },
       {
         label: 'Escalation',
@@ -726,14 +793,14 @@ export const TicketDetailsPage = () => {
       {
         label: 'Resolution TAT',
         value: hasData(ticketData.resolution_tat)
-          ? formatMinutesToDDHHMM(ticketData.resolution_tat) // Already in minutes, no conversion needed
+          ? formatMinutesToDDHHMM(ticketData.resolution_tat)
           : '00:00:00'
       },
       {
         label: 'Balance TAT',
-        value: hasData(ticketData.balance_resolution_tat)
-          ? formatMinutesToDDHHMM(ticketData.balance_resolution_tat) // Already in minutes
-          : '00:00:00'
+        value: resolutionBalanceTAT.value,
+        isExceeded: resolutionBalanceTAT.isExceeded,
+        exceededBy: resolutionBalanceTAT.exceededBy
       },
       {
         label: 'Escalation',
@@ -1330,12 +1397,21 @@ export const TicketDetailsPage = () => {
                                 <div className="bg-white p-3" style={{ width: '75%', borderRadius: '4px' }}>
                                   <div className="grid grid-cols-3 gap-x-10 gap-y-4">
                                     {tatGridRows.flat().map((cell, idx) => (
-                                      <div key={idx} className="flex ">
-                                        <span className=" w-[150px] text-[14px] leading-tight text-gray-500 tracking-wide pr-2">
+                                      <div key={idx} className="flex text-center">
+                                        <span className="w-[150px] text-[14px] leading-tight text-gray-500 tracking-wide pr-2">
                                           {cell.label}
                                         </span>
-                                        <span className="text-[13px] md:text-[14px] font-semibold text-gray-900 ml-8">
-                                          {cell.value}
+                                        <span className={`text-[13px] md:text-[14px] font-semibold ml-8 ${cell.isExceeded ? 'text-red-600' : 'text-gray-900'}`}>
+                                          {cell.isExceeded && cell.label === 'Balance TAT' ? (
+                                            <>
+                                              {cell.value}
+                                              <span className="text-[11px] text-red-500 italic ml-2">
+                                                (Exceeded)
+                                              </span>
+                                            </>
+                                          ) : (
+                                            cell.value
+                                          )}
                                         </span>
                                       </div>
                                     ))}
@@ -3082,12 +3158,21 @@ export const TicketDetailsPage = () => {
                             <div className="bg-white p-3" style={{ width: '75%', borderRadius: '4px' }}>
                               <div className="grid grid-cols-3 gap-x-10 gap-y-4">
                                 {tatGridRows.flat().map((cell, idx) => (
-                                  <div key={idx} className="flex ">
-                                    <span className=" w-[150px] text-[14px] leading-tight text-gray-500 tracking-wide pr-2">
+                                  <div key={idx} className="flex">
+                                    <span className="w-[150px] text-[14px] leading-tight text-gray-500 tracking-wide pr-2">
                                       {cell.label}
                                     </span>
-                                    <span className="text-[13px] md:text-[14px] font-semibold text-gray-900 ml-8">
-                                      {cell.value}
+                                    <span className={`text-[13px] md:text-[14px] font-semibold ml-8 ${cell.isExceeded ? 'text-red-600' : 'text-gray-900'}`}>
+                                      {cell.isExceeded && cell.label === 'Balance TAT' ? (
+                                        <>
+                                          {cell.value}
+                                          <span className="text-[11px] text-red-500 italic ml-2">
+                                            (Exceeded)
+                                          </span>
+                                        </>
+                                      ) : (
+                                        cell.value
+                                      )}
                                     </span>
                                   </div>
                                 ))}
