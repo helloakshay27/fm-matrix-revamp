@@ -659,7 +659,7 @@ export const TaskDetailsPage = () => {
                 <div className="flex items-center gap-3">
                   <div className="figma-card-icon-wrapper">
                     <User className="figma-card-icon" />
-                  </div
+                  </div>
                   <h3 className="figma-card-title">Pre-Post Inspection Info</h3>
                 </div>
               </div>
