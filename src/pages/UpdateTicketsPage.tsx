@@ -151,6 +151,7 @@ const UpdateTicketsPage: React.FC = () => {
     identifier: string;
     identifier_action: string;
     body: string;
+    active?: boolean;
   }>>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [costApprovalRequests, setCostApprovalRequests] = useState<
@@ -1493,7 +1494,7 @@ const UpdateTicketsPage: React.FC = () => {
                           </span>
                         </MenuItem>
                         {communicationTemplates
-                          .filter(template => template.identifier === "Preventive Action")
+                          .filter(template => template.identifier === "Preventive Action" && template?.active === true)
                           .map((template) => (
                             <MenuItem key={template.id} value={template.identifier_action}>
                               {template.identifier_action}
@@ -1832,7 +1833,7 @@ const UpdateTicketsPage: React.FC = () => {
                           </span>
                         </MenuItem>
                         {communicationTemplates
-                          .filter(template => template.identifier === "Root Cause Analysis")
+                          .filter(template => template.identifier === "Root Cause Analysis" && template?.active === true)
                           .map((template) => (
                             <MenuItem key={template.id} value={template.identifier_action}>
                               {template.identifier_action}
@@ -1860,7 +1861,7 @@ const UpdateTicketsPage: React.FC = () => {
                           </span>
                         </MenuItem>
                         {communicationTemplates
-                          .filter(template => template.identifier === "Short-term Impact")
+                          .filter(template => template.identifier === "Short-term Impact" && template?.active === true)
                           .map((template) => (
                             <MenuItem key={template.id} value={template.identifier_action}>
                               {template.identifier_action}
@@ -1908,7 +1909,7 @@ const UpdateTicketsPage: React.FC = () => {
                           </span>
                         </MenuItem>
                         {communicationTemplates
-                          .filter(template => template.identifier === "Long-term Impact")
+                          .filter(template => template.identifier === "Long-term Impact" && template?.active === true)
                           .map((template) => (
                             <MenuItem key={template.id} value={template.identifier_action}>
                               {template.identifier_action}
@@ -1953,7 +1954,7 @@ const UpdateTicketsPage: React.FC = () => {
                       </span>
                     </MenuItem>
                     {communicationTemplates
-                      .filter(template => template.identifier === "Corrective Action")
+                      .filter(template => template.identifier === "Corrective Action" && template?.active === true)
                       .map((template) => (
                         <MenuItem key={template.id} value={template.identifier_action}>
                           {template.identifier_action}
