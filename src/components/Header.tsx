@@ -441,14 +441,14 @@ export const Header = () => {
             !isViSite && (
               <div className="flex items-center gap-3">
                 <button className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors" onClick={() => {
-                  navigate(`/channels`)
-                }}>
-                  <MessageSquare className="w-5 h-5 text-[#1a1a1a]" />
-                </button>
-                <button className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors" onClick={() => {
-                  navigate(`/channels/tasks`)
+                  navigate(`/vas/channels/tasks`)
                 }}>
                   <CircleCheckBig className="w-5 h-5 text-[#1a1a1a]" />
+                </button>
+                <button className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors" onClick={() => {
+                  navigate(`/vas/channels`)
+                }}>
+                  <MessageSquare className="w-5 h-5 text-[#1a1a1a]" />
                 </button>
               </div>
             )

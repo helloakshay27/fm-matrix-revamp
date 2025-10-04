@@ -1045,17 +1045,17 @@ function App() {
                   }
                 >
                   <Route index element={<Index />} />
-                  <Route path="/channels" element={<ChannelsLayout />}>
+                  <Route path="/vas/channels" element={<ChannelsLayout />}>
                     <Route index element={
                       <div className={`flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]`}>
                         Select a Chat/Group to view messages
                       </div>
                     } />
-                    <Route path="/channels/messages/:id" element={<DMConversation />} />
-                    <Route path="/channels/groups/:id" element={<GroupConversation />} />
+                    <Route path="/vas/channels/messages/:id" element={<DMConversation />} />
+                    <Route path="/vas/channels/groups/:id" element={<GroupConversation />} />
                   </Route>
-                  <Route path="/channels/tasks" element={<ChannelTasksAll />} />
-                  <Route path="/channels/tasks/:id" element={<ChatTaskDetailsPage />} />
+                  <Route path="/vas/channels/tasks" element={<ChannelTasksAll />} />
+                  <Route path="/vas/channels/tasks/:id" element={<ChatTaskDetailsPage />} />
 
                   {/* Dashboard Routes */}
                   <Route path="/dashboard" element={<Dashboard />} />
