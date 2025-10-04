@@ -1,15 +1,17 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from "react-router-dom";
+import { LocationSelectionPanel } from "@/components/LocationSelectionPanel";
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info, Download, Star } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info, Download, Star, ChevronDown, FileText, LogsIcon, File, FileIcon } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { apiClient } from '@/utils/apiClient';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { QuestionMark } from '@mui/icons-material';
 
 interface QRCodeData {
   id: number;
@@ -202,6 +204,63 @@ export const SurveyMappingDetailsPage = () => {
   };
 
   // Location details table configuration
+  const [selectedLocations, setSelectedLocations] = useState<number[]>([]);
+  const [selectedLocationObjects, setSelectedLocationObjects] = useState<SurveyMapping[]>([]);
+
+  // Selection handlers
+  const handleLocationSelect = (locationId: string, isSelected: boolean) => {
+    const id = parseInt(locationId);
+    setSelectedLocations(prev =>
+      isSelected
+        ? [...prev, id]
+        : prev.filter(locId => locId !== id)
+    );
+    
+    const location = mapping?.mappings.find(m => m.id === id);
+    if (location) {
+      setSelectedLocationObjects(prev =>
+        isSelected
+          ? [...prev, location]
+          : prev.filter(loc => loc.id !== id)
+      );
+    }
+  };
+
+  const handleSelectAll = (isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedLocations(mapping?.mappings.map(m => m.id) || []);
+      setSelectedLocationObjects(mapping?.mappings || []);
+    } else {
+      setSelectedLocations([]);
+      setSelectedLocationObjects([]);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedLocations([]);
+    setSelectedLocationObjects([]);
+  };
+
+  const handleMoveAssets = () => {
+    // Implement move assets logic
+    console.log('Moving assets for:', selectedLocations);
+  };
+
+  const handlePrintQR = () => {
+    // Implement print QR logic
+    console.log('Printing QR codes for:', selectedLocations);
+  };
+
+  const handleDownload = () => {
+    // Implement download logic
+    console.log('Downloading for:', selectedLocations);
+  };
+
+  const handleDispose = () => {
+    // Implement dispose logic
+    console.log('Disposing:', selectedLocations);
+  };
+
   const locationTableColumns: ColumnConfig[] = [
     {
       key: "mapping_id",
@@ -470,11 +529,11 @@ export const SurveyMappingDetailsPage = () => {
     if (isEmoji) {
       // Default emoji set for satisfaction scale
       const defaultEmojis = [
-        { emoji: '😢', label: 'Very Dissatisfied' },
-        { emoji: '😞', label: 'Dissatisfied' },
-        { emoji: '😐', label: 'Neutral' },
-        { emoji: '😊', label: 'Satisfied' },
-        { emoji: '😀', label: 'Very Satisfied' }
+        // { emoji: '😢', label: 'Very Dissatisfied' },
+        // { emoji: '😞', label: 'Dissatisfied' },
+        // { emoji: '😐', label: 'Neutral' },
+        // { emoji: '😊', label: 'Satisfied' },
+        // { emoji: '😀', label: 'Very Satisfied' }
       ];
 
       return (
@@ -494,13 +553,13 @@ export const SurveyMappingDetailsPage = () => {
               {question.options.map((option, optIndex) => {
                 // Enhanced emoji mapping
                 const emojiMap: { [key: string]: string } = {
-                  'very_satisfied': '��', 'satisfied': '😊', 'neutral': '😐',
-                  'dissatisfied': '��', 'very_dissatisfied': '��',
-                  'very_happy': '��', 'happy': '😊', 'okay': '😐',
+                  'very_satisfied': '😀', 'satisfied': '😊', 'neutral': '😐',
+                  'dissatisfied': '😞', 'very_dissatisfied': '😢',
+                  'very_happy': '😀', 'happy': '😊', 'okay': '😐',
                   'sad': '😞', 'very_sad': '😢',
-                  'excellent': '�', 'good': '😊', 'average': '😐',
+                  'excellent': '😀', 'good': '😊', 'average': '😐',
                   'poor': '😞', 'terrible': '😢',
-                                    'amazing': '�', 'awesome': '�', 'fantastic': '�'
+                  'amazing': '😀', 'awesome': '😀', 'fantastic': '😀'
                 };
                 
                 const optionKey = option.qname.toLowerCase().replace(/\s+/g, '_');
@@ -669,32 +728,35 @@ export const SurveyMappingDetailsPage = () => {
         </Button>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            Survey Details - {mapping.name}
+            {/* Survey Details -  */}
+            {mapping.name}
           </h1>
           <div className="flex gap-2">
-            <Badge
-              variant={mapping.active ? "default" : "secondary"}
-              className="mr-2"
-            >
-              {mapping.active ? (
-                <>
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Active
-                </>
-              ) : (
-                <>
-                  <XCircle className="w-3 h-3 mr-1" />
-                  Inactive
-                </>
-              )}
-            </Badge>
+           <Badge
+  variant={mapping.active ? "default" : "secondary"}
+  className="mr-2 rounded-none flex items-center"
+>
+  {mapping.active ? (
+    <>
+      <CheckCircle className="w-3 h-3 mr-1" />
+      Active
+    </>
+  ) : (
+    <>
+      <XCircle className="w-3 h-3 mr-1" />
+      Inactive
+    </>
+  )}
+  <ChevronDown className="w-3 h-3 ml-1" />
+</Badge>
+
             <Button
               onClick={handleEdit}
               variant="outline"
               className="border-[#C72030] text-[#C72030]"
             >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
+              <Edit className="w-4 h-4 " />
+
             </Button>
             {/* <Button
               onClick={handleDelete}
@@ -709,9 +771,9 @@ export const SurveyMappingDetailsPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className=" rounded-lg">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
+          {/* <TabsList className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
             {[
               { label: "Survey Information", value: "survey-information" },
               { label: "Questions", value: "questions" },
@@ -726,104 +788,227 @@ export const SurveyMappingDetailsPage = () => {
                 {tab.label}
               </TabsTrigger>
             ))}
-          </TabsList>
+          </TabsList> */}
+          <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
+  {[
+    {
+      label: "Survey Information",
+      value: "survey-information",
+      // icon: (
+      //   <svg
+      //     xmlns="http://www.w3.org/2000/svg"
+      //     width="20"
+      //     height="20"
+      //     viewBox="0 0 24 24"
+      //     fill="none"
+      //     strokeWidth={2}
+      //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+      //   >
+      //     <path d="M4 4h16v16H4z" />
+      //     <path d="M8 8h8v8H8z" />
+      //   </svg>
+      // ),
+    },
+    {
+      label: "Questions",
+      value: "questions",
+      // icon: (
+      //   <svg
+      //     xmlns="http://www.w3.org/2000/svg"
+      //     width="20"
+      //     height="20"
+      //     viewBox="0 0 24 24"
+      //     fill="none"
+      //     strokeWidth={2}
+      //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+      //   >
+      //     <path d="M9 18h6" />
+      //     <path d="M10 14a4 4 0 1 1 4-4c0 2-2 3-2 3" />
+      //     <path d="M12 20h0" />
+      //   </svg>
+      // ),
+    },
+    {
+      label: "Location Details",
+      value: "location-details",
+      // icon: (
+      //   <svg
+      //     xmlns="http://www.w3.org/2000/svg"
+      //     width="20"
+      //     height="20"
+      //     viewBox="0 0 24 24"
+      //     fill="none"
+      //     strokeWidth={2}
+      //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+      //   >
+      //     <path d="M12 21C12 21 5 13.6 5 9a7 7 0 0 1 14 0c0 4.6-7 12-7 12z" />
+      //     <circle cx="12" cy="9" r="2.5" />
+      //   </svg>
+      // ),
+    },
+    // {
+    //   label: "Logs",
+    //   value: "logs",
+    // },
+  ].map((tab) => (
+    <TabsTrigger
+      key={tab.value}
+      value={tab.value}
+      className="group flex items-center gap-2 border-none font-semibold data-[state=active]:bg-[#EDEAE3] data-[state=inactive]:bg-white data-[state=inactive]:text-black"
+    >
+      {tab.icon}
+      {tab.label}
+    </TabsTrigger>
+  ))}
+</TabsList>
+
 
           {/* Survey Information */}
-          <TabsContent value="survey-information" className="p-3 sm:p-6">
+          <TabsContent value="survey-information" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-8 h-8 text-gray-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Questions</p>
-                      <p className="text-xl font-semibold">
-                        {mapping.questions_count || 0}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+             <Card className="bg-[#F6F4EE]">
+  <CardContent className="p-6">
+    <div className="flex items-center gap-3">
+      <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+        <QuestionMark className="w-5 h-5 text-[#C72030]" />
+      </div>
+      <div>
+        <p className="text-xl font-semibold text-[#C72030]">
+          {mapping.questions_count || 0}
+        </p>
+        <p className="text-sm text-gray-600">Questions</p>
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-8 h-8 text-gray-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Locations</p>
-                      <p className="text-xl font-semibold">
-                        {mapping.mappings?.length || 0}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <List className="w-8 h-8 text-gray-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Check Type</p>
-                      <p className="text-xl font-semibold capitalize">
-                        {mapping.check_type || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+             <Card className="bg-[#F6F4EE]">
+  <CardContent className="p-6">
+    <div className="flex items-center gap-3">
+      <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+        <MapPin className="w-5 h-5 text-[#C72030]" />
+      </div>
+      <div>
+         <p className="text-xl font-semibold text-[#C72030]">
+          {mapping.mappings?.length || 0}
+        </p>
+        <p className="text-sm text-gray-600">Locations</p>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
+
+             {/* <Card className="bg-[#F6F4EE]">
+  <CardContent className="p-6">
+    <div className="flex items-center gap-3">
+      <List className="w-8 h-8 text-[#C72030]" />
+      <div>
+         <p className="text-xl font-semibold capitalize text-[#C72030]">
+          {mapping.check_type || 'N/A'}
+        </p>
+        <p className="text-sm text-gray-600">Check Type</p>
+       
+      </div>
+    </div>
+  </CardContent>
+</Card> */}
+<Card className="bg-[#F6F4EE]">
+  <CardContent className="p-6">
+    <div className="flex items-center gap-3">
+      <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-6 h-6 text-[#C72030]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </div>
+
+      <div>
+        <p className="text-xl font-semibold capitalize text-[#C72030]">
+          {mapping.check_type || "N/A"}
+        </p>
+        <p className="text-sm text-gray-600">Check Type</p>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+
+
             </div>
 
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Shield className="h-4 w-4" />
-                  </div>
-                  SURVEY INFORMATION
-                </CardTitle>
-              </CardHeader>
+             <CardHeader className="bg-[#F6F4EE] mb-6">
+  <CardTitle className="text-lg flex items-center">
+    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
+      <FileText className="h-5 w-5 text-[#C72030]" />
+    </div>
+    SURVEY INFORMATION
+  </CardTitle>
+</CardHeader>
+
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <strong>Survey Name:</strong> {mapping.name}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Survey Name:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {mapping.name}
+                    </span>
                   </div>
-                  <div>
-                    <strong>Survey ID:</strong> #{mapping.id}
+                  <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Survey ID:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      #{mapping.id}
+                    </span>
                   </div>
-                  <div>
-                    <strong>Check Type:</strong>
-                    <Badge variant="outline" className="ml-2 capitalize">
-                      {mapping.check_type}
-                    </Badge>
+                  <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Check Type:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      <Badge variant="outline" className="capitalize">
+                        {mapping.check_type}
+                      </Badge>
+                    </span>
                   </div>
-                  <div>
-                    <strong>Status:</strong>
-                    <Badge
-                      variant={mapping.active ? "default" : "secondary"}
-                      className="ml-2"
-                    >
-                      {mapping.active ? "Active" : "Inactive"}
-                    </Badge>
+                 <div className="text-sm text-gray-800">
+  <span className="text-gray-500">Status:</span>{" "}
+  <span className="font-medium text-gray-800">
+    {mapping.active ? "Active" : "Inactive"}
+  </span>
+</div>
+
+                  <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Total Locations:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {mapping.mappings?.length || 0}
+                    </span>
                   </div>
-                  <div>
-                    <strong>Total Locations:</strong>{" "}
-                    {mapping.mappings?.length || 0}
+                  <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Total Questions:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {mapping.questions_count || 0}
+                    </span>
                   </div>
-                  <div>
-                    <strong>Total Questions:</strong>{" "}
-                    {mapping.questions_count || 0}
-                  </div>
-                  <div>
-                    <strong>Associations:</strong>{" "}
-                    {mapping.no_of_associations || 0}
+                  <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Associations:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {mapping.no_of_associations || 0}
+                    </span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Location Summary */}
-            {mapping.mappings && mapping.mappings.length > 0 && (
+            {/* {mapping.mappings && mapping.mappings.length > 0 && (
               <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
                 <CardHeader className="bg-[#F6F4EE] mb-6">
                   <CardTitle className="text-lg flex items-center">
@@ -873,18 +1058,19 @@ export const SurveyMappingDetailsPage = () => {
                   )}
                 </CardContent>
               </Card>
-            )}
+            )} */}
           </TabsContent>
 
           {/* Questions */}
-          <TabsContent value="questions" className="p-3 sm:p-6">
+          <TabsContent value="questions" className="mt-4">
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <List className="h-4 w-4" />
-                  </div>
-                  SURVEY QUESTIONS ({mapping.questions?.length || 0})
+    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
+      <QuestionMark className="h-5 w-5 text-[#C72030]" />
+    </div>
+                  SURVEY QUESTIONS 
+                  {/* ({mapping.questions?.length || 0}) */}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -964,21 +1150,38 @@ export const SurveyMappingDetailsPage = () => {
           </TabsContent>
 
           {/* Location Details */}
-          <TabsContent value="location-details" className="p-3 sm:p-6">
+          <TabsContent value="location-details" className="mt-4">
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <MapPin className="h-4 w-4" />
-                  </div>
-                  LOCATION DETAILS ({mapping.mappings?.length || 0} Locations)
+    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
+      <MapPin className="h-5 w-5 text-[#C72030]" />
+    </div>
+                  LOCATION DETAILS 
+                  {/* ({mapping.mappings?.length || 0} Locations) */}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative">
+                {selectedLocations.length > 0 && (
+                  <LocationSelectionPanel
+                    selectedLocations={selectedLocations}
+                    selectedLocationObjects={selectedLocationObjects}
+                    onMoveAssets={handleMoveAssets}
+                    onPrintQR={handlePrintQR}
+                    onDownload={handleDownload}
+                    onDispose={handleDispose}
+                    onClearSelection={handleClearSelection}
+                  />
+                )}
                 <EnhancedTable
                   data={locationTableData}
                   columns={locationTableColumns}
+                  selectable={true}
                   renderCell={renderLocationCell}
+                  selectedItems={selectedLocations.map(String)}
+                  onSelectItem={handleLocationSelect}
+                  onSelectAll={handleSelectAll}
+                  getItemId={(item: LocationTableItem) => String(item.mapping_id)}
                   storageKey="location-details-table"
                   className="min-w-[1200px]"
                   emptyMessage="No location details found"
@@ -991,6 +1194,122 @@ export const SurveyMappingDetailsPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+      <TabsContent value="logs" className="mt-4">
+  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+    <CardHeader className="bg-[#F6F4EE] mb-6">
+  <CardTitle className="text-lg flex items-center">
+    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="18"
+        height="26"
+        viewBox="0 0 18 26"
+        fill="none"
+      >
+        <path
+          d="M9 25H2C1.73478 25 1.48043 24.8736 1.29289 24.6485C1.10536 24.4235 1 24.1183 1 23.8V2.2C1 1.88174 1.10536 1.57652 1.29289 1.35147C1.48043 1.12643 1.73478 1 2 1H16C16.2652 1 16.5196 1.12643 16.7071 1.35147C16.8946 1.57652 17 1.88174 17 2.2V13M14.75 25V17.2"
+          stroke="#C72030"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12 19L12.8333 18.3333L14.5 17L16.1667 18.3333L17 19"
+          stroke="#C72030"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M5 8H13M5 13H9"
+          stroke="#C72030"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+    LOGS
+  </CardTitle>
+</CardHeader>
+
+
+    <CardContent>
+  <div className="relative">
+    {/* Icon at the top of the line */}
+<div className="flex items-center mb-2">
+  <div className="w-8 h-8 ml-2 flex items-center justify-center rounded-full mr-2">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="22"
+      viewBox="0 0 18 26"
+      fill="none"
+    >
+      <path
+        d="M9 25H2C1.73478 25 1.48043 24.8736 1.29289 24.6485C1.10536 24.4235 1 24.1183 1 23.8V2.2C1 1.88174 1.10536 1.57652 1.29289 1.35147C1.48043 1.12643 1.73478 1 2 1H16C16.2652 1 16.5196 1.12643 16.7071 1.35147C16.8946 1.57652 17 1.88174 17 2.2V13M14.75 25V17.2"
+        stroke="#C72030"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 19L12.8333 18.3333L14.5 17L16.1667 18.3333L17 19"
+        stroke="#C72030"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5 8H13M5 13H9"
+        stroke="#C72030"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  </div>
+  <h3 className="text-lg text-[#C72030] font-semibold">Logs</h3>
+</div>
+
+
+    {/* Vertical timeline line */}
+    <div className="absolute left-5 top-8 bottom-9 w-0.5 bg-[#C72030] z-0"></div>
+
+    <div className="space-y-6 relative z-10">
+      {/* Log Entry - 23 Feb 2025 */}
+      <div className="flex items-start">
+  <div className="flex-shrink-0 w-3 h-3 bg-[#C72030] rounded-full mt-4 ml-4"></div>
+  <div className="ml-8">
+    <p className="text-md font-semibold text-gray-900">23 Feb 2025</p>
+    <p className="text-gray-700">
+      <span className="text-gray-500">6:30PM </span>
+      <span className="text-black font-semibold">Survey Created By Abdul</span>
+    </p>
+    <p className="text-gray-700">
+      <span className="text-gray-500">7:30PM </span>
+      <span className="text-black font-semibold">Location Edited By Abdul</span>
+    </p>
+  </div>
+</div>
+
+
+      {/* Log Entry - 21 Feb 2025 */}
+      <div className="flex items-start">
+        <div className="flex-shrink-0 w-3 h-3 bg-[#C72030] rounded-full mt-1.5 ml-4"></div>
+        <div className="ml-8">
+          <p className="text-md font-semibold text-gray-900">21 Feb 2025</p>
+          <p className="text-gray-700">
+            <span className='text-gray-500'>6:30PM</span> 
+            <span className='text-black font-semibold'>Question Marked Inactive By Abdul</span>
+            </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</CardContent>
+  </Card>
+</TabsContent>
+
 
           {/* QR Code */}
           <TabsContent value="qr-code" className="p-3 sm:p-6">

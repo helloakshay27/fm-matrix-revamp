@@ -703,6 +703,9 @@ import AddGateNumberPage from "./pages/master/AddGateNumberPage";
 import AddGatePassTypePage from "./pages/master/AddGatePassTypePage";
 import EditGateNumberPage from "./pages/master/EditGateNumberPage";
 import EditGatePassTypePage from "./pages/master/EditGatePassTypePage";
+import CommunicationTemplateListPage from "./pages/master/CommunicationTemplateListPage";
+import AddCommunicationTemplatePage from "./pages/master/AddCommunicationTemplatePage";
+import EditCommunicationTemplatePage from "./pages/master/EditCommunicationTemplatePage";
 import AddInventoryTypePage from "./pages/master/AddInventoryTypePage";
 import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
 import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
@@ -1273,10 +1276,6 @@ function App() {
                   <Route
                     path="/master/unit-default"
                     element={<UnitMasterByDefaultPage />}
-                  />
-                  <Route
-                    path="/master/communication-template"
-                    element={<CommunicationTemplatePage />}
                   />
 
                   <Route
@@ -2842,6 +2841,18 @@ function App() {
                   <Route
                     path="/master/gate-number/edit/:id"
                     element={<EditGateNumberPage />}
+                  />
+                  <Route
+                    path="/master/communication-template"
+                    element={<CommunicationTemplateListPage />}
+                  />
+                  <Route
+                    path="/master/communication-template/add"
+                    element={<AddCommunicationTemplatePage />}
+                  />
+                  <Route
+                    path="/master/communication-template/edit/:id"
+                    element={<EditCommunicationTemplatePage />}
                   />
                   <Route
                     path="/master/gate-pass-type"
