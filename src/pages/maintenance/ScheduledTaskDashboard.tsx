@@ -1183,6 +1183,7 @@ export const ScheduledTaskDashboard = () => {
           onReassign={handleReassignTasks}
           onReschedule={handleRescheduleTasks}
           onClearSelection={handleClearSelection}
+          onRefreshData={() => fetchTasks(currentFilters, currentPage, debouncedSearchQuery, selectedStatus)}
         />
       )}
 

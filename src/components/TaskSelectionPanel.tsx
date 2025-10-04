@@ -30,6 +30,7 @@ interface TaskSelectionPanelProps {
   onReassign: () => void;
   onReschedule: () => void;
   onClearSelection: () => void;
+  onRefreshData?: () => void; // Optional callback to refresh parent data
 }
 
 export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
@@ -39,6 +40,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
   onReassign,
   onReschedule,
   onClearSelection,
+  onRefreshData,
 }) => {
   const [showAll, setShowAll] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -245,6 +247,11 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
       setShowRescheduleDialog(false);
       onClearSelection();
       
+      // Refresh parent data to reflect changes
+      if (onRefreshData) {
+        onRefreshData();
+      }
+      
       // Reset form
       setRescheduleData({
         scheduleDate: new Date().toISOString().split('T')[0],
@@ -285,6 +292,11 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
       
       setShowReassignDialog(false);
       onClearSelection();
+      
+      // Refresh parent data to reflect changes
+      if (onRefreshData) {
+        onRefreshData();
+      }
       
       // Reset form
       setReassignData({
