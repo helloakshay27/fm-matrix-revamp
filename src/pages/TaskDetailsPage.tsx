@@ -652,67 +652,69 @@ export const TaskDetailsPage = () => {
 
         {/* Main Content */}
         <div className="space-y-6">
-          {/* Pre-Post Inspection Info */}
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <User className="figma-card-icon" />
+          {/* Pre-Post Inspection Info - Conditional rendering based on steps and before_after_enabled */}
+          {taskDetails?.steps == 3 && (
+            <Card className="w-full bg-transparent shadow-none border-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <User className="figma-card-icon" />
+                  </div
+                  <h3 className="figma-card-title">Pre-Post Inspection Info</h3>
                 </div>
-                <h3 className="figma-card-title">Pre-Post Inspection Info</h3>
               </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Before</h4>
-                    <div className="w-32 h-24 bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden">
-                      {getBeforeImageUrl() ? (
-                        <img 
-                          src={getBeforeImageUrl()!} 
-                          alt="Before inspection" 
-                          className="w-full h-full object-cover rounded-lg"
-                          onError={(e) => handleImageError(e, 'before')}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                          <div className="text-xs font-medium">BEFORE</div>
-                          <div className="text-xs mt-1">No Image Available</div>
-                        </div>
-                      )}
-                    </div>
-                 
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">After</h4>
-                    <div className="w-32 h-24 bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden">
-                      {getAfterImageUrl() ? (
-                        <img 
-                          src={getAfterImageUrl()!} 
-                          alt="After inspection" 
-                          className="w-full h-full object-cover rounded-lg"
-                          onError={(e) => handleImageError(e, 'after')}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                          <div className="text-xs font-medium">AFTER</div>
-                          <div className="text-xs mt-1">No Image Available</div>
-                        </div>
-                      )}
-                    </div>
+              <div className="figma-card-content">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Before</h4>
+                      <div className="w-32 h-24 bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden">
+                        {getBeforeImageUrl() ? (
+                          <img 
+                            src={getBeforeImageUrl()!} 
+                            alt="Before inspection" 
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={(e) => handleImageError(e, 'before')}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                            <div className="text-xs font-medium">BEFORE</div>
+                            <div className="text-xs mt-1">No Image Available</div>
+                          </div>
+                        )}
+                      </div>
                    
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">After</h4>
+                      <div className="w-32 h-24 bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden">
+                        {getAfterImageUrl() ? (
+                          <img 
+                            src={getAfterImageUrl()!} 
+                            alt="After inspection" 
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={(e) => handleImageError(e, 'after')}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                            <div className="text-xs font-medium">AFTER</div>
+                            <div className="text-xs mt-1">No Image Available</div>
+                          </div>
+                        )}
+                      </div>
+                     
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Name</label>
+                    <select className="w-48 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option>{getAssignedUserName()}</option>
+                    </select>
                   </div>
                 </div>
-                <div className="pt-2">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Name</label>
-                  <select className="w-48 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>{getAssignedUserName()}</option>
-                  </select>
-                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          )}
 
           {/* Task Info */}
           <Card className="w-full bg-transparent shadow-none border-none">
