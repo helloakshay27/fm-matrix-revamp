@@ -909,114 +909,123 @@ export const TaskDetailsPage = () => {
             <div className="figma-card-content">
               <div className="task-info-enhanced">
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">ID</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>ID</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.id || taskDetails?.id || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Asset/Service Id</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Asset/Service Id</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.asset_service_code || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Created By</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Created By</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.created_by || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Task</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Task</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.task_name || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Scheduled On</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Scheduled On</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.scheduled_on || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Associated With</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Associated With</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.associated_with || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Asset/Service Name</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Asset/Service Name</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.asset_service_name || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Task Duration</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Task Duration</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.task_duration || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Supplier</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Supplier</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.supplier || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Assigned To</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Assigned To</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.assigned_to || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Created On</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Created On</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     {taskDetails?.task_details?.created_on || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced">Status</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Status</span>
                   <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced">
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     <Badge className={getStatusColor(taskDetails?.task_details?.status?.value || '')}>
                       {taskDetails?.task_details?.status?.display_name || 'Unknown'}
                     </Badge>
                   </span>
                 </div>
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Check-in With Before/After Photograph</span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
+                    <Badge className={taskDetails?.before_after_enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                      {taskDetails?.before_after_enabled ? 'Active' : 'NA'}
+                    </Badge>
+                  </span>
+                </div>
                 {taskDetails?.task_details?.start_time && (
                   <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Start Time</span>
+                    <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Start Time</span>
                     <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                    <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                       {taskDetails.task_details.start_time}
                     </span>
                   </div>
                 )}
                 {taskDetails?.task_details?.completed_on && (
                   <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Completed On</span>
+                    <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Completed On</span>
                     <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                    <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                       {taskDetails.task_details.completed_on}
                     </span>
                   </div>
                 )}
                 {taskDetails?.task_details?.performed_by && (
                   <div className="task-info-row">
-                    <span className="task-info-label-enhanced">Completed By</span>
+                    <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Completed By</span>
                     <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced">
+                    <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                       {taskDetails.task_details.performed_by}
                     </span>
                   </div>

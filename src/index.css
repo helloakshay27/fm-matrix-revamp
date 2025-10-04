@@ -17,6 +17,10 @@
   background-color: transparent !important;
 }
 
+
+body{
+      font-family: "Work Sans" !important;
+}
 @media (min-width: 640px) {
   [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
     height: 40px !important;
