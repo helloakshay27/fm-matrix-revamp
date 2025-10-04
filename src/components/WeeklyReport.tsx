@@ -27,19 +27,48 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
         { name: 'Achieved', value: achieved, color: '#D9D3C4' },
         { name: 'Breached', value: breached, color: '#C4B89D' }
     ];
+    // Detect print to enlarge only the circle, not the container height
+    const [isPrinting, setIsPrinting] = React.useState(false);
+    React.useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const before = () => setIsPrinting(true);
+        const after = () => setIsPrinting(false);
+        window.addEventListener('beforeprint', before);
+        window.addEventListener('afterprint', after);
+        let mql: MediaQueryList | null = null;
+        const onChange = (e: MediaQueryListEvent) => setIsPrinting(!!e.matches);
+        try {
+            mql = window.matchMedia('print');
+            // @ts-ignore cross-browser
+            if (mql.addEventListener) mql.addEventListener('change', onChange);
+            else if (mql.addListener) mql.addListener(onChange);
+        } catch {}
+        return () => {
+            window.removeEventListener('beforeprint', before);
+            window.removeEventListener('afterprint', after);
+            try {
+                if (mql) {
+                    // @ts-ignore cross-browser
+                    if (mql.removeEventListener) mql.removeEventListener('change', onChange);
+                    else if (mql.removeListener) mql.removeListener(onChange);
+                }
+            } catch {}
+        };
+    }, []);
     return (
         <div className="w-full">
             <h3 className="text-black font-semibold text-base sm:text-lg mb-2">{title}</h3>
             <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-5 sm:py-6">
-                <div className="w-full h-[300px] sm:h-[360px] print:h-[250px]">
+                <div className="w-full h-[300px] sm:h-[360px] print:h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                        <PieChart margin={{ top: 8, right: 40, bottom: 8, left: 40 }}>
-                            <Pie data={data} dataKey="value" nameKey="name" innerRadius={0} outerRadius={110} stroke="#FFFFFF" paddingAngle={0}>
+                        <PieChart margin={isPrinting ? { top: 8, right: 12, bottom: 8, left: 12 } : { top: 8, right: 40, bottom: 8, left: 40 }}>
+                            <Pie data={data} dataKey="value" nameKey="name" innerRadius={0} outerRadius={isPrinting ? 145 : 110} stroke="#FFFFFF" paddingAngle={0}>
                                 {data.map((d, i) => <Cell key={i} fill={d.color} />)}
                             </Pie>
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
+
                 <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm sm:text-base">
                     <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#D9D3C4' }} /> <span className="text-black font-medium">Achieved:</span> <span className="text-black/80">{achieved.toLocaleString()} ({achPct.toFixed(2)}%)</span></div>
                     <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#C4B89D' }} /> <span className="text-black font-medium">Breached:</span> <span className="text-black/80">{breached.toLocaleString()} ({brcPct.toFixed(2)}%)</span></div>
@@ -1005,157 +1034,164 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         <div className="w-full print-exact">
             {/* readiness marker so external logic (or tests) can detect when page content mounted */}
             <div data-component="weekly-report" data-loading={overallLoading ? 'true' : 'false'} style={{ display: 'none' }} />
-            <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } }`}</style>
-            <header className="w-full bg-[#F6F4EE] py-6 sm:py-8 mb-6 print:py-4 print:mb-4">
-                <h1 className="text-center text-black font-extrabold text-3xl sm:text-4xl print:text-2xl">{title}</h1>
-                <p className="mt-2 text-center text-black font-medium text-base sm:text-lg print:text-sm">{weekRangeLabel}</p>
-            </header>
+            <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } .first-page-group { break-inside: avoid !important; page-break-inside: avoid !important; page-break-before: auto; page-break-after: always; } }`}</style>
+            {/* Wrap sections 1–3 together to keep them on a single page in PDF */}
+            <div className="no-break first-page-group">
+                <header className="w-full bg-[#F6F4EE] py-6 sm:py-8 mb-6 print:pt-0 print:mt-0 print:pb-4 print:mb-4">
+                    <h1 className="text-center text-black font-extrabold text-3xl sm:text-4xl print:text-2xl">
+                        {title}
+                    </h1>
+                    <p className="mt-2 text-center text-black font-medium text-base sm:text-lg print:text-sm">
+                        {weekRangeLabel}
+                    </p>
+                </header>
 
-            {/* 1. Help Desk Management */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">1. Help Desk Management</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {(() => {
-                            const loading = weeklySummaryLoading;
-                            const err = weeklySummaryError;
-                            if (loading) {
-                                return (
-                                    <>
-                                        <StatCard value="…" label="Total Tickets" />
-                                        <StatCard value="…" label="Open Tickets" />
-                                        <StatCard value="…" label="Closed Tickets" />
-                                    </>
-                                );
-                            }
-                            if (err) {
-                                return (
-                                    <>
-                                        <StatCard value="-" label="Total Tickets" subLabel={err} />
-                                        <StatCard value="-" label="Open Tickets" />
-                                        <StatCard value="-" label="Closed Tickets" />
-                                    </>
-                                );
-                            }
-                            const total = weeklySummary?.total ?? 0;
-                            const totalPct = weeklySummary?.total_percentage;
-                            const open = weeklySummary?.open ?? 0;
-                            const openPct = weeklySummary?.open_percentage;
-                            const closed = weeklySummary?.closed ?? 0;
-                            const closedPct = weeklySummary?.closed_percentage;
-                            const fmtPct = (v?: number) => (v === 0 || v ? `(${Math.round(v)}%)` : undefined);
-                            return (
-                                <>
-                                    <StatCard value={total} percent={fmtPct(totalPct)} label="Total Tickets" />
-                                    <StatCard value={open} percent={fmtPct(openPct)} label="Open Tickets" />
-                                    <StatCard value={closed} percent={fmtPct(closedPct)} label="Closed Tickets" />
-                                </>
-                            );
-                        })()}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                        {(() => {
-                            const reactive = weeklySummary?.reactive ?? 0;
-                            const preventive = weeklySummary?.preventive ?? 0;
-                            if (weeklySummaryLoading) {
-                                return (<><StatCard value="…" label="Reactive Tickets" subLabel="(User Generated)" /><StatCard value="…" label="Preventive Tickets" subLabel="(Team Generated)" /></>);
-                            }
-                            if (weeklySummaryError) {
-                                return (<><StatCard value="-" label="Reactive Tickets" subLabel="(User Generated)" /><StatCard value="-" label="Preventive Tickets" subLabel="(Team Generated)" /></>);
-                            }
-                            return (<>
-                                <StatCard value={reactive} label="Reactive Tickets" subLabel="(User Generated)" />
-                                <StatCard value={preventive} label="Preventive Tickets" subLabel="(Team Generated)" />
-                            </>);
-                        })()}
-                    </div>
-                </div>
-            </section>
-
-            {/* 2. Priority Wise Tickets */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">2. Priority Wise Tickets</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
-                            <thead>
-                                <tr>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/2">Priority</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-1/2">Open Tickets</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {priorityLoading && (
-                                    <tr><td colSpan={2} className="p-4 print:p-2 text-center text-gray-500">Loading...</td></tr>
-                                )}
-                                {!priorityLoading && priorityError && (
-                                    <tr><td colSpan={2} className="p-4 print:p-2 text-center text-red-600">{priorityError}</td></tr>
-                                )}
-                                {!priorityLoading && !priorityError && (
-                                    <>
-                                        <tr className="border-b border-gray-200"><td className="p-4 print:p-2 text-black">High (P1)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.high : 0}</td></tr>
-                                        <tr className="border-b border-gray-200"><td className="p-4 print:p-2 text-black">Medium (P2, P3)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.medium : 0}</td></tr>
-                                        <tr><td className="p-4 print:p-2 text-black">Low (P4, P5)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.low : 0}</td></tr>
-                                    </>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            {/* 3. Category Wise Ticket (Top-5) */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">3. Category Wise Ticket (Top-5)</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full table-fixed border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
-                            <thead>
-                                <tr>
-                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left">Category</th>
-                                    <th colSpan={3} className="bg-[#ECE6DE] w-3/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
-                                </tr>
-                                <tr>
-                                    <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Count</th>
-                                    <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">% out of total</th>
-                                    <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">% inc./dec. from last week</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {topCatLoading && (
-                                    <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-gray-500">Loading...</td></tr>
-                                )}
-                                {!topCatLoading && topCatError && (
-                                    <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-red-600">{topCatError}</td></tr>
-                                )}
-                                {!topCatLoading && !topCatError && topCategories.length === 0 && (
-                                    <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-gray-500">No data</td></tr>
-                                )}
-                                {topCategories.map((row, i) => {
-                                    const arrowUp = (row.trend_icon || row.trend || '').toLowerCase().includes('up');
-                                    const arrowDown = (row.trend_icon || row.trend || '').toLowerCase().includes('down');
-                                    const arrowSymbol = arrowUp ? '▲' : arrowDown ? '▼' : '';
-                                    const arrowColor = arrowDown ? 'text-[#C72030]' : arrowUp ? 'text-green-600' : 'text-gray-400';
+                {/* 1. Help Desk Management */}
+                <section className={sectionBox}>
+                    <div className="px-1 sm:px-2">
+                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">1. Help Desk Management</h2>
+                        <div className="border-t border-dashed border-gray-300 my-3" />
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {(() => {
+                                const loading = weeklySummaryLoading;
+                                const err = weeklySummaryError;
+                                if (loading) {
                                     return (
-                                        <tr key={row.category_id} className={i !== topCategories.length - 1 ? 'border-b border-gray-200' : ''}>
-                                            <td className="p-4 print:p-2 text-black border-r border-gray-300 break-words whitespace-normal">{row.category_name}</td>
-                                            <td className="p-4 print:p-2 text-center text-black border-r border-gray-300">{String(row.current_week_count ?? 0).padStart(2, '0')}</td>
-                                            <td className="p-4 print:p-2 text-center text-black border-r border-gray-300">{(row.percentage_of_total ?? 0).toFixed(2)}%</td>
-                                            <td className="p-4 print:p-2 text-center text-black break-words whitespace-normal">
-                                                <span>{(row.percentage_change ?? 0).toFixed(2)}%</span>
-                                                {arrowSymbol && <span className={`ml-2 ${arrowColor}`}>{arrowSymbol}</span>}
-                                            </td>
-                                        </tr>
+                                        <>
+                                            <StatCard value="…" label="Total Tickets" />
+                                            <StatCard value="…" label="Open Tickets" />
+                                            <StatCard value="…" label="Closed Tickets" />
+                                        </>
                                     );
-                                })}
-                            </tbody>
-                        </table>
+                                }
+                                if (err) {
+                                    return (
+                                        <>
+                                            <StatCard value="-" label="Total Tickets" subLabel={err} />
+                                            <StatCard value="-" label="Open Tickets" />
+                                            <StatCard value="-" label="Closed Tickets" />
+                                        </>
+                                    );
+                                }
+                                const total = weeklySummary?.total ?? 0;
+                                const totalPct = weeklySummary?.total_percentage;
+                                const open = weeklySummary?.open ?? 0;
+                                const openPct = weeklySummary?.open_percentage;
+                                const closed = weeklySummary?.closed ?? 0;
+                                const closedPct = weeklySummary?.closed_percentage;
+                                const fmtPct = (v?: number) => (v === 0 || v ? `(${Math.round(v)}%)` : undefined);
+                                return (
+                                    <>
+                                        <StatCard value={total} percent={fmtPct(totalPct)} label="Total Tickets" />
+                                        <StatCard value={open} percent={fmtPct(openPct)} label="Open Tickets" />
+                                        <StatCard value={closed} percent={fmtPct(closedPct)} label="Closed Tickets" />
+                                    </>
+                                );
+                            })()}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                            {(() => {
+                                const reactive = weeklySummary?.reactive ?? 0;
+                                const preventive = weeklySummary?.preventive ?? 0;
+                                if (weeklySummaryLoading) {
+                                    return (<><StatCard value="…" label="Reactive Tickets" subLabel="(User Generated)" /><StatCard value="…" label="Preventive Tickets" subLabel="(Team Generated)" /></>);
+                                }
+                                if (weeklySummaryError) {
+                                    return (<><StatCard value="-" label="Reactive Tickets" subLabel="(User Generated)" /><StatCard value="-" label="Preventive Tickets" subLabel="(Team Generated)" /></>);
+                                }
+                                return (<>
+                                    <StatCard value={reactive} label="Reactive Tickets" subLabel="(User Generated)" />
+                                    <StatCard value={preventive} label="Preventive Tickets" subLabel="(Team Generated)" />
+                                </>);
+                            })()}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+
+                {/* 2. Priority Wise Tickets */}
+                <section className={sectionBox}>
+                    <div className="px-1 sm:px-2">
+                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">2. Priority Wise Tickets</h2>
+                        <div className="border-t border-dashed border-gray-300 my-3" />
+                        <div className="overflow-x-auto">
+                            <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+                                <thead>
+                                    <tr>
+                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/2">Priority</th>
+                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-1/2">Open Tickets</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {priorityLoading && (
+                                        <tr><td colSpan={2} className="p-4 print:p-2 text-center text-gray-500">Loading...</td></tr>
+                                    )}
+                                    {!priorityLoading && priorityError && (
+                                        <tr><td colSpan={2} className="p-4 print:p-2 text-center text-red-600">{priorityError}</td></tr>
+                                    )}
+                                    {!priorityLoading && !priorityError && (
+                                        <>
+                                            <tr className="border-b border-gray-200"><td className="p-4 print:p-2 text-black">High (P1)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.high : 0}</td></tr>
+                                            <tr className="border-b border-gray-200"><td className="p-4 print:p-2 text-black">Medium (P2, P3)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.medium : 0}</td></tr>
+                                            <tr><td className="p-4 print:p-2 text-black">Low (P4, P5)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.low : 0}</td></tr>
+                                        </>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 3. Category Wise Ticket (Top-5) */}
+                <section className={sectionBox}>
+                    <div className="px-1 sm:px-2">
+                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">3. Category Wise Ticket (Top-5)</h2>
+                        <div className="border-t border-dashed border-gray-300 my-3" />
+                        <div className="overflow-x-auto">
+                            <table className="w-full table-fixed border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+                                <thead>
+                                    <tr>
+                                        <th rowSpan={2} className="align-middle bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left">Category</th>
+                                        <th colSpan={3} className="bg-[#ECE6DE] w-3/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
+                                    </tr>
+                                    <tr>
+                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Count</th>
+                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">% out of total</th>
+                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">% inc./dec. from last week</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {topCatLoading && (
+                                        <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-gray-500">Loading...</td></tr>
+                                    )}
+                                    {!topCatLoading && topCatError && (
+                                        <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-red-600">{topCatError}</td></tr>
+                                    )}
+                                    {!topCatLoading && !topCatError && topCategories.length === 0 && (
+                                        <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-gray-500">No data</td></tr>
+                                    )}
+                                    {topCategories.map((row, i) => {
+                                        const arrowUp = (row.trend_icon || row.trend || '').toLowerCase().includes('up');
+                                        const arrowDown = (row.trend_icon || row.trend || '').toLowerCase().includes('down');
+                                        const arrowSymbol = arrowUp ? '▲' : arrowDown ? '▼' : '';
+                                        const arrowColor = arrowDown ? 'text-[#C72030]' : arrowUp ? 'text-green-600' : 'text-gray-400';
+                                        return (
+                                            <tr key={row.category_id} className={i !== topCategories.length - 1 ? 'border-b border-gray-200' : ''}>
+                                                <td className="p-4 print:p-2 text-black border-r border-gray-300 break-words whitespace-normal">{row.category_name}</td>
+                                                <td className="p-4 print:p-2 text-center text-black border-r border-gray-300">{String(row.current_week_count ?? 0).padStart(2, '0')}</td>
+                                                <td className="p-4 print:p-2 text-center text-black border-r border-gray-300">{(row.percentage_of_total ?? 0).toFixed(2)}%</td>
+                                                <td className="p-4 print:p-2 text-center text-black break-words whitespace-normal">
+                                                    <span>{(row.percentage_change ?? 0).toFixed(2)}%</span>
+                                                    {arrowSymbol && <span className={`ml-2 ${arrowColor}`}>{arrowSymbol}</span>}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
 
             {/* Tickets Ageing Matrix */}
             <section className={sectionBox}>
