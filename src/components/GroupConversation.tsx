@@ -5,6 +5,7 @@ import { fetchConversation, fetchConversationMessages, fetchGroupConversation, s
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
+import ChatTasks from "./ChatTasks";
 
 const GroupConversation = () => {
     const { id } = useParams();
@@ -47,13 +48,17 @@ const GroupConversation = () => {
     useEffect(() => {
         fetchData();
         fetchMessages();
-
-        const interval = setInterval(() => {
-            fetchMessages();
-        }, 5000);
-
-        return () => clearInterval(interval);
     }, [id]);
+
+    useEffect(() => {
+        if (activeTab === "chat") {
+            const interval = setInterval(() => {
+                fetchMessages();
+            }, 5000);
+
+            return () => clearInterval(interval);
+        }
+    }, [activeTab])
 
     const sendMessages = async (e) => {
         e.preventDefault();
@@ -136,7 +141,7 @@ const GroupConversation = () => {
 
             <div className="flex-1 overflow-y-auto p-6">
                 {activeTab === "chat" && id && <Chats messages={messages} />}
-                {activeTab === "task" && <>Tasks</>}
+                {activeTab === "task" && <ChatTasks />}
                 {activeTab === "shared" && <>Shared</>}
             </div>
 

@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
+import { useAppDispatch } from '@/store/hooks';
+import { toast } from 'sonner';
+import { fetchIndividualChatTasks } from '@/store/slices/channelSlice';
+import { useParams } from 'react-router-dom';
 
 const columns = [
     {
@@ -29,7 +33,26 @@ const columns = [
 ];
 
 const ChatTasks = () => {
+    const { id } = useParams();
+    const dispatch = useAppDispatch();
+    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem('baseUrl');
+
     const [tasks, setTasks] = useState([])
+
+    const getChatTasks = async () => {
+        try {
+            const response = await dispatch(fetchIndividualChatTasks({ baseUrl, token, id })).unwrap();
+            setTasks(response)
+        } catch (error) {
+            console.log(error)
+            toast.error(error)
+        }
+    }
+
+    useEffect(() => {
+        getChatTasks()
+    }, [])
 
     const renderCell = (item, columnKey) => {
         switch (columnKey) {

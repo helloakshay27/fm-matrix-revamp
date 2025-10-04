@@ -51,13 +51,17 @@ const DMConversation = () => {
     useEffect(() => {
         fetchData();
         fetchMessages();
-
-        const interval = setInterval(() => {
-            fetchMessages();
-        }, 5000);
-
-        return () => clearInterval(interval);
     }, [id]);
+
+    useEffect(() => {
+        if (activeTab === "chat") {
+            const interval = setInterval(() => {
+                fetchMessages();
+            }, 5000);
+
+            return () => clearInterval(interval);
+        }
+    }, [activeTab])
 
     const sendMessages = async (e) => {
         e.preventDefault();

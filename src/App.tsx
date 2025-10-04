@@ -743,6 +743,7 @@ import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
 import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
 import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
+import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1051,6 +1052,8 @@ function App() {
                     <Route path="/channels/groups/:id" element={<GroupConversation />} />
                   </Route>
                   <Route path="/channels/tasks" element={<ChannelTasksAll />} />
+                  <Route path="/channels/tasks/:id" element={<ChatTaskDetailsPage />} />
+
                   {/* Dashboard Routes */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route
