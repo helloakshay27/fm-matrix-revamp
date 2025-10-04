@@ -883,14 +883,7 @@ export const TaskSubmissionPage: React.FC = () => {
         case 2: // Preview
           return (
             <div className="space-y-6">
-              <div className="text-center py-4">
-                <Typography variant="h5" className="text-gray-900 font-bold">
-                  Task Preview
-                </Typography>
-                <Typography variant="body2" className="text-gray-600 mt-2">
-                  Review your work before submitting
-                </Typography>
-              </div>
+
 
               {/* Checklist Summary */}
               <Card className="border border-gray-200 shadow-sm">
@@ -905,12 +898,12 @@ export const TaskSubmissionPage: React.FC = () => {
                       </Typography>
                     </div>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="text-[#C72030] hover:text-[#B11E2A] hover:bg-red-50"
+                      className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-4 py-2 rounded-md"
                       onClick={() => handleEditStep(1)}
                     >
-                      <Edit className="w-4 h-4 mr-1" />
+                      <Edit className="w-4 h-4 mr-2" />
                       Edit
                     </Button>
                   </div>
@@ -1146,12 +1139,12 @@ export const TaskSubmissionPage: React.FC = () => {
                         </Typography>
                       </div>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="text-[#C72030] hover:text-[#B11E2A] hover:bg-red-50"
+                        className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-4 py-2 rounded-md"
                         onClick={() => handleEditStep(1)}
                       >
-                        <Edit className="w-4 h-4 mr-1" />
+                        <Edit className="w-4 h-4 mr-2" />
                         Edit
                       </Button>
                     </div>
@@ -1366,12 +1359,12 @@ export const TaskSubmissionPage: React.FC = () => {
                         </Typography>
                       </div>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="text-[#C72030] hover:text-[#B11E2A] hover:bg-red-50"
+                        className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-4 py-2 rounded-md"
                         onClick={() => handleEditStep(1)}
                       >
-                        <Edit className="w-4 h-4 mr-1" />
+                        <Edit className="w-4 h-4 mr-2" />
                         Edit
                       </Button>
                     </div>
@@ -1433,12 +1426,12 @@ export const TaskSubmissionPage: React.FC = () => {
                       </Typography>
                     </div>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="text-[#C72030] hover:text-[#B11E2A] hover:bg-red-50"
+                      className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-4 py-2 rounded-md"
                       onClick={() => handleEditStep(2)}
                     >
-                      <Edit className="w-4 h-4 mr-1" />
+                      <Edit className="w-4 h-4 mr-2" />
                       Edit
                     </Button>
                   </div>
@@ -1669,7 +1662,7 @@ export const TaskSubmissionPage: React.FC = () => {
         case 4: // Preview
           return (
             <div className="space-y-6">
-              <div className="text-center py-4">
+              <div className="text-center py-1">
                 <Typography variant="h5" className="text-gray-900 font-bold">
                   Task Preview
                 </Typography>
@@ -1703,12 +1696,12 @@ export const TaskSubmissionPage: React.FC = () => {
                           Before
                         </Typography>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="text-[#C72030] hover:text-[#B11E2A] hover:bg-red-50"
+                          className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-4 py-2 rounded-md"
                           onClick={() => handleEditStep(1)}
                         >
-                          <Edit className="w-4 h-4 mr-1" />
+                          <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </Button>
                       </div>
@@ -1749,12 +1742,12 @@ export const TaskSubmissionPage: React.FC = () => {
                           After
                         </Typography>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="text-[#C72030] hover:text-[#B11E2A] hover:bg-red-50"
+                          className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-4 py-2 rounded-md"
                           onClick={() => handleEditStep(3)}
                         >
-                          <Edit className="w-4 h-4 mr-1" />
+                          <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </Button>
                       </div>
@@ -1802,12 +1795,12 @@ export const TaskSubmissionPage: React.FC = () => {
                       </Typography>
                     </div>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="text-[#C72030] hover:text-[#B11E2A] hover:bg-red-50"
+                      className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-4 py-2 rounded-md"
                       onClick={() => handleEditStep(2)}
                     >
-                      <Edit className="w-4 h-4 mr-1" />
+                      <Edit className="w-4 h-4 mr-2" />
                       Edit
                     </Button>
                   </div>
@@ -1990,7 +1983,7 @@ export const TaskSubmissionPage: React.FC = () => {
              {renderStepContent()}
 
 
-      <div className="text-center mt-6">
+      <div className="text-center mt-6 mb-4">
         <Typography variant="body2" className="text-gray-600">
           You've completed {Math.max(...completedSteps, 0)} out of{" "}
           {steps.length} steps.
