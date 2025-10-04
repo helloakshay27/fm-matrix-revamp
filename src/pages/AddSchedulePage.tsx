@@ -231,6 +231,7 @@ export const AddSchedulePage = () => {
 
     // Schedule Setup
     checklistType: 'Individual',
+    checkInPhotograph: 'inactive', // 'active' or 'inactive'
     asset: [],
     service: [],
     assetGroup: '',
@@ -547,6 +548,7 @@ export const AddSchedulePage = () => {
         activityName: '',
         description: '',
         checklistType: 'Individual',
+        checkInPhotograph: 'inactive', // <-- Add this line
         asset: [],
         service: [],
         assetGroup: '',
@@ -2874,6 +2876,7 @@ export const AddSchedulePage = () => {
         submission_time_type: formData.submissionTime || "",
         submission_time_value: formData.submissionTimeValue || "",
         supplier_id: formData.supplier || "",
+        before_after_enabled: formData.checkInPhotograph === 'active',
         // Add attachments from basic configuration step
         attachments: attachments.map(attachment => ({
           filename: attachment.name,
@@ -3266,6 +3269,38 @@ export const AddSchedulePage = () => {
                 formData.scheduleFor === 'Asset' && (<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                   Checklist Type
                 </Typography>)}
+
+                {/* Right side - Check-in with before/after photograph */}
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+      Check-in with before/after photograph
+    </Typography>
+    <RadioGroup
+      row
+      value={formData.checkInPhotograph || 'inactive'}
+      onChange={(e) => setFormData({ ...formData, checkInPhotograph: e.target.value })}
+    >
+      <FormControlLabel
+        value="active"
+        control={
+          <Radio
+            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+            disabled={stepIndex < activeStep && editingStep !== stepIndex}
+          />
+        }
+        label="Active"
+      />
+      <FormControlLabel
+        value="inactive"
+        control={
+          <Radio
+            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+            disabled={stepIndex < activeStep && editingStep !== stepIndex}
+          />
+        }
+        label="Inactive"
+      />
+    </RadioGroup>
               {stepIndex < activeStep && (
                 <MuiButton
                   variant="outlined"
@@ -3948,6 +3983,7 @@ export const AddSchedulePage = () => {
                   }
                 />
               </Box>
+            </Box>
             </Box>
           </SectionCard>
         );
