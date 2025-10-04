@@ -1348,4 +1348,15 @@ export const ticketManagementAPI = {
       throw error;
     }
   },
+
+  // Fetch tickets by task occurrence ID
+  async getTicketsByTaskOccurrenceId(taskOccurrenceId: string): Promise<any> {
+    try {
+      const response = await apiClient.get(`/pms/admin/complaints.json?q[pms_asset_task_occurrence_id_eq]=${taskOccurrenceId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching tickets by task occurrence ID:', error);
+      throw error;
+    }
+  },
 };
