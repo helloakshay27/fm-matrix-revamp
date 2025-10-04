@@ -120,6 +120,8 @@ const UpdateTicketsPage: React.FC = () => {
     correction: "",
     selectedAsset: "",
     selectedService: "",
+    shortTermImpact: "",
+    longTermImpact: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,6 +146,13 @@ const UpdateTicketsPage: React.FC = () => {
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [reviewDate, setReviewDate] = useState<string>(""); // Changed to string for date input
   const [ticketApiData, setTicketApiData] = useState<any>(null); // Store original API data
+  const [communicationTemplates, setCommunicationTemplates] = useState<Array<{
+    id: number;
+    identifier: string;
+    identifier_action: string;
+    body: string;
+  }>>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [costApprovalRequests, setCostApprovalRequests] = useState<
     Array<{
       id: string;
@@ -770,16 +779,19 @@ const UpdateTicketsPage: React.FC = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [statusResponse, usersResponse, complaintModesResponse] =
+        const [statusResponse, usersResponse, complaintModesResponse, templatesResponse] =
           await Promise.all([
             apiClient.get("/pms/admin/complaint_statuses.json"),
             apiClient.get("/pms/users/get_escalate_to_users.json"),
             apiClient.get("/pms/admin/complaint_modes.json"),
+            apiClient.get(API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES),
           ]);
 
         setComplaintStatuses(statusResponse.data || []);
         setFmUsers(usersResponse.data.users || []);
         setComplaintModes(complaintModesResponse.data || []);
+        setCommunicationTemplates(Array.isArray(templatesResponse.data) ? templatesResponse.data : []);
+        console.log("📋 Communication templates loaded:", templatesResponse.data);
       } catch (error) {
         console.error("Error fetching data:", error);
         toast({
@@ -1199,8 +1211,9 @@ const UpdateTicketsPage: React.FC = () => {
         formData.mode || ""
       );
       formDataToSend.append("complaint[root_cause]", formData.rootCause || "");
-      formDataToSend.append("complaint[impact]", formData.impact || "");
+      formDataToSend.append("complaint[short_term_impact]", formData.impact || "");
       formDataToSend.append("complaint[correction]", formData.correction || "");
+      formDataToSend.append("complaint[impact]", formData.longTermImpact || "");
       formDataToSend.append(
         "complaint[reference_number]",
         formData.refNumber || ""
@@ -1463,22 +1476,30 @@ const UpdateTicketsPage: React.FC = () => {
 
                   {/* Preventive Action */}
                   <div className="space-y-1">
-                    <TextField
-                      label="Preventive Action"
-                      placeholder="Enter preventive action"
-                      value={formData.preventiveAction}
-                      onChange={(e) => handleInputChange("preventiveAction", e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      slotProps={{
-                        inputLabel: {
-                          shrink: true,
-                        },
-                      }}
-                      InputProps={{
-                        sx: fieldStyles,
-                      }}
-                    />
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Preventive Action</InputLabel>
+                      <MuiSelect
+                        value={formData.preventiveAction}
+                        onChange={(e) => handleInputChange("preventiveAction", e.target.value)}
+                        label="Preventive Action"
+                        notched
+                        displayEmpty
+                        disabled={loadingTemplates}
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">
+                            {loadingTemplates ? 'Loading templates...' : 'Select preventive action'}
+                          </span>
+                        </MenuItem>
+                        {communicationTemplates
+                          .filter(template => template.identifier === "Preventive Action")
+                          .map((template) => (
+                            <MenuItem key={template.id} value={template.identifier_action}>
+                              {template.identifier_action}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
                   {/* Status */}
@@ -1790,42 +1811,62 @@ const UpdateTicketsPage: React.FC = () => {
 
                   {/* Root Cause */}
                   <div className="space-y-1">
-                    <TextField
-                      label="Root Cause"
-                      placeholder="Enter root cause"
-                      value={formData.rootCause}
-                      onChange={(e) => handleInputChange("rootCause", e.target.value)}
+                    <FormControl
                       fullWidth
                       variant="outlined"
-                      slotProps={{
-                        inputLabel: {
-                          shrink: true,
-                        },
-                      }}
-                      InputProps={{
-                        sx: fieldStyles,
-                      }}
-                    />
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Root Cause</InputLabel>
+                      <MuiSelect
+                        value={formData.rootCause}
+                        onChange={(e) => handleInputChange("rootCause", e.target.value)}
+                        label="Root Cause"
+                        notched
+                        displayEmpty
+                        disabled={loadingTemplates}
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">
+                            {loadingTemplates ? 'Loading templates...' : 'Select root cause'}
+                          </span>
+                        </MenuItem>
+                        {communicationTemplates
+                          .filter(template => template.identifier === "Root Cause Analysis")
+                          .map((template) => (
+                            <MenuItem key={template.id} value={template.identifier_action}>
+                              {template.identifier_action}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
-                  {/* Impact */}
+                  {/* Short-term Impact */}
                   <div className="space-y-1">
-                    <TextField
-                      label="Impact"
-                      placeholder="Enter impact"
-                      value={formData.impact}
-                      onChange={(e) => handleInputChange("impact", e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      slotProps={{
-                        inputLabel: {
-                          shrink: true,
-                        },
-                      }}
-                      InputProps={{
-                        sx: fieldStyles,
-                      }}
-                    />
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Short-term Impact</InputLabel>
+                      <MuiSelect
+                        value={formData.impact}
+                        onChange={(e) => handleInputChange("impact", e.target.value)}
+                        label="Short-term Impact"
+                        notched
+                        displayEmpty
+                        disabled={loadingTemplates}
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">
+                            {loadingTemplates ? 'Loading templates...' : 'Select short-term impact'}
+                          </span>
+                        </MenuItem>
+                        {communicationTemplates
+                          .filter(template => template.identifier === "Short-term Impact")
+                          .map((template) => (
+                            <MenuItem key={template.id} value={template.identifier_action}>
+                              {template.identifier_action}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
                   {/* Correction */}
@@ -1848,6 +1889,34 @@ const UpdateTicketsPage: React.FC = () => {
                     />
                   </div>
 
+                  {/* Long-term Impact */}
+                  <div className="space-y-1">
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Long-term Impact</InputLabel>
+                      <MuiSelect
+                        value={formData.longTermImpact}
+                        onChange={(e) => handleInputChange("longTermImpact", e.target.value)}
+                        label="Long-term Impact"
+                        notched
+                        displayEmpty
+                        disabled={loadingTemplates}
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">
+                            {loadingTemplates ? 'Loading templates...' : 'Select long-term impact'}
+                          </span>
+                        </MenuItem>
+                        {communicationTemplates
+                          .filter(template => template.identifier === "Long-term Impact")
+                          .map((template) => (
+                            <MenuItem key={template.id} value={template.identifier_action}>
+                              {template.identifier_action}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
                    <div className="space-y-1">
                 <TextField
                   label="Reference Number"
@@ -1867,22 +1936,30 @@ const UpdateTicketsPage: React.FC = () => {
                 />
               </div>
                <div className="space-y-1">
-                <TextField
-                  label="Corrective Action"
-                  placeholder="Enter corrective action"
-                  value={formData.correctiveAction}
-                  onChange={(e) => handleInputChange("correctiveAction", e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Corrective Action</InputLabel>
+                  <MuiSelect
+                    value={formData.correctiveAction}
+                    onChange={(e) => handleInputChange("correctiveAction", e.target.value)}
+                    label="Corrective Action"
+                    notched
+                    displayEmpty
+                    disabled={loadingTemplates}
+                  >
+                    <MenuItem value="">
+                      <span className="text-gray-500">
+                        {loadingTemplates ? 'Loading templates...' : 'Select corrective action'}
+                      </span>
+                    </MenuItem>
+                    {communicationTemplates
+                      .filter(template => template.identifier === "Corrective Action")
+                      .map((template) => (
+                        <MenuItem key={template.id} value={template.identifier_action}>
+                          {template.identifier_action}
+                        </MenuItem>
+                      ))}
+                  </MuiSelect>
+                </FormControl>
               </div>
                 <div className="space-y-1">
                 <FormControl

@@ -174,7 +174,7 @@ export const API_CONFIG = {
     TICKET_UNIT_CATEGORYWISE_DOWNLOAD: '/pms/admin/complaints/chart_unit_categorywise_downloads.json',
     TICKET_RESOLUTION_TAT_DOWNLOAD: '/pms/admin/complaints/chart_resolution_tat_downloads.json',
     TICKET_RESPONSE_TAT_DOWNLOAD: '/pms/admin/complaints/chart_response_tat_downloads.json',
-    COST_APPROVALS_CREATE: '/pms/create_muliple_cost_Approvals.json',
+    COST_APPROVALS_CREATE: '/pms/create_cost_approvals_for_complaint.json',
     SURVEY_RESPONSES: '/survey_mapping_responses/all_responses.json',
     SURVEY_DETAILS: '/pms/admin/snag_checklists/survey_details.json',
     SUPPORT_STAFF_CATEGORIES: '/pms/admin/support_staff_categories.json',
@@ -245,6 +245,7 @@ export const API_CONFIG = {
     // Visitor history export endpoint
     VISITOR_HISTORY_EXPORT: '/pms/admin/visitors/visitors_history.xlsx',
     ASSET_TYPES: '/pms/custom_forms/get_asset_type',
+    COMMUNICATION_TEMPLATES: '/communication_templates.json',
   },
 } as const
 

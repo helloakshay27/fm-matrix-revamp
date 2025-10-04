@@ -75,6 +75,7 @@ import {
   Trash,
   ChartColumnIncreasing,
 } from "lucide-react";
+import { template } from "lodash";
 
 const navigationStructure = {
   Settings: {
@@ -399,6 +400,11 @@ const modulesByPackage = {
       name: "Inventory Type",
       icon: Package,
       href: "/master/inventory-type",
+    },
+    {
+      name: "Communication Template",
+      icon: FileSpreadsheet,
+      href: "/master/communication-template",
     },
     // {
     //   name: 'Inventory Sub Type',
@@ -914,6 +920,22 @@ const modulesByPackage = {
       name: "Redemption Marketplace",
       icon: Globe,
       href: "/vas/redemonection-marketplace",
+    },
+    {
+      name: "Collaboration",
+      icon: Globe,
+      subItems: [
+        {
+          name: "Channels",
+          href: "/vas/channels",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Tasks",
+          href: "/vas/channels/tasks",
+          color: "text-[#1a1a1a]",
+        },
+      ]
     }
   ],
   "Market Place": [

@@ -6,6 +6,17 @@ export interface TaskOccurrence {
   start_date: string;
   created_at: string;
   updated_at: string;
+  steps?: number; // Number of steps for the task workflow
+  checklist?: string; // Task checklist name
+  asset?: string; // Asset code
+  asset_id?: number; // Asset ID
+  asset_code?: string; // Asset code
+  assigned_to_name?: string; // Assigned user names
+  asset_path?: string; // Asset location path
+  checklist_questions?: any[]; // Direct checklist questions from API
+  grouped_questions?: any[]; // Grouped questions from API
+  bef_sub_attachment?: string | null; // Before submission attachment
+  aft_sub_attachment?: string | null; // After submission attachment
   task_details: {
     id: number;
     task_name: string;
@@ -53,6 +64,29 @@ export interface TaskOccurrence {
         value: string;
         type?: string;
       }>;
+    }>;
+    resp?: Array<{
+      label: string;
+      name: string;
+      className: string;
+      group_id: string;
+      sub_group_id: string;
+      type: string;
+      subtype: string;
+      required: string;
+      is_reading: string;
+      hint: string;
+      values: Array<{
+        label: string;
+        type: string;
+        value: string;
+      }>;
+      weightage: string;
+      rating_enabled: string;
+      question_hint_image_ids: any[];
+      userData: string[];
+      comment: string;
+      rating: string;
     }>;
   };
   attachments: {
@@ -152,6 +186,16 @@ export const taskService = {
       return response.data.task_occurrence;
     } catch (error) {
       console.error('Error fetching task details:', error);
+      throw error;
+    }
+  },
+
+  async getTaskSubmissionDetails(id: string): Promise<any> {
+    try {
+      const response = await apiClient.get(`/pms/asset_task_occurrences/${id}.json?require_grouping=true`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching task submission details:', error);
       throw error;
     }
   },
@@ -280,4 +324,43 @@ updateTaskComments: async (id: string, comments: string) => {
   }
 },
 
+// Submit task with checklist responses
+submitTaskResponse: async (submissionData: {
+  response_of_id: string;
+  response_of: string;
+  occurrence_of: string;
+  occurrence_of_id: string;
+  offlinemobile: string;
+  first_name: string;
+  asset_quest_response: {
+    occurrence_of: string;
+    occurrence_of_id: string;
+    response_of: string;
+    response_of_id: string;
+    first_name: string;
+  };
+  data: Array<{
+    qname: string;
+    comment: string;
+    value: string[];
+    rating: string;
+    attachments: string[];
+  }>;
+  attachments: string[];
+  bef_sub_attachment: string;
+  aft_sub_attachment: string;
+  mobile_submit: string;
+  token: string;
+}) => {
+  try {
+    // The payload is already formatted correctly by TaskSubmissionPage
+    console.log('Submitting task response:', submissionData);
+
+    const response = await apiClient.post('/pms/asset_quest_responses.json', submissionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting task response:', error);
+    throw new Error('Failed to submit task response');
+  }
+},
 };

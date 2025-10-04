@@ -990,6 +990,119 @@ export const AddPermitPage = () => {
     }));
   };
 
+  // const handleSubmit = async () => {
+  //   if (isSubmitting) return; // Prevent double submission
+
+  //   try {
+  //     setIsSubmitting(true);
+
+  //     // Validate required fields
+  //     if (!permitData.permitFor.trim()) {
+  //       toast.error('Please enter permit for field');
+  //       return;
+  //     }
+  //     if (!permitData.building) {
+  //       toast.error('Please select building');
+  //       return;
+  //     }
+  //     if (!permitData.permitType) {
+  //       toast.error('Please select permit type');
+  //       return;
+  //     }
+  //     if (activities.length === 0 || !activities[0].activity) {
+  //       toast.error('Please add at least one activity');
+  //       return;
+  //     }
+
+  //     const formData = new FormData();
+
+  //     // Basic permit data
+  //     formData.append('pms_permit[permit_for]', permitData.permitFor);
+  //     formData.append('pms_permit[building_id]', permitData.building);
+  //     if (permitData.wing) formData.append('pms_permit[wing_id]', permitData.wing);
+  //     if (permitData.area) formData.append('pms_permit[area_id]', permitData.area);
+  //     if (permitData.floor) formData.append('pms_permit[floor_id]', permitData.floor);
+  //     if (permitData.room) formData.append('pms_permit[room_id]', permitData.room);
+  //     formData.append('pms_permit[client_specific]', permitData.clientSpecific);
+  //     formData.append('pms_permit[comment]', permitData.comment ?? '');
+
+  //     // Entity ID - take first selected entity if multiple
+  //     if (permitData.listOfEntity.length > 0) {
+  //       formData.append('pms_permit[entity_id]', permitData.listOfEntity[0]);
+  //     }
+
+  //     // Copy To (intimate_to) - multiple values
+  //     permitData.copyTo.forEach(userId => {
+  //       formData.append('pms_permit[intimate_to][]', userId);
+  //     });
+
+  //     formData.append('pms_permit[permit_type_id]', permitData.permitType);
+
+  //     // Vendor ID
+  //     if (permitData.vendor) {
+  //       formData.append('pms_permit[vendor_id]', permitData.vendor);
+  //     }
+
+  //     // Permit details (activities) with nested attributes
+  //     activities.forEach((activity, index) => {
+  //       if (activity.activity && activity.subActivity && activity.categoryOfHazards) {
+  //         formData.append(`pms_permit[permit_details_attributes][${index}][_destroy]`, 'false');
+  //         formData.append(`pms_permit[permit_details_attributes][${index}][permit_activity_id]`, activity.activity);
+  //         formData.append(`pms_permit[permit_details_attributes][${index}][permit_sub_activity_id]`, activity.subActivity);
+  //         formData.append(`pms_permit[permit_details_attributes][${index}][permit_hazard_category_id]`, activity.categoryOfHazards);
+
+  //         // Add selected risks for this activity
+  //         activity.selectedRisks.forEach((riskId, riskIndex) => {
+  //           formData.append(`pms_permit[permit_details_attributes][${index}][permit_risks_attributes][${riskIndex}][permit_risk_id]`, riskId);
+  //         });
+  //       }
+  //     });
+
+  //     // Attachments
+  //     if (permitData.attachments) {
+  //       formData.append('attachments[]', permitData.attachments);
+  //     }
+
+  //     // Get API URL and token from localStorage
+  //     const baseUrl = localStorage.getItem('baseUrl') || '';
+  //     const token = localStorage.getItem('token') || '';
+
+  //     let fullBaseUrl = baseUrl;
+  //     if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+  //       fullBaseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+  //     }
+
+  //     const url = `${fullBaseUrl}/pms/permits.json`;
+
+  //     const response = await fetch(url, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`
+  //         // Note: Don't set Content-Type for FormData, let browser set it with boundary
+  //       },
+  //       body: formData
+  //     });
+
+  //     if (!response.ok) {
+  //       const errorData = await response.text();
+  //       console.error('API Error:', errorData);
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
+
+  //     const responseData = await response.json();
+  //     console.log('Permit created successfully:', responseData);
+
+  //     toast.success(`Permit created successfully! Reference Number: ${responseData.permit?.reference_number || 'N/A'}`);
+  //     navigate('/safety/permit');
+
+  //   } catch (error) {
+  //     console.error('Error creating permit:', error);
+  //     toast.error('Failed to create permit. Please try again.');
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
   const handleSubmit = async () => {
     if (isSubmitting) return; // Prevent double submission
 
@@ -1011,6 +1124,27 @@ export const AddPermitPage = () => {
       }
       if (activities.length === 0 || !activities[0].activity) {
         toast.error('Please add at least one activity');
+        return;
+      }
+
+      // Validate first activity details (mandatory: sub activity, category of hazards, risks)
+      const firstActivity = activities[0];
+      if (!firstActivity.subActivity) {
+        toast.error('Please select sub activity for Activity 1');
+        return;
+      }
+      if (!firstActivity.categoryOfHazards) {
+        toast.error('Please select category of hazards for Activity 1');
+        return;
+      }
+      if (firstActivity.selectedRisks.length === 0) {
+        toast.error('Please select at least one risk for Activity 1');
+        return;
+      }
+
+      // Validate vendor (mandatory)
+      if (!permitData.vendor) {
+        toast.error('Please select vendor');
         return;
       }
 
@@ -1129,21 +1263,21 @@ export const AddPermitPage = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Name</label>
+                <label className="text-sm font-medium text-gray-700">Name<span style={{ color: '#C72030' }}>*</span></label>
                 <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
                   {permitData.name || 'N/A'}
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Contact Number</label>
+                <label className="text-sm font-medium text-gray-700">Contact Number<span style={{ color: '#C72030' }}>*</span></label>
                 <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
                   {permitData.contactNumber || 'N/A'}
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Department</label>
+                <label className="text-sm font-medium text-gray-700">Department<span style={{ color: '#C72030' }}>*</span></label>
                 <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
                   {permitData.department || 'N/A'}
                 </div>
@@ -1182,18 +1316,21 @@ export const AddPermitPage = () => {
         <CardContent className="p-6 bg-white">
           <div className="space-y-6">
             <TextField
-              label="Permit For*"
+              label={<>Permit For <span style={{ color: '#C72030', fontWeight: 600 }}>*</span></>}
               value={permitData.permitFor}
               onChange={(e) => handleInputChange('permitFor', e.target.value)}
               fullWidth
               variant="outlined"
               sx={fieldStyles}
               size="small"
+
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel id="building-select-label" shrink>Building*</InputLabel>
+                <InputLabel id="building-select-label" shrink>Building
+                  <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
+                </InputLabel>
                 <MuiSelect
                   labelId="building-select-label"
                   label="Building*"
@@ -1497,7 +1634,8 @@ export const AddPermitPage = () => {
         <CardContent className="p-6 bg-white">
           <div className="space-y-8">
             <div>
-              <label className="block text-sm font-medium mb-3 text-gray-700">Select Permit Type*</label>
+              <label className="block text-sm font-medium mb-3 text-gray-700">Select Permit Type    <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
+              </label>
               {loadingPermitTypes ? (
                 <div className="flex items-center justify-center py-8 border border-gray-200 rounded-lg bg-gray-50">
                   <div className="text-center text-gray-600">Loading permit types...</div>
@@ -1546,7 +1684,7 @@ export const AddPermitPage = () => {
 
             {/* Enter Permit Description */}
             <div>
-              <label className="block text-sm font-medium mb-3 text-gray-700">Enter Permit Description*</label>
+              <label className="block text-sm font-medium mb-3 text-gray-700">Enter Permit DescriptionEnter Permit Description <span style={{ color: '#C72030', fontWeight: 600 }}>*</span></label>
             </div>
 
             {/* Dynamic Activities */}
@@ -1568,7 +1706,11 @@ export const AddPermitPage = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Activity*</InputLabel>
+                    {/* <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Activity*</InputLabel> */}
+                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
+                      Activity
+                      <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
+                    </InputLabel>
                     <MuiSelect
                       label="Activity*"
                       value={activity.activity}
@@ -1597,7 +1739,12 @@ export const AddPermitPage = () => {
                   </FormControl>
 
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Sub Activity*</InputLabel>
+                    {/* <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Sub Activity*</InputLabel>
+                     */}
+                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
+                      Sub Activity
+                      <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
+                    </InputLabel>
                     <MuiSelect
                       label="Sub Activity*"
                       value={activity.subActivity}
@@ -1626,7 +1773,12 @@ export const AddPermitPage = () => {
                   </FormControl>
 
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Category of Hazards*</InputLabel>
+                    {/* <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Category of Hazards*</InputLabel> */}
+                    <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
+                      Category of Hazards
+                      <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
+                    </InputLabel>
+
                     <MuiSelect
                       label="Category of Hazards*"
                       value={activity.categoryOfHazards}
@@ -1658,7 +1810,11 @@ export const AddPermitPage = () => {
                 {/* Risks Section */}
                 {activity.categoryOfHazards && (
                   <div className="mt-6">
-                    <h5 className="text-sm font-medium text-gray-700 mb-3">Risks*</h5>
+                    <h5 className="text-sm font-medium text-gray-700 mb-3">
+                      Risks
+                      <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
+                    </h5>
+
                     {loadingPermitRisks ? (
                       <div className="flex items-center justify-center py-4 border border-gray-200 rounded-lg bg-gray-50">
                         <div className="text-center text-gray-600">Loading risks...</div>
@@ -1715,7 +1871,12 @@ export const AddPermitPage = () => {
             </Button>
 
             <FormControl fullWidth variant="outlined">
-              <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Vendor</InputLabel>
+              {/* <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Vendor</InputLabel> */}
+              <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>
+                Vendor
+                <span style={{ color: '#C72030', fontWeight: 600 }}>*</span>
+              </InputLabel>
+
               <MuiSelect
                 label="Vendor"
                 value={permitData.vendor}
