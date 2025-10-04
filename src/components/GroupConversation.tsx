@@ -146,10 +146,10 @@ const GroupConversation = () => {
                     </div>
                 </div>
 
-                <button className="text-sm flex items-center space-x-1">
+                {/* <button className="text-sm flex items-center space-x-1">
                     <span className="text-xl text-black">&larr;</span>
                     <span className="text-[#C72030]">Back</span>
-                </button>
+                </button> */}
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
