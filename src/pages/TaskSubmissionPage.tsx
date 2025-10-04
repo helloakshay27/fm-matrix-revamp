@@ -1868,7 +1868,7 @@ export const TaskSubmissionPage: React.FC = () => {
         <div className="relative max-w-4xl mx-auto">
           {/* Continuous Dotted Line Background */}
           <div
-            className="absolute top-6 left-0 right-0 h-0.5"
+            className="absolute top-8 left-0 right-0 h-0.5"
             style={{
               backgroundImage:
                 "repeating-linear-gradient(to right, #9CA3AF 0, #9CA3AF 6px, transparent 6px, transparent 12px)",
@@ -1889,14 +1889,22 @@ export const TaskSubmissionPage: React.FC = () => {
                 onClick={() => handleStepClick(step.id)}
               >
                 {/* Step Header Bar */}
-                <div
+
+                   <div
                   className={`
-                  px-6 py-3 rounded text-white font-semibold text-sm mb-4 relative z-5 transition-colors whitespace-nowrap
-                  ${step.active ? "bg-[#C72030]" : "bg-gray-400"}
+                  p-2 rounded text-white font-semibold bg-white
                 `}
                 >
-                  {step.id}. {step.title}
+                  <div
+                    className={`
+                    px-6 py-3 rounded text-white font-semibold text-sm  relative z-5 transition-colors whitespace-nowrap
+                    ${step.active ? "bg-[#C72030]" : "bg-gray-400"}
+                  `}
+                  >
+                    {step.id}. {step.title}
+                  </div>
                 </div>
+
               </div>
             ))}
           </div>
