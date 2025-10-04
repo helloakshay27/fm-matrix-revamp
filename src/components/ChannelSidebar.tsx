@@ -113,7 +113,7 @@ const ChannelSidebar = () => {
                                     }`}
                                 key={conversation.id}
                                 onClick={() =>
-                                    navigate(`/channels/messages/${conversation.id}`)
+                                    navigate(`/vas/channels/messages/${conversation.id}`)
                                 }
                             >
                                 {JSON.parse(localStorage.getItem("user"))?.id ===
@@ -149,7 +149,7 @@ const ChannelSidebar = () => {
                                     }`}
                                 key={group.id}
                                 onClick={() =>
-                                    navigate(`/channels/groups/${group.id}`)
+                                    navigate(`/vas/channels/groups/${group.id}`)
                                 }
                             >
                                 {group.name}

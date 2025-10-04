@@ -920,6 +920,22 @@ const modulesByPackage = {
       name: "Redemption Marketplace",
       icon: Globe,
       href: "/vas/redemonection-marketplace",
+    },
+    {
+      name: "Collaboration",
+      icon: Globe,
+      subItems: [
+        {
+          name: "Channels",
+          href: "/vas/channels",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Tasks",
+          href: "/vas/channels/tasks",
+          color: "text-[#1a1a1a]",
+        },
+      ]
     }
   ],
   "Market Place": [

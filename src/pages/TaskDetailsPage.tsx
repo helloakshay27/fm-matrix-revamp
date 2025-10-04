@@ -503,39 +503,95 @@ export const TaskDetailsPage = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              {(taskDetails?.actions?.can_view_job_sheet || taskDetails?.task_details?.status?.value?.toLowerCase() === 'closed') && (
-                <>
-                  {/* <Button
-                    onClick={handleJobSheetClick}
-                    className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-                  >
-                    View Job Sheet
-                  </Button> */}
-                  <Button
-                    onClick={handleJobSheetModalClick}
-                    variant="outline"
-                    className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
-                  >
-                    Job Sheet 
-                  </Button>
-                </>
-              )}
-              {taskDetails?.actions?.can_submit_task && (
-                <Button
-                  onClick={handleSubmitTask}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-                >
-                  Submit Task
-                </Button>
-              )}
-              {taskDetails?.actions?.can_reschedule && (
-                <Button
-                  onClick={handleTaskReschedule}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-                >
-                  Task Reschedule
-                </Button>
-              )}
+              {(() => {
+                const status = taskDetails?.task_details?.status?.value?.toLowerCase();
+                
+                // If status is open, in progress, scheduled, or work in progress - show Task Reschedule and Submit Task
+                if (['open', 'in progress', 'scheduled', 'work in progress', 'inprogress', 'workinprogress'].includes(status)) {
+                  return (
+                    <>
+                      {(taskDetails?.actions?.can_reschedule || taskDetails?.actions?.can_edit) && (
+                        <Button
+                          onClick={handleTaskReschedule}
+                          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        >
+                          Task Reschedule
+                        </Button>
+                      )}
+                      {(taskDetails?.actions?.can_submit_task || taskDetails?.actions?.can_edit) && (
+                        <Button
+                          onClick={handleSubmitTask}
+                          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        >
+                          Submit Task
+                        </Button>
+                      )}
+                    </>
+                  );
+                }
+                
+                // If status is closed - show Job Sheet
+                else if (['closed', 'completed'].includes(status)) {
+                  return (
+                    <>
+                      {(taskDetails?.actions?.can_view_job_sheet || ['closed', 'completed'].includes(status)) && (
+                        <Button
+                          onClick={handleJobSheetModalClick}
+                          variant="outline"
+                          className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                        >
+                          Job Sheet 
+                        </Button>
+                      )}
+                    </>
+                  );
+                }
+                
+                // If status is overdue - show Submit Task (even if can_submit_task is false, show for overdue)
+                else if (['overdue'].includes(status)) {
+                  return (
+                    <>
+                      <Button
+                        onClick={handleSubmitTask}
+                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                      >
+                        Submit Task
+                      </Button>
+                    </>
+                  );
+                }
+                
+                // Default case - show all buttons if conditions are met
+                return (
+                  <>
+                    {(taskDetails?.actions?.can_view_job_sheet || ['closed', 'completed'].includes(status)) && (
+                      <Button
+                        onClick={handleJobSheetModalClick}
+                        variant="outline"
+                        className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                      >
+                        Job Sheet 
+                      </Button>
+                    )}
+                    {taskDetails?.actions?.can_submit_task && (
+                      <Button
+                        onClick={handleSubmitTask}
+                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                      >
+                        Submit Task
+                      </Button>
+                    )}
+                    {taskDetails?.actions?.can_reschedule && (
+                      <Button
+                        onClick={handleTaskReschedule}
+                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                      >
+                        Task Reschedule
+                      </Button>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
