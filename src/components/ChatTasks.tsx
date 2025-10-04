@@ -1,42 +1,35 @@
+import { useState } from 'react';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
 
-const ChatTasks = () => {
-    const initialData = [
-        {
-            id: '1',
-            title: 'Please complete that today',
-            responsible: 'Unassigned',
-            duration: 'Enter Duration',
-            endDate: 'Unassigned',
-        },
-    ];
+const columns = [
+    {
+        key: 'title',
+        label: 'Task Title',
+        sortable: true,
+        defaultVisible: true,
+    },
+    {
+        key: 'responsible',
+        label: 'Responsible Person',
+        sortable: true,
+        defaultVisible: true,
+    },
+    {
+        key: 'duration',
+        label: 'Duration',
+        sortable: true,
+        defaultVisible: true,
+    },
+    {
+        key: 'endDate',
+        label: 'End Date',
+        sortable: true,
+        defaultVisible: true,
+    },
+];
 
-    const columns = [
-        {
-            key: 'title',
-            label: 'Task Title',
-            sortable: true,
-            defaultVisible: true,
-        },
-        {
-            key: 'responsible',
-            label: 'Responsible Person',
-            sortable: true,
-            defaultVisible: true,
-        },
-        {
-            key: 'duration',
-            label: 'Duration',
-            sortable: true,
-            defaultVisible: true,
-        },
-        {
-            key: 'endDate',
-            label: 'End Date',
-            sortable: true,
-            defaultVisible: true,
-        },
-    ];
+const ChatTasks = () => {
+    const [tasks, setTasks] = useState([])
 
     const renderCell = (item, columnKey) => {
         switch (columnKey) {
@@ -57,20 +50,17 @@ const ChatTasks = () => {
     };
 
     return (
-        <div className="w-full">
-            <EnhancedTable
-                data={initialData}
-                columns={columns}
-                renderCell={renderCell}
-                storageKey="chat-tasks-table"
-                className="w-full border-separate border-spacing-0"
-                emptyMessage="No tasks available"
-                pagination={true}
-                pageSize={10}
-                hideTableSearch={true}
-                hideColumnsButton={true}
-            />
-        </div>
+        <EnhancedTable
+            data={tasks}
+            columns={columns}
+            renderCell={renderCell}
+            storageKey="chat-tasks-table"
+            emptyMessage="No tasks available"
+            pagination={true}
+            pageSize={10}
+            hideTableSearch={true}
+            hideColumnsButton={true}
+        />
     );
 };
 

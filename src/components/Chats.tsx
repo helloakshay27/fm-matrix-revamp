@@ -18,9 +18,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { ClipboardPlus, X } from "lucide-react";
 import CreateChatTask from "./CreateChatTask";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
+import { createChatTask } from "@/store/slices/channelSlice";
+import { useParams } from "react-router-dom";
 
-const Chats = ({ messages, onCreateTask }) => {
+const Chats = ({ messages }) => {
+    const { id } = useParams()
+    const dispatch = useAppDispatch();
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+
     const bottomRef = useRef(null);
+
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [openTaskModal, setOpenTaskModal] = useState(false);
 
@@ -29,6 +39,17 @@ const Chats = ({ messages, onCreateTask }) => {
             bottomRef.current.scrollIntoView({ behavior: "smooth" });
         }
     }, [messages]);
+
+    const handleCreateTask = async (payload) => {
+        try {
+            await dispatch(createChatTask({ baseUrl, token, data: payload })).unwrap();
+            toast.success("Chat task created successfully");
+            setOpenTaskModal(false);
+        } catch (error) {
+            console.log(error)
+            toast.error(error)
+        }
+    };
 
     return (
         <div className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)]">
@@ -127,8 +148,9 @@ const Chats = ({ messages, onCreateTask }) => {
             <CreateChatTask
                 openTaskModal={openTaskModal}
                 setOpenTaskModal={setOpenTaskModal}
-                onCreateTask={onCreateTask}
+                onCreateTask={handleCreateTask}
                 message={selectedMessage}
+                id={id}
             />
 
             <div ref={bottomRef} className="h-0" />

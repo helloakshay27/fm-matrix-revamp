@@ -138,6 +138,40 @@ export const fetchGroupConversation = createAsyncThunk(
     }
 )
 
+export const createChatTask = createAsyncThunk(
+    "createChatTask",
+    async ({ baseUrl, token, data }: { baseUrl: string, token: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(`https://${baseUrl}/task_managements.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create chat task'
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const fetchIndividualChatTasks = createAsyncThunk(
+    "fetchIndividualChatTasks",
+    async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/task_managements.json?q[conversation_id_eq]=${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to get individual chat tasks'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const fetchConversationSlice = createApiSlice("fetchConversation", fetchConversation)
 const createConversationSlice = createApiSlice("createConversation", createConversation)
 const fetchConversationsSlice = createApiSlice("fetchConversations", fetchConversations)
@@ -146,6 +180,7 @@ const sendMessageSlice = createApiSlice("sendMessage", sendMessage)
 const fetchGroupsSlice = createApiSlice("fetchGroups", fetchGroups)
 const createGroupSlice = createApiSlice("createGroup", createGroup)
 const fetchGroupConversationSlice = createApiSlice("fetchGroupConversation", fetchGroupConversation)
+const createChatTaskSlice = createApiSlice("createChatTask", createChatTask)
 
 export const fetchConversationReducer = fetchConversationSlice.reducer
 export const createConversationReducer = createConversationSlice.reducer
@@ -155,3 +190,4 @@ export const sendMessageReducer = sendMessageSlice.reducer
 export const fetchGroupsReducer = fetchGroupsSlice.reducer
 export const createGroupReducer = createGroupSlice.reducer
 export const fetchGroupConversationReducer = fetchGroupConversationSlice.reducer
+export const createChatTaskReducer = createChatTaskSlice.reducer

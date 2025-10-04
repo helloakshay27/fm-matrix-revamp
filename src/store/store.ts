@@ -64,7 +64,7 @@ import { createBannerReducers, editBannerReducers, fetchBannersByIdReducers, fet
 import { createTestimonialReucers, editTestimonialReucers, fetchTestimonialsByIdReucers, fetchTestimonialsReucers } from './slices/testimonialSlice'
 import { createAmenityReducer, editAmenityReducer, fetchAmenityByIdReducer, fetchAmenityReducer } from './slices/amenitySlice'
 import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPartnersReducer } from './slices/companyPartnerSlice'
-import { createConversationReducer, createGroupReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, sendMessageReducer } from './slices/channelSlice'
+import { createChatTaskReducer, createConversationReducer, createGroupReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, sendMessageReducer } from './slices/channelSlice'
 
 export const store = configureStore({
   reducer: {
@@ -311,6 +311,7 @@ export const store = configureStore({
     fetchGroups: fetchGroupsReducer,
     createGroup: createGroupReducer,
     fetchGroupConversation: fetchGroupConversationReducer,
+    createChatTask: createChatTaskReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

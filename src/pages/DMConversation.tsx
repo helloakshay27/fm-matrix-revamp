@@ -78,16 +78,12 @@ const DMConversation = () => {
         }
     }
 
-    const handleCreateTask = (message) => {
-        console.log("Creating task from message:", message);
-    };
-
     return (
         <div
             className={`flex flex-col h-[calc(100vh-112px)] ${isSidebarCollapsed ? "w-[calc(100vw-20rem)]" : "w-[calc(100vw-32rem)]"
                 } min-w-0 overflow-hidden`}
         >
-            <div className="flex justify-between items-center px-6 py-4 border-b ">
+            <div className="flex justify-between items-center px-6 pt-4 border-b">
                 <div>
                     <div className="flex items-center space-x-4">
                         <div className="w-10 h-10 rounded-full bg-[#F2EEE9] flex items-center justify-center text-[#C72030] font-semibold">
@@ -141,7 +137,7 @@ const DMConversation = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
-                {activeTab === "chat" && id && <Chats messages={messages} onCreateTask={handleCreateTask} />}
+                {activeTab === "chat" && id && <Chats messages={messages} />}
                 {activeTab === "task" && <ChatTasks />}
                 {activeTab === "shared" && <>Shared</>}
             </div>

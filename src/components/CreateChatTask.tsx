@@ -45,8 +45,9 @@ interface FormData {
 interface CreateChatTaskProps {
     openTaskModal: boolean;
     setOpenTaskModal: (open: boolean) => void;
-    onCreateTask?: (data: FormData & { message_id?: string }) => void;
+    onCreateTask?: (data) => void;
     message?: { id: string; body: string };
+    id: string;
 }
 
 const CreateChatTask = ({
@@ -54,6 +55,7 @@ const CreateChatTask = ({
     setOpenTaskModal,
     onCreateTask,
     message,
+    id
 }: CreateChatTaskProps) => {
     const dispatch = useAppDispatch();
     const [users, setUsers] = useState<User[]>([]);
@@ -89,13 +91,23 @@ const CreateChatTask = ({
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const submissionData = {
-            ...formData,
-            message_id: message?.id,
+            task_management: {
+                title: "Chat Task",
+                description: formData.description,
+                priority: formData.priority,
+                responsible_person_id: formData.assignTo,
+                target_date: formData.deadline,
+                estimated_hours: formData.estHours,
+                estimated_min: formData.estMinutes,
+                observer_ids: formData.observers,
+                focus_mode: formData.focusMode,
+                project_space_id: id
+            }
         };
 
-        onCreateTask?.(submissionData);
+        await onCreateTask?.(submissionData);
         setFormData({
             description: "",
             priority: "",

@@ -135,7 +135,7 @@ const GroupConversation = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
-                {activeTab === "chat" && id && <Chats messages={messages} onCreateTask={handleCreateTask} />}
+                {activeTab === "chat" && id && <Chats messages={messages} />}
                 {activeTab === "task" && <>Tasks</>}
                 {activeTab === "shared" && <>Shared</>}
             </div>
