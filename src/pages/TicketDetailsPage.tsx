@@ -1050,9 +1050,6 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Ticket Ageing
                         </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          {ticketData.responsible_person || 'N/A'}
-                        </span>
                       </div>
                     </div>
 
@@ -1089,13 +1086,10 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {formatTimeToDDHHMM(ticketData.response_time)}
+                          {formatMinutesToDDHHMM(ticketData.response_tat)}
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Response TAT
-                        </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          {ticketData.response_escalation || 'N/A'}
                         </span>
                       </div>
                     </div>
@@ -1138,9 +1132,6 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Resolution TAT
                         </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          {ticketData.resolution_escalation || 'N/A'}
-                        </span>
                       </div>
                     </div>
 
@@ -1155,18 +1146,21 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
                       >
                         <Ticket className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
-                      <div className="flex flex-col justify-center">
-                        <span
-                          className="font-semibold text-[#1A1A1A]"
-                          style={{ fontSize: 24 }}
-                        >
-                          {formatMinutesToDDHHMM(ticketData.balance_reponse_tat)}
+                      <div className="flex flex-col justify-center w-full">
+                        <div className="flex justify-between w-full">
+                          <span
+                            className="font-semibold text-[#1A1A1A]"
+                            style={{ fontSize: 24 }}
+                          >
+                            {formatMinutesToDDHHMM(ticketData.balance_reponse_tat)}
+                          </span>
+
+                        <span className="text-[12px] text-[#9CA3AF] mt-1">
+                          {`${ticketData.response_esc_name} - ${ticketData.response_escalate_to_user.join(',')}` || ticketData.escalation_response_name || 'N/A'}
                         </span>
+                        </div>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Response Escalation
-                        </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          {ticketData.response_esc_name || ticketData.escalation_response_name || 'N/A'}
                         </span>
                       </div>
                     </div>
@@ -1199,18 +1193,20 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
                           />
                         </svg>
                       </div>
-                      <div className="flex flex-col justify-center">
-                        <span
-                          className="font-semibold text-[#1A1A1A]"
-                          style={{ fontSize: 24 }}
-                        >
+                      <div className="flex flex-col justify-center w-full">
+                        <div className="flex justify-between w-full">
+                          <span
+                            className="font-semibold text-[#1A1A1A]"
+                            style={{ fontSize: 24 }}
+                          >
                           {formatMinutesToDDHHMM(ticketData.balance_resolution_tat)}
                         </span>
+                        <span className="text-[12px] text-[#9CA3AF] mt-1">
+                          {`${ticketData.resolution_esc_name} - ${ticketData.resolution_escalate_to_user.join(', ')}` || ticketData.escalation_resolution_name || 'N/A'}
+                        </span>
+                        </div>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Resolution Escalation
-                        </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          {ticketData.resolution_esc_name || ticketData.escalation_resolution_name || 'N/A'}
                         </span>
                       </div>
                     </div>
@@ -1243,18 +1239,20 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
                           />
                         </svg>
                       </div>
-                      <div className="flex flex-col justify-center">
-                        <span
+                      <div className="flex flex-col justify-center w-full">
+                        <div className="flex justify-between w-full">
+                        <p
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
                           {formatMinutesToDDHHMM(ticketData.golden_resp_time_minutes)}
-                        </span>
+                        </p>
+                          <p className="text-[12px] text-[#9CA3AF] mt-1">
+                          {`${ticketData.golden_esc_name} - ${ticketData.golden_escalate_to_user.join(",")}` || 'N/A'}
+                        </p>
+                        </div>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Golden Ticket Escalation
-                        </span>
-                        <span className="text-[12px] text-[#9CA3AF] mt-1">
-                          {ticketData.golden_esc_name || 'N/A'}
                         </span>
                       </div>
                     </div>
@@ -1494,9 +1492,9 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
                               </span>
                             </div>
                             <div className="flex justify-center items-center gap-2 mb-2">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 16 18" fill="none">
+                              {ticketData.golden_esc_name !== '' && (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 16 18" fill="none">
                                 <path d="M12.36 9.76C14.31 10.42 16 11.5 16 13V18H0V13C0 11.5 1.69 10.42 3.65 9.76L4.27 11L4.5 11.5C3 11.96 1.9 12.62 1.9 13V16.1H6.12L7 11.03L6.06 9.15C6.68 9.08 7.33 9.03 8 9.03C8.67 9.03 9.32 9.08 9.94 9.15L9 11.03L9.88 16.1H14.1V13C14.1 12.62 13 11.96 11.5 11.5L11.73 11L12.36 9.76ZM8 2C6.9 2 6 2.9 6 4C6 5.1 6.9 6 8 6C9.1 6 10 5.1 10 4C10 2.9 9.1 2 8 2ZM8 8C5.79 8 4 6.21 4 4C4 1.79 5.79 0 8 0C10.21 0 12 1.79 12 4C12 6.21 10.21 8 8 8Z" fill="black" />
-                              </svg>
+                              </svg>)}
                               {ticketData.is_golden_ticket && (
                                 <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
                                   <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
@@ -1804,19 +1802,26 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
                   <MenuItem value="">
                     <span style={{ color: '#aaa' }}>Select Root Cause Analysis</span>
                   </MenuItem>
-                  <MenuItem value="Pipe broken">Pipe broken</MenuItem>
-                  <MenuItem value="Short circuit">Short circuit</MenuItem>
-                  <MenuItem value="Transformer breakdown">Transformer breakdown</MenuItem>
-                  <MenuItem value="Equipment failure">Equipment failure</MenuItem>
-                  <MenuItem value="Human error">Human error</MenuItem>
-                  <MenuItem value="Wear and tear">Wear and tear</MenuItem>
+                  {communicationTemplates
+                    .filter(template => template.identifier === "Root Cause Analysis")
+                    .map((template) => (
+                      <MenuItem key={template.id} value={template.identifier_action}>
+                        {template.identifier_action}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
               
-              {/* Show selected root cause description if available */}
+              {/* Show selected root cause description from template body */}
               {ticketData.root_cause && (
-                <div className="mt-2 text-[11px] text-[#6B6B6B] italic">
-                  {ticketData.root_cause}
+                <div className="mt-2" style={{ fontSize: '14px', fontWeight: 'medium'}}>
+                  {(() => {
+                    const matchedTemplate = communicationTemplates.find(
+                      template => template.identifier === "Root Cause Analysis" && 
+                                 template.identifier_action === ticketData.root_cause
+                    );
+                    return matchedTemplate?.body || ticketData.root_cause;
+                  })()}
                 </div>
               )}
             </div>
@@ -2334,17 +2339,24 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
             <MenuItem value="">
               <span style={{ color: '#aaa' }}>Select Preventive Action</span>
             </MenuItem>
-            <MenuItem value="General Cleaning">General Cleaning</MenuItem>
-            <MenuItem value="Filter Replacement">Filter Replacement</MenuItem>
-            <MenuItem value="Routine Maintenance">Routine Maintenance</MenuItem>
-            <MenuItem value="System Upgrade">System Upgrade</MenuItem>
+            {communicationTemplates
+              .filter(template => template.identifier === "Preventive Action")
+              .map((template) => (
+                <MenuItem key={template.id} value={template.identifier_action}>
+                  {template.identifier_action}
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
         <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
-          <p className={!ticketData.preventive_action ? 'text-[#9CA3AF] italic' : ''}>
-            {ticketData.preventive_action_description || 
-             ticketData.preventive_action ||
-             'No preventive action description available'}
+          <p style={!ticketData.preventive_action ? { fontSize: '14px', fontWeight: 'medium'} : {}}>
+            {(() => {
+              const matchedTemplate = communicationTemplates.find(
+                template => template.identifier === "Preventive Action" && 
+                           template.identifier_action === ticketData.preventive_action
+              );
+              return matchedTemplate?.body || ticketData.preventive_action || 'No preventive action description available';
+            })()}
           </p>
         </div>
       </div>
@@ -2363,17 +2375,24 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
             <MenuItem value="">
               <span style={{ color: '#aaa' }}>Select Short-term Impact</span>
             </MenuItem>
-            <MenuItem value="Minor Downtime">Minor Downtime</MenuItem>
-            <MenuItem value="Service Interruption">Service Interruption</MenuItem>
-            <MenuItem value="Temporary Discomfort">Temporary Discomfort</MenuItem>
-            <MenuItem value="No Impact">No Impact</MenuItem>
+            {communicationTemplates
+              .filter(template => template.identifier === "Short-term Impact")
+              .map((template) => (
+                <MenuItem key={template.id} value={template.identifier_action}>
+                  {template.identifier_action}
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
         <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
-          <p className={!ticketData.short_term_impact ? 'text-[#9CA3AF] italic' : ''}>
-            {ticketData.short_term_impact_desc || 
-             ticketData.short_term_impact ||
-             'No short-term impact description available'}
+          <p style={!ticketData.short_term_impact ? { fontSize: '14px', fontWeight: 'medium'} : {}}>
+            {(() => {
+              const matchedTemplate = communicationTemplates.find(
+                template => template.identifier === "Short-term Impact" && 
+                           template.identifier_action === ticketData.short_term_impact
+              );
+              return matchedTemplate?.body || ticketData.short_term_impact || 'No short-term impact description available';
+            })()}
           </p>
         </div>
       </div>
@@ -2392,17 +2411,24 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
             <MenuItem value="">
               <span style={{ color: '#aaa' }}>Select Corrective Action</span>
             </MenuItem>
-            <MenuItem value="Gas Refill">Gas Refill</MenuItem>
-            <MenuItem value="Component Replacement">Component Replacement</MenuItem>
-            <MenuItem value="System Repair">System Repair</MenuItem>
-            <MenuItem value="Configuration Change">Configuration Change</MenuItem>
+            {communicationTemplates
+              .filter(template => template.identifier === "Corrective Action")
+              .map((template) => (
+                <MenuItem key={template.id} value={template.identifier_action}>
+                  {template.identifier_action}
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
         <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
-          <p className={!ticketData.corrective_action ? 'text-[#9CA3AF] italic' : ''}>
-            {ticketData.corrective_action_description || 
-             ticketData.corrective_action ||
-             'No corrective action description available'}
+          <p style={!ticketData.corrective_action ? { fontSize: '14px', fontWeight: 'medium'} : {}}>
+            {(() => {
+              const matchedTemplate = communicationTemplates.find(
+                template => template.identifier === "Corrective Action" && 
+                           template.identifier_action === ticketData.corrective_action
+              );
+              return matchedTemplate?.body || ticketData.corrective_action || 'No corrective action description available';
+            })()}
           </p>
         </div>
       </div>
@@ -2415,23 +2441,30 @@ const [loadingResponsiblePersons, setLoadingResponsiblePersons] = useState(false
             label="Long-term Impact"
             notched
             displayEmpty
-            value={ticketData.long_term_impact || ''}
+            value={ticketData.impact || ''}
             onChange={() => { }}
           >
             <MenuItem value="">
               <span style={{ color: '#aaa' }}>Select Long-term Impact</span>
             </MenuItem>
-            <MenuItem value="Lifecycle Reduction">Lifecycle Reduction</MenuItem>
-            <MenuItem value="High Energy Usage">High Energy Usage</MenuItem>
-            <MenuItem value="System Degradation">System Degradation</MenuItem>
-            <MenuItem value="No Impact">No Impact</MenuItem>
+            {communicationTemplates
+              .filter(template => template.identifier === "Long-term Impact")
+              .map((template) => (
+                <MenuItem key={template.id} value={template.identifier_action}>
+                  {template.identifier_action}
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
         <div className="mt-4 text-[11.5px] leading-[15px] text-[#1A1A1A] font-medium space-y-1">
-          <p className={!ticketData.long_term_impact ? 'text-[#9CA3AF] italic' : ''}>
-            {ticketData.long_term_impact_desc || 
-             ticketData.long_term_impact ||
-             'No long-term impact description available'}
+          <p style={!ticketData.impact ? { fontSize: '14px', fontWeight: 'medium'} : {}}>
+            {(() => {
+              const matchedTemplate = communicationTemplates.find(
+                template => template.identifier === "Long-term Impact" && 
+                           template.identifier_action === ticketData.impact
+              );
+              return matchedTemplate?.body || ticketData.impact || 'No long-term impact description available';
+            })()}
           </p>
         </div>
       </div>
