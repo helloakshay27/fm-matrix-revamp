@@ -31,6 +31,9 @@ import {
   ArrowLeft,
   Layers,
   FileText,
+  FileSpreadsheet,
+  File as FileIcon,
+  Download,
   Building2,
   Ruler,
   Construction,
@@ -1101,10 +1104,57 @@ export const EditAssetDetailsPage = () => {
     toolsinstrumentsAssetImage: [],
     meterAssetImage: [],
   });
+
+  // State for existing attachments from API
+  const [existingAttachments, setExistingAttachments] = useState({
+    asset_image: null as { document: string; document_name: string } | null,
+    asset_manuals: [] as Array<{ id: number; document: string; document_name: string }>,
+    asset_other_uploads: [] as Array<{ id: number; document: string; document_name: string }>,
+    asset_insurances: [] as Array<{ id: number; document: string; document_name: string }>,
+    asset_purchases: [] as Array<{ id: number; document: string; document_name: string }>
+  });
+
   const [selectedAssetCategory, setSelectedAssetCategory] = useState("");
 
   const handleGoBack = () => {
     navigate("/maintenance/asset");
+  };
+
+  // Download attachment function similar to AMC page
+  const downloadAttachment = async (attachment: { id?: number; document: string; document_name: string }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+
+      if (!token || !baseUrl) {
+        console.error('Missing token or base URL');
+        return;
+      }
+
+      const apiUrl = `https://${baseUrl}/attachfiles/${attachment.id}?show_file=true`;
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Download failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.document_name || `document_${attachment.id}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading file:', err);
+    }
   };
 
   // Prefill helpers for editing existing asset
@@ -1308,7 +1358,7 @@ export const EditAssetDetailsPage = () => {
       // Status / critical / breakdown
       if (typeof asset?.critical !== "undefined") {
         setFormData((prev) => ({ ...prev, critical: asset.critical ? "Critical" : "Non-Critical" }));
-        setCriticalStatus(asset.critical ? "critical" : "non-critical");
+        setCriticalStatus(asset.critical ? "1" : "0");
       }
       if (typeof asset?.breakdown !== "undefined") {
         setFormData((prev) => ({ ...prev, breakdown: Boolean(asset.breakdown) }));
@@ -1324,13 +1374,33 @@ export const EditAssetDetailsPage = () => {
       }
       if (asset?.allocation_ids) {
         const raw = asset.allocation_ids;
-        const idsArray = Array.isArray(raw)
-          ? raw
-          : String(raw)
-              .split(',')
-              .map((s) => s.trim())
-              .filter(Boolean);
+        let idsArray = [];
+        
+        // Handle different formats of allocation_ids
+        if (Array.isArray(raw)) {
+          idsArray = raw;
+        } else if (typeof raw === 'string') {
+          // Handle JSON string format like "[\"92\"]"
+          try {
+            const parsed = JSON.parse(raw);
+            idsArray = Array.isArray(parsed) ? parsed : [parsed];
+          } catch {
+            // If not JSON, treat as comma-separated string
+            idsArray = raw.split(',').map((s) => s.trim()).filter(Boolean);
+          }
+        }
+        
         setFormData((prev) => ({ ...prev, allocation_ids: idsArray }));
+        
+        // Set the appropriate selection based on allocation type
+        if (idsArray.length > 0) {
+          const firstId = idsArray[0];
+          if (asset.allocation_type === 'department') {
+            setSelectedDepartmentId(String(firstId));
+          } else if (asset.allocation_type === 'users') {
+            setSelectedUserId(String(firstId));
+          }
+        }
       }
       if (typeof asset?.warranty !== "undefined") {
         // Asset warranty: set boolean in formData and radio helper state (robust parsing)
@@ -1372,6 +1442,7 @@ export const EditAssetDetailsPage = () => {
           amc_detail: {
             ...prev.amc_detail,
             amc_cost: amc.amc_cost ? String(amc.amc_cost) : "",
+            supplier_id: amc.supplier_id ? String(amc.supplier_id) : "",
             amc_start_date: amc.amc_start_date ? String(amc.amc_start_date) : "",
             amc_end_date: amc.amc_end_date ? String(amc.amc_end_date) : "",
             payment_term: amc.payment_term ? String(amc.payment_term) : "",
@@ -1380,7 +1451,168 @@ export const EditAssetDetailsPage = () => {
             supplier_name: amc.supplier_name ? String(amc.supplier_name) : "",
           },
         }));
+        
+        // Set the AMC vendor selection
+        if (amc.supplier_id) {
+          setSelectedAmcVendorId(String(amc.supplier_id));
+        }
       }
+
+
+
+
+         // IT ASSETS DETAILS section
+    if (asset.it_asset === true) {
+      setItAssetsToggle(true);
+      setFormData((prev) => ({
+        ...prev,
+        it_asset: true,
+      }));
+      if (asset.custom_fields) {
+        setItAssetDetails({
+          system_details: {
+            os: asset.custom_fields.system_details?.os || "",
+            memory: asset.custom_fields.system_details?.memory || "",
+            processor: asset.custom_fields.system_details?.processor || "",
+          },
+          hardware: {
+            model: asset.custom_fields.hardware?.model || "",
+            serial_no: asset.custom_fields.hardware?.serial_no || "",
+            capacity: asset.custom_fields.hardware?.capacity || "",
+          },
+        });
+      }
+    }
+
+
+
+      if (asset.is_meter === true) {
+      setMeterDetailsToggle(true);
+
+      // Preselect meter type radio
+      setMeterType(asset.meter_tag_type || "");
+
+      // Preselect Parent Meter dropdown when SubMeter
+      if (asset.meter_tag_type === "SubMeter") {
+        setSelectedParentMeterId(asset.parent_meter_id ? String(asset.parent_meter_id) : "");
+      } else {
+        setSelectedParentMeterId("");
+      }
+
+      // Preselect METER DETAILS category from meter_category_name (normalize names)
+      try {
+        const normalized = (asset.meter_category_name || "").toString().trim().toLowerCase();
+        const nameToValueMap = {
+          "board": "board",
+          "dg": "dg",
+          "renewable": "renewable",
+          "fresh water": "fresh-water",
+          "fresh-water": "fresh-water",
+          "recycled": "recycled",
+          "recycled water": "recycled",
+          "water distribution": "water-distribution",
+          "water-distribution": "water-distribution",
+          "iex-gdam": "iex-gdam",
+        } as Record<string, string>;
+        const mappedValue = nameToValueMap[normalized];
+        if (mappedValue) {
+          setMeterCategoryType(mappedValue);
+        } else {
+          // Fallback to label-based lookup
+          const options = getMeterCategoryOptions();
+          const matched = options.find((o) => o.label.toLowerCase() === normalized);
+          if (matched) {
+            setMeterCategoryType(matched.value);
+          }
+        }
+      } catch {}
+
+      // Preload NON CONSUMPTION METER MEASURE fields
+      if (Array.isArray(asset.non_consumption_pms_asset_measures)) {
+        setNonConsumptionMeasureFields(
+          asset.non_consumption_pms_asset_measures.map((m) => ({
+            id: String(m.id ?? `${Date.now()}-${Math.random()}`),
+            name: m.name || "",
+            unitType: m.meter_unit_id ? String(m.meter_unit_id) : "",
+            min: m.min_value !== undefined && m.min_value !== null ? String(m.min_value) : "",
+            max: m.max_value !== undefined && m.max_value !== null ? String(m.max_value) : "",
+            alertBelowVal: m.alert_below !== undefined && m.alert_below !== null ? String(m.alert_below) : "",
+            alertAboveVal: m.alert_above !== undefined && m.alert_above !== null ? String(m.alert_above) : "",
+            multiplierFactor: m.multiplier_factor !== undefined && m.multiplier_factor !== null ? String(m.multiplier_factor) : "",
+            checkPreviousReading: Boolean(m.check_previous_reading),
+          }))
+        );
+      } else {
+        setNonConsumptionMeasureFields([]);
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        is_meter: true,
+        parent_meter_id: asset.parent_meter_id ? String(asset.parent_meter_id) : "",
+        meter_tag_type: asset.meter_tag_type || "",
+        meter_category_name: asset.meter_category_name || "",
+        non_consumption_pms_asset_measures_attributes: Array.isArray(asset.non_consumption_pms_asset_measures)
+          ? asset.non_consumption_pms_asset_measures.map((m) => ({
+              id: m.id,
+              asset_id: m.asset_id,
+              name: m.name || "",
+              min_value: m.min_value || "",
+              max_value: m.max_value || "",
+              alert_below: m.alert_below || "",
+              alert_above: m.alert_above || "",
+              active: m.active,
+              unit_type: m.unit_type || "",
+              multiplier_factor: m.multiplier_factor || "",
+              meter_tag: m.meter_tag || "",
+              meter_unit_id: m.meter_unit_id || "",
+              cloned: m.cloned || false,
+              check_previous_reading: m.check_previous_reading || false,
+            }))
+          : [],
+      }));
+    }
+
+
+   // CUSTOM FIELDS section (extra_fields_attributes)
+    if (Array.isArray(asset.extra_fields_attributes) && asset.extra_fields_attributes.length > 0) {
+      // Group fields by group_name
+      const groupedFields = {};
+      asset.extra_fields_attributes.forEach((field) => {
+        if (!groupedFields[field.group_name]) groupedFields[field.group_name] = [];
+        groupedFields[field.group_name].push({
+          id: field.id,
+          field_name: field.field_name,
+          field_description: field.field_description,
+          field_value: field.field_value,
+        });
+      });
+      setExtraFormFields((prev) => ({
+        ...prev,
+        ...Object.keys(groupedFields).reduce((acc, group) => {
+          groupedFields[group].forEach((field) => {
+            acc[`${group}_${field.field_name}`] = {
+              value: field.field_value,
+              fieldType: "custom",
+              groupType: group,
+              fieldDescription: field.field_description,
+            };
+          });
+          return acc;
+        }, {}),
+      }));
+      setOriginalExtraFieldsAttributes(asset.extra_fields_attributes);
+    }
+
+    // Populate existing attachments from API
+    setExistingAttachments({
+      asset_image: asset.asset_image || null,
+      asset_manuals: asset.asset_manuals || [],
+      asset_other_uploads: asset.asset_other_uploads || [],
+      asset_insurances: asset.asset_insurances || [],
+      asset_purchases: asset.asset_purchases || []
+    });
+
     } catch (e) {
       console.error("Failed to prefill asset data", e);
     }
@@ -12036,8 +12268,7 @@ export const EditAssetDetailsPage = () => {
                             labelId="amc-vendor-select-label"
                             label="Vendor"
                             displayEmpty
-                            // value={selectedAmcVendorId}
-                            value={formData.amc_detail.supplier_id }
+                            value={selectedAmcVendorId}
 
                             onChange={(e) => {
                               const value = e.target.value;
@@ -12583,6 +12814,32 @@ export const EditAssetDetailsPage = () => {
                       )
                     );
                   })()}
+
+                  {/* Existing Asset Image */}
+                  {existingAttachments.asset_image && (
+                    <div className="mt-4">
+                      <div className="text-xs font-medium text-gray-600 mb-2">Existing Asset Image</div>
+                      <div className="flex items-center justify-between bg-gray-100 p-2 rounded">
+                        <div className="flex items-center space-x-2">
+                          <img 
+                            src={existingAttachments.asset_image.document} 
+                            alt={existingAttachments.asset_image.document_name}
+                            className="w-8 h-8 object-cover rounded border"
+                          />
+                          <span className="text-xs text-gray-700 truncate max-w-[150px]">
+                            {existingAttachments.asset_image.document_name}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => downloadAttachment(existingAttachments.asset_image!)}
+                          className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
+                        >
+                          <Download className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-2">
                     <button
                       type="button"
@@ -12597,6 +12854,7 @@ export const EditAssetDetailsPage = () => {
                   </div>
                 </div>
               </div>
+
 
               {/* Common Document Sections for All Categories */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -12691,6 +12949,65 @@ export const EditAssetDetailsPage = () => {
                           ))}
                         </div>
                       )}
+
+                      {/* Existing Files Display */}
+                      {(() => {
+                        let existingFiles = [];
+                        if (field.label === "Manuals Upload") {
+                          existingFiles = existingAttachments.asset_manuals;
+                        } else if (field.label === "Insurance Details") {
+                          existingFiles = existingAttachments.asset_insurances;
+                        } else if (field.label === "Purchase Invoice") {
+                          existingFiles = existingAttachments.asset_purchases;
+                        } else if (field.label === "Other Documents") {
+                          existingFiles = existingAttachments.asset_other_uploads;
+                        }
+
+                        return existingFiles.length > 0 && (
+                          <div className="mt-4">
+                            <div className="text-xs font-medium text-gray-600 mb-2">Existing Files</div>
+                            <div className="space-y-2">
+                              {existingFiles.map((file) => {
+                                const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
+                                const isPdf = file.document_name.endsWith('.pdf');
+                                const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
+                                
+                                return (
+                                  <div key={file.id} className="flex items-center justify-between bg-gray-100 p-2 rounded">
+                                    <div className="flex items-center space-x-2">
+                                      {isImage ? (
+                                        <img src={file.document} alt={file.document_name} className="w-6 h-6 object-cover rounded border" />
+                                      ) : isPdf ? (
+                                        <div className="w-6 h-6 flex items-center justify-center border rounded text-red-600 bg-white">
+                                          <FileText className="w-3 h-3" />
+                                        </div>
+                                      ) : isExcel ? (
+                                        <div className="w-6 h-6 flex items-center justify-center border rounded text-green-600 bg-white">
+                                          <FileSpreadsheet className="w-3 h-3" />
+                                        </div>
+                                      ) : (
+                                        <div className="w-6 h-6 flex items-center justify-center border rounded text-gray-500 bg-white">
+                                          <FileIcon className="w-3 h-3" />
+                                        </div>
+                                      )}
+                                      <span className="text-xs text-gray-700 truncate max-w-[150px]">
+                                        {file.document_name}
+                                      </span>
+                                    </div>
+                                    <button
+                                      onClick={() => downloadAttachment(file)}
+                                      className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
+                                    >
+                                      <Download className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                       <div className="mt-2">
                         <button
                           type="button"
