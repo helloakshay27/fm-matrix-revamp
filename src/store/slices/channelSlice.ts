@@ -159,7 +159,7 @@ export const fetchIndividualChatTasks = createAsyncThunk(
     "fetchIndividualChatTasks",
     async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/task_managements.json?q[conversation_id_eq]=${id}`, {
+            const response = await axios.get(`https://${baseUrl}/task_managements.json?q[project_space_id_eq]=${id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
