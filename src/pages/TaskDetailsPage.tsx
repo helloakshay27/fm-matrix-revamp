@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, X, FileText, User, MapPin, Eye, Edit, Star, Trash2 } from 'lucide-react';
+import { ArrowLeft, X, FileText, User, MapPin, Eye, Edit, Star, Trash2, Flag } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast as sonnerToast } from "sonner";
@@ -40,6 +40,7 @@ export const TaskDetailsPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [escalateUsers, setEscalateUsers] = useState<EscalateUser[]>([]);
   const [ticketData, setTicketData] = useState<any>(null); // For storing ticket information
+  const [ticketLoading, setTicketLoading] = useState(false);
 
   // Removed showSubmitModal state as we now navigate to a separate page
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
@@ -123,27 +124,65 @@ export const TaskDetailsPage = () => {
         console.log('- After Image (aft_sub_attachment):', mappedDetails?.aft_sub_attachment || 'null');
         console.log('- Before/After Enabled:', mappedDetails?.before_after_enabled || false);
         
-        // If there's a related ticket ID in the task details, fetch ticket data
-        const ticketId = mappedDetails?.task_details?.asset_task_occurrence_id || 
-                         mappedDetails?.ticket_id ||
-                         mappedDetails?.related_ticket_id;
-        
-        if (ticketId) {
+        // Fetch ticket data using the task occurrence ID
+        if (mappedDetails?.id) {
           try {
-            // Try to get ticket details if ticket ID is available
-            // Since we don't have a direct ticket detail API, we'll set default ticket data
-            setTicketData({
-              id: 218911106,
-              ticket_number: "2189-11106",
-              heading: "Light off office",
-              category_type: "House keeping",
-              sub_category_type: "Cleaning",
-              posted_by: "System",
-              is_flagged: false,
-              is_golden_ticket: false
-            });
-          } catch (ticketError) {
-            console.log('Could not fetch ticket details:', ticketError);
+            setTicketLoading(true);
+            const ticketResponse = await ticketManagementAPI.getTicketsByTaskOccurrenceId(mappedDetails.id.toString());
+            console.log('🎫 Ticket API Response:', ticketResponse);
+            
+            if (ticketResponse?.complaints && ticketResponse.complaints.length > 0) {
+              // Set the first ticket from the response
+              const ticket = ticketResponse.complaints[0];
+              setTicketData({
+                id: ticket.id,
+                ticket_number: ticket.ticket_number,
+                heading: ticket.heading,
+                category_type: ticket.category_type,
+                sub_category_type: ticket.sub_category_type,
+                posted_by: ticket.posted_by,
+                is_flagged: ticket.is_flagged,
+                is_golden_ticket: ticket.is_golden_ticket,
+                priority: ticket.priority,
+                issue_status: ticket.issue_status,
+                department_name: ticket.department_name,
+                assigned_to: ticket.assigned_to,
+                created_at: ticket.created_at,
+                updated_at: ticket.updated_at,
+                building_name: ticket.building_name,
+                floor_name: ticket.floor_name,
+                site_name: ticket.site_name,
+                pms_site_name: ticket.pms_site_name,
+                complaint_type: ticket.complaint_type,
+                issue_type: ticket.issue_type,
+                color_code: ticket.color_code,
+                updated_by: ticket.updated_by,
+                priority_status: ticket.priority_status,
+                effective_priority: ticket.effective_priority,
+                schedule_type: ticket.schedule_type,
+                service_or_asset: ticket.service_or_asset,
+                asset_or_service_name: ticket.asset_or_service_name,
+                response_escalation: ticket.response_escalation,
+                resolution_escalation: ticket.resolution_escalation,
+                response_tat: ticket.response_tat,
+                resolution_tat: ticket.resolution_tat,
+                escalation_response_name: ticket.escalation_response_name,
+                escalation_resolution_name: ticket.escalation_resolution_name,
+                status: ticket.status,
+                unit_name: ticket.unit_name,
+                complaint_logs: ticket.complaint_logs || [],
+                documents: ticket.documents || [],
+                faqs: ticket.faqs || []
+              });
+            } else {
+              console.log('No tickets found for task occurrence ID:', mappedDetails.id);
+              setTicketData(null);
+            }
+          } catch (error) {
+            console.error('Could not fetch ticket details:', error);
+            setTicketData(null);
+          } finally {
+            setTicketLoading(false);
           }
         }
       } catch (error) {
@@ -399,6 +438,23 @@ export const TaskDetailsPage = () => {
         <text x="50%" y="60%" font-family="Arial" font-size="8" fill="#${textColor}" text-anchor="middle" dy=".3em">No Image Available</text>
       </svg>
     `)}`;
+  };
+
+  // Helper function to format dates
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return dateString;
+    }
   };
 
   // --- UI ---
@@ -838,80 +894,170 @@ export const TaskDetailsPage = () => {
               </div>
             </div>
             <div className="figma-card-content">
-              <div className="overflow-x-auto">
-                <Table className="w-full">
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="text-xs font-medium text-gray-600 w-20">Action</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">Ticket ID</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">Task Number</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">Description</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">Category</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">Sub-Category</TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600">Created By</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow className="hover:bg-gray-50">
-                      <TableCell className="text-xs">
-                        <div className="flex items-center gap-1">
-                          <Checkbox className="w-4 h-4" />
-                          <button 
-                            className="p-1 hover:bg-gray-100 rounded"
-                            onClick={() => handleTicketView(ticketData?.ticket_number || "2189-11106")}
-                            title="View ticket details"
+              {ticketLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#C72030] mx-auto mb-2"></div>
+                  <p className="text-gray-500 text-sm">Loading ticket details...</p>
+                </div>
+              ) : ticketData ? (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table className="w-full">
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead className="text-xs font-medium text-gray-600 w-20">Action</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Ticket ID</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Description</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Type</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Category</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Priority</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Status</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Created By</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Assigned To</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Location</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Escalation</TableHead>
+                          <TableHead className="text-xs font-medium text-gray-600">Created</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                    <TableBody>
+                      <TableRow className="hover:bg-gray-50">
+                        <TableCell className="text-xs">
+                          <div className="flex items-center gap-1">
+                            <Checkbox className="w-4 h-4" />
+                            <button 
+                              className="p-1 hover:bg-gray-100 rounded"
+                              onClick={() => handleTicketView(ticketData.ticket_number)}
+                              title="View ticket details"
+                            >
+                              <Eye className="w-4 h-4 text-gray-600" />
+                            </button>
+                            <button 
+                              className={`p-1 hover:bg-gray-100 rounded transition-colors ${
+                                ticketData.is_flagged ? 'text-red-500 hover:text-red-600' : 'text-gray-400 hover:text-red-400'
+                              }`}
+                              onClick={() => handleTicketFlag(ticketData.id, ticketData.is_flagged)}
+                              title={ticketData.is_flagged ? "Remove flag" : "Flag ticket"}
+                            >
+                              <Flag className={`w-4 h-4 transition-all duration-200 ${
+                                ticketData.is_flagged 
+                                  ? 'text-red-500 fill-red-500' 
+                                  : 'text-gray-600'
+                              }`} />
+                            </button>
+                            <button 
+                              className={`p-1 hover:bg-gray-100 rounded transition-colors ${
+                                ticketData.is_golden_ticket ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-yellow-400'
+                              }`}
+                              onClick={() => handleTicketGoldenTicket(ticketData.id, ticketData.is_golden_ticket)}
+                              title={ticketData.is_golden_ticket ? "Remove golden ticket" : "Mark as golden ticket"}
+                            >
+                              <Star className={`w-4 h-4 transition-all duration-200 hover:scale-110 ${
+                                ticketData.is_golden_ticket
+                                  ? 'text-yellow-500 fill-yellow-500'
+                                  : 'text-gray-600'
+                              }`} />
+                            </button>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs font-medium">
+                          {ticketData.ticket_number}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {ticketData.heading || 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <Badge className="px-2 py-1 text-xs bg-blue-100 text-blue-700">
+                            {ticketData.issue_type || 'N/A'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <div className="space-y-1">
+                            <div className="font-medium">{ticketData.category_type || 'N/A'}</div>
+                            {ticketData.sub_category_type && (
+                              <div className="text-gray-500 text-xs">
+                                {ticketData.sub_category_type}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <div className="space-y-1">
+                            <Badge className={`px-2 py-1 text-xs ${
+                              ticketData.priority === 'P1' ? 'bg-red-100 text-red-700' :
+                              ticketData.priority === 'P2' ? 'bg-yellow-100 text-yellow-700' :
+                              ticketData.priority === 'P3' ? 'bg-green-100 text-green-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {ticketData.priority || 'N/A'}
+                            </Badge>
+                            <div className="text-xs text-gray-500">
+                              {ticketData.priority_status || 'N/A'}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <Badge 
+                            className="px-2 py-1 text-xs text-white"
+                            style={{ 
+                              backgroundColor: ticketData.status?.color_code || ticketData.color_code || '#60A8C0',
+                              color: 'white'
+                            }}
                           >
-                            <Eye className="w-4 h-4 text-gray-600" />
-                          </button>
-                          {/* <button 
-                            className="p-1 hover:bg-gray-100 rounded"
-                            onClick={() => handleTicketEdit(ticketData?.ticket_number || "2189-11106")}
-                            title="Edit ticket"
-                          >
-                            <Edit className="w-4 h-4 text-gray-600" />
-                          </button> */}
-                          <button 
-                            className={`p-1 hover:bg-gray-100 rounded transition-colors ${
-                              ticketData?.is_flagged ? 'text-red-500 hover:text-red-600' : 'text-gray-400 hover:text-red-400'
-                            }`}
-                            onClick={() => handleTicketFlag(ticketData?.id || 218911106, ticketData?.is_flagged || false)}
-                            title={ticketData?.is_flagged ? "Remove flag" : "Flag ticket"}
-                          >
-                            🚩
-                          </button>
-                          <button 
-                            className={`p-1 hover:bg-gray-100 rounded transition-colors ${
-                              ticketData?.is_golden_ticket ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-yellow-400'
-                            }`}
-                            onClick={() => handleTicketGoldenTicket(ticketData?.id || 218911106, ticketData?.is_golden_ticket || false)}
-                            title={ticketData?.is_golden_ticket ? "Remove golden ticket" : "Mark as golden ticket"}
-                          >
-                            <Star className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs font-medium">
-                        {ticketData?.ticket_number || "2189-11106"}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {taskDetails?.task_details?.task_name || "test"}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {ticketData?.heading || taskDetails?.task_details?.task_name || "Light off office"}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {ticketData?.category_type || "House keeping"}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {ticketData?.sub_category_type || "Cleaning"}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {ticketData?.posted_by || taskDetails?.task_details?.created_by || "System"}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
+                            {ticketData.status?.name || ticketData.issue_status || 'N/A'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {ticketData.posted_by || 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <div className="space-y-1">
+                            <div className="font-medium">{ticketData.assigned_to || 'N/A'}</div>
+                            <div className="text-gray-500 text-xs">
+                              {ticketData.department_name || 'N/A'}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <div className="space-y-1">
+                            <div className="font-medium">{ticketData.pms_site_name || ticketData.site_name || 'N/A'}</div>
+                            <div className="text-gray-500 text-xs">
+                              {ticketData.building_name && `${ticketData.building_name}`}
+                              {ticketData.floor_name && ` - ${ticketData.floor_name}`}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <div className="space-y-1">
+                            <div className={`text-xs px-2 py-1 rounded ${
+                              ticketData.response_escalation === 'Breached' ? 'bg-red-100 text-red-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              Response: {ticketData.response_escalation || 'N/A'}
+                            </div>
+                            <div className={`text-xs px-2 py-1 rounded ${
+                              ticketData.resolution_escalation === 'Breached' ? 'bg-red-100 text-red-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              Resolution: {ticketData.resolution_escalation || 'N/A'}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {formatDate(ticketData.created_at)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Additional Ticket Information */}
+              
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No tickets found for this task.</p>
+                </div>
+              )}
             </div>
           </Card>
         </div>
