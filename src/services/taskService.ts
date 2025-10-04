@@ -65,6 +65,29 @@ export interface TaskOccurrence {
         type?: string;
       }>;
     }>;
+    resp?: Array<{
+      label: string;
+      name: string;
+      className: string;
+      group_id: string;
+      sub_group_id: string;
+      type: string;
+      subtype: string;
+      required: string;
+      is_reading: string;
+      hint: string;
+      values: Array<{
+        label: string;
+        type: string;
+        value: string;
+      }>;
+      weightage: string;
+      rating_enabled: string;
+      question_hint_image_ids: any[];
+      userData: string[];
+      comment: string;
+      rating: string;
+    }>;
   };
   attachments: {
     main_attachment: any;
@@ -301,4 +324,43 @@ updateTaskComments: async (id: string, comments: string) => {
   }
 },
 
+// Submit task with checklist responses
+submitTaskResponse: async (submissionData: {
+  response_of_id: string;
+  response_of: string;
+  occurrence_of: string;
+  occurrence_of_id: string;
+  offlinemobile: string;
+  first_name: string;
+  asset_quest_response: {
+    occurrence_of: string;
+    occurrence_of_id: string;
+    response_of: string;
+    response_of_id: string;
+    first_name: string;
+  };
+  data: Array<{
+    qname: string;
+    comment: string;
+    value: string[];
+    rating: string;
+    attachments: string[];
+  }>;
+  attachments: string[];
+  bef_sub_attachment: string;
+  aft_sub_attachment: string;
+  mobile_submit: string;
+  token: string;
+}) => {
+  try {
+    // The payload is already formatted correctly by TaskSubmissionPage
+    console.log('Submitting task response:', submissionData);
+
+    const response = await apiClient.post('/pms/asset_quest_responses.json', submissionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting task response:', error);
+    throw new Error('Failed to submit task response');
+  }
+},
 };

@@ -373,7 +373,7 @@ export const TaskDetailsPage = () => {
   const getAssignedUserName = () => {
     return taskDetails?.task_details?.assigned_to || 
            taskDetails?.task_details?.created_by || 
-           "Abdul Ghaffar";
+           "User";
   };
 
   // Get before/after image URLs from task details
@@ -460,7 +460,7 @@ export const TaskDetailsPage = () => {
                     variant="outline"
                     className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
                   >
-                    Job Sheet Modal
+                    Job Sheet 
                   </Button>
                 </>
               )}
@@ -699,7 +699,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Site</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.site || 'Haven Infoline'}
+                      {taskDetails?.task_details?.location?.site !== "NA" && taskDetails?.task_details?.location?.site ? taskDetails.task_details.location.site : '-'}
                     </div>
                   </div>
 
@@ -708,7 +708,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Building</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.building || 'Jyoti Tower'}
+                      {taskDetails?.task_details?.location?.building !== "NA" && taskDetails?.task_details?.location?.building ? taskDetails.task_details.location.building : '-'}
                     </div>
                   </div>
 
@@ -717,7 +717,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Wing</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.wing || 'J - Wing'}
+                      {taskDetails?.task_details?.location?.wing !== "NA" && taskDetails?.task_details?.location?.wing ? taskDetails.task_details.location.wing : '-'}
                     </div>
                   </div>
 
@@ -726,7 +726,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Floor</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.floor || '2nd'}
+                      {taskDetails?.task_details?.location?.floor !== "NA" && taskDetails?.task_details?.location?.floor ? taskDetails.task_details.location.floor : '-'}
                     </div>
                   </div>
 
@@ -735,7 +735,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Area</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.area || 'East'}
+                      {taskDetails?.task_details?.location?.area !== "NA" && taskDetails?.task_details?.location?.area ? taskDetails.task_details.location.area : '-'}
                     </div>
                   </div>
 
@@ -744,7 +744,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Room</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.room || 'R 202'}
+                      {taskDetails?.task_details?.location?.room !== "NA" && taskDetails?.task_details?.location?.room ? taskDetails.task_details.location.room : '-'}
                     </div>
                   </div>
                 </div>
@@ -763,7 +763,7 @@ export const TaskDetailsPage = () => {
               </div>
             </div>
             <div className="figma-card-content">
-              {(taskDetails?.activity?.checklist_groups?.length > 0 || taskDetails?.activity?.ungrouped_content?.length > 0) ? (
+              {(taskDetails?.activity?.resp?.length > 0) ? (
                 <div className="space-y-4">
                   {/* Main Checklist Section */}
                   <div>
@@ -784,7 +784,7 @@ export const TaskDetailsPage = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {[...(taskDetails?.activity?.checklist_groups || []), ...(taskDetails?.activity?.ungrouped_content || [])].map((item: any, index: number) => (
+                          {(taskDetails?.activity?.resp || []).map((item: any, index: number) => (
                             <TableRow key={item.name || index}>
                               <TableCell className="text-xs">
                                 {item.hint || '-'}
@@ -793,8 +793,8 @@ export const TaskDetailsPage = () => {
                                 {item.label || '-'}
                               </TableCell>
                               <TableCell className="text-xs">
-                                {item.values && item.values.length > 0 
-                                  ? item.values.map((val: any) => val.label).join(', ')
+                                {item.userData && item.userData.length > 0 
+                                  ? item.userData.join(', ')
                                   : '-'
                                 }
                               </TableCell>

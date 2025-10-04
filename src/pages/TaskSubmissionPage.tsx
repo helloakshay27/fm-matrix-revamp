@@ -54,6 +54,7 @@ export const TaskSubmissionPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // File upload refs
   const beforePhotoRef = useRef<HTMLInputElement>(null);
@@ -248,7 +249,7 @@ export const TaskSubmissionPage: React.FC = () => {
   const isStepDataValid = (step: number): boolean => {
     const apiSteps = taskDetails?.steps;
     
-    if (apiSteps === 0) {
+    if (apiSteps === 1) {
       // Single step workflow validation
       switch (step) {
         case 1: // Checkpoint
@@ -291,7 +292,7 @@ export const TaskSubmissionPage: React.FC = () => {
   const generateSteps = (): TaskSubmissionStep[] => {
     const apiSteps = taskDetails?.steps ; // Default to 3 for backward compatibility
     
-    if (apiSteps === 0) {
+    if (apiSteps === 1) {
       // Single step workflow: Only Checkpoint and Preview
       return [
         {
@@ -454,7 +455,7 @@ export const TaskSubmissionPage: React.FC = () => {
   const validateCurrentStep = () => {
     const apiSteps = taskDetails?.steps;
     
-    if (apiSteps === 0) {
+    if (apiSteps === 1) {
       // Single step workflow validation
       switch (currentStep) {
         case 1: // Checkpoint
@@ -508,7 +509,7 @@ export const TaskSubmissionPage: React.FC = () => {
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateCurrentStep()) {
       return;
     }
@@ -518,23 +519,104 @@ export const TaskSubmissionPage: React.FC = () => {
       setCompletedSteps((prev) => [...prev, currentStep]);
     }
 
-    // Prepare submission data
-    const submissionData = {
-      taskId: id,
-      beforePhoto: formData.beforePhoto,
-      afterPhoto: formData.afterPhoto,
-      checklist: dynamicChecklist.map((item) => ({
-        id: item.id,
-        question: item.question,
-        answer: formData.checklist[item.id]?.value,
-        comment: formData.checklist[item.id]?.comment,
-        attachment: formData.checklist[item.id]?.attachment,
-      })),
-      completedAt: new Date().toISOString(),
-    };
+    // Show loading state
+    setIsSubmitting(true);
+    const loadingToastId = sonnerToast.loading("Submitting task...", {
+      duration: Infinity,
+    });
 
-    console.log("Submitting task...", submissionData);
-    setShowSuccessModal(true);
+    try {
+      // Helper function to convert file to base64
+      const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            // Remove the data:image/...;base64, prefix
+            resolve(base64.split(',')[1]);
+          };
+          reader.onerror = reject;
+        });
+      };
+
+      // Convert images to base64 if they exist
+      const beforePhotoBase64 = formData.beforePhoto 
+        ? await fileToBase64(formData.beforePhoto)
+        : "";
+      const afterPhotoBase64 = formData.afterPhoto 
+        ? await fileToBase64(formData.afterPhoto)
+        : "";
+
+      // Get overall attachments (non-checklist specific files)
+      const overallAttachments: string[] = [];
+
+      // Prepare checklist data with attachments
+      const checklistData = await Promise.all(
+        dynamicChecklist.map(async (item) => {
+          const checklistItem = formData.checklist[item.id];
+          let attachments: string[] = [];
+          
+          // Convert attachment to base64 if it exists
+          if (checklistItem?.attachment) {
+            try {
+              const attachmentBase64 = await fileToBase64(checklistItem.attachment);
+              attachments.push(attachmentBase64);
+            } catch (error) {
+              console.warn(`Failed to convert attachment for ${item.id}:`, error);
+            }
+          }
+
+          return {
+            qname: item.id,
+            comment: checklistItem?.comment || "",
+            value: Array.isArray(checklistItem?.value) 
+              ? checklistItem.value 
+              : checklistItem?.value ? [checklistItem.value] : [""],
+            rating: "Good", // Default rating - can be made dynamic if needed
+            attachments: attachments
+          };
+        })
+      );
+
+      // Prepare submission data according to your API format
+      const submissionData = {
+        response_of_id: "", // Optional, can be blank as per your example
+        response_of: "Pms::Asset",
+        occurrence_of: "Pms::AssetTaskOccurrence",
+        occurrence_of_id: id!,
+        offlinemobile: "true",
+        first_name: getAssignedUserName().trim(),
+        asset_quest_response: {
+          occurrence_of: "Pms::AssetTaskOccurrence",
+          occurrence_of_id: id!,
+          response_of: "Pms::Asset",
+          response_of_id: "", // Optional, can be blank
+          first_name: getAssignedUserName().trim()
+        },
+        data: checklistData,
+        attachments: overallAttachments,
+        bef_sub_attachment: beforePhotoBase64,
+        aft_sub_attachment: afterPhotoBase64,
+        mobile_submit: "true",
+        token: localStorage.getItem("token") || ""
+      };
+
+      console.log("Submitting task with formatted payload:", submissionData);
+
+      // Call the API
+      await taskService.submitTaskResponse(submissionData);
+
+      sonnerToast.dismiss(loadingToastId);
+      sonnerToast.success("Task submitted successfully!");
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Task submission failed:', error);
+      sonnerToast.dismiss(loadingToastId);
+      sonnerToast.error(error instanceof Error ? error.message : "Failed to submit task. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSuccessClose = () => {
@@ -545,7 +627,7 @@ export const TaskSubmissionPage: React.FC = () => {
   const renderStepContent = () => {
     const apiSteps = taskDetails?.steps;
     
-    if (apiSteps === 0) {
+    if (apiSteps === 1) {
       // Single step workflow rendering
       switch (currentStep) {
         case 1: // Checkpoint
