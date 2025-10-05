@@ -81,7 +81,7 @@ const GroupConversation = () => {
 
             return () => clearInterval(interval);
         }
-    }, [activeTab]);
+    }, [activeTab, id]);
 
     useEffect(() => {
         if (showMentionDropdown && mentionSearch !== null) {
