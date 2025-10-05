@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   X,
@@ -52,21 +63,21 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
 
   // Reschedule form state
   const [rescheduleData, setRescheduleData] = useState({
-    scheduleDate: new Date().toISOString().split('T')[0],
-    scheduleTime: '10:30',
+    scheduleDate: new Date().toISOString().split("T")[0],
+    scheduleTime: "10:30",
     email: false,
   });
 
   // Reassign form state
   const [reassignData, setReassignData] = useState({
-    assignedUserId: '',
+    assignedUserId: "",
   });
 
   // Field styles for MUI components (exact same as TaskFilterDialog)
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
+    "& .MuiInputBase-input, & .MuiSelect-select": {
+      padding: { xs: "8px", sm: "10px", md: "12px" },
     },
   };
 
@@ -75,10 +86,11 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     PaperProps: {
       style: {
         maxHeight: 224,
-        backgroundColor: 'white',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        backgroundColor: "white",
+        border: "1px solid #e2e8f0",
+        borderRadius: "8px",
+        boxShadow:
+          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
         zIndex: 9999,
       },
     },
@@ -143,7 +155,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
       link.style.display = "none";
       document.body.appendChild(link);
       link.click();
-      
+
       // Cleanup
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
@@ -198,14 +210,14 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     const loadUsers = async () => {
       setLoadingUsers(true);
       try {
-        const fetchedUsers = await userService.searchUsers('');
+        const fetchedUsers = await userService.searchUsers("");
         setUsers(fetchedUsers);
       } catch (error) {
-        console.error('Error loading users:', error);
+        console.error("Error loading users:", error);
         toast({
           title: "Error",
           description: "Failed to load users for reassignment",
-          variant: "destructive"
+          variant: "destructive",
         });
       } finally {
         setLoadingUsers(false);
@@ -220,7 +232,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
       toast({
         title: "Error",
         description: "Please fill in all required fields",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -232,9 +244,9 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     try {
       // Convert date and time to ISO format
       const dateTimeString = `${rescheduleData.scheduleDate}T${rescheduleData.scheduleTime}:00Z`;
-      
+
       const payload = {
-        task_occurrence_ids: selectedTasks.map(task => parseInt(task.id)),
+        task_occurrence_ids: selectedTasks.map((task) => parseInt(task.id)),
         start_date: dateTimeString,
         email: rescheduleData.email,
       };
@@ -242,26 +254,30 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
       await bulkTaskService.bulkReschedule(payload);
 
       sonnerToast.dismiss(loadingToastId);
-      sonnerToast.success(`Successfully rescheduled ${selectedTasks.length} task(s)`);
-      
+      sonnerToast.success(
+        `Successfully rescheduled ${selectedTasks.length} task(s)`
+      );
+
       setShowRescheduleDialog(false);
       onClearSelection();
-      
+
       // Refresh parent data to reflect changes
       if (onRefreshData) {
         onRefreshData();
       }
-      
+
       // Reset form
       setRescheduleData({
-        scheduleDate: new Date().toISOString().split('T')[0],
-        scheduleTime: '10:30',
+        scheduleDate: new Date().toISOString().split("T")[0],
+        scheduleTime: "10:30",
         email: false,
       });
     } catch (error) {
-      console.error('Bulk reschedule failed:', error);
+      console.error("Bulk reschedule failed:", error);
       sonnerToast.dismiss(loadingToastId);
-      sonnerToast.error(error instanceof Error ? error.message : "Failed to reschedule tasks");
+      sonnerToast.error(
+        error instanceof Error ? error.message : "Failed to reschedule tasks"
+      );
     }
   };
 
@@ -270,7 +286,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
       toast({
         title: "Error",
         description: "Please select a user to reassign tasks to",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -281,31 +297,35 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
 
     try {
       const payload = {
-        task_occurrence_ids: selectedTasks.map(task => parseInt(task.id)),
+        task_occurrence_ids: selectedTasks.map((task) => parseInt(task.id)),
         backup_assigned_to_id: parseInt(reassignData.assignedUserId),
       };
 
       await bulkTaskService.bulkReassign(payload);
 
       sonnerToast.dismiss(loadingToastId);
-      sonnerToast.success(`Successfully reassigned ${selectedTasks.length} task(s)`);
-      
+      sonnerToast.success(
+        `Successfully reassigned ${selectedTasks.length} task(s)`
+      );
+
       setShowReassignDialog(false);
       onClearSelection();
-      
+
       // Refresh parent data to reflect changes
       if (onRefreshData) {
         onRefreshData();
       }
-      
+
       // Reset form
       setReassignData({
-        assignedUserId: '',
+        assignedUserId: "",
       });
     } catch (error) {
-      console.error('Bulk reassign failed:', error);
+      console.error("Bulk reassign failed:", error);
       sonnerToast.dismiss(loadingToastId);
-      sonnerToast.error(error instanceof Error ? error.message : "Failed to reassign tasks");
+      sonnerToast.error(
+        error instanceof Error ? error.message : "Failed to reassign tasks"
+      );
     }
   };
 
@@ -339,8 +359,6 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
           </div>
 
           <div className="flex items-center ml-5">
-          
-
             <Button
               variant="ghost"
               size="sm"
@@ -408,8 +426,6 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
               <span className="text-xs font-medium">Reschedule</span>
             </Button>
 
-        
-
             <div className="w-px h-8 bg-gray-300 mr-5"></div>
 
             <Button
@@ -426,11 +442,15 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
       </div>
 
       {/* Bulk Reschedule Dialog */}
-      <Dialog open={showRescheduleDialog} onOpenChange={setShowRescheduleDialog} modal={false}>
+      <Dialog
+        open={showRescheduleDialog}
+        onOpenChange={setShowRescheduleDialog}
+        modal={false}
+      >
         <DialogContent className="max-w-lg bg-white z-50">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">
-              Bulk Reschedule 
+              Bulk Reschedule
             </DialogTitle>
             <p className="text-sm text-gray-600 mt-2">
               Reschedule {selectedTasks.length} selected task(s)
@@ -439,7 +459,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
 
           <div className="space-y-6 p-4">
             <div>
-              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
+              <h3 className="font-medium mb-4" style={{ color: "#C72030" }}>
                 New Schedule
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -447,10 +467,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                   label="Schedule Date"
                   type="date"
                   value={rescheduleData.scheduleDate}
-                  onChange={e =>
-                    setRescheduleData(prev => ({
+                  onChange={(e) =>
+                    setRescheduleData((prev) => ({
                       ...prev,
-                      scheduleDate: e.target.value
+                      scheduleDate: e.target.value,
                     }))
                   }
                   fullWidth
@@ -464,10 +484,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                   label="Time"
                   type="time"
                   value={rescheduleData.scheduleTime}
-                  onChange={e =>
-                    setRescheduleData(prev => ({
+                  onChange={(e) =>
+                    setRescheduleData((prev) => ({
                       ...prev,
-                      scheduleTime: e.target.value
+                      scheduleTime: e.target.value,
                     }))
                   }
                   fullWidth
@@ -481,17 +501,17 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
             </div>
 
             <div>
-              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
+              <h3 className="font-medium mb-4" style={{ color: "#C72030" }}>
                 Notification Preferences
               </h3>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="email-bulk"
                   checked={rescheduleData.email}
-                  onCheckedChange={checked =>
-                    setRescheduleData(prev => ({
+                  onCheckedChange={(checked) =>
+                    setRescheduleData((prev) => ({
                       ...prev,
-                      email: !!checked
+                      email: !!checked,
                     }))
                   }
                 />
@@ -501,20 +521,20 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-center gap-3 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+              <Button
+                variant="secondary"
+                onClick={handleBulkReschedule}
+                className="flex-1 h-11"
+              >
+                Reschedule
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowRescheduleDialog(false)}
-                className="px-6"
+                className="flex-1 h-11"
               >
                 Cancel
-              </Button>
-              <Button
-                onClick={handleBulkReschedule}
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90 px-6"
-              >
-                Reschedule 
               </Button>
             </div>
           </div>
@@ -522,7 +542,11 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
       </Dialog>
 
       {/* Bulk Reassign Dialog */}
-      <Dialog open={showReassignDialog} onOpenChange={setShowReassignDialog} modal={false}>
+      <Dialog
+        open={showReassignDialog}
+        onOpenChange={setShowReassignDialog}
+        modal={false}
+      >
         <DialogContent className="max-w-lg bg-white z-50">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">
@@ -535,7 +559,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
 
           <div className="space-y-6 p-4">
             <div>
-              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
+              <h3 className="font-medium mb-4" style={{ color: "#C72030" }}>
                 Reassign To
               </h3>
               <FormControl fullWidth variant="outlined">
@@ -543,9 +567,9 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                 <MuiSelect
                   value={reassignData.assignedUserId}
                   onChange={(e) =>
-                    setReassignData(prev => ({
+                    setReassignData((prev) => ({
                       ...prev,
-                      assignedUserId: e.target.value
+                      assignedUserId: e.target.value,
                     }))
                   }
                   label="Assigned To"
@@ -575,21 +599,23 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
               </FormControl>
             </div>
 
-            <div className="flex justify-center gap-3 pt-4 border-t">
+    
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+              <Button
+                variant="secondary"
+                onClick={handleBulkReassign}
+                className="flex-1 h-11"
+                disabled={!reassignData.assignedUserId || loadingUsers}
+              >
+                Reassign
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowReassignDialog(false)}
-                className="px-6"
+                className="flex-1 h-11"
               >
                 Cancel
-              </Button>
-              <Button
-                onClick={handleBulkReassign}
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90 px-6"
-                disabled={!reassignData.assignedUserId || loadingUsers}
-              >
-                Reassign 
               </Button>
             </div>
           </div>

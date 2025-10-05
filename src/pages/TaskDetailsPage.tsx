@@ -115,9 +115,98 @@ export const TaskDetailsPage = () => {
       if (!id) return;
       try {
         setLoading(true);
-        const response = await taskService.getTaskDetails(id);
-        // Map the API response to match our component structure
-        const mappedDetails = (response as any).task_occurrence ? (response as any).task_occurrence : response;
+        const response = await taskService.getTaskDetailsAlternate(id);
+        
+        // Map the new API response to match our component structure
+        const mappedDetails = {
+          id: response.id,
+          task_status: response.task_status,
+          start_date: response.start_date,
+          created_at: response.created_at,
+          updated_at: response.updated_at,
+          steps: response.steps,
+          checklist: response.checklist,
+          asset: response.asset,
+          asset_id: response.asset_id,
+          asset_code: response.asset_code,
+          assigned_to_name: response.assigned_to_name,
+          asset_path: response.asset_path,
+          bef_sub_attachment: response.bef_sub_attachment,
+          aft_sub_attachment: response.aft_sub_attachment,
+          before_after_enabled: response.steps === 3 ? "Yes" : "No",
+          task_details: {
+            id: response.id,
+            task_name: response.checklist || "N/A",
+            associated_with: "Asset",
+            asset_service_name: response.asset || "N/A",
+            asset_service_code: response.asset_code || "N/A",
+            scheduled_on: response.start_date || "N/A",
+            completed_on: response.task_end_time || null,
+            assigned_to: response.assigned_to_name || "N/A",
+            task_duration: response.time_log || "N/A",
+            created_on: response.created_at || "N/A",
+            created_by: response.assigned_to_name?.split(',')[0]?.trim() || "N/A",
+            location: (() => {
+              // Parse asset_path: "Site - Pune / Building - World Trade Centre T3 / Wing - North Side / Floor - Basement 2 / Area - Common Area / Room - UPS Room "
+              const pathParts = response.asset_path?.split('/').map((p: string) => p.trim()) || [];
+              const parseLocationPart = (part: string) => {
+                const match = part.match(/^(.+?)\s*-\s*(.+)$/);
+                return match ? match[2].trim() : part;
+              };
+              
+              return {
+                site: pathParts.find((p: string) => p.startsWith('Site'))?.replace('Site - ', '') || "NA",
+                building: pathParts.find((p: string) => p.startsWith('Building'))?.replace('Building - ', '') || "NA",
+                wing: pathParts.find((p: string) => p.startsWith('Wing'))?.replace('Wing - ', '') || "NA",
+                floor: pathParts.find((p: string) => p.startsWith('Floor'))?.replace('Floor - ', '') || "NA",
+                area: pathParts.find((p: string) => p.startsWith('Area'))?.replace('Area - ', '') || "NA",
+                room: pathParts.find((p: string) => p.startsWith('Room'))?.replace('Room - ', '') || "NA",
+                full_location: response.asset_path || "N/A"
+              };
+            })(),
+            status: {
+              value: response.task_status || "Unknown",
+              label_class: response.task_status?.toLowerCase() || "unknown",
+              display_name: response.task_status || "Unknown"
+            },
+            performed_by: response.performed_by || null,
+            supplier: "N/A",
+            start_time: response.task_start_time || null
+          },
+          activity: {
+            has_response: response.checklist_responses?.length > 0,
+            total_score: null,
+            checklist_groups: [],
+            ungrouped_content: response.checklist_questions || [],
+            resp: response.checklist_responses?.map((item: any) => ({
+              ...item,
+              userData: item.userData || [],
+              comment: item.comment || "",
+              rating: item.rating || "",
+              weightage: item.weightage || "",
+              hint: item.hint || "",
+              attachments: item.attachments || [] // Preserve attachments from API
+            })) || []
+          },
+          attachments: {
+            main_attachment: null,
+            blob_store_files: response.response_attachments || []
+          },
+          actions: {
+            can_reschedule: response.task_status !== 'Closed',
+            can_submit_task: ['Open', 'Scheduled', 'In Progress', 'Overdue'].includes(response.task_status),
+            can_view_job_sheet: response.task_status === 'Closed',
+            can_edit: response.task_status !== 'Closed',
+            can_rate: false
+          },
+          action_urls: {
+            question_form_url: "",
+            job_sheet_url: "",
+            update_task_date_url: ""
+          },
+          comments: []
+        };
+        
         setTaskDetails(mappedDetails);
         
         // Debug logging for image attachments
@@ -452,7 +541,7 @@ export const TaskDetailsPage = () => {
     const activityResp = (taskDetails?.activity as any)?.resp;
     if (!activityResp) return [];
     
-    return activityResp.map((item: any, index: number) => ({
+    const mappedData = activityResp.map((item: any, index: number) => ({
       id: item.name || `activity_${index}`,
       helpText: item.hint || "-",
       activities: item.label || "-",
@@ -460,8 +549,15 @@ export const TaskDetailsPage = () => {
       comments: item.comment || "-",
       weightage: item.weightage || "-",
       rating: item.rating || "-",
+      attachments: item.attachments || [], // Map attachments from checklist_responses
       values: item.values || []
     }));
+    
+    // Debug log to verify attachments
+    console.log('📊 Activity Data with Attachments:', mappedData);
+    console.log('📎 Items with attachments:', mappedData.filter(item => item.attachments?.length > 0));
+    
+    return mappedData;
   };
 
   // Get assigned user name
@@ -521,6 +617,7 @@ export const TaskDetailsPage = () => {
     { key: 'comments', label: 'Comments', sortable: true, defaultVisible: true },
     { key: 'weightage', label: 'Weightage', sortable: true, defaultVisible: true },
     { key: 'rating', label: 'Rating', sortable: true, defaultVisible: true },
+    { key: 'attachments', label: 'Attachments', sortable: false, defaultVisible: true },
     { key: 'score', label: 'Score', sortable: true, defaultVisible: true },
   ];
 
@@ -555,6 +652,26 @@ export const TaskDetailsPage = () => {
         return <span className="text-xs">{item.weightage}</span>;
       case 'rating':
         return <span className="text-xs">{item.rating}</span>;
+      case 'attachments':
+        if (!item.attachments || item.attachments.length === 0) {
+          return <span className="text-xs text-gray-400">-</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {item.attachments.map((url: string, idx: number) => (
+              <a
+                key={idx}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-800 underline"
+                title={`Attachment ${idx + 1}`}
+              >
+                <img src={url} alt={`Attachment ${idx + 1}`} className="w-8 h-8 object-cover" />
+              </a>
+            ))}
+          </div>
+        );
       case 'score':
         return <span className="text-xs">{item.score}</span>;
       default:
@@ -995,7 +1112,7 @@ export const TaskDetailsPage = () => {
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Check-in With <br /> Before/After Photograph</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Check-in With <br /> Before/After <br /> Photograph</span>
                   <span className="task-info-separator-enhanced">:</span>
                   <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     <Badge className={taskDetails?.before_after_enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
@@ -1131,7 +1248,6 @@ export const TaskDetailsPage = () => {
                       data={getActivityData()}
                       columns={activityColumns}
                       renderCell={renderActivityCell}
-                      storageKey="task-activity-table"
                       emptyMessage="No activities found for this task."
                       hideTableExport={true}
                       hideTableSearch={true}
