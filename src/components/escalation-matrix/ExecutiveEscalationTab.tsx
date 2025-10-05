@@ -5,12 +5,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash2, Loader2 } from 'lucide-react';
 import ReactSelect from 'react-select';
 import { apiClient } from '@/utils/apiClient';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
+
+type AxiosErrorLike = { response?: { data?: { message?: string } } };
 
 interface EscalationLevel {
   level: string;
@@ -89,7 +92,11 @@ export const ExecutiveEscalationTab: React.FC = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
-  
+  // Editing state (modal)
+  const [editingGroupIndex, setEditingGroupIndex] = useState<number | null>(null);
+  const [editData, setEditData] = useState<EscalationLevel[]>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   // Local state for escalation users
   const [escalationUsers, setEscalationUsers] = useState<EscalationUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -123,9 +130,10 @@ export const ExecutiveEscalationTab: React.FC = () => {
       setFetchLoading(true);
       const response = await apiClient.get('/executive_escalations.json');
       setExecutiveRules(response.data?.escalations || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching executive rules:', error);
-      toast.error('Failed to fetch executive escalation rules');
+      const msg = (error as AxiosErrorLike)?.response?.data?.message || 'Failed to fetch executive escalation rules';
+      toast.error(msg);
     } finally {
       setFetchLoading(false);
     }
@@ -149,64 +157,26 @@ export const ExecutiveEscalationTab: React.FC = () => {
     return `${days} Day, ${hours} Hour, ${mins} Minute`;
   };
 
+  const splitMinutes = (minutes: number | null) => {
+    const total = minutes || 0;
+    const days = Math.floor(total / (24 * 60));
+    const hours = Math.floor((total % (24 * 60)) / 60);
+    const mins = total % 60;
+    return { days: String(days), hours: String(hours), minutes: String(mins) };
+  };
+
   const handleDeleteRule = async (ruleId: number) => {
     try {
       setDeleteLoading(true);
       await apiClient.delete(`/executive_escalations/${ruleId}.json`);
       toast.success('Executive escalation rule deleted successfully!');
       await fetchExecutiveRules();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting executive rule:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete executive escalation rule');
+      const msg = (error as AxiosErrorLike)?.response?.data?.message || 'Failed to delete executive escalation rule';
+      toast.error(msg);
     } finally {
       setDeleteLoading(false);
-    }
-  };
-
-  // Group escalations by their creation context (they should be grouped together as rules)
-  const groupedRules = executiveRules.reduce((acc, escalation) => {
-    const key = `${escalation.society_id}-${escalation.created_at}`;
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(escalation);
-    return acc;
-  }, {} as Record<string, typeof executiveRules>);
-
-  const ruleGroups = Object.values(groupedRules);
-
-  const filteredRules = selectedCategoryFilter === 'all' 
-    ? ruleGroups 
-    : ruleGroups.filter(group => group.some(escalation => escalation.esc_type === selectedCategoryFilter));
-
-  const handleFieldChange = (index: number, field: keyof EscalationLevel, value: string | number[]) => {
-    setEscalationData(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
-    });
-  };
-
-  const getUserNames = (userIds: number[]): string => {
-    if (!userIds || userIds.length === 0) return '';
-    return userIds.map(id => {
-      const user = escalationUsers.find(u => u.id === id);
-      return user ? user.full_name : 'Unknown User';
-    }).join(', ');
-  };
-
-  const createExecutiveEscalation = async (payload: ExecutiveEscalationPayload) => {
-    try {
-      setIsSubmitting(true);
-      const response = await apiClient.post('/pms/admin/create_executive_worker.json', payload);
-      toast.success('Executive escalation created successfully!');
-      return response.data;
-    } catch (error: any) {
-      console.error('Error creating executive escalation:', error);
-      toast.error(error.response?.data?.message || 'Failed to create executive escalation');
-      throw error;
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -216,6 +186,86 @@ export const ExecutiveEscalationTab: React.FC = () => {
       (parseInt(hours) || 0) * 60 + 
       (parseInt(minutes) || 0);
     return totalMinutes.toString();
+  };
+
+  const startEdit = (groupIndex: number, group: ExecutiveEscalationResponse['escalations']) => {
+    // Prefill edit data for levels E1..E3
+    const levels = ['E1','E2','E3'].map((lvl) => {
+      const esc = group.find(g => g.name === lvl);
+      const time = splitMinutes(esc?.p1 ?? 0);
+      const userIds: number[] = Array.isArray(esc?.escalate_to_users_details)
+        ? esc!.escalate_to_users_details.map((u) => Number(u.id))
+        : [];
+      return {
+        level: lvl,
+        escalationTo: userIds,
+        days: time.days,
+        hours: time.hours,
+        minutes: time.minutes,
+      } as EscalationLevel;
+    });
+    setEditData(levels);
+    setEditingGroupIndex(groupIndex);
+    setIsEditDialogOpen(true);
+  };
+
+  const cancelEdit = () => {
+    setEditingGroupIndex(null);
+    setEditData([]);
+    setIsEditDialogOpen(false);
+  };
+
+  const handleEditFieldChange = (index: number, field: keyof EscalationLevel, value: string | number[]) => {
+    setEditData(prev => {
+      const updated = [...prev];
+      const item = { ...updated[index] };
+      if (field === 'escalationTo') {
+        item.escalationTo = value as number[];
+      } else if (field === 'days' || field === 'hours' || field === 'minutes') {
+        item[field] = value as string;
+      }
+      updated[index] = item;
+      return updated;
+    });
+  };
+
+  const updateExecutiveEscalation = async (group: ExecutiveEscalationResponse['escalations']) => {
+    try {
+      setUpdateLoading(true);
+      // Build escalation_matrix using existing ids
+      const matrix: Record<string, any> = {};
+      ['E1','E2','E3'].forEach((lvl, i) => {
+        const existing = group.find(g => g.name === lvl);
+        const key = lvl.toLowerCase();
+        const item = editData[i];
+        if (!item) return;
+        matrix[key] = {
+          id: existing?.id,
+          esc_type: 'Executive Escalation',
+          name: lvl,
+          p1: convertMinutesToP1(item.days, item.hours, item.minutes),
+          escalate_to_users: (item.escalationTo || []).map(id => Number(id)),
+        };
+      });
+
+      const payload = {
+        complaint_worker: { of_phase: 'pms' },
+        escalation_matrix: matrix,
+      };
+
+      const res = await apiClient.put('/pms/admin/update_executive_worker.json', payload);
+      toast.success('Executive escalation updated successfully!');
+      await fetchExecutiveRules();
+      cancelEdit();
+      return res.data;
+    } catch (error: unknown) {
+      console.error('Error updating executive escalation:', error);
+      const msg = (error as AxiosErrorLike)?.response?.data?.message || 'Failed to update executive escalation';
+      toast.error(msg);
+      throw error;
+    } finally {
+      setUpdateLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -287,9 +337,62 @@ export const ExecutiveEscalationTab: React.FC = () => {
     }
   };
 
+  const getUserNames = (userIds: number[]): string => {
+    if (!userIds || userIds.length === 0) return '';
+    return userIds.map(id => {
+      const user = escalationUsers.find(u => u.id === id);
+      return user ? user.full_name : 'Unknown User';
+    }).join(', ');
+  };
+
+  const createExecutiveEscalation = async (payload: ExecutiveEscalationPayload) => {
+    try {
+      setIsSubmitting(true);
+      const response = await apiClient.post('/pms/admin/create_executive_worker.json', payload);
+      toast.success('Executive escalation created successfully!');
+      return response.data;
+    } catch (error: unknown) {
+      console.error('Error creating executive escalation:', error);
+      const msg = (error as AxiosErrorLike)?.response?.data?.message || 'Failed to create executive escalation';
+      toast.error(msg);
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFieldChange = (index: number, field: keyof EscalationLevel, value: string | number[]) => {
+    setEscalationData(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  // Group and filter rules for display
+  const groupedRules = executiveRules.reduce((acc: Record<string, ExecutiveEscalationResponse['escalations']>, escalation) => {
+    const key = `${escalation.society_id}-${escalation.created_at}`;
+    if (!acc[key]) acc[key] = [] as any;
+    acc[key].push(escalation);
+    return acc;
+  }, {});
+  const ruleGroups = Object.values(groupedRules);
+  const filteredRules = selectedCategoryFilter === 'all'
+    ? ruleGroups
+    : ruleGroups.filter(group => group.some(escalation => escalation.esc_type === selectedCategoryFilter));
+
+  const hasExecutive = executiveRules.some(e => e.esc_type === 'Executive Escalation');
+
   return (
     <div className="space-y-8">
-      <div className="bg-white rounded-lg border border-gray-200 p-8">
+      {/* {hasExecutive && (
+        <div className="bg-white rounded-lg border border-amber-200 p-4 flex items-center gap-3">
+          <div className="text-amber-700 text-sm">
+            Executive escalation already exists. The add form is disabled. Use the edit action to modify the existing configuration.
+          </div>
+        </div>
+      )} */}
+      <div className={`bg-white rounded-lg border border-gray-200 p-8 ${hasExecutive ? 'opacity-60' : ''}`}>
         <div className="space-y-6">
           {/* Header Row 1 */}
           <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3">
@@ -325,7 +428,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                   value={userOptions.filter(option => item.escalationTo.includes(option.value))}
                   placeholder="Select up to 15 users..."
                   isLoading={loadingUsers}
-                  isDisabled={loadingUsers}
+                  isDisabled={loadingUsers || hasExecutive}
                   className="min-w-[250px]"
                   styles={{
                     control: (base) => ({
@@ -369,6 +472,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                     onChange={(e) => handleFieldChange(index, 'days', e.target.value)}
                     placeholder="Days"
                     className="text-center bg-white border-gray-300"
+                    disabled={hasExecutive}
                   />
 
                   <Input
@@ -377,6 +481,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                     onChange={(e) => handleFieldChange(index, 'hours', e.target.value)}
                     placeholder="Hrs"
                     className="text-center bg-white border-gray-300"
+                    disabled={hasExecutive}
                   />
 
                   <Input
@@ -385,6 +490,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                     onChange={(e) => handleFieldChange(index, 'minutes', e.target.value)}
                     placeholder="Min"
                     className="text-center bg-white border-gray-300"
+                    disabled={hasExecutive}
                   />
                 </>
               ) : (
@@ -401,7 +507,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
           <div className="flex justify-center pt-6">
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting || loadingUsers}
+              disabled={isSubmitting || loadingUsers || hasExecutive}
               className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
@@ -461,6 +567,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                               {/* <Trash2 className="h-4 w-4" /> */}
                             </Button>
                           </AlertDialogTrigger>
+
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Rule</AlertDialogTitle>
@@ -479,12 +586,22 @@ export const ExecutiveEscalationTab: React.FC = () => {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-600 hover:text-[#C72030]"
+                          onClick={() => startEdit(index, ruleGroup)}
+                          title="Edit Rule"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>
                   
                   <div className="overflow-hidden">
                     <Table>
+
                       <TableHeader>
                         <TableRow className="bg-gray-50 border-b border-gray-200 hover:bg-gray-50">
                           <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/6">Levels</TableHead>
@@ -512,6 +629,68 @@ export const ExecutiveEscalationTab: React.FC = () => {
                       </TableBody>
                     </Table>
                   </div>
+
+                  {/* Edit Dialog (modal) */}
+                  <Dialog open={isEditDialogOpen && editingGroupIndex === index} onOpenChange={(open) => !open && cancelEdit()}>
+                    <DialogContent className="max-w-3xl">
+                      <DialogHeader>
+                        <DialogTitle>Edit Executive Escalation</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-3">
+                        {editData.map((item, idx) => (
+                          <div key={item.level} className="grid grid-cols-6 gap-6 items-center py-1">
+                            <div className="bg-gray-100 px-3 py-2 rounded border text-sm font-medium">{item.level}</div>
+                            <div className="col-span-2">
+                              <ReactSelect
+                                isMulti
+                                options={userOptions}
+                                onChange={(selected) => {
+                                  const newUsers = selected ? selected.map((s: {value: number; label: string}) => s.value) : [];
+                                  handleEditFieldChange(idx, 'escalationTo', newUsers);
+                                }}
+                                value={userOptions.filter(option => item.escalationTo.includes(option.value))}
+                                placeholder="Select users..."
+                                isLoading={loadingUsers}
+                                isDisabled={loadingUsers}
+                                className="min-w-[250px]"
+                              />
+                            </div>
+                            <Input
+                              type="number"
+                              value={item.days}
+                              onChange={(e) => handleEditFieldChange(idx, 'days', e.target.value)}
+                              placeholder="Days"
+                              className="text-center bg-white border-gray-300"
+                            />
+                            <Input
+                              type="number"
+                              value={item.hours}
+                              onChange={(e) => handleEditFieldChange(idx, 'hours', e.target.value)}
+                              placeholder="Hrs"
+                              className="text-center bg-white border-gray-300"
+                            />
+                            <Input
+                              type="number"
+                              value={item.minutes}
+                              onChange={(e) => handleEditFieldChange(idx, 'minutes', e.target.value)}
+                              placeholder="Min"
+                              className="text-center bg-white border-gray-300"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-end gap-3 mt-4">
+                        <Button variant="outline" onClick={cancelEdit}>Cancel</Button>
+                        <Button
+                          onClick={() => updateExecutiveEscalation(ruleGroup)}
+                          disabled={updateLoading}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {updateLoading ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               ))}
             </div>
