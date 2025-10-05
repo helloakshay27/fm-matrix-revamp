@@ -2113,7 +2113,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                         variant="outline"
                         size="sm"
                         className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                        onClick={handleUpdate}
+                        // onClick={handleUpdate}
                       >
                         <Edit className="w-4 h-4 mr-1" /> Edit
                       </Button>
@@ -2827,7 +2827,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                       variant="outline"
                       size="sm"
                       className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                      onClick={handleUpdate}
+                      // onClick={handleUpdate}
                     >
                       <Edit className="w-4 h-4 mr-1" /> Edit
                     </Button>
@@ -3075,105 +3075,77 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                 </div>
 
                 {ticketData.documents && (
-                  <Card className="w-full bg-white rounded-lg shadow-sm border">
-                    {/* Header */}
-                    <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <Paperclip className="w-6 h-6" style={{ color: '#C72030' }} />
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        Attachments
-                      </h3>
-                    </div>
+  <Card className="w-full bg-white rounded-lg shadow-sm border">
+    <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+        <Paperclip className="w-6 h-6" style={{ color: '#C72030' }} />
+      </div>
+      <h3 className="text-lg font-semibold uppercase text-black">
+        Attachments
+      </h3>
+    </div>
 
-                    {/* Body */}
-                    <CardContent className="pt-4 bg-[#FAFAF8] border border-t-0 border-[#D9D9D9]">
-                      {Array.isArray(ticketData.documents) && ticketData.documents.length > 0 ? (
-                        <div className="flex items-center flex-wrap gap-4">
-                          {ticketData.documents.map((attachment: any, idx: number) => {
-                            const url = attachment.document || attachment.document_url || attachment.url || attachment.attachment_url || '';
-                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
-                            const isPdf = /\.pdf$/i.test(url) || attachment.doctype === 'application/pdf';
-                            const isExcel = /\.(xls|xlsx|csv)$/i.test(url) ||
-                              attachment.doctype?.includes('spreadsheet') ||
-                              attachment.doctype?.includes('excel');
-                            const isWord = /\.(doc|docx)$/i.test(url) ||
-                              attachment.doctype?.includes('document') ||
-                              attachment.doctype?.includes('word');
-                            const isDownloadable = isPdf || isExcel || isWord || isImage;
+    <CardContent className="pt-4 bg-[#FAFAF8] border border-t-0 border-[#D9D9D9]">
+      {Array.isArray(ticketData.documents) && ticketData.documents.length > 0 ? (
+        <div className="flex items-center flex-wrap gap-4">
+          {ticketData.documents.map((attachment: any, idx: number) => {
+            const url = attachment.document || attachment.document_url || attachment.url || attachment.attachment_url || '';
+            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+            const isPdf = /\.pdf$/i.test(url) || attachment.doctype === 'application/pdf';
+            const isExcel = /\.(xls|xlsx|csv)$/i.test(url) ||
+              attachment.doctype?.includes('spreadsheet') ||
+              attachment.doctype?.includes('excel');
+            const isWord = /\.(doc|docx)$/i.test(url) ||
+              attachment.doctype?.includes('document') ||
+              attachment.doctype?.includes('word');
 
-                            return (
-                              <div
-                                key={attachment.id || idx}
-                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                              >
-                                {/* Eye icon for preview - always show for all file types */}
-                                <button
-                                  className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                  title="View"
-                                  onClick={() => {
-                                    setSelectedDoc({
-                                      ...attachment,
-                                      url,
-                                      type: isImage ? 'image' : 'document'
-                                    });
-                                    setIsModalOpen(true);
-                                  }}
-                                  type="button"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </button>
-
-                                {isImage ? (
-                                  <img
-                                    src={url}
-                                    alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
-                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                    onClick={() => {
-                                      setSelectedDoc({
-                                        ...attachment,
-                                        url,
-                                        type: 'image'
-                                      });
-                                      setIsModalOpen(true);
-                                    }}
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
-                                  />
-                                ) : isPdf ? (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                    <FileText className="w-6 h-6" />
-                                  </div>
-                                ) : isExcel ? (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                    <FileSpreadsheet className="w-6 h-6" />
-                                  </div>
-                                ) : isWord ? (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                    <FileText className="w-6 h-6" />
-                                  </div>
-                                ) : (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                    <File className="w-6 h-6" />
-                                  </div>
-                                )}
-                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                                  {attachment.document_name ||
-                                    attachment.document_file_name ||
-                                    url.split('/').pop() ||
-                                    `Document_${attachment.id || idx + 1}`}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-gray-400">No attachments</p>
-                      )}
-                    </CardContent>
-                  </Card>
+            return (
+              <div
+                key={attachment.id || idx}
+                className="flex relative flex-col items-center border rounded-lg w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+              >
+                {isImage ? (
+                  <img
+                    src={url}
+                    alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
+                    className="w-full h-full object-cover rounded-md border"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : isPdf ? (
+                  <div className="w-full h-full flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                ) : isExcel ? (
+                  <div className="w-full h-full flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                    <FileSpreadsheet className="w-6 h-6" />
+                  </div>
+                ) : isWord ? (
+                  <div className="w-full h-full flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                    <File className="w-6 h-6" />
+                  </div>
                 )}
+                {/* <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                  {attachment.document_name ||
+                    attachment.document_file_name ||
+                    url.split('/').pop() ||
+                    `Document_${attachment.id || idx + 1}`}
+                </span> */}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-xs text-gray-400">No attachments</p>
+      )}
+    </CardContent>
+  </Card>
+)}
 
                 {isModalOpen && selectedDoc && (
                   <div
@@ -4051,7 +4023,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                         variant="outline"
                         size="sm"
                         className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                        onClick={handleUpdate}
+                        // onClick={handleUpdate}
                       >
                         <Edit className="w-4 h-4 mr-1" /> Edit
                       </Button>
@@ -4765,7 +4737,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                       variant="outline"
                       size="sm"
                       className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                      onClick={handleUpdate}
+                      // onClick={handleUpdate}
                     >
                       <Edit className="w-4 h-4 mr-1" /> Edit
                     </Button>
