@@ -254,18 +254,48 @@ export class JobSheetPDFGenerator {
     document.body.appendChild(container);
 
     try {
-      // Wait a moment for fonts and images to load
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Wait longer for fonts and images to load - especially for remote S3 images
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Increased from 100ms to 1000ms
+      
+      // Pre-load all images before rendering
+      const images = container.querySelectorAll('img');
+      console.log(`Pre-loading ${images.length} images before PDF generation`);
+      
+      const imageLoadPromises = Array.from(images).map((img: any) => {
+        return new Promise((resolve) => {
+          if (img.complete) {
+            console.log(`Image already loaded: ${img.src}`);
+            resolve(true);
+          } else {
+            img.onload = () => {
+              console.log(`Image loaded successfully: ${img.src}`);
+              resolve(true);
+            };
+            img.onerror = () => {
+              console.warn(`Image failed to load: ${img.src}`);
+              resolve(false); // Resolve anyway to not block PDF generation
+            };
+            // Force reload if needed
+            const src = img.src;
+            img.src = '';
+            img.src = src;
+          }
+        });
+      });
+      
+      await Promise.all(imageLoadPromises);
+      console.log('All images pre-loaded, starting canvas rendering');
 
       const canvas = await html2canvas(container, {
         scale: 2,
-        useCORS: true,
-        allowTaint: true,
+        useCORS: false, // Disable CORS - use allowTaint instead
+        allowTaint: true, // Allow tainted canvas for CORS images
         backgroundColor: "#ffffff",
         width: container.offsetWidth,
         height: container.scrollHeight,
-        logging: false, // Reduce console noise
-        imageTimeout: 5000,
+        logging: true, // Enable logging to debug image loading
+        imageTimeout: 15000, // Increased timeout for image loading
+        proxy: undefined, // Let browser handle images normally
         onclone: (clonedDoc) => {
           // Ensure signature section is visible in cloned document
           const signatureSection =
@@ -274,6 +304,24 @@ export class JobSheetPDFGenerator {
             signatureSection.style.cssText +=
               "position: relative !important; visibility: visible !important; display: block !important; opacity: 1 !important; z-index: 9999 !important;";
           }
+          
+          // Pre-load and ensure images are visible in the cloned document
+          const images = clonedDoc.querySelectorAll('img');
+          console.log(`Found ${images.length} images in cloned document`);
+          images.forEach((img: any, index: number) => {
+            const originalSrc = img.getAttribute('src') || img.getAttribute('data-image-url');
+            console.log(`Image ${index}: ${originalSrc}`);
+            
+            // Ensure image src is set and styles are correct
+            if (originalSrc && !img.src) {
+              img.src = originalSrc;
+            }
+            
+            img.style.cssText += "display: block !important; opacity: 1 !important; max-width: 100% !important; height: auto !important;";
+            
+            // Remove crossorigin attribute to avoid CORS issues
+            img.removeAttribute('crossorigin');
+          });
         },
       });
 
