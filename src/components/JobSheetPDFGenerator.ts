@@ -489,6 +489,31 @@ export class JobSheetPDFGenerator {
         item.input_value !== ""
     );
 
+    // Group checklist items by group_id and sub_group_id
+    const grouped: { [key: string]: any[] } = {};
+    
+    checklistResponses.forEach((item: any) => {
+      const groupId = item.group_id || 'ungrouped';
+      const subGroupId = item.sub_group_id || 'ungrouped';
+      const key = `${groupId}_${subGroupId}`;
+      
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      
+      grouped[key].push(item);
+    });
+
+    // Convert to array of sections
+    const sections = Object.keys(grouped).map(key => ({
+      sectionKey: key,
+      group_name: grouped[key][0]?.group_name || 'Ungrouped',
+      sub_group_name: grouped[key][0]?.sub_group_name || '',
+      activities: grouped[key]
+    }));
+
+    console.log(`📊 PDF Grouping: ${sections.length} sections from ${checklistResponses.length} items`);
+
     // For PDF, show all checklist items without limitation
     const displayItems = checklistResponses; // Show all items in PDF as requested
 
@@ -559,35 +584,67 @@ export class JobSheetPDFGenerator {
 
     // Enhanced section title - use task name or fallback to asset category
     const assetCategory = jobSheet?.task_details?.asset?.category || "";
-    const sectionTitle = taskName
+    const mainTitle = taskName
       ? taskName.toUpperCase()
       : assetCategory
       ? `SERVICE CHECKLIST OF ${assetCategory.toUpperCase()}`
       : "NEW ACTIVITY";
 
+    // Generate HTML for each section
+    const sectionsHtml = sections.map((section, sectionIndex) => {
+      const sectionTitle = section.group_name;
+      const sectionSubtitle = section.sub_group_name;
+      
+      return `
+        <div class="figma-section-wrapper" style="margin-bottom: 20px;">
+          <!-- Section Header -->
+          <div class="figma-section-header" style="background: linear-gradient(to right, #f3f4f6, #f9fafb); padding: 12px 16px; border-radius: 8px; border-left: 4px solid #C72030; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="font-size: 14px; font-weight: 600; color: #1f2937; margin: 0 0 4px 0;">
+                  ${sectionTitle}
+                </h4>
+                ${sectionSubtitle ? `
+                  <p style="font-size: 12px; color: #6b7280; margin: 0;">
+                    ${sectionSubtitle}
+                  </p>
+                ` : ''}
+              </div>
+              <div style="background: rgba(196,184,157,0.33); color: #000; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 500;">
+                Section ${sectionIndex + 1}
+              </div>
+            </div>
+          </div>
+          
+          <!-- Section Table -->
+          <table class="figma-checklist-table">
+            <thead>
+              <tr class="figma-table-header-row">
+                <th class="figma-sl-header">SL<br>NO</th>
+                <th class="figma-inspection-header">INSPECTION POINT</th>
+                <th class="figma-result-header">RESULT</th>
+                <th class="figma-remarks-header">REMARKS</th>
+                <th class="figma-attachment-header">ATTACHMENTS</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${generateTableRows(section.activities)}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }).join('');
+
     return `
       <div class="figma-checklist-section">
-        <div class="figma-checklist-header">${sectionTitle}</div>
-        <table class="figma-checklist-table">
-          <thead>
-            <tr class="figma-table-header-row">
-              <th class="figma-sl-header">SL<br>NO</th>
-              <th class="figma-inspection-header">INSPECTION POINT</th>
-              <th class="figma-result-header">RESULT</th>
-              <th class="figma-remarks-header">REMARKS</th>
-              <th class="figma-attachment-header">ATTACHMENTS</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${generateTableRows(displayItems)}
-          </tbody>
-        </table>
+        <div class="figma-checklist-header">${mainTitle}</div>
+        ${sectionsHtml}
         
         <div class="figma-measurement-section">
           ${
             !hasAnyResponses
               ? `<div class="figma-status-note">Task checklist is pending completion (${checklistResponses.length} items)</div>`
-              : `<div class="figma-status-note">Showing all ${checklistResponses.length} checklist items</div>`
+              : `<div class="figma-status-note">Showing all ${checklistResponses.length} checklist items in ${sections.length} section(s)</div>`
           }
           ${
             jobSheet?.metadata
@@ -638,58 +695,85 @@ export class JobSheetPDFGenerator {
         item.input_value !== ""
     );
 
-    const checklistHtml = checklistResponses
-      .map((item: any, index: number) => {
-        const serialNumber = item.index || (pageNumber - 1) * 10 + index + 1;
-        const activity = item.activity || "";
+    // Group checklist items by group_id and sub_group_id
+    const grouped: { [key: string]: any[] } = {};
+    
+    checklistResponses.forEach((item: any) => {
+      const groupId = item.group_id || 'ungrouped';
+      const subGroupId = item.sub_group_id || 'ungrouped';
+      const key = `${groupId}_${subGroupId}`;
+      
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      
+      grouped[key].push(item);
+    });
 
-        // Handle null/empty input values properly
-        const inputValue = item.input_value;
-        const result =
-          inputValue !== null && inputValue !== undefined && inputValue !== ""
-            ? inputValue
-            : hasAnyResponses
-            ? ""
-            : "Not Completed";
+    // Convert to array of sections
+    const sections = Object.keys(grouped).map(key => ({
+      sectionKey: key,
+      group_name: grouped[key][0]?.group_name || 'Ungrouped',
+      sub_group_name: grouped[key][0]?.sub_group_name || '',
+      activities: grouped[key]
+    }));
 
-        const comments = item.comments || "";
+    const checklistHtml = sections.map((section, sectionIndex) => {
+      const sectionTitle = section.group_name;
+      const sectionSubtitle = section.sub_group_name;
+      
+      const sectionRows = section.activities
+        .map((item: any, index: number) => {
+          const serialNumber = item.index || (pageNumber - 1) * 10 + index + 1;
+          const activity = item.activity || "";
 
-        // Handle attachments with image thumbnails (same as main section)
-        const hasAttachments =
-          item.attachments &&
-          Array.isArray(item.attachments) &&
-          item.attachments.length > 0;
+          // Handle null/empty input values properly
+          const inputValue = item.input_value;
+          const result =
+            inputValue !== null && inputValue !== undefined && inputValue !== ""
+              ? inputValue
+              : hasAnyResponses
+              ? ""
+              : "Not Completed";
 
-        let attachmentDisplay = "-";
-        if (hasAttachments) {
-          // Generate image thumbnails for attachments
-          const attachmentImages = item.attachments
-            .map((attachment: any, attachIdx: number) => {
-              const attachmentUrl =
-                typeof attachment === "string"
-                  ? attachment
-                  : attachment.url || attachment.file_url || "";
-              const attachmentName =
-                typeof attachment === "string"
-                  ? `Attachment ${attachIdx + 1}`
-                  : attachment.filename ||
-                    attachment.name ||
-                    `Attachment ${attachIdx + 1}`;
+          const comments = item.comments || "";
 
-              return `<img 
+          // Handle attachments with image thumbnails (same as main section)
+          const hasAttachments =
+            item.attachments &&
+            Array.isArray(item.attachments) &&
+            item.attachments.length > 0;
+
+          let attachmentDisplay = "-";
+          if (hasAttachments) {
+            // Generate image thumbnails for attachments
+            const attachmentImages = item.attachments
+              .map((attachment: any, attachIdx: number) => {
+                const attachmentUrl =
+                  typeof attachment === "string"
+                    ? attachment
+                    : attachment.url || attachment.file_url || "";
+                const attachmentName =
+                  typeof attachment === "string"
+                    ? `Attachment ${attachIdx + 1}`
+                    : attachment.filename ||
+                      attachment.name ||
+                      `Attachment ${attachIdx + 1}`;
+
+                return `<img 
               src="${attachmentUrl}" 
               alt="${attachmentName}" 
               style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px;"
               crossorigin="anonymous"
               onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
             /><span style="display:none; font-size: 10px; color: #999;">📎</span>`;
-            })
-            .join("");
+              })
+              .join("");
 
-          attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">${attachmentImages}</div>`;
-        }
+            attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">${attachmentImages}</div>`;
+          }
 
-        return `
+          return `
           <tr class="avoid-page-break">
             <td class="sl-no">${serialNumber}</td>
             <td class="inspection-point">${activity}</td>
@@ -698,8 +782,36 @@ export class JobSheetPDFGenerator {
             <td class="attachment-cell">${attachmentDisplay}</td>
           </tr>
         `;
-      })
-      .join("");
+        })
+        .join("");
+
+      return `
+        <div class="section-wrapper" style="margin-bottom: 15px;">
+          <div class="section-header" style="background: linear-gradient(to right, #f3f4f6, #f9fafb); padding: 8px 12px; border-radius: 6px; border-left: 3px solid #C72030; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="font-size: 12px; font-weight: 600; color: #1f2937; margin: 0 0 2px 0;">
+                  ${sectionTitle}
+                </h4>
+                ${sectionSubtitle ? `
+                  <p style="font-size: 10px; color: #6b7280; margin: 0;">
+                    ${sectionSubtitle}
+                  </p>
+                ` : ''}
+              </div>
+              <div style="background: rgba(196,184,157,0.33); color: #000; padding: 2px 8px; border-radius: 3px; font-size: 9px; font-weight: 500;">
+                Section ${sectionIndex + 1}
+              </div>
+            </div>
+          </div>
+          <table class="checklist-table" style="margin-bottom: 10px;">
+            <tbody>
+              ${sectionRows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }).join("");
 
     const sectionTitle = taskName
       ? pageNumber === 1
@@ -726,10 +838,8 @@ export class JobSheetPDFGenerator {
               <th class="attachment-header">ATTACHMENTS</th>
             </tr>
           </thead>
-          <tbody>
-            ${checklistHtml}
-          </tbody>
         </table>
+        ${checklistHtml}
       </div>
     `;
   }

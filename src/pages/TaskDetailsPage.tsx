@@ -126,14 +126,18 @@ export const TaskDetailsPage = () => {
         setLoading(true);
         const response = await taskService.getTaskDetails(id);
         
+        // Log the response from taskService to see what we're getting
+        console.log('📡 Raw API Response from taskService:', response);
+        console.log('📍 Location from taskService:', response?.task_details?.location);
+        
         // Map the API response to match our component structure
         const rawDetails = (response as any).task_occurrence ? (response as any).task_occurrence : response;
         
         // Enhanced mapping to handle the new API structure
         const mappedDetails = {
           ...rawDetails,
-          // Map task details structure
-          task_details: {
+          // task_details is already properly mapped by taskService, just ensure it exists
+          task_details: rawDetails.task_details || {
             id: rawDetails.id,
             task_name: rawDetails.checklist,
             asset_service_code: rawDetails.asset_code,
@@ -149,36 +153,61 @@ export const TaskDetailsPage = () => {
             start_time: rawDetails.task_start_time,
             completed_on: rawDetails.updated_at,
             performed_by: rawDetails.performed_by,
-            status: {
+            status: rawDetails.task_details?.status || {
               value: rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || 'unknown',
               display_name: rawDetails.task_status || 'Unknown'
             },
-            location: {
-              site: rawDetails.site_name || 'NA',
-              building: extractLocationPart(rawDetails.asset_path, 'Building') || 'NA',
-              wing: extractLocationPart(rawDetails.asset_path, 'Wing') || 'NA',
-              floor: extractLocationPart(rawDetails.asset_path, 'Floor') || 'NA',
-              area: extractLocationPart(rawDetails.asset_path, 'Area') || 'NA',
-              room: extractLocationPart(rawDetails.asset_path, 'Room') || 'NA'
+            // Use the location that was already mapped by taskService
+            location: rawDetails.task_details?.location || rawDetails.location || {
+              site: 'NA',
+              building: 'NA',
+              wing: 'NA',
+              floor: 'NA',
+              area: 'NA',
+              room: 'NA'
             }
           },
-          // Map activity/checklist responses
+          // Map activity/checklist responses - if responses exist, map them; otherwise map questions
           activity: {
-            resp: rawDetails.checklist_responses?.map((item: any) => ({
-              label: item.label || item.activity,
-              hint: item.hint || item.help_text || '',
-              userData: item.userData || [item.input_value],
-              comment: item.comment || item.comments || '',
-              weightage: item.weightage || '',
-              rating: item.rating || '',
-              values: item.values || [],
-              attachments: item.attachments || [],
-              name: item.name,
-              className: item.className,
-              type: item.type,
-              required: item.required,
-              is_reading: item.is_reading
-            })) || []
+            resp: rawDetails.checklist_responses
+              ? rawDetails.checklist_responses.map((item: any) => ({
+                  label: item.label || item.activity,
+                  hint: item.hint || item.help_text || '',
+                  userData: item.userData || [item.input_value],
+                  comment: item.comment || item.comments || '',
+                  weightage: item.weightage || '',
+                  rating: item.rating || '',
+                  values: item.values || [],
+                  attachments: item.attachments || [],
+                  name: item.name,
+                  className: item.className,
+                  type: item.type,
+                  required: item.required,
+                  is_reading: item.is_reading,
+                  group_id: item.group_id || '',
+                  sub_group_id: item.sub_group_id || '',
+                  group_name: item.group_name || '',
+                  sub_group_name: item.sub_group_name || ''
+                }))
+              : (rawDetails.checklist_questions || []).map((item: any) => ({
+                  label: item.label || item.activity,
+                  hint: item.hint || item.help_text || '',
+                  userData: ['-'], // Show '-' for questions without responses
+                  comment: '-',
+                  weightage: item.weightage || '',
+                  rating: '',
+                  values: item.values || [],
+                  attachments: [],
+                  name: item.name,
+                  className: item.className,
+                  type: item.type,
+                  required: item.required,
+                  is_reading: item.is_reading,
+                  group_id: item.group_id || '',
+                  sub_group_id: item.sub_group_id || '',
+                  group_name: item.group_name || '',
+                  sub_group_name: item.sub_group_name || ''
+                }))
           },
           // Map before/after attachments
           bef_sub_attachment: rawDetails.bef_sub_attachment,
@@ -206,6 +235,10 @@ export const TaskDetailsPage = () => {
         };
         
         setTaskDetails(mappedDetails);
+        
+        // Enhanced debug logging
+        console.log('🗺️ Final Mapped Details:', mappedDetails);
+        console.log('📍 Final Location Object:', mappedDetails?.task_details?.location);
         
         // Debug logging for image attachments and checklist
         console.log('🖼️ Task Details Image Data:');
@@ -538,10 +571,62 @@ export const TaskDetailsPage = () => {
     return badges;
   };
 
-  // Get activity data dynamically
+  // Get activity data grouped by sections
+  const getGroupedActivityData = () => {
+    const activityResp = (taskDetails?.activity as any)?.resp;
+    console.log('🎯 getActivityData - activityResp:', activityResp);
+    console.log('🎯 getActivityData - activityResp length:', activityResp?.length);
+    
+    if (!activityResp || activityResp.length === 0) {
+      console.log('⚠️ No activity responses found');
+      return [];
+    }
+    
+    // Group by group_id and sub_group_id
+    const grouped: { [key: string]: any[] } = {};
+    
+    activityResp.forEach((item: any, index: number) => {
+      const groupId = item.group_id || 'ungrouped';
+      const subGroupId = item.sub_group_id || 'ungrouped';
+      const key = `${groupId}_${subGroupId}`;
+      
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      
+      grouped[key].push({
+        id: item.name || `activity_${index}`,
+        helpText: item.hint || "-",
+        activities: item.label || "-",
+        input: item.userData?.length > 0 ? item.userData : ["-"],
+        comments: item.comment || "-",
+        weightage: item.weightage || "-",
+        rating: item.rating || "-",
+        attachments: item.attachments || [],
+        values: item.values || [],
+        group_name: item.group_name || '',
+        sub_group_name: item.sub_group_name || '',
+        group_id: groupId,
+        sub_group_id: subGroupId
+      });
+    });
+    
+    // Convert to array of sections
+    return Object.keys(grouped).map(key => ({
+      sectionKey: key,
+      group_name: grouped[key][0]?.group_name || 'Ungrouped',
+      sub_group_name: grouped[key][0]?.sub_group_name || '',
+      activities: grouped[key]
+    }));
+  };
+
+  // Get activity data dynamically (flat list for compatibility)
   const getActivityData = () => {
     const activityResp = (taskDetails?.activity as any)?.resp;
-    if (!activityResp) return [];
+    
+    if (!activityResp || activityResp.length === 0) {
+      return [];
+    }
     
     return activityResp.map((item: any, index: number) => ({
       id: item.name || `activity_${index}`,
@@ -551,7 +636,7 @@ export const TaskDetailsPage = () => {
       comments: item.comment || "-",
       weightage: item.weightage || "-",
       rating: item.rating || "-",
-      attachments: item.attachments || [], // Include attachments array
+      attachments: item.attachments || [],
       values: item.values || []
     }));
   };
@@ -1193,7 +1278,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Site</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.site !== "NA" && taskDetails?.task_details?.location?.site ? taskDetails.task_details.location.site : '-'}
+                      {taskDetails?.task_details?.location?.site || '-'}
                     </div>
                   </div>
 
@@ -1202,7 +1287,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Building</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.building !== "NA" && taskDetails?.task_details?.location?.building ? taskDetails.task_details.location.building : '-'}
+                      {taskDetails?.task_details?.location?.building || '-'}
                     </div>
                   </div>
 
@@ -1211,7 +1296,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Wing</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.wing !== "NA" && taskDetails?.task_details?.location?.wing ? taskDetails.task_details.location.wing : '-'}
+                      {taskDetails?.task_details?.location?.wing || '-'}
                     </div>
                   </div>
 
@@ -1220,7 +1305,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Floor</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.floor !== "NA" && taskDetails?.task_details?.location?.floor ? taskDetails.task_details.location.floor : '-'}
+                      {taskDetails?.task_details?.location?.floor || '-'}
                     </div>
                   </div>
 
@@ -1229,7 +1314,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Area</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.area !== "NA" && taskDetails?.task_details?.location?.area ? taskDetails.task_details.location.area : '-'}
+                      {taskDetails?.task_details?.location?.area || '-'}
                     </div>
                   </div>
 
@@ -1238,7 +1323,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Room</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.room !== "NA" && taskDetails?.task_details?.location?.room ? taskDetails.task_details.location.room : '-'}
+                      {taskDetails?.task_details?.location?.room || '-'}
                     </div>
                   </div>
                 </div>
@@ -1257,23 +1342,42 @@ export const TaskDetailsPage = () => {
               </div>
             </div>
             <div className="figma-card-content">
-              {(taskDetails?.checklist_questions?.length > 0) ? (
-                <div className="space-y-4">
-                  {/* Main Checklist Section */}
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-3 bg-gray-100 px-3 py-2 rounded">
-                      {taskDetails?.task_details?.task_name || 'Checklist Items'}
-                    </h4>
-                    <EnhancedTable
-                      data={getActivityData()}
-                      columns={activityColumns}
-                      renderCell={renderActivityCell}
-                      emptyMessage="No activities found for this task."
-                      hideTableExport={true}
-                      hideTableSearch={true}
-                      hideColumnsButton={true}
-                    />
-                  </div>
+              {(taskDetails?.checklist_questions?.length > 0 || taskDetails?.activity?.resp?.length > 0) ? (
+                <div className="space-y-6">
+                  {/* Grouped Checklist Sections */}
+                  {getGroupedActivityData().map((section, sectionIndex) => (
+                    <div key={section.sectionKey} className="space-y-3">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-base font-semibold text-gray-800">
+                              {section.group_name}
+                            </h4>
+                            {section.sub_group_name && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {section.sub_group_name}
+                              </p>
+                            )}
+                          </div>
+                          <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                            Section {sectionIndex + 1}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      {/* Section Table */}
+                      <EnhancedTable
+                        data={section.activities}
+                        columns={activityColumns}
+                        renderCell={renderActivityCell}
+                        emptyMessage="No activities found in this section."
+                        hideTableExport={true}
+                        hideTableSearch={true}
+                        hideColumnsButton={true}
+                      />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <p className="text-gray-500 text-center py-8">

@@ -93,6 +93,7 @@ export const BookingSetupDetailPage = () => {
   const [showQr, setShowQr] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [additionalOpen, setAdditionalOpen] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState("")
   const [formData, setFormData] = useState({
     facilityName: "",
     isBookable: true,
@@ -188,6 +189,23 @@ export const BookingSetupDetailPage = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchAvailableSlots = async () => {
+      try {
+        const response = await axios.get(`https://fm-uat-api.lockated.com/pms/admin/facility_setups/get_schedules_slot_count?id=${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }
+        })
+
+        setAvailableSlots(response.data.total_slots)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchAvailableSlots()
+  }, [])
 
   const handleAdditionalOpen = () => {
     setAdditionalOpen(!additionalOpen);
@@ -409,6 +427,11 @@ export const BookingSetupDetailPage = () => {
                         ))}
                     </Select>
                   </FormControl>
+
+                  <div className="flex flex-col items-start gap-1 -mt-[10px]">
+                    <div className="text-sm">Available Slots:</div>
+                    <div className="text-md font-semibold">{availableSlots}</div>
+                  </div>
                 </div>
                 <div className="flex gap-6 bg-[#F6F7F7]">
                   <div className="flex items-center space-x-2">

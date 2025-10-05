@@ -1146,7 +1146,7 @@ td div , td span, th div, td button, td a {
 @media (min-width: 1280px) {
   .task-info-label-enhanced {
     min-width: 180px !important;
-    font-size: 15px !important;
+    font-size: 14px !important;
   }
   
   .task-info-separator-enhanced {
@@ -1154,6 +1154,6 @@ td div , td span, th div, td button, td a {
   }
   
   .task-info-value-enhanced {
-    font-size: 15px !important;
+    font-size: 14.5px !important;
   }
 }
