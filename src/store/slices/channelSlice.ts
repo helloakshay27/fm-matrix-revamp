@@ -266,14 +266,31 @@ export const fetchIndividualChatTasks = createAsyncThunk(
             token,
             id,
             param,
-        }: { baseUrl: string; token: string; id?: string; param?: string },
+            page,
+        }: {
+            baseUrl: string;
+            token: string;
+            id?: string;
+            param?: string;
+            page?: number;
+        },
         { rejectWithValue }
     ) => {
         try {
             let url = `https://${baseUrl}/task_managements.json`;
 
+            // Collect query parameters properly
+            const queryParams: string[] = [];
+
             if (id && param) {
-                url += `?q[${param}]=${id}`;
+                queryParams.push(`q[${param}]=${id}`);
+            }
+            if (page) {
+                queryParams.push(`page=${page}`);
+            }
+
+            if (queryParams.length > 0) {
+                url += `?${queryParams.join("&")}`;
             }
 
             const response = await axios.get(url, {
@@ -281,16 +298,41 @@ export const fetchIndividualChatTasks = createAsyncThunk(
                     Authorization: `Bearer ${token}`,
                 },
             });
+
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             const message =
                 error.response?.data?.error ||
-                error.error ||
+                error.message ||
                 "Failed to get individual chat tasks";
             return rejectWithValue(message);
         }
     }
 );
+
+export const removeUserFromGroup = createAsyncThunk(
+    "removeUserFromGroup",
+    async ({ baseUrl, token, userId }: { baseUrl: string; token: string; userId: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.delete(
+                `https://${baseUrl}/project_space_users/${userId}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error: any) {
+            const message =
+                error.response?.data?.error ||
+                error.message ||
+                "Failed to remove user from group";
+            return rejectWithValue(message);
+        }
+    }
+);
+
 
 const fetchConversationSlice = createApiSlice(
     "fetchConversation",
@@ -316,6 +358,7 @@ const fetchGroupConversationSlice = createApiSlice(
     fetchGroupConversation
 );
 const createChatTaskSlice = createApiSlice("createChatTask", createChatTask);
+const removeUserFromGroupSlice = createApiSlice("removeUserFromGroup", removeUserFromGroup);
 
 export const fetchConversationReducer = fetchConversationSlice.reducer;
 export const createConversationReducer = createConversationSlice.reducer;
@@ -328,3 +371,4 @@ export const createGroupReducer = createGroupSlice.reducer;
 export const fetchGroupConversationReducer =
     fetchGroupConversationSlice.reducer;
 export const createChatTaskReducer = createChatTaskSlice.reducer;
+export const removeUserFromGroupReducer = removeUserFromGroupSlice.reducer;

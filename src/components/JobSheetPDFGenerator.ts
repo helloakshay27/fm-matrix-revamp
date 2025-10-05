@@ -32,10 +32,10 @@ export class JobSheetPDFGenerator {
         jobSheet,
         comments
       );
-      const maxSinglePageHeight = 270; // A4 usable height accounting for margins and optimal layout
-      const maxChecklistItemsPerPage = 12; // Optimized for A4 space with proper spacing
+      const maxSinglePageHeight = 280; // A4 usable height accounting for margins and optimal layout
+      const maxChecklistItemsPerPage = 20; // Increased to fit more items on single page
 
-      // Determine if content needs multiple pages
+      // Determine if content needs multiple pages - more conservative approach
       const needsPageBreak =
         estimatedContentHeight > maxSinglePageHeight ||
         checklistResponses.length > maxChecklistItemsPerPage;
@@ -119,10 +119,8 @@ export class JobSheetPDFGenerator {
     );
 
     const jobSheet = jobSheetData?.job_sheet;
-    const checklistResponses = jobSheet?.checklist_responses || [];
-
-    // Split checklist into manageable pages
-    const checklistPerPage = 12; // Optimized for A4 page space
+    const checklistResponses = jobSheet?.checklist_responses || [];      // Split checklist into manageable pages - increased for better utilization
+    const checklistPerPage = 18; // Optimized for A4 page space with better density
     const checklistPages = [];
     for (let i = 0; i < checklistResponses.length; i += checklistPerPage) {
       checklistPages.push(checklistResponses.slice(i, i + checklistPerPage));
@@ -191,6 +189,8 @@ export class JobSheetPDFGenerator {
               i + 1,
               isLastPage
             )}
+            ${isLastPage ? this.generateRemarksSection(taskDetails, comments) : ''}
+            ${isLastPage ? this.generateBottomSection() : ''}
           </body>
         </html>
       `;
@@ -198,22 +198,7 @@ export class JobSheetPDFGenerator {
       await this.renderPageToPDF(pageContent, taskDetails, false);
     }
 
-    // Final page: Measurements, Remarks, Signature
-    const finalPageContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          ${this.getPageStyles()}
-        </head>
-        <body>
-          ${this.generateHeader(jobSheetData)}
-          ${this.generateRemarksSection(taskDetails, comments)}
-          ${this.generateBottomSection()}
-        </body>
-      </html>
-    `;
-
-    await this.renderPageToPDF(finalPageContent, taskDetails, false);
+    // Final page is now included in the last checklist page, so no separate final page needed
 
     // Save the PDF
     this.pdf.save(
@@ -347,37 +332,36 @@ export class JobSheetPDFGenerator {
   private generateClientInfo(taskDetails: any, jobSheetData: any): string {
     const jobSheet = jobSheetData?.job_sheet;
     
-    // Use only dynamic data - no fallbacks
+    // Enhanced data mapping from new API structure
     const siteName = jobSheet?.task_details?.site?.name || "";
     const assetName = jobSheet?.task_details?.asset?.name || "";
-    const assetNo = jobSheet?.task_details?.asset?.code || "";
+    const assetCode = jobSheet?.task_details?.asset?.code || "";
     const jobCode = jobSheet?.basic_info?.job_card_no || "";
-    const modelNo = jobSheet?.task_details?.asset?.category || "";
     const group = jobSheet?.task_details?.asset?.category || "";
-    const subGroup = jobSheet?.task_details?.asset?.category || "";
     const serialNumber = jobSheet?.basic_info?.job_id || "";
-
-    // Format time data from jobSheet - use actual API structure
+    
+    // Get sub group from group_scores if available
+    const subGroup = jobSheet?.group_scores?.[0]?.sub_group_name || group;
+    
+    // Format time data - handle null values properly
     const checkInTime = jobSheet?.summary?.time_tracking?.start_time || "";
     const checkOutTime = jobSheet?.summary?.time_tracking?.end_time || "";
     
-    // Calculate duration from API data
-    const durationHours = jobSheet?.summary?.time_tracking?.duration_hours || 0;
-    const durationMinutes = jobSheet?.summary?.time_tracking?.duration_minutes || 0;
-    const duration = (durationHours > 0 || durationMinutes > 0) 
-      ? `${Math.floor(durationHours)}:${String(Math.floor(durationMinutes % 60)).padStart(2, "0")}:00`
-      : "";
-
+    // Personnel information
     const assignee = jobSheet?.personnel?.performed_by?.full_name || "";
     const completedBy = jobSheet?.personnel?.performed_by?.full_name || "";
-    const verifiedBy = jobSheet?.personnel?.verified_by?.full_name || "";
+    const verifiedBy = ""; // Not available in current API structure
     const schedule = jobSheet?.basic_info?.scheduled_date || "";
-    const verifiedOn = jobSheet?.basic_info?.completed_date || "";
+    const completedDate = jobSheet?.basic_info?.completed_date || "";
     
-    // Only use actual status data
-    const status = jobSheet?.summary?.is_overdue && jobSheet?.task_details?.task_status
-      ? "Completed After Overdue"
-      : jobSheet?.task_details?.task_status || "";
+    // Calculate duration if time tracking is available
+    const duration = jobSheet?.summary?.time_tracking ? 
+      `${jobSheet.summary.time_tracking.duration_hours || 0}:${String(jobSheet.summary.time_tracking.duration_minutes || 0).padStart(2, "0")}:00` : "";
+    
+    // Enhanced status with overdue indicator
+    const baseStatus = jobSheet?.task_details?.task_status || jobSheet?.summary?.task_completion_status || "";
+    const status = jobSheet?.summary?.is_overdue ? 
+      (baseStatus === "Completed" ? "Completed After Overdue" : baseStatus) : baseStatus;
 
     return `
       <div class="figma-client-info">
@@ -393,7 +377,7 @@ export class JobSheetPDFGenerator {
               <td class="figma-label-cell">Asset Name:</td>
               <td class="figma-value-cell">${assetName}</td>
               <td class="figma-label-cell">Asset No.:</td>
-              <td class="figma-value-cell">${assetNo}</td>
+              <td class="figma-value-cell">${assetCode}</td>
             </tr>
             <tr>
               <td class="figma-label-cell">Group:</td>
@@ -421,7 +405,7 @@ export class JobSheetPDFGenerator {
             </tr>
             <tr>
               <td class="figma-label-cell">Verified On:</td>  
-              <td class="figma-value-cell">${verifiedOn}</td>
+              <td class="figma-value-cell">${completedDate}</td>
               <td class="figma-label-cell">Duration:</td>
               <td class="figma-value-cell">${duration}</td>
             </tr>
@@ -429,7 +413,7 @@ export class JobSheetPDFGenerator {
               <td class="figma-label-cell">Schedule:</td>
               <td class="figma-value-cell">${schedule}</td>
               <td class="figma-label-cell">Status:</td>
-              <td class="figma-value-cell figma-status-overdue">${status}</td>
+              <td class="figma-value-cell ${jobSheet?.summary?.is_overdue ? 'figma-status-overdue' : ''}">${status}</td>
             </tr>
           </tbody>
         </table>
@@ -437,6 +421,13 @@ export class JobSheetPDFGenerator {
     `;
   }
 
+  /**
+   * Enhanced Daily Maintenance Section Generation
+   * - Maps all checklist_responses from the API (no limits)
+   * - Shows attachment indicators with count
+   * - Handles empty responses with proper status messages
+   * - Uses table format matching TaskDetailsPage structure
+   */
   private generateDailyMaintenanceSection(jobSheetData: any): string {
     const jobSheet = jobSheetData?.job_sheet;
     const checklistResponses = jobSheet?.checklist_responses || [];
@@ -446,7 +437,7 @@ export class JobSheetPDFGenerator {
     if (checklistResponses.length === 0) {
       return `
         <div class="figma-maintenance-section">
-          <div class="figma-maintenance-header">SERVICE CHECKLIST OF ${(jobSheet?.task_details?.asset?.category || "").toUpperCase()}</div>
+          <div class="figma-maintenance-header">NEW ACTIVITY</div>
           <div class="figma-maintenance-subheader">No checklist items available</div>
         </div>
       `;
@@ -457,8 +448,8 @@ export class JobSheetPDFGenerator {
       item.input_value !== null && item.input_value !== undefined && item.input_value !== ""
     );
 
-    // Limit items for single page view (can be expanded in multi-page)
-    const displayItems = checklistResponses.slice(0, 8); // Optimized for space
+    // For PDF, show all checklist items without limitation
+    const displayItems = checklistResponses; // Show all items in PDF as requested
 
     const generateTableRows = (items: any[]) => {
       return items
@@ -466,13 +457,27 @@ export class JobSheetPDFGenerator {
           const slNo = item.index || (index + 1);
           const inspectionPoint = item.activity || "";
           
-          // Handle null/empty input values properly
+          // Enhanced result handling
           const inputValue = item.input_value;
           const result = inputValue !== null && inputValue !== undefined && inputValue !== "" 
             ? inputValue 
             : (hasAnyResponses ? "" : "Not Completed");
           
           const remarks = item.comments || "";
+          
+          // Handle attachments - show in separate column
+          const hasAttachments = item.attachments && Array.isArray(item.attachments) && item.attachments.length > 0;
+          const attachmentDisplay = hasAttachments ? `📎 ${item.attachments.length}` : "-";
+          
+          // Debug attachment data for first few items
+          if (index < 3) {
+            console.log(`📎 Attachment Debug [${index}]:`, {
+              activity: item.activity,
+              hasAttachments: hasAttachments,
+              attachmentsArray: item.attachments,
+              attachmentCount: item.attachments?.length || 0
+            });
+          }
 
           return `
           <tr class="figma-checklist-row">
@@ -480,17 +485,22 @@ export class JobSheetPDFGenerator {
             <td class="figma-inspection-cell">${inspectionPoint}</td>
             <td class="figma-result-cell">${result}</td>
             <td class="figma-remarks-cell">${remarks}</td>
+            <td class="figma-attachment-cell">${attachmentDisplay}</td>
           </tr>
         `;
         })
         .join("");
     };
 
-    const sectionTitle = taskName || `SERVICE CHECKLIST OF ${(jobSheet?.task_details?.asset?.category || "").toUpperCase()}`;
+    // Enhanced section title - use task name or fallback to asset category
+    const assetCategory = jobSheet?.task_details?.asset?.category || "";
+    const sectionTitle = taskName ? 
+      taskName.toUpperCase() : 
+      (assetCategory ? `SERVICE CHECKLIST OF ${assetCategory.toUpperCase()}` : "NEW ACTIVITY");
 
     return `
       <div class="figma-checklist-section">
-        <div class="figma-checklist-header">${sectionTitle.toUpperCase()}</div>
+        <div class="figma-checklist-header">${sectionTitle}</div>
         <table class="figma-checklist-table">
           <thead>
             <tr class="figma-table-header-row">
@@ -498,6 +508,7 @@ export class JobSheetPDFGenerator {
               <th class="figma-inspection-header">INSPECTION POINT</th>
               <th class="figma-result-header">RESULT</th>
               <th class="figma-remarks-header">REMARKS</th>
+              <th class="figma-attachment-header">ATTACHMENTS</th>
             </tr>
           </thead>
           <tbody>
@@ -506,7 +517,14 @@ export class JobSheetPDFGenerator {
         </table>
         
         <div class="figma-measurement-section">
-          ${!hasAnyResponses ? '<div class="figma-status-note">Task checklist is pending completion</div>' : ''}
+          ${!hasAnyResponses ? 
+            `<div class="figma-status-note">Task checklist is pending completion (${checklistResponses.length} items)</div>` : 
+            `<div class="figma-status-note">Showing all ${checklistResponses.length} checklist items</div>`
+          }
+          ${jobSheet?.metadata ? 
+            `<div class="figma-status-note">Completion: ${jobSheet.metadata.completed_items}/${jobSheet.metadata.total_checklist_items} items (${jobSheet.metadata.completion_percentage.toFixed(1)}%)</div>` 
+            : ''
+          }
         </div>
       </div>
     `;
@@ -551,6 +569,10 @@ export class JobSheetPDFGenerator {
           : (hasAnyResponses ? "" : "Not Completed");
         
         const comments = item.comments || "";
+        
+        // Handle attachments for pagination section too
+        const hasAttachments = item.attachments && Array.isArray(item.attachments) && item.attachments.length > 0;
+        const attachmentDisplay = hasAttachments ? `📎 ${item.attachments.length}` : "-";
 
         return `
           <tr class="avoid-page-break">
@@ -558,6 +580,7 @@ export class JobSheetPDFGenerator {
             <td class="inspection-point">${activity}</td>
             <td class="result-cell">${result}</td>
             <td class="remarks">${comments}</td>
+            <td class="attachment-cell">${attachmentDisplay}</td>
           </tr>
         `;
       })
@@ -578,10 +601,70 @@ export class JobSheetPDFGenerator {
               <th class="inspection-header">INSPECTION POINT</th>
               <th class="result-header">RESULT</th>
               <th class="remarks-header">REMARKS</th>
+              <th class="attachment-header">ATTACHMENTS</th>
             </tr>
           </thead>
           <tbody>
             ${checklistHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  private generateLocationDetails(jobSheetData: any): string {
+    const jobSheet = jobSheetData?.job_sheet;
+    const location = jobSheet?.task_details?.asset?.location;
+    
+    // Debug location data
+    console.log('🗺️ Location Data Debug:', {
+      hasJobSheet: !!jobSheet,
+      hasTaskDetails: !!jobSheet?.task_details,
+      hasAsset: !!jobSheet?.task_details?.asset,
+      hasLocation: !!location,
+      locationData: location
+    });
+    
+    if (!location) {
+      return `
+        <div class="figma-location-section">
+          <div class="figma-location-header">Location Details</div>
+          <div class="figma-location-content">No location information available</div>
+        </div>
+      `;
+    }
+
+    // Extract and clean location data
+    const siteValue = location.site && location.site !== 'null' ? location.site : "•";
+    const buildingValue = location.building && location.building !== 'null' ? location.building : "•";
+    const wingValue = location.wing && location.wing !== 'null' ? location.wing : "•";
+    const floorValue = location.floor && location.floor !== 'null' ? location.floor : "•";
+    const areaValue = location.area && location.area !== 'null' ? location.area : "•";
+    const roomValue = location.room && location.room !== 'null' ? location.room : "•";
+
+    return `
+      <div class="figma-location-section">
+        <div class="figma-location-header">Location Details</div>
+        <table class="figma-location-table">
+          <thead>
+            <tr>
+              <th class="figma-location-th">Site</th>
+              <th class="figma-location-th">Building</th>
+              <th class="figma-location-th">Wing</th>
+              <th class="figma-location-th">Floor</th>
+              <th class="figma-location-th">Area</th>
+              <th class="figma-location-th">Room</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="figma-location-td">${siteValue}</td>
+              <td class="figma-location-td">${buildingValue}</td>
+              <td class="figma-location-td">${wingValue}</td>
+              <td class="figma-location-td">${floorValue}</td>
+              <td class="figma-location-td">${areaValue}</td>
+              <td class="figma-location-td">${roomValue}</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -594,10 +677,10 @@ export class JobSheetPDFGenerator {
     // Use only actual image data - handle null values properly
     const beforeImageUrl = jobSheet?.basic_info?.bef_sub_attachment && jobSheet?.basic_info?.bef_sub_attachment !== null 
       ? jobSheet?.basic_info?.bef_sub_attachment 
-      : jobSheet?.images?.before_image;
+      : null;
     const afterImageUrl = jobSheet?.basic_info?.aft_sub_attachment && jobSheet?.basic_info?.aft_sub_attachment !== null
       ? jobSheet?.basic_info?.aft_sub_attachment 
-      : jobSheet?.images?.after_image;
+      : null;
     
     // Get actual timestamps from data - handle the API date format
     const beforeTimestamp = jobSheet?.basic_info?.bef_sub_date || jobSheet?.basic_info?.created_date || "";
@@ -665,14 +748,55 @@ export class JobSheetPDFGenerator {
 
 
 
+  /**
+   * Enhanced Remarks Section Generation
+   * - Combines comments from multiple sources (task_comments, user comments, checklist comments, system comments)
+   * - Filters out empty/null comments properly
+   * - Uses bullet separator for multiple comments
+   */
   private generateRemarksSection(taskDetails: any, comments: string): string {
+    const jobSheet = taskDetails?.job_sheet;
+    
+    // Get comments from multiple sources and map correctly
+    const taskComments = jobSheet?.task_details?.task_comments || "";
+    const userComments = comments || "";
+    const basicInfoComments = jobSheet?.basic_info?.comments || "";
+    const checklistComments = jobSheet?.checklist_responses?.filter((item: any) => item.comments).map((item: any) => item.comments) || [];
+    const systemComments = jobSheet?.comments || [];
+    
+    // Combine all available comments with proper filtering and formatting
+    const allComments = [
+      taskComments,
+      userComments, 
+      basicInfoComments,
+      ...checklistComments,
+      ...systemComments.map((c: any) => c.comment || c.text || c)
+    ].filter(comment => comment && typeof comment === 'string' && comment.trim().length > 0);
+    
+    const finalComments = allComments.length > 0 ? allComments.join(' • ') : "";
+
+    return `
+      <div class="svg-remarks-section">
+        <div class="svg-remarks-container">
+          <div class="svg-remarks-label">Remarks</div>
+          <div class="svg-remarks-content">
+            ${finalComments || ""}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private generateEnhancedRemarksSection(taskDetails: any, comments: string): string {
     const remarksText = comments || taskDetails?.task_details?.task_comments || "";
 
     return `
-      <div class="figma-remarks-section">
-        <div class="figma-remarks-label">Remarks:</div>
-        <div class="figma-remarks-box">
-          ${remarksText}
+      <div class="svg-remarks-section">
+        <div class="svg-remarks-container">
+          <div class="svg-remarks-label">Remarks</div>
+          <div class="svg-remarks-content">
+            ${remarksText || ""}
+          </div>
         </div>
       </div>
     `;
@@ -718,20 +842,19 @@ export class JobSheetPDFGenerator {
   }
 
   private estimateContentHeight(jobSheet: any, comments: string = ""): number {
-    const headerHeight = 30; // Header with logo
-    const clientInfoHeight = 80; // Client info table (8 rows)
-    const locationHeight = 25; // Location stepper section
-    const beforeAfterHeight = 70; // Before/after images section with table
-    const measurementHeight = 45; // Three measurement tables
-    const remarksHeight = comments ? 35 : 20; // Remarks section (dynamic based on content)
-    const signatureHeight = 60; // Signature section with two columns
-    const bottomHeight = 25; // System note + branding
+    const headerHeight = 25; // Header with logo (reduced)
+    const clientInfoHeight = 70; // Client info table (8 rows, optimized)
+    const locationHeight = 20; // Location table section (reduced)
+    const beforeAfterHeight = 60; // Before/after images section with table (reduced)
+    const measurementHeight = 30; // Status notes section (reduced)
+    const remarksHeight = comments ? 25 : 15; // Remarks section (dynamic based on content, reduced)
+    const bottomHeight = 20; // System note + branding (reduced)
 
-    // Dynamic checklist height calculation - more accurate
+    // Dynamic checklist height calculation - more accurate and optimized
     const checklistItems = jobSheet?.checklist_responses?.length || 8;
-    const checklistHeaderHeight = 15; // Section title
-    const checklistTableHeaderHeight = 12; // Table header
-    const checklistRowHeight = 10; // Per row height
+    const checklistHeaderHeight = 12; // Section title (reduced)
+    const checklistTableHeaderHeight = 10; // Table header (reduced)
+    const checklistRowHeight = 8; // Per row height (reduced for better density)
     const checklistHeight =
       checklistHeaderHeight +
       checklistTableHeaderHeight +
@@ -745,7 +868,6 @@ export class JobSheetPDFGenerator {
       checklistHeight +
       measurementHeight +
       remarksHeight +
-      signatureHeight +
       bottomHeight;
 
     console.log(`📏 Content Height Estimation:`);
@@ -758,7 +880,6 @@ export class JobSheetPDFGenerator {
     );
     console.log(`   - Measurements: ${measurementHeight}mm`);
     console.log(`   - Remarks: ${remarksHeight}mm`);
-    console.log(`   - Signature: ${signatureHeight}mm`);
     console.log(`   - Bottom: ${bottomHeight}mm`);
     console.log(`   - TOTAL: ${totalHeight}mm`);
 
@@ -767,57 +888,5 @@ export class JobSheetPDFGenerator {
 
 
 
-  private generateLocationDetails(jobSheetData?: any): string {
-    const jobSheet = jobSheetData?.job_sheet;
-    const location = jobSheet?.task_details?.asset?.location || {};
 
-    // Extract location data - use only actual values, handle null properly
-    const siteValue = location.site && location.site !== "NA" && location.site !== null ? location.site : "";
-    const buildingValue = location.building && location.building !== "NA" && location.building !== null ? location.building : "";
-    const wingValue = location.wing && location.wing !== "NA" && location.wing !== null ? location.wing : "";
-    const floorValue = location.floor && location.floor !== "NA" && location.floor !== null ? location.floor : "";
-    const areaValue = location.area && location.area !== "NA" && location.area !== null ? location.area : "";
-    const roomValue = location.room && location.room !== "NA" && location.room !== null ? location.room : "";
-
-    return `
-      <div class="figma-location-section">
-        <div class="figma-location-header">Location Details</div>
-        <div class="figma-location-stepper">
-          <div class="figma-stepper-line"></div>
-          <div class="figma-location-steps">
-            <div class="figma-location-step">
-              <div class="figma-step-label">Site</div>
-              <div class="figma-step-dot"></div>
-              <div class="figma-step-value">${siteValue}</div>
-            </div>
-            <div class="figma-location-step">
-              <div class="figma-step-label">Building</div>
-              <div class="figma-step-dot"></div>
-              <div class="figma-step-value">${buildingValue}</div>
-            </div>
-            <div class="figma-location-step">
-              <div class="figma-step-label">Wing</div>
-              <div class="figma-step-dot"></div>
-              <div class="figma-step-value">${wingValue}</div>
-            </div>
-            <div class="figma-location-step">
-              <div class="figma-step-label">Floor</div>
-              <div class="figma-step-dot"></div>
-              <div class="figma-step-value">${floorValue}</div>
-            </div>
-            <div class="figma-location-step">
-              <div class="figma-step-label">Area</div>
-              <div class="figma-step-dot"></div>
-              <div class="figma-step-value">${areaValue}</div>
-            </div>
-            <div class="figma-location-step">
-              <div class="figma-step-label">Room</div>
-              <div class="figma-step-dot"></div>
-              <div class="figma-step-value">${roomValue}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
 }

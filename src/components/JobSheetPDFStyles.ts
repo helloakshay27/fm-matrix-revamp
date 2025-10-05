@@ -219,6 +219,8 @@ export class JobSheetPDFStyles {
         .figma-location-section {
           margin: 15px 0;
           background: #ffffff;
+          page-break-inside: avoid;
+          clear: both;
         }
 
         .figma-location-header {
@@ -292,6 +294,44 @@ export class JobSheetPDFStyles {
           text-align: center;
           line-height: 1.1;
         }
+
+        /* Location Table Styles */
+        .figma-location-table {
+          width: 100%;
+          border-collapse: collapse;
+          border: 1px solid #000000;
+          margin: 0;
+          background: #ffffff;
+          table-layout: fixed;
+        }
+
+        .figma-location-th {
+          background: #F5F5F5;
+          border: 1px solid #000000;
+          padding: 8px 6px;
+          font-family: "Work Sans", Arial, sans-serif;
+          font-size: 10px;
+          font-weight: 600;
+          color: #000000;
+          text-align: center;
+          vertical-align: middle;
+          width: 16.66%;
+          white-space: nowrap;
+        }
+
+        .figma-location-td {
+          border: 1px solid #000000;
+          padding: 8px 6px;
+          font-family: "Work Sans", Arial, sans-serif;
+          font-size: 9px;
+          color: #000000;
+          text-align: center;
+          vertical-align: middle;
+          width: 16.66%;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          min-height: 25px;
+          line-height: 1.2;
         }
 
         .floor-dot {
@@ -440,9 +480,10 @@ export class JobSheetPDFStyles {
         }
 
         .sl-header { width: 8%; }
-        .inspection-header { width: 52%; }
-        .result-header { width: 20%; }
+        .inspection-header { width: 42%; }
+        .result-header { width: 15%; }
         .remarks-header { width: 20%; }
+        .attachment-header { width: 15%; }
 
         .checklist-table td {
           border: 1px solid #000000;
@@ -478,6 +519,13 @@ export class JobSheetPDFStyles {
         .remarks {
           text-align: left;
           padding-left: 10px;
+          font-size: 9px;
+        }
+
+        .attachment-cell {
+          text-align: center;
+          font-weight: 600;
+          color: #007bff;
           font-size: 9px;
         }
 
@@ -889,7 +937,7 @@ export class JobSheetPDFStyles {
           font-weight: 600;
           color: #000000;
           text-align: center;
-          width: 52%;
+          width: 42%;
           vertical-align: middle;
         }
 
@@ -913,7 +961,19 @@ export class JobSheetPDFStyles {
           font-weight: 600;
           color: #000000;
           text-align: center;
-          width: 25%;
+          width: 20%;
+          vertical-align: middle;
+        }
+
+        .figma-attachment-header {
+          border: 1px solid #000000;
+          padding: 8px 10px;
+          font-family: "Work Sans", Arial, sans-serif;
+          font-size: 9px;
+          font-weight: 600;
+          color: #000000;
+          text-align: center;
+          width: 15%;
           vertical-align: middle;
         }
 
@@ -964,6 +1024,42 @@ export class JobSheetPDFStyles {
           color: #000000;
           text-align: left;
           vertical-align: middle;
+        }
+
+        .figma-attachment-cell {
+          border: 1px solid #000000;
+          padding: 6px 10px;
+          font-family: "Work Sans", Arial, sans-serif;
+          font-size: 9px;
+          color: #007bff;
+          text-align: center;
+          vertical-align: middle;
+          font-weight: 600;
+        }
+
+        /* Attachment Indicator Styles */
+        .figma-attachment-indicator {
+          color: #007bff;
+          font-weight: 600;
+          font-size: 8px;
+          background: #e3f2fd;
+          padding: 1px 4px;
+          border-radius: 3px;
+          margin-left: 5px;
+          display: inline-block;
+        }
+
+        /* Status Note Styles */
+        .figma-status-note {
+          font-family: "Work Sans", Arial, sans-serif;
+          font-size: 9px;
+          color: #666666;
+          font-style: italic;
+          margin-top: 8px;
+          padding: 4px 8px;
+          background: #f5f5f5;
+          border-radius: 4px;
+          text-align: center;
         }
 
         /* Figma Measurement Section Styles */
@@ -1062,29 +1158,63 @@ export class JobSheetPDFStyles {
           }
         }
 
-        /* Figma Remarks Section Styles */
-        .figma-remarks-section {
-          margin: 15px 0;
+        /* SVG-Style Remarks Section */
+        .svg-remarks-section {
+          margin: 20px 0;
+          position: relative;
           background: #ffffff;
         }
 
-        .figma-remarks-label {
+        .svg-remarks-container {
+          border: 2px solid #000000;
+          border-radius: 8px;
+          min-height: 100px;
+          position: relative;
+          background: #ffffff;
+          padding: 20px 15px 15px 15px;
+        }
+
+        .svg-remarks-label {
+          position: absolute;
+          top: -12px;
+          left: 15px;
+          background: #ffffff;
+          padding: 0 8px;
           font-family: "Work Sans", Arial, sans-serif;
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 600;
           color: #000000;
-          margin-bottom: 5px;
         }
 
-        .figma-remarks-box {
-          border: 1px solid #000000;
-          padding: 15px;
-          min-height: 60px;
-          background: #ffffff;
+        .svg-remarks-content {
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 10px;
           color: #000000;
-          line-height: 1.3;
+          line-height: 1.4;
+          min-height: 60px;
+          word-wrap: break-word;
+        }
+
+        /* Powered By with Vi Logo */
+        .powered-by-vi {
+          margin: 15px 0;
+          text-align: center;
+          font-size: 10px;
+          color: #000000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+
+        .vi-logo {
+          width: 80px;
+          height: auto;
+        }
+
+        .powered-text {
+          font-family: "Work Sans", Arial, sans-serif;
+          font-weight: 400;
         }
       </style>
     `;

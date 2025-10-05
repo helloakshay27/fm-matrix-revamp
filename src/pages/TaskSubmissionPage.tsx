@@ -55,6 +55,11 @@ export const TaskSubmissionPage: React.FC = () => {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionStats, setSubmissionStats] = useState({
+    questionsAttended: 0,
+    negativeFeedback: 0,
+    ticketsRaised: 0,
+  });
 
   // File upload refs
   const beforePhotoRef = useRef<HTMLInputElement>(null);
@@ -200,6 +205,31 @@ export const TaskSubmissionPage: React.FC = () => {
 
   const dynamicChecklist = getChecklistFromTaskDetails();
 
+  // Calculate dynamic stats for success modal
+  const calculateSubmissionStats = () => {
+    const totalQuestions = dynamicChecklist.length;
+    let negativeFeedback = 0;
+    let ticketsRaised = 0;
+
+    dynamicChecklist.forEach((item) => {
+      const answer = formData.checklist[item.id]?.value;
+      // Count "No" answers as negative feedback
+      if (answer === "No" || answer === "Poor" || answer === "Bad") {
+        negativeFeedback++;
+      }
+      // Count negative answers as potential tickets (simplified logic)
+      if (answer === "No") {
+        ticketsRaised++;
+      }
+    });
+
+    return {
+      questionsAttended: totalQuestions,
+      negativeFeedback,
+      ticketsRaised,
+    };
+  };
+
   // Get task name dynamically
   const getTaskName = () => {
     return (
@@ -296,9 +326,9 @@ export const TaskSubmissionPage: React.FC = () => {
           return dynamicChecklist.every((item) => {
             if (item.required) {
               const answer = formData.checklist[item.id]?.value;
-              return answer && (!Array.isArray(answer) || answer.length > 0);
+              return answer && answer !== "" && (!Array.isArray(answer) || answer.length > 0);
             }
-            return true;
+            return true; // Non-required items are always valid
           });
         case 2: // Preview
           return true;
@@ -314,9 +344,9 @@ export const TaskSubmissionPage: React.FC = () => {
           return dynamicChecklist.every((item) => {
             if (item.required) {
               const answer = formData.checklist[item.id]?.value;
-              return answer && (!Array.isArray(answer) || answer.length > 0);
+              return answer && answer !== "" && (!Array.isArray(answer) || answer.length > 0);
             }
-            return true;
+            return true; // Non-required items are always valid
           });
         case 3:
           return !!formData.afterPhoto;
@@ -382,8 +412,11 @@ export const TaskSubmissionPage: React.FC = () => {
   const steps: TaskSubmissionStep[] = generateSteps();
 
   const handleStepClick = (stepId: number) => {
-    // Allow navigation to completed steps or current step
-    if (stepId <= Math.max(...completedSteps, currentStep)) {
+    // Allow navigation to completed steps or current step, or next step if current is valid
+    const maxAccessibleStep = Math.max(...completedSteps, currentStep);
+    const canProceedToNext = currentStep < steps.length && isStepDataValid(currentStep);
+    
+    if (stepId <= maxAccessibleStep || (stepId === currentStep + 1 && canProceedToNext)) {
       setCurrentStep(stepId);
     }
   };
@@ -411,6 +444,22 @@ export const TaskSubmissionPage: React.FC = () => {
       setFormData((prev) => ({ ...prev, checklist: initialChecklist }));
     }
   }, [taskDetails]);
+
+  // Auto-mark steps as completed when they have valid data
+  useEffect(() => {
+    const newCompletedSteps: number[] = [];
+    
+    steps.forEach((step) => {
+      if (step.id < currentStep && isStepDataValid(step.id)) {
+        newCompletedSteps.push(step.id);
+      }
+    });
+
+    setCompletedSteps((prev) => {
+      const combined = [...new Set([...prev, ...newCompletedSteps])];
+      return combined;
+    });
+  }, [formData, currentStep, steps]);
 
   // Fetch task details
   useEffect(() => {
@@ -502,10 +551,16 @@ export const TaskSubmissionPage: React.FC = () => {
       switch (currentStep) {
         case 1: // Checkpoint
           // Validate checklist items
+          console.log("Validating checklist items:", dynamicChecklist);
+          console.log("Current form data:", formData.checklist);
+          
           for (const item of dynamicChecklist) {
             if (item.required) {
+              console.log(`Checking required item: ${item.question}`);
               const answer = formData.checklist[item.id]?.value;
-              if (!answer || (Array.isArray(answer) && answer.length === 0)) {
+              console.log(`Answer for ${item.id}:`, answer);
+              
+              if (!answer || answer === "" || (Array.isArray(answer) && answer.length === 0)) {
                 sonnerToast.error(
                   `Required Field. Please answer: ${item.question}`
                 );
@@ -531,10 +586,16 @@ export const TaskSubmissionPage: React.FC = () => {
           break;
         case 2:
           // Validate checklist items
+          console.log("Validating multi-step checklist items:", dynamicChecklist);
+          console.log("Current form data:", formData.checklist);
+          
           for (const item of dynamicChecklist) {
             if (item.required) {
+              console.log(`Checking required item: ${item.question}`);
               const answer = formData.checklist[item.id]?.value;
-              if (!answer || (Array.isArray(answer) && answer.length === 0)) {
+              console.log(`Answer for ${item.id}:`, answer);
+              
+              if (!answer || answer === "" || (Array.isArray(answer) && answer.length === 0)) {
                 sonnerToast.error(
                   `Required Field. Please answer: ${item.question}`
                 );
@@ -661,20 +722,81 @@ export const TaskSubmissionPage: React.FC = () => {
 
       console.log("Submitting task with formatted payload:", submissionData);
 
-      // Call the API
-      await taskService.submitTaskResponse(submissionData);
+      // Call the API and handle response
+      const response = await taskService.submitTaskResponse(submissionData);
 
-      sonnerToast.dismiss(loadingToastId);
-      sonnerToast.success("Task submitted successfully!");
-      setShowSuccessModal(true);
-    } catch (error) {
+      // Check if response contains an application-level error (even with 200 status)
+      if (response && response.code === 500) {
+        // Handle application-level 500 error in successful HTTP response
+        let errorMessage = "Failed to submit task. Please try again.";
+        
+        if (response.error === "Task not available for submission") {
+          errorMessage = "This task is no longer available for submission. It may have been completed or cancelled.";
+        } else if (response.error) {
+          errorMessage = response.error;
+        }
+
+        sonnerToast.dismiss(loadingToastId);
+        sonnerToast.error(errorMessage, {
+          duration: 6000,
+        });
+        return; // Exit early, don't show success modal
+      }
+
+      // Only proceed with success flow if we get a successful response without errors
+      if (response) {
+        // Calculate stats and set them before showing the modal
+        const stats = calculateSubmissionStats();
+        setSubmissionStats(stats);
+
+        sonnerToast.dismiss(loadingToastId);
+        sonnerToast.success("Task submitted successfully!");
+        setShowSuccessModal(true);
+      }
+    } catch (error: any) {
       console.error("Task submission failed:", error);
       sonnerToast.dismiss(loadingToastId);
-      sonnerToast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to submit task. Please try again."
-      );
+
+      // Handle specific error scenarios
+      let errorMessage = "Failed to submit task. Please try again.";
+      
+      // Check for API response errors
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        
+        // Handle specific 500 error with "Task not available for submission"
+        if (errorData.code === 500 && errorData.error === "Task not available for submission") {
+          errorMessage = "This task is no longer available for submission. It may have been completed or cancelled.";
+        }
+        // Handle other structured API errors
+        else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        // Handle error messages from API
+        else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      }
+      // Handle network or other errors
+      else if (error?.message) {
+        if (error.message.includes("Network Error")) {
+          errorMessage = "Network connection failed. Please check your internet connection and try again.";
+        } else if (error.message.includes("timeout")) {
+          errorMessage = "Request timed out. Please try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      // Show error toast with specific message
+      sonnerToast.error(errorMessage, {
+        duration: 6000, // Show error longer than success messages
+      });
+
+      // Log additional error details for debugging
+      if (error?.response?.status) {
+        console.error(`API Error ${error.response.status}:`, error.response.data);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -723,6 +845,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             className="font-medium text-gray-900"
                           >
                             {index + 1}. {item.question}
+                            {item.required && <span className="text-red-500 ml-1">*</span>}
                           </Typography>
 
                           {item.type === "text" && (
@@ -750,7 +873,7 @@ export const TaskSubmissionPage: React.FC = () => {
                                   e.target.value
                                 )
                               }
-                              className="ml-4"
+                              className=""
                               sx={{
                                 "& .MuiOutlinedInput-root": {
                                   backgroundColor: "white",
@@ -775,7 +898,7 @@ export const TaskSubmissionPage: React.FC = () => {
                                   e.target.value
                                 )
                               }
-                              className="ml-4"
+                              className=""
                             >
                               {item.options?.map((option) => (
                                 <FormControlLabel
@@ -796,7 +919,40 @@ export const TaskSubmissionPage: React.FC = () => {
                             </RadioGroup>
                           )}
 
-                          <div className="ml-4">
+                          {item.type === "checkbox" && (
+                            <div className="">
+                              {item.options?.map((option) => (
+                                <FormControlLabel
+                                  key={option}
+                                  control={
+                                    <Checkbox
+                                      checked={
+                                        Array.isArray(formData.checklist[item.id]?.value) &&
+                                        formData.checklist[item.id].value.includes(option)
+                                      }
+                                      onChange={(e) => {
+                                        const currentValues = Array.isArray(formData.checklist[item.id]?.value)
+                                          ? formData.checklist[item.id].value
+                                          : [];
+                                        const newValues = e.target.checked
+                                          ? [...currentValues, option]
+                                          : currentValues.filter((v: string) => v !== option);
+                                        handleChecklistChange(item.id, "value", newValues);
+                                      }}
+                                      sx={{
+                                        color: "#C72030",
+                                        "&.Mui-checked": { color: "#C72030" },
+                                      }}
+                                    />
+                                  }
+                                  label={option}
+                                  className="block mb-1"
+                                />
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="">
                             <TextField
                               placeholder="Add your comment..."
                               fullWidth
@@ -826,7 +982,7 @@ export const TaskSubmissionPage: React.FC = () => {
                           </div>
 
                           {formData.checklist[item.id]?.attachment && (
-                            <div className="ml-4">
+                            <div className="">
                               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
                                 <img
                                   src={URL.createObjectURL(
@@ -845,7 +1001,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             </div>
                           )}
 
-                          <div className="ml-4">
+                          <div className="">
                             <Button
                               variant="outline"
                               size="sm"
@@ -883,8 +1039,6 @@ export const TaskSubmissionPage: React.FC = () => {
         case 2: // Preview
           return (
             <div className="space-y-6">
-
-
               {/* Checklist Summary */}
               <Card className="border border-gray-200 shadow-sm">
                 <div className="figma-card-header">
@@ -917,68 +1071,84 @@ export const TaskSubmissionPage: React.FC = () => {
                       </Typography>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {dynamicChecklist.map((item, index) => {
-                        const answer = formData.checklist[item.id]?.value;
-                        const comment = formData.checklist[item.id]?.comment;
-                        const attachment =
-                          formData.checklist[item.id]?.attachment;
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Help Text
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Activities
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Input
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Comments
+                            </th>
+                          
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Attachment
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {dynamicChecklist.map((item, index) => {
+                            const answer = formData.checklist[item.id]?.value;
+                            const comment = formData.checklist[item.id]?.comment;
+                            const attachment = formData.checklist[item.id]?.attachment;
+                            
+                            // Calculate score based on answer (similar to TaskDetailsPage logic)
+                            const calculateScore = () => {
+                              if (answer === "Yes") return "100";
+                              if (answer === "No") return "0";
+                              if (Array.isArray(answer) && answer.length > 0) return "75";
+                              return "-";
+                            };
 
-                        return (
-                          <div
-                            key={item.id}
-                            className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg"
-                          >
-                            <div
-                              className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                answer ? "bg-green-500" : "bg-gray-400"
-                              }`}
-                            >
-                              <span className="text-white text-xs font-bold">
-                                ✓
-                              </span>
-                            </div>
-                            <div className="flex-1">
-                              <Typography
-                                variant="body2"
-                                className="font-medium text-gray-900 mb-2"
-                              >
-                                {index + 1}. {item.question}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                className="text-gray-700 font-medium mb-2"
-                              >
-                                Answer:{" "}
-                                <span
-                                  className={`${
-                                    answer ? "text-green-600" : "text-gray-600"
-                                  }`}
-                                >
-                                  {answer || "Not answered"}
-                                </span>
-                              </Typography>
-                              {comment && (
-                                <Typography
-                                  variant="body2"
-                                  className="text-gray-600 mb-2"
-                                >
-                                  Comment: {comment}
-                                </Typography>
-                              )}
-                              {attachment && (
-                                <div className="mt-2">
-                                  <img
-                                    src={URL.createObjectURL(attachment)}
-                                    alt="Attachment"
-                                    className="w-16 h-16 object-cover rounded border border-gray-200"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                            return (
+                              <tr key={item.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs"></span>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs">{item.question}</span>
+                                </td>
+                                <td className="px-4 py-3 text-xs border-b border-gray-100">
+                                  <span className="text-xs">
+                                    {Array.isArray(answer) 
+                                      ? answer.length > 0 
+                                        ? answer.join(", ") 
+                                        : "-"
+                                      : answer || "-"}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs">{comment || "-"}</span>
+                                </td>
+  
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  {attachment ? (
+                                    <div className="flex items-center gap-2">
+                                      <img
+                                        src={URL.createObjectURL(attachment)}
+                                        alt="Attachment"
+                                        className="w-8 h-8 object-cover rounded border border-gray-200"
+                                      />
+                                      <span className="text-xs text-gray-600 truncate max-w-20">
+                                        {attachment.name}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs">-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </CardContent>
@@ -995,15 +1165,6 @@ export const TaskSubmissionPage: React.FC = () => {
         case 1: // Before Photo
           return (
             <div className="space-y-6">
-              <div className="text-center py-4">
-                <Typography
-                  variant="body1"
-                  className="text-gray-900 font-medium"
-                >
-                  Add Photograph before starting work.
-                </Typography>
-              </div>
-
               <Card className="border border-gray-200 shadow-sm">
                 <div className="figma-card-header">
                   <div className="flex items-center gap-3">
@@ -1050,16 +1211,8 @@ export const TaskSubmissionPage: React.FC = () => {
                                   <InputLabel>Enter Your Name</InputLabel>
                                   <MuiSelect
                                     value={getAssignedUserName()}
-                                    onChange={(e) =>
-                                      setFormData((prev) => ({
-                                        ...prev,
-                                        beforePhotoName: e.target.value,
-                                      }))
-                                    }
                                     label="Enter Your Name"
-                                    disabled={
-                                      currentStep > 1 && !steps[0].active
-                                    }
+                                    disabled={true}
                                   >
                                     <MenuItem value={getAssignedUserName()}>
                                       {getAssignedUserName()}
@@ -1173,16 +1326,13 @@ export const TaskSubmissionPage: React.FC = () => {
                           >
                             <InputLabel>Enter Your Name</InputLabel>
                             <MuiSelect
-                              value={
-                                formData.beforePhotoName || "Abdul Ghaffar"
-                              }
+                              value={getAssignedUserName()}
                               label="Enter Your Name"
                               disabled
                             >
-                              <MenuItem value="Abdul Ghaffar">
-                                Abdul Ghaffar
+                              <MenuItem value={getAssignedUserName()}>
+                                {getAssignedUserName()}
                               </MenuItem>
-                              <MenuItem value="John Doe">John Doe</MenuItem>
                             </MuiSelect>
                           </FormControl>
                         </div>
@@ -1222,7 +1372,48 @@ export const TaskSubmissionPage: React.FC = () => {
                             className="font-medium text-gray-900"
                           >
                             {index + 1}. {item.question}
+                            {item.required && <span className="text-red-500 ml-1">*</span>}
                           </Typography>
+
+                          {item.type === "text" && (
+                            <TextField
+                              placeholder="Enter your value..."
+                              fullWidth
+                              variant="outlined"
+                              type={
+                                item.question
+                                  .toLowerCase()
+                                  .includes("voltage") ||
+                                item.question
+                                  .toLowerCase()
+                                  .includes("current") ||
+                                item.question.toLowerCase().includes("power") ||
+                                item.question.toLowerCase().includes("time")
+                                  ? "number"
+                                  : "text"
+                              }
+                              value={formData.checklist[item.id]?.value || ""}
+                              onChange={(e) =>
+                                handleChecklistChange(
+                                  item.id,
+                                  "value",
+                                  e.target.value
+                                )
+                              }
+                              className=""
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  backgroundColor: "white",
+                                  "& fieldset": {
+                                    borderColor: "#D1D5DB",
+                                  },
+                                  "&:hover fieldset": {
+                                    borderColor: "#9CA3AF",
+                                  },
+                                },
+                              }}
+                            />
+                          )}
 
                           {item.type === "radio" && (
                             <RadioGroup
@@ -1234,7 +1425,7 @@ export const TaskSubmissionPage: React.FC = () => {
                                   e.target.value
                                 )
                               }
-                              className="ml-4"
+                              className=""
                             >
                               {item.options?.map((option) => (
                                 <FormControlLabel
@@ -1255,7 +1446,40 @@ export const TaskSubmissionPage: React.FC = () => {
                             </RadioGroup>
                           )}
 
-                          <div className="ml-4">
+                          {item.type === "checkbox" && (
+                            <div className="">
+                              {item.options?.map((option) => (
+                                <FormControlLabel
+                                  key={option}
+                                  control={
+                                    <Checkbox
+                                      checked={
+                                        Array.isArray(formData.checklist[item.id]?.value) &&
+                                        formData.checklist[item.id].value.includes(option)
+                                      }
+                                      onChange={(e) => {
+                                        const currentValues = Array.isArray(formData.checklist[item.id]?.value)
+                                          ? formData.checklist[item.id].value
+                                          : [];
+                                        const newValues = e.target.checked
+                                          ? [...currentValues, option]
+                                          : currentValues.filter((v: string) => v !== option);
+                                        handleChecklistChange(item.id, "value", newValues);
+                                      }}
+                                      sx={{
+                                        color: "#C72030",
+                                        "&.Mui-checked": { color: "#C72030" },
+                                      }}
+                                    />
+                                  }
+                                  label={option}
+                                  className="block mb-1"
+                                />
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="">
                             <TextField
                               placeholder="Add your comment..."
                               fullWidth
@@ -1285,7 +1509,7 @@ export const TaskSubmissionPage: React.FC = () => {
                           </div>
 
                           {formData.checklist[item.id]?.attachment && (
-                            <div className="ml-4">
+                            <div className="">
                               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
                                 <img
                                   src={URL.createObjectURL(
@@ -1304,7 +1528,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             </div>
                           )}
 
-                          <div className="ml-4">
+                          <div className="">
                             <Button
                               variant="outline"
                               size="sm"
@@ -1393,16 +1617,13 @@ export const TaskSubmissionPage: React.FC = () => {
                           >
                             <InputLabel>Enter Your Name</InputLabel>
                             <MuiSelect
-                              value={
-                                formData.beforePhotoName || "Abdul Ghaffar"
-                              }
+                              value={getAssignedUserName()}
                               label="Enter Your Name"
                               disabled
                             >
-                              <MenuItem value="Abdul Ghaffar">
-                                Abdul Ghaffar
+                              <MenuItem value={getAssignedUserName()}>
+                                {getAssignedUserName()}
                               </MenuItem>
-                              <MenuItem value="John Doe">John Doe</MenuItem>
                             </MuiSelect>
                           </FormControl>
                         </div>
@@ -1458,7 +1679,7 @@ export const TaskSubmissionPage: React.FC = () => {
                           {item.type === "radio" && (
                             <RadioGroup
                               value={formData.checklist[item.id]?.value || ""}
-                              className="ml-4"
+                              className=""
                             >
                               {item.options?.map((option) => (
                                 <FormControlLabel
@@ -1481,7 +1702,7 @@ export const TaskSubmissionPage: React.FC = () => {
                             </RadioGroup>
                           )}
 
-                          <div className="ml-4">
+                          <div className="">
                             <TextField
                               placeholder="Add your comment..."
                               fullWidth
@@ -1502,7 +1723,7 @@ export const TaskSubmissionPage: React.FC = () => {
                           </div>
 
                           {formData.checklist[item.id]?.attachment && (
-                            <div className="ml-4">
+                            <div className="">
                               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
                                 <img
                                   src={URL.createObjectURL(
@@ -1528,14 +1749,7 @@ export const TaskSubmissionPage: React.FC = () => {
               </Card>
 
               {/* Step 3 - After Photo (Active) */}
-              <div className="text-center py-4">
-                <Typography
-                  variant="body1"
-                  className="text-gray-900 font-medium"
-                >
-                  Add Photograph After work.
-                </Typography>
-              </div>
+       
 
               <Card className="border border-gray-200 shadow-sm">
                 <div className="figma-card-header">
@@ -1544,7 +1758,9 @@ export const TaskSubmissionPage: React.FC = () => {
                       <User className="figma-card-icon" />
                     </div>
                     <Typography variant="body1" className="figma-card-title">
-                      Info
+                      Pre-Post Inspection Info
+
+
                     </Typography>
                   </div>
                 </div>
@@ -1582,30 +1798,12 @@ export const TaskSubmissionPage: React.FC = () => {
                                 >
                                   <InputLabel>Enter Your Name</InputLabel>
                                   <MuiSelect
-                                    value={
-                                      formData.afterPhotoName ||
-                                      formData.beforePhotoName ||
-                                      ""
-                                    }
-                                    onChange={(e) =>
-                                      setFormData((prev) => ({
-                                        ...prev,
-                                        afterPhotoName: e.target.value,
-                                      }))
-                                    }
+                                    value={getAssignedUserName()}
                                     label="Enter Your Name"
-                                    disabled={
-                                      currentStep > 3 && !steps[2].active
-                                    }
+                                    disabled={true}
                                   >
                                     <MenuItem value={getAssignedUserName()}>
                                       {getAssignedUserName()}
-                                    </MenuItem>
-                                    <MenuItem value="Abdul Ghaffar">
-                                      Abdul Ghaffar
-                                    </MenuItem>
-                                    <MenuItem value="John Doe">
-                                      John Doe
                                     </MenuItem>
                                   </MuiSelect>
                                 </FormControl>
@@ -1662,14 +1860,7 @@ export const TaskSubmissionPage: React.FC = () => {
         case 4: // Preview
           return (
             <div className="space-y-6">
-              <div className="text-center py-1">
-                <Typography variant="h5" className="text-gray-900 font-bold">
-                  Task Preview
-                </Typography>
-                <Typography variant="body2" className="text-gray-600 mt-2">
-                  Review your work before submitting
-                </Typography>
-              </div>
+          
 
               {/* Photo Preview */}
               <Card className="border border-gray-200 shadow-sm">
@@ -1814,76 +2005,84 @@ export const TaskSubmissionPage: React.FC = () => {
                       </Typography>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {dynamicChecklist.map((item, index) => {
-                        const answer = formData.checklist[item.id]?.value;
-                        const comment = formData.checklist[item.id]?.comment;
-                        const attachment =
-                          formData.checklist[item.id]?.attachment;
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Help Text
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Activities
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Input
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Comments
+                            </th>
+                           
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                              Attachment
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {dynamicChecklist.map((item, index) => {
+                            const answer = formData.checklist[item.id]?.value;
+                            const comment = formData.checklist[item.id]?.comment;
+                            const attachment = formData.checklist[item.id]?.attachment;
+                            
+                            // Calculate score based on answer (similar to TaskDetailsPage logic)
+                            const calculateScore = () => {
+                              if (answer === "Yes") return "100";
+                              if (answer === "No") return "0";
+                              if (Array.isArray(answer) && answer.length > 0) return "75";
+                              return "-";
+                            };
 
-                        return (
-                          <div
-                            key={item.id}
-                            className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg"
-                          >
-                            <div
-                              className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                answer === "Yes"
-                                  ? "bg-green-500"
-                                  : answer === "No"
-                                  ? "bg-red-500"
-                                  : "bg-gray-400"
-                              }`}
-                            >
-                              <span className="text-white text-xs font-bold">
-                                ✓
-                              </span>
-                            </div>
-                            <div className="flex-1">
-                              <Typography
-                                variant="body2"
-                                className="font-medium text-gray-900 mb-2"
-                              >
-                                {index + 1}. {item.question}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                className="text-gray-700 font-medium mb-2"
-                              >
-                                Answer:{" "}
-                                <span
-                                  className={`${
-                                    answer === "Yes"
-                                      ? "text-green-600"
-                                      : answer === "No"
-                                      ? "text-red-600"
-                                      : "text-gray-600"
-                                  }`}
-                                >
-                                  {answer || "Not answered"}
-                                </span>
-                              </Typography>
-                              {comment && (
-                                <Typography
-                                  variant="body2"
-                                  className="text-gray-600 mb-2"
-                                >
-                                  Comment: {comment}
-                                </Typography>
-                              )}
-                              {attachment && (
-                                <div className="mt-2">
-                                  <img
-                                    src={URL.createObjectURL(attachment)}
-                                    alt="Attachment"
-                                    className="w-16 h-16 object-cover rounded border border-gray-200"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                            return (
+                              <tr key={item.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs"></span>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs">{item.question}</span>
+                                </td>
+                                <td className="px-4 py-3 text-xs border-b border-gray-100">
+                                  <span className="text-xs">
+                                    {Array.isArray(answer) 
+                                      ? answer.length > 0 
+                                        ? answer.join(", ") 
+                                        : "-"
+                                      : answer || "-"}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  <span className="text-xs">{comment || "-"}</span>
+                                </td>
+                               
+                                <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                  {attachment ? (
+                                    <div className="flex items-center gap-2">
+                                      <img
+                                        src={URL.createObjectURL(attachment)}
+                                        alt="Attachment"
+                                        className="w-8 h-8 object-cover rounded border border-gray-200"
+                                      />
+                                      <span className="text-xs text-gray-600 truncate max-w-20">
+                                        {attachment.name}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs">-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   )}
                 </CardContent>
@@ -1985,8 +2184,16 @@ export const TaskSubmissionPage: React.FC = () => {
 
       <div className="text-center mt-6 mb-4">
         <Typography variant="body2" className="text-gray-600">
-          You've completed {Math.max(...completedSteps, 0)} out of{" "}
-          {steps.length} steps.
+          You've completed {completedSteps.length} out of{" "}
+          {steps.length} steps. 
+          {dynamicChecklist.length > 0 && (
+            <span className="ml-2">
+              ({Math.round((Object.keys(formData.checklist).filter(key => {
+                const item = formData.checklist[key];
+                return item.value && (Array.isArray(item.value) ? item.value.length > 0 : item.value !== "");
+              }).length / dynamicChecklist.length) * 100)}% checklist completed)
+            </span>
+          )}
         </Typography>
       </div>
 
@@ -2037,6 +2244,7 @@ export const TaskSubmissionPage: React.FC = () => {
         isOpen={showSuccessModal}
         onClose={handleSuccessClose}
         onViewDetails={handleSuccessClose}
+        stats={submissionStats}
       />
     </div>
   );
