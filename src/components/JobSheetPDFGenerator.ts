@@ -21,12 +21,19 @@ export class JobSheetPDFGenerator {
   async generateJobSheetPDF(
     taskDetails: any,
     jobSheetData: any,
-    
+
     comments: string = ""
   ): Promise<void> {
     try {
-      const jobSheet = jobSheetData || jobSheetData?.job_sheet ;
+      // Properly extract job_sheet from the API response
+      const jobSheet =
+        jobSheetData?.data?.job_sheet ||
+        jobSheetData?.job_sheet ||
+        jobSheetData;
       const checklistResponses = jobSheet?.checklist_responses || [];
+
+      // Debug: Log the data structure
+
       // Enhanced page break logic for better content distribution
       const estimatedContentHeight = this.estimateContentHeight(
         jobSheet,
@@ -39,13 +46,6 @@ export class JobSheetPDFGenerator {
       const needsPageBreak =
         estimatedContentHeight > maxSinglePageHeight ||
         checklistResponses.length > maxChecklistItemsPerPage;
-
-      console.log(`PDF Layout Analysis:`);
-      console.log(`- Estimated content height: ${estimatedContentHeight}mm`);
-      console.log(`- Checklist items: ${checklistResponses.length}`);
-      console.log(`- Max single page height: ${maxSinglePageHeight}mm`);
-      console.log(`- Max items per page: ${maxChecklistItemsPerPage}`);
-      console.log(`- Requires multi-page: ${needsPageBreak}`);
 
       if (needsPageBreak) {
         console.log(
@@ -79,6 +79,13 @@ export class JobSheetPDFGenerator {
       "Generating PDF matching Figma design structure - Single Page Mode"
     );
 
+    // Check if before/after section should be shown
+    const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
+    const shouldShowBeforeAfter =
+      jobSheet?.basic_info?.before_after_enabled === true ||
+      jobSheet?.basic_info?.before_after_enabled === "true" ||
+      jobSheet?.basic_info?.steps === 3;
+
     // Single Page: All sections as per Figma design
     const pageContent = `
       <!DOCTYPE html>
@@ -90,7 +97,11 @@ export class JobSheetPDFGenerator {
           ${this.generateHeader(jobSheetData)}
           ${this.generateClientInfo(taskDetails, jobSheetData)}
           ${this.generateLocationDetails(jobSheetData)}
-          ${this.generateBeforeAfterImagesSection(jobSheetData)}
+          ${
+            shouldShowBeforeAfter
+              ? this.generateBeforeAfterImagesSection(jobSheetData)
+              : ""
+          }
           ${this.generateDailyMaintenanceSection(jobSheetData)}
           ${this.generateRemarksSection(taskDetails, comments)}
           ${this.generateBottomSection()}
@@ -103,9 +114,9 @@ export class JobSheetPDFGenerator {
 
     // Save the PDF
     this.pdf.save(
-      `JobSheet_${taskDetails.task_details?.id || taskDetails.id || new Date().getTime()}_${new Date()
-        .toISOString()
-        .slice(0, 10)}.pdf`
+      `JobSheet_${
+        taskDetails.task_details?.id || taskDetails.id || new Date().getTime()
+      }_${new Date().toISOString().slice(0, 10)}.pdf`
     );
   }
 
@@ -118,8 +129,16 @@ export class JobSheetPDFGenerator {
       "Generating PDF matching Figma design structure - Multi-Page Mode"
     );
 
-    const jobSheet = jobSheetData?.job_sheet;
-    const checklistResponses = jobSheet?.checklist_responses || [];      // Split checklist into manageable pages - increased for better utilization
+    const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
+    const checklistResponses = jobSheet?.checklist_responses || [];
+
+    // Check if before/after section should be shown
+    const shouldShowBeforeAfter =
+      jobSheet?.basic_info?.before_after_enabled === true ||
+      jobSheet?.basic_info?.before_after_enabled === "true" ||
+      jobSheet?.basic_info?.steps === 3;
+
+    // Split checklist into manageable pages - increased for better utilization
     const checklistPerPage = 18; // Optimized for A4 page space with better density
     const checklistPages = [];
     for (let i = 0; i < checklistResponses.length; i += checklistPerPage) {
@@ -130,12 +149,14 @@ export class JobSheetPDFGenerator {
       `Multi-page PDF: ${checklistPages.length} pages for ${checklistResponses.length} checklist items`
     );
 
-    // Page 1: Header, Client Info, Location, Before/After, First Checklist Batch
+    // Page 1: Header, Client Info, Location, Before/After (conditional), First Checklist Batch
     const page1ChecklistData = {
       ...jobSheetData,
-      job_sheet: {
-        ...jobSheet,
-        checklist_responses: checklistPages[0] || [],
+      data: {
+        job_sheet: {
+          ...jobSheet,
+          checklist_responses: checklistPages[0] || [],
+        },
       },
     };
 
@@ -149,7 +170,11 @@ export class JobSheetPDFGenerator {
           ${this.generateHeader(jobSheetData)}
           ${this.generateClientInfo(taskDetails, jobSheetData)}
           ${this.generateLocationDetails(jobSheetData)}
-          ${this.generateBeforeAfterImagesSection(jobSheetData)}
+          ${
+            shouldShowBeforeAfter
+              ? this.generateBeforeAfterImagesSection(jobSheetData)
+              : ""
+          }
           ${this.generateChecklistSectionWithPagination(
             page1ChecklistData,
             1,
@@ -166,9 +191,11 @@ export class JobSheetPDFGenerator {
     for (let i = 1; i < checklistPages.length; i++) {
       const pageChecklistData = {
         ...jobSheetData,
-        job_sheet: {
-          ...jobSheet,
-          checklist_responses: checklistPages[i],
+        data: {
+          job_sheet: {
+            ...jobSheet,
+            checklist_responses: checklistPages[i],
+          },
         },
       };
 
@@ -189,8 +216,12 @@ export class JobSheetPDFGenerator {
               i + 1,
               isLastPage
             )}
-            ${isLastPage ? this.generateRemarksSection(taskDetails, comments) : ''}
-            ${isLastPage ? this.generateBottomSection() : ''}
+            ${
+              isLastPage
+                ? this.generateRemarksSection(taskDetails, comments)
+                : ""
+            }
+            ${isLastPage ? this.generateBottomSection() : ""}
           </body>
         </html>
       `;
@@ -202,9 +233,9 @@ export class JobSheetPDFGenerator {
 
     // Save the PDF
     this.pdf.save(
-      `JobSheet_${taskDetails.task_details?.id || taskDetails.id || new Date().getTime()}_${new Date()
-        .toISOString()
-        .slice(0, 10)}.pdf`
+      `JobSheet_${
+        taskDetails.task_details?.id || taskDetails.id || new Date().getTime()
+      }_${new Date().toISOString().slice(0, 10)}.pdf`
     );
   }
 
@@ -330,8 +361,8 @@ export class JobSheetPDFGenerator {
   }
 
   private generateClientInfo(taskDetails: any, jobSheetData: any): string {
-    const jobSheet = jobSheetData?.job_sheet;
-    
+    const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
+
     // Enhanced data mapping from new API structure
     const siteName = jobSheet?.task_details?.site?.name || "";
     const assetName = jobSheet?.task_details?.asset?.name || "";
@@ -339,29 +370,41 @@ export class JobSheetPDFGenerator {
     const jobCode = jobSheet?.basic_info?.job_card_no || "";
     const group = jobSheet?.task_details?.asset?.category || "";
     const serialNumber = jobSheet?.basic_info?.job_id || "";
-    
+
     // Get sub group from group_scores if available
     const subGroup = jobSheet?.group_scores?.[0]?.sub_group_name || group;
-    
+
     // Format time data - handle null values properly
     const checkInTime = jobSheet?.summary?.time_tracking?.start_time || "";
     const checkOutTime = jobSheet?.summary?.time_tracking?.end_time || "";
-    
+
     // Personnel information
-    const assignee = jobSheet?.personnel?.performed_by?.full_name || "";
+    const assignee =
+      jobSheet?.personnel?.performed_by?.full_name ||
+      jobSheet?.basic_info?.backup_assigned_user ||
+      "";
     const completedBy = jobSheet?.personnel?.performed_by?.full_name || "";
     const verifiedBy = ""; // Not available in current API structure
     const schedule = jobSheet?.basic_info?.scheduled_date || "";
     const completedDate = jobSheet?.basic_info?.completed_date || "";
-    
+
     // Calculate duration if time tracking is available
-    const duration = jobSheet?.summary?.time_tracking ? 
-      `${jobSheet.summary.time_tracking.duration_hours || 0}:${String(jobSheet.summary.time_tracking.duration_minutes || 0).padStart(2, "0")}:00` : "";
-    
+    const duration = jobSheet?.summary?.time_tracking
+      ? `${jobSheet.summary.time_tracking.duration_hours || 0}:${String(
+          jobSheet.summary.time_tracking.duration_minutes || 0
+        ).padStart(2, "0")}:00`
+      : "";
+
     // Enhanced status with overdue indicator
-    const baseStatus = jobSheet?.task_details?.task_status || jobSheet?.summary?.task_completion_status || "";
-    const status = jobSheet?.summary?.is_overdue ? 
-      (baseStatus === "Completed" ? "Completed After Overdue" : baseStatus) : baseStatus;
+    const baseStatus =
+      jobSheet?.task_details?.task_status ||
+      jobSheet?.summary?.task_completion_status ||
+      "";
+    const status = jobSheet?.summary?.is_overdue
+      ? baseStatus === "Completed"
+        ? "Completed After Overdue"
+        : baseStatus
+      : baseStatus;
 
     return `
       <div class="figma-client-info">
@@ -413,7 +456,9 @@ export class JobSheetPDFGenerator {
               <td class="figma-label-cell">Schedule:</td>
               <td class="figma-value-cell">${schedule}</td>
               <td class="figma-label-cell">Status:</td>
-              <td class="figma-value-cell ${jobSheet?.summary?.is_overdue ? 'figma-status-overdue' : ''}">${status}</td>
+              <td class="figma-value-cell ${
+                jobSheet?.summary?.is_overdue ? "figma-status-overdue" : ""
+              }">${status}</td>
             </tr>
           </tbody>
         </table>
@@ -421,15 +466,8 @@ export class JobSheetPDFGenerator {
     `;
   }
 
-  /**
-   * Enhanced Daily Maintenance Section Generation
-   * - Maps all checklist_responses from the API (no limits)
-   * - Shows attachment indicators with count
-   * - Handles empty responses with proper status messages
-   * - Uses table format matching TaskDetailsPage structure
-   */
   private generateDailyMaintenanceSection(jobSheetData: any): string {
-    const jobSheet = jobSheetData?.job_sheet;
+    const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
     const checklistResponses = jobSheet?.checklist_responses || [];
     const taskName = jobSheet?.task_details?.task_name || "";
 
@@ -444,8 +482,11 @@ export class JobSheetPDFGenerator {
     }
 
     // Check if any checklist items have actual responses
-    const hasAnyResponses = checklistResponses.some(item => 
-      item.input_value !== null && item.input_value !== undefined && item.input_value !== ""
+    const hasAnyResponses = checklistResponses.some(
+      (item) =>
+        item.input_value !== null &&
+        item.input_value !== undefined &&
+        item.input_value !== ""
     );
 
     // For PDF, show all checklist items without limitation
@@ -454,28 +495,52 @@ export class JobSheetPDFGenerator {
     const generateTableRows = (items: any[]) => {
       return items
         .map((item: any, index: number) => {
-          const slNo = item.index || (index + 1);
+          const slNo = item.index || index + 1;
           const inspectionPoint = item.activity || "";
-          
+
           // Enhanced result handling
           const inputValue = item.input_value;
-          const result = inputValue !== null && inputValue !== undefined && inputValue !== "" 
-            ? inputValue 
-            : (hasAnyResponses ? "" : "Not Completed");
-          
+          const result =
+            inputValue !== null && inputValue !== undefined && inputValue !== ""
+              ? inputValue
+              : hasAnyResponses
+              ? ""
+              : "Not Completed";
+
           const remarks = item.comments || "";
-          
-          // Handle attachments - show in separate column
-          const hasAttachments = item.attachments && Array.isArray(item.attachments) && item.attachments.length > 0;
-          const attachmentDisplay = hasAttachments ? `📎 ${item.attachments.length}` : "-";
-          
+
+          // Handle attachments - generate HTML for image thumbnails
+          const hasAttachments =
+            item.attachments &&
+            Array.isArray(item.attachments) &&
+            item.attachments.length > 0;
+
+          let attachmentDisplay = "-";
+          if (hasAttachments) {
+            // Generate image thumbnails for attachments
+            const attachmentImages = item.attachments
+              .map((attachment: any, attachIdx: number) => {
+               
+
+                return `<img 
+                src="${attachment}" 
+                style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px;"
+                crossorigin="anonymous"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
+              />`;
+              })
+              .join("");
+
+            attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">${attachmentImages}</div>`;
+          }
+
           // Debug attachment data for first few items
           if (index < 3) {
             console.log(`📎 Attachment Debug [${index}]:`, {
               activity: item.activity,
               hasAttachments: hasAttachments,
               attachmentsArray: item.attachments,
-              attachmentCount: item.attachments?.length || 0
+              attachmentCount: item.attachments?.length || 0,
             });
           }
 
@@ -494,9 +559,11 @@ export class JobSheetPDFGenerator {
 
     // Enhanced section title - use task name or fallback to asset category
     const assetCategory = jobSheet?.task_details?.asset?.category || "";
-    const sectionTitle = taskName ? 
-      taskName.toUpperCase() : 
-      (assetCategory ? `SERVICE CHECKLIST OF ${assetCategory.toUpperCase()}` : "NEW ACTIVITY");
+    const sectionTitle = taskName
+      ? taskName.toUpperCase()
+      : assetCategory
+      ? `SERVICE CHECKLIST OF ${assetCategory.toUpperCase()}`
+      : "NEW ACTIVITY";
 
     return `
       <div class="figma-checklist-section">
@@ -517,62 +584,110 @@ export class JobSheetPDFGenerator {
         </table>
         
         <div class="figma-measurement-section">
-          ${!hasAnyResponses ? 
-            `<div class="figma-status-note">Task checklist is pending completion (${checklistResponses.length} items)</div>` : 
-            `<div class="figma-status-note">Showing all ${checklistResponses.length} checklist items</div>`
+          ${
+            !hasAnyResponses
+              ? `<div class="figma-status-note">Task checklist is pending completion (${checklistResponses.length} items)</div>`
+              : `<div class="figma-status-note">Showing all ${checklistResponses.length} checklist items</div>`
           }
-          ${jobSheet?.metadata ? 
-            `<div class="figma-status-note">Completion: ${jobSheet.metadata.completed_items}/${jobSheet.metadata.total_checklist_items} items (${jobSheet.metadata.completion_percentage.toFixed(1)}%)</div>` 
-            : ''
+          ${
+            jobSheet?.metadata
+              ? `<div class="figma-status-note">Completion: ${
+                  jobSheet.metadata.completed_items
+                }/${
+                  jobSheet.metadata.total_checklist_items
+                } items (${jobSheet.metadata.completion_percentage.toFixed(
+                  1
+                )}%)</div>`
+              : ""
           }
         </div>
       </div>
     `;
   }
 
-
-
-
-
   private generateChecklistSectionWithPagination(
     jobSheetData: any,
     pageNumber: number = 1,
     isLastPage: boolean = true
   ): string {
-    const jobSheet = jobSheetData?.job_sheet;
+    const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
     const checklistResponses = jobSheet?.checklist_responses || [];
     const assetCategory = jobSheet?.task_details?.asset?.category || "";
+    const taskName = jobSheet?.task_details?.task_name || "";
 
     if (checklistResponses.length === 0) {
       return `
         <div class="checklist-section avoid-page-break">
-          <h3>SERVICE CHECKLIST OF ${assetCategory.toUpperCase()}</h3>
+          <h3>SERVICE CHECKLIST${
+            taskName
+              ? ` - ${taskName.toUpperCase()}`
+              : assetCategory
+              ? ` OF ${assetCategory.toUpperCase()}`
+              : ""
+          }</h3>
           <p>No checklist items available</p>
         </div>
       `;
     }
 
     // Check if any checklist items have actual responses
-    const hasAnyResponses = checklistResponses.some(item => 
-      item.input_value !== null && item.input_value !== undefined && item.input_value !== ""
+    const hasAnyResponses = checklistResponses.some(
+      (item) =>
+        item.input_value !== null &&
+        item.input_value !== undefined &&
+        item.input_value !== ""
     );
 
     const checklistHtml = checklistResponses
       .map((item: any, index: number) => {
         const serialNumber = item.index || (pageNumber - 1) * 10 + index + 1;
         const activity = item.activity || "";
-        
+
         // Handle null/empty input values properly
         const inputValue = item.input_value;
-        const result = inputValue !== null && inputValue !== undefined && inputValue !== "" 
-          ? inputValue 
-          : (hasAnyResponses ? "" : "Not Completed");
-        
+        const result =
+          inputValue !== null && inputValue !== undefined && inputValue !== ""
+            ? inputValue
+            : hasAnyResponses
+            ? ""
+            : "Not Completed";
+
         const comments = item.comments || "";
-        
-        // Handle attachments for pagination section too
-        const hasAttachments = item.attachments && Array.isArray(item.attachments) && item.attachments.length > 0;
-        const attachmentDisplay = hasAttachments ? `📎 ${item.attachments.length}` : "-";
+
+        // Handle attachments with image thumbnails (same as main section)
+        const hasAttachments =
+          item.attachments &&
+          Array.isArray(item.attachments) &&
+          item.attachments.length > 0;
+
+        let attachmentDisplay = "-";
+        if (hasAttachments) {
+          // Generate image thumbnails for attachments
+          const attachmentImages = item.attachments
+            .map((attachment: any, attachIdx: number) => {
+              const attachmentUrl =
+                typeof attachment === "string"
+                  ? attachment
+                  : attachment.url || attachment.file_url || "";
+              const attachmentName =
+                typeof attachment === "string"
+                  ? `Attachment ${attachIdx + 1}`
+                  : attachment.filename ||
+                    attachment.name ||
+                    `Attachment ${attachIdx + 1}`;
+
+              return `<img 
+              src="${attachmentUrl}" 
+              alt="${attachmentName}" 
+              style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px;"
+              crossorigin="anonymous"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
+            /><span style="display:none; font-size: 10px; color: #999;">📎</span>`;
+            })
+            .join("");
+
+          attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">${attachmentImages}</div>`;
+        }
 
         return `
           <tr class="avoid-page-break">
@@ -586,10 +701,17 @@ export class JobSheetPDFGenerator {
       })
       .join("");
 
-    const sectionTitle =
-      pageNumber === 1
-        ? `SERVICE CHECKLIST OF ${assetCategory.toUpperCase()}`
-        : `SERVICE CHECKLIST OF ${assetCategory.toUpperCase()} (Continued)`;
+    const sectionTitle = taskName
+      ? pageNumber === 1
+        ? taskName.toUpperCase()
+        : `${taskName.toUpperCase()} (Continued)`
+      : pageNumber === 1
+      ? `SERVICE CHECKLIST${
+          assetCategory ? ` OF ${assetCategory.toUpperCase()}` : ""
+        }`
+      : `SERVICE CHECKLIST${
+          assetCategory ? ` OF ${assetCategory.toUpperCase()}` : ""
+        } (Continued)`;
 
     return `
       <div class="checklist-section ${isLastPage ? "" : "avoid-page-break"}">
@@ -613,18 +735,18 @@ export class JobSheetPDFGenerator {
   }
 
   private generateLocationDetails(jobSheetData: any): string {
-    const jobSheet = jobSheetData?.job_sheet;
+    const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
     const location = jobSheet?.task_details?.asset?.location;
-    
+
     // Debug location data
-    console.log('🗺️ Location Data Debug:', {
+    console.log("🗺️ Location Data Debug:", {
       hasJobSheet: !!jobSheet,
       hasTaskDetails: !!jobSheet?.task_details,
       hasAsset: !!jobSheet?.task_details?.asset,
       hasLocation: !!location,
-      locationData: location
+      locationData: location,
     });
-    
+
     if (!location) {
       return `
         <div class="figma-location-section">
@@ -634,13 +756,33 @@ export class JobSheetPDFGenerator {
       `;
     }
 
-    // Extract and clean location data
-    const siteValue = location.site && location.site !== 'null' ? location.site : "•";
-    const buildingValue = location.building && location.building !== 'null' ? location.building : "•";
-    const wingValue = location.wing && location.wing !== 'null' ? location.wing : "•";
-    const floorValue = location.floor && location.floor !== 'null' ? location.floor : "•";
-    const areaValue = location.area && location.area !== 'null' ? location.area : "•";
-    const roomValue = location.room && location.room !== 'null' ? location.room : "•";
+    // Extract and clean location data - handle null/undefined values
+    const siteValue =
+      location.site && location.site !== "null" && location.site !== null
+        ? location.site
+        : "•";
+    const buildingValue =
+      location.building &&
+      location.building !== "null" &&
+      location.building !== null
+        ? location.building
+        : "•";
+    const wingValue =
+      location.wing && location.wing !== "null" && location.wing !== null
+        ? location.wing
+        : "•";
+    const floorValue =
+      location.floor && location.floor !== "null" && location.floor !== null
+        ? location.floor
+        : "•";
+    const areaValue =
+      location.area && location.area !== "null" && location.area !== null
+        ? location.area
+        : "•";
+    const roomValue =
+      location.room && location.room !== "null" && location.room !== null
+        ? location.room
+        : "•";
 
     return `
       <div class="figma-location-section">
@@ -672,31 +814,46 @@ export class JobSheetPDFGenerator {
   }
 
   private generateBeforeAfterImagesSection(jobSheetData: any): string {
-    const jobSheet = jobSheetData?.job_sheet;
+    const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
 
     // Use only actual image data - handle null values properly
-    const beforeImageUrl = jobSheet?.basic_info?.bef_sub_attachment && jobSheet?.basic_info?.bef_sub_attachment !== null 
-      ? jobSheet?.basic_info?.bef_sub_attachment 
-      : null;
-    const afterImageUrl = jobSheet?.basic_info?.aft_sub_attachment && jobSheet?.basic_info?.aft_sub_attachment !== null
-      ? jobSheet?.basic_info?.aft_sub_attachment 
-      : null;
-    
+    const beforeImageUrl =
+      jobSheet?.basic_info?.bef_sub_attachment &&
+      jobSheet?.basic_info?.bef_sub_attachment !== null &&
+      jobSheet?.basic_info?.bef_sub_attachment !== "null"
+        ? jobSheet?.basic_info?.bef_sub_attachment
+        : null;
+    const afterImageUrl =
+      jobSheet?.basic_info?.aft_sub_attachment &&
+      jobSheet?.basic_info?.aft_sub_attachment !== null &&
+      jobSheet?.basic_info?.aft_sub_attachment !== "null"
+        ? jobSheet?.basic_info?.aft_sub_attachment
+        : null;
+
     // Get actual timestamps from data - handle the API date format
-    const beforeTimestamp = jobSheet?.basic_info?.bef_sub_date || jobSheet?.basic_info?.created_date || "";
-    const afterTimestamp = jobSheet?.basic_info?.aft_sub_date || jobSheet?.basic_info?.completed_date || "";
-    
+    const beforeTimestamp =
+      jobSheet?.basic_info?.bef_sub_date ||
+      jobSheet?.basic_info?.created_date ||
+      "";
+    const afterTimestamp =
+      jobSheet?.basic_info?.aft_sub_date ||
+      jobSheet?.basic_info?.completed_date ||
+      "";
+
     // Format timestamps if available - handle API format "09/09/2025, 09:04 AM"
     const formatDate = (dateStr: string) => {
       if (!dateStr) return "";
       try {
         // Check if it's already in the desired format (contains comma and AM/PM)
-        if (dateStr.includes(',') && (dateStr.includes('AM') || dateStr.includes('PM'))) {
+        if (
+          dateStr.includes(",") &&
+          (dateStr.includes("AM") || dateStr.includes("PM"))
+        ) {
           return dateStr; // Return as-is since it's already formatted
         }
         // Otherwise try to parse and format
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+        return date.toLocaleDateString("en-GB"); // DD/MM/YYYY format
       } catch {
         return dateStr; // Return original if parsing fails
       }
@@ -704,6 +861,14 @@ export class JobSheetPDFGenerator {
 
     const beforeDate = formatDate(beforeTimestamp);
     const afterDate = formatDate(afterTimestamp);
+
+    // Debug image URLs
+    console.log("🖼️ Before/After Images Debug:", {
+      beforeImageUrl,
+      afterImageUrl,
+      beforeDate,
+      afterDate,
+    });
 
     return `
       <div class="figma-images-section">
@@ -719,24 +884,36 @@ export class JobSheetPDFGenerator {
             <tr>
               <td class="figma-image-cell">
                 <div class="figma-image-container">
-                  ${beforeImageUrl ? 
-                    `<img src="${beforeImageUrl}" 
+                  ${
+                    beforeImageUrl
+                      ? `<img src="${beforeImageUrl}" 
                          alt="Before Maintenance" 
-                         class="figma-maintenance-image" />` :
-                    '<div class="figma-no-image">No image available</div>'
+                         class="figma-maintenance-image" 
+                         crossorigin="anonymous" />`
+                      : '<div class="figma-no-image">No image available</div>'
                   }
-                  ${beforeDate ? `<div class="figma-image-timestamp">${beforeDate}</div>` : ''}
+                  ${
+                    beforeDate
+                      ? `<div class="figma-image-timestamp">${beforeDate}</div>`
+                      : ""
+                  }
                 </div>
               </td>
               <td class="figma-image-cell">
                 <div class="figma-image-container">
-                  ${afterImageUrl ? 
-                    `<img src="${afterImageUrl}" 
+                  ${
+                    afterImageUrl
+                      ? `<img src="${afterImageUrl}" 
                          alt="After Maintenance" 
-                         class="figma-maintenance-image" />` :
-                    '<div class="figma-no-image">No image available</div>'
+                         class="figma-maintenance-image" 
+                         crossorigin="anonymous" />`
+                      : '<div class="figma-no-image">No image available</div>'
                   }
-                  ${afterDate ? `<div class="figma-image-timestamp">${afterDate}</div>` : ''}
+                  ${
+                    afterDate
+                      ? `<div class="figma-image-timestamp">${afterDate}</div>`
+                      : ""
+                  }
                 </div>
               </td>
             </tr>
@@ -746,34 +923,32 @@ export class JobSheetPDFGenerator {
     `;
   }
 
-
-
-  /**
-   * Enhanced Remarks Section Generation
-   * - Combines comments from multiple sources (task_comments, user comments, checklist comments, system comments)
-   * - Filters out empty/null comments properly
-   * - Uses bullet separator for multiple comments
-   */
   private generateRemarksSection(taskDetails: any, comments: string): string {
-    const jobSheet = taskDetails?.job_sheet;
-    
+    const jobSheet = taskDetails?.data?.job_sheet || taskDetails?.job_sheet;
+
     // Get comments from multiple sources and map correctly
     const taskComments = jobSheet?.task_details?.task_comments || "";
     const userComments = comments || "";
     const basicInfoComments = jobSheet?.basic_info?.comments || "";
-    const checklistComments = jobSheet?.checklist_responses?.filter((item: any) => item.comments).map((item: any) => item.comments) || [];
+    const checklistComments =
+      jobSheet?.checklist_responses
+        ?.filter((item: any) => item.comments)
+        .map((item: any) => item.comments) || [];
     const systemComments = jobSheet?.comments || [];
-    
+
     // Combine all available comments with proper filtering and formatting
     const allComments = [
       taskComments,
-      userComments, 
+      userComments,
       basicInfoComments,
       ...checklistComments,
-      ...systemComments.map((c: any) => c.comment || c.text || c)
-    ].filter(comment => comment && typeof comment === 'string' && comment.trim().length > 0);
-    
-    const finalComments = allComments.length > 0 ? allComments.join(' • ') : "";
+      ...systemComments.map((c: any) => c.comment || c.text || c),
+    ].filter(
+      (comment) =>
+        comment && typeof comment === "string" && comment.trim().length > 0
+    );
+
+    const finalComments = allComments.length > 0 ? allComments.join(" • ") : "";
 
     return `
       <div class="svg-remarks-section">
@@ -787,8 +962,12 @@ export class JobSheetPDFGenerator {
     `;
   }
 
-  private generateEnhancedRemarksSection(taskDetails: any, comments: string): string {
-    const remarksText = comments || taskDetails?.task_details?.task_comments || "";
+  private generateEnhancedRemarksSection(
+    taskDetails: any,
+    comments: string
+  ): string {
+    const remarksText =
+      comments || taskDetails?.task_details?.task_comments || "";
 
     return `
       <div class="svg-remarks-section">
@@ -885,8 +1064,4 @@ export class JobSheetPDFGenerator {
 
     return totalHeight;
   }
-
-
-
-
 }

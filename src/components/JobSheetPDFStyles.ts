@@ -1028,13 +1028,33 @@ export class JobSheetPDFStyles {
 
         .figma-attachment-cell {
           border: 1px solid #000000;
-          padding: 6px 10px;
+          padding: 4px 6px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
-          color: #007bff;
+          color: #333;
           text-align: center;
           vertical-align: middle;
-          font-weight: 600;
+          min-width: 80px;
+          max-width: 120px;
+        }
+        
+        /* Attachment Image Styles */
+        .figma-attachment-cell img {
+          width: 40px;
+          height: 40px;
+          object-fit: cover;
+          border-radius: 4px;
+          border: 1px solid #ddd;
+          margin: 2px;
+          display: inline-block;
+        }
+        
+        .figma-attachment-cell > div {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+          align-items: center;
+          justify-content: center;
         }
 
         /* Attachment Indicator Styles */
