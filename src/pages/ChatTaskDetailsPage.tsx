@@ -1,10 +1,50 @@
 import { ArrowLeft, Pencil, Trash2, ChevronDown } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchChannelTaskDetails } from "@/store/slices/channelSlice";
+import { format } from "date-fns";
 
 const ChatTaskDetailsPage = () => {
+    const { id } = useParams();
     const navigate = useNavigate()
+    const dispatch = useAppDispatch();
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+
     const [status, setStatus] = useState("Active")
+    const [task, setTask] = useState({
+        id: "",
+        title: "",
+        created_by: {
+            name: ""
+        },
+        created_at: "",
+        description: "",
+        responsible_person: {
+            name: ""
+        },
+        priority: "",
+        expected_start_date: "",
+        target_date: "",
+        observers: [],
+        status: ""
+    })
+
+    const fetchData = async () => {
+        try {
+            const response = await dispatch(fetchChannelTaskDetails({ baseUrl, token, id })).unwrap();
+            setTask(response);
+        } catch (error) {
+            console.log(error)
+            toast.error(error)
+        }
+    }
+
+    useEffect(() => {
+        fetchData();
+    }, [id])
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
@@ -22,7 +62,7 @@ const ChatTaskDetailsPage = () => {
             <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-semibold text-gray-900">
-                        T-0484 Asset List Page
+                        T-{task?.id} {task?.title}
                     </h1>
                     <div className="flex items-center gap-3">
                         <div className="relative">
@@ -51,11 +91,11 @@ const ChatTaskDetailsPage = () => {
                 <div className="flex items-center gap-6 mt-4 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                         <span>Created By:</span>
-                        <span className="text-gray-900 font-medium">Sadanand Gupta</span>
+                        <span className="text-gray-900 font-medium">{task?.created_by?.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <span>Created On:</span>
-                        <span className="text-gray-900 font-medium">20/09/2025 01:43 PM</span>
+                        <span className="text-gray-900 font-medium">{task?.created_at && format(task?.created_at, "dd/MM/yyyy hh:mm a")}</span>
                     </div>
                 </div>
             </div>
@@ -69,7 +109,7 @@ const ChatTaskDetailsPage = () => {
                     <h2 className="text-xl font-semibold text-gray-900">Description</h2>
                 </div>
                 <p className="text-gray-700 ml-13 pl-1">
-                    This is test task
+                    {task?.description}
                 </p>
             </div>
 
@@ -87,11 +127,11 @@ const ChatTaskDetailsPage = () => {
                     <div className="grid grid-cols-2 gap-8 pb-6 border-b border-gray-200">
                         <div className="flex items-start">
                             <span className="text-gray-600 min-w-[180px] font-medium">Responsible Person:</span>
-                            <span className="text-gray-900">Tejas Chaudhari</span>
+                            <span className="text-gray-900">{task?.responsible_person?.name}</span>
                         </div>
                         <div className="flex items-start">
                             <span className="text-gray-600 min-w-[180px] font-medium">Priority:</span>
-                            <span className="text-gray-900">Medium</span>
+                            <span className="text-gray-900">{task?.priority}</span>
                         </div>
                     </div>
 
@@ -99,13 +139,17 @@ const ChatTaskDetailsPage = () => {
                     <div className="grid grid-cols-2 gap-8 pb-6 border-b border-gray-200">
                         <div className="flex items-start">
                             <span className="text-gray-600 min-w-[180px] font-medium">Start Date:</span>
-                            <span className="text-gray-900">2025-09-20</span>
+                            <span className="text-gray-900">{task?.expected_start_date && format(task?.expected_start_date, "dd/MM/yyyy")}</span>
                         </div>
                         <div className="flex items-start">
                             <span className="text-gray-600 min-w-[180px] font-medium">Observer:</span>
-                            <span className="px-3 py-1 border-2 border-[#C72030] text-[#C72030] rounded-full text-sm font-medium">
-                                Vinayak Mane
-                            </span>
+                            {
+                                task?.observers && task?.observers.map((observer, index) => (
+                                    <span key={index} className="px-3 py-1 border-2 border-[#C72030] text-[#C72030] rounded-full text-sm font-medium">
+                                        {observer.user_name}
+                                    </span>
+                                ))
+                            }
                         </div>
                     </div>
 
@@ -113,7 +157,7 @@ const ChatTaskDetailsPage = () => {
                     <div className="grid grid-cols-2 gap-8 pb-6 border-b border-gray-200">
                         <div className="flex items-start">
                             <span className="text-gray-600 min-w-[180px] font-medium">End Date:</span>
-                            <span className="text-gray-900">2025-09-22</span>
+                            <span className="text-gray-900">{task?.target_date && format(task?.target_date, "dd/MM/yyyy")}</span>
                         </div>
                         <div className="flex items-start">
                             <span className="text-gray-600 min-w-[180px] font-medium">Duration:</span>
