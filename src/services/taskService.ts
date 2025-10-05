@@ -223,20 +223,15 @@ export const taskService = {
           created_on: data.created_at || "N/A",
           created_by: data.assigned_to_name?.split(',')[0]?.trim() || "N/A",
           backup_assigned_user: data.backup_assigned_user || data.performed_by,
-          location: (() => {
-            // Parse asset_path: "Site - Pune / Building - World Trade Centre T3 / Wing - North Side / Floor - Basement 2 / Area - Common Area / Room - UPS Room "
-            const pathParts = data.asset_path?.split('/').map((p: string) => p.trim()) || [];
-            
-            return {
-              site: pathParts.find((p: string) => p.startsWith('Site'))?.replace('Site - ', '') || "NA",
-              building: pathParts.find((p: string) => p.startsWith('Building'))?.replace('Building - ', '') || "NA",
-              wing: pathParts.find((p: string) => p.startsWith('Wing'))?.replace('Wing - ', '') || "NA",
-              floor: pathParts.find((p: string) => p.startsWith('Floor'))?.replace('Floor - ', '') || "NA",
-              area: pathParts.find((p: string) => p.startsWith('Area'))?.replace('Area - ', '') || "NA",
-              room: pathParts.find((p: string) => p.startsWith('Room'))?.replace('Room - ', '') || "NA",
-              full_location: data.asset_path || "N/A"
-            };
-          })(),
+          location: {
+            site: data.location?.site || data.site_name || "NA",
+            building: data.location?.building || "NA",
+            wing: data.location?.wing || "NA",
+            floor: data.location?.floor || "NA",
+            area: data.location?.area || "NA",
+            room: data.location?.room || "NA",
+            full_location: data.asset_path || "N/A"
+          },
           status: {
             value: data.task_status || "Unknown",
             label_class: data.task_status?.toLowerCase() || "unknown",

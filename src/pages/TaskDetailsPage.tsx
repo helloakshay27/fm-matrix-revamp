@@ -126,14 +126,18 @@ export const TaskDetailsPage = () => {
         setLoading(true);
         const response = await taskService.getTaskDetails(id);
         
+        // Log the response from taskService to see what we're getting
+        console.log('📡 Raw API Response from taskService:', response);
+        console.log('📍 Location from taskService:', response?.task_details?.location);
+        
         // Map the API response to match our component structure
         const rawDetails = (response as any).task_occurrence ? (response as any).task_occurrence : response;
         
         // Enhanced mapping to handle the new API structure
         const mappedDetails = {
           ...rawDetails,
-          // Map task details structure
-          task_details: {
+          // task_details is already properly mapped by taskService, just ensure it exists
+          task_details: rawDetails.task_details || {
             id: rawDetails.id,
             task_name: rawDetails.checklist,
             asset_service_code: rawDetails.asset_code,
@@ -149,17 +153,18 @@ export const TaskDetailsPage = () => {
             start_time: rawDetails.task_start_time,
             completed_on: rawDetails.updated_at,
             performed_by: rawDetails.performed_by,
-            status: {
+            status: rawDetails.task_details?.status || {
               value: rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || 'unknown',
               display_name: rawDetails.task_status || 'Unknown'
             },
-            location: {
-              site: rawDetails.site_name || 'NA',
-              building: extractLocationPart(rawDetails.asset_path, 'Building') || 'NA',
-              wing: extractLocationPart(rawDetails.asset_path, 'Wing') || 'NA',
-              floor: extractLocationPart(rawDetails.asset_path, 'Floor') || 'NA',
-              area: extractLocationPart(rawDetails.asset_path, 'Area') || 'NA',
-              room: extractLocationPart(rawDetails.asset_path, 'Room') || 'NA'
+            // Use the location that was already mapped by taskService
+            location: rawDetails.task_details?.location || rawDetails.location || {
+              site: 'NA',
+              building: 'NA',
+              wing: 'NA',
+              floor: 'NA',
+              area: 'NA',
+              room: 'NA'
             }
           },
           // Map activity/checklist responses
@@ -206,6 +211,10 @@ export const TaskDetailsPage = () => {
         };
         
         setTaskDetails(mappedDetails);
+        
+        // Enhanced debug logging
+        console.log('🗺️ Final Mapped Details:', mappedDetails);
+        console.log('📍 Final Location Object:', mappedDetails?.task_details?.location);
         
         // Debug logging for image attachments and checklist
         console.log('🖼️ Task Details Image Data:');
@@ -1193,7 +1202,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Site</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.site !== "NA" && taskDetails?.task_details?.location?.site ? taskDetails.task_details.location.site : '-'}
+                      {taskDetails?.task_details?.location?.site || '-'}
                     </div>
                   </div>
 
@@ -1202,7 +1211,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Building</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.building !== "NA" && taskDetails?.task_details?.location?.building ? taskDetails.task_details.location.building : '-'}
+                      {taskDetails?.task_details?.location?.building || '-'}
                     </div>
                   </div>
 
@@ -1211,7 +1220,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Wing</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.wing !== "NA" && taskDetails?.task_details?.location?.wing ? taskDetails.task_details.location.wing : '-'}
+                      {taskDetails?.task_details?.location?.wing || '-'}
                     </div>
                   </div>
 
@@ -1220,7 +1229,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Floor</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.floor !== "NA" && taskDetails?.task_details?.location?.floor ? taskDetails.task_details.location.floor : '-'}
+                      {taskDetails?.task_details?.location?.floor || '-'}
                     </div>
                   </div>
 
@@ -1229,7 +1238,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Area</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.area !== "NA" && taskDetails?.task_details?.location?.area ? taskDetails.task_details.location.area : '-'}
+                      {taskDetails?.task_details?.location?.area || '-'}
                     </div>
                   </div>
 
@@ -1238,7 +1247,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Room</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.room !== "NA" && taskDetails?.task_details?.location?.room ? taskDetails.task_details.location.room : '-'}
+                      {taskDetails?.task_details?.location?.room || '-'}
                     </div>
                   </div>
                 </div>
