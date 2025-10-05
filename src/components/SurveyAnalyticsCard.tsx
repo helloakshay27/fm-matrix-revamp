@@ -88,9 +88,11 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
     console.log("🎯 SurveyAnalyticsCard - Data length:", data.length);
     console.log("🎯 SurveyAnalyticsCard - Total value:", total);
 
-    const chartHeight = customStyle?.pieChart?.height || 200;
-    const outerRadius = customStyle?.pieChart?.outerRadius || 80;
-    const innerRadius = customStyle?.pieChart?.innerRadius || 40;
+    const chartHeight = customStyle?.pieChart?.height || 250;
+    const outerRadius = customStyle?.pieChart?.outerRadius || 90;
+    const innerRadius = customStyle?.pieChart?.innerRadius || 45;
+    // Only show in-slice ordinal labels for small donuts
+    const isSmallDonut = outerRadius <= 90;
 
     return (
       <div className="relative flex items-center justify-center">
@@ -104,42 +106,82 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
               outerRadius={outerRadius}
               paddingAngle={2}
               dataKey="value"
-              label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
+              label={isSmallDonut ? ({ percent, cx, cy, midAngle, innerRadius, outerRadius, index }) => {
                 const RADIAN = Math.PI / 180;
-                const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                const radius = innerRadius + (outerRadius - innerRadius) * 0.6; // Position labels on the pie segments
                 const x = cx + radius * Math.cos(-midAngle * RADIAN);
                 const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                
+                // Calculate percentage (percent is 0..1 in Recharts)
+                const percentage = Math.round((percent || 0) * 100);
+                // Avoid clutter: skip label for tiny slices
+                if (percentage < 5) return null;
+                
+                // Determine ordinal quarter label strictly from position
+                const toOrdinal = (n: number) => {
+                  const s = ["th", "st", "nd", "rd"]; const v = n % 100;
+                  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                };
+                const formattedName = `${toOrdinal((index ?? 0) + 1)} Qtr`;
+                
                 return (
                   <text
                     x={x}
                     y={y}
-                    fill="white"
-                    textAnchor={x > cx ? 'start' : 'end'}
+                    fill="black"
+                    textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize="14"
-                    fontWeight="bold"
+                    fontSize="8"
+                    fontWeight="600"
                   >
-                    {value}
+                    <tspan x={x} dy="-8">{formattedName}</tspan>
+                    <tspan x={x} dy="14">{percentage}%</tspan>
                   </text>
                 );
-              }}
+              } : undefined}
               labelLine={false}
             >
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number, name: string) => [value, name]} />
+            <Tooltip 
+              content={(props: TooltipProps<number, string>) => {
+                const { active, payload } = props;
+                if (active && payload && payload.length) {
+                  type Datum = { name: string; value: number; color?: string };
+                  const item = (payload[0]?.payload as Datum) || { name: '', value: 0 };
+                  const idx = data.findIndex(d => d.name === item.name && d.value === item.value);
+                  const toOrdinal = (n: number) => {
+                    const s = ["th", "st", "nd", "rd"]; const v = n % 100;
+                    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                  };
+                  const label = idx >= 0 ? `${toOrdinal(idx + 1)} Qtr` : item.name;
+                  const pct = total ? Math.round((item.value / total) * 100) : 0;
+                  const color = item.color || String(payload[0]?.color || '#374151');
+                  return (
+                    <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                      <p className="font-semibold text-gray-800 mb-2">{label}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
+                        <span className="text-gray-700">{pct}% • Count: <span className="font-semibold">{item.value}</span></span>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
           </PieChart>
         </ResponsiveContainer>
         {/* Only show total in center for smaller pie charts (outerRadius <= 80) */}
-        {outerRadius <= 80 && (
+        {/* {outerRadius <= 80 && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className="text-lg font-semibold text-gray-700">Total: {total}</div>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     );
   };
@@ -227,15 +269,17 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
         {/* Data Summary Grid - Only show for pie charts (statusDistribution) */}
         {type === 'statusDistribution' && (
           <div className="flex justify-center gap-6 mt-4 flex-wrap">
-            {data.map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <div 
-                  className="w-4 h-4 rounded-sm"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-sm font-medium text-gray-700">{item.name}</span>
-              </div>
-            ))}
+            {data.map((item, index) => {
+              return (
+                <div key={index} className="flex items-center gap-2">
+                  <div 
+                    className="w-4 h-4 rounded-sm"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                </div>
+              );
+            })}
           </div>
         )}
 
