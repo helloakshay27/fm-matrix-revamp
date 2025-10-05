@@ -65,7 +65,12 @@ const ChannelTasksAll = () => {
         setLoading(true);
         try {
             const response = await dispatch(fetchIndividualChatTasks({ baseUrl, token, ...filterParams })).unwrap();
-            setTasks(formattedData(response))
+            setTasks(formattedData(response.task_managements))
+            setPagination({
+                current_page: response.current_page,
+                total_count: response.total_count,
+                total_pages: response.total_pages,
+            })
         } catch (error) {
             console.log(error)
         } finally {
@@ -74,7 +79,7 @@ const ChannelTasksAll = () => {
     }
 
     useEffect(() => {
-        getChatTasks();
+        getChatTasks({ page: 1 });
     }, [])
 
     const renderCell = (item, columnKey) => {
@@ -102,7 +107,7 @@ const ChannelTasksAll = () => {
                     size="sm"
                     variant="ghost"
                     className="p-1"
-                    onClick={() => navigate(`/channels/tasks/${item.id}`)}
+                    onClick={() => navigate(`/vas/channels/tasks/${item.id}`)}
                 >
                     <Eye className="w-4 h-4" />
                 </Button>

@@ -1,12 +1,13 @@
 import { useAppDispatch } from "@/store/hooks";
 import { fetchConversationMessages } from "@/store/slices/channelSlice";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { FileIcon, ImageIcon } from "lucide-react";
 
 const ChatAttachments = () => {
     const { id } = useParams();
+    const path = useLocation().pathname;
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -22,7 +23,7 @@ const ChatAttachments = () => {
                     id,
                     per_page: 100,
                     page: 1,
-                    param: "conversation_id_eq",
+                    param: path.includes("messages") ? "conversation_id_eq" : "project_space_id",
                     attachments_id_null: true,
                 })
             ).unwrap();

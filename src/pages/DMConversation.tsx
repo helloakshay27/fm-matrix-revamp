@@ -4,7 +4,7 @@ import ChatTasks from "@/components/ChatTasks";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchConversation, fetchConversationMessages, sendMessage } from "@/store/slices/channelSlice";
-import { Paperclip, X } from "lucide-react";
+import { Paperclip, X, Smile } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -17,17 +17,38 @@ const DMConversation = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const paperclipRef = useRef(null);
+    const emojiPickerRef = useRef(null);
 
     const [activeTab, setActiveTab] = useState("chat");
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState([]);
     const [attachments, setAttachments] = useState([]);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [replyingTo, setReplyingTo] = useState(null);
     const [conversation, setConversation] = useState({
         receiver_name: "",
         recipient_id: "",
         sender_name: "",
         sender_id: "",
     });
+
+    // Common emojis list
+    const emojis = [
+        "😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃",
+        "😉", "😊", "😇", "🥰", "😍", "🤩", "😘", "😗", "😚", "😙",
+        "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔",
+        "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "🤥",
+        "😌", "😔", "😪", "🤤", "😴", "😷", "🤒", "🤕", "🤢", "🤮",
+        "🤧", "🥵", "🥶", "😶‍🌫️", "😵", "😵‍💫", "🤯", "🤠", "🥳", "😎",
+        "🤓", "🧐", "😕", "😟", "🙁", "☹️", "😮", "😯", "😲", "😳",
+        "🥺", "😦", "😧", "😨", "😰", "😥", "😢", "😭", "😱", "😖",
+        "😣", "😞", "😓", "😩", "😫", "🥱", "😤", "😡", "😠", "🤬",
+        "👍", "👎", "👌", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉",
+        "👆", "👇", "☝️", "👏", "🙌", "👐", "🤲", "🤝", "🙏", "✍️",
+        "💪", "🦾", "🦿", "🦵", "🦶", "👂", "🦻", "👃", "🧠", "❤️",
+        "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️",
+        "💕", "💞", "💓", "💗", "💖", "💘", "💝", "🎉", "🎊", "🎈"
+    ];
 
     const fetchData = async () => {
         try {
@@ -63,6 +84,18 @@ const DMConversation = () => {
         }
     }, [activeTab]);
 
+    // Close emoji picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     const handleFileChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
         setAttachments((prevFiles) => [...prevFiles, ...selectedFiles]);
@@ -72,6 +105,18 @@ const DMConversation = () => {
         setAttachments((prev) => prev.filter((_, i) => i !== index));
     };
 
+    const handleEmojiClick = (emoji) => {
+        setInput((prev) => prev + emoji);
+    };
+
+    const handleReply = (message) => {
+        setReplyingTo(message);
+    };
+
+    const cancelReply = () => {
+        setReplyingTo(null);
+    };
+
     const sendMessages = async (e) => {
         e.preventDefault();
         if (!input.trim() && attachments.length === 0) return;
@@ -79,6 +124,12 @@ const DMConversation = () => {
         const payload = new FormData();
         payload.append("message[body]", input);
         payload.append("message[conversation_id]", id);
+
+        // Add parent_id if replying to a message
+        if (replyingTo) {
+            payload.append("message[parent_id]", replyingTo.id);
+        }
+
         attachments.forEach((attachment) => {
             payload.append("message[attachments][]", attachment);
         });
@@ -88,6 +139,7 @@ const DMConversation = () => {
             setMessages([response, ...messages]);
             setInput("");
             setAttachments([]);
+            setReplyingTo(null);
         } catch (error) {
             toast.error(error);
         }
@@ -144,7 +196,7 @@ const DMConversation = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
-                {activeTab === "chat" && id && <Chats messages={messages} />}
+                {activeTab === "chat" && id && <Chats messages={messages} onReply={handleReply} />}
                 {activeTab === "task" && <ChatTasks />}
                 {activeTab === "attachments" && <ChatAttachments />}
             </div>
@@ -155,6 +207,26 @@ const DMConversation = () => {
                         })] mx-auto px-6 py-4 flex items-center space-x-2`}
                 >
                     <div className="relative flex-1 bg-white rounded-2xl shadow-md p-3 flex flex-col">
+                        {/* Reply Preview */}
+                        {replyingTo && (
+                            <div className="mb-2 bg-gray-50 border-l-4 border-[#C72030] rounded p-2 flex items-start justify-between">
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-semibold text-[#C72030] mb-1">
+                                        Replying to {replyingTo.user_name}
+                                    </div>
+                                    <div className="text-xs text-gray-600 truncate">
+                                        {replyingTo.body || "Attachment"}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={cancelReply}
+                                    className="ml-2 text-gray-400 hover:text-gray-600"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+
                         {attachments.length > 0 && (
                             <div className="flex flex-wrap gap-2 mb-2">
                                 {attachments.map((file, index) => {
@@ -193,7 +265,7 @@ const DMConversation = () => {
 
                         <textarea
                             placeholder="Type here and hit enter"
-                            className="w-full bg-transparent py-1 pr-2 pl-8 text-sm focus:outline-none resize-none max-h-24 overflow-y-auto"
+                            className="w-full bg-transparent py-1 pr-2 pl-12 text-sm focus:outline-none resize-none max-h-24 overflow-y-auto"
                             rows={1}
                             value={input}
                             onChange={(e) => {
@@ -209,11 +281,37 @@ const DMConversation = () => {
                             }}
                         />
 
-                        <Paperclip
-                            className="absolute bottom-[16px] left-3 text-gray-500 cursor-pointer"
-                            size={18}
-                            onClick={() => paperclipRef.current.click()}
-                        />
+                        <div className="absolute bottom-[16px] left-3 flex items-center space-x-1">
+                            <Paperclip
+                                className="text-gray-500 cursor-pointer hover:text-gray-700"
+                                size={18}
+                                onClick={() => paperclipRef.current.click()}
+                            />
+                            <div className="relative" ref={emojiPickerRef}>
+                                <Smile
+                                    className="text-gray-500 cursor-pointer hover:text-gray-700"
+                                    size={18}
+                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                />
+                                {showEmojiPicker && (
+                                    <div className="absolute bottom-8 left-0 bg-white border rounded-lg shadow-lg p-3 w-64 h-48 overflow-y-auto z-50">
+                                        <div className="grid grid-cols-8 gap-1">
+                                            {emojis.map((emoji, index) => (
+                                                <button
+                                                    key={index}
+                                                    type="button"
+                                                    className="text-xl hover:bg-gray-100 rounded p-1 transition-colors"
+                                                    onClick={() => handleEmojiClick(emoji)}
+                                                >
+                                                    {emoji}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         <input
                             type="file"
                             multiple
