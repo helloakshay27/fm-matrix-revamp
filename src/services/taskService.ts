@@ -1,4 +1,4 @@
-import { apiClient } from '@/utils/apiClient';
+import { apiClient } from "@/utils/apiClient";
 
 export interface TaskOccurrence {
   id: number;
@@ -187,9 +187,11 @@ export const taskService = {
   async getTaskDetails(id: string): Promise<TaskOccurrence> {
     try {
       // Use the direct API endpoint that returns the flat structure
-      const response = await apiClient.get(`/pms/asset_task_occurrences/${id}.json`);
+      const response = await apiClient.get(
+        `/pms/asset_task_occurrences/${id}.json`
+      );
       const data = response.data;
-      
+
       // Map the flat API response to our TaskOccurrence interface
       const mappedData: TaskOccurrence = {
         id: data.id,
@@ -221,85 +223,140 @@ export const taskService = {
           assigned_to: data.assigned_to_name || "N/A",
           task_duration: data.time_log || "N/A",
           created_on: data.created_at || "N/A",
-          created_by: data.assigned_to_name?.split(',')[0]?.trim() || "N/A",
+          created_by: data.assigned_to_name?.split(",")[0]?.trim() || "N/A",
           backup_assigned_user: data.backup_assigned_user || data.performed_by,
-          location: {
-            site: data.location?.site || data.site_name || "NA",
-            building: data.location?.building || "NA",
-            wing: data.location?.wing || "NA",
-            floor: data.location?.floor || "NA",
-            area: data.location?.area || "NA",
-            room: data.location?.room || "NA",
-            full_location: data.asset_path || "N/A"
+          location: data.location ? {
+            // If location object exists in API, use it
+            site: data.location.site || data.site_name || "NA",
+            building: data.location.building || "NA",
+            wing: data.location.wing || "NA",
+            floor: data.location.floor || "NA",
+            area: data.location.area || "NA",
+            room: data.location.room || "NA",
+            full_location: data.asset_path || "N/A",
+          } : {
+            // If location is null, parse from asset_path
+            site: (() => {
+              const match = data.asset_path?.match(/Site\s*-\s*([^/]+)/i);
+              return match ? match[1].trim() : data.site_name || "NA";
+            })(),
+            building: (() => {
+              const match = data.asset_path?.match(/Building\s*-\s*([^/]+)/i);
+              return match ? match[1].trim() : "NA";
+            })(),
+            wing: (() => {
+              const match = data.asset_path?.match(/Wing\s*-\s*([^/]+)/i);
+              return match ? match[1].trim() : "NA";
+            })(),
+            floor: (() => {
+              const match = data.asset_path?.match(/Floor\s*-\s*([^/]+)/i);
+              return match ? match[1].trim() : "NA";
+            })(),
+            area: (() => {
+              const match = data.asset_path?.match(/Area\s*-\s*([^/]+)/i);
+              return match ? match[1].trim() : "NA";
+            })(),
+            room: (() => {
+              const match = data.asset_path?.match(/Room\s*-\s*([^/]+)/i);
+              return match ? match[1].trim() : "NA";
+            })(),
+            full_location: data.asset_path || "N/A",
           },
           status: {
             value: data.task_status || "Unknown",
             label_class: data.task_status?.toLowerCase() || "unknown",
-            display_name: data.task_status || "Unknown"
+            display_name: data.task_status || "Unknown",
           },
           performed_by: data.performed_by || null,
           supplier: "N/A",
-          start_time: data.task_start_time || null
+          start_time: data.task_start_time || null,
         },
         activity: {
           has_response: data.checklist_responses?.length > 0,
           total_score: null,
           checklist_groups: [],
           ungrouped_content: data.checklist_questions || [],
-          resp: data.checklist_responses?.map((item: any) => ({
-            label: item.label,
-            name: item.name,
-            className: item.className,
-            group_id: item.group_id || "",
-            sub_group_id: item.sub_group_id || "",
-            type: item.type,
-            subtype: item.subtype,
-            required: item.required,
-            is_reading: item.is_reading,
-            hint: item.hint || "",
-            values: item.values || [],
-            weightage: item.weightage || "",
-            rating_enabled: item.rating_enabled || "false",
-            question_hint_image_ids: item.question_hint_image_ids || [],
-            userData: item.userData || [],
-            comment: item.comment || "",
-            rating: item.rating || "",
-            attachments: item.attachments || [] // Map attachments
-          })) || []
+          resp: data.checklist_responses
+            ? data.checklist_responses.map((item: any) => ({
+                label: item.label || "",
+                name: item.name || "",
+                className: item.className || "",
+                group_id: item.group_id || "",
+                sub_group_id: item.sub_group_id || "",
+                type: item.type || "",
+                subtype: item.subtype || "",
+                required: item.required || "false",
+                is_reading: item.is_reading || "false",
+                hint: item.hint || "",
+                values: item.values || [],
+                weightage: item.weightage || "",
+                rating_enabled: item.rating_enabled || "false",
+                question_hint_image_ids: item.question_hint_image_ids || [],
+                userData: item.userData || [],
+                comment: item.comment || "",
+                rating: item.rating || "",
+                attachments: item.attachments || [],
+              }))
+            : data.checklist_questions?.map((item: any) => ({
+                label: item.label || "",
+                name: item.name || "",
+                className: item.className || "",
+                group_id: item.group_id || "",
+                sub_group_id: item.sub_group_id || "",
+                type: item.type || "",
+                subtype: item.subtype || "",
+                required: item.required || "false",
+                is_reading: item.is_reading || "false",
+                hint: item.hint || "",
+                values: item.values || [],
+                weightage: item.weightage || "",
+                rating_enabled: item.rating_enabled || "false",
+                question_hint_image_ids: item.question_hint_image_ids || [],
+                userData: ["-"], // Show '-' for questions without responses
+                comment: "-", // Show '-' for questions without responses
+                rating: "", // No rating for questions
+                attachments: [], // No attachments for questions
+              })) || [],
         },
         attachments: {
           main_attachment: data.response_attachments,
-          blob_store_files: []
+          blob_store_files: [],
         },
         actions: {
-          can_reschedule: data.task_status !== "Closed" && data.task_status !== "Completed",
-          can_submit_task: data.task_status !== "Closed" && data.task_status !== "Completed",
-          can_view_job_sheet: data.task_status === "Closed" || data.task_status === "Completed",
-          can_edit: data.task_status !== "Closed" && data.task_status !== "Completed",
-          can_rate: false
+          can_reschedule:
+            data.task_status !== "Closed" && data.task_status !== "Completed",
+          can_submit_task:
+            data.task_status !== "Closed" && data.task_status !== "Completed",
+          can_view_job_sheet:
+            data.task_status === "Closed" || data.task_status === "Completed",
+          can_edit:
+            data.task_status !== "Closed" && data.task_status !== "Completed",
+          can_rate: false,
         },
         action_urls: {
           question_form_url: `/pms/asset_task_occurrences/${data.id}.json`,
           job_sheet_url: `/pms/asset_task_occurrences/${data.id}/job_sheet.json`,
-          update_task_date_url: `/pms/asset_task_occurrences/${data.id}/update_task_date.json`
+          update_task_date_url: `/pms/asset_task_occurrences/${data.id}/update_task_date.json`,
         },
-        comments: []
+        comments: [],
       };
-      
-      console.log('📋 Mapped Task Details:', mappedData);
+
+      console.log("📋 Mapped Task Details:", mappedData);
       return mappedData;
     } catch (error) {
-      console.error('Error fetching task details:', error);
+      console.error("Error fetching task details:", error);
       throw error;
     }
   },
 
   async getTaskSubmissionDetails(id: string): Promise<any> {
     try {
-      const response = await apiClient.get(`/pms/asset_task_occurrences/${id}.json?require_grouping=true`);
+      const response = await apiClient.get(
+        `/pms/asset_task_occurrences/${id}.json?require_grouping=true`
+      );
       return response.data;
     } catch (error) {
-      console.error('Error fetching task submission details:', error);
+      console.error("Error fetching task submission details:", error);
       throw error;
     }
   },
@@ -314,157 +371,179 @@ export const taskService = {
       const queryParams: any = {
         show_all: true,
         page: 1,
-        ...params
+        ...params,
       };
 
       // Handle status filtering
       if (params?.status) {
-        queryParams['q[task_status_eq]'] = params.status;
+        queryParams["q[task_status_eq]"] = params.status;
         delete queryParams.status; // Remove the status key to avoid duplication
       }
-      queryParams.append('type', status);
+      queryParams.append("type", status);
 
-
-      const response = await apiClient.get<TaskListResponse>('/pms/users/scheduled_tasks.json', {
-        params: queryParams
-      });
-      console.log('Fetched task list:', response.data);
+      const response = await apiClient.get<TaskListResponse>(
+        "/pms/users/scheduled_tasks.json",
+        {
+          params: queryParams,
+        }
+      );
+      console.log("Fetched task list:", response.data);
       return response.data;
     } catch (error) {
-      console.error('Error fetching task list:', error);
+      console.error("Error fetching task list:", error);
       throw error;
     }
   },
 
-  async exportTasks(params?: { status?: string,[key: string]: any; }): Promise<Blob> {
+  async exportTasks(params?: {
+    status?: string;
+    [key: string]: any;
+  }): Promise<Blob> {
     try {
       const queryParams: any = {};
 
       // Handle status filtering
       if (params?.status) {
-        queryParams['task_status_eq'] = params.status;
-        
+        queryParams["task_status_eq"] = params.status;
       }
-      console.log('Params for export:', params);
-      queryParams['type'] =  params.status.toLocaleLowerCase() || 'Open';
-      console.log('Export query params:', queryParams);
+      console.log("Params for export:", params);
+      queryParams["type"] = params.status.toLocaleLowerCase() || "Open";
+      console.log("Export query params:", queryParams);
       if (params) {
         Object.entries(params).forEach(([key, value]) => {
-          if (key === 'status' && value) {
-            queryParams['task_status_eq'] = value;
-          } else if (value !== undefined && value !== null && value !== '') {
+          if (key === "status" && value) {
+            queryParams["task_status_eq"] = value;
+          } else if (value !== undefined && value !== null && value !== "") {
             queryParams[key] = value;
           }
         });
       }
 
-      const response = await apiClient.get('/pms/users/scheduled_tasks.xlsx', {
-        responseType: 'blob',
-        params: queryParams
+      const response = await apiClient.get("/pms/users/scheduled_tasks.xlsx", {
+        responseType: "blob",
+        params: queryParams,
       });
       return response.data;
     } catch (error) {
-      console.error('Error exporting tasks:', error);
+      console.error("Error exporting tasks:", error);
       throw error;
     }
   },
 
-  async downloadTaskExport(params?: { status?: string,[key: string]: any; }): Promise<void> {
+  async downloadTaskExport(params?: {
+    status?: string;
+    [key: string]: any;
+  }): Promise<void> {
     try {
       const blob = await this.exportTasks(params);
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      const statusSuffix = params?.status ? `_${params.status.toLowerCase().replace(/\s+/g, '_')}` : '';
-      a.download = `tasks_export${statusSuffix}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const statusSuffix = params?.status
+        ? `_${params.status.toLowerCase().replace(/\s+/g, "_")}`
+        : "";
+      a.download = `tasks_export${statusSuffix}_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading task export:', error);
+      console.error("Error downloading task export:", error);
       throw error;
     }
   },
 
-  rescheduleTask: async (id: string, data: {
-    start_date: string;
-    user_ids: number[];
-    email: boolean;
-    sms: boolean;
-  }) => {
+  rescheduleTask: async (
+    id: string,
+    data: {
+      start_date: string;
+      user_ids: number[];
+      email: boolean;
+      sms: boolean;
+    }
+  ) => {
     try {
       return await apiClient.put(
         `/pms/asset_task_occurrences/${id}/update_task_date.json`,
         data
       );
     } catch (error) {
-      console.error('Error rescheduling task:', error);
-      throw new Error('Failed to reschedule task');
+      console.error("Error rescheduling task:", error);
+      throw new Error("Failed to reschedule task");
     }
   },
 
   getJobSheet: async (id: string) => {
     try {
-      const response = await apiClient.get(`/pms/asset_task_occurrences/${id}/job_sheet.json`);
+      const response = await apiClient.get(
+        `/pms/asset_task_occurrences/${id}/job_sheet.json`
+      );
       return response.data;
     } catch (error) {
-      console.error('Error fetching job sheet:', error);
-      throw new Error('Failed to fetch job sheet');
+      console.error("Error fetching job sheet:", error);
+      throw new Error("Failed to fetch job sheet");
     }
   },
 
-updateTaskComments: async (id: string, comments: string) => {
-  try {
-    const response = await apiClient.patch(`/pms/asset_task_occurrences/${id}.json`, {
-      pms_asset_task_occurrence: {
-        task_comments: comments
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating task comments:', error);
-    throw new Error('Failed to update task comments');
-  }
-},
+  updateTaskComments: async (id: string, comments: string) => {
+    try {
+      const response = await apiClient.patch(
+        `/pms/asset_task_occurrences/${id}.json`,
+        {
+          pms_asset_task_occurrence: {
+            task_comments: comments,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating task comments:", error);
+      throw new Error("Failed to update task comments");
+    }
+  },
 
-// Submit task with checklist responses
-submitTaskResponse: async (submissionData: {
-  response_of_id: string;
-  response_of: string;
-  occurrence_of: string;
-  occurrence_of_id: string;
-  offlinemobile: string;
-  first_name: string;
-  asset_quest_response: {
+  // Submit task with checklist responses
+  submitTaskResponse: async (submissionData: {
+    response_of_id: string;
+    response_of: string;
     occurrence_of: string;
     occurrence_of_id: string;
-    response_of: string;
-    response_of_id: string;
+    offlinemobile: string;
     first_name: string;
-  };
-  data: Array<{
-    qname: string;
-    comment: string;
-    value: string[];
-    rating: string;
+    asset_quest_response: {
+      occurrence_of: string;
+      occurrence_of_id: string;
+      response_of: string;
+      response_of_id: string;
+      first_name: string;
+    };
+    data: Array<{
+      qname: string;
+      comment: string;
+      value: string[];
+      rating: string;
+      attachments: string[];
+    }>;
     attachments: string[];
-  }>;
-  attachments: string[];
-  bef_sub_attachment: string;
-  aft_sub_attachment: string;
-  mobile_submit: string;
-  token: string;
-}) => {
-  try {
-    // The payload is already formatted correctly by TaskSubmissionPage
-    console.log('Submitting task response:', submissionData);
+    bef_sub_attachment: string;
+    aft_sub_attachment: string;
+    mobile_submit: string;
+    token: string;
+  }) => {
+    try {
+      // The payload is already formatted correctly by TaskSubmissionPage
+      console.log("Submitting task response:", submissionData);
 
-    const response = await apiClient.post('/pms/asset_quest_responses.json', submissionData);
-    return response.data;
-  } catch (error) {
-    console.error('Error submitting task response:', error);
-    throw new Error('Failed to submit task response');
-  }
-},
+      const response = await apiClient.post(
+        "/pms/asset_quest_responses.json",
+        submissionData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error submitting task response:", error);
+      throw new Error("Failed to submit task response");
+    }
+  },
 };

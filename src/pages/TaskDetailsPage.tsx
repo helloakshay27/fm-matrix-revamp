@@ -167,23 +167,39 @@ export const TaskDetailsPage = () => {
               room: 'NA'
             }
           },
-          // Map activity/checklist responses
+          // Map activity/checklist responses - if responses exist, map them; otherwise map questions
           activity: {
-            resp: rawDetails.checklist_responses?.map((item: any) => ({
-              label: item.label || item.activity,
-              hint: item.hint || item.help_text || '',
-              userData: item.userData || [item.input_value],
-              comment: item.comment || item.comments || '',
-              weightage: item.weightage || '',
-              rating: item.rating || '',
-              values: item.values || [],
-              attachments: item.attachments || [],
-              name: item.name,
-              className: item.className,
-              type: item.type,
-              required: item.required,
-              is_reading: item.is_reading
-            })) || []
+            resp: rawDetails.checklist_responses
+              ? rawDetails.checklist_responses.map((item: any) => ({
+                  label: item.label || item.activity,
+                  hint: item.hint || item.help_text || '',
+                  userData: item.userData || [item.input_value],
+                  comment: item.comment || item.comments || '',
+                  weightage: item.weightage || '',
+                  rating: item.rating || '',
+                  values: item.values || [],
+                  attachments: item.attachments || [],
+                  name: item.name,
+                  className: item.className,
+                  type: item.type,
+                  required: item.required,
+                  is_reading: item.is_reading
+                }))
+              : (rawDetails.checklist_questions || []).map((item: any) => ({
+                  label: item.label || item.activity,
+                  hint: item.hint || item.help_text || '',
+                  userData: ['-'], // Show '-' for questions without responses
+                  comment: '-',
+                  weightage: item.weightage || '',
+                  rating: '',
+                  values: item.values || [],
+                  attachments: [],
+                  name: item.name,
+                  className: item.className,
+                  type: item.type,
+                  required: item.required,
+                  is_reading: item.is_reading
+                }))
           },
           // Map before/after attachments
           bef_sub_attachment: rawDetails.bef_sub_attachment,
@@ -550,7 +566,13 @@ export const TaskDetailsPage = () => {
   // Get activity data dynamically
   const getActivityData = () => {
     const activityResp = (taskDetails?.activity as any)?.resp;
-    if (!activityResp) return [];
+    console.log('🎯 getActivityData - activityResp:', activityResp);
+    console.log('🎯 getActivityData - activityResp length:', activityResp?.length);
+    
+    if (!activityResp || activityResp.length === 0) {
+      console.log('⚠️ No activity responses found');
+      return [];
+    }
     
     return activityResp.map((item: any, index: number) => ({
       id: item.name || `activity_${index}`,
@@ -1266,7 +1288,7 @@ export const TaskDetailsPage = () => {
               </div>
             </div>
             <div className="figma-card-content">
-              {(taskDetails?.checklist_questions?.length > 0) ? (
+              {(taskDetails?.checklist_questions?.length > 0 || taskDetails?.activity?.resp?.length > 0) ? (
                 <div className="space-y-4">
                   {/* Main Checklist Section */}
                   <div>
