@@ -359,6 +359,56 @@ export const fetchChannelTaskDetails = createAsyncThunk(
     }
 );
 
+export const updateChatTask = createAsyncThunk(
+    "updateChatTask",
+    async (
+        { baseUrl, token, id, data }: { baseUrl: string; token: string; id: string; data: any },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.put(
+                `https://${baseUrl}/task_managements/${id}.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error: any) {
+            const message =
+                error.response?.data?.error ||
+                error.message ||
+                "Failed to update chat task";
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const deleteChatTask = createAsyncThunk(
+    "deleteChatTask",
+    async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.delete(
+                `https://${baseUrl}/task_managements/${id}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error: any) {
+            const message =
+                error.response?.data?.error ||
+                error.message ||
+                "Failed to delete chat task";
+            return rejectWithValue(message);
+        }
+    }
+);
+
 const fetchConversationSlice = createApiSlice(
     "fetchConversation",
     fetchConversation
@@ -385,6 +435,8 @@ const fetchGroupConversationSlice = createApiSlice(
 const createChatTaskSlice = createApiSlice("createChatTask", createChatTask);
 const removeUserFromGroupSlice = createApiSlice("removeUserFromGroup", removeUserFromGroup);
 const fetchChannelTaskDetailsSlice = createApiSlice("fetchChannelTaskDetails", fetchChannelTaskDetails);
+const updateChatTaskSlice = createApiSlice("updateChatTask", updateChatTask);
+const deleteChatTaskSlice = createApiSlice("deleteChatTask", deleteChatTask);
 
 
 
@@ -401,3 +453,5 @@ export const fetchGroupConversationReducer =
 export const createChatTaskReducer = createChatTaskSlice.reducer;
 export const removeUserFromGroupReducer = removeUserFromGroupSlice.reducer;
 export const fetchChannelTaskDetailsReducer = fetchChannelTaskDetailsSlice.reducer;
+export const updateChatTaskReducer = updateChatTaskSlice.reducer;
+export const deleteChatTaskReducer = deleteChatTaskSlice.reducer;
