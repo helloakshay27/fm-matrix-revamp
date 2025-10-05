@@ -333,6 +333,31 @@ export const removeUserFromGroup = createAsyncThunk(
     }
 );
 
+export const fetchChannelTaskDetails = createAsyncThunk(
+    "fetchChannelTaskDetails",
+    async (
+        { baseUrl, token, id }: { baseUrl: string; token: string; id: string },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/task_managements/${id}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error: any) {
+            const message =
+                error.response?.data?.error ||
+                error.message ||
+                "Failed to get channel task details";
+            return rejectWithValue(message);
+        }
+    }
+);
 
 const fetchConversationSlice = createApiSlice(
     "fetchConversation",
@@ -359,6 +384,9 @@ const fetchGroupConversationSlice = createApiSlice(
 );
 const createChatTaskSlice = createApiSlice("createChatTask", createChatTask);
 const removeUserFromGroupSlice = createApiSlice("removeUserFromGroup", removeUserFromGroup);
+const fetchChannelTaskDetailsSlice = createApiSlice("fetchChannelTaskDetails", fetchChannelTaskDetails);
+
+
 
 export const fetchConversationReducer = fetchConversationSlice.reducer;
 export const createConversationReducer = createConversationSlice.reducer;
@@ -372,3 +400,4 @@ export const fetchGroupConversationReducer =
     fetchGroupConversationSlice.reducer;
 export const createChatTaskReducer = createChatTaskSlice.reducer;
 export const removeUserFromGroupReducer = removeUserFromGroupSlice.reducer;
+export const fetchChannelTaskDetailsReducer = fetchChannelTaskDetailsSlice.reducer;
