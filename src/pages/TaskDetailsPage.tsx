@@ -86,6 +86,15 @@ export const TaskDetailsPage = () => {
   });
 
   // Menu props for MUI Select
+  // Helper function to extract location parts from asset_path
+  const extractLocationPart = (assetPath: string, part: string): string => {
+    if (!assetPath) return 'NA';
+    const regex = new RegExp(`${part}\\s*-\\s*([^/]+)`, 'i');
+    const match = assetPath.match(regex);
+    const value = match ? match[1].trim() : 'NA';
+    return value === 'NA' ? 'NA' : value;
+  };
+
   const selectMenuProps = {
     PaperProps: {
       style: {
@@ -116,15 +125,97 @@ export const TaskDetailsPage = () => {
       try {
         setLoading(true);
         const response = await taskService.getTaskDetails(id);
+        
         // Map the API response to match our component structure
-        const mappedDetails = (response as any).task_occurrence ? (response as any).task_occurrence : response;
+        const rawDetails = (response as any).task_occurrence ? (response as any).task_occurrence : response;
+        
+        // Enhanced mapping to handle the new API structure
+        const mappedDetails = {
+          ...rawDetails,
+          // Map task details structure
+          task_details: {
+            id: rawDetails.id,
+            task_name: rawDetails.checklist,
+            asset_service_code: rawDetails.asset_code,
+            created_by: rawDetails.first_name || rawDetails.assigned_to_name,
+            scheduled_on: rawDetails.start_date,
+            associated_with: rawDetails.asset,
+            asset_service_name: rawDetails.asset,
+            task_duration: rawDetails.grace_time,
+            supplier: rawDetails.company,
+            backup_assigned_user: rawDetails.backup_assigned_user,
+            assigned_to: rawDetails.assigned_to_name,
+            created_on: rawDetails.created_at,
+            start_time: rawDetails.task_start_time,
+            completed_on: rawDetails.updated_at,
+            performed_by: rawDetails.performed_by,
+            status: {
+              value: rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || 'unknown',
+              display_name: rawDetails.task_status || 'Unknown'
+            },
+            location: {
+              site: rawDetails.site_name || 'NA',
+              building: extractLocationPart(rawDetails.asset_path, 'Building') || 'NA',
+              wing: extractLocationPart(rawDetails.asset_path, 'Wing') || 'NA',
+              floor: extractLocationPart(rawDetails.asset_path, 'Floor') || 'NA',
+              area: extractLocationPart(rawDetails.asset_path, 'Area') || 'NA',
+              room: extractLocationPart(rawDetails.asset_path, 'Room') || 'NA'
+            }
+          },
+          // Map activity/checklist responses
+          activity: {
+            resp: rawDetails.checklist_responses?.map((item: any) => ({
+              label: item.label || item.activity,
+              hint: item.hint || item.help_text || '',
+              userData: item.userData || [item.input_value],
+              comment: item.comment || item.comments || '',
+              weightage: item.weightage || '',
+              rating: item.rating || '',
+              values: item.values || [],
+              attachments: item.attachments || [],
+              name: item.name,
+              className: item.className,
+              type: item.type,
+              required: item.required,
+              is_reading: item.is_reading
+            })) || []
+          },
+          // Map before/after attachments
+          bef_sub_attachment: rawDetails.bef_sub_attachment,
+          aft_sub_attachment: rawDetails.aft_sub_attachment,
+          // Map checklist questions
+          checklist_questions: rawDetails.checklist_questions || [],
+          // Map actions based on status
+          actions: {
+            can_submit_task: ['open', 'inprogress', 'scheduled', 'workinprogress', 'overdue'].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || ''
+            ),
+            can_reschedule: ['open', 'inprogress', 'scheduled', 'workinprogress'].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || ''
+            ),
+            can_edit: ['open', 'inprogress', 'scheduled', 'workinprogress'].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || ''
+            ),
+            can_view_job_sheet: ['closed', 'completed'].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || ''
+            )
+          },
+          // Keep original fields for reference
+          before_after_enabled: rawDetails.steps === 3 ? 'Yes' : 'No',
+          steps: rawDetails.steps
+        };
+        
         setTaskDetails(mappedDetails);
         
-        // Debug logging for image attachments
+        // Debug logging for image attachments and checklist
         console.log('🖼️ Task Details Image Data:');
         console.log('- Before Image (bef_sub_attachment):', mappedDetails?.bef_sub_attachment || 'null');
         console.log('- After Image (aft_sub_attachment):', mappedDetails?.aft_sub_attachment || 'null');
         console.log('- Before/After Enabled:', mappedDetails?.before_after_enabled || false);
+        console.log('📋 Checklist Responses with Attachments:', mappedDetails?.activity?.resp?.map((r: any) => ({
+          label: r.label,
+          attachments: r.attachments?.length || 0
+        })));
         
         // Fetch ticket data using the task occurrence ID
         if (mappedDetails?.id) {
@@ -148,7 +239,7 @@ export const TaskDetailsPage = () => {
                 priority: ticket.priority,
                 issue_status: ticket.issue_status,
                 department_name: ticket.department_name,
-                assigned_to: ticket.assigned_to,
+                assigned_to: ticket.backup_assigned_user || ticket.assigned_to,
                 created_at: ticket.created_at,
                 updated_at: ticket.updated_at,
                 building_name: ticket.building_name,
@@ -460,15 +551,17 @@ export const TaskDetailsPage = () => {
       comments: item.comment || "-",
       weightage: item.weightage || "-",
       rating: item.rating || "-",
+      attachments: item.attachments || [], // Include attachments array
       values: item.values || []
     }));
   };
 
   // Get assigned user name
   const getAssignedUserName = () => {
-    return taskDetails?.task_details?.assigned_to || 
+    return taskDetails?.task_details?.backup_assigned_user || 
+           taskDetails?.task_details?.assigned_to || 
            taskDetails?.task_details?.created_by || 
-           "User";
+           "-";
   };
 
   // Get before/after image URLs from task details
@@ -522,6 +615,7 @@ export const TaskDetailsPage = () => {
     { key: 'weightage', label: 'Weightage', sortable: true, defaultVisible: true },
     { key: 'rating', label: 'Rating', sortable: true, defaultVisible: true },
     { key: 'score', label: 'Score', sortable: true, defaultVisible: true },
+    { key: 'attachments', label: 'Attachments', sortable: false, defaultVisible: true },
   ];
 
   // Ticket table columns configuration
@@ -557,6 +651,34 @@ export const TaskDetailsPage = () => {
         return <span className="text-xs">{item.rating}</span>;
       case 'score':
         return <span className="text-xs">{item.score}</span>;
+      case 'attachments':
+        // Handle attachments display
+        if (!item.attachments || item.attachments.length === 0) {
+          return <span className="text-xs text-gray-400">-</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {item.attachments.map((attachment: any, idx: number) => {
+              const attachmentUrl = typeof attachment === 'string' ? attachment : attachment.url || attachment.file_url;
+              const attachmentName = typeof attachment === 'string' 
+                ? `Attachment ${idx + 1}` 
+                : attachment.name || attachment.filename || `Attachment ${idx + 1}`;
+              
+              return (
+                <a
+                  key={idx}
+                  href={attachmentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
+                  title={attachmentName}
+                >
+                 <img src={attachmentUrl} alt={attachmentName} className="w-12 h-12" />
+                </a>
+              );
+            })}
+          </div>
+        );
       default:
         return item[columnKey] || '-';
     }
@@ -975,7 +1097,7 @@ export const TaskDetailsPage = () => {
                   <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Assigned To</span>
                   <span className="task-info-separator-enhanced">:</span>
                   <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
-                    {taskDetails?.task_details?.assigned_to || 'N/A'}
+                    {taskDetails?.task_details?.backup_assigned_user || taskDetails?.task_details?.assigned_to || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
@@ -1120,7 +1242,7 @@ export const TaskDetailsPage = () => {
               </div>
             </div>
             <div className="figma-card-content">
-              {(taskDetails?.activity?.resp?.length > 0) ? (
+              {(taskDetails?.checklist_questions?.length > 0) ? (
                 <div className="space-y-4">
                   {/* Main Checklist Section */}
                   <div>
@@ -1131,7 +1253,6 @@ export const TaskDetailsPage = () => {
                       data={getActivityData()}
                       columns={activityColumns}
                       renderCell={renderActivityCell}
-                      storageKey="task-activity-table"
                       emptyMessage="No activities found for this task."
                       hideTableExport={true}
                       hideTableSearch={true}

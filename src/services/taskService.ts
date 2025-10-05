@@ -17,6 +17,9 @@ export interface TaskOccurrence {
   grouped_questions?: any[]; // Grouped questions from API
   bef_sub_attachment?: string | null; // Before submission attachment
   aft_sub_attachment?: string | null; // After submission attachment
+  before_after_enabled?: string; // Before/After photo enabled status
+  backup_assigned_user?: string; // Backup assigned user name
+  checklist_responses?: any[]; // Checklist responses from API
   task_details: {
     id: number;
     task_name: string;
@@ -29,6 +32,7 @@ export interface TaskOccurrence {
     task_duration: string;
     created_on: string;
     created_by: string;
+    backup_assigned_user?: string; // Add backup assigned user here too
     location: {
       site: string;
       building: string;
@@ -182,8 +186,113 @@ export interface TaskListResponse {
 export const taskService = {
   async getTaskDetails(id: string): Promise<TaskOccurrence> {
     try {
-      const response = await apiClient.get<TaskDetailsResponse>(`/pms/asset_task_occurrences/${id}/asset_task_details.json`);
-      return response.data.task_occurrence;
+      // Use the direct API endpoint that returns the flat structure
+      const response = await apiClient.get(`/pms/asset_task_occurrences/${id}.json`);
+      const data = response.data;
+      
+      // Map the flat API response to our TaskOccurrence interface
+      const mappedData: TaskOccurrence = {
+        id: data.id,
+        task_status: data.task_status,
+        start_date: data.start_date,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        steps: data.steps,
+        checklist: data.checklist,
+        asset: data.asset,
+        asset_id: data.asset_id,
+        asset_code: data.asset_code,
+        assigned_to_name: data.assigned_to_name,
+        backup_assigned_user: data.backup_assigned_user || data.performed_by,
+        asset_path: data.asset_path,
+        checklist_questions: data.checklist_questions,
+        checklist_responses: data.checklist_responses,
+        bef_sub_attachment: data.bef_sub_attachment,
+        aft_sub_attachment: data.aft_sub_attachment,
+        before_after_enabled: data.steps === 3 ? "Yes" : "No",
+        task_details: {
+          id: data.id,
+          task_name: data.checklist || "N/A",
+          associated_with: "Asset",
+          asset_service_name: data.asset || "N/A",
+          asset_service_code: data.asset_code || "N/A",
+          scheduled_on: data.start_date || "N/A",
+          completed_on: data.task_end_time || null,
+          assigned_to: data.assigned_to_name || "N/A",
+          task_duration: data.time_log || "N/A",
+          created_on: data.created_at || "N/A",
+          created_by: data.assigned_to_name?.split(',')[0]?.trim() || "N/A",
+          backup_assigned_user: data.backup_assigned_user || data.performed_by,
+          location: (() => {
+            // Parse asset_path: "Site - Pune / Building - World Trade Centre T3 / Wing - North Side / Floor - Basement 2 / Area - Common Area / Room - UPS Room "
+            const pathParts = data.asset_path?.split('/').map((p: string) => p.trim()) || [];
+            
+            return {
+              site: pathParts.find((p: string) => p.startsWith('Site'))?.replace('Site - ', '') || "NA",
+              building: pathParts.find((p: string) => p.startsWith('Building'))?.replace('Building - ', '') || "NA",
+              wing: pathParts.find((p: string) => p.startsWith('Wing'))?.replace('Wing - ', '') || "NA",
+              floor: pathParts.find((p: string) => p.startsWith('Floor'))?.replace('Floor - ', '') || "NA",
+              area: pathParts.find((p: string) => p.startsWith('Area'))?.replace('Area - ', '') || "NA",
+              room: pathParts.find((p: string) => p.startsWith('Room'))?.replace('Room - ', '') || "NA",
+              full_location: data.asset_path || "N/A"
+            };
+          })(),
+          status: {
+            value: data.task_status || "Unknown",
+            label_class: data.task_status?.toLowerCase() || "unknown",
+            display_name: data.task_status || "Unknown"
+          },
+          performed_by: data.performed_by || null,
+          supplier: "N/A",
+          start_time: data.task_start_time || null
+        },
+        activity: {
+          has_response: data.checklist_responses?.length > 0,
+          total_score: null,
+          checklist_groups: [],
+          ungrouped_content: data.checklist_questions || [],
+          resp: data.checklist_responses?.map((item: any) => ({
+            label: item.label,
+            name: item.name,
+            className: item.className,
+            group_id: item.group_id || "",
+            sub_group_id: item.sub_group_id || "",
+            type: item.type,
+            subtype: item.subtype,
+            required: item.required,
+            is_reading: item.is_reading,
+            hint: item.hint || "",
+            values: item.values || [],
+            weightage: item.weightage || "",
+            rating_enabled: item.rating_enabled || "false",
+            question_hint_image_ids: item.question_hint_image_ids || [],
+            userData: item.userData || [],
+            comment: item.comment || "",
+            rating: item.rating || "",
+            attachments: item.attachments || [] // Map attachments
+          })) || []
+        },
+        attachments: {
+          main_attachment: data.response_attachments,
+          blob_store_files: []
+        },
+        actions: {
+          can_reschedule: data.task_status !== "Closed" && data.task_status !== "Completed",
+          can_submit_task: data.task_status !== "Closed" && data.task_status !== "Completed",
+          can_view_job_sheet: data.task_status === "Closed" || data.task_status === "Completed",
+          can_edit: data.task_status !== "Closed" && data.task_status !== "Completed",
+          can_rate: false
+        },
+        action_urls: {
+          question_form_url: `/pms/asset_task_occurrences/${data.id}.json`,
+          job_sheet_url: `/pms/asset_task_occurrences/${data.id}/job_sheet.json`,
+          update_task_date_url: `/pms/asset_task_occurrences/${data.id}/update_task_date.json`
+        },
+        comments: []
+      };
+      
+      console.log('📋 Mapped Task Details:', mappedData);
+      return mappedData;
     } catch (error) {
       console.error('Error fetching task details:', error);
       throw error;
