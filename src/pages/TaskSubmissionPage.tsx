@@ -205,6 +205,65 @@ export const TaskSubmissionPage: React.FC = () => {
 
   const dynamicChecklist = getChecklistFromTaskDetails();
 
+  // Group checklist by group_id and sub_group_id for section-wise display
+  const getGroupedChecklistData = () => {
+    const checklistQuestions = taskDetails?.checklist_questions;
+    
+    if (!checklistQuestions || !Array.isArray(checklistQuestions)) {
+      return [];
+    }
+
+    // Group by group_id and sub_group_id
+    const grouped: { [key: string]: any[] } = {};
+    
+    checklistQuestions.forEach((item: any) => {
+      const groupId = item.group_id || 'ungrouped';
+      const subGroupId = item.sub_group_id || 'ungrouped';
+      const key = `${groupId}_${subGroupId}`;
+      
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      
+      // Map to ChecklistItem format
+      const itemType =
+        item.type === "radio-group"
+          ? ("radio" as const)
+          : item.type === "checkbox-group"
+          ? ("checkbox" as const)
+          : item.type === "select"
+          ? ("radio" as const)
+          : item.type === "number"
+          ? ("text" as const)
+          : ("text" as const);
+
+      grouped[key].push({
+        id: item.name,
+        question: item.label || item.hint || '',
+        type: itemType,
+        required: item.required === "true" || item.required === true,
+        options: item.values?.map((val: any) => {
+          if (typeof val === "string") return val;
+          return val.label || val.value || val.name || String(val);
+        }) || [],
+        group_id: groupId,
+        sub_group_id: subGroupId,
+        group_name: item.group_name || 'Ungrouped',
+        sub_group_name: item.sub_group_name || ''
+      });
+    });
+
+    // Convert to array of sections
+    return Object.keys(grouped).map(key => ({
+      sectionKey: key,
+      group_name: grouped[key][0]?.group_name || 'Ungrouped',
+      sub_group_name: grouped[key][0]?.sub_group_name || '',
+      questions: grouped[key]
+    }));
+  };
+
+  const groupedChecklist = getGroupedChecklistData();
+
   // Calculate dynamic stats for success modal
   const calculateSubmissionStats = () => {
     const totalQuestions = dynamicChecklist.length;
@@ -836,9 +895,32 @@ export const TaskSubmissionPage: React.FC = () => {
                         No checklist items available for this task.
                       </Typography>
                     </div>
-                  ) : (
-                    <div className="space-y-8">
-                      {dynamicChecklist.map((item, index) => (
+                  ) : groupedChecklist.length > 0 ? (
+                    <div className="space-y-6">
+                      {groupedChecklist.map((section, sectionIndex) => (
+                        <div key={section.sectionKey} className="space-y-4">
+                          {/* Section Header */}
+                          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="text-base font-semibold text-gray-800">
+                                  {section.group_name}
+                                </h4>
+                                {section.sub_group_name && (
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {section.sub_group_name}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                                Section {sectionIndex + 1}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Section Questions */}
+                          <div className="space-y-8">
+                            {section.questions.map((item: any, index: number) => (
                         <div key={item.id} className="space-y-4">
                           <Typography
                             variant="body2"
@@ -1028,6 +1110,15 @@ export const TaskSubmissionPage: React.FC = () => {
                             </Button>
                           </div>
                         </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-8">
+                      {dynamicChecklist.map((item, index) => (
+                        <div key={item.id}>Question {index + 1}</div>
                       ))}
                     </div>
                   )}
@@ -1069,6 +1160,102 @@ export const TaskSubmissionPage: React.FC = () => {
                       <Typography variant="body1" className="text-gray-600">
                         No checklist items available for this task.
                       </Typography>
+                    </div>
+                  ) : groupedChecklist.length > 0 ? (
+                    <div className="space-y-6">
+                      {groupedChecklist.map((section, sectionIndex) => (
+                        <div key={section.sectionKey} className="space-y-3">
+                          {/* Section Header */}
+                          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="text-base font-semibold text-gray-800">
+                                  {section.group_name}
+                                </h4>
+                                {section.sub_group_name && (
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {section.sub_group_name}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                                Section {sectionIndex + 1}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Section Table */}
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                    Help Text
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                    Activities
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                    Input
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                    Comments
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                    Attachment
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-200">
+                                {section.questions.map((item: any) => {
+                                  const answer = formData.checklist[item.id]?.value;
+                                  const comment = formData.checklist[item.id]?.comment;
+                                  const attachment = formData.checklist[item.id]?.attachment;
+
+                                  return (
+                                    <tr key={item.id} className="hover:bg-gray-50">
+                                      <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                        <span className="text-xs">-</span>
+                                      </td>
+                                      <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                        <span className="text-xs">{item.question}</span>
+                                      </td>
+                                      <td className="px-4 py-3 text-xs border-b border-gray-100">
+                                        <span className="text-xs">
+                                          {Array.isArray(answer) 
+                                            ? answer.length > 0 
+                                              ? answer.join(", ") 
+                                              : "-"
+                                            : answer || "-"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                        <span className="text-xs">{comment || "-"}</span>
+                                      </td>
+                                      <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                        {attachment ? (
+                                          <div className="flex items-center gap-2">
+                                            <img
+                                              src={URL.createObjectURL(attachment)}
+                                              alt="Attachment"
+                                              className="w-8 h-8 object-cover rounded border border-gray-200"
+                                            />
+                                            <span className="text-xs text-gray-600 truncate max-w-20">
+                                              {attachment.name}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <span className="text-xs">-</span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -2246,6 +2433,6 @@ export const TaskSubmissionPage: React.FC = () => {
         onViewDetails={handleSuccessClose}
         stats={submissionStats}
       />
-    </div>
+       </div>
   );
 };
