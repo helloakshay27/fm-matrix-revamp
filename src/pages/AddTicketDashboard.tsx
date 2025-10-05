@@ -30,6 +30,11 @@ const PROACTIVE_REACTIVE_OPTIONS = [
   { value: 'Reactive', label: 'Reactive' }
 ];
 
+const SEVERITY_OPTIONS = [
+  { value: 'Major', label: 'Major' },
+  { value: 'Minor', label: 'Minor' }
+];
+
 // Field styles for Material-UI components
 const fieldStyles = {
   height: '45px',
@@ -96,6 +101,7 @@ export const AddTicketDashboard = () => {
     assignedTo: '',
     proactiveReactive: '',
     adminPriority: '',
+    severity: '',
     referenceNumber: '',
     mode: '',
     complaintMode: ''
@@ -359,6 +365,7 @@ export const AddTicketDashboard = () => {
         proactive_reactive: formData.proactiveReactive || '',
         heading: formData.description,
         ...(formData.complaintMode && { complaint_mode_id: parseInt(formData.complaintMode) }),
+        ...(formData.severity && { severity: formData.severity }),
         room_id: 1,
         wing_id: 1,
         area_id: 1,
@@ -626,7 +633,7 @@ export const AddTicketDashboard = () => {
 
 
             {/* Form fields in exact layout as per image */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Row 1: Category Type, Sub Category Type, Assigned To, Mode */}
               <FormControl
                 fullWidth
@@ -725,7 +732,7 @@ export const AddTicketDashboard = () => {
               </FormControl>
 
 
-              {/* Row 2: Proactive/Reactive, Admin Priority, Reference Number */}
+              {/* Row 2: Proactive/Reactive, Admin Priority, Severity, Reference Number */}
 
               <FormControl
                 fullWidth
@@ -763,6 +770,27 @@ export const AddTicketDashboard = () => {
                 >
                   <MenuItem value="">Select Admin Priority</MenuItem>
                   {PRIORITY_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Severity</InputLabel>
+                <MuiSelect
+                  value={formData.severity}
+                  onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
+                  label="Severity"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Severity</MenuItem>
+                  {SEVERITY_OPTIONS.map((option) => (
                     <MenuItem key={option.value} value={option.value}>
                       {option.label}
                     </MenuItem>
