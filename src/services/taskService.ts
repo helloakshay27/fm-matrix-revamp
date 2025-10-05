@@ -17,6 +17,7 @@ export interface TaskOccurrence {
   grouped_questions?: any[]; // Grouped questions from API
   bef_sub_attachment?: string | null; // Before submission attachment
   aft_sub_attachment?: string | null; // After submission attachment
+  before_after_enabled?: string; // Before/After photo enabled status
   task_details: {
     id: number;
     task_name: string;
@@ -186,6 +187,17 @@ export const taskService = {
       return response.data.task_occurrence;
     } catch (error) {
       console.error('Error fetching task details:', error);
+      throw error;
+    }
+  },
+
+  // New API endpoint for task details with direct response mapping
+  async getTaskDetailsAlternate(id: string): Promise<any> {
+    try {
+      const response = await apiClient.get(`/pms/asset_task_occurrences/${id}.json`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching task details (alternate API):', error);
       throw error;
     }
   },
