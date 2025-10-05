@@ -86,6 +86,15 @@ export const TaskDetailsPage = () => {
   });
 
   // Menu props for MUI Select
+  // Helper function to extract location parts from asset_path
+  const extractLocationPart = (assetPath: string, part: string): string => {
+    if (!assetPath) return 'NA';
+    const regex = new RegExp(`${part}\\s*-\\s*([^/]+)`, 'i');
+    const match = assetPath.match(regex);
+    const value = match ? match[1].trim() : 'NA';
+    return value === 'NA' ? 'NA' : value;
+  };
+
   const selectMenuProps = {
     PaperProps: {
       style: {
@@ -115,105 +124,123 @@ export const TaskDetailsPage = () => {
       if (!id) return;
       try {
         setLoading(true);
-        const response = await taskService.getTaskDetailsAlternate(id);
+        const response = await taskService.getTaskDetails(id);
         
-        // Map the new API response to match our component structure
+        // Log the response from taskService to see what we're getting
+        console.log('📡 Raw API Response from taskService:', response);
+        console.log('📍 Location from taskService:', response?.task_details?.location);
+        
+        // Map the API response to match our component structure
+        const rawDetails = (response as any).task_occurrence ? (response as any).task_occurrence : response;
+        
+        // Enhanced mapping to handle the new API structure
         const mappedDetails = {
-          id: response.id,
-          task_status: response.task_status,
-          start_date: response.start_date,
-          created_at: response.created_at,
-          updated_at: response.updated_at,
-          steps: response.steps,
-          checklist: response.checklist,
-          asset: response.asset,
-          asset_id: response.asset_id,
-          asset_code: response.asset_code,
-          assigned_to_name: response.assigned_to_name,
-          asset_path: response.asset_path,
-          bef_sub_attachment: response.bef_sub_attachment,
-          aft_sub_attachment: response.aft_sub_attachment,
-          before_after_enabled: response.steps === 3 ? "Yes" : "No",
-          task_details: {
-            id: response.id,
-            task_name: response.checklist || "N/A",
-            associated_with: "Asset",
-            asset_service_name: response.asset || "N/A",
-            asset_service_code: response.asset_code || "N/A",
-            scheduled_on: response.start_date || "N/A",
-            completed_on: response.task_end_time || null,
-            assigned_to: response.assigned_to_name || "N/A",
-            task_duration: response.time_log || "N/A",
-            created_on: response.created_at || "N/A",
-            created_by: response.assigned_to_name?.split(',')[0]?.trim() || "N/A",
-            location: (() => {
-              // Parse asset_path: "Site - Pune / Building - World Trade Centre T3 / Wing - North Side / Floor - Basement 2 / Area - Common Area / Room - UPS Room "
-              const pathParts = response.asset_path?.split('/').map((p: string) => p.trim()) || [];
-              const parseLocationPart = (part: string) => {
-                const match = part.match(/^(.+?)\s*-\s*(.+)$/);
-                return match ? match[2].trim() : part;
-              };
-              
-              return {
-                site: pathParts.find((p: string) => p.startsWith('Site'))?.replace('Site - ', '') || "NA",
-                building: pathParts.find((p: string) => p.startsWith('Building'))?.replace('Building - ', '') || "NA",
-                wing: pathParts.find((p: string) => p.startsWith('Wing'))?.replace('Wing - ', '') || "NA",
-                floor: pathParts.find((p: string) => p.startsWith('Floor'))?.replace('Floor - ', '') || "NA",
-                area: pathParts.find((p: string) => p.startsWith('Area'))?.replace('Area - ', '') || "NA",
-                room: pathParts.find((p: string) => p.startsWith('Room'))?.replace('Room - ', '') || "NA",
-                full_location: response.asset_path || "N/A"
-              };
-            })(),
-            status: {
-              value: response.task_status || "Unknown",
-              label_class: response.task_status?.toLowerCase() || "unknown",
-              display_name: response.task_status || "Unknown"
+          ...rawDetails,
+          // task_details is already properly mapped by taskService, just ensure it exists
+          task_details: rawDetails.task_details || {
+            id: rawDetails.id,
+            task_name: rawDetails.checklist,
+            asset_service_code: rawDetails.asset_code,
+            created_by: rawDetails.first_name || rawDetails.assigned_to_name,
+            scheduled_on: rawDetails.start_date,
+            associated_with: rawDetails.asset,
+            asset_service_name: rawDetails.asset,
+            task_duration: rawDetails.grace_time,
+            supplier: rawDetails.company,
+            backup_assigned_user: rawDetails.backup_assigned_user,
+            assigned_to: rawDetails.assigned_to_name,
+            created_on: rawDetails.created_at,
+            start_time: rawDetails.task_start_time,
+            completed_on: rawDetails.updated_at,
+            performed_by: rawDetails.performed_by,
+            status: rawDetails.task_details?.status || {
+              value: rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || 'unknown',
+              display_name: rawDetails.task_status || 'Unknown'
             },
-            performed_by: response.performed_by || null,
-            supplier: "N/A",
-            start_time: response.task_start_time || null
+            // Use the location that was already mapped by taskService
+            location: rawDetails.task_details?.location || rawDetails.location || {
+              site: 'NA',
+              building: 'NA',
+              wing: 'NA',
+              floor: 'NA',
+              area: 'NA',
+              room: 'NA'
+            }
           },
+          // Map activity/checklist responses - if responses exist, map them; otherwise map questions
           activity: {
-            has_response: response.checklist_responses?.length > 0,
-            total_score: null,
-            checklist_groups: [],
-            ungrouped_content: response.checklist_questions || [],
-            resp: response.checklist_responses?.map((item: any) => ({
-              ...item,
-              userData: item.userData || [],
-              comment: item.comment || "",
-              rating: item.rating || "",
-              weightage: item.weightage || "",
-              hint: item.hint || "",
-              attachments: item.attachments || [] // Preserve attachments from API
-            })) || []
+            resp: rawDetails.checklist_responses
+              ? rawDetails.checklist_responses.map((item: any) => ({
+                  label: item.label || item.activity,
+                  hint: item.hint || item.help_text || '',
+                  userData: item.userData || [item.input_value],
+                  comment: item.comment || item.comments || '',
+                  weightage: item.weightage || '',
+                  rating: item.rating || '',
+                  values: item.values || [],
+                  attachments: item.attachments || [],
+                  name: item.name,
+                  className: item.className,
+                  type: item.type,
+                  required: item.required,
+                  is_reading: item.is_reading
+                }))
+              : (rawDetails.checklist_questions || []).map((item: any) => ({
+                  label: item.label || item.activity,
+                  hint: item.hint || item.help_text || '',
+                  userData: ['-'], // Show '-' for questions without responses
+                  comment: '-',
+                  weightage: item.weightage || '',
+                  rating: '',
+                  values: item.values || [],
+                  attachments: [],
+                  name: item.name,
+                  className: item.className,
+                  type: item.type,
+                  required: item.required,
+                  is_reading: item.is_reading
+                }))
           },
-          attachments: {
-            main_attachment: null,
-            blob_store_files: response.response_attachments || []
-          },
+          // Map before/after attachments
+          bef_sub_attachment: rawDetails.bef_sub_attachment,
+          aft_sub_attachment: rawDetails.aft_sub_attachment,
+          // Map checklist questions
+          checklist_questions: rawDetails.checklist_questions || [],
+          // Map actions based on status
           actions: {
-            can_reschedule: response.task_status !== 'Closed',
-            can_submit_task: ['Open', 'Scheduled', 'In Progress', 'Overdue'].includes(response.task_status),
-            can_view_job_sheet: response.task_status === 'Closed',
-            can_edit: response.task_status !== 'Closed',
-            can_rate: false
+            can_submit_task: ['open', 'inprogress', 'scheduled', 'workinprogress', 'overdue'].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || ''
+            ),
+            can_reschedule: ['open', 'inprogress', 'scheduled', 'workinprogress'].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || ''
+            ),
+            can_edit: ['open', 'inprogress', 'scheduled', 'workinprogress'].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || ''
+            ),
+            can_view_job_sheet: ['closed', 'completed'].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || ''
+            )
           },
-          action_urls: {
-            question_form_url: "",
-            job_sheet_url: "",
-            update_task_date_url: ""
-          },
-          comments: []
+          // Keep original fields for reference
+          before_after_enabled: rawDetails.steps === 3 ? 'Yes' : 'No',
+          steps: rawDetails.steps
         };
         
         setTaskDetails(mappedDetails);
         
-        // Debug logging for image attachments
+        // Enhanced debug logging
+        console.log('🗺️ Final Mapped Details:', mappedDetails);
+        console.log('📍 Final Location Object:', mappedDetails?.task_details?.location);
+        
+        // Debug logging for image attachments and checklist
         console.log('🖼️ Task Details Image Data:');
         console.log('- Before Image (bef_sub_attachment):', mappedDetails?.bef_sub_attachment || 'null');
         console.log('- After Image (aft_sub_attachment):', mappedDetails?.aft_sub_attachment || 'null');
         console.log('- Before/After Enabled:', mappedDetails?.before_after_enabled || false);
+        console.log('📋 Checklist Responses with Attachments:', mappedDetails?.activity?.resp?.map((r: any) => ({
+          label: r.label,
+          attachments: r.attachments?.length || 0
+        })));
         
         // Fetch ticket data using the task occurrence ID
         if (mappedDetails?.id) {
@@ -237,7 +264,7 @@ export const TaskDetailsPage = () => {
                 priority: ticket.priority,
                 issue_status: ticket.issue_status,
                 department_name: ticket.department_name,
-                assigned_to: ticket.assigned_to,
+                assigned_to: ticket.backup_assigned_user || ticket.assigned_to,
                 created_at: ticket.created_at,
                 updated_at: ticket.updated_at,
                 building_name: ticket.building_name,
@@ -539,7 +566,13 @@ export const TaskDetailsPage = () => {
   // Get activity data dynamically
   const getActivityData = () => {
     const activityResp = (taskDetails?.activity as any)?.resp;
-    if (!activityResp) return [];
+    console.log('🎯 getActivityData - activityResp:', activityResp);
+    console.log('🎯 getActivityData - activityResp length:', activityResp?.length);
+    
+    if (!activityResp || activityResp.length === 0) {
+      console.log('⚠️ No activity responses found');
+      return [];
+    }
     
     const mappedData = activityResp.map((item: any, index: number) => ({
       id: item.name || `activity_${index}`,
@@ -549,7 +582,7 @@ export const TaskDetailsPage = () => {
       comments: item.comment || "-",
       weightage: item.weightage || "-",
       rating: item.rating || "-",
-      attachments: item.attachments || [], // Map attachments from checklist_responses
+      attachments: item.attachments || [], // Include attachments array
       values: item.values || []
     }));
     
@@ -562,9 +595,10 @@ export const TaskDetailsPage = () => {
 
   // Get assigned user name
   const getAssignedUserName = () => {
-    return taskDetails?.task_details?.assigned_to || 
+    return taskDetails?.task_details?.backup_assigned_user || 
+           taskDetails?.task_details?.assigned_to || 
            taskDetails?.task_details?.created_by || 
-           "User";
+           "-";
   };
 
   // Get before/after image URLs from task details
@@ -619,6 +653,7 @@ export const TaskDetailsPage = () => {
     { key: 'rating', label: 'Rating', sortable: true, defaultVisible: true },
     { key: 'attachments', label: 'Attachments', sortable: false, defaultVisible: true },
     { key: 'score', label: 'Score', sortable: true, defaultVisible: true },
+    { key: 'attachments', label: 'Attachments', sortable: false, defaultVisible: true },
   ];
 
   // Ticket table columns configuration
@@ -674,6 +709,34 @@ export const TaskDetailsPage = () => {
         );
       case 'score':
         return <span className="text-xs">{item.score}</span>;
+      case 'attachments':
+        // Handle attachments display
+        if (!item.attachments || item.attachments.length === 0) {
+          return <span className="text-xs text-gray-400">-</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {item.attachments.map((attachment: any, idx: number) => {
+              const attachmentUrl = typeof attachment === 'string' ? attachment : attachment.url || attachment.file_url;
+              const attachmentName = typeof attachment === 'string' 
+                ? `Attachment ${idx + 1}` 
+                : attachment.name || attachment.filename || `Attachment ${idx + 1}`;
+              
+              return (
+                <a
+                  key={idx}
+                  href={attachmentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
+                  title={attachmentName}
+                >
+                 <img src={attachmentUrl} alt={attachmentName} className="w-12 h-12" />
+                </a>
+              );
+            })}
+          </div>
+        );
       default:
         return item[columnKey] || '-';
     }
@@ -858,7 +921,7 @@ export const TaskDetailsPage = () => {
                 const status = taskDetails?.task_details?.status?.value?.toLowerCase();
                 
                 // If status is open, in progress, scheduled, or work in progress - show Task Reschedule and Submit Task
-                if (['open', 'in progress', 'scheduled', 'work in progress', 'inprogress', 'workinprogress'].includes(status)) {
+                if (['open', 'in progress',  'work in progress', 'inprogress', 'workinprogress'].includes(status)) {
                   return (
                     <>
                       {(taskDetails?.actions?.can_reschedule || taskDetails?.actions?.can_edit) && (
@@ -877,6 +940,21 @@ export const TaskDetailsPage = () => {
                           Submit Task
                         </Button>
                       )}
+                    </>
+                  );
+                }
+                else if (['scheduled'].includes(status)) {
+                  return (
+                    <>
+                      {(taskDetails?.actions?.can_reschedule || taskDetails?.actions?.can_edit) && (
+                        <Button
+                          onClick={handleTaskReschedule}
+                          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        >
+                          Task Reschedule
+                        </Button>
+                      )}
+                  
                     </>
                   );
                 }
@@ -1092,7 +1170,7 @@ export const TaskDetailsPage = () => {
                   <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Assigned To</span>
                   <span className="task-info-separator-enhanced">:</span>
                   <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
-                    {taskDetails?.task_details?.assigned_to || 'N/A'}
+                    {taskDetails?.task_details?.backup_assigned_user || taskDetails?.task_details?.assigned_to || 'N/A'}
                   </span>
                 </div>
                 <div className="task-info-row">
@@ -1173,7 +1251,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Site</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.site !== "NA" && taskDetails?.task_details?.location?.site ? taskDetails.task_details.location.site : '-'}
+                      {taskDetails?.task_details?.location?.site || '-'}
                     </div>
                   </div>
 
@@ -1182,7 +1260,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Building</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.building !== "NA" && taskDetails?.task_details?.location?.building ? taskDetails.task_details.location.building : '-'}
+                      {taskDetails?.task_details?.location?.building || '-'}
                     </div>
                   </div>
 
@@ -1191,7 +1269,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Wing</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.wing !== "NA" && taskDetails?.task_details?.location?.wing ? taskDetails.task_details.location.wing : '-'}
+                      {taskDetails?.task_details?.location?.wing || '-'}
                     </div>
                   </div>
 
@@ -1200,7 +1278,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Floor</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.floor !== "NA" && taskDetails?.task_details?.location?.floor ? taskDetails.task_details.location.floor : '-'}
+                      {taskDetails?.task_details?.location?.floor || '-'}
                     </div>
                   </div>
 
@@ -1209,7 +1287,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Area</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.area !== "NA" && taskDetails?.task_details?.location?.area ? taskDetails.task_details.location.area : '-'}
+                      {taskDetails?.task_details?.location?.area || '-'}
                     </div>
                   </div>
 
@@ -1218,7 +1296,7 @@ export const TaskDetailsPage = () => {
                     <div className="text-sm font-medium text-gray-600 mb-3">Room</div>
                     <div className="location-step-dot mb-3"></div>
                     <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.room !== "NA" && taskDetails?.task_details?.location?.room ? taskDetails.task_details.location.room : '-'}
+                      {taskDetails?.task_details?.location?.room || '-'}
                     </div>
                   </div>
                 </div>
@@ -1237,7 +1315,7 @@ export const TaskDetailsPage = () => {
               </div>
             </div>
             <div className="figma-card-content">
-              {(taskDetails?.activity?.resp?.length > 0) ? (
+              {(taskDetails?.checklist_questions?.length > 0 || taskDetails?.activity?.resp?.length > 0) ? (
                 <div className="space-y-4">
                   {/* Main Checklist Section */}
                   <div>

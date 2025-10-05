@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ClipboardPlus, FileText, X, Reply, Forward, Search, Users, MessageCircle } from "lucide-react";
+import { ClipboardPlus, FileText, X, Reply, Forward, Search, Users, MessageCircle, CornerDownRight } from "lucide-react";
 import CreateChatTask from "./CreateChatTask";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -135,7 +135,6 @@ const Chats = ({ messages, onReply }) => {
                     payload.append("message[project_space_id]", target.data.id);
                 }
 
-                // Forward attachments URLs if any
                 if (messageToForward.attachments && messageToForward.attachments.length > 0) {
                     messageToForward.attachments.forEach((attachment) => {
                         if (attachment.url) {
@@ -159,7 +158,6 @@ const Chats = ({ messages, onReply }) => {
         }
     };
 
-    // Find parent message by parent_id
     const findParentMessage = (parentId) => {
         return messages.find(msg => msg.id === parentId);
     };
@@ -410,6 +408,12 @@ const Chats = ({ messages, onReply }) => {
                                     <div
                                         className={`rounded-2xl px-4 py-2 text-sm shadow max-w-xs bg-white`}
                                     >
+                                        {message.is_forwarded && (
+                                            <div className="flex items-center gap-1 text-gray-500 text-xs mb-1 italic">
+                                                <CornerDownRight className="w-3 h-3" />
+                                                <span>Forwarded</span>
+                                            </div>
+                                        )}
                                         {parentMessage && renderReplyPreview(parentMessage, isMe)}
                                         {renderAttachments(message.attachments)}
                                         {message.body && (

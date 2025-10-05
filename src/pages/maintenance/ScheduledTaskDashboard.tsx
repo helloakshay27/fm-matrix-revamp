@@ -150,6 +150,7 @@ interface ApiTaskOccurrence {
   start_date: string;
   assigned_to_id: number[];
   assigned_to_name: string;
+  backup_assigned_user: string | null;
   grace_time: string;
   company_id: number;
   company: string;
@@ -303,7 +304,7 @@ export const ScheduledTaskDashboard = () => {
       checklist: task.checklist,
       type: task.schedule_type,
       schedule: task.start_date,
-      assignTo: task.assigned_to_name,
+      assignTo: task.backup_assigned_user || task.assigned_to_name,
       status: task.task_status,
       scheduleFor: task.scheduled_for,
       assetsServices: task.asset,
