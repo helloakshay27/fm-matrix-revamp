@@ -863,7 +863,7 @@ export const TaskDetailsPage = () => {
                 const status = taskDetails?.task_details?.status?.value?.toLowerCase();
                 
                 // If status is open, in progress, scheduled, or work in progress - show Task Reschedule and Submit Task
-                if (['open', 'in progress', 'scheduled', 'work in progress', 'inprogress', 'workinprogress'].includes(status)) {
+                if (['open', 'in progress',  'work in progress', 'inprogress', 'workinprogress'].includes(status)) {
                   return (
                     <>
                       {(taskDetails?.actions?.can_reschedule || taskDetails?.actions?.can_edit) && (
@@ -882,6 +882,21 @@ export const TaskDetailsPage = () => {
                           Submit Task
                         </Button>
                       )}
+                    </>
+                  );
+                }
+                else if (['scheduled'].includes(status)) {
+                  return (
+                    <>
+                      {(taskDetails?.actions?.can_reschedule || taskDetails?.actions?.can_edit) && (
+                        <Button
+                          onClick={handleTaskReschedule}
+                          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        >
+                          Task Reschedule
+                        </Button>
+                      )}
+                  
                     </>
                   );
                 }
