@@ -183,7 +183,11 @@ export const TaskDetailsPage = () => {
                   className: item.className,
                   type: item.type,
                   required: item.required,
-                  is_reading: item.is_reading
+                  is_reading: item.is_reading,
+                  group_id: item.group_id || '',
+                  sub_group_id: item.sub_group_id || '',
+                  group_name: item.group_name || '',
+                  sub_group_name: item.sub_group_name || ''
                 }))
               : (rawDetails.checklist_questions || []).map((item: any) => ({
                   label: item.label || item.activity,
@@ -198,7 +202,11 @@ export const TaskDetailsPage = () => {
                   className: item.className,
                   type: item.type,
                   required: item.required,
-                  is_reading: item.is_reading
+                  is_reading: item.is_reading,
+                  group_id: item.group_id || '',
+                  sub_group_id: item.sub_group_id || '',
+                  group_name: item.group_name || '',
+                  sub_group_name: item.sub_group_name || ''
                 }))
           },
           // Map before/after attachments
@@ -563,14 +571,60 @@ export const TaskDetailsPage = () => {
     return badges;
   };
 
-  // Get activity data dynamically
-  const getActivityData = () => {
+  // Get activity data grouped by sections
+  const getGroupedActivityData = () => {
     const activityResp = (taskDetails?.activity as any)?.resp;
     console.log('🎯 getActivityData - activityResp:', activityResp);
     console.log('🎯 getActivityData - activityResp length:', activityResp?.length);
     
     if (!activityResp || activityResp.length === 0) {
       console.log('⚠️ No activity responses found');
+      return [];
+    }
+    
+    // Group by group_id and sub_group_id
+    const grouped: { [key: string]: any[] } = {};
+    
+    activityResp.forEach((item: any, index: number) => {
+      const groupId = item.group_id || 'ungrouped';
+      const subGroupId = item.sub_group_id || 'ungrouped';
+      const key = `${groupId}_${subGroupId}`;
+      
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      
+      grouped[key].push({
+        id: item.name || `activity_${index}`,
+        helpText: item.hint || "-",
+        activities: item.label || "-",
+        input: item.userData?.length > 0 ? item.userData : ["-"],
+        comments: item.comment || "-",
+        weightage: item.weightage || "-",
+        rating: item.rating || "-",
+        attachments: item.attachments || [],
+        values: item.values || [],
+        group_name: item.group_name || '',
+        sub_group_name: item.sub_group_name || '',
+        group_id: groupId,
+        sub_group_id: subGroupId
+      });
+    });
+    
+    // Convert to array of sections
+    return Object.keys(grouped).map(key => ({
+      sectionKey: key,
+      group_name: grouped[key][0]?.group_name || 'Ungrouped',
+      sub_group_name: grouped[key][0]?.sub_group_name || '',
+      activities: grouped[key]
+    }));
+  };
+
+  // Get activity data dynamically (flat list for compatibility)
+  const getActivityData = () => {
+    const activityResp = (taskDetails?.activity as any)?.resp;
+    
+    if (!activityResp || activityResp.length === 0) {
       return [];
     }
     
@@ -582,7 +636,7 @@ export const TaskDetailsPage = () => {
       comments: item.comment || "-",
       weightage: item.weightage || "-",
       rating: item.rating || "-",
-      attachments: item.attachments || [], // Include attachments array
+      attachments: item.attachments || [],
       values: item.values || []
     }));
   };
@@ -1289,22 +1343,41 @@ export const TaskDetailsPage = () => {
             </div>
             <div className="figma-card-content">
               {(taskDetails?.checklist_questions?.length > 0 || taskDetails?.activity?.resp?.length > 0) ? (
-                <div className="space-y-4">
-                  {/* Main Checklist Section */}
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-3 bg-gray-100 px-3 py-2 rounded">
-                      {taskDetails?.task_details?.task_name || 'Checklist Items'}
-                    </h4>
-                    <EnhancedTable
-                      data={getActivityData()}
-                      columns={activityColumns}
-                      renderCell={renderActivityCell}
-                      emptyMessage="No activities found for this task."
-                      hideTableExport={true}
-                      hideTableSearch={true}
-                      hideColumnsButton={true}
-                    />
-                  </div>
+                <div className="space-y-6">
+                  {/* Grouped Checklist Sections */}
+                  {getGroupedActivityData().map((section, sectionIndex) => (
+                    <div key={section.sectionKey} className="space-y-3">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-base font-semibold text-gray-800">
+                              {section.group_name}
+                            </h4>
+                            {section.sub_group_name && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {section.sub_group_name}
+                              </p>
+                            )}
+                          </div>
+                          <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                            Section {sectionIndex + 1}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      {/* Section Table */}
+                      <EnhancedTable
+                        data={section.activities}
+                        columns={activityColumns}
+                        renderCell={renderActivityCell}
+                        emptyMessage="No activities found in this section."
+                        hideTableExport={true}
+                        hideTableSearch={true}
+                        hideColumnsButton={true}
+                      />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <p className="text-gray-500 text-center py-8">
