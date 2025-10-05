@@ -523,11 +523,11 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
 
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <Button
-                variant="secondary"
                 onClick={handleBulkReschedule}
-                className="flex-1 h-11"
+                style={{ backgroundColor: '#C72030' }}
+                className="text-white hover:bg-[#C72030]/90 flex-1 h-11"
               >
-                Reschedule
+                Reschedule 
               </Button>
               <Button
                 variant="outline"
@@ -599,16 +599,14 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
               </FormControl>
             </div>
 
-    
-
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <Button
-                variant="secondary"
                 onClick={handleBulkReassign}
-                className="flex-1 h-11"
+                style={{ backgroundColor: '#C72030' }}
+                className="text-white hover:bg-[#C72030]/90 flex-1 h-11"
                 disabled={!reassignData.assignedUserId || loadingUsers}
               >
-                Reassign
+                Reassign 
               </Button>
               <Button
                 variant="outline"

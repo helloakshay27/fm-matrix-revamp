@@ -523,21 +523,21 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
           )} */}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
           <Button
-            variant="secondary"
             onClick={handleApply}
             disabled={isLoading}
-            className="flex-1 h-11"
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex-1 h-11"
           >
-            {isLoading ? "Applying..." : "Apply Filter"}
+            {isLoading ? 'Applying...' : 'Apply Filter'}
           </Button>
           <Button
             variant="outline"
             onClick={handleClear}
             className="flex-1 h-11"
           >
-            Reset
+            Clear All
           </Button>
         </div>
         {/* Action Buttons */}

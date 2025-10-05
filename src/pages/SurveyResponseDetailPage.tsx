@@ -171,6 +171,80 @@ interface SurveyDetailsResponse {
   };
 }
 
+// Customer Satisfaction Score API interfaces
+interface CSATBucket {
+  start: string;
+  end: string;
+  label: string;
+  csat: number | null;
+  change_pct: number;
+  positive_count: number;
+  negative_count: number;
+  positive_pct: number;
+  negative_pct: number;
+  total: number;
+}
+
+// Heat Map API interfaces
+interface HeatMapColumn {
+  date: string;
+  label: string;
+}
+
+interface HeatMapRow {
+  hour: number;
+  label: string;
+}
+
+interface HeatMapResponse {
+  meta: {
+    survey_id: number;
+    question_id: number;
+    timezone: string;
+    start_date: string;
+    end_date: string;
+    column_unit: string;
+  };
+  totals: {
+    responses: number;
+    skipped: number;
+  };
+  columns: HeatMapColumn[];
+  rows: HeatMapRow[];
+  matrix: number[][];
+  scale: {
+    breaks: number[];
+    classes: string[];
+  };
+}
+
+interface CSATResponse {
+  meta: {
+    survey_id: number;
+    question_id: number | null;
+    timezone: string;
+    bucket: string;
+    range: {
+      start: string;
+      end: string;
+    };
+    thresholds: {
+      positive_min: number;
+      negative_max: number;
+    };
+  };
+  summary: {
+    date_range_label: string;
+    responses: number;
+    positive: number;
+    negative: number;
+    neutral: number;
+    csat_avg: number | null;
+    suggested_y_max: number;
+  };
+  buckets: CSATBucket[];
+}
+
 // Chart data interfaces
 interface ChartDataItem {
   name: string;
@@ -294,6 +368,14 @@ export const SurveyResponseDetailPage = () => {
   const [originalSurveyData, setOriginalSurveyData] = useState<SurveyDetail | null>(null);
   const [originalSurveyDetailsData, setOriginalSurveyDetailsData] =
     useState<SurveyDetailsResponse | null>(null);
+
+  // Customer Satisfaction Score data
+  const [csatData, setCsatData] = useState<CSATResponse | null>(null);
+  const [loadingCSAT, setLoadingCSAT] = useState(false);
+
+  // Heat Map data
+  const [heatMapData, setHeatMapData] = useState<HeatMapResponse | null>(null);
+  const [loadingHeatMap, setLoadingHeatMap] = useState(false);
 
   // Filter states - separate for each tab
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -505,6 +587,162 @@ export const SurveyResponseDetailPage = () => {
       setLoadingRooms(false);
     }
   }, []);
+
+  // Fetch Customer Satisfaction Score data
+  const fetchCSATData = useCallback(async () => {
+    if (!surveyId) return;
+    
+    try {
+      setLoadingCSAT(true);
+      const baseUrl = getFullUrl('/pms/admin/snag_checklists/customer_satisfaction_score');
+      const url = new URL(baseUrl);
+      url.searchParams.append('survey_id', surveyId);
+      
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('access_token', API_CONFIG.TOKEN);
+      }
+
+      console.log('Fetching CSAT data from:', url.toString());
+      
+      const response = await fetch(url.toString(), { method: 'GET' });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch CSAT data: ${response.status} ${response.statusText}`);
+      }
+      
+      const data: CSATResponse = await response.json();
+      console.log('CSAT data received:', data);
+      setCsatData(data);
+    } catch (error) {
+      console.error('Error fetching CSAT data:', error);
+      
+      // Use sample data for testing
+      const testData: CSATResponse = {
+        meta: {
+          survey_id: 12581,
+          question_id: null,
+          timezone: "Asia/Kolkata",
+          bucket: "week",
+          range: {
+            start: "2025-10-01",
+            end: "2025-10-05"
+          },
+          thresholds: {
+            positive_min: 4,
+            negative_max: 2
+          }
+        },
+        summary: {
+          date_range_label: "Oct 1, 2025 - Oct 5, 2025",
+          responses: 6,
+          positive: 3,
+          negative: 3,
+          neutral: 0,
+          csat_avg: 2.5,
+          suggested_y_max: 6
+        },
+        buckets: [
+          {
+            start: "2025-09-28",
+            end: "2025-10-04",
+            label: "Oct 4, 2025",
+            csat: 2.5,
+            change_pct: 0,
+            positive_count: 3,
+            negative_count: 3,
+            positive_pct: 50.0,
+            negative_pct: 50.0,
+            total: 6
+          }
+        ]
+      };
+      
+      console.log('Using test CSAT data:', testData);
+      setCsatData(testData);
+    } finally {
+      setLoadingCSAT(false);
+    }
+  }, [surveyId]);
+
+  // Fetch Heat Map data
+  const fetchHeatMapData = useCallback(async () => {
+    if (!surveyId) return;
+    
+    try {
+      setLoadingHeatMap(true);
+      const baseUrl = getFullUrl('/pms/admin/snag_checklists/heat_map');
+      const url = new URL(baseUrl);
+      url.searchParams.append('survey_id', surveyId);
+      
+      // Add date range parameters - use last 5 days as default
+      const toDate = new Date();
+      const fromDate = new Date();
+      fromDate.setDate(toDate.getDate() - 4); // Last 5 days
+      
+      url.searchParams.append('from_date', fromDate.toISOString().split('T')[0]);
+      url.searchParams.append('to_date', toDate.toISOString().split('T')[0]);
+      
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('access_token', API_CONFIG.TOKEN);
+      }
+
+      console.log('Fetching Heat Map data from:', url.toString());
+      
+      const response = await fetch(url.toString(), { method: 'GET' });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch Heat Map data: ${response.status} ${response.statusText}`);
+      }
+      
+      const data: HeatMapResponse = await response.json();
+      console.log('Heat Map data received:', data);
+      setHeatMapData(data);
+    } catch (error) {
+      console.error('Error fetching Heat Map data:', error);
+      
+      // Use sample data for testing
+      const testData: HeatMapResponse = {
+        meta: {
+          survey_id: 12583,
+          question_id: 0,
+          timezone: "Asia/Kolkata",
+          start_date: "2025-10-01",
+          end_date: "2025-10-05",
+          column_unit: "day"
+        },
+        totals: {
+          responses: 13,
+          skipped: 11
+        },
+        columns: [
+          { date: "2025-10-01", label: "01/10/2025" },
+          { date: "2025-10-02", label: "02/10/2025" },
+          { date: "2025-10-03", label: "03/10/2025" },
+          { date: "2025-10-04", label: "04/10/2025" },
+          { date: "2025-10-05", label: "05/10/2025" }
+        ],
+        rows: Array.from({ length: 24 }, (_, hour) => ({
+          hour,
+          label: hour === 0 ? "12 AM" : hour < 12 ? `${hour} AM` : hour === 12 ? "12 PM" : `${hour - 12} PM`
+        })),
+        matrix: [
+          [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0], [10, 0, 0, 0, 0], [1, 0, 0, 0, 0], [2, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]
+        ],
+        scale: {
+          breaks: [0, 1, 3, 5],
+          classes: ["none", "light", "dark"]
+        }
+      };
+      
+      console.log('Using test Heat Map data:', testData);
+      setHeatMapData(testData);
+    } finally {
+      setLoadingHeatMap(false);
+    }
+  }, [surveyId]);
 
   // Load buildings when opening the filter modal on both Summary and Tabular tabs
   useEffect(() => {
@@ -939,11 +1177,11 @@ export const SurveyResponseDetailPage = () => {
 
     // Fetch both survey details and response list data
     const fetchAllData = async () => {
-      await Promise.all([fetchSurveyData(), fetchResponseListData()]);
+      await Promise.all([fetchSurveyData(), fetchResponseListData(), fetchCSATData(), fetchHeatMapData()]);
     };
 
     fetchAllData();
-  }, [surveyId, navigate, fetchResponseListData, fetchSurveyDetails]);
+  }, [surveyId, navigate, fetchResponseListData, fetchSurveyDetails, fetchCSATData, fetchHeatMapData]);
 
   const handleCopyQuestion = async (questionId: number) => {
     const question = surveyData?.questions.find(
@@ -3762,13 +4000,13 @@ export const SurveyResponseDetailPage = () => {
             </Card>
 
             {/* Overall Response Distribution */}
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+            {/* <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                     <HelpCircle className="h-4 w-4 text-[#C72030]" />
                   </div>
-                  {/* OVERALL RESPONSE DISTRIBUTION */}
+                  
                   Q2.
                 </CardTitle>
               </CardHeader>
@@ -3784,7 +4022,7 @@ export const SurveyResponseDetailPage = () => {
                   onDownload={handleDownloadResponseChart}
                 />
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Emoji Response Summary */}
 
@@ -3797,7 +4035,7 @@ export const SurveyResponseDetailPage = () => {
                      <HelpCircle className="h-4 w-4 text-[#C72030]" />
                   </div>
                   {/* QUESTION RESPONSE DETAILS */}
-                  <span>Q3.</span>
+                  <span>Q2.</span>
 
                 </CardTitle>
               </CardHeader>
@@ -3901,7 +4139,7 @@ export const SurveyResponseDetailPage = () => {
                     <HelpCircle className="h-4 w-4 text-[#C72030]" />
                   </div>
                   {/* EMOJI RESPONSE SUMMARY */}
-                  Q4.
+                  Q3.
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -3962,7 +4200,7 @@ export const SurveyResponseDetailPage = () => {
                   <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                     <HelpCircle className="h-4 w-4 text-[#C72030]" />
                   </div>
-                  Q5.
+                  Q4.
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -4046,29 +4284,102 @@ export const SurveyResponseDetailPage = () => {
                 </CardHeader>
                 <CardContent>
                   {(() => {
-                    // Static data to mirror the provided UI
-                    const dateRangeText = "Aug 1, 2024 - Aug 31, 2024";
+                    // Use API data if available, otherwise show loading or empty state
+                    if (loadingCSAT) {
+                      return (
+                        <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                          <div className="px-6 py-8 text-center text-gray-500">
+                            Loading Customer Satisfaction Score data...
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    if (!csatData) {
+                      return (
+                        <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                          <div className="px-6 py-8 text-center text-gray-500">
+                            No Customer Satisfaction Score data available
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Transform API data into chart-ready format
+                    const buckets = csatData.buckets || [];
+                    const summary = csatData.summary;
+                    const dateRangeText = summary.date_range_label;
+                    
+                    console.log('Processing CSAT data:', { buckets, summary, dateRangeText });
+
+                    // Create rows for the table
                     type Row = {
                       dateLabel: string;
-                      csat: number; // average score 0..5
-                      changePct: number; // compared to previous period
-                      negPct: number; negCount: number;
-                      posPct: number; posCount: number;
+                      csat: number;
+                      changePct: number;
+                      negPct: number;
+                      negCount: number;
+                      posPct: number; 
+                      posCount: number;
                       total: number;
+                      neutral: number;
                     };
-                    const rows: Row[] = [
-                      { dateLabel: "July 28, 2024", csat: 0, changePct: 0, negPct: 0, negCount: 0, posPct: 0, posCount: 0, total: 0 },
-                      { dateLabel: "Aug 4, 2024", csat: 5.0, changePct: 5, negPct: 0, negCount: 0, posPct: 100, posCount: 1, total: 1 },
-                      { dateLabel: "Aug 11, 2024", csat: 4.75, changePct: -0.25, negPct: 0, negCount: 0, posPct: 100, posCount: 4, total: 4 },
-                      { dateLabel: "Aug 18, 2024", csat: 4.0, changePct: -0.75, negPct: 25, negCount: 1, posPct: 75, posCount: 3, total: 4 },
-                      { dateLabel: "Aug 25, 2024", csat: 4.0, changePct: -0, negPct: 25, negCount: 1, posPct: 75, posCount: 3, total: 4 },
-                    ];
 
-                    // Simple stacked bars without external chart deps (match neutral + red look)
-                    const maxTotal = Math.max(1, ...rows.map(r => r.total));
-                    const BAR_AREA_HEIGHT = 240; // px for bar area
-                    const colorPositive = "#C4AE9D"; // taupe
-                    const colorNegative = "#C72030"; // red
+                    const rows: Row[] = buckets.map((bucket, index) => {
+                      console.log('Processing bucket:', bucket);
+                      const total = bucket.total;
+                      const prevBucket = index > 0 ? buckets[index - 1] : null;
+                      const changePct = prevBucket && prevBucket.csat !== null && bucket.csat !== null
+                        ? ((bucket.csat - prevBucket.csat) / prevBucket.csat) * 100
+                        : bucket.change_pct || 0;
+                      
+                      // Use the percentage values directly from API
+                      const negPct = Math.round(bucket.negative_pct || 0);
+                      const posPct = Math.round(bucket.positive_pct || 0);
+
+                      const row = {
+                        dateLabel: bucket.label || new Date(bucket.start).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        }),
+                        csat: bucket.csat || 0,
+                        changePct,
+                        negPct,
+                        negCount: bucket.negative_count || 0,
+                        posPct,
+                        posCount: bucket.positive_count || 0,
+                        total: bucket.total || 0,
+                        neutral: 0 // Not provided in new API, calculate if needed
+                      };
+                      
+                      console.log('Processed row:', row);
+                      return row;
+                    });
+
+                    // If no buckets data, create a summary row
+                    if (rows.length === 0 && summary.responses > 0) {
+                      const total = summary.responses;
+                      const negPct = total > 0 ? Math.round((summary.negative / total) * 100) : 0;
+                      const posPct = total > 0 ? Math.round((summary.positive / total) * 100) : 0;
+                      
+                      rows.push({
+                        dateLabel: dateRangeText || "Summary",
+                        csat: summary.csat_avg || 0,
+                        changePct: 0,
+                        negPct,
+                        negCount: summary.negative,
+                        posPct,
+                        posCount: summary.positive,
+                        total: summary.responses,
+                        neutral: summary.neutral
+                      });
+                    }
+
+                    const maxTotal = Math.max(1, summary.suggested_y_max || Math.max(...rows.map(r => r.total), 1));
+                    const BAR_AREA_HEIGHT = 240;
+                    const colorPositive = "#C4AE9D";
+                    const colorNegative = "#C72030";
 
                     const ChangeTag = ({ value }: { value: number }) => {
                       if (value > 0) {
@@ -4087,7 +4398,7 @@ export const SurveyResponseDetailPage = () => {
                       }
                       return (
                         <span className="ml-2 text-xs px-1.5 py-0.5 rounded border text-gray-600" style={{ background: "#F3F4F6", borderColor: "#E5E7EB" }}>
-                          -0%
+                          0%
                         </span>
                       );
                     };
@@ -4097,7 +4408,7 @@ export const SurveyResponseDetailPage = () => {
                         {/* Date range */}
                         <div className="px-6 pt-4 text-sm text-gray-700">{dateRangeText}</div>
 
-                        {/* Chart area (Recharts) */}
+                        {/* Chart area */}
                         <div className="px-6 pt-4 pb-6">
                           <div className="bg-white" style={{ height: BAR_AREA_HEIGHT + 60 }}>
                             <ResponsiveContainer width="100%" height={BAR_AREA_HEIGHT + 40}>
@@ -4110,10 +4421,18 @@ export const SurveyResponseDetailPage = () => {
                                 margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
                               >
                                 <CartesianGrid vertical={false} stroke="#E5E7EB" />
-                                <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6B7280' }} tickMargin={10} axisLine={{ stroke: '#9CA3AF' }} />
-                                <YAxis domain={[0, 11]} ticks={[0,2,4,6,8,10,11]} tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: '#9CA3AF' }} />
-                                <Tooltip formatter={(val: any, name: any) => [val, name]} />
-                                {/* Negative at bottom, Positive stacked above */}
+                                <XAxis 
+                                  dataKey="date" 
+                                  tick={{ fontSize: 12, fill: '#6B7280' }} 
+                                  tickMargin={10} 
+                                  axisLine={{ stroke: '#9CA3AF' }} 
+                                />
+                                <YAxis 
+                                  domain={[0, maxTotal]} 
+                                  tick={{ fontSize: 12, fill: '#6B7280' }} 
+                                  axisLine={{ stroke: '#9CA3AF' }} 
+                                />
+                                <Tooltip formatter={(val: number, name: string) => [val, name]} />
                                 <Bar dataKey="Negative" stackId="a" fill="#C72030" radius={[0,0,0,0]} barSize={36} />
                                 <Bar dataKey="Positive" stackId="a" fill="#C4AE9D" radius={[0,0,0,0]} barSize={36} />
                               </BarChart>
@@ -4135,8 +4454,8 @@ export const SurveyResponseDetailPage = () => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {rows.map((r, idx) => (
-                                  <tr key={r.dateLabel} className="border-x border-b border-gray-300">
+                                {rows.length > 0 ? rows.map((r, idx) => (
+                                  <tr key={idx} className="border-x border-b border-gray-300">
                                     <td className="px-6 py-3 text-gray-800">{r.dateLabel}</td>
                                     <td className="px-6 py-3 text-gray-800">
                                       {r.csat.toFixed(2)} <ChangeTag value={r.changePct} />
@@ -4145,7 +4464,13 @@ export const SurveyResponseDetailPage = () => {
                                     <td className="px-6 py-3 text-gray-800">{r.posPct}% ({r.posCount})</td>
                                     <td className="px-6 py-3 text-gray-800">{r.total}</td>
                                   </tr>
-                                ))}
+                                )) : (
+                                  <tr className="border-x border-b border-gray-300">
+                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                      No CSAT data available for the selected period
+                                    </td>
+                                  </tr>
+                                )}
                               </tbody>
                             </table>
                           </div>
@@ -4166,47 +4491,72 @@ export const SurveyResponseDetailPage = () => {
               </CardHeader>
               <CardContent>
                 {(() => {
-                  // Static heatmap data to mirror the provided UI
-                  const totalResponses = 2;
-                  const skipped = 11;
+                  // Use API data if available, otherwise show loading or empty state
+                  if (loadingHeatMap) {
+                    return (
+                      <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                        <div className="px-6 py-8 text-center text-gray-500">
+                          Loading Heat Map data...
+                        </div>
+                      </div>
+                    );
+                  }
 
-                  // Hours 0..23, formatted as 12 AM .. 11 PM
-                  const hours = Array.from({ length: 24 }, (_, h) => {
-                    const suffix = h < 12 ? "AM" : "PM";
-                    const hour12 = h % 12 === 0 ? 12 : h % 12;
-                    return `${hour12} ${suffix}`;
-                  });
+                  if (!heatMapData) {
+                    return (
+                      <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                        <div className="px-6 py-8 text-center text-gray-500">
+                          No Heat Map data available
+                        </div>
+                      </div>
+                    );
+                  }
 
-                  // Create 10 date columns to enable horizontal scroll
-                  const dates = Array.from({ length: 10 }, (_, i) => {
-                    return "01/10/2025"; // static label as per screenshot
-                  });
+                  // Transform API data into display format
+                  const { columns, rows, matrix, totals, scale } = heatMapData;
+                  const dates = columns.map(col => col.label);
+                  const hours = rows.map(row => row.label);
+                  
+                  console.log('Processing Heat Map data:', { columns, rows, matrix, totals, scale });
 
-                  // Some shaded cells (row, col) to look like the example
-                  const shaded: Array<[number, number, "dark" | "light"]> = [
-                    [9, 2, "dark"],
-                    [10, 1, "light"],
-                    [10, 2, "dark"],
-                    [10, 3, "dark"],
-                    [11, 5, "light"],
-                    [13, 2, "dark"],
-                    [14, 2, "dark"],
-                    [15, 6, "light"],
-                  ];
-                  const isShaded = (r: number, c: number) => {
-                    const hit = shaded.find(([rr, cc]) => rr === r && cc === c);
-                    if (!hit) return "";
-                    return hit[2] === "dark" ? "bg-[#BFCBD3]" : "bg-[#E4EAED]";
+                  // Function to get cell color based on value and scale
+                  const getCellColor = (value: number) => {
+                    if (value === 0) return "";
+                    
+                    const { breaks, classes } = scale;
+                    let classIndex = 0;
+                    
+                    for (let i = 0; i < breaks.length - 1; i++) {
+                      if (value >= breaks[i] && value < breaks[i + 1]) {
+                        classIndex = i;
+                        break;
+                      }
+                    }
+                    
+                    // If value is >= the last break, use the last class
+                    if (value >= breaks[breaks.length - 1]) {
+                      classIndex = classes.length - 1;
+                    }
+                    
+                    const className = classes[classIndex];
+                    switch (className) {
+                      case "light":
+                        return "bg-[#E4EAED]";
+                      case "dark":
+                        return "bg-[#BFCBD3]";
+                      default:
+                        return "";
+                    }
                   };
 
                   return (
                     <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
                       <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
                         <span>
-                          <span className="font-medium">Total Response:</span> {totalResponses}
+                          <span className="font-medium">Total Response:</span> {totals.responses}
                         </span>
                         <span>
-                          <span className="font-medium">Skipped:</span> {skipped}
+                          <span className="font-medium">Skipped:</span> {totals.skipped}
                         </span>
                       </div>
 
@@ -4243,12 +4593,23 @@ export const SurveyResponseDetailPage = () => {
 
                                 {/* Cells */}
                                 {hours.map((_, ri) =>
-                                  dates.map((_, ci) => (
-                                    <div
-                                      key={`c-${ri}-${ci}`}
-                                      className={`border-b border-l border-gray-300 ${isShaded(ri, ci)}`}
-                                    />
-                                  ))
+                                  dates.map((_, ci) => {
+                                    const value = matrix[ri] ? matrix[ri][ci] || 0 : 0;
+                                    const cellColor = getCellColor(value);
+                                    return (
+                                      <div
+                                        key={`c-${ri}-${ci}`}
+                                        className={`border-b border-l border-gray-300 ${cellColor} flex items-center justify-center`}
+                                        title={value > 0 ? `${value} responses at ${hours[ri]} on ${dates[ci]}` : undefined}
+                                      >
+                                        {value > 0 && (
+                                          <span className="text-xs text-gray-700 font-medium">
+                                            {value}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })
                                 )}
                               </div>
 

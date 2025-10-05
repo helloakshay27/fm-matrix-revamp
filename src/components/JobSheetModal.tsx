@@ -251,26 +251,80 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                 </div>
               </div>
 
-              {/* Checklist Responses Table */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="text-left bg-gray-50">
-                        <th className="p-3 border-b border-r">Help Text</th>
-                        <th className="p-3 border-b border-r">Activities</th>
-                        <th className="p-3 border-b border-r">Input</th>
-                        <th className="p-3 border-b border-r">Comments</th>
-                        <th className="p-3 border-b border-r">Weightage</th>
-                        <th className="p-3 border-b border-r">Rating</th>
-                        <th className="p-3 border-b border-r">Score</th>
-                        <th className="p-3 border-b border-r">Status</th>
-                        <th className="p-3 border-b">Attachments</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {((jobSheetData?.data?.job_sheet?.checklist_responses || jobSheetData?.job_sheet?.checklist_responses)?.length > 0) ? (
-                        (jobSheetData?.data?.job_sheet?.checklist_responses || jobSheetData?.job_sheet?.checklist_responses).map((response: any, index: number) => {
+              {/* Checklist Responses Table - Grouped by Sections */}
+              <div className="space-y-6">
+                {(() => {
+                  const responses = jobSheetData?.data?.job_sheet?.checklist_responses || jobSheetData?.job_sheet?.checklist_responses || [];
+                  
+                  if (responses.length === 0) {
+                    return (
+                      <div className="border rounded-lg p-8 text-center text-gray-500">
+                        No checklist responses found for this job sheet.
+                      </div>
+                    );
+                  }
+
+                  // Group responses by group_id and sub_group_id
+                  const grouped: { [key: string]: any[] } = {};
+                  responses.forEach((response: any) => {
+                    const groupId = response.group_id || 'ungrouped';
+                    const subGroupId = response.sub_group_id || 'ungrouped';
+                    const key = `${groupId}_${subGroupId}`;
+                    
+                    if (!grouped[key]) {
+                      grouped[key] = [];
+                    }
+                    grouped[key].push(response);
+                  });
+
+                  // Convert to array of sections
+                  const sections = Object.keys(grouped).map(key => ({
+                    sectionKey: key,
+                    group_name: grouped[key][0]?.group_name || 'Ungrouped',
+                    sub_group_name: grouped[key][0]?.sub_group_name || '',
+                    responses: grouped[key]
+                  }));
+
+                  return sections.map((section, sectionIndex) => (
+                    <div key={section.sectionKey} className="space-y-3">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-base font-semibold text-gray-800">
+                              {section.group_name}
+                            </h4>
+                            {section.sub_group_name && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {section.sub_group_name}
+                              </p>
+                            )}
+                          </div>
+                          <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                            Section {sectionIndex + 1}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Section Table */}
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="text-left bg-gray-50">
+                                <th className="p-3 border-b border-r">Help Text</th>
+                                <th className="p-3 border-b border-r">Activities</th>
+                                <th className="p-3 border-b border-r">Input</th>
+                                <th className="p-3 border-b border-r">Comments</th>
+                                <th className="p-3 border-b border-r">Weightage</th>
+                                <th className="p-3 border-b border-r">Rating</th>
+                                <th className="p-3 border-b border-r">Score</th>
+                                <th className="p-3 border-b border-r">Status</th>
+                                <th className="p-3 border-b">Attachments</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {section.responses.map((response: any, index: number) => {
                           const files = response.attachments || [];
                           
                           // Display input value or "-" if null/empty
@@ -359,18 +413,15 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                               </td>
                             </tr>
                           );
-                        })
-                      ) : (
-                        <tr>
-                          <td colSpan={9} className="p-3 text-center text-gray-500">
-                            No checklist responses found for this job sheet.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
+            ));
+          })()}
+        </div>
 
               {/* Existing Task Comments Display */}
               {(jobSheetData?.data?.job_sheet?.task_details?.task_comments || jobSheetData?.job_sheet?.task_details?.task_comments) && (

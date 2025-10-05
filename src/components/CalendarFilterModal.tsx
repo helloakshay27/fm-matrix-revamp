@@ -155,27 +155,23 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
         </div>
 
         {/* Action Buttons */}
-     
-
-
-
-           <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                  <Button
-                    variant="secondary"
-                    onClick={handleApply}
-                    disabled={isLoading}
-                    className="flex-1 h-11"
-                  >
-                    {isLoading ? "Applying..." : "Apply Filter"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleClear}
-                    className="flex-1 h-11"
-                  >
-                    Reset
-                  </Button>
-                </div>
+        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
+          <Button 
+            onClick={handleApply} 
+            disabled={isLoading} 
+            className="bg-blue-600 hover:bg-blue-700 text-white flex-1 h-11 focus:ring-2 focus:ring-blue-500"
+          >
+            {isLoading ? 'Applying...' : 'Apply Filter'}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleClear} 
+            disabled={isLoading} 
+            className="flex-1 h-11 border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Clear All
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
