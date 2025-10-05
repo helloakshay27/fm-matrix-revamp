@@ -98,10 +98,10 @@ export const CommunicationTemplatePage = () => {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">
-          Communication Templates
+          Templates
         </h1>
         <p className="text-sm text-gray-600">
-          Manage your communication templates for various purposes
+          Manage your templates for various purposes
         </p>
       </div>
 

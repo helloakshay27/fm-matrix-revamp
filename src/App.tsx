@@ -706,6 +706,24 @@ import EditGatePassTypePage from "./pages/master/EditGatePassTypePage";
 import CommunicationTemplateListPage from "./pages/master/CommunicationTemplateListPage";
 import AddCommunicationTemplatePage from "./pages/master/AddCommunicationTemplatePage";
 import EditCommunicationTemplatePage from "./pages/master/EditCommunicationTemplatePage";
+
+// Import Template pages
+import RootCauseAnalysisListPage from "./pages/master/template/RootCauseAnalysisListPage";
+import AddRootCauseAnalysisPage from "./pages/master/template/AddRootCauseAnalysisPage";
+import EditRootCauseAnalysisPage from "./pages/master/template/EditRootCauseAnalysisPage";
+import PreventiveActionListPage from "./pages/master/template/PreventiveActionListPage";
+import AddPreventiveActionPage from "./pages/master/template/AddPreventiveActionPage";
+import EditPreventiveActionPage from "./pages/master/template/EditPreventiveActionPage";
+import ShortTermImpactListPage from "./pages/master/template/ShortTermImpactListPage";
+import AddShortTermImpactPage from "./pages/master/template/AddShortTermImpactPage";
+import EditShortTermImpactPage from "./pages/master/template/EditShortTermImpactPage";
+import LongTermImpactListPage from "./pages/master/template/LongTermImpactListPage";
+import AddLongTermImpactPage from "./pages/master/template/AddLongTermImpactPage";
+import EditLongTermImpactPage from "./pages/master/template/EditLongTermImpactPage";
+import CorrectiveActionListPage from "./pages/master/template/CorrectiveActionListPage";
+import AddCorrectiveActionPage from "./pages/master/template/AddCorrectiveActionPage";
+import EditCorrectiveActionPage from "./pages/master/template/EditCorrectiveActionPage";
+
 import AddInventoryTypePage from "./pages/master/AddInventoryTypePage";
 import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
 import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
@@ -2859,6 +2877,77 @@ function App() {
                     path="/master/communication-template/edit/:id"
                     element={<EditCommunicationTemplatePage />}
                   />
+
+                  {/* Template Routes - Root Cause Analysis */}
+                  <Route
+                    path="/master/template/root-cause-analysis"
+                    element={<RootCauseAnalysisListPage />}
+                  />
+                  <Route
+                    path="/master/template/root-cause-analysis/add"
+                    element={<AddRootCauseAnalysisPage />}
+                  />
+                  <Route
+                    path="/master/template/root-cause-analysis/edit/:id"
+                    element={<EditRootCauseAnalysisPage />}
+                  />
+
+                  {/* Template Routes - Preventive Action */}
+                  <Route
+                    path="/master/template/preventive-action"
+                    element={<PreventiveActionListPage />}
+                  />
+                  <Route
+                    path="/master/template/preventive-action/add"
+                    element={<AddPreventiveActionPage />}
+                  />
+                  <Route
+                    path="/master/template/preventive-action/edit/:id"
+                    element={<EditPreventiveActionPage />}
+                  />
+
+                  {/* Template Routes - Short-term Impact */}
+                  <Route
+                    path="/master/template/short-term-impact"
+                    element={<ShortTermImpactListPage />}
+                  />
+                  <Route
+                    path="/master/template/short-term-impact/add"
+                    element={<AddShortTermImpactPage />}
+                  />
+                  <Route
+                    path="/master/template/short-term-impact/edit/:id"
+                    element={<EditShortTermImpactPage />}
+                  />
+
+                  {/* Template Routes - Long-term Impact */}
+                  <Route
+                    path="/master/template/long-term-impact"
+                    element={<LongTermImpactListPage />}
+                  />
+                  <Route
+                    path="/master/template/long-term-impact/add"
+                    element={<AddLongTermImpactPage />}
+                  />
+                  <Route
+                    path="/master/template/long-term-impact/edit/:id"
+                    element={<EditLongTermImpactPage />}
+                  />
+
+                  {/* Template Routes - Corrective Action */}
+                  <Route
+                    path="/master/template/corrective-action"
+                    element={<CorrectiveActionListPage />}
+                  />
+                  <Route
+                    path="/master/template/corrective-action/add"
+                    element={<AddCorrectiveActionPage />}
+                  />
+                  <Route
+                    path="/master/template/corrective-action/edit/:id"
+                    element={<EditCorrectiveActionPage />}
+                  />
+
                   <Route
                     path="/master/gate-pass-type"
                     element={<GatePassTypePage />}

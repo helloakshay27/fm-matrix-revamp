@@ -17,16 +17,14 @@ export interface CommunicationTemplate {
   active: boolean | null;
 }
 
-const CommunicationTemplateListPage = () => {
+const LongTermImpactListPage = () => {
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<CommunicationTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [optimisticActive, setOptimisticActive] = useState<Record<number, boolean>>({});
 
-  // Helper to determine if active is ON
   const isActiveValue = (val: any) => val === null || String(val) === 'true' || String(val) === '1';
 
-  // Toggle handler for status switch
   const handleToggleActive = async (id: number) => {
     const item = templates.find(t => t.id === id);
     if (!item) return;
@@ -53,12 +51,13 @@ const CommunicationTemplateListPage = () => {
       try {
         setLoading(true);
         const data = await communicationTemplateService.getCommunicationTemplates();
-        console.log('Fetched templates:', data);
-        // Handle if data is array directly or wrapped in object
-        setTemplates(Array.isArray(data) ? data : []);
+        const filteredData = Array.isArray(data) 
+          ? data.filter(template => template.identifier === 'Long-term Impact')
+          : [];
+        setTemplates(filteredData);
       } catch (error) {
         console.error('Error fetching templates:', error);
-        toast.error('Failed to fetch communication templates.');
+        toast.error('Failed to fetch templates.');
       } finally {
         setLoading(false);
       }
@@ -70,17 +69,17 @@ const CommunicationTemplateListPage = () => {
   const [showActionPanel, setShowActionPanel] = useState(false);
   
   const handleAddTemplate = () => {
-    navigate('/master/communication-template/add');
+    navigate('/master/template/long-term-impact/add');
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/master/communication-template/edit/${id}`);
+    navigate(`/master/template/long-term-impact/edit/${id}`);
   };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Templates</h1>
+        <h1 className="text-2xl font-bold">Long-term Impact Templates</h1>
       </div>
       {showActionPanel && (
         <SelectionPanel
@@ -95,7 +94,6 @@ const CommunicationTemplateListPage = () => {
         columns={[
           { key: 'srno', label: 'Sr. No.' },
           { key: 'actions', label: 'Actions' },
-          { key: 'identifier', label: 'Dropdown' },
           { key: 'identifier_action', label: 'Field Value' },
           { key: 'body', label: 'Description' },
           { key: 'active', label: 'Status' },
@@ -154,10 +152,10 @@ const CommunicationTemplateListPage = () => {
           }
           return row[key];
         }}
-        emptyMessage="No communication templates found."
+        emptyMessage="No Long-term Impact templates found."
       />
     </div>
   );
 };
 
-export default CommunicationTemplateListPage;
+export default LongTermImpactListPage;

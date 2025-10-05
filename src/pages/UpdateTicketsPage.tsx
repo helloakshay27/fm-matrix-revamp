@@ -96,6 +96,7 @@ const UpdateTicketsPage: React.FC = () => {
     responsiblePerson: "",
     proactiveReactive: "",
     adminPriority: "",
+    severity: "",
     softClose: "",
     refNumber: "",
     issueRelatedTo: "",
@@ -117,6 +118,7 @@ const UpdateTicketsPage: React.FC = () => {
     costInvolved: false,
     selectedStatus: "",
     rootCause: "",
+    rootCauseTemplateIds: [] as number[], // Store template IDs for API submission
     correction: "",
     selectedAsset: "",
     selectedService: "",
@@ -302,6 +304,7 @@ const UpdateTicketsPage: React.FC = () => {
         ...prev,
         title: ticketData.heading || "",
         adminPriority: ticketData.priority ? ticketData.priority.toLowerCase() : "",
+        severity: ticketData.severity || "",
         selectedStatus: matchingStatus?.id.toString() || "",
         proactiveReactive: ticketData.proactive_reactive || "",
         serviceType: ticketData.service_type || "",
@@ -976,6 +979,34 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
+  // Handle Root Cause multi-select change with auto-save
+  // Handle Root Cause multi-select change (only updates state, API call happens on Save)
+  const handleRootCauseChange = (selectedValues: string | string[] | number | number[]) => {
+    // Convert to array of numbers (template IDs)
+    let templateIds: number[] = [];
+    if (Array.isArray(selectedValues)) {
+      templateIds = selectedValues.map(v => typeof v === 'number' ? v : parseInt(String(v)));
+    } else {
+      templateIds = [typeof selectedValues === 'number' ? selectedValues : parseInt(String(selectedValues))];
+    }
+    
+    // Filter out any NaN values
+    templateIds = templateIds.filter(id => !isNaN(id));
+
+    // Update local state with the selected template text for display
+    const selectedTemplates = communicationTemplates.filter(t => templateIds.includes(t.id));
+    const rootCauseString = selectedTemplates.map(t => t.identifier_action).join(', ');
+    
+    // Store both the display string and the template IDs
+    setFormData((prev) => ({ 
+      ...prev, 
+      rootCause: rootCauseString,
+      rootCauseTemplateIds: templateIds // Store IDs for submission
+    }));
+
+    console.log('✅ Root cause selected:', { templateIds, rootCauseString });
+  };
+
   const handleCostPopupFileUpload = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -1212,7 +1243,23 @@ const UpdateTicketsPage: React.FC = () => {
         "complaint[complaint_mode_id]",
         formData.mode || ""
       );
-      formDataToSend.append("complaint[root_cause]", formData.rootCause || "");
+      
+      // Add severity
+      formDataToSend.append(
+        "complaint[severity]",
+        formData.severity || ""
+      );
+      
+      // Add root cause template IDs with array notation
+      if (formData.rootCauseTemplateIds && formData.rootCauseTemplateIds.length > 0) {
+        formData.rootCauseTemplateIds.forEach(templateId => {
+          formDataToSend.append('root_cause[template_ids][]', String(templateId));
+        });
+        console.log('📝 Adding root cause template IDs:', formData.rootCauseTemplateIds);
+      } else {
+        console.log('⚠️ No root cause template IDs to submit');
+      }
+      
       formDataToSend.append("complaint[short_term_impact]", formData.impact || "");
       formDataToSend.append("complaint[correction]", formData.correction || "");
       formDataToSend.append("complaint[impact]", formData.longTermImpact || "");
@@ -1759,6 +1806,30 @@ const UpdateTicketsPage: React.FC = () => {
                     </FormControl>
                   </div>
 
+                  {/* Severity */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Severity</InputLabel>
+                      <MuiSelect
+                        value={formData.severity}
+                        onChange={(e) => handleInputChange("severity", e.target.value)}
+                        label="Severity"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select severity</span>
+                        </MenuItem>
+                        <MenuItem value="Major">Major</MenuItem>
+                        <MenuItem value="Minor">Minor</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
                   {/* External Priority */}
                   <div className="space-y-1">
                     <FormControl
@@ -1812,35 +1883,97 @@ const UpdateTicketsPage: React.FC = () => {
                   </div>
 
                   {/* Root Cause */}
-                  <div className="space-y-1">
+                  <div className="flex flex-col">
                     <FormControl
                       fullWidth
                       variant="outlined"
                       sx={{ '& .MuiInputBase-root': fieldStyles }}
                     >
-                      <InputLabel shrink>Root Cause</InputLabel>
+                      <InputLabel shrink>Root Cause Analysis</InputLabel>
                       <MuiSelect
-                        value={formData.rootCause}
-                        onChange={(e) => handleInputChange("rootCause", e.target.value)}
-                        label="Root Cause"
+                        multiple
+                        label="Root Cause Analysis"
                         notched
                         displayEmpty
+                        value={(() => {
+                          if (!formData.rootCause) return [];
+                          
+                          // Convert rootCause to string
+                          let rootCauseString = '';
+                          if (typeof formData.rootCause === 'string') {
+                            rootCauseString = formData.rootCause;
+                          } else if (Array.isArray(formData.rootCause)) {
+                            rootCauseString = (formData.rootCause as any[]).join(', ');
+                          } else {
+                            rootCauseString = String(formData.rootCause);
+                          }
+                          
+                          if (!rootCauseString) return [];
+                          
+                          // Split and match with templates to get IDs
+                          const rootCauseValues = rootCauseString.split(',').map(s => s.trim());
+                          const matchedTemplates = communicationTemplates.filter(
+                            template => template.identifier === "Root Cause Analysis" &&
+                              rootCauseValues.includes(template.identifier_action)
+                          );
+                          
+                          return matchedTemplates.map(t => t.id);
+                        })()}
+                        onChange={(e) => handleRootCauseChange(e.target.value)}
+                        renderValue={(selected) => {
+                          if (!selected || (Array.isArray(selected) && selected.length === 0)) {
+                            return <span style={{ color: '#aaa' }}>Select Root Cause Analysis</span>;
+                          }
+                          
+                          // Convert selected IDs back to display text
+                          const selectedIds = Array.isArray(selected) ? selected : [selected];
+                          const selectedTemplates = communicationTemplates.filter(
+                            t => selectedIds.includes(t.id)
+                          );
+                          
+                          return selectedTemplates.map(t => t.identifier_action).join(', ');
+                        }}
                         disabled={loadingTemplates}
                       >
-                        <MenuItem value="">
+                        <MenuItem value="" disabled>
                           <span className="text-gray-500">
-                            {loadingTemplates ? 'Loading templates...' : 'Select root cause'}
+                            {loadingTemplates ? 'Loading templates...' : 'Select Root Cause Analysis'}
                           </span>
                         </MenuItem>
                         {communicationTemplates
                           .filter(template => template.identifier === "Root Cause Analysis" && template?.active === true)
                           .map((template) => (
-                            <MenuItem key={template.id} value={template.identifier_action}>
+                            <MenuItem key={template.id} value={template.id}>
                               {template.identifier_action}
                             </MenuItem>
                           ))}
                       </MuiSelect>
                     </FormControl>
+
+                    {/* Show selected root cause descriptions from template body */}
+                    {formData.rootCause && (
+                      <div className="mt-2 space-y-2" style={{ fontSize: '14px', fontWeight: 'medium' }}>
+                        {(() => {
+                          const selectedValues = typeof formData.rootCause === 'string' 
+                            ? formData.rootCause.split(',').map(s => s.trim()) 
+                            : Array.isArray(formData.rootCause) 
+                              ? formData.rootCause 
+                              : [formData.rootCause];
+                          
+                          return selectedValues.map((value, index) => {
+                            const matchedTemplate = communicationTemplates.find(
+                              template => template.identifier === "Root Cause Analysis" &&
+                                template.identifier_action === value
+                            );
+                            return (
+                              <div key={index}>
+                                {matchedTemplate?.body || value}
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   {/* Short-term Impact */}
