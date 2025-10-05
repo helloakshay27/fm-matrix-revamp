@@ -178,12 +178,12 @@ export class JobSheetPDFStyles {
         .figma-info-table {
           width: 100%;
           border-collapse: collapse;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           background: #ffffff;
         }
 
         .figma-label-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 10px;
           vertical-align: middle;
           width: 25%;
@@ -197,7 +197,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-value-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 10px;
           vertical-align: middle;
           width: 25%;
@@ -225,7 +225,7 @@ export class JobSheetPDFStyles {
 
         .figma-location-header {
           background: #F5F5F5;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 10px 15px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 12px;
@@ -238,7 +238,7 @@ export class JobSheetPDFStyles {
         .figma-location-stepper {
           position: relative;
           padding: 20px 15px;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           border-top: none;
           background: #ffffff;
         }
@@ -299,7 +299,7 @@ export class JobSheetPDFStyles {
         .figma-location-table {
           width: 100%;
           border-collapse: collapse;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           margin: 0;
           background: #ffffff;
           table-layout: fixed;
@@ -307,7 +307,7 @@ export class JobSheetPDFStyles {
 
         .figma-location-th {
           background: #F5F5F5;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 6px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 10px;
@@ -320,7 +320,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-location-td {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 6px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -368,7 +368,7 @@ export class JobSheetPDFStyles {
           color: #000000;
           background-color: #c8a882;
           padding: 8px;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
         }
 
         .maintenance-table {
@@ -377,12 +377,12 @@ export class JobSheetPDFStyles {
           font-size: 9px;
           height: auto;
           background: #ffffff;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
         }
 
         .maintenance-table th {
           background: inherit;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 4px;
           font-weight: bold;
           text-align: center;
@@ -402,7 +402,7 @@ export class JobSheetPDFStyles {
         .attachment-header { width: 15%; }
 
         .maintenance-table td {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 6px 4px;
           vertical-align: middle;
           height: auto;
@@ -430,7 +430,7 @@ export class JobSheetPDFStyles {
           color: #000000;
           background-color: #f0f0f0;
           padding: 8px;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
         }
 
         /* Service Checklist Styles - Matching Figma Design */
@@ -451,7 +451,7 @@ export class JobSheetPDFStyles {
           text-align: center;
           background-color: #f0f0f0;
           padding: 12px 8px;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
         }
 
         .checklist-table {
@@ -460,12 +460,12 @@ export class JobSheetPDFStyles {
           font-size: 9px;
           height: auto;
           background: #ffffff;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
         }
 
         .checklist-table th {
           background: #f5f5f5;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 10px 6px;
           text-align: center;
           vertical-align: middle;
@@ -486,7 +486,7 @@ export class JobSheetPDFStyles {
         .attachment-header { width: 15%; }
 
         .checklist-table td {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 6px;
           vertical-align: middle;
           height: auto;
@@ -544,7 +544,7 @@ export class JobSheetPDFStyles {
           color: #000000;
           background-color: #f0f0f0;
           padding: 8px;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
         }
 
         .measurement-table {
@@ -553,12 +553,12 @@ export class JobSheetPDFStyles {
           font-size: 9px;
           margin-bottom: 10px;
           background: #ffffff;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
         }
 
         .measurement-table th {
           background: #f5f5f5;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 4px;
           font-weight: bold;
           text-align: center;
@@ -569,7 +569,7 @@ export class JobSheetPDFStyles {
         }
 
         .measurement-table td {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 4px;
           vertical-align: middle;
           height: 25px;
@@ -603,7 +603,7 @@ export class JobSheetPDFStyles {
         }
 
         .remarks-box {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           min-height: 40px;
           padding: 8px;
           background: #ffffff;
@@ -621,11 +621,11 @@ export class JobSheetPDFStyles {
         .signature-table {
           width: 100%;
           border-collapse: collapse;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
         }
 
         .signature-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 15px;
           vertical-align: top;
           width: 50%;
@@ -717,18 +717,18 @@ export class JobSheetPDFStyles {
           text-align: center;
           background-color: #f0f0f0;
           padding: 12px 8px;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
         }
 
         .images-table {
           width: 100%;
           border-collapse: collapse;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
         }
 
         .images-table th {
           background: #f5f5f5;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 12px 8px;
           color: #000;
           font-family: "Work Sans", Arial, sans-serif;
@@ -740,7 +740,7 @@ export class JobSheetPDFStyles {
         }
 
         .image-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 15px;
           text-align: center;
           vertical-align: top;
@@ -813,7 +813,7 @@ export class JobSheetPDFStyles {
 
         .figma-images-header {
           background: #F5F5F5;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 10px 15px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 12px;
@@ -826,13 +826,13 @@ export class JobSheetPDFStyles {
         .figma-images-table {
           width: 100%;
           border-collapse: collapse;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           border-top: none;
           background: #ffffff;
         }
 
         .figma-image-header-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 10px;
           background: #F5F5F5;
           font-family: "Work Sans", Arial, sans-serif;
@@ -844,7 +844,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-image-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 15px;
           text-align: center;
           vertical-align: top;
@@ -895,7 +895,7 @@ export class JobSheetPDFStyles {
 
         .figma-checklist-header {
           background: #C8A882;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 10px 15px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 12px;
@@ -908,7 +908,7 @@ export class JobSheetPDFStyles {
         .figma-checklist-table {
           width: 100%;
           border-collapse: collapse;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           border-top: none;
           background: #ffffff;
         }
@@ -918,7 +918,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-sl-header {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 5px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -930,7 +930,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-inspection-header {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 10px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -942,7 +942,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-result-header {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 10px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -954,7 +954,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-remarks-header {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 10px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -966,7 +966,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-attachment-header {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 8px 10px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -986,7 +986,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-sl-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 6px 5px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -996,7 +996,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-inspection-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 6px 10px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -1007,7 +1007,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-result-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 6px 10px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -1017,7 +1017,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-remarks-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 6px 10px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -1027,7 +1027,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-attachment-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 6px 10px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -1072,14 +1072,14 @@ export class JobSheetPDFStyles {
 
         .figma-measurement-table {
           border-collapse: collapse;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           background: #ffffff;
           flex: 1;
         }
 
         .figma-measurement-header {
           background: #F5F5F5;
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 6px 8px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
@@ -1095,7 +1095,7 @@ export class JobSheetPDFStyles {
         .figma-voltage-cell,
         .figma-ampere-cell,
         .figma-pressure-cell {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 4px 6px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 8px;
@@ -1105,7 +1105,7 @@ export class JobSheetPDFStyles {
         }
 
         .figma-measurement-value {
-          border: 1px dotted #000000;
+          border: 1px dotted #CCCCCC;
           padding: 6px 8px;
           font-family: "Work Sans", Arial, sans-serif;
           font-size: 9px;
