@@ -213,6 +213,7 @@ export const SurveyResponsePage = () => {
     total_feedback_count: 0,
     total_survey_count: 0,
     total_responses: 0,
+    inactive_surveys: 0,
   });
   const [appliedFilters, setAppliedFilters] = useState<FilterState>({
     surveyTitle: "",
@@ -633,6 +634,7 @@ export const SurveyResponsePage = () => {
             total_feedback_count: data.summary.total_responses,
             total_survey_count: data.summary.total_surveys,
             total_responses: data.summary.total_responses,
+            inactive_surveys: data.summary.inactive_surveys,
           };
           console.log("🔄 Setting summary stats:", newStats);
           setSummaryStats(newStats);
@@ -669,6 +671,7 @@ export const SurveyResponsePage = () => {
             total_feedback_count: totalResponsesFromData,
             total_survey_count: totalSurveys,
             total_responses: totalResponsesFromData,
+            inactive_surveys: totalSurveys - activeSurveys, // Calculate inactive surveys
           };
           // console.log('🔄 Setting calculated summary stats:', newStats);
           setSummaryStats(newStats);
@@ -1134,6 +1137,12 @@ export const SurveyResponsePage = () => {
     return count;
   };
 
+  const getInactiveSurveysCount = () => {
+    const count = summaryStats.inactive_surveys;
+    // console.log('❌ Inactive Surveys count from state:', count);
+    return count;
+  };
+
   // Helper: show only first location; show full value on hover with styled badge
   const renderLocation = (value?: string) => {
     const safe = (value || "").trim();
@@ -1271,6 +1280,22 @@ export const SurveyResponsePage = () => {
         <TabsContent value="list" className="mt-0">
           {/* Survey Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+             <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <ClipboardList className="w-6 h-6 text-[#C72030]" />
+              </div>
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
+                  {getSurveyCount()}
+                  {isLoading && (
+                    <span className="ml-1 text-xs animate-pulse">...</span>
+                  )}
+                </div>
+                <div className="text-sm font-medium text-[#1A1A1A]">
+                  Total Surveys
+                </div>
+              </div>
+            </div>
             {/* Active Surveys */}
             <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
@@ -1290,37 +1315,22 @@ export const SurveyResponsePage = () => {
             </div>
 
             {/* Total Surveys */}
-            <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
-              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                <ClipboardList className="w-6 h-6 text-[#C72030]" />
-              </div>
-              <div>
-                <div className="text-2xl font-semibold text-[#1A1A1A]">
-                  {getSurveyCount()}
-                  {isLoading && (
-                    <span className="ml-1 text-xs animate-pulse">...</span>
-                  )}
-                </div>
-                <div className="text-sm font-medium text-[#1A1A1A]">
-                  Total Surveys
-                </div>
-              </div>
-            </div>
+           
 
-            {/* Total Responses */}
+            {/* Inactive Surveys */}
             <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                <ThumbsUp className="w-6 h-6 text-[#C72030]" />
+                <HelpCircle className="w-6 h-6 text-[#C72030]" />
               </div>
               <div>
                 <div className="text-2xl font-semibold text-[#1A1A1A]">
-                  {getTotalResponsesCount()}
+                  {getInactiveSurveysCount()}
                   {isLoading && (
                     <span className="ml-1 text-xs animate-pulse">...</span>
                   )}
                 </div>
                 <div className="text-sm font-medium text-[#1A1A1A]">
-                  Total Responses
+                  Inactive Surveys
                 </div>
               </div>
             </div>

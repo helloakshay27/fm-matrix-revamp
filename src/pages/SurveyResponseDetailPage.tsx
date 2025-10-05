@@ -229,7 +229,6 @@ interface SurveyResponseFilters {
   };
   // Selected mapping (location) to filter summary analytics by mapping_id
   locationMappingId?: string;
-  siteId?: string;
   buildingId?: string;
   wingId?: string;
   areaId?: string;
@@ -319,14 +318,12 @@ export const SurveyResponseDetailPage = () => {
   const [loadingLocations, setLoadingLocations] = useState(false);
 
   // Tabular filter: Location dropdown data and loading states
-  const [sites, setSites] = useState<SiteItem[]>([]);
   const [buildings, setBuildings] = useState<BuildingItem[]>([]);
   const [wings, setWings] = useState<WingItem[]>([]);
   const [areas, setAreas] = useState<AreaItem[]>([]);
   const [floors, setFloors] = useState<FloorItem[]>([]);
   const [rooms, setRooms] = useState<RoomItem[]>([]);
 
-  const [loadingSites, setLoadingSites] = useState(false);
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [loadingWings, setLoadingWings] = useState(false);
   const [loadingAreas, setLoadingAreas] = useState(false);
@@ -366,38 +363,18 @@ export const SurveyResponseDetailPage = () => {
   }, [showFilterModal, activeFilterTab, fetchLocationOptions]);
 
   // Tabular filter: API fetch functions
-  const fetchSitesForTabular = useCallback(async () => {
-    try {
-      setLoadingSites(true);
-      const baseUrl = getFullUrl('/pms/sites.json');
-      const url = new URL(baseUrl);
-      if (API_CONFIG.TOKEN) {
-        url.searchParams.append('token', API_CONFIG.TOKEN);
-      }
 
-      const response = await fetch(url.toString(), { method: 'GET' });
-      if (!response.ok) throw new Error(`Failed to fetch sites: ${response.status}`);
-      const data = await response.json();
-      const sitesData = Array.isArray(data?.sites) ? data.sites : [];
-      setSites(sitesData);
-    } catch (error) {
-      console.error('Error fetching sites:', error);
-      toast.error('Failed to load sites');
-    } finally {
-      setLoadingSites(false);
-    }
-  }, []);
-
-  const fetchBuildingsForTabular = useCallback(async (siteId: string) => {
-    if (!siteId) {
+  const fetchBuildingsForTabular = useCallback(async () => {
+    if (!surveyId) {
       setBuildings([]);
       return;
     }
 
     try {
       setLoadingBuildings(true);
-      const baseUrl = getFullUrl(`/pms/sites/${siteId}/buildings.json`);
+      const baseUrl = getFullUrl('/survey_mappings/survey_buildings.json');
       const url = new URL(baseUrl);
+      url.searchParams.append('survey_id', surveyId);
       if (API_CONFIG.TOKEN) {
         url.searchParams.append('token', API_CONFIG.TOKEN);
       }
@@ -405,7 +382,8 @@ export const SurveyResponseDetailPage = () => {
       const response = await fetch(url.toString(), { method: 'GET' });
       if (!response.ok) throw new Error(`Failed to fetch buildings: ${response.status}`);
       const data = await response.json();
-      const buildingsData = Array.isArray(data?.buildings) ? data.buildings : [];
+      // Adjust based on actual API response structure
+      const buildingsData = Array.isArray(data?.buildings) ? data.buildings : Array.isArray(data) ? data : [];
       setBuildings(buildingsData);
     } catch (error) {
       console.error('Error fetching buildings:', error);
@@ -413,7 +391,7 @@ export const SurveyResponseDetailPage = () => {
     } finally {
       setLoadingBuildings(false);
     }
-  }, []);
+  }, [surveyId]);
 
   const fetchWingsForTabular = useCallback(async (buildingId: string) => {
     if (!buildingId) {
@@ -527,30 +505,14 @@ export const SurveyResponseDetailPage = () => {
     }
   }, []);
 
-  // Load sites when opening the filter modal on both Summary and Tabular tabs
+  // Load buildings when opening the filter modal on both Summary and Tabular tabs
   useEffect(() => {
     if (showFilterModal && (activeFilterTab === 'tabular' || activeFilterTab === 'summary')) {
-      fetchSitesForTabular();
+      fetchBuildingsForTabular();
     }
-  }, [showFilterModal, activeFilterTab, fetchSitesForTabular]);
+  }, [showFilterModal, activeFilterTab, fetchBuildingsForTabular]);
 
   // Handle location dependencies for tabular filter
-  useEffect(() => {
-    if (tabularFormFilters.siteId) {
-      fetchBuildingsForTabular(tabularFormFilters.siteId);
-    } else {
-      setBuildings([]);
-      // Reset dependent fields
-      setTabularFormFilters(prev => ({
-        ...prev,
-        buildingId: undefined,
-        wingId: undefined,
-        areaId: undefined,
-        floorId: undefined,
-        roomId: undefined,
-      }));
-    }
-  }, [tabularFormFilters.siteId, fetchBuildingsForTabular]);
 
   useEffect(() => {
     if (tabularFormFilters.buildingId) {
@@ -607,22 +569,6 @@ export const SurveyResponseDetailPage = () => {
   }, [tabularFormFilters.floorId, fetchRoomsForTabular]);
 
   // Handle location dependencies for summary filter
-  useEffect(() => {
-    if (summaryFormFilters.siteId) {
-      fetchBuildingsForTabular(summaryFormFilters.siteId);
-    } else {
-      setBuildings([]);
-      // Reset dependent fields
-      setSummaryFormFilters(prev => ({
-        ...prev,
-        buildingId: undefined,
-        wingId: undefined,
-        areaId: undefined,
-        floorId: undefined,
-        roomId: undefined,
-      }));
-    }
-  }, [summaryFormFilters.siteId, fetchBuildingsForTabular]);
 
   useEffect(() => {
     if (summaryFormFilters.buildingId) {
@@ -743,8 +689,8 @@ export const SurveyResponseDetailPage = () => {
     return <span className={className}>{text}</span>;
   };
 
-  // Fetch response list data from new API
-  const fetchResponseListData = useCallback(async () => {
+  // Fetch response list data from new API with optional filters
+  const fetchResponseListData = useCallback(async (filters?: SurveyResponseFilters) => {
     try {
       const baseUrl = getFullUrl(`/survey_mappings/response_list.json`);
       const url = new URL(baseUrl);
@@ -755,10 +701,48 @@ export const SurveyResponseDetailPage = () => {
       }
 
       // Add token parameter instead of Authorization header
-      url.searchParams.append(
-        "token",
-        "fkLRVExOU3z0SUElnlKtEkNd7fJ4jOUL8hKd190ONrU"
-      );
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append("token", API_CONFIG.TOKEN);
+      }
+
+      // Add filter parameters if provided
+      if (filters) {
+        // Building filters - support multiple buildings
+        if (filters.buildingId) {
+          url.searchParams.append("q[survey_mappings_building_id_in][]", filters.buildingId);
+        }
+
+        // Wing filters - support multiple wings
+        if (filters.wingId) {
+          url.searchParams.append("q[survey_mappings_wing_id_in][]", filters.wingId);
+        }
+
+        // Area filters
+        if (filters.areaId) {
+          url.searchParams.append("q[survey_mappings_area_id_in]", filters.areaId);
+        }
+
+        // Floor filters - support multiple floors
+        if (filters.floorId) {
+          url.searchParams.append("q[survey_mappings_floor_id_in][]", filters.floorId);
+        }
+
+        // Room filters - support multiple rooms
+        if (filters.roomId) {
+          url.searchParams.append("q[survey_mappings_room_id_in][]", filters.roomId);
+        }
+
+        // Date filters
+        if (filters.dateRange?.from) {
+          const fromDate = new Date(filters.dateRange.from);
+          url.searchParams.append("from_date", fromDate.toISOString().split('T')[0]);
+        }
+
+        if (filters.dateRange?.to) {
+          const toDate = new Date(filters.dateRange.to);
+          url.searchParams.append("to_date", toDate.toISOString().split('T')[0]);
+        }
+      }
 
       console.log("🚀 Fetching response list from:", url.toString());
 
@@ -776,6 +760,8 @@ export const SurveyResponseDetailPage = () => {
       const data = await response.json();
       console.log("✅ Response list data received:", data);
       console.log("✅ Number of responses:", data?.responses?.length || 0);
+      console.log("✅ Filter parameters used:", filters);
+      console.log("✅ API URL called:", url.toString());
       setResponseListData(data);
     } catch (error) {
       console.error("Error fetching response list data:", error);
@@ -1009,13 +995,6 @@ export const SurveyResponseDetailPage = () => {
 
     return responseListData.responses.filter((response: SurveyResponse) => {
       // Apply location hierarchy filters
-      if (summaryCurrentFilters.siteId) {
-        const selectedSite = sites.find(s => s.id?.toString() === summaryCurrentFilters.siteId);
-        if (!selectedSite || response.location?.site_name !== selectedSite.name) {
-          return false;
-        }
-      }
-
       if (summaryCurrentFilters.buildingId) {
         const selectedBuilding = buildings.find(b => b.id?.toString() === summaryCurrentFilters.buildingId);
         if (!selectedBuilding || response.location?.building_name !== selectedBuilding.name) {
@@ -1076,13 +1055,11 @@ export const SurveyResponseDetailPage = () => {
   }, [
     responseListData, 
     summaryCurrentFilters.dateRange, 
-    summaryCurrentFilters.siteId,
     summaryCurrentFilters.buildingId,
     summaryCurrentFilters.wingId,
     summaryCurrentFilters.areaId,
     summaryCurrentFilters.floorId,
     summaryCurrentFilters.roomId,
-    sites,
     buildings,
     wings,
     areas,
@@ -2238,6 +2215,7 @@ export const SurveyResponseDetailPage = () => {
 
     console.log("🎯 Final transformed data for table:", transformedData);
     console.log("🎯 Number of rows:", transformedData.length);
+    console.log("🎯 Response data source:", responseListData?.responses?.length || 0);
     return transformedData;
   }, [responseListData, surveyData]);
 
@@ -2760,32 +2738,43 @@ export const SurveyResponseDetailPage = () => {
       const exportUrl = new URL(baseUrl);
 
       // Add required parameters
-      exportUrl.searchParams.append(
-        "access_token",
-        "fkLRVExOU3z0SUElnlKtEkNd7fJ4jOUL8hKd190ONrU"
-      );
+      if (API_CONFIG.TOKEN) {
+        exportUrl.searchParams.append("token", API_CONFIG.TOKEN);
+      }
       exportUrl.searchParams.append("survey_id", surveyId);
       exportUrl.searchParams.append("export", "true");
 
-      // Add date filters if they are provided
-      if (exportFromDate) {
-        const fromDate = new Date(exportFromDate);
-        const fromDateStr = fromDate.toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }).replace(/\//g, '/'); // Format: DD/MM/YYYY
-        exportUrl.searchParams.append("from_date", fromDateStr);
+      // Add current tabular filters to export
+      if (tabularCurrentFilters.buildingId) {
+        exportUrl.searchParams.append("q[survey_mappings_building_id_in][]", tabularCurrentFilters.buildingId);
       }
 
-      if (exportToDate) {
-        const toDate = new Date(exportToDate);
-        const toDateStr = toDate.toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }).replace(/\//g, '/'); // Format: DD/MM/YYYY
-        exportUrl.searchParams.append("to_date", toDateStr);
+      if (tabularCurrentFilters.wingId) {
+        exportUrl.searchParams.append("q[survey_mappings_wing_id_in][]", tabularCurrentFilters.wingId);
+      }
+
+      if (tabularCurrentFilters.areaId) {
+        exportUrl.searchParams.append("q[survey_mappings_area_id_in]", tabularCurrentFilters.areaId);
+      }
+
+      if (tabularCurrentFilters.floorId) {
+        exportUrl.searchParams.append("q[survey_mappings_floor_id_in][]", tabularCurrentFilters.floorId);
+      }
+
+      if (tabularCurrentFilters.roomId) {
+        exportUrl.searchParams.append("q[survey_mappings_room_id_in][]", tabularCurrentFilters.roomId);
+      }
+
+      // Add date filters if they are provided (from export modal or current filters)
+      const fromDate = exportFromDate || (tabularCurrentFilters.dateRange?.from ? new Date(tabularCurrentFilters.dateRange.from).toISOString().split('T')[0] : null);
+      const toDate = exportToDate || (tabularCurrentFilters.dateRange?.to ? new Date(tabularCurrentFilters.dateRange.to).toISOString().split('T')[0] : null);
+
+      if (fromDate) {
+        exportUrl.searchParams.append("from_date", fromDate);
+      }
+
+      if (toDate) {
+        exportUrl.searchParams.append("to_date", toDate);
       }
 
       console.log("🚀 Exporting tabular data from:", exportUrl.toString());
@@ -2825,7 +2814,7 @@ export const SurveyResponseDetailPage = () => {
       console.error("❌ Error exporting tabular data:", error);
       toast.error("Failed to export survey data");
     }
-  }, [surveyId, exportFromDate, exportToDate]);
+  }, [surveyId, exportFromDate, exportToDate, tabularCurrentFilters]);
 
   const handleApplyFilters = useCallback(async () => {
     if (activeFilterTab === "summary") {
@@ -2839,19 +2828,15 @@ export const SurveyResponseDetailPage = () => {
     } else {
       setTabularCurrentFilters(tabularFormFilters);
 
-      // Apply filters to both datasets for tabular tab
-      const baseTabularData = getTabularData();
-      const baseTicketData = getTicketData();
-
-      setFilteredTabularData(
-        applyFiltersToTabularData(baseTabularData, tabularFormFilters)
-      );
-      setFilteredTicketData(
-        applyFiltersToTicketData(baseTicketData, tabularFormFilters)
-      );
-
-      // Show success toast for tabular filters
-      toast.success("Tabular filters applied successfully");
+      // Fetch filtered data from API for tabular tab
+      try {
+        await fetchResponseListData(tabularFormFilters);
+        // Show success toast for tabular filters
+        toast.success("Tabular filters applied successfully");
+      } catch (error) {
+        console.error("Error applying tabular filters:", error);
+        toast.error("Failed to apply tabular filters");
+      }
     }
 
     setShowFilterModal(false);
@@ -2859,8 +2844,7 @@ export const SurveyResponseDetailPage = () => {
     activeFilterTab,
     summaryFormFilters,
     tabularFormFilters,
-    getTabularData,
-    getTicketData,
+    fetchResponseListData,
     refetchSurveyDetailsWithFilters,
   ]);
 
@@ -2880,14 +2864,19 @@ export const SurveyResponseDetailPage = () => {
     } else {
       setTabularCurrentFilters({});
       setTabularFormFilters({});
-      setFilteredTabularData([]);
-      setFilteredTicketData([]);
 
-      // Show success toast for tabular filter reset
-      toast.success("Tabular filters cleared successfully");
+      // Refetch data without filters for tabular tab
+      try {
+        await fetchResponseListData();
+        // Show success toast for tabular filter reset
+        toast.success("Tabular filters cleared successfully");
+      } catch (error) {
+        console.error("Error clearing tabular filters:", error);
+        toast.error("Failed to clear tabular filters");
+      }
     }
     // Keep modal open after clearing filters
-  }, [activeFilterTab, originalSurveyData, originalSurveyDetailsData]);
+  }, [activeFilterTab, originalSurveyData, originalSurveyDetailsData, fetchResponseListData]);
 
   const getActiveFiltersCount = useCallback(() => {
     const filters =
@@ -2896,7 +2885,6 @@ export const SurveyResponseDetailPage = () => {
         : tabularCurrentFilters;
     let count = 0;
     if (filters.dateRange?.from || filters.dateRange?.to) count++;
-    if (filters.siteId) count++;
     if (filters.buildingId) count++;
     if (filters.wingId) count++;
     if (filters.areaId) count++;
@@ -2927,27 +2915,21 @@ export const SurveyResponseDetailPage = () => {
 
   // Get data to display (filtered or original) - for tabular tab
   const getDisplayTabularData = useCallback(() => {
-    // console.log("🔍 getDisplayTabularData called");
-    // console.log("🔍 tabularCurrentFilters:", tabularCurrentFilters);
-    // console.log("🔍 Object.keys(tabularCurrentFilters).length:", Object.keys(tabularCurrentFilters).length);
-    // console.log("🔍 filteredTabularData.length:", filteredTabularData.length);
+    console.log("🔍 getDisplayTabularData called");
+    console.log("🔍 tabularCurrentFilters:", tabularCurrentFilters);
+    console.log("🔍 Object.keys(tabularCurrentFilters).length:", Object.keys(tabularCurrentFilters).length);
 
-    if (Object.keys(tabularCurrentFilters).length > 0) {
-      console.log("🔍 Using filtered data:", filteredTabularData.length);
-      return filteredTabularData;
-    }
-
-    const rawData = getTabularData();
-    console.log("🔍 Using raw tabular data:", rawData.length);
-    return rawData;
-  }, [tabularCurrentFilters, filteredTabularData, getTabularData]);
+    // Always use the current responseListData which contains server-filtered data
+    // Since we now fetch filtered data from the server, getTabularData() will always return the correct data
+    const data = getTabularData();
+    console.log("🔍 Using server-filtered data:", data.length);
+    return data;
+  }, [getTabularData, tabularCurrentFilters]);
 
   const getDisplayTicketData = useCallback(() => {
-    if (Object.keys(tabularCurrentFilters).length > 0) {
-      return filteredTicketData;
-    }
+    // Always use the current server-filtered data from getTicketData()
     return getTicketData();
-  }, [tabularCurrentFilters, filteredTicketData, getTicketData]);
+  }, [getTicketData]);
 
   // Helper functions to calculate ticket statistics
   const getTicketStatistics = useCallback(() => {
@@ -3106,33 +3088,6 @@ export const SurveyResponseDetailPage = () => {
                 <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
                 <div className="grid grid-cols-2 gap-6">
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Site</InputLabel>
-                    <MuiSelect
-                      label="Site"
-                      value={summaryFormFilters.siteId ?? ""}
-                      onChange={(e) => setSummaryFormFilters(prev => ({ 
-                        ...prev, 
-                        siteId: e.target.value || undefined,
-                        buildingId: undefined,
-                        wingId: undefined,
-                        areaId: undefined,
-                        floorId: undefined,
-                        roomId: undefined,
-                      }))}
-                      displayEmpty
-                      sx={fieldStyles}
-                      disabled={loadingSites}
-                      MenuProps={selectMenuProps}
-                    >
-                      <MenuItem value=""><em>Select Site</em></MenuItem>
-                      {sites.map((siteItem) => (
-                        <MenuItem key={siteItem.id} value={siteItem.id?.toString() || ''}>
-                          {siteItem.name || 'Unknown Site'}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                  <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>Building</InputLabel>
                     <MuiSelect
                       label="Building"
@@ -3147,7 +3102,7 @@ export const SurveyResponseDetailPage = () => {
                       }))}
                       displayEmpty
                       sx={fieldStyles}
-                      disabled={loadingBuildings || !summaryFormFilters.siteId}
+                      disabled={loadingBuildings}
                       MenuProps={selectMenuProps}
                     >
                       <MenuItem value=""><em>Select Building</em></MenuItem>
@@ -3158,9 +3113,7 @@ export const SurveyResponseDetailPage = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
-                </div>
-                <div className="grid grid-cols-2 gap-6 mt-4">
-                  <FormControl fullWidth variant="outlined">
+                    <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>Wing</InputLabel>
                     <MuiSelect
                       label="Wing"
@@ -3209,9 +3162,7 @@ export const SurveyResponseDetailPage = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
-                </div>
-                <div className="grid grid-cols-2 gap-6 mt-4">
-                  <FormControl fullWidth variant="outlined">
+                   <FormControl fullWidth variant="outlined">
                     <InputLabel shrink>Floor</InputLabel>
                     <MuiSelect
                       label="Floor"
@@ -3257,6 +3208,12 @@ export const SurveyResponseDetailPage = () => {
                     </MuiSelect>
                   </FormControl>
                 </div>
+                {/* <div className="grid grid-cols-2 gap-6 mt-4">
+                
+                </div> */}
+                {/* <div className="grid grid-cols-2 gap-6 mt-4">
+                 
+                </div> */}
               </div>
             )}
 
@@ -3265,34 +3222,6 @@ export const SurveyResponseDetailPage = () => {
               <div>
                 <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
                 <div className="grid grid-cols-2 gap-6">
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel id="site-label" shrink>Site</InputLabel>
-                    <MuiSelect
-                      labelId="site-label"
-                      label="Site"
-                      value={tabularFormFilters.siteId ?? ""}
-                      onChange={(e) => setTabularFormFilters(prev => ({ 
-                        ...prev, 
-                        siteId: e.target.value || undefined,
-                        buildingId: undefined,
-                        wingId: undefined,
-                        areaId: undefined,
-                        floorId: undefined,
-                        roomId: undefined,
-                      }))}
-                      displayEmpty
-                      sx={fieldStyles}
-                      disabled={loadingSites}
-                      MenuProps={selectMenuProps}
-                    >
-                      <MenuItem value=""><em>Select Site</em></MenuItem>
-                      {sites.map((siteItem) => (
-                        <MenuItem key={siteItem.id} value={siteItem.id?.toString() || ''}>
-                          {siteItem.name || 'Unknown Site'}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="building-label" shrink>Building</InputLabel>
                     <MuiSelect
@@ -3309,7 +3238,7 @@ export const SurveyResponseDetailPage = () => {
                       }))}
                       displayEmpty
                       sx={fieldStyles}
-                      disabled={loadingBuildings || !tabularFormFilters.siteId}
+                      disabled={loadingBuildings}
                       MenuProps={selectMenuProps}
                     >
                       <MenuItem value=""><em>Select Building</em></MenuItem>
@@ -3320,9 +3249,7 @@ export const SurveyResponseDetailPage = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
-                </div>
-                <div className="grid grid-cols-2 gap-6 mt-4">
-                  <FormControl fullWidth variant="outlined">
+                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="wing-label" shrink>Wing</InputLabel>
                     <MuiSelect
                       labelId="wing-label"
@@ -3373,9 +3300,7 @@ export const SurveyResponseDetailPage = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
-                </div>
-                <div className="grid grid-cols-2 gap-6 mt-4">
-                  <FormControl fullWidth variant="outlined">
+                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="floor-label" shrink>Floor</InputLabel>
                     <MuiSelect
                       labelId="floor-label"
@@ -3423,6 +3348,12 @@ export const SurveyResponseDetailPage = () => {
                     </MuiSelect>
                   </FormControl>
                 </div>
+                {/* <div className="grid grid-cols-2 gap-6 mt-4">
+                 
+                </div> */}
+                {/* <div className="grid grid-cols-2 gap-6 mt-4">
+                 
+                </div> */}
               </div>
             )}
           </div>
@@ -3457,7 +3388,6 @@ export const SurveyResponseDetailPage = () => {
       localFromDate,
       localToDate,
       activeFilterTab,
-      summaryFormFilters.siteId,
       summaryFormFilters.buildingId,
       summaryFormFilters.wingId,
       summaryFormFilters.areaId,
@@ -3465,13 +3395,11 @@ export const SurveyResponseDetailPage = () => {
       summaryFormFilters.roomId,
       tabularFormFilters,
       setTabularFormFilters,
-      sites,
       buildings,
       wings,
       areas,
       floors,
       rooms,
-      loadingSites,
       loadingBuildings,
       loadingWings,
       loadingAreas,
@@ -3536,14 +3464,22 @@ export const SurveyResponseDetailPage = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-4">
         <Button
           variant="ghost"
-          onClick={() => navigate("/maintenance/survey/response")}
+          onClick={() => {
+            // If we're viewing tabular details, go back to tabular list
+            if (selectedTabularResponseId) {
+              setSelectedTabularResponseId(null);
+            } else {
+              // Otherwise go back to main response list
+              navigate("/maintenance/survey/response");
+            }
+          }}
           className="mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Response List
+          {selectedTabularResponseId ? "Back to Tabular List" : "Back to Response List"}
         </Button>
 
         <div className="flex items-center justify-between">
@@ -3575,7 +3511,6 @@ export const SurveyResponseDetailPage = () => {
                         summaryCurrentFilters.dateRange?.to
                       )
                         count++;
-                      if (summaryCurrentFilters.siteId) count++;
                       if (summaryCurrentFilters.buildingId) count++;
                       if (summaryCurrentFilters.wingId) count++;
                       if (summaryCurrentFilters.areaId) count++;
@@ -3641,7 +3576,6 @@ export const SurveyResponseDetailPage = () => {
                         summaryCurrentFilters.dateRange?.to
                       )
                         count++;
-                      if (summaryCurrentFilters.siteId) count++;
                       if (summaryCurrentFilters.buildingId) count++;
                       if (summaryCurrentFilters.wingId) count++;
                       if (summaryCurrentFilters.areaId) count++;
@@ -3657,7 +3591,6 @@ export const SurveyResponseDetailPage = () => {
                         summaryCurrentFilters.dateRange?.to
                       )
                         count++;
-                      if (summaryCurrentFilters.siteId) count++;
                       if (summaryCurrentFilters.buildingId) count++;
                       if (summaryCurrentFilters.wingId) count++;
                       if (summaryCurrentFilters.areaId) count++;

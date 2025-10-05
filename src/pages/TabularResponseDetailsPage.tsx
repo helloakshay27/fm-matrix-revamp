@@ -52,6 +52,8 @@ interface SurveyResponse {
   survey_name: string;
   questions_count: number;
   complaints_count: number;
+  positive_responses?: number;
+  negative_responses?: number;
   location: ResponseLocation;
   answers: ResponseAnswer[];
 }
@@ -60,13 +62,27 @@ interface ResponseListData {
   responses: SurveyResponse[];
 }
 
+// Survey detail interfaces for API data
+interface SurveyDetail {
+  survey_id: number;
+  survey_name: string;
+  positive_responses?: number;
+  negative_responses?: number;
+  csat?: number;
+}
+
+interface SurveyDetailsResponse {
+  survey_details: {
+    surveys: SurveyDetail[];
+  };
+}
+
 // Filter interface for responses
 interface ResponseFilters {
   dateRange?: {
     from?: Date;
     to?: Date;
   };
-  siteId?: string;
   buildingId?: string;
   wingId?: string;
   areaId?: string;
@@ -80,11 +96,6 @@ interface ResponseFilters {
 }
 
 // Location interfaces for dropdowns
-interface SiteItem {
-  id: number;
-  name: string;
-}
-
 interface BuildingItem {
   id: number;
   name: string;
@@ -148,6 +159,7 @@ export default function TabularResponseDetailsPage({
   const [loading, setLoading] = useState(true);
   const [response, setResponse] = useState<SurveyResponse | null>(null);
   const [search, setSearch] = useState("");
+  const [surveyData, setSurveyData] = useState<SurveyDetail | null>(null);
 
   // Filter state
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -155,14 +167,12 @@ export default function TabularResponseDetailsPage({
   const [formFilters, setFormFilters] = useState<ResponseFilters>({});
 
   // Location dropdown data and loading states
-  const [sites, setSites] = useState<SiteItem[]>([]);
   const [buildings, setBuildings] = useState<BuildingItem[]>([]);
   const [wings, setWings] = useState<WingItem[]>([]);
   const [areas, setAreas] = useState<AreaItem[]>([]);
   const [floors, setFloors] = useState<FloorItem[]>([]);
   const [rooms, setRooms] = useState<RoomItem[]>([]);
 
-  const [loadingSites, setLoadingSites] = useState(false);
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [loadingWings, setLoadingWings] = useState(false);
   const [loadingAreas, setLoadingAreas] = useState(false);
@@ -173,45 +183,65 @@ export default function TabularResponseDetailsPage({
   const [localFromDate, setLocalFromDate] = useState("");
   const [localToDate, setLocalToDate] = useState("");
 
-  // API fetch functions for location dropdowns
-  const fetchSites = useCallback(async () => {
-    if (!showFilterModal) return;
-
-    console.log('Fetching sites API call started...');
-    setLoadingSites(true);
+  // API function to fetch survey details
+  const fetchSurveyDetails = useCallback(async (surveyId: string) => {
     try {
-      const response = await apiClient.get('/pms/sites.json');
-      console.log('Sites API response:', response.data);
+      if (!surveyId || surveyId.trim() === "") {
+        throw new Error("Invalid survey ID provided");
+      }
 
-      const sitesData = Array.isArray(response.data?.sites) ? response.data.sites : [];
-      console.log('Setting sites data:', sitesData);
-      setSites(sitesData);
+      const baseUrl = getFullUrl("/pms/admin/snag_checklists/survey_details.json");
+      const urlWithParams = new URL(baseUrl);
+      urlWithParams.searchParams.append("survey_id", surveyId.trim());
+
+      if (API_CONFIG.TOKEN) {
+        urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
+      }
+
+      const response = await fetch(urlWithParams.toString(), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch survey details: ${response.status} ${response.statusText}`);
+      }
+
+      const data: SurveyDetailsResponse = await response.json();
+      return data;
     } catch (error) {
-      console.error('Error fetching sites:', error);
-      setSites([]);
-      toast.error('Failed to load sites');
-    } finally {
-      setLoadingSites(false);
+      console.error("Error fetching survey details:", error);
+      throw error;
     }
-  }, [showFilterModal]);
+  }, []);
 
-  const fetchBuildings = useCallback(async (siteId: string) => {
-    if (!siteId) {
+  // API fetch functions for location dropdowns
+
+  const fetchBuildings = useCallback(async (surveyId: string) => {
+    if (!surveyId) {
       setBuildings([]);
       return;
     }
 
-    console.log('Fetching buildings for site:', siteId);
+    console.log('Fetching buildings for survey:', surveyId);
     setLoadingBuildings(true);
     try {
-      const response = await apiClient.get(`/pms/sites/${siteId}/buildings.json`);
-      console.log('Buildings API response:', response.data);
+      const baseUrl = `${API_CONFIG.BASE_URL}/survey_mappings/survey_buildings.json`;
+      const url = new URL(baseUrl);
+      url.searchParams.append('survey_id', surveyId);
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('token', API_CONFIG.TOKEN);
+      }
 
-      // Extract buildings directly from the array
-      const buildingsData = Array.isArray(response.data?.buildings)
-        ? response.data.buildings
-        : [];
-      console.log('Setting buildings data:', buildingsData);
+      const response = await fetch(url.toString(), { method: 'GET' });
+      if (!response.ok) throw new Error(`Failed to fetch buildings: ${response.status}`);
+      const data = await response.json();
+      
+      // Adjust based on actual API response structure
+      const buildingsData = Array.isArray(data?.buildings) ? data.buildings : Array.isArray(data) ? data : [];
+      console.log('Setting buildings data for survey:', buildingsData);
       setBuildings(buildingsData);
     } catch (error) {
       console.error('Error fetching buildings:', error);
@@ -324,32 +354,12 @@ export default function TabularResponseDetailsPage({
     }
   }, []);
 
-  // Load sites when opening the filter modal
+  // Load buildings when opening the filter modal
   useEffect(() => {
-    fetchSites();
-  }, [fetchSites]);
-
-  // Fetch buildings when site changes
-  useEffect(() => {
-    const fetchBuildingsEffect = async () => {
-      if (!formFilters.siteId) {
-        setBuildings([]);
-        setFormFilters(prev => ({
-          ...prev,
-          buildingId: undefined,
-          wingId: undefined,
-          areaId: undefined,
-          floorId: undefined,
-          roomId: undefined,
-        }));
-        return;
-      }
-
-      await fetchBuildings(formFilters.siteId);
-    };
-
-    fetchBuildingsEffect();
-  }, [formFilters.siteId, fetchBuildings]);
+    if (showFilterModal && surveyId) {
+      fetchBuildings(surveyId);
+    }
+  }, [showFilterModal, surveyId, fetchBuildings]);
 
   // Fetch wings when building changes
   useEffect(() => {
@@ -451,34 +461,55 @@ export default function TabularResponseDetailsPage({
   }), []);
 
   useEffect(() => {
-    const fetchSingleResponse = async () => {
+    const fetchData = async () => {
       if (!surveyId || !responseId) return;
+      
       try {
         setLoading(true);
-        const baseUrl = getFullUrl(`/survey_mappings/response_list.json`);
-        const url = new URL(baseUrl);
-        url.searchParams.append("survey_id", String(surveyId));
-        url.searchParams.append("token", API_CONFIG.TOKEN || "");
+        
+        // Fetch both response details and survey data in parallel
+        const [responseData, surveyDetailsData] = await Promise.all([
+          // Fetch single response
+          (async () => {
+            const baseUrl = getFullUrl(`/survey_mappings/response_list.json`);
+            const url = new URL(baseUrl);
+            url.searchParams.append("survey_id", String(surveyId));
+            url.searchParams.append("token", API_CONFIG.TOKEN || "");
 
-        const res = await fetch(url.toString(), { method: "GET" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: ResponseListData = await res.json();
-        const found = (data.responses || []).find(
+            const res = await fetch(url.toString(), { method: "GET" });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data: ResponseListData = await res.json();
+            return data;
+          })(),
+          // Fetch survey details
+          fetchSurveyDetails(surveyId)
+        ]);
+
+        // Set response data
+        const found = (responseData.responses || []).find(
           r => String(r.response_id) === String(responseId)
         );
         setResponse(found || null);
         if (!found) {
           toast.error("Response not found");
         }
+
+        // Set survey data for summary cards
+        if (surveyDetailsData?.survey_details?.surveys?.length > 0) {
+          const surveyDetail = surveyDetailsData.survey_details.surveys[0];
+          setSurveyData(surveyDetail);
+        }
+        
       } catch (e) {
         console.error(e);
-        toast.error("Failed to load response details");
+        toast.error("Failed to load data");
       } finally {
         setLoading(false);
       }
     };
-    fetchSingleResponse();
-  }, [surveyId, responseId]);
+    
+    fetchData();
+  }, [surveyId, responseId, fetchSurveyDetails]);
 
   // Sync local date state with form filters when modal opens
   useEffect(() => {
@@ -563,7 +594,6 @@ export default function TabularResponseDetailsPage({
   const getActiveFiltersCount = useCallback(() => {
     let count = 0;
     if (currentFilters.dateRange?.from || currentFilters.dateRange?.to) count++;
-    if (currentFilters.siteId) count++;
     if (currentFilters.buildingId) count++;
     if (currentFilters.wingId) count++;
     if (currentFilters.areaId) count++;
@@ -583,18 +613,6 @@ export default function TabularResponseDetailsPage({
   }, [localFromDate]);
 
   // Handle change functions similar to AssetFilterDialog
-  const handleSiteChange = (value: string) => {
-    setFormFilters(prev => ({
-      ...prev,
-      siteId: value || undefined,
-      buildingId: undefined,
-      wingId: undefined,
-      areaId: undefined,
-      floorId: undefined,
-      roomId: undefined,
-    }));
-  };
-
   const handleBuildingChange = (value: string) => {
     setFormFilters(prev => ({
       ...prev,
@@ -691,12 +709,9 @@ export default function TabularResponseDetailsPage({
               </div>
               <div>
         <p className="text-xl font-semibold text-[#C72030]">
-          {/* {surveyData.questions?.length || 0} */} 1
+          {response?.positive_responses || 0}
         </p>
         <p className="text-sm text-gray-600">Positive</p>
-        {/* {Object.keys(summaryCurrentFilters).length > 0 && (
-          <p className="text-xs text-gray-500">All questions shown</p>
-        )} */}
       </div>
             </div>
           </CardContent>
@@ -720,12 +735,9 @@ export default function TabularResponseDetailsPage({
       </div>
               <div>
         <p className="text-xl font-semibold text-[#C72030]">
-          {/* {surveyData.questions?.length || 0} */} 1
+          {response?.negative_responses || 0}
         </p>
         <p className="text-sm text-gray-600">Negative</p>
-        {/* {Object.keys(summaryCurrentFilters).length > 0 && (
-          <p className="text-xs text-gray-500">All questions shown</p>
-        )} */}
       </div>
             </div>
           </CardContent>
@@ -743,7 +755,7 @@ export default function TabularResponseDetailsPage({
             className="pl-10"
           />
         </div>
-        <Button 
+        {/* <Button 
           variant="outline" 
           size="icon" 
           title="Filter"
@@ -756,13 +768,13 @@ export default function TabularResponseDetailsPage({
               {getActiveFiltersCount()}
             </div>
           )}
-        </Button>
+        </Button> */}
         <Button variant="outline" size="icon" title="Export">
           <Download className="w-4 h-4" />
         </Button>
-        <Button variant="outline" size="icon" title="View">
+        {/* <Button variant="outline" size="icon" title="View">
           <List className="w-4 h-4" />
-        </Button>
+        </Button> */}
       </div>
 
       {/* Survey Response Detail */}
@@ -924,31 +936,13 @@ export default function TabularResponseDetailsPage({
               <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Site</InputLabel>
-                  <MuiSelect
-                    label="Site"
-                    value={formFilters.siteId ?? ""}
-                    onChange={(e) => handleSiteChange(e.target.value)}
-                    displayEmpty
-                    disabled={loadingSites}
-                    MenuProps={selectMenuProps}
-                  >
-                    <MenuItem value=""><em>Select Site</em></MenuItem>
-                    {sites.map((siteItem) => (
-                      <MenuItem key={siteItem.id} value={siteItem.id?.toString() || ''}>
-                        {siteItem.name || 'Unknown Site'}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-                <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Building</InputLabel>
                   <MuiSelect
                     label="Building"
                     value={formFilters.buildingId ?? ""}
                     onChange={(e) => handleBuildingChange(e.target.value)}
                     displayEmpty
-                    disabled={loadingBuildings || !formFilters.siteId}
+                    disabled={loadingBuildings}
                     MenuProps={selectMenuProps}
                   >
                     <MenuItem value=""><em>Select Building</em></MenuItem>
@@ -959,8 +953,6 @@ export default function TabularResponseDetailsPage({
                     ))}
                   </MuiSelect>
                 </FormControl>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Wing</InputLabel>
                   <MuiSelect
@@ -997,9 +989,7 @@ export default function TabularResponseDetailsPage({
                     ))}
                   </MuiSelect>
                 </FormControl>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <FormControl fullWidth variant="outlined">
+                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Floor</InputLabel>
                   <MuiSelect
                     label="Floor"
@@ -1036,6 +1026,12 @@ export default function TabularResponseDetailsPage({
                   </MuiSelect>
                 </FormControl>
               </div>
+              {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
+                
+              </div> */}
+              {/* <div className="grid grid-cols-2 gap-4 mt-4">
+               
+              </div> */}
             </div>
           </div>
 
