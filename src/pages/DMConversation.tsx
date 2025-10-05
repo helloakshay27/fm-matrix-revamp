@@ -65,7 +65,7 @@ const DMConversation = () => {
             }, 5000);
             return () => clearInterval(interval);
         }
-    }, [activeTab]);
+    }, [activeTab, id]);
 
     // Close emoji picker when clicking outside
     useEffect(() => {
