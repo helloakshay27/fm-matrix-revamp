@@ -1062,9 +1062,9 @@ td div , td span, th div, td button, td a {
 }
 
 .task-info-label-enhanced {
-  color: #6b7280 !important;
+  color: #1A1A1A80 !important;
   min-width: 140px !important;
-  font-weight: 500 !important;
+  font-weight: 400 !important;
 }
 
 .task-info-separator-enhanced {
@@ -1073,8 +1073,8 @@ td div , td span, th div, td button, td a {
 }
 
 .task-info-value-enhanced {
-  color: #1f2937 !important;
-  font-weight: 600 !important;
+  color: #1A1A1A !important;
+  font-weight: 500 !important;
   flex: 1 !important;
 }
 
