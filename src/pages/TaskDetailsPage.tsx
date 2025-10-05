@@ -639,6 +639,12 @@ export const TaskDetailsPage = () => {
       attachments: item.attachments || [],
       values: item.values || []
     }));
+    
+    // Debug log to verify attachments
+    console.log('📊 Activity Data with Attachments:', mappedData);
+    console.log('📎 Items with attachments:', mappedData.filter(item => item.attachments?.length > 0));
+    
+    return mappedData;
   };
 
   // Get assigned user name
@@ -699,6 +705,7 @@ export const TaskDetailsPage = () => {
     { key: 'comments', label: 'Comments', sortable: true, defaultVisible: true },
     { key: 'weightage', label: 'Weightage', sortable: true, defaultVisible: true },
     { key: 'rating', label: 'Rating', sortable: true, defaultVisible: true },
+    { key: 'attachments', label: 'Attachments', sortable: false, defaultVisible: true },
     { key: 'score', label: 'Score', sortable: true, defaultVisible: true },
     { key: 'attachments', label: 'Attachments', sortable: false, defaultVisible: true },
   ];
@@ -734,6 +741,26 @@ export const TaskDetailsPage = () => {
         return <span className="text-xs">{item.weightage}</span>;
       case 'rating':
         return <span className="text-xs">{item.rating}</span>;
+      case 'attachments':
+        if (!item.attachments || item.attachments.length === 0) {
+          return <span className="text-xs text-gray-400">-</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {item.attachments.map((url: string, idx: number) => (
+              <a
+                key={idx}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-800 underline"
+                title={`Attachment ${idx + 1}`}
+              >
+                <img src={url} alt={`Attachment ${idx + 1}`} className="w-8 h-8 object-cover" />
+              </a>
+            ))}
+          </div>
+        );
       case 'score':
         return <span className="text-xs">{item.score}</span>;
       case 'attachments':
@@ -1217,7 +1244,7 @@ export const TaskDetailsPage = () => {
                   </span>
                 </div>
                 <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Check-in With <br /> Before/After Photograph</span>
+                  <span className="task-info-label-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 500, fontSize: '16px' }}>Check-in With <br /> Before/After <br /> Photograph</span>
                   <span className="task-info-separator-enhanced">:</span>
                   <span className="task-info-value-enhanced" style={{ fontFamily: 'Work Sans', fontWeight: 400, fontSize: '14px' }}>
                     <Badge className={taskDetails?.before_after_enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>

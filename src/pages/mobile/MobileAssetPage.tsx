@@ -4,6 +4,7 @@ import { MobileAssetList } from "@/components/mobile/MobileAssetList";
 import { MobileAssetDetails } from "@/components/mobile/MobileAssetDetails";
 import { MobileAssetBreakdown } from "@/components/mobile/MobileAssetBreakdown";
 import { MobileAssetFilters } from "@/components/mobile/MobileAssetFilterDialog";
+import { baseClient } from "@/utils/withoutTokenBase";
 
 interface Activity {
   id: number;
@@ -67,17 +68,6 @@ interface AssetApiResponse {
 const mobileAssetService = {
   async getAssets(token: string, page: number = 1, filters?: MobileAssetFilters): Promise<AssetApiResponse> {
     try {
-      // Get base URL from sessionStorage or use default
-      let baseUrl =
-        sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
-        // sessionStorage.getItem("baseUrl") || "https://fm-uat-api.lockated.com/";
-
-      // Ensure baseUrl doesn't have trailing slash and starts with https://
-      baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
-      if (!baseUrl.startsWith("http")) {
-        baseUrl = `https://${baseUrl}`;
-      }
-
       // Build query parameters
       const queryParams = new URLSearchParams();
       queryParams.append('page', page.toString());
@@ -98,32 +88,21 @@ const mobileAssetService = {
         if (filters.breakdown !== undefined) queryParams.append('q[breakdown_eq]', filters.breakdown.toString());
       }
 
-      const url = `${baseUrl}/pms/assets.json?${queryParams.toString()}`;
+      const url = `/pms/assets.json?${queryParams.toString()}`;
 
       console.log("🔍 FETCHING MOBILE ASSETS:");
-      console.log(
-        "  - Base URL from sessionStorage:",
-        sessionStorage.getItem("baseUrl")
-      );
-      console.log("  - Processed Base URL:", baseUrl);
-      console.log("  - Final URL:", url);
+      console.log("  - URL:", url);
       console.log("  - Page:", page);
       console.log("  - Filters:", filters);
       console.log("  - Token:", token?.substring(0, 20) + "...");
 
-      const response = await fetch(url, {
-        method: "GET",
+      const response = await baseClient.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: AssetApiResponse = await response.json();
+      const data: AssetApiResponse = response.data;
       console.log("📦 MOBILE ASSETS API Response:", data);
       console.log("📊 Assets Summary:");
       console.log("  - Total Count:", data.total_count);
@@ -142,39 +121,20 @@ const mobileAssetService = {
 
   async getAssetById(token: string, assetId: string): Promise<MobileAsset> {
     try {
-      // Get base URL from sessionStorage or use default
-      let baseUrl =
-        sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
-        // sessionStorage.getItem("baseUrl") || "https://fm-uat-api.lockated.com/";
-
-      // Ensure baseUrl doesn't have trailing slash and starts with https://
-      baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
-      if (!baseUrl.startsWith("http")) {
-        baseUrl = `https://${baseUrl}`;
-      }
-
-      const url = `${baseUrl}/pms/assets/${assetId}.json`;
+      const url = `/pms/assets/${assetId}.json`;
 
       console.log("🔍 FETCHING SPECIFIC ASSET:");
-      console.log("  - Base URL from sessionStorage:", sessionStorage.getItem("baseUrl"));
-      console.log("  - Processed Base URL:", baseUrl);
-      console.log("  - Final URL:", url);
+      console.log("  - URL:", url);
       console.log("  - Asset ID:", assetId);
       console.log("  - Token:", token?.substring(0, 20) + "...");
 
-      const response = await fetch(url, {
-        method: "GET",
+      const response = await baseClient.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: MobileAsset = await response.json();
+      const data: MobileAsset = response.data;
       console.log("📦 SPECIFIC ASSET API Response:", data);
 
       return data;
@@ -186,18 +146,7 @@ const mobileAssetService = {
 
   async updateAssetStatus(token: string, assetId: string, newStatus: string): Promise<MobileAsset> {
     try {
-      // Get base URL from sessionStorage or use default
-      let baseUrl =
-        sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
-        // sessionStorage.getItem("baseUrl") || "https://fm-uat-api.lockated.com/";
-
-      // Ensure baseUrl doesn't have trailing slash and starts with https://
-      baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
-      if (!baseUrl.startsWith("http")) {
-        baseUrl = `https://${baseUrl}`;
-      }
-
-      const url = `${baseUrl}/pms/assets/${assetId}.json`;
+      const url = `/pms/assets/${assetId}.json`;
 
       // Prepare the update payload
       const updatePayload = {
@@ -213,28 +162,19 @@ const mobileAssetService = {
       };
 
       console.log("🔄 UPDATING ASSET STATUS:");
-      console.log("  - Base URL from sessionStorage:", sessionStorage.getItem("baseUrl"));
-      console.log("  - Processed Base URL:", baseUrl);
-      console.log("  - Final URL:", url);
+      console.log("  - URL:", url);
       console.log("  - Asset ID:", assetId);
       console.log("  - New Status:", newStatus);
       console.log("  - Update Payload:", updatePayload);
       console.log("  - Token:", token?.substring(0, 20) + "...");
 
-      const response = await fetch(url, {
-        method: "PUT",
+      const response = await baseClient.put(url, updatePayload, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatePayload),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: MobileAsset = await response.json();
+      const data: MobileAsset = response.data;
       console.log("📦 UPDATED ASSET API Response:", data);
 
       return data;
@@ -278,12 +218,8 @@ export const MobileAssetPage = () => {
         sessionStorage.getItem("baseUrl")
       );
 
-      // Set baseUrl if not already set
-      if (!sessionStorage.getItem("baseUrl")) {
-        sessionStorage.setItem("baseUrl", "https://oig-api.gophygital.work");
-        // sessionStorage.setItem("baseUrl", "https://fm-uat-api.lockated.com");
-        console.log("📝 Set default baseUrl in sessionStorage");
-      }
+      // Dynamic baseUrl will be set by baseClient interceptor from allowed companies API
+      console.log("📝 Using dynamic baseUrl from allowed companies API");
 
       if (token) {
         // Store token in sessionStorage for future use as mobile_token
