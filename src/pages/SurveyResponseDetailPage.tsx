@@ -24,6 +24,7 @@ import {
   ChevronRight,
   ChevronLeft,
   FileText,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -3638,7 +3639,7 @@ export const SurveyResponseDetailPage = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <QuestionMark className="w-4 h-4 text-[#C72030]" />
+                      <HelpCircle className="w-5 h-5 text-[#C72030]" />
                     </div>
                     <div>
                       <p className="text-xl font-semibold text-[#C72030]">
@@ -3656,7 +3657,7 @@ export const SurveyResponseDetailPage = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <QuestionMark className="w-4 h-4 text-[#C72030]" />
+                      <HelpCircle className="w-5 h-5 text-[#C72030]" />
                     </div>
                     <div>
                       <p className="text-xl font-semibold text-[#C72030]">
@@ -3731,7 +3732,7 @@ export const SurveyResponseDetailPage = () => {
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <QuestionMark className="h-2 w-2 text-[#C72030]" />
+                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
                   </div>
                   <span>
                     {/* OVERALL QUESTION RESPONSE DISTRIBUTION */}
@@ -3765,7 +3766,7 @@ export const SurveyResponseDetailPage = () => {
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <QuestionMark className="h-2 w-2 text-[#C72030]" />
+                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
                   </div>
                   {/* OVERALL RESPONSE DISTRIBUTION */}
                   Q2.
@@ -3792,8 +3793,8 @@ export const SurveyResponseDetailPage = () => {
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                     <QuestionMark className="h-2 w-2 text-[#C72030]" />
+                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                     <HelpCircle className="h-4 w-4 text-[#C72030]" />
                   </div>
                   {/* QUESTION RESPONSE DETAILS */}
                   <span>Q3.</span>
@@ -3897,7 +3898,7 @@ export const SurveyResponseDetailPage = () => {
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
                   <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <QuestionMark className="h-4 w-4 text-[#C72030]" />
+                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
                   </div>
                   {/* EMOJI RESPONSE SUMMARY */}
                   Q4.
@@ -3958,8 +3959,8 @@ export const SurveyResponseDetailPage = () => {
             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <QuestionMark className="h-4 w-4 text-[#C72030]" />
+                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
                   </div>
                   Q5.
                 </CardTitle>
@@ -4037,8 +4038,8 @@ export const SurveyResponseDetailPage = () => {
              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
                 <CardHeader className="bg-[#F6F4EE] mb-6">
                   <CardTitle className="text-lg flex items-center">
-                    <div className="w-8 h-8 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                      <QuestionMark className="h-4 w-4 text-[#C72030]" />
+                    <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                      <HelpCircle className="h-4 w-4 text-[#C72030]" />
                     </div>
                     Customer Satisfaction Score.
                   </CardTitle>
@@ -4157,8 +4158,8 @@ export const SurveyResponseDetailPage = () => {
                <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
               <CardHeader className="bg-[#F6F4EE] mb-6">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <QuestionMark className="h-4 w-4 text-[#C72030]" />
+                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
                   </div>
                   Heat Map
                 </CardTitle>
