@@ -192,6 +192,7 @@ export interface CreateTicketFormData {
   complaint_type: string;
   category_type_id: number;
   priority: string;
+  severity?: string;
   society_staff_type: string;
   assigned_to?: number;
   proactive_reactive: string;
@@ -626,6 +627,12 @@ export const ticketManagementAPI = {
     formData.append('complaint[proactive_reactive]', ticketData.proactive_reactive);
     formData.append('complaint[heading]', ticketData.heading);
     formData.append('complaint[complaint_mode_id]', ticketData.complaint_mode_id.toString());
+    
+    // Add severity if provided
+    if (ticketData.severity) {
+      formData.append('complaint[severity]', ticketData.severity);
+    }
+    
     formData.append('complaint[room_id]', ticketData.room_id.toString());
     formData.append('complaint[wing_id]', ticketData.wing_id.toString());
     formData.append('complaint[area_id]', ticketData.area_id.toString());

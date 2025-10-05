@@ -361,11 +361,11 @@ export const AddTicketDashboard = () => {
         complaint_type: ticketType,
         category_type_id: parseInt(formData.categoryType),
         priority: formData.adminPriority || '',
+        severity: formData.severity || '',
         society_staff_type: 'User',
         proactive_reactive: formData.proactiveReactive || '',
         heading: formData.description,
         ...(formData.complaintMode && { complaint_mode_id: parseInt(formData.complaintMode) }),
-        ...(formData.severity && { severity: formData.severity }),
         room_id: 1,
         wing_id: 1,
         area_id: 1,
@@ -388,6 +388,7 @@ export const AddTicketDashboard = () => {
       console.log('Using site ID from user account:', siteId);
       console.log('User account info:', userAccount);
       console.log('Form data:', formData);
+      console.log('Severity value:', formData.severity);
       console.log('Golden Ticket:', isGoldenTicket);
       console.log('Is Flagged:', isFlagged);
 
