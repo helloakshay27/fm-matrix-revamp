@@ -501,20 +501,20 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-center gap-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setShowRescheduleDialog(false)}
-                className="px-6"
-              >
-                Cancel
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <Button
                 onClick={handleBulkReschedule}
                 style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90 px-6"
+                className="text-white hover:bg-[#C72030]/90 flex-1 h-11"
               >
                 Reschedule 
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowRescheduleDialog(false)}
+                className="flex-1 h-11"
+              >
+                Cancel
               </Button>
             </div>
           </div>
@@ -575,21 +575,21 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
               </FormControl>
             </div>
 
-            <div className="flex justify-center gap-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setShowReassignDialog(false)}
-                className="px-6"
-              >
-                Cancel
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <Button
                 onClick={handleBulkReassign}
                 style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90 px-6"
+                className="text-white hover:bg-[#C72030]/90 flex-1 h-11"
                 disabled={!reassignData.assignedUserId || loadingUsers}
               >
                 Reassign 
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowReassignDialog(false)}
+                className="flex-1 h-11"
+              >
+                Cancel
               </Button>
             </div>
           </div>

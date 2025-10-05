@@ -498,20 +498,20 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClear}
-            className="px-6 py-2"
-          >
-            Clear All
-          </Button>
+        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
           <Button
             onClick={handleApply}
             disabled={isLoading}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex-1 h-11"
           >
             {isLoading ? 'Applying...' : 'Apply Filter'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleClear}
+            className="flex-1 h-11"
+          >
+            Clear All
           </Button>
         </div>
       </DialogContent>
