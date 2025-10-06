@@ -3208,19 +3208,19 @@ export const TicketDetailsPage = () => {
                                     }}
                                   />
                                 ) : isPdf ? (
-                                  <div className="w-full h-full flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                  <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
                                     <FileText className="w-6 h-6" />
                                   </div>
                                 ) : isExcel ? (
-                                  <div className="w-full h-full flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                  <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
                                     <FileSpreadsheet className="w-6 h-6" />
                                   </div>
                                 ) : isWord ? (
-                                  <div className="w-full h-full flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                  <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
                                     <FileText className="w-6 h-6" />
                                   </div>
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                  <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
                                     <File className="w-6 h-6" />
                                   </div>
                                 )}
@@ -5143,19 +5143,19 @@ export const TicketDetailsPage = () => {
                                 }}
                               />
                             ) : isPdf ? (
-                              <div className="w-full h-full flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                              <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
                                 <FileText className="w-6 h-6" />
                               </div>
                             ) : isExcel ? (
-                              <div className="w-full h-full flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                              <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
                                 <FileSpreadsheet className="w-6 h-6" />
                               </div>
                             ) : isWord ? (
-                              <div className="w-full h-full flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                              <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
                                 <FileText className="w-6 h-6" />
                               </div>
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                              <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
                                 <File className="w-6 h-6" />
                               </div>
                             )}
