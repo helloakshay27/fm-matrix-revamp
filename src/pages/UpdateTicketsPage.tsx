@@ -1673,10 +1673,21 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
+  const handleBackToList = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full p-6">
         {/* Header */}
+        <button
+                  onClick={handleBackToList}
+                  className="flex items-center gap-1 hover:text-gray-800 mb-4"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Ticket List
+                </button>
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">UPDATE TICKET</h1>
         </div>

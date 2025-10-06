@@ -10,11 +10,78 @@ import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
+import { Select as MuiSelect } from '@mui/material';
 import MenuItem from '@mui/material/MenuItem';
 import { TextField } from '@mui/material';
 import { Button as MuiButton } from '@mui/material';
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
+import Select, { components } from "react-select";
+
+// Custom MultiValue (tag) styling with top-right close icon
+const CustomMultiValue = (props) => (
+  <div
+    style={{
+      position: "relative",
+      backgroundColor: "#E5E0D3",
+      borderRadius: "2px",
+      margin: "3px",
+      marginTop: "10px",
+      padding: "4px 10px 6px 10px",
+      display: "flex",
+      alignItems: "center",
+    }}
+  >
+    <span style={{ fontSize: "13px", color: "#1a1a1a8a", fontWeight: "500" }}>{props.data.label}</span>
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        props.removeProps.onClick();
+      }}
+      style={{
+          position: "absolute",
+          top: "-4px",
+          right: "-4px",
+          fontSize: "6px",
+          fontWeight: "500",
+          color: "#000",
+          cursor: "pointer",
+          lineHeight: "1",
+          border: "1.5px solid #000",
+          borderRadius: "50%",
+          padding: "2px",
+        }}
+    >
+      ✕
+    </div>
+  </div>
+);
+
+const customStyles = {
+  control: (provided) => ({
+    ...provided,
+    minHeight: "44px",
+    borderColor: "#dcdcdc",
+    boxShadow: "none",
+    fontSize: "14px",
+    paddingTop: "6px", // 👈 adds space under label
+    "&:hover": { borderColor: "#bcbcbc" },
+  }),
+  valueContainer: (provided) => ({
+    ...provided,
+    padding: "4px 6px",
+    flexWrap: "wrap",
+  }),
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    padding: "4px",
+  }),
+  indicatorSeparator: () => ({ display: "none" }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: "#999",
+  }),
+};
 
 const fieldStyles = {
   height: '40px',
@@ -175,7 +242,6 @@ export const TicketDetailsPage = () => {
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [previewImage, setPreviewImage] = useState(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
   const [costInvolveEnabled, setCostInvolveEnabled] = useState<boolean>(false);
@@ -1894,13 +1960,13 @@ export const TicketDetailsPage = () => {
                                   </div>
                                 </div>
                                 <div className="bg-white p-3" style={{ width: '75%', borderRadius: '4px' }}>
-                                  <div className="grid grid-cols-3 gap-x-10 gap-y-4">
+                                  <div className="grid grid-cols-3  gap-4">
                                     {tatGridRows.flat().map((cell, idx) => (
-                                      <div key={idx} className="flex text-center">
-                                        <span className="w-[150px] text-[14px] leading-tight text-gray-500 tracking-wide pr-2">
+                                      <div key={idx} className="flex justify-between items-center">
+                                        <span className="text-[14px] text-left leading-tight text-gray-500 tracking-wide pr-2">
                                           {cell.label}
                                         </span>
-                                        <span className={`text-[13px] md:text-[14px] font-semibold ml-8 ${cell.isExceeded ? 'text-red-600' : 'text-gray-900'}`}>
+                                        <span className={`text-[13px] md:text-[14px] font-semibold ${cell.isExceeded ? 'text-red-600' : 'text-gray-900'}`}>
                                           {cell.isExceeded && cell.label === 'Balance TAT' ? (
                                             <>
                                               <p>{cell.value}</p>
@@ -2231,201 +2297,108 @@ export const TicketDetailsPage = () => {
                           </div>
 
                           {/* Right: Root Cause + Notes (stacked) */}
-                          <div className="w-full lg:w-[38%] flex flex-col gap-8 min-w-0">
-                            <div className="flex flex-col min-w-0">
-                              <FormControl
-                                fullWidth
-                                variant="outlined"
-                                sx={{
-                                  minWidth: 0,
-                                  '& .MuiOutlinedInput-root': {
-                                    backgroundColor: '#FFFFFF',
-                                    borderRadius: '4px',
-                                    fontSize: '14px',
-                                    minHeight: '40px',
-                                    maxHeight: '80px',
-                                    '& fieldset': {
-                                      borderColor: '#E0E0E0',
-                                      borderWidth: '1px',
-                                    },
-                                    '&:hover fieldset': {
-                                      borderColor: '#C72030',
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                      borderColor: '#C72030',
-                                      borderWidth: '2px',
-                                    },
-                                  },
-                                  '& .MuiInputLabel-root': {
-                                    fontSize: '14px',
-                                    color: '#6B6B6B',
-                                    backgroundColor: '#FFFFFF',
-                                    padding: '0 4px',
-                                    '&.Mui-focused': {
-                                      color: '#C72030',
-                                    },
-                                  },
-                                  '& .MuiSelect-select': {
-                                    padding: '10px 12px',
-                                    fontSize: '14px',
-                                    color: '#1A1A1A',
-                                    maxWidth: '100%',
-                                    minHeight: '20px',
-                                    maxHeight: '60px',
-                                    overflow: 'auto',
-                                  },
-                                }}
-                              >
-                                <InputLabel shrink>Root Cause Analysis</InputLabel>
-                                <Select
-                                  label="Root Cause Analysis"
-                                  notched
-                                  displayEmpty
-                                  multiple
-                                  value={(() => {
-                                    if (!ticketData.root_cause) return [];
+                          <div className="w-full lg:w-[38%] min-w-0">
+                           <div className="min-w-0 relative">
+      <div className="relative w-full">
+        {/* Floating label on border */}
+        <label
+          style={{
+            position: "absolute",
+            top: "-10px",
+            left: "12px",
+            background: "#fff",
+            padding: "0 6px",
+            fontWeight: 500,
+            fontSize: "14px",
+            color: "#1A1A1A",
+            zIndex: 10,
+          }}
+        >
+          Root Cause Analysis
+        </label>
 
-                                    // Convert root_cause string to template IDs
-                                    const rootCauseString = typeof ticketData.root_cause === 'string'
-                                      ? ticketData.root_cause
-                                      : Array.isArray(ticketData.root_cause)
-                                        ? ticketData.root_cause.join(', ')
-                                        : '';
+        {/* React Select */}
+        <Select
+          isMulti
+          value={(() => {
+            if (!ticketData.root_cause) return [];
+            const rootCauseString =
+              typeof ticketData.root_cause === "string"
+                ? ticketData.root_cause
+                : Array.isArray(ticketData.root_cause)
+                ? ticketData.root_cause.join(", ")
+                : "";
 
-                                    if (!rootCauseString) return [];
+            if (!rootCauseString) return [];
 
-                                    // Split and match with templates to get IDs
-                                    const rootCauseValues = rootCauseString.split(',').map(s => s.trim());
-                                    const matchedTemplates = communicationTemplates.filter(
-                                      template => template.identifier === "Root Cause Analysis" &&
-                                        rootCauseValues.includes(template.identifier_action)
-                                    );
+            const rootCauseValues = rootCauseString.split(",").map((s) => s.trim());
+            const matchedTemplates = communicationTemplates.filter(
+              (t) =>
+                t.identifier === "Root Cause Analysis" &&
+                rootCauseValues.includes(t.identifier_action)
+            );
 
-                                    return matchedTemplates.map(t => t.id);
-                                  })()}
-                                  onChange={(e) => handleRootCauseChange(e.target.value)}
-                                  renderValue={(selected) => {
-                                    if (!selected || (Array.isArray(selected) && selected.length === 0)) {
-                                      return <span style={{ color: '#9CA3AF', fontSize: '14px' }}>Select Root Cause Analysis</span>;
-                                    }
+            return matchedTemplates.map((t) => ({
+              value: t.id,
+              label: t.identifier_action,
+            }));
+          })()}
+          onChange={(selectedOptions) => {
+            const selectedIds = selectedOptions
+              ? selectedOptions.map((opt) => opt.value)
+              : [];
+            handleRootCauseChange(selectedIds);
+            setSelectedOptions(selectedOptions);
+          }}
+          options={communicationTemplates
+            .filter((t) => t.identifier === "Root Cause Analysis")
+            .map((t) => ({
+              value: t.id,
+              label: t.identifier_action,
+            }))}
+          placeholder="Select Root Cause Analysis..."
+          styles={customStyles}
+          components={{
+            MultiValue: CustomMultiValue,
+            MultiValueRemove: () => null,
+          }}
+          closeMenuOnSelect={false}
+        />
+      </div>
+    </div>
+{ticketData.root_cause && (
+    <div
+      className="space-y-2 min-w-0"
+      style={{ fontSize: "14px", fontWeight: "500" }}
+    >
+      {(() => {
+        const selectedValues =
+          typeof ticketData.root_cause === "string"
+            ? ticketData.root_cause.split(",").map((s) => s.trim())
+            : Array.isArray(ticketData.root_cause)
+            ? ticketData.root_cause
+            : [ticketData.root_cause];
 
-                                    const selectedIds = Array.isArray(selected) ? selected : [selected];
-                                    const selectedTemplates = communicationTemplates.filter(
-                                      (t) => selectedIds.includes(t.id)
-                                    );
-
-                                    return (
-                                      <div
-                                        style={{
-                                          display: 'flex',
-                                          flexWrap: 'wrap',
-                                          gap: '4px',
-                                          maxHeight: '60px',
-                                          overflowY: 'auto',
-                                          padding: '2px 0',
-                                        }}
-                                      >
-                                        {selectedTemplates.map((template) => (
-                                          <div
-                                            key={template.id}
-                                            style={{
-                                              backgroundColor: 'rgb(221, 215, 202)',
-                                              color: '#1A1A1A',
-                                              padding: '4px 8px',
-                                              borderRadius: '4px',
-                                              fontSize: '12px',
-                                              fontWeight: '500',
-                                              display: 'inline-flex',
-                                              alignItems: 'center',
-                                              lineHeight: '1.2',
-                                              maxWidth: '100%',
-                                            }}
-                                          >
-                                            <span
-                                              style={{
-                                                maxWidth: '150px',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                              }}
-                                            >
-                                              {template.identifier_action}
-                                            </span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    );
-                                  }}
-                                  MenuProps={{
-                                    PaperProps: {
-                                      sx: {
-                                        borderRadius: '8px',
-                                        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-                                        marginTop: '4px',
-                                        maxWidth: 'calc(100vw - 32px)',
-                                        '& .MuiMenuItem-root': {
-                                          fontSize: '14px',
-                                          padding: '10px 16px',
-                                          color: '#1A1A1A',
-                                          wordBreak: 'break-word',
-                                          whiteSpace: 'normal',
-                                          '&:hover': {
-                                            backgroundColor: '#F5F5F5',
-                                          },
-                                          '&.Mui-selected': {
-                                            backgroundColor: '#FBE8EA',
-                                            color: '#C72030',
-                                            fontWeight: '500',
-                                            '&:hover': {
-                                              backgroundColor: '#FBE8EA',
-                                            },
-                                          },
-                                        },
-                                      },
-                                    },
-                                  }}
-                                >
-                                  {communicationTemplates
-                                    .filter(template => template.identifier === "Root Cause Analysis")
-                                    .map((template) => (
-                                      <MenuItem key={template.id} value={template.id}>
-                                        {template.identifier_action}
-                                      </MenuItem>
-                                    ))}
-                                </Select>
-                              </FormControl>
-
-                              {/* Show selected root cause descriptions from template body */}
-                              {ticketData.root_cause && (
-                                <div className="mt-2 space-y-2 min-w-0" style={{ fontSize: '14px', fontWeight: 'medium' }}>
-                                  {(() => {
-                                    const selectedValues = typeof ticketData.root_cause === 'string'
-                                      ? ticketData.root_cause.split(',').map(s => s.trim())
-                                      : Array.isArray(ticketData.root_cause)
-                                        ? ticketData.root_cause
-                                        : [ticketData.root_cause];
-
-                                    return selectedValues.map((value, index) => {
-                                      const matchedTemplate = communicationTemplates.find(
-                                        template => template.identifier === "Root Cause Analysis" &&
-                                          template.identifier_action === value
-                                      );
-                                      return (
-                                        <div
-                                          key={index}
-                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                          style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-                                        >
-                                          {matchedTemplate?.body || value}
-                                        </div>
-                                      );
-                                    });
-                                  })()}
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex flex-col min-w-0">
+        return selectedValues.map((value, index) => {
+          const matchedTemplate = communicationTemplates.find(
+            (template) =>
+              template.identifier === "Root Cause Analysis" &&
+              template.identifier_action === value
+          );
+          return (
+            <div
+              key={index}
+              className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+              style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+            >
+              {matchedTemplate?.body || value}
+            </div>
+          );
+        });
+      })()}
+    </div>
+  )}
+                            <div className="flex flex-col min-w-0 mt-4">
                               <span className="text-[11px] tracking-wide text-[#6B6B6B] mb-1">
                                 Additional Notes
                               </span>
@@ -2616,7 +2589,7 @@ export const TicketDetailsPage = () => {
                                     Vendor <span style={{ color: "red" }}>*</span>
                                   </span>
                                 </InputLabel>
-                                <Select
+                                <MuiSelect
                                   labelId={`vendor-label-${row.id}`}
                                   label="Vendor *"
                                   value={row.vendor_id}
@@ -2644,7 +2617,7 @@ export const TicketDetailsPage = () => {
                                       {supplier.company_name || supplier.email}
                                     </MenuItem>
                                   ))}
-                                </Select>
+                                </MuiSelect>
                               </FormControl>
 
                               {/* File Input for Attachments */}
@@ -3141,7 +3114,7 @@ export const TicketDetailsPage = () => {
                         }}
                       />
 
-                      <div className="flex justify-between items-start relative z-10">
+                      <div className="flex justify-between items-start relative z-1">
                         {[
                           { label: "Site", value: ticketData.site_name || "-" },
                           { label: "Building", value: ticketData.building_name || "-" },
@@ -3157,7 +3130,7 @@ export const TicketDetailsPage = () => {
                             <div className="text-sm text-gray-500 mb-2 mt-1">
                               {item.label}
                             </div>
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
+                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
                             <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
                               {item.value}
                             </div>
@@ -3440,7 +3413,7 @@ export const TicketDetailsPage = () => {
 
                   {/* Body */}
                   <div className="bg-[#FAFAF8]">
-                    <div className="flex flex-col md:flex-row gap-3 ">
+                    <div className="flex flex-col md:flex-row gap-3 px-2">
                       {/* Internal Comments Section */}
                       <div className="flex-1">
                         <div className="bg-white w-full text-center py-0.5 bg-[#fafafa] border-[#D9D9D9]">
@@ -3799,188 +3772,186 @@ export const TicketDetailsPage = () => {
                 hasData(ticketData.effective_priority) ||
                 hasData(ticketData.assigned_to) ? (
 
-
                 <Card className="w-full">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div style={{ width: '40px', height: '40px' }} className="rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Ticket Details
-                    </h3>
-                  </div>
-                  <div className="px-6 bg-[#dfd9cb]">
-                    <div className="flex justify-between py-4 border-b border-[#dfd9cb]">
-                      <div className='w-full '>
-                        <div className="">
-                          <div className="flex items-start mb-4">
-                            <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Description</span>
-                            <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
-                              {ticketData.heading || 'No description available'}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                        <div style={{ width: '40px', height: '40px' }} className="rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                          <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
+                        </div>
+                        <h3 className="text-lg font-semibold uppercase text-black">
+                          Ticket Details
+                        </h3>
+                      </div>
+                      <div className="px-6 bg-[#dfd9cb]">
+                        <div className="flex justify-between py-4 border-b border-[#dfd9cb]">
+                          <div className='w-full '>
                             <div className="">
                               <div className="flex items-start mb-4">
-                                <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Category</span>
+                                <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Description</span>
                                 <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
-                                  {ticketData.category_type || '-'}
+                                  {ticketData.heading || 'No description available'}
                                 </span>
                               </div>
-                              <div className="flex items-start mb-4">
-                                <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Sub Category</span>
-                                <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
-                                  {ticketData.sub_category_type || '-'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="bg-white p-3" style={{ width: '75%', borderRadius: '4px' }}>
-                              <div className="grid grid-cols-3 gap-x-10 gap-y-4">
-                                {tatGridRows.flat().map((cell, idx) => (
-                                  <div key={idx} className="flex text-center">
-                                    <span className="w-[150px] text-[14px] leading-tight text-gray-500 tracking-wide pr-2">
-                                      {cell.label}
-                                    </span>
-                                    <span className={`text-[13px] md:text-[14px] font-semibold ml-8 ${cell.isExceeded ? 'text-red-600' : 'text-gray-900'}`}>
-                                      {cell.isExceeded && cell.label === 'Balance TAT' ? (
-                                        <>
-                                          <p>{cell.value}</p>
-                                          <p className="text-[11px] text-red-500 italic ml-2">
-                                            (Exceeded)
-                                          </p>
-                                        </>
-                                      ) : (
-                                        cell.value
-                                      )}
+                              <div className="flex justify-between items-center">
+                                <div className="">
+                                  <div className="flex items-start mb-4">
+                                    <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Category</span>
+                                    <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
+                                      {ticketData.category_type || '-'}
                                     </span>
                                   </div>
-                                ))}
+                                  <div className="flex items-start mb-4">
+                                    <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Sub Category</span>
+                                    <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
+                                      {ticketData.sub_category_type || '-'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="bg-white p-3" style={{ width: '75%', borderRadius: '4px' }}>
+                                  <div className="grid grid-cols-3  gap-4">
+                                    {tatGridRows.flat().map((cell, idx) => (
+                                      <div key={idx} className="flex justify-between items-center">
+                                        <span className="text-[14px] text-left leading-tight text-gray-500 tracking-wide pr-2">
+                                          {cell.label}
+                                        </span>
+                                        <span className={`text-[13px] md:text-[14px] font-semibold ${cell.isExceeded ? 'text-red-600' : 'text-gray-900'}`}>
+                                          {cell.isExceeded && cell.label === 'Balance TAT' ? (
+                                            <>
+                                              <p>{cell.value}</p>
+                                              <p className="text-[11px] text-red-500 italic ml-2">
+                                                (Exceeded)
+                                              </p>
+                                            </>
+                                          ) : (
+                                            cell.value
+                                          )}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
                               </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col justify-around" style={{ textAlign: 'center', marginLeft: '20px' }}>
+                            <button className='w-full py-1 bg-black rounded-full text-white mb-2 text-xs px-3'>
+                              {ticketData.issue_status || '-'}
+                            </button>
+                            <div className='mb-2'>
+                              <button className='w-full py-1 bg-[#FFCFCF] rounded-full text-[#C72030] text-xs px-3 font-semibold'>
+                                {getPriorityLabel(ticketData.priority)}
+                              </button>
+                            </div>
+                            <div className="flex mb-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <mask id="mask0_9118_15345" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="2" y="0" width="20" height="23">
+                                  <path d="M12 21.9995C16.6945 21.9995 20.5 18.194 20.5 13.4995C20.5 8.80501 16.6945 4.99951 12 4.99951C7.3055 4.99951 3.5 8.80501 3.5 13.4995C3.5 18.194 7.3055 21.9995 12 21.9995Z" fill="white" stroke="white" strokeWidth="2" strokeLinejoin="round" />
+                                  <path d="M15.5 1.99951H8.5M19 4.99951L17.5 6.49951" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  <path d="M12 9V13.5" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </mask>
+                                <g mask="url(#mask0_9118_15345)">
+                                  <path d="M0 0H24V24H0V0Z" fill="#434343" />
+                                </g>
+                              </svg>
+                              <span style={{ fontSize: 16, fontWeight: 600 }} className="text-black ml-1">
+                                {formatTicketAgeing(currentAgeing)}
+                              </span>
+                            </div>
+                            <div className="flex justify-center items-center gap-2 mb-2">
+                              {ticketData.is_executive_ecalation === true && (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 16 18" fill="none">
+                                <path d="M12.36 9.76C14.31 10.42 16 11.5 16 13V18H0V13C0 11.5 1.69 10.42 3.65 9.76L4.27 11L4.5 11.5C3 11.96 1.9 12.62 1.9 13V16.1H6.12L7 11.03L6.06 9.15C6.68 9.08 7.33 9.03 8 9.03C8.67 9.03 9.32 9.08 9.94 9.15L9 11.03L9.88 16.1H14.1V13C14.1 12.62 13 11.96 11.5 11.5L11.73 11L12.36 9.76ZM8 2C6.9 2 6 2.9 6 4C6 5.1 6.9 6 8 6C9.1 6 10 5.1 10 4C10 2.9 9.1 2 8 2ZM8 8C5.79 8 4 6.21 4 4C4 1.79 5.79 0 8 0C10.21 0 12 1.79 12 4C12 6.21 10.21 8 8 8Z" fill="black" />
+                              </svg>)}
+                              {ticketData.is_golden_ticket && (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
+                                  <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
+                                  <path d="M17.6229 19.896C17.6103 19.896 17.5977 19.8926 17.5864 19.8862L10.998 16.0584L4.40068 19.8732C4.38954 19.8795 4.37736 19.8826 4.36471 19.8826C4.35021 19.8826 4.3357 19.879 4.32352 19.8696C4.30055 19.8541 4.2901 19.8267 4.2966 19.8006L6.05905 12.6117L0.235078 7.77705C0.213845 7.75947 0.205725 7.73112 0.214311 7.7052C0.223361 7.67996 0.247029 7.66172 0.275107 7.65972L7.95284 7.04474L10.9502 0.241834C10.9614 0.216923 10.9866 0.200684 11.0147 0.200684C11.0147 0.200684 11.0147 0.200684 11.0149 0.200684C11.0432 0.200684 11.0685 0.217032 11.0794 0.241943L14.062 7.05063L21.7385 7.68085C21.7665 7.68307 21.7902 7.70121 21.7992 7.72701C21.8076 7.75281 21.7994 7.78105 21.7783 7.7984L15.9439 12.6213L17.6909 19.8137C17.6973 19.8397 17.6862 19.8674 17.6638 19.883C17.6512 19.8916 17.6371 19.896 17.6229 19.896Z" fill="url(#paint1_linear_9118_15308)" />
+                                  <path d="M7.99743 7.10811L11.0112 0.268066L14.0103 7.11412L21.7291 7.7479L15.8627 12.5975L17.6192 19.8291L10.9944 15.9802L4.36114 19.8159L6.13322 12.5877L0.277344 7.72644L7.99743 7.10811Z" fill="url(#paint2_linear_9118_15308)" />
+                                  <path d="M11.1891 11.551C11.1439 11.4959 11.0748 11.4633 11.0016 11.4633C11.0013 11.4633 11.0013 11.4633 11.0009 11.4633C10.928 11.4633 10.8587 11.4956 10.8138 11.5507L8.37693 14.534L10.5906 11.395C10.6317 11.3368 10.6425 11.2637 10.6201 11.197C10.5972 11.1303 10.5441 11.0772 10.4752 11.053L6.76172 9.75321L10.5606 10.8015C10.5824 10.8077 10.6044 10.8107 10.6263 10.8107C10.6762 10.8107 10.7253 10.7958 10.7663 10.7672C10.8257 10.7258 10.8619 10.6606 10.8644 10.5904L11.0063 6.80371L11.1405 10.5907C11.143 10.6611 11.179 10.7263 11.2382 10.7677C11.2793 10.7962 11.3287 10.8113 11.3782 10.8113C11.4 10.8113 11.4222 10.8084 11.4438 10.8026L15.245 9.76189L11.5286 11.054C11.4599 11.0783 11.4064 11.1311 11.3835 11.1977C11.3608 11.2647 11.3714 11.3376 11.4124 11.396L13.6195 14.5391L11.1891 11.551Z" fill="white" />
+                                  <path d="M10.6435 10.0628L8.08027 6.91957L11.0111 0.267578L10.6435 10.0628ZM21.7289 7.74752H21.7291L14.2765 7.13554L11.9655 10.4201L21.7289 7.74752ZM9.90642 11.0964L0.277344 7.72606L5.98598 12.4647L9.90642 11.0964ZM11.961 11.7709L17.6192 19.8288L15.9261 12.8597L11.961 11.7709ZM4.36114 19.8153L10.7915 16.0971L10.6454 12.1225L4.36114 19.8153Z" fill="url(#paint3_linear_9118_15308)" />
+                                  <path d="M11.3577 10.0658L11.0112 0.267578L13.9241 6.91623L11.3577 10.0658ZM7.72152 7.12998L0.277344 7.72606L10.0372 10.4191L7.72152 7.12998ZM21.7289 7.74752L12.0992 11.0962L16.0235 12.464L21.7289 7.74752ZM11.2154 16.1082L17.6191 19.8288L11.3594 12.1331L11.2154 16.1082ZM10.0325 11.7743L6.06523 12.8657L4.36126 19.8154V19.8152L10.0325 11.7743Z" fill="url(#paint4_linear_9118_15308)" />
+                                  <defs>
+                                    <radialGradient id="paint0_radial_9118_15308" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11.0059 10.0489) scale(10.7481 10.3019)">
+                                      <stop stopColor="#D08B01" />
+                                      <stop offset="0.5758" stopColor="#F2B145" />
+                                      <stop offset="1" stopColor="#F8F3BC" />
+                                    </radialGradient>
+                                    <linearGradient id="paint1_linear_9118_15308" x1="0.211178" y1="10.0483" x2="21.8026" y2="10.0483" gradientUnits="userSpaceOnUse">
+                                      <stop stopColor="#F6DB89" />
+                                      <stop offset="1" stopColor="#F8F7DA" />
+                                    </linearGradient>
+                                    <linearGradient id="paint2_linear_9118_15308" x1="0.277344" y1="10.0486" x2="21.7291" y2="10.0486" gradientUnits="userSpaceOnUse">
+                                      <stop stopColor="#ED9017" />
+                                      <stop offset="0.1464" stopColor="#F09F23" />
+                                      <stop offset="0.4262" stopColor="#F6C642" />
+                                      <stop offset="0.4945" stopColor="#F8D04A" />
+                                      <stop offset="1" stopColor="#F6E6B5" />
+                                    </linearGradient>
+                                    <linearGradient id="paint3_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7291" y2="10.0482" gradientUnits="userSpaceOnUse">
+                                      <stop stopColor="#ED9017" />
+                                      <stop offset="0.1464" stopColor="#F09F23" />
+                                      <stop offset="0.4262" stopColor="#F6C642" />
+                                      <stop offset="0.4945" stopColor="#F8D04A" />
+                                      <stop offset="1" stopColor="#F6E6B5" />
+                                    </linearGradient>
+                                    <linearGradient id="paint4_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7288" y2="10.0482" gradientUnits="userSpaceOnUse">
+                                      <stop stopColor="#DF8D00" />
+                                      <stop offset="0.0848" stopColor="#FFD006" />
+                                      <stop offset="0.2242" stopColor="#F4AD06" />
+                                      <stop offset="0.85" stopColor="#F4AD06" />
+                                      <stop offset="0.8777" stopColor="#F2A807" />
+                                      <stop offset="0.9093" stopColor="#EC9B09" />
+                                      <stop offset="0.9428" stopColor="#E2840D" />
+                                      <stop offset="0.9773" stopColor="#D46412" />
+                                      <stop offset="1" stopColor="#C94B16" />
+                                    </linearGradient>
+                                  </defs>
+                                </svg>
+                              )}
+                              {ticketData.is_flagged && (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
+                                  <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
+                                </svg>
+                              )}
                             </div>
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col justify-around" style={{ textAlign: 'center', marginLeft: '20px' }}>
-                        <button className='w-full py-1 bg-black rounded-full text-white mb-2 text-xs px-3'>
-                          {ticketData.issue_status || '-'}
-                        </button>
-                        <div className='mb-2'>
-                          <button className='w-full py-1 bg-[#FFCFCF] rounded-full text-[#C72030] text-xs px-3 font-semibold'>
-                            {getPriorityLabel(ticketData.priority)}
-                          </button>
-                        </div>
-                        <div className="flex mb-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <mask id="mask0_9118_15345" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="2" y="0" width="20" height="23">
-                              <path d="M12 21.9995C16.6945 21.9995 20.5 18.194 20.5 13.4995C20.5 8.80501 16.6945 4.99951 12 4.99951C7.3055 4.99951 3.5 8.80501 3.5 13.4995C3.5 18.194 7.3055 21.9995 12 21.9995Z" fill="white" stroke="white" strokeWidth="2" strokeLinejoin="round" />
-                              <path d="M15.5 1.99951H8.5M19 4.99951L17.5 6.49951" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M12 9V13.5" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </mask>
-                            <g mask="url(#mask0_9118_15345)">
-                              <path d="M0 0H24V24H0V0Z" fill="#434343" />
-                            </g>
-                          </svg>
-                          <span style={{ fontSize: 16, fontWeight: 600 }} className="text-black ml-1">
-                            {formatTicketAgeing(currentAgeing)}
-                          </span>
-                        </div>
-                        <div className="flex justify-center items-center gap-2 mb-2">
-                          {ticketData.is_executive_ecalation === true && (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 16 18" fill="none">
-                            <path d="M12.36 9.76C14.31 10.42 16 11.5 16 13V18H0V13C0 11.5 1.69 10.42 3.65 9.76L4.27 11L4.5 11.5C3 11.96 1.9 12.62 1.9 13V16.1H6.12L7 11.03L6.06 9.15C6.68 9.08 7.33 9.03 8 9.03C8.67 9.03 9.32 9.08 9.94 9.15L9 11.03L9.88 16.1H14.1V13C14.1 12.62 13 11.96 11.5 11.5L11.73 11L12.36 9.76ZM8 2C6.9 2 6 2.9 6 4C6 5.1 6.9 6 8 6C9.1 6 10 5.1 10 4C10 2.9 9.1 2 8 2ZM8 8C5.79 8 4 6.21 4 4C4 1.79 5.79 0 8 0C10.21 0 12 1.79 12 4C12 6.21 10.21 8 8 8Z" fill="black" />
-                          </svg>)}
-                          {ticketData.is_golden_ticket && (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
-                              <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
-                              <path d="M17.6229 19.896C17.6103 19.896 17.5977 19.8926 17.5864 19.8862L10.998 16.0584L4.40068 19.8732C4.38954 19.8795 4.37736 19.8826 4.36471 19.8826C4.35021 19.8826 4.3357 19.879 4.32352 19.8696C4.30055 19.8541 4.2901 19.8267 4.2966 19.8006L6.05905 12.6117L0.235078 7.77705C0.213845 7.75947 0.205725 7.73112 0.214311 7.7052C0.223361 7.67996 0.247029 7.66172 0.275107 7.65972L7.95284 7.04474L10.9502 0.241834C10.9614 0.216923 10.9866 0.200684 11.0147 0.200684C11.0147 0.200684 11.0147 0.200684 11.0149 0.200684C11.0432 0.200684 11.0685 0.217032 11.0794 0.241943L14.062 7.05063L21.7385 7.68085C21.7665 7.68307 21.7902 7.70121 21.7992 7.72701C21.8076 7.75281 21.7994 7.78105 21.7783 7.7984L15.9439 12.6213L17.6909 19.8137C17.6973 19.8397 17.6862 19.8674 17.6638 19.883C17.6512 19.8916 17.6371 19.896 17.6229 19.896Z" fill="url(#paint1_linear_9118_15308)" />
-                              <path d="M7.99743 7.10811L11.0112 0.268066L14.0103 7.11412L21.7291 7.7479L15.8627 12.5975L17.6192 19.8291L10.9944 15.9802L4.36114 19.8159L6.13322 12.5877L0.277344 7.72644L7.99743 7.10811Z" fill="url(#paint2_linear_9118_15308)" />
-                              <path d="M11.1891 11.551C11.1439 11.4959 11.0748 11.4633 11.0016 11.4633C11.0013 11.4633 11.0013 11.4633 11.0009 11.4633C10.928 11.4633 10.8587 11.4956 10.8138 11.5507L8.37693 14.534L10.5906 11.395C10.6317 11.3368 10.6425 11.2637 10.6201 11.197C10.5972 11.1303 10.5441 11.0772 10.4752 11.053L6.76172 9.75321L10.5606 10.8015C10.5824 10.8077 10.6044 10.8107 10.6263 10.8107C10.6762 10.8107 10.7253 10.7958 10.7663 10.7672C10.8257 10.7258 10.8619 10.6606 10.8644 10.5904L11.0063 6.80371L11.1405 10.5907C11.143 10.6611 11.179 10.7263 11.2382 10.7677C11.2793 10.7962 11.3287 10.8113 11.3782 10.8113C11.4 10.8113 11.4222 10.8084 11.4438 10.8026L15.245 9.76189L11.5286 11.054C11.4599 11.0783 11.4064 11.1311 11.3835 11.1977C11.3608 11.2647 11.3714 11.3376 11.4124 11.396L13.6195 14.5391L11.1891 11.551Z" fill="white" />
-                              <path d="M10.6435 10.0628L8.08027 6.91957L11.0111 0.267578L10.6435 10.0628ZM21.7289 7.74752H21.7291L14.2765 7.13554L11.9655 10.4201L21.7289 7.74752ZM9.90642 11.0964L0.277344 7.72606L5.98598 12.4647L9.90642 11.0964ZM11.961 11.7709L17.6192 19.8288L15.9261 12.8597L11.961 11.7709ZM4.36114 19.8153L10.7915 16.0971L10.6454 12.1225L4.36114 19.8153Z" fill="url(#paint3_linear_9118_15308)" />
-                              <path d="M11.3577 10.0658L11.0112 0.267578L13.9241 6.91623L11.3577 10.0658ZM7.72152 7.12998L0.277344 7.72606L10.0372 10.4191L7.72152 7.12998ZM21.7289 7.74752L12.0992 11.0962L16.0235 12.464L21.7289 7.74752ZM11.2154 16.1082L17.6191 19.8288L11.3594 12.1331L11.2154 16.1082ZM10.0325 11.7743L6.06523 12.8657L4.36126 19.8154V19.8152L10.0325 11.7743Z" fill="url(#paint4_linear_9118_15308)" />
-                              <defs>
-                                <radialGradient id="paint0_radial_9118_15308" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11.0059 10.0489) scale(10.7481 10.3019)">
-                                  <stop stopColor="#D08B01" />
-                                  <stop offset="0.5758" stopColor="#F2B145" />
-                                  <stop offset="1" stopColor="#F8F3BC" />
-                                </radialGradient>
-                                <linearGradient id="paint1_linear_9118_15308" x1="0.211178" y1="10.0483" x2="21.8026" y2="10.0483" gradientUnits="userSpaceOnUse">
-                                  <stop stopColor="#F6DB89" />
-                                  <stop offset="1" stopColor="#F8F7DA" />
-                                </linearGradient>
-                                <linearGradient id="paint2_linear_9118_15308" x1="0.277344" y1="10.0486" x2="21.7291" y2="10.0486" gradientUnits="userSpaceOnUse">
-                                  <stop stopColor="#ED9017" />
-                                  <stop offset="0.1464" stopColor="#F09F23" />
-                                  <stop offset="0.4262" stopColor="#F6C642" />
-                                  <stop offset="0.4945" stopColor="#F8D04A" />
-                                  <stop offset="1" stopColor="#F6E6B5" />
-                                </linearGradient>
-                                <linearGradient id="paint3_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7291" y2="10.0482" gradientUnits="userSpaceOnUse">
-                                  <stop stopColor="#ED9017" />
-                                  <stop offset="0.1464" stopColor="#F09F23" />
-                                  <stop offset="0.4262" stopColor="#F6C642" />
-                                  <stop offset="0.4945" stopColor="#F8D04A" />
-                                  <stop offset="1" stopColor="#F6E6B5" />
-                                </linearGradient>
-                                <linearGradient id="paint4_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7288" y2="10.0482" gradientUnits="userSpaceOnUse">
-                                  <stop stopColor="#DF8D00" />
-                                  <stop offset="0.0848" stopColor="#FFD006" />
-                                  <stop offset="0.2242" stopColor="#F4AD06" />
-                                  <stop offset="0.85" stopColor="#F4AD06" />
-                                  <stop offset="0.8777" stopColor="#F2A807" />
-                                  <stop offset="0.9093" stopColor="#EC9B09" />
-                                  <stop offset="0.9428" stopColor="#E2840D" />
-                                  <stop offset="0.9773" stopColor="#D46412" />
-                                  <stop offset="1" stopColor="#C94B16" />
-                                </linearGradient>
-                              </defs>
-                            </svg>
-                          )}
-                          {ticketData.is_flagged && (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
-                              <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
-                            </svg>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <CardContent className="pt-6">
-                    {[
-                      [
-                        { label: 'Issue Type', value: ticketData.issue_type || '-' },
-                        { label: 'Assigned To', value: ticketData.assigned_to || '-' },
-                        { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
-                        { label: 'Association', value: ticketData.service_or_asset || '-' },
-                      ],
-                      [
-                        { label: 'Created By', value: ticketData.created_by_name || '-' },
-                        { label: 'Updated By', value: ticketData.updated_by || '-' },
-                        { label: 'Mode', value: ticketData.complaint_mode || '-' },
-                        { label: 'Identification', value: ticketData.proactive_reactive || '-' },
-                      ],
-                    ].map((row, rIdx) => (
-                      <div
-                        key={rIdx}
-                        className="grid grid-cols-2 md:grid-cols-4 gap-6"
-                      >
-                        {row
-                          .filter(f => hasData(f.value))
-                          .map(field => (
-                            <div key={field.label} className="mb-4">
-                              <div className="flex">
-                                <div className="w-[120px] text-[14px] leading-tight text-gray-500 tracking-wide pr-2">
-                                  {field.label}
+                      <CardContent className="pt-6">
+                        {[
+                          [
+                            { label: 'Issue Type', value: ticketData.issue_type || '-' },
+                            { label: 'Assigned To', value: ticketData.assigned_to || '-' },
+                            { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
+                            { label: 'Association', value: ticketData.service_or_asset || '-' },
+                          ],
+                          [
+                            { label: 'Created By', value: ticketData.created_by_name || '-' },
+                            { label: 'Updated By', value: ticketData.updated_by || '-' },
+                            { label: 'Mode', value: ticketData.complaint_mode || '-' },
+                            { label: 'Identification', value: ticketData.proactive_reactive || '-' },
+                          ],
+                        ].map((row, rIdx) => (
+                          <div
+                            key={rIdx}
+                            className="grid grid-cols-2 md:grid-cols-4 gap-6"
+                          >
+                            {row
+                              .filter(f => hasData(f.value))
+                              .map(field => (
+                                <div key={field.label} className="mb-4">
+                                  <div className="flex">
+                                    <div className="w-[120px] text-[14px] leading-tight text-gray-500 tracking-wide pr-2">
+                                      {field.label}
+                                    </div>
+                                    <div className="text-[14px] font-semibold text-gray-900">
+                                      {field.value}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-[14px] font-semibold text-gray-900">
-                                  {field.value}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-
+                              ))}
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
               ) : (
                 /* No Data Available Message */
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -4040,352 +4011,259 @@ export const TicketDetailsPage = () => {
               </div>
             </div>
 
-            <Card className="w-full bg-white rounded-lg shadow-sm border">
-              {/* Header (consistent) */}
-              <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+              <Card className="w-full bg-white rounded-lg shadow-sm border">
+                  {/* Header (consistent) */}
+                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Ticket Management
+                      </h3>
+                      {ticketData.closure_date === null || ticketData.closure_date === undefined || ticketData.closure_date === '' && (
+                        <span className="w-2 h-2 rounded-full bg-[#4BE2B9]" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {ticketData.is_golden_ticket && (
+                        <button
+                          type="button"
+                          className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#EDEAE3]"
+                          title="Favourite"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
+                            <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
+                            <path d="M17.6229 19.896C17.6103 19.896 17.5977 19.8926 17.5864 19.8862L10.998 16.0584L4.40068 19.8732C4.38954 19.8795 4.37736 19.8826 4.36471 19.8826C4.35021 19.8826 4.3357 19.879 4.32352 19.8696C4.30055 19.8541 4.2901 19.8267 4.2966 19.8006L6.05905 12.6117L0.235078 7.77705C0.213845 7.75947 0.205725 7.73112 0.214311 7.7052C0.223361 7.67996 0.247029 7.66172 0.275107 7.65972L7.95284 7.04474L10.9502 0.241834C10.9614 0.216923 10.9866 0.200684 11.0147 0.200684C11.0147 0.200684 11.0147 0.200684 11.0149 0.200684C11.0432 0.200684 11.0685 0.217032 11.0794 0.241943L14.062 7.05063L21.7385 7.68085C21.7665 7.68307 21.7902 7.70121 21.7992 7.72701C21.8076 7.75281 21.7994 7.78105 21.7783 7.7984L15.9439 12.6213L17.6909 19.8137C17.6973 19.8397 17.6862 19.8674 17.6638 19.883C17.6512 19.8916 17.6371 19.896 17.6229 19.896Z" fill="url(#paint1_linear_9118_15308)" />
+                            <path d="M7.99743 7.10811L11.0112 0.268066L14.0103 7.11412L21.7291 7.7479L15.8627 12.5975L17.6192 19.8291L10.9944 15.9802L4.36114 19.8159L6.13322 12.5877L0.277344 7.72644L7.99743 7.10811Z" fill="url(#paint2_linear_9118_15308)" />
+                            <path d="M11.1891 11.551C11.1439 11.4959 11.0748 11.4633 11.0016 11.4633C11.0013 11.4633 11.0013 11.4633 11.0009 11.4633C10.928 11.4633 10.8587 11.4956 10.8138 11.5507L8.37693 14.534L10.5906 11.395C10.6317 11.3368 10.6425 11.2637 10.6201 11.197C10.5972 11.1303 10.5441 11.0772 10.4752 11.053L6.76172 9.75321L10.5606 10.8015C10.5824 10.8077 10.6044 10.8107 10.6263 10.8107C10.6762 10.8107 10.7253 10.7958 10.7663 10.7672C10.8257 10.7258 10.8619 10.6606 10.8644 10.5904L11.0063 6.80371L11.1405 10.5907C11.143 10.6611 11.179 10.7263 11.2382 10.7677C11.2793 10.7962 11.3287 10.8113 11.3782 10.8113C11.4 10.8113 11.4222 10.8084 11.4438 10.8026L15.245 9.76189L11.5286 11.054C11.4599 11.0783 11.4064 11.1311 11.3835 11.1977C11.3608 11.2647 11.3714 11.3376 11.4124 11.396L13.6195 14.5391L11.1891 11.551Z" fill="white" />
+                            <path d="M10.6435 10.0628L8.08027 6.91957L11.0111 0.267578L10.6435 10.0628ZM21.7289 7.74752H21.7291L14.2765 7.13554L11.9655 10.4201L21.7289 7.74752ZM9.90642 11.0964L0.277344 7.72606L5.98598 12.4647L9.90642 11.0964ZM11.961 11.7709L17.6192 19.8288L15.9261 12.8597L11.961 11.7709ZM4.36114 19.8153L10.7915 16.0971L10.6454 12.1225L4.36114 19.8153Z" fill="url(#paint3_linear_9118_15308)" />
+                            <path d="M11.3577 10.0658L11.0112 0.267578L13.9241 6.91623L11.3577 10.0658ZM7.72152 7.12998L0.277344 7.72606L10.0372 10.4191L7.72152 7.12998ZM21.7289 7.74752L12.0992 11.0962L16.0235 12.464L21.7289 7.74752ZM11.2154 16.1082L17.6191 19.8288L11.3594 12.1331L11.2154 16.1082ZM10.0325 11.7743L6.06523 12.8657L4.36126 19.8154V19.8152L10.0325 11.7743Z" fill="url(#paint4_linear_9118_15308)" />
+                            <defs>
+                              <radialGradient id="paint0_radial_9118_15308" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11.0059 10.0489) scale(10.7481 10.3019)">
+                                <stop stopColor="#D08B01" />
+                                <stop offset="0.5758" stopColor="#F2B145" />
+                                <stop offset="1" stopColor="#F8F3BC" />
+                              </radialGradient>
+                              <linearGradient id="paint1_linear_9118_15308" x1="0.211178" y1="10.0483" x2="21.8026" y2="10.0483" gradientUnits="userSpaceOnUse">
+                                <stop stopColor="#F6DB89" />
+                                <stop offset="1" stopColor="#F8F7DA" />
+                              </linearGradient>
+                              <linearGradient id="paint2_linear_9118_15308" x1="0.277344" y1="10.0486" x2="21.7291" y2="10.0486" gradientUnits="userSpaceOnUse">
+                                <stop stopColor="#ED9017" />
+                                <stop offset="0.1464" stopColor="#F09F23" />
+                                <stop offset="0.4262" stopColor="#F6C642" />
+                                <stop offset="0.4945" stopColor="#F8D04A" />
+                                <stop offset="1" stopColor="#F6E6B5" />
+                              </linearGradient>
+                              <linearGradient id="paint3_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7291" y2="10.0482" gradientUnits="userSpaceOnUse">
+                                <stop stopColor="#ED9017" />
+                                <stop offset="0.1464" stopColor="#F09F23" />
+                                <stop offset="0.4262" stopColor="#F6C642" />
+                                <stop offset="0.4945" stopColor="#F8D04A" />
+                                <stop offset="1" stopColor="#F6E6B5" />
+                              </linearGradient>
+                              <linearGradient id="paint4_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7288" y2="10.0482" gradientUnits="userSpaceOnUse">
+                                <stop stopColor="#DF8D00" />
+                                <stop offset="0.0848" stopColor="#FFD006" />
+                                <stop offset="0.2242" stopColor="#F4AD06" />
+                                <stop offset="0.85" stopColor="#F4AD06" />
+                                <stop offset="0.8777" stopColor="#F2A807" />
+                                <stop offset="0.9093" stopColor="#EC9B09" />
+                                <stop offset="0.9428" stopColor="#E2840D" />
+                                <stop offset="0.9773" stopColor="#D46412" />
+                                <stop offset="1" stopColor="#C94B16" />
+                              </linearGradient>
+                            </defs>
+                          </svg>
+                        </button>
+                      )}
+                      {ticketData.is_flagged && (
+                        <button
+                          type="button"
+                          className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#EDEAE3]"
+                          title="Flag"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
+                            <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
+                          </svg>
+                        </button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                      // onClick={handleUpdate}
+                      >
+                        <Edit className="w-4 h-4 mr-1" /> Edit
+                      </Button>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold uppercase text-black">
-                    Ticket Management
-                  </h3>
-                  {ticketData.closure_date === null || ticketData.closure_date === undefined || ticketData.closure_date === '' && (
-                    <span className="w-2 h-2 rounded-full bg-[#4BE2B9]" />
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {ticketData.is_golden_ticket && (
-                    <button
-                      type="button"
-                      className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#EDEAE3]"
-                      title="Favourite"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
-                        <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
-                        <path d="M17.6229 19.896C17.6103 19.896 17.5977 19.8926 17.5864 19.8862L10.998 16.0584L4.40068 19.8732C4.38954 19.8795 4.37736 19.8826 4.36471 19.8826C4.35021 19.8826 4.3357 19.879 4.32352 19.8696C4.30055 19.8541 4.2901 19.8267 4.2966 19.8006L6.05905 12.6117L0.235078 7.77705C0.213845 7.75947 0.205725 7.73112 0.214311 7.7052C0.223361 7.67996 0.247029 7.66172 0.275107 7.65972L7.95284 7.04474L10.9502 0.241834C10.9614 0.216923 10.9866 0.200684 11.0147 0.200684C11.0147 0.200684 11.0147 0.200684 11.0149 0.200684C11.0432 0.200684 11.0685 0.217032 11.0794 0.241943L14.062 7.05063L21.7385 7.68085C21.7665 7.68307 21.7902 7.70121 21.7992 7.72701C21.8076 7.75281 21.7994 7.78105 21.7783 7.7984L15.9439 12.6213L17.6909 19.8137C17.6973 19.8397 17.6862 19.8674 17.6638 19.883C17.6512 19.8916 17.6371 19.896 17.6229 19.896Z" fill="url(#paint1_linear_9118_15308)" />
-                        <path d="M7.99743 7.10811L11.0112 0.268066L14.0103 7.11412L21.7291 7.7479L15.8627 12.5975L17.6192 19.8291L10.9944 15.9802L4.36114 19.8159L6.13322 12.5877L0.277344 7.72644L7.99743 7.10811Z" fill="url(#paint2_linear_9118_15308)" />
-                        <path d="M11.1891 11.551C11.1439 11.4959 11.0748 11.4633 11.0016 11.4633C11.0013 11.4633 11.0013 11.4633 11.0009 11.4633C10.928 11.4633 10.8587 11.4956 10.8138 11.5507L8.37693 14.534L10.5906 11.395C10.6317 11.3368 10.6425 11.2637 10.6201 11.197C10.5972 11.1303 10.5441 11.0772 10.4752 11.053L6.76172 9.75321L10.5606 10.8015C10.5824 10.8077 10.6044 10.8107 10.6263 10.8107C10.6762 10.8107 10.7253 10.7958 10.7663 10.7672C10.8257 10.7258 10.8619 10.6606 10.8644 10.5904L11.0063 6.80371L11.1405 10.5907C11.143 10.6611 11.179 10.7263 11.2382 10.7677C11.2793 10.7962 11.3287 10.8113 11.3782 10.8113C11.4 10.8113 11.4222 10.8084 11.4438 10.8026L15.245 9.76189L11.5286 11.054C11.4599 11.0783 11.4064 11.1311 11.3835 11.1977C11.3608 11.2647 11.3714 11.3376 11.4124 11.396L13.6195 14.5391L11.1891 11.551Z" fill="white" />
-                        <path d="M10.6435 10.0628L8.08027 6.91957L11.0111 0.267578L10.6435 10.0628ZM21.7289 7.74752H21.7291L14.2765 7.13554L11.9655 10.4201L21.7289 7.74752ZM9.90642 11.0964L0.277344 7.72606L5.98598 12.4647L9.90642 11.0964ZM11.961 11.7709L17.6192 19.8288L15.9261 12.8597L11.961 11.7709ZM4.36114 19.8153L10.7915 16.0971L10.6454 12.1225L4.36114 19.8153Z" fill="url(#paint3_linear_9118_15308)" />
-                        <path d="M11.3577 10.0658L11.0112 0.267578L13.9241 6.91623L11.3577 10.0658ZM7.72152 7.12998L0.277344 7.72606L10.0372 10.4191L7.72152 7.12998ZM21.7289 7.74752L12.0992 11.0962L16.0235 12.464L21.7289 7.74752ZM11.2154 16.1082L17.6191 19.8288L11.3594 12.1331L11.2154 16.1082ZM10.0325 11.7743L6.06523 12.8657L4.36126 19.8154V19.8152L10.0325 11.7743Z" fill="url(#paint4_linear_9118_15308)" />
-                        <defs>
-                          <radialGradient id="paint0_radial_9118_15308" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11.0059 10.0489) scale(10.7481 10.3019)">
-                            <stop stopColor="#D08B01" />
-                            <stop offset="0.5758" stopColor="#F2B145" />
-                            <stop offset="1" stopColor="#F8F3BC" />
-                          </radialGradient>
-                          <linearGradient id="paint1_linear_9118_15308" x1="0.211178" y1="10.0483" x2="21.8026" y2="10.0483" gradientUnits="userSpaceOnUse">
-                            <stop stopColor="#F6DB89" />
-                            <stop offset="1" stopColor="#F8F7DA" />
-                          </linearGradient>
-                          <linearGradient id="paint2_linear_9118_15308" x1="0.277344" y1="10.0486" x2="21.7291" y2="10.0486" gradientUnits="userSpaceOnUse">
-                            <stop stopColor="#ED9017" />
-                            <stop offset="0.1464" stopColor="#F09F23" />
-                            <stop offset="0.4262" stopColor="#F6C642" />
-                            <stop offset="0.4945" stopColor="#F8D04A" />
-                            <stop offset="1" stopColor="#F6E6B5" />
-                          </linearGradient>
-                          <linearGradient id="paint3_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7291" y2="10.0482" gradientUnits="userSpaceOnUse">
-                            <stop stopColor="#ED9017" />
-                            <stop offset="0.1464" stopColor="#F09F23" />
-                            <stop offset="0.4262" stopColor="#F6C642" />
-                            <stop offset="0.4945" stopColor="#F8D04A" />
-                            <stop offset="1" stopColor="#F6E6B5" />
-                          </linearGradient>
-                          <linearGradient id="paint4_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7288" y2="10.0482" gradientUnits="userSpaceOnUse">
-                            <stop stopColor="#DF8D00" />
-                            <stop offset="0.0848" stopColor="#FFD006" />
-                            <stop offset="0.2242" stopColor="#F4AD06" />
-                            <stop offset="0.85" stopColor="#F4AD06" />
-                            <stop offset="0.8777" stopColor="#F2A807" />
-                            <stop offset="0.9093" stopColor="#EC9B09" />
-                            <stop offset="0.9428" stopColor="#E2840D" />
-                            <stop offset="0.9773" stopColor="#D46412" />
-                            <stop offset="1" stopColor="#C94B16" />
-                          </linearGradient>
-                        </defs>
-                      </svg>
-                    </button>
-                  )}
-                  {ticketData.is_flagged && (
-                    <button
-                      type="button"
-                      className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#EDEAE3]"
-                      title="Flag"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
-                        <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
-                      </svg>
-                    </button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                  // onClick={handleUpdate}
-                  >
-                    <Edit className="w-4 h-4 mr-1" /> Edit
-                  </Button>
-                </div>
-              </div>
 
-              {/* Body (consistent background / border like Location card) */}
-              <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-4 overflow-hidden">
-                {(() => {
-                  const mgmtFields = [
-                    { label: 'Update Status', value: ticketData.issue_status || 'Pending' },
-                    { label: 'Severity', value: ticketData.severity || '-' },
-                    { label: 'Select Vendor', value: ticketData.vendors && ticketData.vendors.length > 0 ? ticketData.vendors.map(v => v.name || v).join(', ') : '-' },
-                    { label: 'Assigned To', value: ticketData.assigned_to || '-' },
-                    { label: 'Source', value: ticketData.asset_service || 'Asset' },
+                  {/* Body (consistent background / border like Location card) */}
+                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-4 overflow-hidden">
+                    {(() => {
+                      const mgmtFields = [
+                        { label: 'Update Status', value: ticketData.issue_status || 'Pending' },
+                        { label: 'Severity', value: ticketData.severity || '-' },
+                        { label: 'Select Vendor', value: ticketData.vendors && ticketData.vendors.length > 0 ? ticketData.vendors.map(v => v.name || v).join(', ') : '-' },
+                        { label: 'Assigned To', value: ticketData.assigned_to || '-' },
+                        { label: 'Source', value: ticketData.asset_service || 'Asset' },
 
-                    { label: 'Expected Visit Date', value: ticketData.visit_date ? formatDate(ticketData.visit_date) : '-' },
-                    { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
-                    { label: 'Scope', value: ticketData.issue_related_to || 'FM' },
-                    { label: 'Mode', value: ticketData.complaint_mode || 'App' },
-                    { label: 'Identification', value: ticketData.proactive_reactive || 'Proactive' },
-                  ];
+                        { label: 'Expected Visit Date', value: ticketData.visit_date ? formatDate(ticketData.visit_date) : '-' },
+                        { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
+                        { label: 'Scope', value: ticketData.issue_related_to || 'FM' },
+                        { label: 'Mode', value: ticketData.complaint_mode || 'App' },
+                        { label: 'Identification', value: ticketData.proactive_reactive || 'Proactive' },
+                      ];
 
-                  // Split into two vertical columns
-                  const midpoint = Math.ceil(mgmtFields.length / 2);
-                  const colA = mgmtFields.slice(0, midpoint);
-                  const colB = mgmtFields.slice(midpoint);
+                      // Split into two vertical columns
+                      const midpoint = Math.ceil(mgmtFields.length / 2);
+                      const colA = mgmtFields.slice(0, midpoint);
+                      const colB = mgmtFields.slice(midpoint);
 
-                  return (
-                    <div className="flex flex-col lg:flex-row gap-10">
-                      {/* Left: two vertical columns of key/value pairs */}
-                      <div className="flex-1 flex gap-16 min-w-0">
-                        {[colA, colB].map((col, ci) => (
-                          <div key={ci} className="flex flex-col gap-4 min-w-[280px] flex-1">
-                            {col.map((field) => (
-                              <div key={field.label} className="flex text-[14px] leading-snug min-w-0">
-                                <div className="w-[180px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                  {field.label}
-                                </div>
-                                <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                                  {field.value}
-                                </div>
+                      return (
+                        <div className="flex flex-col lg:flex-row gap-10">
+                          {/* Left: two vertical columns of key/value pairs */}
+                          <div className="flex-1 flex gap-16 min-w-0">
+                            {[colA, colB].map((col, ci) => (
+                              <div key={ci} className="flex flex-col gap-4 min-w-[280px] flex-1">
+                                {col.map((field) => (
+                                  <div key={field.label} className="flex text-[14px] leading-snug min-w-0">
+                                    <div className="w-[180px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                      {field.label}
+                                    </div>
+                                    <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                      {field.value}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             ))}
                           </div>
-                        ))}
-                      </div>
 
-                      {/* Right: Root Cause + Notes (stacked) */}
-                      <div className="w-full lg:w-[38%] flex flex-col gap-8 min-w-0">
-                        <div className="flex flex-col min-w-0">
-                          <FormControl
-                            fullWidth
-                            variant="outlined"
-                            sx={{
-                              minWidth: 0,
-                              '& .MuiOutlinedInput-root': {
-                                backgroundColor: '#FFFFFF',
-                                borderRadius: '4px',
-                                fontSize: '14px',
-                                minHeight: '40px',
-                                maxHeight: '80px',
-                                '& fieldset': {
-                                  borderColor: '#E0E0E0',
-                                  borderWidth: '1px',
-                                },
-                                '&:hover fieldset': {
-                                  borderColor: '#C72030',
-                                },
-                                '&.Mui-focused fieldset': {
-                                  borderColor: '#C72030',
-                                  borderWidth: '2px',
-                                },
-                              },
-                              '& .MuiInputLabel-root': {
-                                fontSize: '14px',
-                                color: '#6B6B6B',
-                                backgroundColor: '#FFFFFF',
-                                padding: '0 4px',
-                                '&.Mui-focused': {
-                                  color: '#C72030',
-                                },
-                              },
-                              '& .MuiSelect-select': {
-                                padding: '10px 12px',
-                                fontSize: '14px',
-                                color: '#1A1A1A',
-                                maxWidth: '100%',
-                                minHeight: '20px',
-                                maxHeight: '60px',
-                                overflow: 'auto',
-                              },
-                            }}
-                          >
-                            <InputLabel shrink>Root Cause Analysis</InputLabel>
-                            <Select
-                              label="Root Cause Analysis"
-                              notched
-                              displayEmpty
-                              multiple
-                              value={(() => {
-                                if (!ticketData.root_cause) return [];
+                          {/* Right: Root Cause + Notes (stacked) */}
+                          <div className="w-full lg:w-[38%] min-w-0">
+                           <div className="min-w-0 relative">
+      <div className="relative w-full">
+        {/* Floating label on border */}
+        <label
+          style={{
+            position: "absolute",
+            top: "-10px",
+            left: "12px",
+            background: "#fff",
+            padding: "0 6px",
+            fontWeight: 500,
+            fontSize: "14px",
+            color: "#1A1A1A",
+            zIndex: 10,
+          }}
+        >
+          Root Cause Analysis
+        </label>
 
-                                // Convert root_cause string to template IDs
-                                const rootCauseString = typeof ticketData.root_cause === 'string'
-                                  ? ticketData.root_cause
-                                  : Array.isArray(ticketData.root_cause)
-                                    ? ticketData.root_cause.join(', ')
-                                    : '';
+        {/* React Select */}
+        <Select
+          isMulti
+          value={(() => {
+            if (!ticketData.root_cause) return [];
+            const rootCauseString =
+              typeof ticketData.root_cause === "string"
+                ? ticketData.root_cause
+                : Array.isArray(ticketData.root_cause)
+                ? ticketData.root_cause.join(", ")
+                : "";
 
-                                if (!rootCauseString) return [];
+            if (!rootCauseString) return [];
 
-                                // Split and match with templates to get IDs
-                                const rootCauseValues = rootCauseString.split(',').map(s => s.trim());
-                                const matchedTemplates = communicationTemplates.filter(
-                                  template => template.identifier === "Root Cause Analysis" &&
-                                    rootCauseValues.includes(template.identifier_action)
-                                );
+            const rootCauseValues = rootCauseString.split(",").map((s) => s.trim());
+            const matchedTemplates = communicationTemplates.filter(
+              (t) =>
+                t.identifier === "Root Cause Analysis" &&
+                rootCauseValues.includes(t.identifier_action)
+            );
 
-                                return matchedTemplates.map(t => t.id);
-                              })()}
-                              onChange={(e) => handleRootCauseChange(e.target.value)}
-                              renderValue={(selected) => {
-                                if (!selected || (Array.isArray(selected) && selected.length === 0)) {
-                                  return <span style={{ color: '#9CA3AF', fontSize: '14px' }}>Select Root Cause Analysis</span>;
-                                }
+            return matchedTemplates.map((t) => ({
+              value: t.id,
+              label: t.identifier_action,
+            }));
+          })()}
+          onChange={(selectedOptions) => {
+            const selectedIds = selectedOptions
+              ? selectedOptions.map((opt) => opt.value)
+              : [];
+            handleRootCauseChange(selectedIds);
+            setSelectedOptions(selectedOptions);
+          }}
+          options={communicationTemplates
+            .filter((t) => t.identifier === "Root Cause Analysis")
+            .map((t) => ({
+              value: t.id,
+              label: t.identifier_action,
+            }))}
+          placeholder="Select Root Cause Analysis..."
+          styles={customStyles}
+          components={{
+            MultiValue: CustomMultiValue,
+            MultiValueRemove: () => null,
+          }}
+          closeMenuOnSelect={false}
+        />
+      </div>
+    </div>
+{ticketData.root_cause && (
+    <div
+      className="space-y-2 min-w-0"
+      style={{ fontSize: "14px", fontWeight: "500" }}
+    >
+      {(() => {
+        const selectedValues =
+          typeof ticketData.root_cause === "string"
+            ? ticketData.root_cause.split(",").map((s) => s.trim())
+            : Array.isArray(ticketData.root_cause)
+            ? ticketData.root_cause
+            : [ticketData.root_cause];
 
-                                const selectedIds = Array.isArray(selected) ? selected : [selected];
-                                const selectedTemplates = communicationTemplates.filter(
-                                  (t) => selectedIds.includes(t.id)
-                                );
-
-                                return (
-                                  <div
-                                    style={{
-                                      display: 'flex',
-                                      flexWrap: 'wrap',
-                                      gap: '4px',
-                                      maxHeight: '60px',
-                                      overflowY: 'auto',
-                                      padding: '2px 0',
-                                    }}
-                                  >
-                                    {selectedTemplates.map((template) => (
-                                      <div
-                                        key={template.id}
-                                        style={{
-                                          backgroundColor: 'rgb(221, 215, 202)',
-                                          color: '#1A1A1A',
-                                          padding: '4px 8px',
-                                          borderRadius: '4px',
-                                          fontSize: '12px',
-                                          fontWeight: '500',
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          lineHeight: '1.2',
-                                          maxWidth: '100%',
-                                        }}
-                                      >
-                                        <span
-                                          style={{
-                                            maxWidth: '150px',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                          }}
-                                        >
-                                          {template.identifier_action}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                );
-                              }}
-                              MenuProps={{
-                                PaperProps: {
-                                  sx: {
-                                    borderRadius: '8px',
-                                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
-                                    marginTop: '4px',
-                                    maxWidth: 'calc(100vw - 32px)',
-                                    '& .MuiMenuItem-root': {
-                                      fontSize: '14px',
-                                      padding: '10px 16px',
-                                      color: '#1A1A1A',
-                                      wordBreak: 'break-word',
-                                      whiteSpace: 'normal',
-                                      '&:hover': {
-                                        backgroundColor: '#F5F5F5',
-                                      },
-                                      '&.Mui-selected': {
-                                        backgroundColor: '#FBE8EA',
-                                        color: '#C72030',
-                                        fontWeight: '500',
-                                        '&:hover': {
-                                          backgroundColor: '#FBE8EA',
-                                        },
-                                      },
-                                    },
-                                  },
-                                },
-                              }}
-                            >
-                              {communicationTemplates
-                                .filter(template => template.identifier === "Root Cause Analysis")
-                                .map((template) => (
-                                  <MenuItem key={template.id} value={template.id}>
-                                    {template.identifier_action}
-                                  </MenuItem>
-                                ))}
-                            </Select>
-                          </FormControl>
-
-                          {/* Show selected root cause descriptions from template body */}
-                          {ticketData.root_cause && (
-                            <div className="mt-2 space-y-2 min-w-0" style={{ fontSize: '14px', fontWeight: 'medium' }}>
-                              {(() => {
-                                const selectedValues = typeof ticketData.root_cause === 'string'
-                                  ? ticketData.root_cause.split(',').map(s => s.trim())
-                                  : Array.isArray(ticketData.root_cause)
-                                    ? ticketData.root_cause
-                                    : [ticketData.root_cause];
-
-                                return selectedValues.map((value, index) => {
-                                  const matchedTemplate = communicationTemplates.find(
-                                    template => template.identifier === "Root Cause Analysis" &&
-                                      template.identifier_action === value
-                                  );
-                                  return (
-                                    <div
-                                      key={index}
-                                      className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                      style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-                                    >
-                                      {matchedTemplate?.body || value}
-                                    </div>
-                                  );
-                                });
-                              })()}
+        return selectedValues.map((value, index) => {
+          const matchedTemplate = communicationTemplates.find(
+            (template) =>
+              template.identifier === "Root Cause Analysis" &&
+              template.identifier_action === value
+          );
+          return (
+            <div
+              key={index}
+              className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+              style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+            >
+              {matchedTemplate?.body || value}
+            </div>
+          );
+        });
+      })()}
+    </div>
+  )}
+                            <div className="flex flex-col min-w-0 mt-4">
+                              <span className="text-[11px] tracking-wide text-[#6B6B6B] mb-1">
+                                Additional Notes
+                              </span>
+                              <div
+                                className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                              >
+                                {ticketData.notes ||
+                                  ticketData.heading ||
+                                  ticketData.text ||
+                                  'No additional notes available'}
+                              </div>
                             </div>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-[11px] tracking-wide text-[#6B6B6B] mb-1">
-                            Additional Notes
-                          </span>
-                          <div
-                            className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                            style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-                          >
-                            {ticketData.notes ||
-                              ticketData.heading ||
-                              ticketData.text ||
-                              'No additional notes available'}
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            </Card>
+                      );
+                    })()}
+                  </div>
+                </Card>
 
             {/* Cost Involve */}
             <Card className="w-full bg-white rounded-lg shadow-sm border">
@@ -5082,7 +4960,7 @@ export const TicketDetailsPage = () => {
                     }}
                   />
 
-                  <div className="flex justify-between items-start relative z-10">
+                  <div className="flex justify-between items-start relative z-1">
                     {[
                       { label: "Site", value: ticketData.site_name || "-" },
                       { label: "Building", value: ticketData.building_name || "-" },
@@ -5098,7 +4976,7 @@ export const TicketDetailsPage = () => {
                         <div className="text-sm text-gray-500 mb-2 mt-1">
                           {item.label}
                         </div>
-                        <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
+                        <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
                         <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
                           {item.value}
                         </div>
@@ -5387,7 +5265,7 @@ export const TicketDetailsPage = () => {
 
               {/* Body */}
               <div className="bg-[#FAFAF8]">
-                <div className="flex flex-col md:flex-row gap-3 ">
+                <div className="flex flex-col md:flex-row gap-3 px-2 ">
                   {/* Internal Comments Section */}
                   <div className="flex-1">
                     <div className="bg-white w-full text-center py-0.5 bg-[#fafafa] border-[#D9D9D9]">
@@ -6175,10 +6053,11 @@ export const TicketDetailsPage = () => {
                             className="w-full h-32 bg-gray-100 rounded mb-3 flex items-center justify-center border overflow-hidden cursor-pointer"
                             onClick={() => {
                               if (documentUrl && isImage) {
-                                setPreviewImage({
+                                // Set selectedDoc for AttachmentPreviewModal
+                                setSelectedDoc({
+                                  id: document.id || 0,
+                                  document_name: document.document_name || document.document_file_name || `Document ${index + 1}`,
                                   url: documentUrl,
-                                  name: `Document ${index + 1}`,
-                                  document: document,
                                 });
                                 setShowImagePreview(true);
                               }
@@ -6346,155 +6225,7 @@ export const TicketDetailsPage = () => {
             </div>
           </TabsContent>
 
-          {/* Image Preview Modal */}
-          {showImagePreview && previewImage && (
-            <div
-              className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
-              onClick={() => setShowImagePreview(false)}
-            >
-              <div
-                className="max-w-4xl max-h-[90vh] bg-white rounded-lg p-4"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold truncate">
-                    {previewImage.name}
-                  </h3>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        // Reuse the download logic for the preview modal with new API
-                        const document = previewImage.document;
-
-                        console.log(
-                          "📎 Modal download attempt using new API:",
-                          {
-                            id: document.id,
-                            doctype: document.doctype,
-                          }
-                        );
-
-                        if (!document.id) {
-                          toast.error(
-                            "Unable to download: No document ID found"
-                          );
-                          return;
-                        }
-
-                        try {
-                          // Check if we're in a browser environment
-                          if (
-                            typeof window === "undefined" ||
-                            !window.document
-                          ) {
-                            throw new Error(
-                              "Download not supported in this environment"
-                            );
-                          }
-
-                          // Import API_CONFIG to get the base URL
-                          const { API_CONFIG } = await import(
-                            "@/config/apiConfig"
-                          );
-                          const baseUrl = API_CONFIG.BASE_URL;
-                          const token = localStorage.getItem("token");
-
-                          // Clean up base URL - ensure it doesn't have protocol and has no trailing slash
-                          const cleanBaseUrl = baseUrl
-                            .replace(/^https?:\/\//, "")
-                            .replace(/\/$/, "");
-                          const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${document.id}?show_file=true`;
-
-                          console.log("🔗 Modal download URL:", downloadUrl);
-
-                          // Try authenticated download
-                          const response = await fetch(downloadUrl, {
-                            method: "GET",
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                              Accept: "*/*",
-                            },
-                            mode: "cors",
-                          });
-
-                          if (response.ok) {
-                            const blob = await response.blob();
-
-                            // Get file extension from doctype or original URL
-                            const fileExtension =
-                              document.doctype?.split("/").pop() ||
-                              document.document
-                                ?.split(".")
-                                .pop()
-                                ?.toLowerCase() ||
-                              "file";
-                            const documentName = `document_${document.id}.${fileExtension}`;
-
-                            // Create download link using window.document
-                            const url = window.URL.createObjectURL(blob);
-                            const link = window.document.createElement("a");
-                            link.href = url;
-                            link.download = documentName;
-                            link.style.display = "none";
-                            window.document.body.appendChild(link);
-                            link.click();
-
-                            // Cleanup
-                            setTimeout(() => {
-                              window.document.body.removeChild(link);
-                              window.URL.revokeObjectURL(url);
-                            }, 100);
-
-                            toast.success("File downloaded successfully");
-                            return;
-                          } else {
-                            console.error(
-                              "Modal download failed with status:",
-                              response.status
-                            );
-                            throw new Error(
-                              `HTTP ${response.status}: ${response.statusText}`
-                            );
-                          }
-                        } catch (error) {
-                          console.error("Error downloading file:", error);
-                          toast.error(`Failed to download: ${error.message}`);
-                        }
-                      }}
-                    >
-                      <Download className="w-4 h-4 mr-1" />
-                      Download
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowImagePreview(false)}
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Close
-                    </Button>
-                  </div>
-                </div>
-                <div className="max-h-[70vh] overflow-auto">
-                  <img
-                    src={previewImage.url}
-                    alt={previewImage.name}
-                    className="max-w-full h-auto rounded-md"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-                      (target.nextSibling as HTMLElement).style.display = "block";
-                    }}
-                  />
-                  <div className="hidden text-center py-8 text-gray-500">
-                    Failed to load image preview
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Image Preview Modal - Using AttachmentPreviewModal Component */}
 
           {/* Cost Approval Tab */}
           <TabsContent value="cost-approval" className="p-4 sm:p-6">
@@ -6552,36 +6283,38 @@ export const TicketDetailsPage = () => {
                         </TableCell>
                         <TableCell>{request.cancelled_by || "-"}</TableCell>
                         <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Check if request has attachments
-                              if (
-                                request.attachments &&
-                                request.attachments.length > 0
-                              ) {
-                                const attachment = request.attachments[0]; // Take first attachment
-                                const imageUrl = attachment.url;
-                                if (imageUrl) {
-                                  setPreviewImage({
-                                    url: imageUrl,
-                                    name: `Cost Approval Request ${request.id || index + 1
-                                      }`,
-                                    document: attachment,
-                                  });
-                                  setShowImagePreview(true);
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Check if request has attachments
+                                if (
+                                  request.attachments &&
+                                  request.attachments.length > 0
+                                ) {
+                                  const attachment = request.attachments[0]; // Take first attachment
+                                  const imageUrl = attachment.url;
+                                  if (imageUrl) {
+                                    // Set selectedDoc for AttachmentPreviewModal
+                                    setSelectedDoc({
+                                      id: attachment.id || 0, // Use 0 if no ID (for S3 direct URLs)
+                                      document_name: `Cost Approval Request ${request.id || index + 1}`,
+                                      url: imageUrl,
+                                    });
+                                    setShowImagePreview(true);
+                                  }
+                                } else {
+                                  toast.error(
+                                    "No attachments found for this request"
+                                  );
                                 }
-                              } else {
-                                toast.error(
-                                  "No attachments found for this request"
-                                );
-                              }
-                            }}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
+                              }}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              View
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -6646,145 +6379,12 @@ export const TicketDetailsPage = () => {
       </div>
 
       {/* Image Preview Modal */}
-      {showImagePreview && previewImage && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
-          onClick={() => setShowImagePreview(false)}
-        >
-          <div
-            className="max-w-4xl max-h-[90vh] bg-white rounded-lg p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold truncate">
-                {previewImage.name}
-              </h3>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    // Reuse the download logic for the preview modal with new API
-                    const document = previewImage.document;
-
-                    console.log("📎 Modal download attempt using new API:", {
-                      id: document.id,
-                      doctype: document.doctype,
-                    });
-
-                    if (!document.id) {
-                      console.error("No document ID found", document);
-                      toast.error("Unable to download: No document ID found");
-                      return;
-                    }
-
-                    try {
-                      // Check if we're in a browser environment
-                      if (typeof window === "undefined" || !window.document) {
-                        throw new Error(
-                          "Download not supported in this environment"
-                        );
-                      }
-
-                      // Import API_CONFIG to get the base URL
-                      const { API_CONFIG } = await import("@/config/apiConfig");
-                      const baseUrl = API_CONFIG.BASE_URL;
-                      const token = localStorage.getItem("token");
-
-                      // Clean up base URL - ensure it doesn't have protocol and has no trailing slash
-                      const cleanBaseUrl = baseUrl
-                        .replace(/^https?:\/\//, "")
-                        .replace(/\/$/, "");
-                      const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${document.id}?show_file=true`;
-
-                      console.log(
-                        "🔗 Modal new API download URL:",
-                        downloadUrl
-                      );
-
-                      // Try authenticated download
-                      const response = await fetch(downloadUrl, {
-                        method: "GET",
-                        headers: {
-                          Authorization: `Bearer ${token}`,
-                          Accept: "*/*",
-                        },
-                        mode: "cors",
-                      });
-
-                      if (response.ok) {
-                        const blob = await response.blob();
-
-                        // Get file extension from doctype or original URL
-                        const fileExtension =
-                          document.doctype?.split("/").pop() ||
-                          document.document?.split(".").pop()?.toLowerCase() ||
-                          "file";
-                        const documentName = `document_${document.id}.${fileExtension}`;
-
-                        // Create download link using window.document
-                        const url = window.URL.createObjectURL(blob);
-                        const link = window.document.createElement("a");
-                        link.href = url;
-                        link.download = documentName;
-                        link.style.display = "none";
-                        window.document.body.appendChild(link);
-                        link.click();
-
-                        // Cleanup
-                        setTimeout(() => {
-                          window.document.body.removeChild(link);
-                          window.URL.revokeObjectURL(url);
-                        }, 100);
-
-                        toast.success("File downloaded successfully");
-                        return;
-                      } else {
-                        console.error(
-                          "Modal download failed with status:",
-                          response.status
-                        );
-                        throw new Error(
-                          `HTTP ${response.status}: ${response.statusText}`
-                        );
-                      }
-                    } catch (error) {
-                      console.error("Error downloading file:", error);
-                      toast.error(`Failed to download: ${error.message}`);
-                    }
-                  }}
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Download
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowImagePreview(false)}
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Close
-                </Button>
-              </div>
-            </div>
-            <div className="max-h-[70vh] overflow-auto">
-              <img
-                src={previewImage.url}
-                alt={previewImage.name}
-                className="max-w-full h-auto rounded-md"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = "none";
-                  (target.nextSibling as HTMLElement).style.display = "block";
-                }}
-              />
-              <div className="hidden text-center py-8 text-gray-500">
-                Failed to load image preview
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <AttachmentPreviewModal
+        isModalOpen={showImagePreview}
+        setIsModalOpen={setShowImagePreview}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

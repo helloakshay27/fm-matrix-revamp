@@ -730,11 +730,33 @@ export const AddTicketDashboard = () => {
     return [];
   };
 
+  const handleGoBack = () => {
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("tickets")) {
+      navigate("/tickets");
+    } else {
+      navigate("/maintenance/ticket");
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">NEW TICKET</h1>
+        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+          <button
+            onClick={handleGoBack}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Ticket List</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Create New Ticket</span>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">NEW TICKET</h1>
       </div>
 
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">

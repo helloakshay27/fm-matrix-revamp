@@ -992,11 +992,21 @@ export const AddVendorPage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex items-center mb-6">
-        <IconButton onClick={() => navigate('/maintenance/vendor')} className="mr-4">
-          <ArrowLeft className="w-4 h-4" />
-        </IconButton>
-        <h1 className="text-2xl font-bold text-gray-900">Add Vendor</h1>
+      {/* Header with Back Button and Breadcrumbs */}
+      <div className="mb-6">
+        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+          <button
+            onClick={() => navigate('/maintenance/vendor')}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Vendor List</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Add New Vendor</span>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">ADD VENDOR</h1>
       </div>
 
       <Box sx={{ mb: 4, overflow: 'auto' }}>
