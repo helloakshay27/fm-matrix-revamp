@@ -1197,31 +1197,7 @@ export const BookingSetupDetailPage = () => {
             </div>
           </div>
         </div>
-        {/* </div> */}
       </div>
-      {/* <Dialog
-        open={showQr}
-        onClose={() => setShowQr(false)}
-        aria-labelledby="qr-code-dialog-title"
-      >
-        <DialogContent>
-          <Box display="flex" justifyContent="center">
-            <img
-              src={qrUrl}
-              alt="QR Code"
-              style={{ width: "200px", height: "200px" }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <button
-            className="bg-[#F6F4EE] text-[#C72030] font-bold py-2 px-4 rounded mx-auto -mt-6 mb-4"
-            onClick={handleDownloadQr}
-          >
-            Download
-          </button>
-        </DialogActions>
-      </Dialog> */}
 
       <QRCodeModal
         isOpen={showQr}
