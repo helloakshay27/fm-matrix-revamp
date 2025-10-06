@@ -112,12 +112,12 @@ const Chats = ({ messages, onReply }) => {
         try {
             if (message.is_pinned) {
                 await dispatch(
-                    updateMessage({ baseUrl, token, id: message.id, data: { is_pinned: false } })
+                    updateMessage({ baseUrl, token, id: message.id, data: { message: { is_pinned: false } } })
                 ).unwrap();
                 toast.success("Message unpinned");
             } else {
                 await dispatch(
-                    updateMessage({ baseUrl, token, id: message.id, data: { is_pinned: true } })
+                    updateMessage({ baseUrl, token, id: message.id, data: { message: { is_pinned: true } } })
                 ).unwrap();
                 toast.success("Message pinned");
             }
@@ -402,7 +402,7 @@ const Chats = ({ messages, onReply }) => {
                 onMessageClick={(message) => scrollToMessage(message.id)}
             />
 
-            <div className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)]">
+            <div className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)] px-6">
                 {[...messages].reverse().map((message, index) => {
                     const isMe = message?.user_id?.toString() === currentUserId;
                     const shouldShowActions = hoveredMessageIndex === index && showActions;
