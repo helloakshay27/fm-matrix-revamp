@@ -2071,18 +2071,18 @@ export const TicketDetailsPage = () => {
                   <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
                       {[
-                        { label: 'Asset Name', value: ticketData.asset_or_service_name || '—' },
-                        { label: 'Group', value: ticketData.asset_group || '—' },
-                        { label: 'Status', value: ticketData.amc?.amc_status || '—' },
+                        { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
+                        { label: 'Group', value: ticketData.asset_group || '-' },
+                        { label: 'Status', value: ticketData.amc?.amc_status || '-' },
                         { label: 'Criticality', value: ticketData.asset_criticality ? 'Critical' : 'Non Critical' },
 
-                        { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '—' },
-                        { label: 'Sub group', value: ticketData.asset_sub_group || '—' },
-                        { label: 'AMC Status', value: ticketData.amc?.amc_status || '—' },
+                        { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
+                        { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
+                        { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
                         { label: 'Under Warranty', value: ticketData.warranty ? 'Yes' : 'No' },
 
-                        { label: 'Category', value: ticketData.asset_type_category || '—' },
-                        { label: 'Allocated', value: ticketData.assigned_to || '—' },
+                        { label: 'Category', value: ticketData.asset_type_category || '-' },
+                        { label: 'Allocated', value: ticketData.assigned_to || '-' },
                         { label: 'AMC Type', value: 'Comprehensive' },
                         { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
                       ].map(field => (
@@ -3199,49 +3199,43 @@ export const TicketDetailsPage = () => {
                                 className="flex relative flex-col items-center border rounded-lg w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                               >
                                 {isImage ? (
-  <img
-    src={url}
-    alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
-    className="w-full h-full object-cover rounded-md border"
-    onError={(e) => {
-      (e.target as HTMLImageElement).style.display = 'none';
-    }}
-  />
-) : isPdf ? (
-  <div 
-    className="flex items-center justify-center border rounded-md text-red-600 bg-white"
-    style={{ width: '150px', height: '150px' }}
-  >
-    <FileText className="w-12 h-12" />
-  </div>
-) : isExcel ? (
-  <div 
-    className="flex items-center justify-center border rounded-md text-green-600 bg-white"
-    style={{ width: '150px', height: '150px' }}
-  >
-    <FileSpreadsheet className="w-12 h-12" />
-  </div>
-) : isWord ? (
-  <div 
-    className="flex items-center justify-center border rounded-md text-blue-600 bg-white"
-    style={{ width: '150px', height: '150px' }}
-  >
-    <FileText className="w-12 h-12" />
-  </div>
-) : (
-  <div 
-    className="flex items-center justify-center border rounded-md text-gray-600 bg-white"
-    style={{ width: '150px', height: '150px' }}
-  >
-    <File className="w-12 h-12" />
-  </div>
-)}
-                                {/* <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                  {attachment.document_name ||
-                    attachment.document_file_name ||
-                    url.split('/').pop() ||
-                    `Document_${attachment.id || idx + 1}`}
-                </span> */}
+                                  <img
+                                    src={url}
+                                    alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
+                                    className="w-full h-full object-cover rounded-md border"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
+                                  />
+                                ) : isPdf ? (
+                                  <div
+                                    className="flex items-center justify-center border rounded-md text-red-600 bg-white"
+                                    style={{ width: '150px', height: '150px' }}
+                                  >
+                                    <FileText className="w-12 h-12" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div
+                                    className="flex items-center justify-center border rounded-md text-green-600 bg-white"
+                                    style={{ width: '150px', height: '150px' }}
+                                  >
+                                    <FileSpreadsheet className="w-12 h-12" />
+                                  </div>
+                                ) : isWord ? (
+                                  <div
+                                    className="flex items-center justify-center border rounded-md text-blue-600 bg-white"
+                                    style={{ width: '150px', height: '150px' }}
+                                  >
+                                    <FileText className="w-12 h-12" />
+                                  </div>
+                                ) : (
+                                  <div
+                                    className="flex items-center justify-center border rounded-md text-gray-600 bg-white"
+                                    style={{ width: '150px', height: '150px' }}
+                                  >
+                                    <File className="w-12 h-12" />
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -4018,18 +4012,18 @@ export const TicketDetailsPage = () => {
               <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
                   {[
-                    { label: 'Asset Name', value: ticketData.asset_or_service_name || '—' },
-                    { label: 'Group', value: ticketData.asset_group || '—' },
-                    { label: 'Status', value: ticketData.amc?.amc_status || '—' },
+                    { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
+                    { label: 'Group', value: ticketData.asset_group || '-' },
+                    { label: 'Status', value: ticketData.amc?.amc_status || '-' },
                     { label: 'Criticality', value: ticketData.asset_criticality ? 'Critical' : 'Non Critical' },
 
-                    { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '—' },
-                    { label: 'Sub group', value: ticketData.asset_sub_group || '—' },
-                    { label: 'AMC Status', value: ticketData.amc?.amc_status || '—' },
+                    { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
+                    { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
+                    { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
                     { label: 'Under Warranty', value: ticketData.warranty ? 'Yes' : 'No' },
 
-                    { label: 'Category', value: ticketData.asset_type_category || '—' },
-                    { label: 'Allocated', value: ticketData.assigned_to || '—' },
+                    { label: 'Category', value: ticketData.asset_type_category || '-' },
+                    { label: 'Allocated', value: ticketData.assigned_to || '-' },
                     { label: 'AMC Type', value: 'Comprehensive' },
                     { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
                   ].map(field => (
