@@ -18,7 +18,8 @@ import {
   Eye,
   FileSpreadsheet,
   Download,
-  Edit
+  Edit,
+  AlertTriangle
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPRById, fetchWBS } from "@/store/slices/materialPRSlice";
@@ -38,6 +39,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  DialogContentText,
 } from "@mui/material";
 import { approvePO, rejectPO } from "@/store/slices/purchaseOrderSlice";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
@@ -137,12 +139,6 @@ interface TableRow {
 const columns: ColumnConfig[] = [
   { key: "srNo", label: "SR No.", sortable: true, defaultVisible: true },
   { key: "item", label: "Item", sortable: true, defaultVisible: true },
-  // {
-  //   key: "availability",
-  //   label: "Availability",
-  //   sortable: true,
-  //   defaultVisible: true,
-  // },
   {
     key: "sacHsnCode",
     label: "SAC/HSN Code",
@@ -188,6 +184,8 @@ export const MaterialPRDetailsPage = () => {
   const levelId = searchParams.get("level_id");
   const userId = searchParams.get("user_id");
   const shouldShowButtons = Boolean(levelId && userId);
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
 
   const [pr, setPR] = useState<MaterialPR>({});
   const [loading, setLoading] = useState<boolean>(true);
@@ -197,6 +195,7 @@ export const MaterialPRDetailsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [showEditWbsModal, setShowEditWbsModal] = useState(false);
   const [wbsCodes, setWbsCodes] = useState([]);
+  const [openDeletionModal, setOpenDeletionModal] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
   }>({});
@@ -209,9 +208,6 @@ export const MaterialPRDetailsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
-
-      const token = localStorage.getItem("token");
-      const baseUrl = localStorage.getItem("baseUrl");
 
       if (!baseUrl || !token) {
         toast.error("Missing required configuration");
@@ -252,8 +248,6 @@ export const MaterialPRDetailsPage = () => {
   // Fetch WBS codes
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token");
-      const baseUrl = localStorage.getItem("baseUrl");
 
       if (!baseUrl || !token) {
         toast.error("Missing required configuration");
@@ -283,8 +277,6 @@ export const MaterialPRDetailsPage = () => {
 
   // Handle update WBS codes to backend
   const handleUpdateWbsCodes = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
 
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
@@ -316,8 +308,6 @@ export const MaterialPRDetailsPage = () => {
 
   // Handle approve action
   const handleApprove = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
     if (!baseUrl || !token || !id || !levelId || !userId) {
       toast.error("Missing required configuration");
       return;
@@ -358,8 +348,6 @@ export const MaterialPRDetailsPage = () => {
       return;
     }
 
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
     if (!baseUrl || !token || !id || !levelId || !userId) {
       toast.error("Missing required configuration");
       return;
@@ -389,8 +377,6 @@ export const MaterialPRDetailsPage = () => {
 
   // Handle send to SAP
   const handleSendToSap = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
       return;
@@ -409,10 +395,31 @@ export const MaterialPRDetailsPage = () => {
     }
   }, [id]);
 
+  const handleDelete = async () => {
+    const payload = {
+      deletion_request: {
+        resource_id: id,
+        resource_type: "Pms::PurchaseOrder",
+        approve: false
+      }
+    }
+    try {
+      await axios.post(`https://${baseUrl}/deletion_requests.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      toast.success("Deletion request raised successfully")
+      setOpenDeletionModal(false)
+    } catch (error) {
+      console.log(error)
+      toast.error("Failed to raise deletion request")
+    }
+  }
+
   // Handle print
   const handlePrint = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
       return;
@@ -552,14 +559,25 @@ export const MaterialPRDetailsPage = () => {
             Feeds
           </Button>
           {pr.all_level_approved && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 btn-primary"
-              onClick={() => setShowEditWbsModal(true)}
-            >
-              Edit WBS Codes
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 btn-primary"
+                onClick={() => setShowEditWbsModal(true)}
+              >
+                Edit WBS Codes
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 btn-primary"
+                onClick={() => setOpenDeletionModal(true)}
+              >
+                Raise Deletion Request
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -972,6 +990,31 @@ export const MaterialPRDetailsPage = () => {
               className="bg-[#C72030] text-white hover:bg-[#a61b27]"
             >
               Update
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={openDeletionModal}
+          onClose={() => setOpenDeletionModal(false)}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AlertTriangle size={24} color="#d32f2f" />
+            Confirm Deletion Request
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to raise a deletion request? This action will initiate the deletion process.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setOpenDeletionModal(false)} variant="outline">
+              Cancel
+            </Button>
+            <Button onClick={handleDelete}>
+              Yes
             </Button>
           </DialogActions>
         </Dialog>
