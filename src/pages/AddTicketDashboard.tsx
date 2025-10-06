@@ -366,10 +366,6 @@ export const AddTicketDashboard = () => {
         proactive_reactive: formData.proactiveReactive || '',
         heading: formData.description,
         ...(formData.complaintMode && { complaint_mode_id: parseInt(formData.complaintMode) }),
-        room_id: 1,
-        wing_id: 1,
-        area_id: 1,
-        floor_id: 1,
         // Add user parameters based on selection type
         ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
         ...(onBehalfOf !== 'self' && selectedUserId && {

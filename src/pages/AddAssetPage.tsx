@@ -1760,7 +1760,7 @@ const AddAssetPage = () => {
             field_name: field.name,
             field_value: field.value,
             group_name: sectionKey,
-            field_description: field.name,
+            field_description: "custom_field",
             _destroy: false,
           });
         } else {
@@ -1779,7 +1779,7 @@ const AddAssetPage = () => {
             field_name: field.name,
             field_value: field.value,
             group_name: sectionKey,
-            field_description: field.name,
+            field_description: "custom_field",
             _destroy: false,
           });
         } else {
