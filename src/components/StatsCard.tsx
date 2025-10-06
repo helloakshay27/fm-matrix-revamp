@@ -41,7 +41,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
 }) => {
   return (
     <div
-      className={`rounded-lg p-6 shadow-[0px_1px_8px_rgba(45,45,45,0.05)] hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer 
+      className={`rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer 
       ${selected ? "bg-[rgb(230_226_218_/_1)]" : "bg-[#f6f4ee]"} ${className}`}
       onClick={() => onClick?.(title)}
     >
