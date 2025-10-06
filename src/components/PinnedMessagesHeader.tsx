@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Pin, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +9,12 @@ import {
 
 const PinnedMessagesHeader = ({ messages, onUnpin, onMessageClick }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [pinnedMessages, setPinnedMessages] = useState([]);
 
-    const pinnedMessages = messages.filter(msg => msg.is_pinned);
+    useEffect(() => {
+        const pinned = messages.filter(msg => msg.is_pinned);
+        setPinnedMessages(pinned);
+    }, [messages]);
 
     if (pinnedMessages.length === 0) return null;
 
@@ -18,6 +22,17 @@ const PinnedMessagesHeader = ({ messages, onUnpin, onMessageClick }) => {
         if (!text) return "Attachment";
         if (text.length <= maxLength) return text;
         return text.substring(0, maxLength) + "...";
+    };
+
+    const handleUnpin = async (message) => {
+        const previousState = [...pinnedMessages];
+        setPinnedMessages(prev => prev.filter(msg => msg.id !== message.id));
+
+        try {
+            await onUnpin?.(message);
+        } catch (error) {
+            setPinnedMessages(previousState);
+        }
     };
 
     const renderSinglePinned = () => {
@@ -41,7 +56,7 @@ const PinnedMessagesHeader = ({ messages, onUnpin, onMessageClick }) => {
                     size="sm"
                     onClick={(e) => {
                         e.stopPropagation();
-                        onUnpin?.(message);
+                        handleUnpin(message);
                     }}
                     className="h-8 w-8 p-0 hover:bg-[#FFE0B2]"
                 >
@@ -54,9 +69,9 @@ const PinnedMessagesHeader = ({ messages, onUnpin, onMessageClick }) => {
     const renderMultiplePinned = () => {
         return (
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                <div className="bg-[#FFF4E6] border-b border-[#FFE0B2]">
+                <div className="bg-[#F2EEE9] border-b">
                     <CollapsibleTrigger className="w-full">
-                        <div className="flex items-center gap-3 py-2 px-4 hover:bg-[#FFE0B2] transition-colors">
+                        <div className="flex items-center gap-3 py-2 px-4 hover:bg-[#e8e0d7] transition-colors">
                             <Pin className="w-4 h-4 text-[#C72030] flex-shrink-0" />
                             <div className="flex-1 text-left">
                                 <div className="text-sm font-semibold text-[#C72030]">
@@ -81,7 +96,7 @@ const PinnedMessagesHeader = ({ messages, onUnpin, onMessageClick }) => {
                             {pinnedMessages.map((message, index) => (
                                 <div
                                     key={message.id || index}
-                                    className="flex items-center gap-3 py-2 px-4 hover:bg-[#FFE0B2] transition-colors border-t border-[#FFE0B2] cursor-pointer"
+                                    className="flex items-center gap-3 py-2 px-4 hover:bg-[#e8e0d7] transition-colors border-t cursor-pointer"
                                     onClick={() => onMessageClick?.(message)}
                                 >
                                     <div className="w-8 h-8 rounded-full bg-white text-[#C72030] text-xs flex items-center justify-center flex-shrink-0">
@@ -100,7 +115,7 @@ const PinnedMessagesHeader = ({ messages, onUnpin, onMessageClick }) => {
                                         size="sm"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onUnpin?.(message);
+                                            handleUnpin(message);
                                         }}
                                         className="h-8 w-8 p-0 hover:bg-white flex-shrink-0"
                                     >
