@@ -409,6 +409,33 @@ export const deleteChatTask = createAsyncThunk(
     }
 );
 
+export const updateMessage = createAsyncThunk(
+    "updateMessage",
+    async (
+        { baseUrl, token, id, data }: { baseUrl: string; token: string; id: string; data: any },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.put(
+                `https://${baseUrl}/messages/${id}.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error: any) {
+            const message =
+                error.response?.data?.error ||
+                error.message ||
+                "Failed to update message";
+            return rejectWithValue(message);
+        }
+    }
+)
+
 const fetchConversationSlice = createApiSlice(
     "fetchConversation",
     fetchConversation
@@ -437,6 +464,7 @@ const removeUserFromGroupSlice = createApiSlice("removeUserFromGroup", removeUse
 const fetchChannelTaskDetailsSlice = createApiSlice("fetchChannelTaskDetails", fetchChannelTaskDetails);
 const updateChatTaskSlice = createApiSlice("updateChatTask", updateChatTask);
 const deleteChatTaskSlice = createApiSlice("deleteChatTask", deleteChatTask);
+const updateMessageSlice = createApiSlice("updateMessage", updateMessage);
 
 
 
@@ -455,3 +483,4 @@ export const removeUserFromGroupReducer = removeUserFromGroupSlice.reducer;
 export const fetchChannelTaskDetailsReducer = fetchChannelTaskDetailsSlice.reducer;
 export const updateChatTaskReducer = updateChatTaskSlice.reducer;
 export const deleteChatTaskReducer = deleteChatTaskSlice.reducer;
+export const updateMessageReducer = updateMessageSlice.reducer;

@@ -64,7 +64,7 @@ import { createBannerReducers, editBannerReducers, fetchBannersByIdReducers, fet
 import { createTestimonialReucers, editTestimonialReucers, fetchTestimonialsByIdReucers, fetchTestimonialsReucers } from './slices/testimonialSlice'
 import { createAmenityReducer, editAmenityReducer, fetchAmenityByIdReducer, fetchAmenityReducer } from './slices/amenitySlice'
 import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPartnersReducer } from './slices/companyPartnerSlice'
-import { createChatTaskReducer, createConversationReducer, createGroupReducer, deleteChatTaskReducer, fetchChannelTaskDetailsReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, removeUserFromGroupReducer, sendMessageReducer, updateChatTaskReducer } from './slices/channelSlice'
+import { createChatTaskReducer, createConversationReducer, createGroupReducer, deleteChatTaskReducer, fetchChannelTaskDetailsReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, removeUserFromGroupReducer, sendMessageReducer, updateChatTaskReducer, updateMessageReducer } from './slices/channelSlice'
 
 export const store = configureStore({
   reducer: {
@@ -316,6 +316,7 @@ export const store = configureStore({
     fetchChannelTaskDetails: fetchChannelTaskDetailsReducer,
     updateChatTask: updateChatTaskReducer,
     deleteChatTask: deleteChatTaskReducer,
+    updateMessage: updateMessageReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>
