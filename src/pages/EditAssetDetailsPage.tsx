@@ -2297,56 +2297,84 @@ export const EditAssetDetailsPage = () => {
       return value;
     };
 
-    // Helper function to find original field ID
-    const findOriginalFieldId = (fieldName, groupName) => {
-      return originalExtraFieldsAttributes.find(
-        attr => attr.field_name === fieldName && attr.group_name === groupName
-      )?.id;
+    // Build a quick lookup of original attributes by group::field
+    const originalByKey = new Map<string, { id?: number; value?: any }>();
+    (originalExtraFieldsAttributes || []).forEach((attr: any) => {
+      const k = `${attr.group_name}::${attr.field_name}`;
+      originalByKey.set(k, { id: attr.id, value: attr.field_value });
+    });
+
+    // Helper to find original field ID and value
+    const findOriginal = (fieldName: string, groupName: string) => {
+      return originalByKey.get(`${groupName}::${fieldName}`);
     };
 
-    // Custom fields - only include fields with non-empty values
+    // Normalize field name: strip repeated `<group>_` prefixes if present
+    const normalizeFieldName = (fieldName: string, groupName: string) => {
+      let base = String(fieldName);
+      const prefix = `${groupName}_`;
+      while (base.startsWith(prefix)) {
+        base = base.slice(prefix.length);
+      }
+      return base;
+    };
+
+    // De-dup collector to avoid duplicates: last write wins
+    const candidates = new Map<string, any>();
+    const addOrReplace = (entry: any) => {
+      const key = `${entry.group_name}::${entry.field_name}`;
+      candidates.set(key, entry);
+    };
+
+    // Custom fields - only include fields with non-empty values and changes only
     Object.keys(customFields).forEach((sectionKey) => {
       (customFields[sectionKey] || []).forEach((field) => {
         // Only add field if it has a non-empty value
         if (!isEmpty(field.value)) {
           console.log(`Including custom field: ${field.name} = ${field.value}`);
-          const originalId = findOriginalFieldId(field.name, sectionKey);
-          extraFields.push({
-            ...(originalId && { id: originalId }),
+          const original = findOriginal(field.name, sectionKey);
+          const originalValue = original?.value ?? undefined;
+          if (String(field.value ?? "") !== String(originalValue ?? "")) {
+            addOrReplace({
+              ...(original?.id && { id: original.id }),
             field_name: field.name,
             field_value: field.value,
             group_name: sectionKey,
-            field_description: "custom_field",
+              field_description: "custom_field",
             _destroy: false,
           });
+          }
         } else {
           console.log(`Skipping empty custom field: ${field.name} (value: ${field.value})`);
         }
       });
     });
 
-    // IT Assets custom fields - only include fields with non-empty values
+    // IT Assets custom fields - only include fields with non-empty values and changes only
     Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
       (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
         // Only add field if it has a non-empty value
         if (!isEmpty(field.value)) {
           console.log(`Including IT assets field: ${field.name} = ${field.value}`);
-          const originalId = findOriginalFieldId(field.name, sectionKey);
-          extraFields.push({
-            ...(originalId && { id: originalId }),
+          const original = findOriginal(field.name, sectionKey);
+          const originalValue = original?.value ?? undefined;
+          if (String(field.value ?? "") !== String(originalValue ?? "")) {
+            addOrReplace({
+              ...(original?.id && { id: original.id }),
             field_name: field.name,
             field_value: field.value,
             group_name: sectionKey,
-            field_description: "custom_field",
+              field_description: "custom_field",
             _destroy: false,
           });
+          }
         } else {
           console.log(`Skipping empty IT assets field: ${field.name} (value: ${field.value})`);
         }
       });
     });
 
-    // Standard extra fields (dynamic) - with proper date formatting
+    // Standard extra fields (dynamic) - with proper date formatting; include changes only
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
       // Skip custom fields here to avoid duplicates; they are handled above via customFields/itAssetsCustomFields
       const isCustomFieldDesc = String(fieldObj?.fieldDescription || "").trim().toLowerCase() === "custom_field";
@@ -2361,16 +2389,20 @@ export const EditAssetDetailsPage = () => {
           fieldObj.value,
           fieldObj.fieldType
         );
-
-        const originalId = findOriginalFieldId(key, fieldObj.groupType);
-        extraFields.push({
-          ...(originalId && { id: originalId }),
-          field_name: key,
+        const groupName = String(fieldObj.groupType || "");
+        const baseName = normalizeFieldName(key, groupName);
+        const original = findOriginal(baseName, groupName);
+        const originalValue = original?.value ?? undefined;
+        if (String(processedValue ?? "") !== String(originalValue ?? "")) {
+          addOrReplace({
+            ...(original?.id && { id: original.id }),
+            field_name: baseName,
           field_value: processedValue,
-          group_name: fieldObj.groupType,
+            group_name: groupName,
           field_description: fieldObj.fieldDescription,
           _destroy: false,
         });
+        }
       } else {
         console.log(`Skipping empty standard field: ${key} (value: ${fieldObj?.value})`);
       }
@@ -2403,7 +2435,7 @@ export const EditAssetDetailsPage = () => {
           const key = `${attr.group_name}::${attr.field_name}`;
           if (!currentCustomKeys.has(key)) {
             // Not present anymore -> mark for destroy
-            extraFields.push({
+            addOrReplace({
               id: attr.id,
               field_name: attr.field_name,
               field_value: "",
@@ -2417,6 +2449,8 @@ export const EditAssetDetailsPage = () => {
       console.warn("Failed to compute custom field deletions", e);
     }
 
+    // Materialize from candidates, preserving insertion order
+    extraFields = Array.from(candidates.values());
     console.log("Final extra fields to send:", extraFields);
     return extraFields;
   };
@@ -3236,14 +3270,28 @@ export const EditAssetDetailsPage = () => {
     );
   };
 
+  // Resolve effective category for attachments (prefilled or chosen)
+  const getEffectiveCategory = () => {
+    // 1) UI selection
+    if (selectedAssetCategory) return selectedAssetCategory;
+    // 2) Form data (if prefilled)
+    const formDataCategory = (formData as any)?.asset_category;
+    if (formDataCategory) return String(formDataCategory);
+    // 3) Extra fields (prefilled from API)
+    const extraCat = extraFormFields?.asset_category?.value;
+    if (extraCat) return String(extraCat);
+    return "";
+  };
+
   // Helper function to get category-specific attachment arrays
   const getCategoryAttachments = () => {
-    if (!selectedAssetCategory) return {};
+    const effectiveCategory = getEffectiveCategory();
+    if (!effectiveCategory) return {};
 
-    const categoryKey = selectedAssetCategory
+    const categoryKey = effectiveCategory
       .toLowerCase()
       .replace(/\s+/g, "")
-      .replace("&", "");
+      .replace(/&/g, "");
 
     return {
       asset_image: attachments[`${categoryKey}AssetImage`] || [],
@@ -4061,11 +4109,12 @@ export const EditAssetDetailsPage = () => {
       }
 
       // Add category-specific files dynamically
-      if (selectedAssetCategory) {
-        const categoryKey = selectedAssetCategory
+      const effectiveCategory = getEffectiveCategory();
+      if (effectiveCategory) {
+        const categoryKey = effectiveCategory
           .toLowerCase()
           .replace(/\s+/g, "")
-          .replace("&", "");
+          .replace(/&/g, "");
         const categoryAttachments = getCategoryAttachments();
 
         // Add asset image
@@ -4239,7 +4288,8 @@ export const EditAssetDetailsPage = () => {
 
   // Helper function to check if there are files to upload
   const hasFiles = () => {
-    if (!selectedAssetCategory) return false;
+    const effectiveCategory = getEffectiveCategory();
+    if (!effectiveCategory) return false;
 
     const categoryAttachments = getCategoryAttachments();
 
@@ -4602,11 +4652,12 @@ export const EditAssetDetailsPage = () => {
       }
 
       // Add category-specific files dynamically
-      if (selectedAssetCategory) {
-        const categoryKey = selectedAssetCategory
+      const effectiveCategory = getEffectiveCategory();
+      if (effectiveCategory) {
+        const categoryKey = effectiveCategory
           .toLowerCase()
           .replace(/\s+/g, "")
-          .replace("&", "");
+          .replace(/&/g, "");
         const categoryAttachments = getCategoryAttachments();
 
         // Add asset image
