@@ -1509,7 +1509,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                         className="flex items-center justify-center rounded-lg mr-4"
                         style={{ background: "#EDEAE3", width: 62, height: 62 }}
                       >
-                        <Ticket className="w-6 h-6" style={{ color: '#C72030' }} />
+                        <Ticket style={{ color: '#C72030', width: '24px', height: '24px' }} />
                       </div>
                       <div className="flex flex-col justify-center">
                         <span
@@ -1792,8 +1792,8 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
 
                     <Card className="w-full">
                       <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                          <Ticket className="w-6 h-6" style={{ color: '#C72030' }} />
+                        <div style={{ width: '40px', height: '40px' }} className="rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                          <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
                         </div>
                         <h3 className="text-lg font-semibold uppercase text-black">
                           Ticket Details
@@ -1804,7 +1804,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                           <div className='w-full '>
                             <div className="">
                               <div className="flex items-start mb-4">
-                                <span className="text-gray-500 min-w-[140px]" style={{ fontSize: '14px' }}>Description</span>
+                                <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Description</span>
                                 <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
                                   {ticketData.heading || 'No description available'}
                                 </span>
@@ -1812,13 +1812,13 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                               <div className="flex justify-between items-center">
                                 <div className="">
                                   <div className="flex items-start mb-4">
-                                    <span className="text-gray-500 min-w-[140px]" style={{ fontSize: '14px' }}>Category</span>
+                                    <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Category</span>
                                     <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
                                       {ticketData.category_type || '-'}
                                     </span>
                                   </div>
                                   <div className="flex items-start mb-4">
-                                    <span className="text-gray-500 min-w-[140px]" style={{ fontSize: '14px' }}>Sub Category</span>
+                                    <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Sub Category</span>
                                     <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
                                       {ticketData.sub_category_type || '-'}
                                     </span>
@@ -1850,7 +1850,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                               </div>
                             </div>
                           </div>
-                          <div className="flex flex-col justify-around" style={{ textAlign: 'center', marginLeft: '40px' }}>
+                          <div className="flex flex-col justify-around" style={{ textAlign: 'center', marginLeft: '20px' }}>
                             <button className='w-full py-1 bg-black rounded-full text-white mb-2 text-xs px-3'>
                               {ticketData.issue_status || '-'}
                             </button>
@@ -1989,7 +1989,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                 <div className="w-full bg-white rounded-lg shadow-sm border">
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <ClipboardList className="w-6 h-6 text-[#C72030]" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
@@ -2034,7 +2034,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                   {/* Header (consistent) */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
@@ -2356,7 +2356,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                 <Card className="w-full bg-white rounded-lg shadow-sm border">
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9] rounded-t-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <DollarSign className="w-6 h-6 text-[#C72030]" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
@@ -2816,7 +2816,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                   {/* Header */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
@@ -3029,7 +3029,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
 
                 <div className="w-full bg-white rounded-lg shadow-sm border">
                   <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                       <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-black">
@@ -3077,7 +3077,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                 {ticketData.documents && (
   <Card className="w-full bg-white rounded-lg shadow-sm border">
     <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
         <Paperclip className="w-6 h-6" style={{ color: '#C72030' }} />
       </div>
       <h3 className="text-lg font-semibold uppercase text-black">
@@ -3329,7 +3329,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                   {/* Header */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <MessageSquare className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
@@ -3565,7 +3565,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                   {/* Header */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <div className="w-6 h-6">
                           <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 18 26" fill="none">
                             <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -3702,7 +3702,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
 
                     <Card className="w-full">
                       <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                           <Ticket className="w-6 h-6" style={{ color: '#C72030' }} />
                         </div>
                         <h3 className="text-lg font-semibold uppercase text-black">
@@ -3899,7 +3899,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                 <div className="w-full bg-white rounded-lg shadow-sm border">
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <ClipboardList className="w-6 h-6 text-[#C72030]" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
@@ -3944,7 +3944,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                   {/* Header (consistent) */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
@@ -4266,7 +4266,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                 <Card className="w-full bg-white rounded-lg shadow-sm border">
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9] rounded-t-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <DollarSign className="w-6 h-6 text-[#C72030]" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
@@ -4726,7 +4726,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                   {/* Header */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
@@ -4939,7 +4939,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
 
                 <div className="w-full bg-white rounded-lg shadow-sm border">
                   <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                       <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-black">
@@ -5084,7 +5084,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                 {ticketData.documents && (
   <Card className="w-full bg-white rounded-lg shadow-sm border">
     <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
         <Paperclip className="w-6 h-6" style={{ color: '#C72030' }} />
       </div>
       <h3 className="text-lg font-semibold uppercase text-black">
@@ -5336,7 +5336,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                   {/* Header */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <MessageSquare className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
@@ -5572,7 +5572,7 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
                   {/* Header */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <div className="w-6 h-6">
                           <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 18 26" fill="none">
                             <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
