@@ -632,11 +632,6 @@ export const ticketManagementAPI = {
     if (ticketData.severity) {
       formData.append('complaint[severity]', ticketData.severity);
     }
-    
-    formData.append('complaint[room_id]', ticketData.room_id.toString());
-    formData.append('complaint[wing_id]', ticketData.wing_id.toString());
-    formData.append('complaint[area_id]', ticketData.area_id.toString());
-    formData.append('complaint[floor_id]', ticketData.floor_id.toString());
 
     // Optional fields
     if (ticketData.id_user) {
