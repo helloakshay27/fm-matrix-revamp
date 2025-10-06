@@ -42,7 +42,7 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
             // @ts-ignore cross-browser
             if (mql.addEventListener) mql.addEventListener('change', onChange);
             else if (mql.addListener) mql.addListener(onChange);
-        } catch {}
+        } catch { }
         return () => {
             window.removeEventListener('beforeprint', before);
             window.removeEventListener('afterprint', after);
@@ -52,7 +52,7 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
                     if (mql.removeEventListener) mql.removeEventListener('change', onChange);
                     else if (mql.removeListener) mql.removeListener(onChange);
                 }
-            } catch {}
+            } catch { }
         };
     }, []);
     return (
@@ -1037,7 +1037,9 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } .first-page-group { break-inside: avoid !important; page-break-inside: avoid !important; page-break-before: auto; page-break-after: always; } }`}</style>
             {/* Wrap sections 1–3 together to keep them on a single page in PDF */}
             <div className="no-break first-page-group">
-                <header className="w-full bg-[#F6F4EE] py-6 sm:py-8 mb-6 print:pt-0 print:mt-0 print:pb-4 print:mb-4">
+                <header className="w-full bg-[#F6F4EE] flex flex-col items-center justify-center text-center py-6 sm:py-8 mb-6 
+    print:flex print:flex-col print:items-center print:justify-center print:text-center 
+    print:pt-0 print:mt-0 print:pb-4 print:mb-4">
                     <h1 className="text-center text-black font-extrabold text-3xl sm:text-4xl print:text-2xl">
                         {title}
                     </h1>

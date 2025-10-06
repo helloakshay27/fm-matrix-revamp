@@ -344,7 +344,8 @@ export const InventoryDetailsPage = () => {
     expiry_date: 'Expiry Date',
     unit: 'Unit',
     category: 'Category',
-    green_product: 'Green Product',
+    green_product: 'Eco Friendly',
+    eco_friendly: 'Eco Friendly',
     category_id: 'Category',
     category_name: 'Category',
     inventory_category_id: 'Category',
@@ -485,6 +486,7 @@ export const InventoryDetailsPage = () => {
     // Booleans: show Yes/No for known boolean flags
     const BOOLEAN_KEYS = new Set([
       'green_product',
+      'eco_friendly',
       'active',
       'expired',
       'is_active',
@@ -1019,10 +1021,10 @@ export const InventoryDetailsPage = () => {
                     <span className="text-gray-500 w-24  ">Name</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">
-                    <span>: {inventoryData?.asset_name || inventoryData?.name || '—'}</span>
+                      <span>: {inventoryData?.asset_name || inventoryData?.name || '—'}</span>
                     </span>
                   </div>
-                  
+
                   <div className="flex text-sm">
                     <span className="text-gray-500 w-24">Group</span>
                     <span className="text-gray-500 mx-2">:</span>
