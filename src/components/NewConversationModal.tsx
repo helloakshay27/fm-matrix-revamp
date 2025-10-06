@@ -72,7 +72,7 @@ const NewConversationModal = ({
 
     return (
         <div
-            className="absolute top-1 left-[15.5rem] w-[32rem] h-[35rem] bg-white flex flex-col shadow-2xl rounded-2xl p-4 space-y-4 border border-gray-100"
+            className="absolute top-1 left-[15.5rem] w-[32rem] h-[35rem] bg-white flex flex-col shadow-2xl rounded-2xl p-4 space-y-4 border border-gray-100 z-10"
             ref={modalRef}
         >
             <div className="flex items-center justify-between">
