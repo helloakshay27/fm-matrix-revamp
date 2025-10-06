@@ -114,15 +114,28 @@ const ViSidebarWithToken: React.FC = () => {
         if (isSidebarCollapsed) setExpandedItems([]);
     }, [isSidebarCollapsed]);
 
-    // Auto-expand "M-Safe" on first load only (per browser tab via sessionStorage)
+    // Auto-expand M-Safe on first load only (per browser tab via sessionStorage) when landing under /safety/m-safe
     useEffect(() => {
         if (isLoading || !hasValidToken) return;
-        const FLAG_KEY = 'vi_msafe_auto_expanded';
+        const FLAG_KEY = 'vi_safety_auto_expanded_once';
         if (!sessionStorage.getItem(FLAG_KEY)) {
-            setExpandedItems((prev) => (prev.includes('M-Safe') ? prev : [...prev, 'M-Safe']));
+            const p = location.pathname || '';
+            const groupToExpand = p.startsWith('/safety/m-safe') ? 'M-Safe' : null;
+
+            // Ensure the sidebar is open so expansion is visible
+            if (isSidebarCollapsed) {
+                setIsSidebarCollapsed(false);
+            }
+
+        if (groupToExpand) {
+                // Slight defer to allow collapse state to update before expanding
+                setTimeout(() => {
+                    setExpandedItems((prev) => (prev.includes(groupToExpand) ? prev : [...prev, groupToExpand]));
+                }, 0);
+            }
             sessionStorage.setItem(FLAG_KEY, '1');
         }
-    }, [isLoading, hasValidToken]);
+    }, [isLoading, hasValidToken, location.pathname, isSidebarCollapsed, setIsSidebarCollapsed]);
 
     // Don't render sidebar if no valid token
     if (isLoading) {

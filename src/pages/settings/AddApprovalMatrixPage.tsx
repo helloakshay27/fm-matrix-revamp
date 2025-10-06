@@ -48,7 +48,8 @@ const AddApprovalMatrixPage = () => {
     { label: 'Permit Closure', value: 'permit_closure' },
     { label: 'Supplier', value: 'supplier' },
     { label: 'GDN', value: 'gdn' },
-    { label: 'Asset Movement', value: 'asset_movement' }
+    { label: 'Asset Movement', value: 'asset_movement' },
+    { label: 'PR Deletion', value: 'pr_deletion_request' },
   ];
 
   useEffect(() => {
@@ -57,7 +58,7 @@ const AddApprovalMatrixPage = () => {
         setLoadingUsers(true);
         const response = await apiClient.get('/pms/users/get_escalate_to_users.json');
         console.log('Users API response:', response.data);
-        
+
         // Ensure we always set an array
         if (Array.isArray(response.data.users)) {
           setUsers(response.data.users);
@@ -122,7 +123,7 @@ const AddApprovalMatrixPage = () => {
     }
 
     // Per-level validation
-    const newErrors: Array<{ order?: string; name?: string; users?: string }> = approvalLevels.map((level) => ({ }));
+    const newErrors: Array<{ order?: string; name?: string; users?: string }> = approvalLevels.map((level) => ({}));
 
     approvalLevels.forEach((level, idx) => {
       // Order: required, integer >= 1
@@ -161,7 +162,7 @@ const AddApprovalMatrixPage = () => {
 
     try {
       setIsSubmitting(true);
-      
+
       const payload = {
         invoice_approval: {
           approval_type: selectedFunction,
@@ -177,7 +178,7 @@ const AddApprovalMatrixPage = () => {
 
       await apiClient.post('/pms/admin/invoice_approvals.json', payload);
       toast.success('Approval matrix created successfully');
-      
+
       navigate('/settings/approval-matrix/setup');
     } catch (error) {
       console.error('Error creating approval matrix:', error);
@@ -272,11 +273,11 @@ const AddApprovalMatrixPage = () => {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         {/* Function Selection */}
         <div className="mb-8">
-            <FormControl fullWidth error={!!functionError}>
-            <InputLabel 
+          <FormControl fullWidth error={!!functionError}>
+            <InputLabel
               required
               shrink={true}
-              sx={{ 
+              sx={{
                 color: '#1a1a1a',
                 '&.Mui-focused': { color: '#C72030' }
               }}
@@ -305,7 +306,7 @@ const AddApprovalMatrixPage = () => {
                 </MenuItem>
               ))}
             </MuiSelect>
-              {functionError && <FormHelperText>{functionError}</FormHelperText>}
+            {functionError && <FormHelperText>{functionError}</FormHelperText>}
           </FormControl>
         </div>
 
@@ -372,10 +373,10 @@ const AddApprovalMatrixPage = () => {
                 {/* Users */}
                 <div className="md:col-span-5">
                   <FormControl fullWidth size="small" error={!!levelErrors[index]?.users}>
-                    <InputLabel 
+                    <InputLabel
                       required
                       shrink={true}
-                      sx={{ 
+                      sx={{
                         color: '#1a1a1a',
                         '&.Mui-focused': { color: '#C72030' }
                       }}
@@ -413,7 +414,7 @@ const AddApprovalMatrixPage = () => {
                       ) : (
                         users.map((user) => (
                           <MenuItem key={user.id} value={user.id.toString()}>
-                            <Checkbox 
+                            <Checkbox
                               checked={level.users.includes(user.id.toString())}
                               sx={{
                                 color: '#C72030',
@@ -447,7 +448,7 @@ const AddApprovalMatrixPage = () => {
                     label="Send Emails"
                     sx={{ color: '#1a1a1a' }}
                   />
-                  
+
                   {approvalLevels.length > 1 && (
                     <Button
                       variant="ghost"
@@ -482,7 +483,7 @@ const AddApprovalMatrixPage = () => {
           >
             {isSubmitting ? 'Creating...' : 'Create'}
           </Button>
-          
+
           <Button
             variant="outline"
             onClick={handleSaveAndCreateNew}

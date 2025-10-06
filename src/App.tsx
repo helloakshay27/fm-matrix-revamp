@@ -735,6 +735,7 @@ import CheckHierarchy from "./components/CheckHierarchy";
 import { InvoiceFeeds } from "./pages/InvoiceFeeds";
 import EditApprovalMatrixPage from "./pages/settings/EditApprovalMatrixPage";
 import AllContent from "./components/fm-pdf/AllContent";
+import DailyReport from "./components/DailyReport";
 import PDFDownloadPage from "./components/PDFDownloadPage";
 import PermissionDemo from "./components/PermissionDemo";
 import CRMWalletList from "./pages/CRMWalletList";
@@ -921,6 +922,7 @@ function App() {
 
                 {/* Login Route */}
                 <Route path="/thepdf" element={<AllContent />} />
+                <Route path="/dailypdf" element={<DailyReport />} />
                 <Route path="/weeklypdf" element={<WeeklyReport />} />
 
                 <Route

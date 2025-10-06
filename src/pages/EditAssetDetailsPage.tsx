@@ -1601,6 +1601,23 @@ export const EditAssetDetailsPage = () => {
           return acc;
         }, {}),
       }));
+      
+      // Also prefill visible custom fields for UI rendering (only those marked as custom_field)
+      setCustomFields((prev) => ({
+        ...prev,
+        ...Object.keys(groupedFields).reduce((acc, group) => {
+          const customOnly = (groupedFields[group] || []).filter(
+            (f) => String(f.field_description).trim().toLowerCase() === "custom_field"
+          );
+          if (customOnly.length > 0) {
+            acc[group] = [
+              ...(prev[group] || []),
+              ...customOnly.map((f) => ({ id: f.id, name: f.field_name, value: f.field_value })),
+            ];
+          }
+          return acc;
+        }, {} as any),
+      }));
       setOriginalExtraFieldsAttributes(asset.extra_fields_attributes);
     }
 
@@ -2299,7 +2316,7 @@ export const EditAssetDetailsPage = () => {
             field_name: field.name,
             field_value: field.value,
             group_name: sectionKey,
-            field_description: field.name,
+            field_description: "custom_field",
             _destroy: false,
           });
         } else {
@@ -2320,7 +2337,7 @@ export const EditAssetDetailsPage = () => {
             field_name: field.name,
             field_value: field.value,
             group_name: sectionKey,
-            field_description: field.name,
+            field_description: "custom_field",
             _destroy: false,
           });
         } else {
@@ -2331,6 +2348,12 @@ export const EditAssetDetailsPage = () => {
 
     // Standard extra fields (dynamic) - with proper date formatting
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
+      // Skip custom fields here to avoid duplicates; they are handled above via customFields/itAssetsCustomFields
+      const isCustomFieldDesc = String(fieldObj?.fieldDescription || "").trim().toLowerCase() === "custom_field";
+      if (isCustomFieldDesc) {
+        return;
+      }
+
       if (!isEmpty(fieldObj?.value)) {
         console.log(`Including standard field: ${key} = ${fieldObj.value}`);
         // Format date values properly
@@ -2352,6 +2375,47 @@ export const EditAssetDetailsPage = () => {
         console.log(`Skipping empty standard field: ${key} (value: ${fieldObj?.value})`);
       }
     });
+
+    // Handle deletions for custom fields: include original records with _destroy: true
+    try {
+      const currentCustomKeys = new Set<string>();
+
+      // Track current custom fields from UI (customFields)
+      Object.keys(customFields).forEach((sectionKey) => {
+        (customFields[sectionKey] || []).forEach((field: any) => {
+          const key = `${sectionKey}::${field.name}`;
+          currentCustomKeys.add(key);
+        });
+      });
+
+      // Track current IT assets custom fields
+      Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
+        (itAssetsCustomFields[sectionKey] || []).forEach((field: any) => {
+          const key = `${sectionKey}::${field.name}`;
+          currentCustomKeys.add(key);
+        });
+      });
+
+      // From original attributes, find removed custom fields (field_description === 'custom_field')
+      (originalExtraFieldsAttributes || [])
+        .filter((attr: any) => String(attr.field_description).trim().toLowerCase() === "custom_field")
+        .forEach((attr: any) => {
+          const key = `${attr.group_name}::${attr.field_name}`;
+          if (!currentCustomKeys.has(key)) {
+            // Not present anymore -> mark for destroy
+            extraFields.push({
+              id: attr.id,
+              field_name: attr.field_name,
+              field_value: "",
+              group_name: attr.group_name,
+              field_description: attr.field_description,
+              _destroy: true,
+            });
+          }
+        });
+    } catch (e) {
+      console.warn("Failed to compute custom field deletions", e);
+    }
 
     console.log("Final extra fields to send:", extraFields);
     return extraFields;
@@ -4762,7 +4826,9 @@ export const EditAssetDetailsPage = () => {
           </button>
           <span>Asset List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Create New Asset</span>
+          <span>Asset Details</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium"> Edit Asset</span>
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           NEW ASSET
@@ -4782,34 +4848,9 @@ export const EditAssetDetailsPage = () => {
             <div className="w-full">
               <RadioGroup
                 value={selectedAssetCategory}
-                onValueChange={(category) => {
-                  setSelectedAssetCategory(category);
-                  // handleFieldChange('asset_category', category);
-                  handleExtraFieldChange(
-                    "asset_category",
-                    category,
-                    "text",
-                    "basicIdentification",
-                    "Asset Category"
-                  );
-                  // Reset form data when category changes
-                  setFormData((prevData) => ({
-                    ...prevData,
-                    asset_category: category,
-                    name: "",
-                    asset_number: "",
-                    // Preserve these fields for Leasehold Improvement
-                    location_site:
-                      category === "Leasehold Improvement"
-                        ? prevData.location_site
-                        : "",
-                    improvement_description:
-                      category === "Leasehold Improvement"
-                        ? prevData.improvement_description
-                        : "",
-                  }));
-                }}
-                className="flex flex-wrap gap-2 lg:gap-3"
+                onValueChange={() => {}}
+                aria-readonly
+                className="flex flex-wrap gap-2 lg:gap-3 pointer-events-none opacity-60"
               >
                 {[
                   "Land",
@@ -4830,6 +4871,7 @@ export const EditAssetDetailsPage = () => {
                       value={category}
                       id={category}
                       className="mx-auto"
+                      disabled
                     />
                     <label
                       htmlFor={category}

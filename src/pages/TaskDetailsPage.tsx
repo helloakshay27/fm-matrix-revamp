@@ -225,7 +225,7 @@ export const TaskDetailsPage = () => {
             can_edit: ['open', 'inprogress', 'scheduled', 'workinprogress'].includes(
               rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || ''
             ),
-            can_view_job_sheet: ['closed', 'completed'].includes(
+            can_view_job_sheet: ['closed', 'completed','partially closed'].includes(
               rawDetails.task_status?.toLowerCase().replace(/\s+/g, '') || ''
             )
           },
@@ -1014,10 +1014,10 @@ export const TaskDetailsPage = () => {
                 }
                 
                 // If status is closed - show Job Sheet
-                else if (['closed', 'completed'].includes(status)) {
+                else if (['closed', 'completed','partially closed'].includes(status)) {
                   return (
                     <>
-                      {(taskDetails?.actions?.can_view_job_sheet || ['closed', 'completed'].includes(status)) && (
+                      {(taskDetails?.actions?.can_view_job_sheet || ['closed', 'completed','partially closed'].includes(status)) && (
                         <Button
                           onClick={handleJobSheetModalClick}
                           variant="outline"
@@ -1047,7 +1047,7 @@ export const TaskDetailsPage = () => {
                 // Default case - show all buttons if conditions are met
                 return (
                   <>
-                    {(taskDetails?.actions?.can_view_job_sheet || ['closed', 'completed'].includes(status)) && (
+                    {(taskDetails?.actions?.can_view_job_sheet || ['closed', 'completed', 'partially closed'].includes(status)) && (
                       <Button
                         onClick={handleJobSheetModalClick}
                         variant="outline"
@@ -1417,7 +1417,7 @@ export const TaskDetailsPage = () => {
           {/* Ticket Details - Show only for closed/completed status */}
           {(() => {
             const status = taskDetails?.task_details?.status?.value?.toLowerCase();
-            return ['closed', 'completed'].includes(status) && (
+            return ['closed', 'completed','partially closed'].includes(status) && (
               <Card className="w-full bg-transparent shadow-none border-none">
                 <div className="figma-card-header">
                   <div className="flex items-center gap-3">
