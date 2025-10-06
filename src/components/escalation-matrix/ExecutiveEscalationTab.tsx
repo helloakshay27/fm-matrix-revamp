@@ -80,6 +80,7 @@ interface EscalationUser {
 
 export const ExecutiveEscalationTab: React.FC = () => {
   const [escalationData, setEscalationData] = useState<EscalationLevel[]>([
+    { level: 'E0', escalationTo: [], days: '', hours: '', minutes: '' },
     { level: 'E1', escalationTo: [], days: '', hours: '', minutes: '' },
     { level: 'E2', escalationTo: [], days: '', hours: '', minutes: '' },
     { level: 'E3', escalationTo: [], days: '', hours: '', minutes: '' }
@@ -190,7 +191,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
 
   const startEdit = (groupIndex: number, group: ExecutiveEscalationResponse['escalations']) => {
     // Prefill edit data for levels E1..E3
-    const levels = ['E1','E2','E3'].map((lvl) => {
+    const levels = ['E0','E1','E2','E3'].map((lvl) => {
       const esc = group.find(g => g.name === lvl);
       const time = splitMinutes(esc?.p1 ?? 0);
       const userIds: number[] = Array.isArray(esc?.escalate_to_users_details)
@@ -234,18 +235,21 @@ export const ExecutiveEscalationTab: React.FC = () => {
       setUpdateLoading(true);
       // Build escalation_matrix using existing ids
       const matrix: Record<string, any> = {};
-      ['E1','E2','E3'].forEach((lvl, i) => {
+      ['E0','E1','E2','E3'].forEach((lvl, i) => {
         const existing = group.find(g => g.name === lvl);
         const key = lvl.toLowerCase();
         const item = editData[i];
         if (!item) return;
-        matrix[key] = {
+        const base = {
           id: existing?.id,
           esc_type: 'Executive Escalation',
           name: lvl,
-          p1: convertMinutesToP1(item.days, item.hours, item.minutes),
           escalate_to_users: (item.escalationTo || []).map(id => Number(id)),
-        };
+        } as any;
+        if (lvl !== 'E0') {
+          base.p1 = convertMinutesToP1(item.days, item.hours, item.minutes);
+        }
+        matrix[key] = base;
       });
 
       const payload = {
@@ -293,8 +297,8 @@ export const ExecutiveEscalationTab: React.FC = () => {
           escalationMatrix[levelKey].escalate_to_users = item.escalationTo.map(id => id.toString());
         }
 
-        // Add p1 timing if any time value is provided (except for E0)
-        if (levelKey !== 'e0' && (item.days || item.hours || item.minutes)) {
+        // Add p1 timing if any time value is provided
+        if (item.days || item.hours || item.minutes) {
           escalationMatrix[levelKey].p1 = convertMinutesToP1(item.days, item.hours, item.minutes);
         }
       });
@@ -324,6 +328,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
       
       // Clear the form inputs after successful submission
       setEscalationData([
+        { level: 'E0', escalationTo: [], days: '', hours: '', minutes: '' },
         { level: 'E1', escalationTo: [], days: '', hours: '', minutes: '' },
         { level: 'E2', escalationTo: [], days: '', hours: '', minutes: '' },
         { level: 'E3', escalationTo: [], days: '', hours: '', minutes: '' }
@@ -463,8 +468,8 @@ export const ExecutiveEscalationTab: React.FC = () => {
                 />
               </div>
 
-              {/* Hide timing inputs for E0 level */}
-              {item.level !== 'E0' ? (
+              {/* P1 timing is NOT needed for E0 */}
+              {item.level !== 'E0' && (
                 <>
                   <Input
                     type="number"
@@ -492,12 +497,6 @@ export const ExecutiveEscalationTab: React.FC = () => {
                     className="text-center bg-white border-gray-300"
                     disabled={hasExecutive}
                   />
-                </>
-              ) : (
-                <>
-                  <div></div>
-                  <div></div>
-                  <div></div>
                 </>
               )}
             </div>
@@ -610,7 +609,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {[ 'E1', 'E2', 'E3'].map((levelName) => {
+                        {[ 'E0', 'E1', 'E2', 'E3'].map((levelName) => {
                           const escalation = ruleGroup.find(esc => esc.name === levelName);
                           return (
                             <TableRow key={levelName} className="border-b border-gray-100 hover:bg-gray-50/50">
@@ -655,27 +654,31 @@ export const ExecutiveEscalationTab: React.FC = () => {
                                 className="min-w-[250px]"
                               />
                             </div>
-                            <Input
-                              type="number"
-                              value={item.days}
-                              onChange={(e) => handleEditFieldChange(idx, 'days', e.target.value)}
-                              placeholder="Days"
-                              className="text-center bg-white border-gray-300"
-                            />
-                            <Input
-                              type="number"
-                              value={item.hours}
-                              onChange={(e) => handleEditFieldChange(idx, 'hours', e.target.value)}
-                              placeholder="Hrs"
-                              className="text-center bg-white border-gray-300"
-                            />
-                            <Input
-                              type="number"
-                              value={item.minutes}
-                              onChange={(e) => handleEditFieldChange(idx, 'minutes', e.target.value)}
-                              placeholder="Min"
-                              className="text-center bg-white border-gray-300"
-                            />
+                            {item.level !== 'E0' && (
+                              <>
+                                <Input
+                                  type="number"
+                                  value={item.days}
+                                  onChange={(e) => handleEditFieldChange(idx, 'days', e.target.value)}
+                                  placeholder="Days"
+                                  className="text-center bg-white border-gray-300"
+                                />
+                                <Input
+                                  type="number"
+                                  value={item.hours}
+                                  onChange={(e) => handleEditFieldChange(idx, 'hours', e.target.value)}
+                                  placeholder="Hrs"
+                                  className="text-center bg-white border-gray-300"
+                                />
+                                <Input
+                                  type="number"
+                                  value={item.minutes}
+                                  onChange={(e) => handleEditFieldChange(idx, 'minutes', e.target.value)}
+                                  placeholder="Min"
+                                  className="text-center bg-white border-gray-300"
+                                />
+                              </>
+                            )}
                           </div>
                         ))}
                       </div>
