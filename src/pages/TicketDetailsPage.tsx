@@ -1167,44 +1167,97 @@ const handleRootCauseChange = async (selectedValues: string | string[] | number 
   const responseBalanceTAT = calculateBalanceTAT(ticketData.response_tat_time, ticketData.balance_reponse_tat);
   const resolutionBalanceTAT = calculateBalanceTAT(ticketData.resolution_tat_time, ticketData.balance_resolution_tat);
 
-  const tatGridRows = [
-    [
-      {
-        label: 'Response TAT',
-        value: hasData(ticketData.response_tat)
-          ? formatMinutesToDDHHMM(ticketData.response_tat)
-          : '00:00:00'
-      },
-      {
-        label: 'Balance TAT',
-        value: responseBalanceTAT.value,
-        isExceeded: responseBalanceTAT.isExceeded,
-        exceededBy: responseBalanceTAT.exceededBy
-      },
-      {
-        label: 'Escalation',
-        value: ticketData.response_escalation || '-'
-      },
-    ],
-    [
-      {
-        label: 'Resolution TAT',
-        value: hasData(ticketData.resolution_tat)
-          ? formatMinutesToDDHHMM(ticketData.resolution_tat)
-          : '00:00:00'
-      },
-      {
-        label: 'Balance TAT',
-        value: resolutionBalanceTAT.value,
-        isExceeded: resolutionBalanceTAT.isExceeded,
-        exceededBy: resolutionBalanceTAT.exceededBy
-      },
-      {
-        label: 'Escalation',
-        value: ticketData.resolution_escalation || '-'
-      },
-    ],
-  ];
+ const tatGridRows = [
+  [
+    {
+      label: 'Response TAT',
+      value: hasData(ticketData.response_tat)
+        ? formatMinutesToDDHHMM(ticketData.response_tat)
+        : '00:00:00'
+    },
+    {
+      label: 'Balance TAT',
+      value: responseBalanceTAT.value,
+      isExceeded: responseBalanceTAT.isExceeded,
+      exceededBy: responseBalanceTAT.exceededBy
+    },
+    {
+      label: 'Escalation',
+      value: (() => {
+        console.log('Response Escalation Debug:', {
+          response_escalate_to_user: ticketData.response_escalate_to_user,
+          response_esc_name: ticketData.response_esc_name,
+          response_escalation: ticketData.response_escalation
+        });
+
+        // Build the escalation display string
+        const parts: string[] = [];
+        
+        // Add escalation name (E2, E3, etc.) if available
+        if (ticketData.response_esc_name) {
+          parts.push(ticketData.response_esc_name);
+        }
+        
+        // Add user names if available
+        if (Array.isArray(ticketData.response_escalate_to_user) && ticketData.response_escalate_to_user.length > 0) {
+          const users = ticketData.response_escalate_to_user.filter(user => user !== null && user !== undefined && user !== '');
+          if (users.length > 0) {
+            parts.push(users.join(', '));
+          }
+        }
+        
+        // Return combined string or fallback
+        return parts.length > 0 ? parts.join(' - ') : (ticketData.response_escalation || '-');
+      })()
+    },
+  ],
+  [
+    {
+      label: 'Resolution TAT',
+      value: hasData(ticketData.resolution_tat)
+        ? formatMinutesToDDHHMM(ticketData.resolution_tat)
+        : '00:00:00'
+    },
+    {
+      label: 'Balance TAT',
+      value: resolutionBalanceTAT.value,
+      isExceeded: resolutionBalanceTAT.isExceeded,
+      exceededBy: resolutionBalanceTAT.exceededBy
+    },
+    {
+      label: 'Escalation',
+      value: (() => {
+        console.log('Resolution Escalation Debug:', {
+          resolution_escalate_to_user: ticketData.resolution_escalate_to_user,
+          resolution_esc_name: ticketData.resolution_esc_name,
+          resolution_escalation: ticketData.resolution_escalation
+        });
+
+        // Build the escalation display string
+        const parts: string[] = [];
+        
+        // Add escalation name (E2, E3, etc.) if available
+        if (ticketData.resolution_esc_name) {
+          parts.push(ticketData.resolution_esc_name);
+        }
+        
+        // Add user names if available
+        if (Array.isArray(ticketData.resolution_escalate_to_user) && ticketData.resolution_escalate_to_user.length > 0) {
+          const users = ticketData.resolution_escalate_to_user.filter(user => user !== null && user !== undefined && user !== '');
+          if (users.length > 0) {
+            parts.push(users.join(', '));
+          }
+        }
+        
+        // Return combined string or fallback
+        return parts.length > 0 ? parts.join(' - ') : (ticketData.resolution_escalation || '-');
+      })()
+    },
+  ],
+];
+
+  console.log("escNAme",ticketData.response_esc_name, ticketData.resolution_esc_name);
+  
 
   // Helper function to find the matched responsible person
   const getResponsiblePersonValue = () => {
