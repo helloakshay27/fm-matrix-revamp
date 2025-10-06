@@ -86,7 +86,7 @@ const ChatAttachments = () => {
                     No attachments found
                 </p>
             ) : (
-                <>
+                <div className="p-6">
                     <div className="flex justify-end mb-4">
                         <div className="flex items-center gap-2 bg-white rounded-lg shadow-sm border border-gray-200 p-1">
                             <button
@@ -163,7 +163,7 @@ const ChatAttachments = () => {
                             </div>
                         ))}
                     </div>
-                </>
+                </div>
             )}
         </div>
     );

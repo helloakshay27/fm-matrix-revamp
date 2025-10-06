@@ -178,7 +178,7 @@ const DMConversation = () => {
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto">
                 {activeTab === "chat" && id && <Chats messages={messages} onReply={handleReply} />}
                 {activeTab === "task" && <ChatTasks />}
                 {activeTab === "attachments" && <ChatAttachments />}

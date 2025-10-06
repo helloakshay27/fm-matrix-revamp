@@ -23,7 +23,7 @@ const PinnedMessagesHeader = ({ messages, onUnpin, onMessageClick }) => {
     const renderSinglePinned = () => {
         const message = pinnedMessages[0];
         return (
-            <div className="flex items-center gap-3 py-2 px-4 bg-[#FFF4E6] border-b border-[#FFE0B2]">
+            <div className="flex items-center gap-3 py-2 px-4 bg-[#F2EEE9] border-b">
                 <Pin className="w-4 h-4 text-[#C72030] flex-shrink-0" />
                 <div
                     className="flex-1 min-w-0 cursor-pointer"
