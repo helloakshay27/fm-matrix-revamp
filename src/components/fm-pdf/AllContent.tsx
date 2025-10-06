@@ -3320,7 +3320,7 @@ const AllContent = () => {
                             </table>
                         </div>
                         <p className="text-xs text-gray-700 mt-2 print:text-[9px] print:mt-1">
-                            <strong>Note:</strong> Top 10 high-maintenance assets for cost review.
+                            <strong>Note:</strong> This table lists the top 10 assets with the highest maintenance spend, highlighting the assets that incur the most significant costs
                         </p>
                     </div>
 
@@ -3367,7 +3367,7 @@ const AllContent = () => {
                         <table className="min-w-full border border-black text-sm text-center align-middle print:text-[9px] print:leading-relaxed print:table-fixed print:w-full">
                             <thead className="bg-[#DAD6C9] text-[#c72030]">
                                 <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[10px]">
-                                    {['Site Name','AMC Name','Contract Start Date','Contract End Date','Renewal Reminder','Projected Renewal Cost (₹)','Vendor Contact'].map(h => (
+                                    {['Site Name', 'AMC Name', 'Contract Start Date', 'Contract End Date', 'Renewal Reminder', 'Contract Cost (₹)', 'Vendor Contact'].map(h => (
                                         <th
                                             key={h}
                                             scope="col"
@@ -3390,8 +3390,8 @@ const AllContent = () => {
                                             const d = row.contract_end_date ? new Date(row.contract_end_date) : null;
                                             if (!d || isNaN(d.getTime())) return Infinity;
                                             const today = new Date();
-                                            today.setHours(0,0,0,0);
-                                            d.setHours(0,0,0,0);
+                                            today.setHours(0, 0, 0, 0);
+                                            d.setHours(0, 0, 0, 0);
                                             return Math.round((d.getTime() - today.getTime()) / 86400000);
                                         })();
                                         const reminderText = String(row.renewal_reminder || '').toLowerCase();
@@ -3430,7 +3430,7 @@ const AllContent = () => {
                             <table className="min-w-full border border-black text-sm text-center align-middle print:table-fixed print:w-full print:text-[9px] print:leading-relaxed">
                                 <thead className="bg-[#DAD6C9] text-[#c72030]">
                                     <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[10px]">
-                                        {['Site Name','AMC Name','Contract Start Date','Contract End Date','Status','Projected Renewal Cost (₹)','Vendor Contact'].map(h => (
+                                        {['Site Name', 'AMC Name', 'Contract Start Date', 'Contract End Date', 'Status', 'Projected Renewal Cost (₹)', 'Vendor Contact'].map(h => (
                                             <th
                                                 key={h}
                                                 scope="col"
@@ -3865,7 +3865,7 @@ const AllContent = () => {
                                 <table className="min-w-full border border-black text-sm align-middle print:table-fixed print:w-full print:text-[10px] print:leading-relaxed">
                                     <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
                                         <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[9px]">
-                                            <th scope="col" className="border border-black py-1 px-4 text-left bg-[#F6F4EE] print:py-1 print:px-2 print:w-[22%] print:whitespace-normal print:break-words print:align-top">Inventory</th>
+                                            <th scope="col" className="border border-black py-1 px-4 text-left bg-[#F6F4EE] print:py-1 print:px-2 print:w-[22%] print:whitespace-normal print:break-words print:align-top">Sites</th>
                                             {topConsumableHeaders.map((header, index) => (
                                                 <th
                                                     key={index}
@@ -3900,7 +3900,7 @@ const AllContent = () => {
 
 
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[11px] print:mt-0 print:px-3 print:py-2 print:text-black">
-                            <strong>Note :</strong> This table highlights the top 10 consumables (highest overall usage) across each centre. Numeric values are right-aligned with tabular spacing for easier comparison.
+                            <strong>Note :</strong> This table highlights the top 10 consumables (highest overall usage) across each centre. Numeric values are right-aligned with tabular spacing for easier comparison. <br />
                         </div>
                     </div>
 
