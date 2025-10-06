@@ -3199,31 +3199,43 @@ export const TicketDetailsPage = () => {
                                 className="flex relative flex-col items-center border rounded-lg w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                               >
                                 {isImage ? (
-                                  <img
-                                    src={url}
-                                    alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
-                                    className="w-full h-full object-cover rounded-md border"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
-                                  />
-                                ) : isPdf ? (
-                                  <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                    <FileText className="w-6 h-6" />
-                                  </div>
-                                ) : isExcel ? (
-                                  <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                    <FileSpreadsheet className="w-6 h-6" />
-                                  </div>
-                                ) : isWord ? (
-                                  <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                    <FileText className="w-6 h-6" />
-                                  </div>
-                                ) : (
-                                  <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                    <File className="w-6 h-6" />
-                                  </div>
-                                )}
+  <img
+    src={url}
+    alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
+    className="w-full h-full object-cover rounded-md border"
+    onError={(e) => {
+      (e.target as HTMLImageElement).style.display = 'none';
+    }}
+  />
+) : isPdf ? (
+  <div 
+    className="flex items-center justify-center border rounded-md text-red-600 bg-white"
+    style={{ width: '150px', height: '150px' }}
+  >
+    <FileText className="w-12 h-12" />
+  </div>
+) : isExcel ? (
+  <div 
+    className="flex items-center justify-center border rounded-md text-green-600 bg-white"
+    style={{ width: '150px', height: '150px' }}
+  >
+    <FileSpreadsheet className="w-12 h-12" />
+  </div>
+) : isWord ? (
+  <div 
+    className="flex items-center justify-center border rounded-md text-blue-600 bg-white"
+    style={{ width: '150px', height: '150px' }}
+  >
+    <FileText className="w-12 h-12" />
+  </div>
+) : (
+  <div 
+    className="flex items-center justify-center border rounded-md text-gray-600 bg-white"
+    style={{ width: '150px', height: '150px' }}
+  >
+    <File className="w-12 h-12" />
+  </div>
+)}
                                 {/* <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
                   {attachment.document_name ||
                     attachment.document_file_name ||
@@ -5143,20 +5155,32 @@ export const TicketDetailsPage = () => {
                                 }}
                               />
                             ) : isPdf ? (
-                              <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                <FileText className="w-6 h-6" />
+                              <div
+                                className="flex items-center justify-center border rounded-md text-red-600 bg-white"
+                                style={{ width: '150px', height: '150px' }}
+                              >
+                                <FileText className="w-12 h-12" />
                               </div>
                             ) : isExcel ? (
-                              <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                <FileSpreadsheet className="w-6 h-6" />
+                              <div
+                                className="flex items-center justify-center border rounded-md text-green-600 bg-white"
+                                style={{ width: '150px', height: '150px' }}
+                              >
+                                <FileSpreadsheet className="w-12 h-12" />
                               </div>
                             ) : isWord ? (
-                              <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                <FileText className="w-6 h-6" />
+                              <div
+                                className="flex items-center justify-center border rounded-md text-blue-600 bg-white"
+                                style={{ width: '150px', height: '150px' }}
+                              >
+                                <FileText className="w-12 h-12" />
                               </div>
                             ) : (
-                              <div className="w-full h-full m-auto flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                <File className="w-6 h-6" />
+                              <div
+                                className="flex items-center justify-center border rounded-md text-gray-600 bg-white"
+                                style={{ width: '150px', height: '150px' }}
+                              >
+                                <File className="w-12 h-12" />
                               </div>
                             )}
                             {/* <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">

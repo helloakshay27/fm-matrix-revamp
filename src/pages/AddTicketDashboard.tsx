@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Paperclip, X, User, Ticket } from 'lucide-react';
+import { ArrowLeft, Upload, Paperclip, X, User, Ticket, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
@@ -15,6 +15,72 @@ import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/a
 interface ComplaintModeResponse {
   id: number;
   name: string;
+}
+
+// Update location interfaces to match API responses
+interface AreaResponse {
+  id: number;
+  name: string;
+  wing_id: string;
+  building_id: string;
+  wing?: {
+    id: number;
+    name: string;
+  };
+  building?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface BuildingResponse {
+  id: number;
+  name: string;
+  site_id: string;
+  wings?: Array<{
+    id: number;
+    name: string;
+  }>;
+  areas?: Array<{
+    id: number;
+    name: string;
+    wing_id: string;
+  }>;
+}
+
+interface WingResponse {
+  id: number;
+  name: string;
+  building_id: string;
+  building?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface FloorResponse {
+  id: number;
+  name: string;
+  wing_id: number;
+  area_id: number;
+  building_id: string;
+  wing?: {
+    id: number;
+    name: string;
+  };
+  area?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface RoomResponse {
+  id: number;
+  name: string;
+  floor_id: number;
+  wing_id: number;
+  area_id: string;
+  building_id: string;
 }
 
 const PRIORITY_OPTIONS = [
@@ -71,6 +137,8 @@ export const AddTicketDashboard = () => {
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFieldsReadOnly, setIsFieldsReadOnly] = useState(false);
+  const [isGoldenTicket, setIsGoldenTicket] = useState(false);
+  const [isFlagged, setIsFlagged] = useState(false);
 
   // Dropdown data states
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
@@ -79,8 +147,15 @@ export const AddTicketDashboard = () => {
   const [occupantUsers, setOccupantUsers] = useState<OccupantUserResponse[]>([]);
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
   const [complaintModes, setComplaintModes] = useState<ComplaintModeResponse[]>([]);
-  const [isGoldenTicket, setIsGoldenTicket] = useState(false);
-  const [isFlagged, setIsFlagged] = useState(false);
+  const [areas, setAreas] = useState<AreaResponse[]>([]);
+  const [buildings, setBuildings] = useState<BuildingResponse[]>([]);
+  const [wings, setWings] = useState<WingResponse[]>([]);
+  const [floors, setFloors] = useState<FloorResponse[]>([]);
+  const [rooms, setRooms] = useState<RoomResponse[]>([]);
+  const [filteredBuildings, setFilteredBuildings] = useState<BuildingResponse[]>([]);
+  const [filteredWings, setFilteredWings] = useState<WingResponse[]>([]);
+  const [filteredFloors, setFilteredFloors] = useState<FloorResponse[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<RoomResponse[]>([]);
 
   // Loading states
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -88,6 +163,11 @@ export const AddTicketDashboard = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingAccount, setLoadingAccount] = useState(false);
   const [loadingComplaintModes, setLoadingComplaintModes] = useState(false);
+  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [loadingWings, setLoadingWings] = useState(false);
+  const [loadingFloors, setLoadingFloors] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -104,8 +184,32 @@ export const AddTicketDashboard = () => {
     severity: '',
     referenceNumber: '',
     mode: '',
-    complaintMode: ''
+    complaintMode: '',
+    // Add location fields
+    area: '',
+    building: '',
+    wing: '',
+    floor: '',
+    room: ''
   });
+
+  // Load user account
+  const loadUserAccount = async () => {
+    setLoadingAccount(true);
+    try {
+      const response = await ticketManagementAPI.getUserAccount();
+      setUserAccount(response);
+    } catch (error) {
+      console.error('Error loading user account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load user account",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingAccount(false);
+    }
+  };
 
   // Load initial data
   useEffect(() => {
@@ -113,10 +217,21 @@ export const AddTicketDashboard = () => {
     loadFMUsers();
     loadOccupantUsers();
     loadComplaintModes();
+    loadLocationData();
     if (onBehalfOf === 'self') {
       loadUserAccount();
     }
   }, [onBehalfOf]);
+
+  // Load occupant users
+  const loadOccupantUsers = async () => {
+    try {
+      const response = await ticketManagementAPI.getOccupantUsers();
+      setOccupantUsers(response);
+    } catch (error) {
+      console.error('Error loading occupant users:', error);
+    }
+  };
 
   // Reset form when behalf selection changes
   useEffect(() => {
@@ -213,36 +328,124 @@ export const AddTicketDashboard = () => {
     }
   };
 
-  // Load occupant users
-  const loadOccupantUsers = async () => {
-    setLoadingUsers(true);
+  // Load areas, buildings, wings, floors, and rooms
+  const loadLocationData = async () => {
+    await Promise.all([
+      loadAreas(),
+      loadBuildings(),
+      loadWings(),
+      loadFloors(),
+      loadRooms()
+    ]);
+  };
+
+  const loadAreas = async () => {
+    setLoadingAreas(true);
     try {
-      const users = await ticketManagementAPI.getOccupantUsers();
-      setOccupantUsers(users);
+      const url = getFullUrl('/pms/areas.json');
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch areas');
+      const data = await response.json();
+      // API returns { areas: [...] }
+      setAreas(data.areas || []);
     } catch (error) {
-      console.error('Error loading occupant users:', error);
+      console.error('Error loading areas:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load areas",
+        variant: "destructive"
+      });
     } finally {
-      setLoadingUsers(false);
+      setLoadingAreas(false);
     }
   };
 
-  // Load user account details
-  const loadUserAccount = async () => {
-    setLoadingAccount(true);
+  const loadBuildings = async () => {
+    setLoadingBuildings(true);
     try {
-      const account = await ticketManagementAPI.getUserAccount();
-      setUserAccount(account);
-      setFormData(prev => ({
-        ...prev,
-        name: `${account.firstname} ${account.lastname}`,
-        department: account.department_name || '',
-        contactNumber: account.mobile || ''
-      }));
-      setIsFieldsReadOnly(true);
+      const url = getFullUrl('/pms/buildings.json');
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch buildings');
+      const data = await response.json();
+      // API returns { pms_buildings: [...] }
+      setBuildings(data.pms_buildings || []);
     } catch (error) {
-      console.error('Error loading user account:', error);
+      console.error('Error loading buildings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load buildings",
+        variant: "destructive"
+      });
     } finally {
-      setLoadingAccount(false);
+      setLoadingBuildings(false);
+    }
+  };
+
+  const loadWings = async () => {
+    setLoadingWings(true);
+    try {
+      const url = getFullUrl('/pms/wings.json');
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch wings');
+      const data = await response.json();
+      // API returns { wings: [...] }
+      setWings(data.wings || []);
+    } catch (error) {
+      console.error('Error loading wings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load wings",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingWings(false);
+    }
+  };
+
+  const loadFloors = async () => {
+    setLoadingFloors(true);
+    try {
+      const url = getFullUrl('/pms/floors.json');
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch floors');
+      const data = await response.json();
+      // API returns { floors: [...] }
+      setFloors(data.floors || []);
+    } catch (error) {
+      console.error('Error loading floors:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load floors",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingFloors(false);
+    }
+  };
+
+  const loadRooms = async () => {
+    setLoadingRooms(true);
+    try {
+      const url = getFullUrl('/pms/rooms.json');
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch rooms');
+      const data = await response.json();
+      // API returns array directly
+      setRooms(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading rooms:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load rooms",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingRooms(false);
     }
   };
 
@@ -301,6 +504,90 @@ export const AddTicketDashboard = () => {
   // Remove file from attachments
   const removeFile = (index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle area change
+  const handleAreaChange = (areaId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      area: areaId,
+      building: '',
+      wing: '',
+      floor: '',
+      room: ''
+    }));
+    
+    if (areaId) {
+      // Areas are linked to buildings via building_id
+      const selectedArea = areas.find(a => a.id === parseInt(areaId));
+      if (selectedArea) {
+        // Filter buildings that match the area's building_id
+        const filtered = buildings.filter(b => b.id === parseInt(selectedArea.building_id));
+        setFilteredBuildings(filtered);
+      }
+    } else {
+      setFilteredBuildings([]);
+    }
+    setFilteredWings([]);
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+  };
+
+  // Handle building change
+  const handleBuildingChange = (buildingId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      building: buildingId,
+      wing: '',
+      floor: '',
+      room: ''
+    }));
+    
+    if (buildingId) {
+      // Filter wings that belong to this building
+      const filtered = wings.filter(w => w.building_id === buildingId);
+      setFilteredWings(filtered);
+    } else {
+      setFilteredWings([]);
+    }
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+  };
+
+  // Handle wing change
+  const handleWingChange = (wingId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      wing: wingId,
+      floor: '',
+      room: ''
+    }));
+    
+    if (wingId) {
+      // Filter floors that belong to this wing
+      const filtered = floors.filter(f => f.wing_id === parseInt(wingId));
+      setFilteredFloors(filtered);
+    } else {
+      setFilteredFloors([]);
+    }
+    setFilteredRooms([]);
+  };
+
+  // Handle floor change
+  const handleFloorChange = (floorId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      floor: floorId,
+      room: ''
+    }));
+    
+    if (floorId) {
+      // Filter rooms that belong to this floor
+      const filtered = rooms.filter(r => r.floor_id === parseInt(floorId));
+      setFilteredRooms(filtered);
+    } else {
+      setFilteredRooms([]);
+    }
   };
 
   // Handle form submission
@@ -366,7 +653,6 @@ export const AddTicketDashboard = () => {
         proactive_reactive: formData.proactiveReactive || '',
         heading: formData.description,
         ...(formData.complaintMode && { complaint_mode_id: parseInt(formData.complaintMode) }),
-        // Add user parameters based on selection type
         ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
         ...(onBehalfOf !== 'self' && selectedUserId && {
           sel_id_user: selectedUserId,
@@ -375,7 +661,12 @@ export const AddTicketDashboard = () => {
         ...(formData.assignedTo && { assigned_to: parseInt(formData.assignedTo) }),
         ...(formData.referenceNumber && { reference_number: formData.referenceNumber }),
         ...(formData.subCategoryType && { sub_category_id: parseInt(formData.subCategoryType) }),
-        // Add golden ticket and flagged parameters
+        // Add location parameters with correct keys
+        ...(formData.area && { area_id: parseInt(formData.area) }),
+        ...(formData.building && { tower_id: parseInt(formData.building) }),
+        ...(formData.wing && { wing_id: parseInt(formData.wing) }),
+        ...(formData.floor && { floor_id: parseInt(formData.floor) }),
+        ...(formData.room && { room_id: parseInt(formData.room) }),
         is_golden_ticket: isGoldenTicket,
         is_flagged: isFlagged
       };
@@ -840,7 +1131,156 @@ export const AddTicketDashboard = () => {
           </div>
         </div>
 
-        {/* Section 3: Add Attachments */}
+        {/* Section 3: Location Details */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <MapPin size={16} color="#C72030" />
+              </span>
+              Location Details
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Area */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Area</InputLabel>
+                <MuiSelect
+                  value={formData.area}
+                  onChange={(e) => handleAreaChange(e.target.value)}
+                  label="Area"
+                  notched
+                  displayEmpty
+                  disabled={loadingAreas}
+                >
+                  <MenuItem value="">
+                    {loadingAreas ? "Loading..." : "Select Area"}
+                  </MenuItem>
+                  {areas.map((area) => (
+                    <MenuItem key={area.id} value={area.id.toString()}>
+                      {area.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Building */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Building</InputLabel>
+                <MuiSelect
+                  value={formData.building}
+                  onChange={(e) => handleBuildingChange(e.target.value)}
+                  label="Building"
+                  notched
+                  displayEmpty
+                  disabled={loadingBuildings || !formData.area}
+                >
+                  <MenuItem value="">
+                    {loadingBuildings ? "Loading..." : 
+                     !formData.area ? "Select Area First" : "Select Building"}
+                  </MenuItem>
+                  {filteredBuildings.map((building) => (
+                    <MenuItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Wing */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Wing</InputLabel>
+                <MuiSelect
+                  value={formData.wing}
+                  onChange={(e) => handleWingChange(e.target.value)}
+                  label="Wing"
+                  notched
+                  displayEmpty
+                  disabled={loadingWings || !formData.building}
+                >
+                  <MenuItem value="">
+                    {loadingWings ? "Loading..." : 
+                     !formData.building ? "Select Building First" : "Select Wing"}
+                  </MenuItem>
+                  {filteredWings.map((wing) => (
+                    <MenuItem key={wing.id} value={wing.id.toString()}>
+                      {wing.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Floor */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Floor</InputLabel>
+                <MuiSelect
+                  value={formData.floor}
+                  onChange={(e) => handleFloorChange(e.target.value)}
+                  label="Floor"
+                  notched
+                  displayEmpty
+                  disabled={loadingFloors || !formData.wing}
+                >
+                  <MenuItem value="">
+                    {loadingFloors ? "Loading..." : 
+                     !formData.wing ? "Select Wing First" : "Select Floor"}
+                  </MenuItem>
+                  {filteredFloors.map((floor) => (
+                    <MenuItem key={floor.id} value={floor.id.toString()}>
+                      {floor.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Room */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Room</InputLabel>
+                <MuiSelect
+                  value={formData.room}
+                  onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                  label="Room"
+                  notched
+                  displayEmpty
+                  disabled={loadingRooms || !formData.floor}
+                >
+                  <MenuItem value="">
+                    {loadingRooms ? "Loading..." : 
+                     !formData.floor ? "Select Floor First" : "Select Room"}
+                  </MenuItem>
+                  {filteredRooms.map((room) => (
+                    <MenuItem key={room.id} value={room.id.toString()}>
+                      {room.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 4: Add Attachments */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">

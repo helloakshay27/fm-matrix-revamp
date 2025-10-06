@@ -200,11 +200,11 @@ export interface CreateTicketFormData {
   heading: string;
   complaint_mode_id: number;
   sub_category_id?: number;
-  room_id: number;
-  wing_id: number;
-  area_id: number;
-  floor_id: number;
+  area_id?: number;
   tower_id?: number;
+  wing_id?: number;
+  floor_id?: number;
+  room_id?: number;
   is_golden_ticket?: boolean;
   is_flagged?: boolean;
 }
@@ -649,8 +649,22 @@ export const ticketManagementAPI = {
     if (ticketData.sub_category_id) {
       formData.append('complaint[sub_category_id]', ticketData.sub_category_id.toString());
     }
+    
+    // Add all location parameters
+    if (ticketData.area_id) {
+      formData.append('complaint[area_id]', ticketData.area_id.toString());
+    }
     if (ticketData.tower_id) {
       formData.append('complaint[tower_id]', ticketData.tower_id.toString());
+    }
+    if (ticketData.wing_id) {
+      formData.append('complaint[wing_id]', ticketData.wing_id.toString());
+    }
+    if (ticketData.floor_id) {
+      formData.append('complaint[floor_id]', ticketData.floor_id.toString());
+    }
+    if (ticketData.room_id) {
+      formData.append('complaint[room_id]', ticketData.room_id.toString());
     }
 
     // Add golden ticket and flagged parameters
