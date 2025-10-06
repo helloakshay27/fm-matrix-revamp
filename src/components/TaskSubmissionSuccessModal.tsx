@@ -20,11 +20,7 @@ export const TaskSubmissionSuccessModal: React.FC<
   isOpen,
   onClose,
   onViewDetails,
-  stats = {
-    questionsAttended: 10,
-    negativeFeedback: 2,
-    ticketsRaised: 2,
-  },
+  stats,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -69,7 +65,7 @@ export const TaskSubmissionSuccessModal: React.FC<
                 No. of questions attended
               </span>
               <span className="text-gray-900 font-bold text-lg">
-                {stats.questionsAttended}
+                {stats?.questionsAttended || 0}
               </span>
             </div>
 
@@ -78,14 +74,14 @@ export const TaskSubmissionSuccessModal: React.FC<
                 Negative feedback
               </span>
               <span className="text-gray-900 font-bold text-lg">
-                {String(stats.negativeFeedback).padStart(2, "0")}
+                {String(stats?.negativeFeedback || 0).padStart(2, "0")}
               </span>
             </div>
 
             <div className="flex justify-between items-center py-3 border-b border-gray-200">
               <span className="text-gray-700 font-medium">Ticket Raised</span>
               <span className="text-gray-900 font-bold text-lg">
-                {String(stats.ticketsRaised).padStart(2, "0")}
+                {String(stats?.ticketsRaised || 0).padStart(2, "0")}
               </span>
             </div>
           </div>

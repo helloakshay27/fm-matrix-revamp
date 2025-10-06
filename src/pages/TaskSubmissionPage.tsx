@@ -804,8 +804,12 @@ export const TaskSubmissionPage: React.FC = () => {
 
       // Only proceed with success flow if we get a successful response without errors
       if (response) {
-        // Calculate stats and set them before showing the modal
-        const stats = calculateSubmissionStats();
+        // Use stats from API response instead of local calculation
+        const stats = {
+          questionsAttended: response.question_attended_count || 0,
+          negativeFeedback: response.negative_answers_count || 0,
+          ticketsRaised: response.complaints_count || 0,
+        };
         setSubmissionStats(stats);
 
         sonnerToast.dismiss(loadingToastId);
