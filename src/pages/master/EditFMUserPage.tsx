@@ -71,6 +71,8 @@ interface LockUserPermission {
   employee_id?: string;
   designation?: string;
   access_level?: string;
+  last_working_date?: string;
+  lock_role_id?: number;
   access_to?: string[];
 }
 
@@ -81,6 +83,7 @@ interface UserData {
   mobile?: string;
   email?: string;
   gender?: string;
+  employee_type?: string;
   entity_id?: number;
   supplier_id?: number;
   site_id?: number;
@@ -98,6 +101,7 @@ interface FormData {
   mobileNumber: string;
   emailAddress: string;
   gender: string;
+  employeeType: string;
   selectEntity: string | number;
   supplier: string | number;
   employeeId: string;
@@ -138,6 +142,7 @@ interface Payload {
     gender: string;
     entity_id: string | number;
     supplier_id: string | number;
+    employee_type: string;
   };
   lock_user_permission?: number;
 }
@@ -209,6 +214,7 @@ export const EditFMUserPage = () => {
     mobileNumber: "",
     emailAddress: "",
     gender: "",
+    employeeType: "",
     selectEntity: "",
     supplier: "",
     employeeId: "",
@@ -281,6 +287,7 @@ export const EditFMUserPage = () => {
         mobileNumber: userData.mobile || "",
         emailAddress: userData.email || "",
         gender: userData.gender || "",
+        employeeType: userData.employee_type || "",
         selectEntity: userData.entity_id || "",
         supplier: userData.supplier_id || "",
         employeeId: userData.lock_user_permission?.employee_id || "",
@@ -387,6 +394,7 @@ export const EditFMUserPage = () => {
         gender: formData.gender,
         entity_id: formData.selectEntity,
         supplier_id: formData.supplier,
+        employee_type: formData.employeeType,
       },
       lock_user_permission: lockId,
     };
@@ -521,6 +529,23 @@ export const EditFMUserPage = () => {
                       <MenuItem value="">Select Gender</MenuItem>
                       <MenuItem value="Male">Male</MenuItem>
                       <MenuItem value="Female">Female</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Employee Type</InputLabel>
+                    <Select
+                      value={formData.employeeType}
+                      onChange={(e) =>
+                        handleInputChange("employeeType", e.target.value as string)
+                      }
+                      label="Gender"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Type</MenuItem>
+                      <MenuItem value="internal">Internal</MenuItem>
+                      <MenuItem value="external">External</MenuItem>
                     </Select>
                   </FormControl>
                 </div>
