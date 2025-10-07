@@ -1781,7 +1781,13 @@ export const FillForm = () => {
                                         <Input
                                             id="contractorSupervisorName"
                                             value={personsInfo.contractorSupervisorName}
-                                            onChange={(e) => handlePersonsInfoChange('contractorSupervisorName', e.target.value)}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Only allow alphabets and spaces
+                                                if (/^[a-zA-Z ]*$/.test(value)) {
+                                                    handlePersonsInfoChange('contractorSupervisorName', value);
+                                                }
+                                            }}
                                             placeholder="Enter Contract Supervisor Name"
                                             className="mt-1"
                                         />
@@ -1828,7 +1834,13 @@ export const FillForm = () => {
                                         <Input
                                             id="contractorSupervisorContact"
                                             value={personsInfo.contractorSupervisorContact}
-                                            onChange={(e) => handlePersonsInfoChange('contractorSupervisorContact', e.target.value)}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Only allow numbers
+                                                if (/^\d*$/.test(value)) {
+                                                    handlePersonsInfoChange('contractorSupervisorContact', value);
+                                                }
+                                            }}
                                             placeholder="Enter Contract Supervisor Number"
                                             className="mt-1"
                                         />
