@@ -1,23 +1,51 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, CalendarIcon } from 'lucide-react';
+import { 
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
+import { X } from 'lucide-react';
 import { toast } from 'sonner';
-import { MaterialDatePicker } from '@/components/ui/material-date-picker';
-import { Label } from '@/components/ui/label';
 interface CalendarFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyFilters: (filters: CalendarFilters) => void;
 }
+
 export interface CalendarFilters {
   dateFrom: string;
   dateTo: string;
   's[task_custom_form_schedule_type_eq]': string;
   's[task_task_of_eq]': string;
 }
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px", sm: "10px", md: "12px" },
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   isOpen,
   onClose,
@@ -30,10 +58,10 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     oneWeekAgo.setDate(today.getDate() - 7);
     
     const formatDate = (date: Date) => {
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
       const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
     };
     
     return {
@@ -61,7 +89,21 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   const handleApply = async () => {
     setIsLoading(true);
     try {
-      onApplyFilters(filters);
+      // Convert YYYY-MM-DD to DD/MM/YYYY for API
+      const formatForAPI = (dateStr: string) => {
+        if (!dateStr) return '';
+        const [year, month, day] = dateStr.split('-');
+        return `${day}/${month}/${year}`;
+      };
+
+      const apiFilters: CalendarFilters = {
+        dateFrom: formatForAPI(filters.dateFrom),
+        dateTo: formatForAPI(filters.dateTo),
+        's[task_custom_form_schedule_type_eq]': filters['s[task_custom_form_schedule_type_eq]'],
+        's[task_task_of_eq]': filters['s[task_task_of_eq]']
+      };
+
+      onApplyFilters(apiFilters);
       onClose();
       toast.success('Filters applied successfully');
     } catch (error) {
@@ -79,77 +121,113 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
       's[task_task_of_eq]': ''
     };
     setFilters(clearedFilters);
-    onApplyFilters(clearedFilters);
+    
+    // Convert to DD/MM/YYYY for API
+    const formatForAPI = (dateStr: string) => {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-');
+      return `${day}/${month}/${year}`;
+    };
+
+    const apiFilters: CalendarFilters = {
+      dateFrom: formatForAPI(clearedFilters.dateFrom),
+      dateTo: formatForAPI(clearedFilters.dateTo),
+      's[task_custom_form_schedule_type_eq]': '',
+      's[task_task_of_eq]': ''
+    };
+
+    onApplyFilters(apiFilters);
     onClose();
     toast.success('Filters cleared successfully');
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Filter Calendar Tasks</DialogTitle>
+    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50" aria-describedby="calendar-filter-dialog-description">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <DialogTitle className="text-lg font-semibold text-gray-900">FILTER CALENDAR TASKS</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-6 w-6 p-0 hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <div id="calendar-filter-dialog-description" className="sr-only">
+            Filter calendar tasks by date range, type, and schedule type
+          </div>
         </DialogHeader>
         
-        <div className="space-y-6">
+        <div className="space-y-6 py-4">
           {/* Date Range Section */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium mb-4 text-gray-800">Date Range</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Start Date</Label>
-                <MaterialDatePicker 
-                  value={filters.dateFrom} 
-                  onChange={(value) => handleFilterChange('dateFrom', value)} 
-                  placeholder="Select start date"
-                  className="h-10 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">End Date</Label>
-                <MaterialDatePicker 
-                  value={filters.dateTo} 
-                  onChange={(value) => handleFilterChange('dateTo', value)} 
-                  placeholder="Select end date"
-                  className="h-10 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+          <div>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">Date Range</h3>
+            <div className="grid grid-cols-2 gap-6">
+              <TextField
+                label="Start Date"
+                type="date"
+                value={filters.dateFrom}
+                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+              />
+              <TextField
+                label="End Date"
+                type="date"
+                value={filters.dateTo}
+                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+              />
             </div>
           </div>
 
-          {/* Filter Options */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium mb-4 text-gray-800">Filter Options</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Select Type</Label>
-                <Select value={filters['s[task_custom_form_schedule_type_eq]']} onValueChange={value => handleFilterChange('s[task_custom_form_schedule_type_eq]', value)}>
-                  <SelectTrigger className="h-10 bg-white border border-gray-300 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
-                    <SelectItem value="PPM" className="hover:bg-gray-100 focus:bg-gray-100">PPM</SelectItem>
-                    <SelectItem value="AMC" className="hover:bg-gray-100 focus:bg-gray-100">AMC</SelectItem>
-                    <SelectItem value="Preparedness" className="hover:bg-gray-100 focus:bg-gray-100">Preparedness</SelectItem>
-                    <SelectItem value="Routine" className="hover:bg-gray-100 focus:bg-gray-100">Routine</SelectItem>
-                   
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Filter Options Section */}
+          <div>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">Filter Options</h3>
+            <div className="grid grid-cols-2 gap-6">
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Select Type</InputLabel>
+                <MuiSelect
+                  value={filters['s[task_custom_form_schedule_type_eq]']}
+                  onChange={(e) => handleFilterChange('s[task_custom_form_schedule_type_eq]', e.target.value)}
+                  label="Select Type"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Type</em>
+                  </MenuItem>
+                  <MenuItem value="PPM">PPM</MenuItem>
+                  <MenuItem value="AMC">AMC</MenuItem>
+                  <MenuItem value="Preparedness">Preparedness</MenuItem>
+                  <MenuItem value="Routine">Routine</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Schedule Type</Label>
-                <Select value={filters['s[task_task_of_eq]']} onValueChange={value => handleFilterChange('s[task_task_of_eq]', value)}>
-                  <SelectTrigger className="h-10 bg-white border border-gray-300 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue placeholder="Select Schedule Type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
-                    <SelectItem value="Pms::Asset" className="hover:bg-gray-100 focus:bg-gray-100">Asset</SelectItem>
-                    <SelectItem value="Pms::Service" className="hover:bg-gray-100 focus:bg-gray-100">Service</SelectItem>
-                   
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Schedule Type</InputLabel>
+                <MuiSelect
+                  value={filters['s[task_task_of_eq]']}
+                  onChange={(e) => handleFilterChange('s[task_task_of_eq]', e.target.value)}
+                  label="Schedule Type"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Schedule Type</em>
+                  </MenuItem>
+                  <MenuItem value="Pms::Asset">Asset</MenuItem>
+                  <MenuItem value="Pms::Service">Service</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
         </div>
@@ -159,7 +237,7 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
           <Button 
             onClick={handleApply} 
             disabled={isLoading} 
-            className="bg-blue-600 hover:bg-blue-700 text-white flex-1 h-11 focus:ring-2 focus:ring-blue-500"
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex-1 h-11"
           >
             {isLoading ? 'Applying...' : 'Apply Filter'}
           </Button>
@@ -167,7 +245,7 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
             variant="outline" 
             onClick={handleClear} 
             disabled={isLoading} 
-            className="flex-1 h-11 border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="flex-1 h-11"
           >
             Clear All
           </Button>
