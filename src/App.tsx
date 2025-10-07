@@ -795,27 +795,32 @@ function App() {
   }, []);
 
 
-  // Check authentication and fetch currency on app load
+  // Check authentication and fetch currency when site is available
+  const selectedSite = useAppSelector((s) => s.site.selectedSite);
   useEffect(() => {
     if (!baseUrl || !token) return;
+    // Resolve site id from Redux first, then URL, then localStorage
+    const urlSiteId = new URLSearchParams(window.location.search).get('site_id') || '';
+    const id = (selectedSite?.id ? String(selectedSite.id) : '')
+      || urlSiteId
+      || localStorage.getItem('selectedSiteId')
+      || '';
+    if (!id) return; // wait until site id is known
 
     const fetchCurrency = async () => {
       try {
-        const response = await dispatch(
-          getCurrency({
-            baseUrl,
-            token,
-            id: localStorage.getItem("selectedSiteId") || "",
-          })
+        const response: any = await dispatch(
+          getCurrency({ baseUrl, token, id })
         ).unwrap();
-        localStorage.setItem("currency", response[0].currency);
+        const currency = Array.isArray(response) && response[0]?.currency ? response[0].currency : '';
+        if (currency) localStorage.setItem('currency', currency);
       } catch (error) {
         console.log(error);
       }
     };
 
     fetchCurrency();
-  }, [baseUrl, token]);
+  }, [baseUrl, token, selectedSite?.id, dispatch]);
 
   return (
     <>
@@ -1846,7 +1851,7 @@ function App() {
                     element={<SurveyResponseDashboard />}
                   />
 
-                    <Route
+                  <Route
                     path="/maintenance/survey/response/:surveyId/:responseId"
                     element={<TabularResponseDetailsPage />}
                   />
