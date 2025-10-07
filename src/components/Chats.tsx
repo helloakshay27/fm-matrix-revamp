@@ -692,7 +692,7 @@ const Chats = ({ messages, onReply }) => {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="p-3 bg-gray-50 rounded-md text-sm text-gray-700">
-                            {selectedMessage?.body}
+                            {selectedMessage?.body.slice(0, 100) + (selectedMessage?.body.length > 100 ? '...' : '')}
                         </div>
                         <DialogFooter className="flex justify-end gap-2 mt-4">
                             <Button variant="outline" onClick={() => setSelectedMessage(null)}>
@@ -700,7 +700,7 @@ const Chats = ({ messages, onReply }) => {
                             </Button>
                             <Button
                                 onClick={() => {
-                                    setSelectedMessage(null);
+                                    setSelectedMessage(selectedMessage);
                                     setOpenTaskModal(true);
                                 }}
                             >

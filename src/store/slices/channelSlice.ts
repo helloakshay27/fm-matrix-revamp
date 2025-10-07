@@ -198,9 +198,7 @@ export const createGroup = createAsyncThunk(
             );
             return response.data;
         } catch (error) {
-            const message =
-                error.response?.data?.error || error.error || "Failed to create group";
-            return rejectWithValue(message);
+            return rejectWithValue(error);
         }
     }
 );
