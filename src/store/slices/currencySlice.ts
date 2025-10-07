@@ -56,8 +56,38 @@ export const getCurrency = createAsyncThunk(
     }
 );
 
+export const updateCurrency = createAsyncThunk(
+    "updateCurrency",
+    async (
+        { data, baseUrl, token, id }: { data: any; baseUrl: string; token: string, id: string },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await axios.put(
+                `https://${baseUrl}/currencies/${id}.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to update currency";
+            return rejectWithValue(message);
+        }
+    }
+);
+
 export const addCurrencySlice = createApiSlice("addCurrency", addCurrency);
 export const getCurrencySlice = createApiSlice("getCurrency", getCurrency);
+export const updateCurrencySlice = createApiSlice("updateCurrency", updateCurrency);
 
 export const addCurrencyReducer = addCurrencySlice.reducer;
 export const getCurrencyReducer = getCurrencySlice.reducer;
+export const updateCurrencyReducer = updateCurrencySlice.reducer;

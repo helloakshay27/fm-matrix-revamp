@@ -799,13 +799,12 @@ function App() {
   const selectedSite = useAppSelector((s) => s.site.selectedSite);
   useEffect(() => {
     if (!baseUrl || !token) return;
-    // Resolve site id from Redux first, then URL, then localStorage
     const urlSiteId = new URLSearchParams(window.location.search).get('site_id') || '';
     const id = (selectedSite?.id ? String(selectedSite.id) : '')
       || urlSiteId
       || localStorage.getItem('selectedSiteId')
       || '';
-    if (!id) return; // wait until site id is known
+    if (!id) return;
 
     const fetchCurrency = async () => {
       try {
@@ -813,7 +812,9 @@ function App() {
           getCurrency({ baseUrl, token, id })
         ).unwrap();
         const currency = Array.isArray(response) && response[0]?.currency ? response[0].currency : '';
+        const currencySymbol = Array.isArray(response) && response[0]?.symbol ? response[0].symbol : '';
         if (currency) localStorage.setItem('currency', currency);
+        if (currencySymbol) localStorage.setItem('currencySymbol', currencySymbol);
       } catch (error) {
         console.log(error);
       }
