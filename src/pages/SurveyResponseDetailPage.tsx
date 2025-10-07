@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   FileText,
   HelpCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,6 +62,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { EmojiEmotions, QuestionMark, QuestionMarkRounded } from "@mui/icons-material";
 import TabularResponseDetailsPage from "./TabularResponseDetailsPage";
+import html2pdf from 'html2pdf.js'; // Add this import for PDF generation
 // Recharts imported above
 // import TabularResponseDetailsPage from "./TabularResponseDetailsPage";
 
@@ -1117,25 +1119,25 @@ export const SurveyResponseDetailPage = () => {
         // Add location filters if provided
         if (locationFilters?.buildingIds && locationFilters.buildingIds.length > 0) {
           locationFilters.buildingIds.forEach(buildingId => {
-            urlWithParams.searchParams.append("q[survey_mapping_building_id_in][]", buildingId);
+            urlWithParams.searchParams.append("q[building_id_in][]", buildingId);
           });
         }
 
         if (locationFilters?.wingIds && locationFilters.wingIds.length > 0) {
           locationFilters.wingIds.forEach(wingId => {
-            urlWithParams.searchParams.append("q[survey_mapping_wing_id_in][]", wingId);
+            urlWithParams.searchParams.append("q[wing_id_in][]", wingId);
           });
         }
 
         if (locationFilters?.floorIds && locationFilters.floorIds.length > 0) {
           locationFilters.floorIds.forEach(floorId => {
-            urlWithParams.searchParams.append("q[survey_mapping_floor_id_in][]", floorId);
+            urlWithParams.searchParams.append("q[floor_id_in][]", floorId);
           });
         }
 
         if (locationFilters?.roomIds && locationFilters.roomIds.length > 0) {
           locationFilters.roomIds.forEach(roomId => {
-            urlWithParams.searchParams.append("q[survey_mapping_room_id_in][]", roomId);
+            urlWithParams.searchParams.append("q[room_id_in][]", roomId);
           });
         }
 
@@ -2297,7 +2299,7 @@ export const SurveyResponseDetailPage = () => {
     // console.log(
     //   `🔍 Chart type for question ${questionId} ("${questionText.substring(
     //     0,
-    //     50
+    //   50
     //   )}..."): ${chartType} (useBarChart: ${useBarChart})`
     // );
 
@@ -3412,6 +3414,48 @@ export const SurveyResponseDetailPage = () => {
     };
   }, [getDisplayTicketData]);
 
+  // PDF download state for summary
+  const [isDownloadingSummary, setIsDownloadingSummary] = useState(false);
+  const summaryContentRef = useRef<HTMLDivElement>(null);
+
+  // Handle PDF download for summary tab
+  const handleDownloadSummaryPDF = async () => {
+    if (!surveyData || !summaryContentRef.current) {
+      toast.error("No summary data available to download");
+      return;
+    }
+    
+    setIsDownloadingSummary(true);
+    try {
+      const element = summaryContentRef.current;
+
+      // Temporarily hide the toolbar (filter and download buttons) for PDF capture
+      const toolbar = element.querySelector('.flex.items-center.justify-between.mb-6.print\\:hidden') as HTMLElement;
+      const originalDisplay = toolbar ? toolbar.style.display : '';
+      if (toolbar) toolbar.style.display = 'none';
+
+      const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `survey_summary_${surveyId}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, logging: true, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+
+      await html2pdf().from(element).set(opt).save();
+
+      // Restore toolbar display
+      if (toolbar) toolbar.style.display = originalDisplay;
+
+      toast.success('Survey summary PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating summary PDF:', error);
+      toast.error('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsDownloadingSummary(false);
+    }
+  };
+
   // Export Modal Component
   const ExportModal = useMemo(() => (
     <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
@@ -3954,6 +3998,33 @@ export const SurveyResponseDetailPage = () => {
               {/* <Button variant="outline" size="icon" title="Export">
                 <Download className="w-4 h-4" />
               </Button> */}
+               {/* <Button
+                  onClick={handleDownloadSummaryPDF}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                  disabled={isDownloadingSummary || !surveyData}
+                >
+                  {isDownloadingSummary ? (
+                    <span>Generating PDF...</span>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download PDF
+                    </>
+                  )}
+                </Button> */}
+                 <Button
+                            variant="outline"
+                            size="icon"
+                            title="Export"
+                            onClick={handleDownloadSummaryPDF}
+                            disabled={isDownloadingSummary || !surveyData}
+                          >
+                            {isDownloadingSummary ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                          </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -4025,7 +4096,7 @@ export const SurveyResponseDetailPage = () => {
 
           <TabsContent value="summary" className="">
             {/* Summary Tab Header with Filter */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 print:hidden">
               {/* <h2 className="text-lg font-semibold text-gray-800">
                 Survey Analytics Summary
               </h2> */}
@@ -4090,72 +4161,75 @@ export const SurveyResponseDetailPage = () => {
                     </span>
                   )}
                 </Button> */}
+               
               </div>
             </div>
 
-            {/* Summary Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-              {/* Total Questions */}
+            {/* Summary Content - Ref for PDF capture */}
+            <div ref={summaryContentRef}>
+              {/* Summary Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                {/* Total Questions */}
 
-               <Card className="bg-[#F6F4EE]">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <HelpCircle className="w-5 h-5 text-[#C72030]" />
+                 <Card className="bg-[#F6F4EE]">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
+                        <HelpCircle className="w-5 h-5 text-[#C72030]" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-semibold text-[#C72030]">
+                          {surveyData.csat ? surveyData.csat.toFixed(2) : '0.00'}
+                        </p>
+                        <p className="text-sm text-gray-600">CSAT</p>
+                        {Object.keys(summaryCurrentFilters).length > 0 && (
+                          <p className="text-xs text-gray-500">Filtered data shown</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xl font-semibold text-[#C72030]">
-                        {surveyData.csat ? surveyData.csat.toFixed(2) : '0.00'}
-                      </p>
-                      <p className="text-sm text-gray-600">CSAT</p>
-                      {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">Filtered data shown</p>
-                      )}
+                  </CardContent>
+                </Card>
+                <Card className="bg-[#F6F4EE]">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
+                        <HelpCircle className="w-5 h-5 text-[#C72030]" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-semibold text-[#C72030]">
+                          {surveyData.questions?.length || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">Total Questions</p>
+                        {Object.keys(summaryCurrentFilters).length > 0 && (
+                          <p className="text-xs text-gray-500">Filtered data shown</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="bg-[#F6F4EE]">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <HelpCircle className="w-5 h-5 text-[#C72030]" />
-                    </div>
-                    <div>
-                      <p className="text-xl font-semibold text-[#C72030]">
-                        {surveyData.questions?.length || 0}
-                      </p>
-                      <p className="text-sm text-gray-600">Total Questions</p>
-                      {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">Filtered data shown</p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* Positive */}
-              <Card className="bg-[#F6F4EE]">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <Smile className="w-5 h-5 text-[#C72030]" />
+                {/* Positive */}
+                <Card className="bg-[#F6F4EE]">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
+                        <Smile className="w-5 h-5 text-[#C72030]" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-semibold text-[#C72030]">
+                          {surveyData.positive_responses || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">Positive</p>
+                        {Object.keys(summaryCurrentFilters).length > 0 && (
+                          <p className="text-xs text-gray-500">Filtered data shown</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xl font-semibold text-[#C72030]">
-                        {surveyData.positive_responses || 0}
-                      </p>
-                      <p className="text-sm text-gray-600">Positive</p>
-                      {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">Filtered data shown</p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* Negative */}
-              <Card className="bg-[#F6F4EE]">
+                {/* Negative */}
+                <Card className="bg-[#F6F4EE]">
   <CardContent className="p-6">
     <div className="flex items-center gap-3">
       <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
@@ -4186,615 +4260,418 @@ export const SurveyResponseDetailPage = () => {
 </Card>
 
 
-              {/* Placeholder for 4th card (optional) */}
-            </div>
+                {/* Placeholder for 4th card (optional) */}
+              </div>
 
-            {/* Overall Question Response Distribution - Hide if no data */}
-            {(() => {
-              const responseData = typeof getResponseDistributionData === "function" ? getResponseDistributionData() : [];
-              // Hide card if no meaningful data (only shows "No data available")
-              if (!responseData || responseData.length === 0 || (responseData.length === 1 && responseData[0].name === "No data available")) {
-                return null;
-              }
-
-              return (
-                <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                  <CardHeader className="bg-[#F6F4EE] mb-6">
-                    <CardTitle className="text-lg flex items-center">
-                      <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                        <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                      </div>
-                      <span>
-                        Overall Question Response Distribution
-                       
-                        </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <SurveyAnalyticsCard
-                      title="Overall Question Response Distribution"
-                      type="statusDistribution"
-                      data={responseData}
-                      dateRange={{
-                        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-                        endDate: new Date(),
-                      }}
-                      onDownload={typeof handleDownloadResponseChart === "function" ? handleDownloadResponseChart : undefined}
-                      customStyle={{
-                        pieChart: {
-                          outerRadius: 140,
-                          innerRadius: 90,
-                          height: 300,
-                        }
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              );
-            })()}
-
-            {/* Overall Response Distribution */}
-            {/* <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                  </div>
-                  
-                  Q2.
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SurveyAnalyticsCard
-                  title="Rate Your Experience"
-                  type="statusDistribution"
-                  data={getResponseDistributionData()}
-                  dateRange={{
-                    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-                    endDate: new Date(),
-                  }}
-                  onDownload={handleDownloadResponseChart}
-                />
-              </CardContent>
-            </Card> */}
-
-            {/* Emoji Response Summary */}
-
-
-            {/* Questions Response Details - Now individual cards are created for each question type below */}
-
- {(() => {
-              // Get all multiple choice questions from survey details
-              const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
-                (q: SurveyQuestion) => {
-                  // Filter for multiple choice questions (exclude rating and emoji)
-                  if (q.qtype) {
-                    return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
-                  }
-                  
-                  // Fallback: exclude questions that would be handled by rating/emoji cards
-                  return !shouldUseBarChart(q.question_id);
-                }
-              ) || [];
-
-              if (multipleChoiceQuestions.length === 0) {
-                return null; // Don't show anything if no multiple choice questions
-              }
-
-              return multipleChoiceQuestions.map((mcQuestion: SurveyQuestion, questionIndex: number) => {
-                // Calculate total responses for this multiple choice question
-                const totalResponses = mcQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
-                
-                // Hide card if no responses
-                if (totalResponses === 0) {
+              {/* Overall Question Response Distribution - Hide if no data */}
+              {(() => {
+                const responseData = typeof getResponseDistributionData === "function" ? getResponseDistributionData() : [];
+                // Hide card if no meaningful data (only shows "No data available")
+                if (!responseData || responseData.length === 0 || (responseData.length === 1 && responseData[0].name === "No data available")) {
                   return null;
                 }
-                
-                // Multiple choice questions start from Q1, Q2, etc. since they appear first in UI
-                const questionNumber = questionIndex + 1;
-                
-                // Create display data for multiple choice options
-                const multipleChoiceColors = ["#D5DBDB", "#C4B99D", "#DAD6CA"]; // Three colors for pie chart segments
-                const mcData = mcQuestion.options?.map((option, index) => {
-                  const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
-
-                  return {
-                    name: option.option || `Option ${index + 1}`,
-                    value: option.response_count || 0,
-                    color: multipleChoiceColors[index % multipleChoiceColors.length] // Cycle through the three colors
-                  };
-                }).filter(item => item.value > 0) || []; // Only show options with responses
 
                 return (
-                  <Card key={mcQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
                     <CardHeader className="bg-[#F6F4EE] mb-6">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
-                        <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
-                        {mcQuestion.question}
+                        <span>
+                          Overall Question Response Distribution
+                         
+                          </span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <SurveyAnalyticsCard
-                        title="Response Distribution"
+                        title="Overall Question Response Distribution"
                         type="statusDistribution"
-                        data={mcData}
+                        data={responseData}
                         dateRange={{
                           startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
                           endDate: new Date(),
                         }}
-                        onDownload={() => {
-                          toast.success(`Chart for multiple choice question "${mcQuestion.question}" download initiated`);
+                        onDownload={typeof handleDownloadResponseChart === "function" ? handleDownloadResponseChart : undefined}
+                        customStyle={{
+                          pieChart: {
+                            outerRadius: 140,
+                            innerRadius: 90,
+                            height: 300,
+                          }
                         }}
                       />
                     </CardContent>
                   </Card>
                 );
-              }).filter(Boolean);
-            })()}
-            {/* Dynamic Rating Question Cards */}
-            {(() => {
-              // Get all rating questions from survey details
-              const ratingQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
-                (q: SurveyQuestion) => q.qtype === "rating"
-              ) || [];
+              })()}
 
-              if (ratingQuestions.length === 0) {
-                return null; // Don't show anything if no rating questions
-              }
+              {/* Overall Response Distribution */}
+              {/* <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                <CardHeader className="bg-[#F6F4EE] mb-6">
+                  <CardTitle className="text-lg flex items-center">
+                    <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                      <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                    </div>
+                    
+                    Q2.
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SurveyAnalyticsCard
+                    title="Rate Your Experience"
+                    type="statusDistribution"
+                    data={getResponseDistributionData()}
+                    dateRange={{
+                      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                      endDate: new Date(),
+                    }}
+                    onDownload={handleDownloadResponseChart}
+                  />
+                </CardContent>
+              </Card> */}
 
-              return ratingQuestions.map((ratingQuestion: SurveyQuestion, questionIndex: number) => {
-                // Calculate total responses for this rating question
-                const totalResponses = ratingQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
-                
-                // Hide card if no responses
-                if (totalResponses === 0) {
-                  return null;
-                }
-                
-                // Get count of multiple choice questions to continue numbering after them
+              {/* Emoji Response Summary */}
+
+
+              {/* Questions Response Details - Now individual cards are created for each question type below */}
+
+   {(() => {
+                // Get all multiple choice questions from survey details
                 const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
                   (q: SurveyQuestion) => {
+                    // Filter for multiple choice questions (exclude rating and emoji)
                     if (q.qtype) {
                       return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
                     }
+                    
+                    // Fallback: exclude questions that would be handled by rating/emoji cards
                     return !shouldUseBarChart(q.question_id);
                   }
                 ) || [];
-                const questionNumber = multipleChoiceQuestions.length + questionIndex + 1;
-                
-                // Create display data for rating options with actual option text
-                const ratingData = ratingQuestion.options?.map((option, index) => {
-                  const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
 
-                  return {
-                    name: option.option || `Option ${index + 1}`,
-                    count: option.response_count || 0,
-                    percentage: percentage
-                  };
-                }) || [];
-
-                return (
-                  <Card key={ratingQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                    <CardHeader className="bg-[#F6F4EE] mb-6">
-                      <CardTitle className="text-lg flex items-center">
-                        <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                          <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                        </div>
-                        <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
-                        {ratingQuestion.question}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <SurveyAnalyticsCard
-                        title="Rating Response"
-                        type="surveyDistributions"
-                        data={ratingData.map(item => ({
-                          name: item.name,
-                          value: item.count,
-                          color: "#C4AE9D"
-                        }))}
-                        dateRange={{
-                          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-                          endDate: new Date(),
-                        }}
-                        xAxisLabel="Rating Options"
-                        yAxisLabel="Response Count"
-                        onDownload={() => {
-                          toast.success(`Chart for rating question "${ratingQuestion.question}" download initiated`);
-                        }}
-                      />
-                    </CardContent>
-                  </Card>
-                );
-              }).filter(Boolean);
-            })()}
-
-            {/* Dynamic Emoji Question Cards */}
-            {(() => {
-              // Get all emoji questions from survey details
-              const emojiQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
-                (q: SurveyQuestion) => q.qtype === "emoji"
-              ) || [];
-
-              if (emojiQuestions.length === 0) {
-                return null; // Hide card if no emoji questions
-              }
-
-              return emojiQuestions.map((emojiQuestion: SurveyQuestion, questionIndex: number) => {
-                // Calculate total responses for this question
-                const totalResponses = emojiQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
-                
-                // Hide card if no responses
-                if (totalResponses === 0) {
-                  return null;
+                if (multipleChoiceQuestions.length === 0) {
+                  return null; // Don't show anything if no multiple choice questions
                 }
-                
-                // Get count of multiple choice and rating questions to continue numbering after them
-                const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
-                  (q: SurveyQuestion) => {
-                    if (q.qtype) {
-                      return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
-                    }
-                    return !shouldUseBarChart(q.question_id);
+
+                return multipleChoiceQuestions.map((mcQuestion: SurveyQuestion, questionIndex: number) => {
+                  // Calculate total responses for this multiple choice question
+                  const totalResponses = mcQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
+                  
+                  // Hide card if no responses
+                  if (totalResponses === 0) {
+                    return null;
                   }
-                ) || [];
+                  
+                  // Multiple choice questions start from Q1, Q2, etc. since they appear first in UI
+                  const questionNumber = questionIndex + 1;
+                  
+                  // Create display data for multiple choice options
+                  const multipleChoiceColors = ["#D5DBDB", "#C4B99D", "#DAD6CA"]; // Three colors for pie chart segments
+                  const mcData = mcQuestion.options?.map((option, index) => {
+                    const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
+
+                    return {
+                      name: option.option || `Option ${index + 1}`,
+                      value: option.response_count || 0,
+                      color: multipleChoiceColors[index % multipleChoiceColors.length] // Cycle through the three colors
+                    };
+                  }).filter(item => item.value > 0) || []; // Only show options with responses
+
+                  return (
+                    <Card key={mcQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                      <CardHeader className="bg-[#F6F4EE] mb-6">
+                        <CardTitle className="text-lg flex items-center">
+                          <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                            <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                          </div>
+                          <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
+                          {mcQuestion.question}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <SurveyAnalyticsCard
+                          title="Response Distribution"
+                          type="statusDistribution"
+                          data={mcData}
+                          dateRange={{
+                            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                            endDate: new Date(),
+                          }}
+                          onDownload={() => {
+                            toast.success(`Chart for multiple choice question "${mcQuestion.question}" download initiated`);
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
+                  );
+                }).filter(Boolean);
+              })()}
+              {/* Dynamic Rating Question Cards */}
+              {(() => {
+                // Get all rating questions from survey details
                 const ratingQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
                   (q: SurveyQuestion) => q.qtype === "rating"
                 ) || [];
-                const questionNumber = multipleChoiceQuestions.length + ratingQuestions.length + questionIndex + 1;
-                
-                // Fixed emoji sequence based on position (1st, 2nd, 3rd, 4th, 5th option)
-                const fixedEmojis = ['😞', '😟', '😐', '😊', '😁'];
-                
-                // Create display data with fixed emoji sequence
-                const displayData = emojiQuestion.options?.map((option, index) => {
-                  const emoji = fixedEmojis[index] || '😐'; // Use fixed emoji by position, fallback to neutral
-                  const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
 
-                  return {
-                    emoji: emoji,
-                    name: option.option || 'Unknown',
-                    count: option.response_count || 0,
-                    percentage: percentage
-                  };
-                }) || [];
+                if (ratingQuestions.length === 0) {
+                  return null; // Don't show anything if no rating questions
+                }
+
+                return ratingQuestions.map((ratingQuestion: SurveyQuestion, questionIndex: number) => {
+                  // Calculate total responses for this rating question
+                  const totalResponses = ratingQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
+                  
+                  // Hide card if no responses
+                  if (totalResponses === 0) {
+                    return null;
+                  }
+                  
+                  // Get count of multiple choice questions to continue numbering after them
+                  const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
+                    (q: SurveyQuestion) => {
+                      if (q.qtype) {
+                        return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
+                      }
+                      return !shouldUseBarChart(q.question_id);
+                    }
+                  ) || [];
+                  const questionNumber = multipleChoiceQuestions.length + questionIndex + 1;
+                  
+                  // Create display data for rating options with actual option text
+                  const ratingData = ratingQuestion.options?.map((option, index) => {
+                    const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
+
+                    return {
+                      name: option.option || `Option ${index + 1}`,
+                      count: option.response_count || 0,
+                      percentage: percentage
+                    };
+                  }) || [];
+
+                  return (
+                    <Card key={ratingQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                      <CardHeader className="bg-[#F6F4EE] mb-6">
+                        <CardTitle className="text-lg flex items-center">
+                          <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                            <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                          </div>
+                          <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
+                          {ratingQuestion.question}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <SurveyAnalyticsCard
+                          title="Rating Response"
+                          type="surveyDistributions"
+                          data={ratingData.map(item => ({
+                            name: item.name,
+                            value: item.count,
+                            color: "#C4AE9D"
+                          }))}
+                          dateRange={{
+                            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                            endDate: new Date(),
+                          }}
+                          xAxisLabel="Rating Options"
+                          yAxisLabel="Response Count"
+                          onDownload={() => {
+                            toast.success(`Chart for rating question "${ratingQuestion.question}" download initiated`);
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
+                  );
+                }).filter(Boolean);
+              })()}
+
+              {/* Dynamic Emoji Question Cards */}
+              {(() => {
+                // Get all emoji questions from survey details
+                const emojiQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
+                  (q: SurveyQuestion) => q.qtype === "emoji"
+                ) || [];
+
+                if (emojiQuestions.length === 0) {
+                  return null; // Hide card if no emoji questions
+                }
+
+                return emojiQuestions.map((emojiQuestion: SurveyQuestion, questionIndex: number) => {
+                  // Calculate total responses for this question
+                  const totalResponses = emojiQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
+                  
+                  // Hide card if no responses
+                  if (totalResponses === 0) {
+                    return null;
+                  }
+                  
+                  // Get count of multiple choice and rating questions to continue numbering after them
+                  const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
+                    (q: SurveyQuestion) => {
+                      if (q.qtype) {
+                        return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
+                      }
+                      return !shouldUseBarChart(q.question_id);
+                    }
+                  ) || [];
+                  const ratingQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
+                    (q: SurveyQuestion) => q.qtype === "rating"
+                  ) || [];
+                  const questionNumber = multipleChoiceQuestions.length + ratingQuestions.length + questionIndex + 1;
+                  
+                  // Fixed emoji sequence based on position (1st, 2nd, 3rd, 4th, 5th option)
+                  const fixedEmojis = ['😞', '😟', '😐', '😊', '😁'];
+                  
+                  // Create display data with fixed emoji sequence
+                  const displayData = emojiQuestion.options?.map((option, index) => {
+                    const emoji = fixedEmojis[index] || '😐'; // Use fixed emoji by position, fallback to neutral
+                    const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
+
+                    return {
+                      emoji: emoji,
+                      name: option.option || 'Unknown',
+                      count: option.response_count || 0,
+                      percentage: percentage
+                    };
+                  }) || [];
+
+                  return (
+                    <Card key={emojiQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                      <CardHeader className="bg-[#F6F4EE] mb-6">
+                        <CardTitle className="text-lg flex items-center">
+                          <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                            <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                          </div>
+                          <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
+                          {emojiQuestion.question}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                          <div className="text-center py-6">
+                            {displayData.length > 0 ? (
+                              <div className="flex justify-center items-center gap-8 mb-4">
+                                {displayData.map((item, index) => (
+                                  <div key={index} className="flex flex-col items-center">
+                                    <div className="text-3xl mb-2">{item.emoji}</div>
+                                    <div className="text-sm font-medium text-gray-700 mb-1 capitalize">{item.name}</div>
+                                    <div className="text-sm text-gray-600">
+                                      {item.percentage}% ({item.count})
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-gray-500">No responses available for this question</div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                }).filter(Boolean);
+              })()}
+
+              {/* Dynamic Multiple Choice Question Cards */}
+             
+
+              {/* Response Category - Hide if no data */}
+              {(() => {
+                // Get dynamic data from API response
+                const surveyDetails = surveyDetailsData?.survey_details?.surveys?.[0];
+                const responseCategories = surveyDetails?.response_categories || [];
+                const totalComplaints = surveyDetails?.total_complaints || 0;
+                const skipped = surveyDetails?.skipped || 0;
+
+                // Calculate total responses from response categories
+                const totalCategoryResponses = responseCategories.reduce((sum, category) => sum + category.responses_count, 0);
+
+                // Hide card if no response categories
+                if (responseCategories.length === 0) {
+                  return null;
+                }
 
                 return (
-                  <Card key={emojiQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
                     <CardHeader className="bg-[#F6F4EE] mb-6">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
-                        <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
-                        {emojiQuestion.question}
+                        Response by Category
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                        <div className="text-center py-6">
-                          {displayData.length > 0 ? (
-                            <div className="flex justify-center items-center gap-8 mb-4">
-                              {displayData.map((item, index) => (
-                                <div key={index} className="flex flex-col items-center">
-                                  <div className="text-3xl mb-2">{item.emoji}</div>
-                                  <div className="text-sm font-medium text-gray-700 mb-1 capitalize">{item.name}</div>
-                                  <div className="text-sm text-gray-600">
-                                    {item.percentage}% ({item.count})
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-gray-500">No responses available for this question</div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              }).filter(Boolean);
-            })()}
-
-            {/* Dynamic Multiple Choice Question Cards */}
-           
-
-            {/* Response Category - Hide if no data */}
-            {(() => {
-              // Get dynamic data from API response
-              const surveyDetails = surveyDetailsData?.survey_details?.surveys?.[0];
-              const responseCategories = surveyDetails?.response_categories || [];
-              const totalComplaints = surveyDetails?.total_complaints || 0;
-              const skipped = surveyDetails?.skipped || 0;
-
-              // Calculate total responses from response categories
-              const totalCategoryResponses = responseCategories.reduce((sum, category) => sum + category.responses_count, 0);
-
-              // Hide card if no response categories
-              if (responseCategories.length === 0) {
-                return null;
-              }
-
-              return (
-                <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                  <CardHeader className="bg-[#F6F4EE] mb-6">
-                    <CardTitle className="text-lg flex items-center">
-                      <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                        <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                      </div>
-                      Response by Category
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {(() => {
-
-                  return (
-                    <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                      <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
-                        <span>
-                          <span className="font-medium">Total Response:</span> {totalCategoryResponses}
-                        </span>
-                        {/* <span>
-                          <span className="font-medium">Skipped:</span> {skipped}
-                        </span> */}
-                        <span>
-                          <span className="font-medium">Total Complaints:</span> {totalComplaints}
-                        </span>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-t border-b border-gray-300">
-                              <th className="text-left font-semibold px-6 py-3 w-1/2">Response Category</th>
-                              <th className="text-left font-semibold px-6 py-3 w-1/4">Responses</th>
-                              {/* <th className="text-left font-semibold px-6 py-3 w-1/4">CSAT</th> */}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {responseCategories.length > 0 ? (
-                              responseCategories.map((category, idx) => (
-                                <tr key={category.heading} className={idx !== responseCategories.length - 1 ? "border-b border-gray-300" : ""}>
-                                  <td className="px-6 py-3 text-gray-800">{category.heading}</td>
-                                  <td className="px-6 py-3 text-gray-800">{category.responses_percent.toFixed(1)}% ({category.responses_count})</td>
-                                  {/* <td className="px-6 py-3 text-gray-800">
-                                  {r.csat > 0 ? (
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-20 h-3 bg-gray-200 rounded-sm overflow-hidden">
-                                        <div
-                                          className="h-3 bg-[#C72030]"
-                                          style={{ width: `${(r.csat / maxCsat) * 100}%` }}
-                                        />
-                                      </div>
-                                      <span className="text-gray-800 text-sm">{r.csat}</span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-gray-400">-</span>
-                                  )}
-                                </td> */}
-                                </tr>
-                              ))
-                            ) : (
-                              <tr>
-                                <td colSpan={2} className="px-6 py-8 text-center text-gray-500">
-                                  No response categories available
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  );
-                })()}
-                  </CardContent>
-                </Card>
-              );
-            })()}
-
-             {/* Customer Satisfaction Score - Hide if no data */}
-             {(() => {
-               // Use API data if available, otherwise hide card
-               if (loadingCSAT || !csatData) {
-                 return null; // Hide card if loading or no data
-               }
-
-               return (
-                 <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                   <CardHeader className="bg-[#F6F4EE] mb-6">
-                     <CardTitle className="text-lg flex items-center">
-                       <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                         <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                       </div>
-                       Customer Satisfaction Score.
-                     </CardTitle>
-                   </CardHeader>
-                   <CardContent>
-                     {(() => {
-
-                    // Transform API data into chart-ready format
-                    const buckets = csatData.buckets || [];
-                    const summary = csatData.summary;
-                    const dateRangeText = summary.date_range_label;
-                    
-                    console.log('Processing CSAT data:', { buckets, summary, dateRangeText });
-
-                    // Create rows for the table
-                    type Row = {
-                      dateLabel: string;
-                      csat: number;
-                      changePct: number;
-                      negPct: number;
-                      negCount: number;
-                      posPct: number; 
-                      posCount: number;
-                      total: number;
-                      neutral: number;
-                    };
-
-                    const rows: Row[] = buckets.map((bucket, index) => {
-                      console.log('Processing bucket:', bucket);
-                      const total = bucket.total;
-                      const prevBucket = index > 0 ? buckets[index - 1] : null;
-                      const changePct = prevBucket && prevBucket.csat !== null && bucket.csat !== null
-                        ? ((bucket.csat - prevBucket.csat) / prevBucket.csat) * 100
-                        : bucket.change_pct || 0;
-                      
-                      // Use the percentage values directly from API
-                      const negPct = Math.round(bucket.negative_pct || 0);
-                      const posPct = Math.round(bucket.positive_pct || 0);
-
-                      const row = {
-                        dateLabel: bucket.label || new Date(bucket.start).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        }),
-                        csat: bucket.csat || 0,
-                        changePct,
-                        negPct,
-                        negCount: bucket.negative_count || 0,
-                        posPct,
-                        posCount: bucket.positive_count || 0,
-                        total: bucket.total || 0,
-                        neutral: 0 // Not provided in new API, calculate if needed
-                      };
-                      
-                      console.log('Processed row:', row);
-                      return row;
-                    });
-
-                    // If no buckets data, create a summary row
-                    if (rows.length === 0 && summary.responses > 0) {
-                      const total = summary.responses;
-                      const negPct = total > 0 ? Math.round((summary.negative / total) * 100) : 0;
-                      const posPct = total > 0 ? Math.round((summary.positive / total) * 100) : 0;
-                      
-                      rows.push({
-                        dateLabel: dateRangeText || "Summary",
-                        csat: summary.csat_avg || 0,
-                        changePct: 0,
-                        negPct,
-                        negCount: summary.negative,
-                        posPct,
-                        posCount: summary.positive,
-                        total: summary.responses,
-                        neutral: summary.neutral
-                      });
-                    }
-
-                    const maxTotal = Math.max(1, summary.suggested_y_max || Math.max(...rows.map(r => r.total), 1));
-                    const BAR_AREA_HEIGHT = 240;
-                    const colorPositive = "#C4AE9D";
-                    const colorNegative = "#C72030";
-
-                    const ChangeTag = ({ value }: { value: number }) => {
-                      if (value > 0) {
-                        return (
-                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded border" style={{ background: "#E6F4EA", color: "#1E7E34", borderColor: "#B5DFCB" }}>
-                            +{value.toFixed(2)}%
-                          </span>
-                        );
-                      }
-                      if (value < 0) {
-                        return (
-                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded border" style={{ background: "#FCE8E6", color: "#C72030", borderColor: "#F5C2C7" }}>
-                            {value.toFixed(2)}%
-                          </span>
-                        );
-                      }
-                      return (
-                        <span className="ml-2 text-xs px-1.5 py-0.5 rounded border text-gray-600" style={{ background: "#F3F4F6", borderColor: "#E5E7EB" }}>
-                          0%
-                        </span>
-                      );
-                    };
+                      {(() => {
 
                     return (
                       <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                        {/* Date range */}
-                        <div className="px-6 pt-4 text-sm text-gray-700">{dateRangeText}</div>
-
-                        {/* Chart area */}
-                        <div className="px-6 pt-4 pb-6">
-                          <div className="bg-white" style={{ height: BAR_AREA_HEIGHT + 60 }}>
-                            <ResponsiveContainer width="100%" height={BAR_AREA_HEIGHT + 40}>
-                              <BarChart
-                                data={rows.map(r => ({
-                                  date: r.dateLabel,
-                                  Positive: r.posCount,
-                                  Negative: r.negCount,
-                                }))}
-                                margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
-                              >
-                                <CartesianGrid vertical={false} stroke="#E5E7EB" />
-                                <XAxis 
-                                  dataKey="date" 
-                                  tick={{ fontSize: 12, fill: '#6B7280' }} 
-                                  tickMargin={10} 
-                                  axisLine={{ stroke: '#9CA3AF' }} 
-                                />
-                                <YAxis 
-                                  domain={[0, maxTotal]} 
-                                  tick={{ fontSize: 12, fill: '#6B7280' }} 
-                                  axisLine={{ stroke: '#9CA3AF' }} 
-                                />
-                                <Tooltip formatter={(val: number, name: string) => [val, name]} />
-                                <Bar dataKey="Negative" stackId="a" fill="#C72030" radius={[0,0,0,0]} barSize={36} />
-                                <Bar dataKey="Positive" stackId="a" fill="#C4AE9D" radius={[0,0,0,0]} barSize={36} />
-                              </BarChart>
-                            </ResponsiveContainer>
-                          </div>
+                        <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
+                          <span>
+                            <span className="font-medium">Total Response:</span> {totalCategoryResponses}
+                          </span>
+                          {/* <span>
+                            <span className="font-medium">Skipped:</span> {skipped}
+                          </span> */}
+                          <span>
+                            <span className="font-medium">Total Complaints:</span> {totalComplaints}
+                          </span>
                         </div>
-
-                        {/* Table */}
-                        <div className="px-6 pb-6">
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border border-gray-300">
-                                  <th className="text-left font-semibold px-6 py-3 w-1/4">&nbsp;</th>
-                                  <th className="text-left font-semibold px-6 py-3 w-1/4">CSAT</th>
-                                  <th className="text-left font-semibold px-6 py-3 w-1/4">Negative</th>
-                                  <th className="text-left font-semibold px-6 py-3 w-1/4">Positive</th>
-                                  <th className="text-left font-semibold px-6 py-3 w-[90px]">Total</th>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-t border-b border-gray-300">
+                                <th className="text-left font-semibold px-6 py-3 w-1/2">Response Category</th>
+                                <th className="text-left font-semibold px-6 py-3 w-1/4">Responses</th>
+                                {/* <th className="text-left font-semibold px-6 py-3 w-1/4">CSAT</th> */}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {responseCategories.length > 0 ? (
+                                responseCategories.map((category, idx) => (
+                                  <tr key={category.heading} className={idx !== responseCategories.length - 1 ? "border-b border-gray-300" : ""}>
+                                    <td className="px-6 py-3 text-gray-800">{category.heading}</td>
+                                    <td className="px-6 py-3 text-gray-800">{category.responses_percent.toFixed(1)}% ({category.responses_count})</td>
+                                    {/* <td className="px-6 py-3 text-gray-800">
+                                    {r.csat > 0 ? (
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-20 h-3 bg-gray-200 rounded-sm overflow-hidden">
+                                          <div
+                                            className="h-3 bg-[#C72030]"
+                                            style={{ width: `${(r.csat / maxCsat) * 100}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-gray-800 text-sm">{r.csat}</span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-gray-400">-</span>
+                                    )}
+                                  </td> */}
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan={2} className="px-6 py-8 text-center text-gray-500">
+                                    No response categories available
+                                  </td>
                                 </tr>
-                              </thead>
-                              <tbody>
-                                {rows.length > 0 ? rows.map((r, idx) => (
-                                  <tr key={idx} className="border-x border-b border-gray-300">
-                                    <td className="px-6 py-3 text-gray-800">{r.dateLabel}</td>
-                                    <td className="px-6 py-3 text-gray-800">
-                                      {r.csat.toFixed(2)} <ChangeTag value={r.changePct} />
-                                    </td>
-                                    <td className="px-6 py-3 text-gray-800">{r.negPct}% ({r.negCount})</td>
-                                    <td className="px-6 py-3 text-gray-800">{r.posPct}% ({r.posCount})</td>
-                                    <td className="px-6 py-3 text-gray-800">{r.total}</td>
-                                  </tr>
-                                )) : (
-                                  <tr className="border-x border-b border-gray-300">
-                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                                      No CSAT data available for the selected period
-                                    </td>
-                                  </tr>
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
+                              )}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     );
                   })()}
-                   </CardContent>
-                 </Card>
-               );
-             })()}
-               {/* Heat Map - Hide if no data */}
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
+               {/* Customer Satisfaction Score - Hide if no data */}
                {(() => {
                  // Use API data if available, otherwise hide card
-                 if (loadingHeatMap || !heatMapData) {
+                 if (loadingCSAT || !csatData) {
                    return null; // Hide card if loading or no data
                  }
 
@@ -4805,148 +4682,346 @@ export const SurveyResponseDetailPage = () => {
                          <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                            <HelpCircle className="h-4 w-4 text-[#C72030]" />
                          </div>
-                         Heat Map
+                         Customer Satisfaction Score.
                        </CardTitle>
                      </CardHeader>
                      <CardContent>
                        {(() => {
 
-                  // Transform API data into display format
-                  const { columns, rows, matrix, totals, scale } = heatMapData;
-                  const dates = columns.map(col => col.label);
-                  const hours = rows.map(row => row.label);
-                  
-                  console.log('Processing Heat Map data:', { columns, rows, matrix, totals, scale });
+                      // Transform API data into chart-ready format
+                      const buckets = csatData.buckets || [];
+                      const summary = csatData.summary;
+                      const dateRangeText = summary.date_range_label;
+                      
+                      console.log('Processing CSAT data:', { buckets, summary, dateRangeText });
 
-                  // Function to get cell color based on value and scale
-                  const getCellColor = (value: number) => {
-                    if (value === 0) return "";
-                    
-                    const { breaks, classes } = scale;
-                    let classIndex = 0;
-                    
-                    for (let i = 0; i < breaks.length - 1; i++) {
-                      if (value >= breaks[i] && value < breaks[i + 1]) {
-                        classIndex = i;
-                        break;
+                      // Create rows for the table
+                      type Row = {
+                        dateLabel: string;
+                        csat: number;
+                        changePct: number;
+                        negPct: number;
+                        negCount: number;
+                        posPct: number; 
+                        posCount: number;
+                        total: number;
+                        neutral: number;
+                      };
+
+                      const rows: Row[] = buckets.map((bucket, index) => {
+                        console.log('Processing bucket:', bucket);
+                        const total = bucket.total;
+                        const prevBucket = index > 0 ? buckets[index - 1] : null;
+                        const changePct = prevBucket && prevBucket.csat !== null && bucket.csat !== null
+                          ? ((bucket.csat - prevBucket.csat) / prevBucket.csat) * 100
+                          : bucket.change_pct || 0;
+                        
+                        // Use the percentage values directly from API
+                        const negPct = Math.round(bucket.negative_pct || 0);
+                        const posPct = Math.round(bucket.positive_pct || 0);
+
+                        const row = {
+                          dateLabel: bucket.label || new Date(bucket.start).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          }),
+                          csat: bucket.csat || 0,
+                          changePct,
+                          negPct,
+                          negCount: bucket.negative_count || 0,
+                          posPct,
+                          posCount: bucket.positive_count || 0,
+                          total: bucket.total || 0,
+                          neutral: 0 // Not provided in new API, calculate if needed
+                        };
+                        
+                        console.log('Processed row:', row);
+                        return row;
+                      });
+
+                      // If no buckets data, create a summary row
+                      if (rows.length === 0 && summary.responses > 0) {
+                        const total = summary.responses;
+                        const negPct = total > 0 ? Math.round((summary.negative / total) * 100) : 0;
+                        const posPct = total > 0 ? Math.round((summary.positive / total) * 100) : 0;
+                        
+                        rows.push({
+                          dateLabel: dateRangeText || "Summary",
+                          csat: summary.csat_avg || 0,
+                          changePct: 0,
+                          negPct,
+                          negCount: summary.negative,
+                          posPct,
+                          posCount: summary.positive,
+                          total: summary.responses,
+                          neutral: summary.neutral
+                        });
                       }
-                    }
-                    
-                    // If value is >= the last break, use the last class
-                    if (value >= breaks[breaks.length - 1]) {
-                      classIndex = classes.length - 1;
-                    }
-                    
-                    const className = classes[classIndex];
-                    switch (className) {
-                      case "light":
-                        return "bg-[#E4EAED]";
-                      case "dark":
-                        return "bg-[#BFCBD3]";
-                      default:
-                        return "";
-                    }
-                  };
 
-                  return (
-                    <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                      <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
-                        <span>
-                          <span className="font-medium">Total Response:</span> {totals.responses}
-                        </span>
-                        <span>
-                          <span className="font-medium">Skipped:</span> {totals.skipped}
-                        </span>
-                      </div>
+                      const maxTotal = Math.max(1, summary.suggested_y_max || Math.max(...rows.map(r => r.total), 1));
+                      const BAR_AREA_HEIGHT = 240;
+                      const colorPositive = "#C4AE9D";
+                      const colorNegative = "#C72030";
 
-                      {/* Grid + Time labels */}
-                      <div className="relative px-6 pb-6">
-                        <div className="flex items-start gap-2">
-                          {/* Y-axis time labels */}
-                          <div className="w-16 select-none">
-                            {/* Top spacer to align first grid row */}
-                            <div className="h-[36px]" />
-                            {hours.map((h, i) => (
-                              <div key={h + i} className="h-[36px] text-xs text-gray-600 flex items-center justify-end">
-                                {h}
-                              </div>
-                            ))}
+                      const ChangeTag = ({ value }: { value: number }) => {
+                        if (value > 0) {
+                          return (
+                            <span className="ml-2 text-xs px-1.5 py-0.5 rounded border" style={{ background: "#E6F4EA", color: "#1E7E34", borderColor: "#B5DFCB" }}>
+                              +{value.toFixed(2)}%
+                            </span>
+                          );
+                        }
+                        if (value < 0) {
+                          return (
+                            <span className="ml-2 text-xs px-1.5 py-0.5 rounded border" style={{ background: "#FCE8E6", color: "#C72030", borderColor: "#F5C2C7" }}>
+                              {value.toFixed(2)}%
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded border text-gray-600" style={{ background: "#F3F4F6", borderColor: "#E5E7EB" }}>
+                            0%
+                          </span>
+                        );
+                      };
+
+                      return (
+                        <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                          {/* Date range */}
+                          <div className="px-6 pt-4 text-sm text-gray-700">{dateRangeText}</div>
+
+                          {/* Chart area */}
+                          <div className="px-6 pt-4 pb-6">
+                            <div className="bg-white" style={{ height: BAR_AREA_HEIGHT + 60 }}>
+                              <ResponsiveContainer width="100%" height={BAR_AREA_HEIGHT + 40}>
+                                <BarChart
+                                  data={rows.map(r => ({
+                                    date: r.dateLabel,
+                                    Positive: r.posCount,
+                                    Negative: r.negCount,
+                                  }))}
+                                  margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
+                                >
+                                  <CartesianGrid vertical={false} stroke="#E5E7EB" />
+                                  <XAxis 
+                                    dataKey="date" 
+                                    tick={{ fontSize: 12, fill: '#6B7280' }} 
+                                    tickMargin={10} 
+                                    axisLine={{ stroke: '#9CA3AF' }} 
+                                  />
+                                  <YAxis 
+                                    domain={[0, maxTotal]} 
+                                    tick={{ fontSize: 12, fill: '#6B7280' }} 
+                                    axisLine={{ stroke: '#9CA3AF' }} 
+                                  />
+                                  <Tooltip formatter={(val: number, name: string) => [val, name]} />
+                                  <Bar dataKey="Negative" stackId="a" fill="#C72030" radius={[0,0,0,0]} barSize={36} />
+                                  <Bar dataKey="Positive" stackId="a" fill="#C4AE9D" radius={[0,0,0,0]} barSize={36} />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
                           </div>
 
-                          {/* Scrollable grid and date footer kept together so they stay in sync */}
-                          <div id="heatmap-scroll" className="overflow-x-auto border-l border-gray-300">
-                            <div className="inline-block">
-                              {/* Grid */}
-                              <div
-                                className="grid border-t border-r border-gray-300"
-                                style={{
-                                  gridTemplateColumns: `repeat(${dates.length}, 140px)`,
-                                  gridTemplateRows: `repeat(${hours.length}, 36px)`,
-                                  minWidth: `${dates.length * 140}px`,
-                                }}
-                              >
-                                {/* Column header spacer row */}
-                                {dates.map((_, ci) => (
-                                  <div key={"hdr-" + ci} className="border-b border-gray-300" />
-                                ))}
-
-                                {/* Cells */}
-                                {hours.map((_, ri) =>
-                                  dates.map((_, ci) => {
-                                    const value = matrix[ri] ? matrix[ri][ci] || 0 : 0;
-                                    const cellColor = getCellColor(value);
-                                    return (
-                                      <div
-                                        key={`c-${ri}-${ci}`}
-                                        className={`border-b border-l border-gray-300 ${cellColor} flex items-center justify-center`}
-                                        title={value > 0 ? `${value} responses at ${hours[ri]} on ${dates[ci]}` : undefined}
-                                      >
-                                        {value > 0 && (
-                                          <span className="text-xs text-gray-700 font-medium">
-                                            {value}
-                                          </span>
-                                        )}
-                                      </div>
-                                    );
-                                  })
-                                )}
-                              </div>
-
-                              {/* Date labels row */}
-                              <div
-                                className="grid"
-                                style={{ gridTemplateColumns: `repeat(${dates.length}, 140px)` }}
-                              >
-                                {dates.map((d, ci) => (
-                                  <div key={"dl-" + ci} className="text-xs text-gray-600 py-3 text-center">
-                                    {d}
-                                  </div>
-                                ))}
-                              </div>
+                          {/* Table */}
+                          <div className="px-6 pb-6">
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="border border-gray-300">
+                                    <th className="text-left font-semibold px-6 py-3 w-1/4">&nbsp;</th>
+                                    <th className="text-left font-semibold px-6 py-3 w-1/4">CSAT</th>
+                                    <th className="text-left font-semibold px-6 py-3 w-1/4">Negative</th>
+                                    <th className="text-left font-semibold px-6 py-3 w-1/4">Positive</th>
+                                    <th className="text-left font-semibold px-6 py-3 w-[90px]">Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {rows.length > 0 ? rows.map((r, idx) => (
+                                    <tr key={idx} className="border-x border-b border-gray-300">
+                                      <td className="px-6 py-3 text-gray-800">{r.dateLabel}</td>
+                                      <td className="px-6 py-3 text-gray-800">
+                                        {r.csat.toFixed(2)} <ChangeTag value={r.changePct} />
+                                      </td>
+                                      <td className="px-6 py-3 text-gray-800">{r.negPct}% ({r.negCount})</td>
+                                      <td className="px-6 py-3 text-gray-800">{r.posPct}% ({r.posCount})</td>
+                                      <td className="px-6 py-3 text-gray-800">{r.total}</td>
+                                    </tr>
+                                  )) : (
+                                    <tr className="border-x border-b border-gray-300">
+                                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                        No CSAT data available for the selected period
+                                      </td>
+                                    </tr>
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
                           </div>
                         </div>
-
-                        {/* Right arrow overlay to scroll */}
-                        <button
-                          type="button"
-                          aria-label="Scroll right"
-                          onClick={() => {
-                            const el = document.getElementById("heatmap-scroll");
-                            if (el) el.scrollBy({ left: 300, behavior: "smooth" });
-                          }}
-                          className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-600 hover:text-gray-800 shadow rounded-full p-1 border border-gray-200"
-                        >
-                          <ChevronRight className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })()}
+                      );
+                    })()}
                      </CardContent>
                    </Card>
                  );
                })()}
+                 {/* Heat Map - Hide if no data */}
+                 {(() => {
+                   // Use API data if available, otherwise hide card
+                   if (loadingHeatMap || !heatMapData) {
+                     return null; // Hide card if loading or no data
+                   }
+
+                   return (
+                     <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                       <CardHeader className="bg-[#F6F4EE] mb-6">
+                         <CardTitle className="text-lg flex items-center">
+                           <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                             <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                           </div>
+                           Heat Map
+                         </CardTitle>
+                       </CardHeader>
+                       <CardContent>
+                         {(() => {
+
+                    // Transform API data into display format
+                    const { columns, rows, matrix, totals, scale } = heatMapData;
+                    const dates = columns.map(col => col.label);
+                    const hours = rows.map(row => row.label);
+                    
+                    console.log('Processing Heat Map data:', { columns, rows, matrix, totals, scale });
+
+                    // Function to get cell color based on value and scale
+                    const getCellColor = (value: number) => {
+                      if (value === 0) return "";
+                      
+                      const { breaks, classes } = scale;
+                      let classIndex = 0;
+                      
+                      for (let i = 0; i < breaks.length - 1; i++) {
+                        if (value >= breaks[i] && value < breaks[i + 1]) {
+                          classIndex = i;
+                          break;
+                        }
+                      }
+                      
+                      // If value is >= the last break, use the last class
+                      if (value >= breaks[breaks.length - 1]) {
+                        classIndex = classes.length - 1;
+                      }
+                      
+                      const className = classes[classIndex];
+                      switch (className) {
+                        case "light":
+                          return "bg-[#E4EAED]";
+                        case "dark":
+                          return "bg-[#BFCBD3]";
+                        default:
+                          return "";
+                      }
+                    };
+
+                    return (
+                      <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                        <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
+                          <span>
+                            <span className="font-medium">Total Response:</span> {totals.responses}
+                          </span>
+                          <span>
+                            <span className="font-medium">Skipped:</span> {totals.skipped}
+                          </span>
+                        </div>
+
+                        {/* Grid + Time labels */}
+                        <div className="relative px-6 pb-6">
+                          <div className="flex items-start gap-2">
+                            {/* Y-axis time labels */}
+                            <div className="w-16 select-none">
+                              {/* Top spacer to align first grid row */}
+                              <div className="h-[36px]" />
+                              {hours.map((h, i) => (
+                                <div key={h + i} className="h-[36px] text-xs text-gray-600 flex items-center justify-end">
+                                  {h}
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Scrollable grid and date footer kept together so they stay in sync */}
+                            <div id="heatmap-scroll" className="overflow-x-auto border-l border-gray-300">
+                              <div className="inline-block">
+                                {/* Grid */}
+                                <div
+                                  className="grid border-t border-r border-gray-300"
+                                  style={{
+                                    gridTemplateColumns: `repeat(${dates.length}, 140px)`,
+                                    gridTemplateRows: `repeat(${hours.length}, 36px)`,
+                                    minWidth: `${dates.length * 140}px`,
+                                  }}
+                                >
+                                  {/* Column header spacer row */}
+                                  {dates.map((_, ci) => (
+                                    <div key={"hdr-" + ci} className="border-b border-gray-300" />
+                                  ))}
+
+                                  {/* Cells */}
+                                  {hours.map((_, ri) =>
+                                    dates.map((_, ci) => {
+                                      const value = matrix[ri] ? matrix[ri][ci] || 0 : 0;
+                                      const cellColor = getCellColor(value);
+                                      return (
+                                        <div
+                                          key={`c-${ri}-${ci}`}
+                                          className={`border-b border-l border-gray-300 ${cellColor} flex items-center justify-center`}
+                                          title={value > 0 ? `${value} responses at ${hours[ri]} on ${dates[ci]}` : undefined}
+                                        >
+                                          {value > 0 && (
+                                            <span className="text-xs text-gray-700 font-medium">
+                                              {value}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })
+                                  )}
+                                </div>
+
+                                {/* Date labels row */}
+                                <div
+                                  className="grid"
+                                  style={{ gridTemplateColumns: `repeat(${dates.length}, 140px)` }}
+                                >
+                                  {dates.map((d, ci) => (
+                                    <div key={"dl-" + ci} className="text-xs text-gray-600 py-3 text-center">
+                                      {d}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right arrow overlay to scroll */}
+                          <button
+                            type="button"
+                            aria-label="Scroll right"
+                            onClick={() => {
+                              const el = document.getElementById("heatmap-scroll");
+                              if (el) el.scrollBy({ left: 300, behavior: "smooth" });
+                            }}
+                            className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-600 hover:text-gray-800 shadow rounded-full p-1 border border-gray-200"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            );
+          })()}
+          </div>
           </TabsContent>
 
           <TabsContent value="tabular" className="">
