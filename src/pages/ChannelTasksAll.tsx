@@ -40,6 +40,12 @@ const columns = [
         sortable: true,
         defaultVisible: true,
     },
+    {
+        key: 'focus_mode',
+        label: 'Focus Mode',
+        sortable: true,
+        defaultVisible: true,
+    },
 ];
 
 const formattedData = (data) => {
@@ -50,6 +56,7 @@ const formattedData = (data) => {
         duration: item.duration,
         endDate: item.target_date,
         priority: item?.priority?.charAt(0).toUpperCase() + item?.priority?.slice(1) || "-",
+        focus_mode: item?.focus_mode ? "Yes" : "No",
     }));
 }
 
