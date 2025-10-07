@@ -309,7 +309,11 @@ const CreateChatTask = ({
                         </FormControl>
 
                         <TextField
-                            label={<>Deadline<span className="text-red-600">*</span></>}
+                            label={
+                                <>
+                                    Deadline<span className="text-red-600">*</span>
+                                </>
+                            }
                             type="date"
                             fullWidth
                             variant="outlined"
@@ -317,26 +321,43 @@ const CreateChatTask = ({
                             onChange={(e) => handleChange("deadline", e.target.value)}
                             InputLabelProps={{ shrink: true }}
                             InputProps={{ sx: fieldStyles }}
+                            inputProps={{
+                                min: new Date().toISOString().split("T")[0], // ⛔ disables past dates
+                            }}
                         />
+
 
                         <div className="sm:col-span-1 flex gap-2">
                             <TextField
                                 label="Est Time (hours)"
-                                type="number"
+                                type="text"
                                 fullWidth
                                 variant="outlined"
                                 value={formData.estHours}
-                                onChange={(e) => handleChange("estHours", e.target.value)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    if (/^\d*$/.test(value)) {
+                                        handleChange("estHours", value);
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{ sx: fieldStyles }}
                             />
+
                             <TextField
                                 label="Est Time (minutes)"
-                                type="number"
+                                type="text"
                                 fullWidth
                                 variant="outlined"
                                 value={formData.estMinutes}
-                                onChange={(e) => handleChange("estMinutes", e.target.value)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    if (/^\d*$/.test(value)) {
+                                        handleChange("estMinutes", value);
+                                    }
+                                }}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{ sx: fieldStyles }}
                             />

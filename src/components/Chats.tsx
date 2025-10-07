@@ -429,7 +429,7 @@ const Chats = ({ messages, onReply }) => {
                                 <ContextMenuTrigger asChild>
                                     <div className="flex items-start space-x-3 cursor-pointer relative">
                                         <div
-                                            className={`absolute top-1/2 -translate-y-1/2 flex gap-1 z-10 transition-all duration-300 ease-out ${isMe ? "left-[-70px]" : "right-[-70px]"
+                                            className={`absolute top-1/2 -translate-y-1/2 flex gap-1 z-10 transition-all duration-300 ease-out ${isMe ? "left-[-65px]" : "right-[-75px]"
                                                 } ${shouldShowActions
                                                     ? "opacity-100 scale-100"
                                                     : "opacity-0 scale-90 pointer-events-none"

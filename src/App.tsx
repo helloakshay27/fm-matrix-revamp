@@ -163,6 +163,7 @@ import { EditIconPage } from "./pages/EditIconPage";
 import { IncidentDashboard } from "./pages/IncidentDashboard";
 import { PermitToWorkDashboard } from "./pages/PermitToWorkDashboard";
 import { PermitDetails } from "./pages/PermitDetails";
+import PermitSafetyCheckForm from "./pages/PermitSafetyCheckForm";
 import { PermitPendingApprovalsDashboard } from "./pages/PermitPendingApprovalsDashboard";
 import { VendorPermitForm } from "./pages/VendorPermitForm";
 import FillForm from "./pages/FillForm";
@@ -1589,6 +1590,10 @@ function App() {
                         <EditPermitPage />
                       </ProtectedRoute>
                     }
+                  />
+                  <Route
+                    path="/safety/permit/safety-check-form"
+                    element={<PermitSafetyCheckForm />}
                   />
                   <Route
                     path="/safety/permit/vendor-form/:id?"

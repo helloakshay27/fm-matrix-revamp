@@ -366,6 +366,9 @@ export const PermitDetails = () => {
     // Attachment preview modal states
     const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [isPermitSectionVisible, setIsPermitSectionVisible] = useState(false)
+
+    console.log(isPermitSectionVisible)
 
     // Check if we came from pending approvals page
     const levelId = searchParams.get('level_id');
@@ -379,6 +382,15 @@ export const PermitDetails = () => {
     const permitExtension = searchParams.get('resource_type') === 'permit_extend';
     const permitMain = searchParams.get('resource_type') === 'permit';
     console.log(selectedExtendAssignees)
+
+    // Resume permit form states (mirror of extend)
+    const [isResuming, setIsResuming] = useState(false);
+    const [resumeReason, setResumeReason] = useState("");
+    const [resumeDate, setResumeDate] = useState("");
+    const [resumeAttachments, setResumeAttachments] = useState<FileList | null>(null);
+    const [selectedResumeAssignees, setSelectedResumeAssignees] = useState<string[]>([]);
+    const resumeFileInputRef = useRef<HTMLInputElement>(null);
+
 
     // Handle multi-select change for assignees
     const handleAssigneeChange = (event: SelectChangeEvent<typeof selectedExtendAssignees>) => {
@@ -477,6 +489,16 @@ export const PermitDetails = () => {
         setRejectComment("");
     };
 
+    // Handle multi-select change for resume assignees
+    const handleResumeAssigneeChange = (event: SelectChangeEvent<typeof selectedResumeAssignees>) => {
+        const {
+            target: { value },
+        } = event;
+        setSelectedResumeAssignees(
+            // On autofill we get a stringified value.
+            typeof value === 'string' ? value.split(',') : value,
+        );
+    };
     // Handle reject dialog confirm
     const handleRejectConfirm = async () => {
         if (!rejectComment.trim()) {
@@ -785,10 +807,10 @@ export const PermitDetails = () => {
             return;
         }
 
-        if (selectedExtendAssignees.length === 0) {
-            toast.error('Please select at least one assignee');
-            return;
-        }
+        // if (selectedExtendAssignees.length === 0) {
+        //     toast.error('Please select at least one assignee');
+        //     return;
+        // }
 
         setIsExtending(true);
         try {
@@ -857,6 +879,99 @@ export const PermitDetails = () => {
             toast.error('Failed to submit permit extension. Please try again.');
         } finally {
             setIsExtending(false);
+        }
+    };
+
+    // Handle resume permit form submission (mirror of extend, but add to_resume: true)
+    const handleResumePermit = async () => {
+        if (!id) {
+            toast.error('Permit ID is required for resume');
+            return;
+        }
+
+        if (!resumeReason.trim()) {
+            toast.error('Please provide a reason for resume');
+            return;
+        }
+
+        if (!resumeDate) {
+            toast.error('Please select a resume date');
+            return;
+        }
+
+        // if (selectedResumeAssignees.length === 0) {
+        //     toast.error('Please select at least one assignee');
+        //     return;
+        // }
+
+        setIsResuming(true);
+        try {
+            let baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
+            if (!baseUrl || !token) {
+                throw new Error("Base URL or token not set in localStorage");
+            }
+
+            // Ensure protocol is present
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                baseUrl = `https://${baseUrl}`;
+            }
+
+            // Create FormData for multipart/form-data
+            const formData = new FormData();
+            formData.append('pms_permit_extend[permit_id]', id);
+            formData.append('pms_permit_extend[reason_for_extension]', resumeReason.trim());
+            formData.append('pms_permit_extend[extension_date]', resumeDate);
+            formData.append('pms_permit_extend[to_resume]', 'true');  // Add the extra param for resume
+
+            // Add selected assignees
+            if (selectedResumeAssignees.length > 0) {
+                selectedResumeAssignees.forEach((assigneeId, index) => {
+                    formData.append(`pms_permit_extend[permit_extension_assignees][]`, assigneeId);
+                });
+            }
+
+            // Add attachments if any
+            if (resumeAttachments && resumeAttachments.length > 0) {
+                for (let i = 0; i < resumeAttachments.length; i++) {
+                    formData.append('extend_attachments[]', resumeAttachments[i]);
+                }
+            }
+
+            const response = await fetch(`${baseUrl}/pms/permit_extends`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to resume permit: ${response.statusText}`);
+            }
+
+            toast.success('Permit resume request submitted successfully');
+
+            // Clear form data
+            setResumeReason("");
+            setResumeDate("");
+            setResumeAttachments(null);
+            setSelectedResumeAssignees([]);
+            if (resumeFileInputRef.current) {
+                resumeFileInputRef.current.value = "";
+            }
+
+            // Refresh permit details to show updated information
+            const updatedData = await fetchPermitDetails(id);
+            setPermitData(updatedData);
+
+        } catch (error) {
+            console.error('Error resuming permit:', error);
+            toast.error('Failed to submit permit resume. Please try again.');
+        } finally {
+            setIsResuming(false);
         }
     };
 
@@ -1060,13 +1175,13 @@ export const PermitDetails = () => {
     // Format date for display
     const formatDate = (dateString: string) => {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
     };
 
     const formatDateWithTimezone = (dateString: string) => {
@@ -1296,7 +1411,10 @@ export const PermitDetails = () => {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setActiveSection(activeSection === "permit-extension" ? "" : "permit-extension")}
+                                onClick={() => {
+                                    setIsPermitSectionVisible(true)
+                                    setActiveSection(activeSection === "permit-extension" ? "" : "permit-extension")
+                                }}
                                 className="bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
                             >
                                 <Clock className="w-4 h-4 mr-2" />
@@ -1404,7 +1522,34 @@ export const PermitDetails = () => {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => toast.info('Send mail functionality coming soon')}
+                                onClick={async () => {
+                                    try {
+                                        let baseUrl = localStorage.getItem('baseUrl');
+                                        const token = localStorage.getItem('token');
+                                        if (!baseUrl || !token || !id) {
+                                            toast.error('Base URL, token, or permit ID missing');
+                                            return;
+                                        }
+                                        if (!/^https?:\/\//i.test(baseUrl)) {
+                                            baseUrl = `https://${baseUrl}`;
+                                        }
+                                        const response = await fetch(`${baseUrl}/pms/permits/${id}/permit_supplier_mail.json`, {
+                                            method: 'GET',
+                                            headers: {
+                                                'Authorization': `Bearer ${token}`,
+                                                'Content-Type': 'application/json',
+                                                'Accept': 'application/json',
+                                            },
+                                        });
+                                        if (response.ok) {
+                                            toast.success('Mail sent successfully');
+                                        } else {
+                                            toast.error('Failed to send mail');
+                                        }
+                                    } catch (error) {
+                                        toast.error('Error sending mail');
+                                    }
+                                }}
                             >
                                 <Mail className="w-4 h-4 mr-2" />
                                 Send Mail
@@ -1511,7 +1656,7 @@ export const PermitDetails = () => {
                         </div>
                         <div className="space-y-4">
                             <Field label="Vendor Company" value={permitData.permit.vendor?.company_name || "N/A"} />
-                            <Field label="External Vendor Name" value={permitData.permit.external_vendor_name || "N/A"} />
+                            {/* <Field label="External Vendor Name" value={permitData.permit.external_vendor_name || "N/A"} /> */}
                         </div>
                     </div>
                 </Section>
@@ -1542,131 +1687,6 @@ export const PermitDetails = () => {
                         </div>
                     </Section>
                 )} */}
-
-                {/* Permit Extensions Section */}
-                {permitData.permit_extends && permitData.permit_extends.length > 0 && (
-                    <Section
-                        title="PERMIT EXTENSIONS"
-                        icon={<Clock />}
-                        sectionKey="extensions"
-                        activeSection={activeSection}
-                        setActiveSection={setActiveSection}
-                    >
-                        <div className="space-y-4">
-                            {permitData.permit_extends.map((extension: PermitExtend, index: number) => (
-                                <div key={extension.id || index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h4 className="font-medium text-gray-900">Extension #{extension.id}</h4>
-                                        <Badge className={`${extension.extend_approval_levels?.[0]?.status === 'Approved'
-                                            ? 'bg-green-100 text-green-800'
-                                            : extension.extend_approval_levels?.[0]?.status === 'Rejected'
-                                                ? 'bg-red-100 text-red-800'
-                                                : 'bg-yellow-100 text-yellow-800'
-                                            }`}>
-                                            {extension.extend_approval_levels?.[0]?.status || 'Pending'}
-                                        </Badge>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                                        <div>
-                                            <span className="font-medium text-gray-700">Reason:</span>
-                                            <p className="text-gray-900 mt-1">{extension.reason_for_extension || '-'}</p>
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-gray-700">Extension Date:</span>
-                                            <p className="text-gray-900 mt-1">{formatDate(extension.extension_date)}</p>
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-gray-700">Created By:</span>
-                                            <p className="text-gray-900 mt-1">{extension.created_by?.full_name || '-'}</p>
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-gray-700">Assignees:</span>
-                                            <p className="text-gray-900 mt-1">{extension.assignees || '-'}</p>
-                                        </div>
-                                        <div>
-                                            <span className="font-medium text-gray-700">Attachments:</span>
-                                            <p className="text-gray-900 mt-1">{extension.attachments_count || 0}</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Extension Approval Levels */}
-                                    {extension.extend_approval_levels && extension.extend_approval_levels.length > 0 && (
-                                        <div className="mt-4 pt-4 border-t border-gray-200">
-                                            <h5 className="font-medium text-gray-700 mb-2">Approval Levels:</h5>
-                                            <div className="space-y-2">
-                                                {extension.extend_approval_levels.map((level: any, levelIndex: number) => (
-                                                    <div key={levelIndex} className="flex items-center justify-between p-2 bg-white rounded border">
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-sm font-medium">{level.name}</span>
-                                                            <Badge className={getStatusColor(level.status)}>
-                                                                {level.status}
-                                                            </Badge>
-                                                        </div>
-                                                        {level.updated_by && (
-                                                            <div className="text-xs text-gray-500">
-                                                                {level.updated_by}
-                                                                {level.status_updated_at && (
-                                                                    <span className="ml-1">
-                                                                        ({formatDateOnly(level.status_updated_at)})
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {
-                                        permitExtension && (
-                                            <div className="flex items-center gap-4 justify-center mt-4">
-                                                <Button
-                                                    onClick={() => handleApproveExtension(extension.id.toString())}
-                                                    disabled={isApproving || isRejecting}
-                                                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
-                                                >
-                                                    {isApproving ? (
-                                                        <>
-                                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                                            Approving...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <CheckCircle className="w-4 h-4 mr-2" />
-                                                            Approve Extension
-                                                        </>
-                                                    )}
-                                                </Button>
-                                                <Button
-                                                    onClick={() => {
-                                                        handleReject()
-                                                        setExtensionId(extension.id.toString())
-                                                    }}
-                                                    disabled={isApproving || isRejecting}
-                                                    className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
-                                                >
-                                                    {isRejecting ? (
-                                                        <>
-                                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                                            Rejecting...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <AlertTriangle className="w-4 h-4 mr-2" />
-                                                            Reject Extension
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            </div>
-
-                                        )
-                                    }
-                                </div>
-                            ))}
-                        </div>
-                    </Section>
-                )}
 
                 {/* Permit Resume Section */}
                 {permitData.permit_resume && permitData.permit_resume.length > 0 && (
@@ -1731,7 +1751,7 @@ export const PermitDetails = () => {
                 )}
 
                 {/* Activity Details Section */}
-                <Section
+                {/* <Section
                     title="ACTIVITY DETAILS"
                     icon={<Clipboard />}
                     sectionKey="activity"
@@ -1752,7 +1772,64 @@ export const PermitDetails = () => {
                             )}
                         </div>
                     </div>
+                </Section> */}
+                <Section
+                    title="ACTIVITY DETAILS"
+                    icon={<Clipboard />}
+                    sectionKey="activity"
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                >
+                    <div className="grid grid-cols-1  gap-6">
+                        <div className="space-y-4">
+                            {permitData.activity_details && permitData.activity_details.length > 0 ? (
+                                permitData.activity_details.map((activity: any, index: number) => (
+                                    <div
+                                        key={activity.id || index}
+                                        className="p-4 bg-gray-50 rounded-lg"
+                                    >
+                                        {/* One row with 3 fields */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                                            <div className="flex flex-wrap">
+                                                <span className="font-medium text-gray-700 mr-2">Activity</span>
+                                                <span className="mr-2">:</span>
+                                                <span className="text-gray-900">{activity.activity || "-"}</span>
+                                            </div>
+                                            <div className="flex flex-wrap">
+                                                <span className="font-medium text-gray-700 mr-2">Sub Activity</span>
+                                                <span className="mr-2">:</span>
+                                                <span className="text-gray-900">{activity.sub_activity || "-"}</span>
+                                            </div>
+                                            <div className="flex flex-wrap">
+                                                <span className="font-medium text-gray-700 mr-2">Category of Hazard</span>
+                                                <span className="mr-2">:</span>
+                                                <span className="text-gray-900">{activity.hazard_category || "-"}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Risks */}
+                                        <div>
+                                            <h5 className="font-semibold mb-2">Risks</h5>
+                                            <ul className="list-disc pl-6 text-gray-700">
+                                                {activity.risks && activity.risks.length > 0 ? (
+                                                    activity.risks.map((risk: string, i: number) => (
+                                                        <li key={i}>{risk}</li>
+                                                    ))
+                                                ) : (
+                                                    <li>-</li>
+                                                )}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-500">No activity details available</p>
+                            )}
+                        </div>
+                    </div>
                 </Section>
+
+
 
                 {/* Attachments Section */}
                 {permitData.main_attachments && permitData.main_attachments.length > 0 && (
@@ -2216,215 +2293,347 @@ export const PermitDetails = () => {
                     )}
 
                 {/* Permit Extension Section */}
-                <Section
-                    title="PERMIT EXTENSION"
-                    icon={<Clock />}
-                    sectionKey="permit-extension"
-                    activeSection={activeSection}
-                    setActiveSection={setActiveSection}
-                >
-                    <div className="space-y-6">
-                        {/* Form Fields */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                                {/* Reason for Extension */}
-                                <div>
-                                    <TextField
-                                        label="Reason for Extension *"
-                                        value={extendReason}
-                                        onChange={(e) => setExtendReason(e.target.value)}
-                                        fullWidth
-                                        variant="outlined"
-                                        multiline
-                                        rows={3}
-                                        placeholder="Enter Reason Here"
-                                        InputLabelProps={{
-                                            shrink: true
-                                        }}
-                                        sx={fieldStyles}
-                                    />
-                                </div>
 
-                                {/* Extension Date & Time */}
-                                <div>
-                                    <TextField
-                                        label="Extension Date & Time *"
-                                        type="datetime-local"
-                                        value={extendDate}
-                                        onChange={(e) => setExtendDate(e.target.value)}
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true
-                                        }}
-                                        sx={fieldStyles}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                {/* Assignees */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Assignees<span className="text-red-500">*</span>
-                                    </label>
-                                    <FormControl
-                                        sx={{
-                                            width: '100%',
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#C72030',
-                                                },
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#C72030',
-                                                    borderWidth: '2px',
-                                                },
-                                            },
-                                        }}
-                                    >
-                                        <Select
-                                            multiple
-                                            value={selectedExtendAssignees}
-                                            onChange={handleAssigneeChange}
-                                            input={<OutlinedInput />}
-                                            renderValue={(selected) => {
-                                                if ((selected as string[]).length === 0) {
-                                                    return <span style={{ color: '#9CA3AF' }}>Select assignees</span>;
-                                                }
-                                                return (
-                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                        {(selected as string[]).map((value) => {
-                                                            const assignee = permitData?.permit?.permit_assignees?.find(a => a.id.toString() === value);
-                                                            return (
-                                                                <Chip
-                                                                    key={value}
-                                                                    label={assignee?.name || value}
-                                                                    size="small"
-                                                                    sx={{
-                                                                        backgroundColor: '#C72030',
-                                                                        color: 'white',
-                                                                        '& .MuiChip-deleteIcon': {
-                                                                            color: 'white',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            );
-                                                        })}
-                                                    </Box>
-                                                );
-                                            }}
-                                            displayEmpty
-                                            sx={{
-                                                minHeight: '48px',
-                                                '& .MuiSelect-placeholder': {
-                                                    color: '#9CA3AF',
-                                                },
-                                            }}
-                                        >
-                                            <MenuItem disabled value="">
-                                                <em>Select assignees</em>
-                                            </MenuItem>
-                                            {permitData?.permit?.permit_assignees?.map((assignee) => (
-                                                <MenuItem key={assignee.id} value={assignee.id.toString()}>
-                                                    {assignee.name}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </div>
-
-                                {/* Attachment */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Attachment
-                                    </label>
-                                    <div className="flex items-center gap-3">
-                                        <label className="flex items-center gap-2 px-4 py-2 border border-orange-400 text-orange-600 rounded cursor-pointer hover:bg-orange-50 transition-colors">
-                                            <Upload className="w-4 h-4" />
-                                            Choose files
-                                            <input
-                                                ref={fileInputRef}
-                                                type="file"
-                                                className="hidden"
-                                                multiple
-                                                onChange={(e) => setExtendAttachments(e.target.files)}
+                {
+                    isPermitSectionVisible && (
+                        <Section
+                            title="PERMIT EXTENSION"
+                            icon={<Clock />}
+                            sectionKey="permit-extension"
+                            activeSection={activeSection}
+                            setActiveSection={setActiveSection}
+                        >
+                            <div className="space-y-6">
+                                {/* Form Fields */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        {/* Reason for Extension */}
+                                        <div>
+                                            <TextField
+                                                label="Reason for Extension *"
+                                                value={extendReason}
+                                                onChange={(e) => setExtendReason(e.target.value)}
+                                                fullWidth
+                                                variant="outlined"
+                                                multiline
+                                                rows={3}
+                                                placeholder="Enter Reason Here"
+                                                InputLabelProps={{
+                                                    shrink: true
+                                                }}
+                                                sx={fieldStyles}
                                             />
-                                        </label>
-                                        <span className="text-sm text-gray-500">
-                                            {extendAttachments && extendAttachments.length > 0
-                                                ? `${extendAttachments.length} file(s) selected`
-                                                : "No file chosen"
-                                            }
-                                        </span>
+                                        </div>
+
+                                        {/* Extension Date & Time */}
+                                        <div>
+                                            <TextField
+                                                label="Extension Date & Time *"
+                                                type="datetime-local"
+                                                value={extendDate}
+                                                onChange={(e) => setExtendDate(e.target.value)}
+                                                fullWidth
+                                                variant="outlined"
+                                                InputLabelProps={{
+                                                    shrink: true
+                                                }}
+                                                sx={fieldStyles}
+                                            />
+                                        </div>
                                     </div>
-                                    {/* Show selected files */}
-                                    {extendAttachments && extendAttachments.length > 0 && (
-                                        <div className="mt-2 space-y-1">
-                                            {Array.from(extendAttachments).map((file, index) => (
-                                                <div key={index} className="text-xs text-gray-600">
-                                                    {file.name} ({Math.round(file.size / 1024)} KB)
+
+                                    <div className="space-y-4">
+                                        {/* Assignees */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Assignees<span className="text-red-500">*</span>
+                                            </label>
+                                            <FormControl
+                                                sx={{
+                                                    width: '100%',
+                                                    '& .MuiOutlinedInput-root': {
+                                                        borderRadius: '8px',
+                                                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#C72030',
+                                                        },
+                                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                            borderColor: '#C72030',
+                                                            borderWidth: '2px',
+                                                        },
+                                                    },
+                                                }}
+                                            >
+                                                <Select
+                                                    multiple
+                                                    value={selectedExtendAssignees}
+                                                    onChange={handleAssigneeChange}
+                                                    input={<OutlinedInput />}
+                                                    renderValue={(selected) => {
+                                                        if ((selected as string[]).length === 0) {
+                                                            return <span style={{ color: '#9CA3AF' }}>Select assignees</span>;
+                                                        }
+                                                        return (
+                                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                                {(selected as string[]).map((value) => {
+                                                                    const assignee = permitData?.permit?.permit_assignees?.find(a => a.id.toString() === value);
+                                                                    return (
+                                                                        <Chip
+                                                                            key={value}
+                                                                            label={assignee?.name || value}
+                                                                            size="small"
+                                                                            sx={{
+                                                                                backgroundColor: '#C72030',
+                                                                                color: 'white',
+                                                                                '& .MuiChip-deleteIcon': {
+                                                                                    color: 'white',
+                                                                                },
+                                                                            }}
+                                                                        />
+                                                                    );
+                                                                })}
+                                                            </Box>
+                                                        );
+                                                    }}
+                                                    displayEmpty
+                                                    sx={{
+                                                        minHeight: '48px',
+                                                        '& .MuiSelect-placeholder': {
+                                                            color: '#9CA3AF',
+                                                        },
+                                                    }}
+                                                >
+                                                    <MenuItem disabled value="">
+                                                        <em>Select assignees</em>
+                                                    </MenuItem>
+                                                    {permitData?.permit?.permit_assignees?.map((assignee) => (
+                                                        <MenuItem key={assignee.id} value={assignee.id.toString()}>
+                                                            {assignee.name}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </div>
+
+                                        {/* Attachment */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Attachment
+                                            </label>
+                                            <div className="flex items-center gap-3">
+                                                <label className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-[#C72030] border border-gray-300 rounded cursor-pointer transition-colors">
+                                                    <Upload className="w-4 h-4" />
+                                                    Choose files
+                                                    <input
+                                                        ref={fileInputRef}
+                                                        type="file"
+                                                        className="hidden"
+                                                        multiple
+                                                        onChange={(e) => setExtendAttachments(e.target.files)}
+                                                    />
+                                                </label>
+                                                <span className="text-sm text-gray-500">
+                                                    {extendAttachments && extendAttachments.length > 0
+                                                        ? `${extendAttachments.length} file(s) selected`
+                                                        : "No file chosen"}
+                                                </span>
+                                            </div>
+
+                                            {/* Show selected files */}
+                                            {extendAttachments && extendAttachments.length > 0 && (
+                                                <div className="mt-2 space-y-1">
+                                                    {Array.from(extendAttachments).map((file, index) => (
+                                                        <div key={index} className="text-xs text-gray-600">
+                                                            {file.name} ({Math.round(file.size / 1024)} KB)
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Agreement Checkbox */}
+                                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                                    <div className="flex items-start gap-3">
+                                        <input
+                                            type="checkbox"
+                                            id="extensionAgreement"
+                                            className="mt-1 h-4 w-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                                        />
+                                        <label htmlFor="extensionAgreement" className="text-sm text-gray-700 leading-relaxed">
+                                            I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analyses JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally and physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Panchshil & Norms.
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {/* Extend Permit Button */}
+
+                                <div className="flex justify-center pt-4">
+                                    <Button
+                                        className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
+                                        onClick={handleExtendPermit}
+                                        disabled={isExtending}
+                                    >
+                                        {isExtending ? (
+                                            <>
+                                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                Submitting...
+                                            </>
+                                        ) : (
+                                            'Extend Permit'
+                                        )}
+                                    </Button>
+                                </div>
+
+                            </div>
+                        </Section>
+                    )
+                }
+
+                {/* Permit Extensions Section */}
+                {permitData.permit_extends && permitData.permit_extends.length > 0 && (
+                    <Section
+                        title="PERMIT EXTENSIONS"
+                        icon={<Clock />}
+                        sectionKey="extensions"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
+                        <div className="space-y-4">
+                            {permitData.permit_extends.map((extension: PermitExtend, index: number) => (
+                                <div key={extension.id || index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h4 className="font-medium text-gray-900">Extension #{extension.id}</h4>
+                                        <Badge className={`${extension.extend_approval_levels?.[0]?.status === 'Approved'
+                                            ? 'bg-green-100 text-green-800'
+                                            : extension.extend_approval_levels?.[0]?.status === 'Rejected'
+                                                ? 'bg-red-100 text-red-800'
+                                                : 'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                            {extension.extend_approval_levels?.[0]?.status || 'Pending'}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                                        <div>
+                                            <span className="font-medium text-gray-700">Reason:</span>
+                                            <p className="text-gray-900 mt-1">{extension.reason_for_extension || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-700">Extension Date:</span>
+                                            <p className="text-gray-900 mt-1">{formatDate(extension.extension_date)}</p>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-700">Created By:</span>
+                                            <p className="text-gray-900 mt-1">{extension.created_by?.full_name || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-700">Assignees:</span>
+                                            <p className="text-gray-900 mt-1">{extension.assignees || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-700">Attachments:</span>
+                                            <p className="text-gray-900 mt-1">{extension.attachments_count || 0}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Extension Approval Levels */}
+                                    {extension.extend_approval_levels && extension.extend_approval_levels.length > 0 && (
+                                        <div className="mt-4 pt-4 border-t border-gray-200">
+                                            <h5 className="font-medium text-gray-700 mb-2">Approval Levels:</h5>
+                                            <div className="space-y-2">
+                                                {extension.extend_approval_levels.map((level: any, levelIndex: number) => (
+                                                    <div key={levelIndex} className="flex items-center justify-between p-2 bg-white rounded border">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="text-sm font-medium">{level.name}</span>
+                                                            <Badge className={getStatusColor(level.status)}>
+                                                                {level.status}
+                                                            </Badge>
+                                                        </div>
+                                                        {level.updated_by && (
+                                                            <div className="text-xs text-gray-500">
+                                                                {level.updated_by}
+                                                                {level.status_updated_at && (
+                                                                    <span className="ml-1">
+                                                                        ({formatDateOnly(level.status_updated_at)})
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
+                                    {
+                                        permitExtension && (
+                                            <div className="flex items-center gap-4 justify-center mt-4">
+                                                <Button
+                                                    onClick={() => handleApproveExtension(extension.id.toString())}
+                                                    disabled={isApproving || isRejecting}
+                                                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
+                                                >
+                                                    {isApproving ? (
+                                                        <>
+                                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                            Approving...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                                            Approve Extension
+                                                        </>
+                                                    )}
+                                                </Button>
+                                                <Button
+                                                    onClick={() => {
+                                                        handleReject()
+                                                        setExtensionId(extension.id.toString())
+                                                    }}
+                                                    disabled={isApproving || isRejecting}
+                                                    className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
+                                                >
+                                                    {isRejecting ? (
+                                                        <>
+                                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                            Rejecting...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <AlertTriangle className="w-4 h-4 mr-2" />
+                                                            Reject Extension
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+
+                                        )
+                                    }
                                 </div>
-                            </div>
+                            ))}
                         </div>
+                    </Section>
+                )}
 
-                        {/* Agreement Checkbox */}
-                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                            <div className="flex items-start gap-3">
-                                <input
-                                    type="checkbox"
-                                    id="extensionAgreement"
-                                    className="mt-1 h-4 w-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
-                                />
-                                <label htmlFor="extensionAgreement" className="text-sm text-gray-700 leading-relaxed">
-                                    I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analyses JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally and physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Panchshil & Norms.
-                                </label>
-                            </div>
-                        </div>
-
-                        {/* Extend Permit Button */}
-
-                        <div className="flex justify-center pt-4">
-                            <Button
-                                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
-                                onClick={handleExtendPermit}
-                                disabled={isExtending}
-                            >
-                                {isExtending ? (
-                                    <>
-                                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                        Submitting...
-                                    </>
-                                ) : (
-                                    'Extend Permit'
-                                )}
-                            </Button>
-                        </div>
-
-                    </div>
-                </Section>
-
-                {/* Resume Permit Section */}
-                {permitData.show_resume_button && (
+                {/* Permit Resume Section */}
+                {(permitData.show_resume_permit_button) && (
                     <Section
-                        title="RESUME PERMIT"
+                        title="PERMIT RESUME"
                         icon={<RefreshCw />}
                         sectionKey="resume-permit"
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
                     >
                         <div className="space-y-6">
-                            {/* Resume Form Fields */}
+                            {/* Form Fields */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     {/* Reason for Resume */}
                                     <div>
                                         <TextField
                                             label="Reason for Resume *"
+                                            value={resumeReason}
+                                            onChange={(e) => setResumeReason(e.target.value)}
                                             fullWidth
                                             variant="outlined"
                                             multiline
@@ -2442,6 +2651,8 @@ export const PermitDetails = () => {
                                         <TextField
                                             label="Resume Date & Time *"
                                             type="datetime-local"
+                                            value={resumeDate}
+                                            onChange={(e) => setResumeDate(e.target.value)}
                                             fullWidth
                                             variant="outlined"
                                             InputLabelProps={{
@@ -2455,16 +2666,65 @@ export const PermitDetails = () => {
                                 <div className="space-y-4">
                                     {/* Assignees */}
                                     <div>
-                                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                                            <InputLabel shrink>Assignees *</InputLabel>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Assignees<span className="text-red-500">*</span>
+                                        </label>
+                                        <FormControl
+                                            sx={{
+                                                width: '100%',
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '8px',
+                                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#C72030',
+                                                    },
+                                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#C72030',
+                                                        borderWidth: '2px',
+                                                    },
+                                                },
+                                            }}
+                                        >
                                             <Select
-                                                label="Assignees *"
-                                                defaultValue=""
+                                                multiple
+                                                value={selectedResumeAssignees}
+                                                onChange={handleResumeAssigneeChange}
+                                                input={<OutlinedInput />}
+                                                renderValue={(selected) => {
+                                                    if ((selected as string[]).length === 0) {
+                                                        return <span style={{ color: '#9CA3AF' }}>Select assignees</span>;
+                                                    }
+                                                    return (
+                                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                            {(selected as string[]).map((value) => {
+                                                                const assignee = permitData?.permit?.permit_assignees?.find(a => a.id.toString() === value);
+                                                                return (
+                                                                    <Chip
+                                                                        key={value}
+                                                                        label={assignee?.name || value}
+                                                                        size="small"
+                                                                        sx={{
+                                                                            backgroundColor: '#C72030',
+                                                                            color: 'white',
+                                                                            '& .MuiChip-deleteIcon': {
+                                                                                color: 'white',
+                                                                            },
+                                                                        }}
+                                                                    />
+                                                                );
+                                                            })}
+                                                        </Box>
+                                                    );
+                                                }}
                                                 displayEmpty
-                                                MenuProps={menuProps}
+                                                sx={{
+                                                    minHeight: '48px',
+                                                    '& .MuiSelect-placeholder': {
+                                                        color: '#9CA3AF',
+                                                    },
+                                                }}
                                             >
-                                                <MenuItem value="">
-                                                    <em>Select Here</em>
+                                                <MenuItem disabled value="">
+                                                    <em>Select assignees</em>
                                                 </MenuItem>
                                                 {permitData?.permit?.permit_assignees?.map((assignee) => (
                                                     <MenuItem key={assignee.id} value={assignee.id.toString()}>
@@ -2481,14 +2741,49 @@ export const PermitDetails = () => {
                                             Attachment
                                         </label>
                                         <div className="flex items-center gap-3">
-                                            <label className="flex items-center gap-2 px-4 py-2 border border-orange-400 text-orange-600 rounded cursor-pointer hover:bg-orange-50 transition-colors">
+                                            <label className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-[#C72030] border border-gray-300 rounded cursor-pointer transition-colors">
                                                 <Upload className="w-4 h-4" />
                                                 Choose files
-                                                <input type="file" className="hidden" multiple />
+                                                <input
+                                                    ref={resumeFileInputRef}
+                                                    type="file"
+                                                    className="hidden"
+                                                    multiple
+                                                    onChange={(e) => setResumeAttachments(e.target.files)}
+                                                />
                                             </label>
-                                            <span className="text-sm text-gray-500">No file chosen</span>
+                                            <span className="text-sm text-gray-500">
+                                                {resumeAttachments && resumeAttachments.length > 0
+                                                    ? `${resumeAttachments.length} file(s) selected`
+                                                    : "No file chosen"
+                                                }
+                                            </span>
                                         </div>
+                                        {/* Show selected files */}
+                                        {resumeAttachments && resumeAttachments.length > 0 && (
+                                            <div className="mt-2 space-y-1">
+                                                {Array.from(resumeAttachments).map((file, index) => (
+                                                    <div key={index} className="text-xs text-gray-600">
+                                                        {file.name} ({Math.round(file.size / 1024)} KB)
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Agreement Checkbox */}
+                            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        type="checkbox"
+                                        id="resumeAgreement"
+                                        className="mt-1 h-4 w-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                                    />
+                                    <label htmlFor="resumeAgreement" className="text-sm text-gray-700 leading-relaxed">
+                                        I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analyses JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally and physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Panchshil & Norms.
+                                    </label>
                                 </div>
                             </div>
 
@@ -2496,20 +2791,27 @@ export const PermitDetails = () => {
                             <div className="flex justify-center pt-4">
                                 <Button
                                     className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
-                                    onClick={() => {
-                                        // Handle resume permit functionality here
-                                        toast.success('Permit resume request submitted');
-                                    }}
+                                    onClick={handleResumePermit}
+                                    disabled={isResuming}
                                 >
-                                    Resume Permit
+                                    {isResuming ? (
+                                        <>
+                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        'Resume Permit'
+
+                                    )}
                                 </Button>
                             </div>
                         </div>
                     </Section>
                 )}
 
+
                 {/* Permit Closure Details Section */}
-                {permitData.permit_closure && (
+                {permitData.permit_closure && permitData.permit_closure.completion_comment && permitData.permit_closure.attachments_count > 0 && permitData.permit_closure.closed_by && (
                     <Section
                         title="PERMIT CLOSURE DETAILS"
                         icon={<CheckCircle />}
