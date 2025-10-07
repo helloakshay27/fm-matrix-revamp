@@ -675,7 +675,6 @@ import { LockModuleList } from "./pages/settings/LockModuleList";
 import { LockSubFunctionList } from "./pages/settings/LockSubFunctionList";
 import { LockSubFunctionView } from "./pages/settings/LockSubFunctionView";
 import { LockSubFunctionEdit } from "./pages/settings/LockSubFunctionEdit";
-import { LockedUsersDashboard } from "./pages/settings/LockedUsersDashboard";
 import { CrmCustomerDetails } from "./pages/CrmCustomerDetails";
 import { EditCrmCustomer } from "./pages/EditCrmCustomer";
 import MultipleUserDeletePage from "./pages/MultipleUserDeletePage";
@@ -768,6 +767,7 @@ import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
 import TabularResponseDetailsPage from "./pages/TabularResponseDetailsPage";
 import CurrencyPage from "./pages/CurrencyPage";
+import { LockedUsersDashboard } from "./pages/settings/LockedUsersDashboard";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
