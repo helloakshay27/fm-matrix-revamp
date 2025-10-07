@@ -212,7 +212,24 @@ export const loginUser = async (
   });
 
   if (!response.ok) {
-    throw new Error("Login failed");
+    // Try to get error details from response
+    let errorMessage = "Login failed";
+    let errorData = null;
+    
+    try {
+      errorData = await response.json();
+      if (errorData?.error) {
+        errorMessage = errorData.error;
+      }
+    } catch (e) {
+      // If response is not JSON, use status text
+      errorMessage = response.statusText || "Login failed";
+    }
+    
+    const error = new Error(errorMessage) as any;
+    error.status = response.status;
+    error.data = errorData;
+    throw error;
   }
 
   const data = await response.json();

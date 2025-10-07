@@ -251,9 +251,26 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           ? navigate("/safety/m-safe/internal")
           : navigate(from, { replace: true });
       }, 500);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      toast.error("Invalid email or password. Please try again.");
+      
+      // Handle specific error messages from API
+      if (error?.status === 401) {
+        // Check for specific error messages
+        const errorMessage = error?.message?.toLowerCase() || '';
+        
+        if (errorMessage.includes('locked') || errorMessage.includes('lock')) {
+          toast.error("Your account has been locked. Please contact your administrator.");
+        } else {
+          toast.error("Invalid email or password. Please try again.");
+        }
+      } else if (error?.data?.error) {
+        toast.error(error.data.error);
+      } else if (error?.message) {
+        toast.error(error.message);
+      } else {
+        toast.error("An error occurred during login. Please try again.");
+      }
     } finally {
       setLoginLoading(false);
     }
