@@ -20,6 +20,7 @@ const NewConversationModal = ({
     const baseUrl = localStorage.getItem("baseUrl");
     const currentUserId = JSON.parse(localStorage.getItem("user"))?.id;
 
+    const [activeTab, setActiveTab] = useState("direct");
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [groupName, setGroupName] = useState("");
 
@@ -34,7 +35,7 @@ const NewConversationModal = ({
             }
         });
 
-        return filteredUsers.filter(user => !conversationUserIds.has(user.id));
+        return filteredUsers.filter((user) => !conversationUserIds.has(user.id));
     }, [filteredUsers, conversations, currentUserId]);
 
     const handleCreateConversation = async (id: string) => {
@@ -63,20 +64,25 @@ const NewConversationModal = ({
 
         const payload = {
             project_space: {
-                name: groupName,
+                name: groupName.trim(),
                 user_ids: selectedUsers,
                 created_by_id: currentUserId,
                 resource_type: "Pms::Site",
-                resource_id: localStorage.getItem('selectedSiteId')
+                resource_id: localStorage.getItem("selectedSiteId"),
             },
         };
 
         try {
-            const response = await dispatch(createGroup({ baseUrl, token, data: payload })).unwrap();
+            const response = await dispatch(
+                createGroup({ baseUrl, token, data: payload })
+            ).unwrap();
             setNewConversationModal(false);
             navigate(`/vas/channels/groups/${response.id}`);
         } catch (error) {
             console.log(error);
+            if (error.response.data.name && Array.isArray(error.response.data.name)) {
+                toast.error("Group with this name already exists");
+            }
         }
     };
 
@@ -103,7 +109,14 @@ const NewConversationModal = ({
                 </button>
             </div>
 
-            <Tabs defaultValue="direct" className="w-full flex-1 flex flex-col min-h-0">
+            <Tabs
+                value={activeTab}
+                onValueChange={(value) => {
+                    setActiveTab(value);
+                    setSearchQuery("");
+                }}
+                className="w-full flex-1 flex flex-col min-h-0"
+            >
                 <TabsList className="w-full bg-white border border-gray-200">
                     <TabsTrigger
                         value="direct"
@@ -119,7 +132,10 @@ const NewConversationModal = ({
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="direct" className="flex-1 flex flex-col space-y-4 mt-4 min-h-0 data-[state=inactive]:hidden">
+                <TabsContent
+                    value="direct"
+                    className="flex-1 flex flex-col space-y-4 mt-4 min-h-0 data-[state=inactive]:hidden"
+                >
                     <div className="relative">
                         <Input
                             placeholder="Search for users..."
@@ -165,13 +181,18 @@ const NewConversationModal = ({
                             ))
                         ) : (
                             <div className="text-center text-gray-500 text-sm py-8">
-                                {searchQuery ? "No users found" : "All users already have conversations"}
+                                {searchQuery
+                                    ? "No users found"
+                                    : "All users already have conversations"}
                             </div>
                         )}
                     </div>
                 </TabsContent>
 
-                <TabsContent value="group" className="flex-1 flex flex-col space-y-4 mt-4 min-h-0 data-[state=inactive]:hidden">
+                <TabsContent
+                    value="group"
+                    className="flex-1 flex flex-col space-y-4 mt-4 min-h-0 data-[state=inactive]:hidden"
+                >
                     <Input
                         placeholder="Enter group name"
                         value={groupName}
@@ -203,29 +224,37 @@ const NewConversationModal = ({
 
                     <div className="flex-1 flex flex-col min-h-0">
                         <div className="flex-1 space-y-2 overflow-y-auto pr-1 min-h-0">
-                            {filteredUsers.map((user) => (
-                                <div
-                                    key={user.id}
-                                    className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${selectedUsers.includes(user.id)
-                                        ? "bg-[#c72030]/10"
-                                        : "hover:bg-gray-100"
-                                        }`}
-                                    onClick={() => toggleUserSelection(user.id)}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedUsers.includes(user.id)}
-                                        readOnly
-                                        className="cursor-pointer"
-                                    />
-                                    <div className="w-9 h-9 rounded-full bg-[#F2EEE9] flex items-center justify-center font-medium text-[#c72030]">
-                                        {user.full_name.charAt(0)}
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-800">
-                                        {user.full_name}
-                                    </span>
-                                </div>
-                            ))}
+                            {
+                                filteredUsers.length > 0 ? (
+                                    filteredUsers.map((user) => (
+                                        <div
+                                            key={user.id}
+                                            className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${selectedUsers.includes(user.id)
+                                                ? "bg-[#c72030]/10"
+                                                : "hover:bg-gray-100"
+                                                }`}
+                                            onClick={() => toggleUserSelection(user.id)}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedUsers.includes(user.id)}
+                                                readOnly
+                                                className="cursor-pointer"
+                                            />
+                                            <div className="w-9 h-9 rounded-full bg-[#F2EEE9] flex items-center justify-center font-medium text-[#c72030]">
+                                                {user.full_name.charAt(0)}
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-800">
+                                                {user.full_name}
+                                            </span>
+                                        </div>
+                                    )))
+                                    : (
+                                        <div className="text-center text-gray-500 text-sm py-8">
+                                            No users found
+                                        </div>
+                                    )
+                            }
                         </div>
 
                         <button

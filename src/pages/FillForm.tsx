@@ -559,8 +559,8 @@ export const FillForm = () => {
                         }
                     },
                     signatures: {
-                        initiator: permitData.initiator?.full_name || '',
-                        issuer: permitData.permit_issuer?.name || '',
+                        initiator: permitData?.initiator?.full_name || '',
+                        issuer: permitData?.permit_issuer?.name || '',
                         security_dept: ''
                     },
                     date_and_time: {
@@ -572,43 +572,43 @@ export const FillForm = () => {
 
                 // Map Attachments - Fixed structure for Documents to be Enclosed
                 console.log('Permit data for attachments:', {
-                    attachments: permitData.attachments
+                    attachments: permitData?.attachments
                 });
 
                 const attachmentsList = [
                     {
                         id: '1',
                         name: 'List of people to be work',
-                        workVoucher: permitData.attachments?.people_work_attachments?.length > 0 &&
-                            permitData.attachments.people_work_attachments[0]?.id &&
-                            permitData.attachments.people_work_attachments[0]?.url,
+                        workVoucher: permitData?.attachments?.people_work_attachments?.length > 0 &&
+                            permitData?.attachments.people_work_attachments[0]?.id &&
+                            permitData?.attachments.people_work_attachments[0]?.url,
                         file: null,
                         sr_no: 1
                     },
                     {
                         id: '2',
                         name: 'ESI/WC policy',
-                        workVoucher: permitData.attachments?.policy_attachments?.length > 0 &&
-                            permitData.attachments.policy_attachments[0]?.id &&
-                            permitData.attachments.policy_attachments[0]?.url,
+                        workVoucher: permitData?.attachments?.policy_attachments?.length > 0 &&
+                            permitData?.attachments.policy_attachments[0]?.id &&
+                            permitData?.attachments.policy_attachments[0]?.url,
                         file: null,
                         sr_no: 2
                     },
                     {
                         id: '3',
                         name: 'Medical Reports',
-                        workVoucher: permitData.attachments?.medical_attachments?.length > 0 &&
-                            permitData.attachments.medical_attachments[0]?.id &&
-                            permitData.attachments.medical_attachments[0]?.url,
+                        workVoucher: permitData?.attachments?.medical_attachments?.length > 0 &&
+                            permitData?.attachments.medical_attachments[0]?.id &&
+                            permitData?.attachments.medical_attachments[0]?.url,
                         file: null,
                         sr_no: 3
                     },
                     {
                         id: '4',
                         name: 'Other',
-                        workVoucher: permitData.attachments?.other_attachments?.length > 0 &&
-                            permitData.attachments.other_attachments[0]?.id &&
-                            permitData.attachments.other_attachments[0]?.url,
+                        workVoucher: permitData?.attachments?.other_attachments?.length > 0 &&
+                            permitData?.attachments.other_attachments[0]?.id &&
+                            permitData?.attachments.other_attachments[0]?.url,
                         file: null,
                         sr_no: 4
                     }

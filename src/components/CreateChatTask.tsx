@@ -100,7 +100,6 @@ const CreateChatTask = ({
         }
     }, [message, editMode]);
 
-    // Populate form with existing task data in edit mode
     useEffect(() => {
         if (editMode && existingTask && openTaskModal) {
             setFormData({
@@ -115,9 +114,8 @@ const CreateChatTask = ({
                 focusMode: existingTask.focus_mode || false,
             });
         } else if (!editMode && openTaskModal) {
-            // Reset form for create mode
             setFormData({
-                title: message?.body || "",
+                title: message?.body.slice(0, 50) + (message?.body.length > 50 ? '...' : '') || "",
                 description: "",
                 priority: "",
                 assignTo: "",
@@ -128,7 +126,7 @@ const CreateChatTask = ({
                 focusMode: false,
             });
         }
-    }, [editMode, existingTask, openTaskModal, message]);
+    }, [editMode, existingTask, openTaskModal]);
 
     const handleChange = <K extends keyof FormData>(field: K, value: FormData[K]) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
