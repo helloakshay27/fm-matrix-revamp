@@ -259,9 +259,13 @@ export const FillJSAForm = () => {
                                                 <Input
                                                     id="checkedByName"
                                                     value={jsaInfo.checkedByName}
-                                                    onChange={(e) =>
-                                                        setJsaInfo((prev) => ({ ...prev, checkedByName: e.target.value }))
-                                                    }
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        // Only allow alphabets and spaces
+                                                        if (/^[a-zA-Z ]*$/.test(value)) {
+                                                            setJsaInfo((prev) => ({ ...prev, checkedByName: value }));
+                                                        }
+                                                    }}
                                                     placeholder="Enter Name"
                                                     className="mt-1"
                                                 />
