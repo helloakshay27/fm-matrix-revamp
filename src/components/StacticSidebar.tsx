@@ -677,23 +677,23 @@ const modulesByPackage = {
         { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
       ],
     },
-    {
-      name: "Vi Miles",
-      icon: User,
-      href: "/safety/vi-miles",
-      subItems: [
-        {
-          name: "Vehicle Details",
-          href: "/safety/vi-miles/vehicle-details",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Vehicle Check In",
-          href: "/safety/vi-miles/vehicle-check-in",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
+    // {
+    //   name: "Vi Miles",
+    //   icon: User,
+    //   href: "/safety/vi-miles",
+    //   subItems: [
+    //     {
+    //       name: "Vehicle Details",
+    //       href: "/safety/vi-miles/vehicle-details",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //     {
+    //       name: "Vehicle Check In",
+    //       href: "/safety/vi-miles/vehicle-check-in",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //   ],
+    // },
     {
       name: "Check Hierarchy Levels",
       icon: FolderTree,
