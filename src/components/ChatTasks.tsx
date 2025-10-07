@@ -263,7 +263,7 @@ const ChatTasks = () => {
     };
 
     const renderTaskTable = () => (
-        <>
+        <div className={`${!isGroupChat && "p-6"}`}>
             <EnhancedTable
                 data={tasks}
                 columns={columns}
@@ -295,7 +295,7 @@ const ChatTasks = () => {
                     </PaginationContent>
                 </Pagination>
             </div>
-        </>
+        </div>
     );
 
     if (!isGroupChat) {

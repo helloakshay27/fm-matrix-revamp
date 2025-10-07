@@ -163,6 +163,7 @@ import { EditIconPage } from "./pages/EditIconPage";
 import { IncidentDashboard } from "./pages/IncidentDashboard";
 import { PermitToWorkDashboard } from "./pages/PermitToWorkDashboard";
 import { PermitDetails } from "./pages/PermitDetails";
+import PermitSafetyCheckForm from "./pages/PermitSafetyCheckForm";
 import { PermitPendingApprovalsDashboard } from "./pages/PermitPendingApprovalsDashboard";
 import { VendorPermitForm } from "./pages/VendorPermitForm";
 import FillForm from "./pages/FillForm";
@@ -766,6 +767,7 @@ import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
 import TabularResponseDetailsPage from "./pages/TabularResponseDetailsPage";
 import CurrencyPage from "./pages/CurrencyPage";
+import { LockedUsersDashboard } from "./pages/settings/LockedUsersDashboard";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -918,6 +920,10 @@ function App() {
                   <Route
                     path="settings/account/lock-sub-function/edit/:id"
                     element={<LockSubFunctionEdit />}
+                  />
+                  <Route
+                    path="settings/account/locked-users"
+                    element={<LockedUsersDashboard />}
                   />
                   {/* <Route
                       path="settings/account/lock-sub-function/create"
@@ -1584,6 +1590,10 @@ function App() {
                         <EditPermitPage />
                       </ProtectedRoute>
                     }
+                  />
+                  <Route
+                    path="/safety/permit/safety-check-form"
+                    element={<PermitSafetyCheckForm />}
                   />
                   <Route
                     path="/safety/permit/vendor-form/:id?"
