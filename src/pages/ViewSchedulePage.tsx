@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, FileText, Box, Clock, Calendar, Link, Mail, MapPin, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Box, Clock, Calendar, Link, Mail, MapPin, Loader2, Eye, Download, File, FileSpreadsheet } from 'lucide-react';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, Typography, Tooltip } from '@mui/material';
 import AttachFile from '@mui/icons-material/AttachFile';
 import { assetService } from '@/services/assetService';
@@ -97,6 +98,8 @@ export const ViewSchedulePage = () => {
   const [showSetApprovalModal, setShowSetApprovalModal] = useState(false);
   const [groupOptions, setGroupOptions] = useState<any[]>([]);
   const [subGroupOptions, setSubGroupOptions] = useState<any[]>([]);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
 
   // Supervisor and Supplier state
   const [users, setUsers] = useState<any[]>([]);
@@ -469,18 +472,103 @@ export const ViewSchedulePage = () => {
                       <div className="flex items-start col-span-2">
                         <span className="text-gray-500 min-w-[140px]">Attachments</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <div className="flex flex-wrap gap-2">
-                          {customForm.attachments.map((attachment: any, index: number) => (
-                            <a 
-                              key={attachment.id || index} 
-                              href={attachment.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 underline"
-                            >
-                              {attachment.file_name || `Attachment ${index + 1}`}
-                            </a>
-                          ))}
+                        <div className="flex flex-wrap gap-4">
+                          {customForm.attachments.map((attachment: any, index: number) => {
+                            const url = attachment.document || attachment.url || attachment.file_url;
+                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                            const isPdf = /\.pdf$/i.test(url);
+                            const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                            const isWord = /\.(doc|docx)$/i.test(url);
+                            const isDownloadable = isPdf || isExcel || isWord;
+
+                            return (
+                              <div
+                                key={attachment.id || index}
+                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                              >
+                                {isImage ? (
+                                  <>
+                                    <button
+                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                      title="View"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: attachment.id || 0,
+                                          document_name: attachment.document_name || attachment.file_name || `Attachment ${index + 1}`,
+                                          url: url,
+                                          document_url: url,
+                                          document: url,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      type="button"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    <img
+                                      src={url}
+                                      alt={attachment.document_name || attachment.file_name || `Attachment ${index + 1}`}
+                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: attachment.id || 0,
+                                          document_name: attachment.document_name || attachment.file_name || `Attachment ${index + 1}`,
+                                          url: url,
+                                          document_url: url,
+                                          document: url,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  </>
+                                ) : isPdf ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                    <FileSpreadsheet className="w-6 h-6" />
+                                  </div>
+                                ) : isWord ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                    <File className="w-6 h-6" />
+                                  </div>
+                                )}
+                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                  {attachment.document_name ||
+                                    attachment.file_name ||
+                                    url?.split('/').pop() ||
+                                    `Attachment ${index + 1}`}
+                                </span>
+                                {isDownloadable && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                    onClick={() => {
+                                      setSelectedDoc({
+                                        id: attachment.id || 0,
+                                        document_name: attachment.document_name || attachment.file_name || `Attachment ${index + 1}`,
+                                        url: url,
+                                        document_url: url,
+                                        document: url,
+                                      });
+                                      setShowImagePreview(true);
+                                    }}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -993,6 +1081,14 @@ export const ViewSchedulePage = () => {
       <SetApprovalModal
         isOpen={showSetApprovalModal}
         onClose={() => setShowSetApprovalModal(false)}
+      />
+
+      {/* Attachment Preview Modal */}
+      <AttachmentPreviewModal
+        isModalOpen={showImagePreview}
+        setIsModalOpen={setShowImagePreview}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
       />
     </div>
   );

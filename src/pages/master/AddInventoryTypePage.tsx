@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { inventoryTypeService } from '@/services/inventoryTypeService';
 import { gateNumberService } from '@/services/gateNumberService'; // Reusing for company fetch
 import { useSelector } from 'react-redux';
+import { ArrowLeft } from 'lucide-react';
 
 interface InventoryTypeFormValues {
   name: string;
@@ -75,8 +76,24 @@ const AddInventoryTypePage = () => {
   return (
    <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
       <div className="w-full max-w-none space-y-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Add Inventory Type</h1>
-      <div style={{ padding: '24px', margin: 0, borderRadius: '3px', background: '#fff' }}>
+        {/* Breadcrumb */}
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button
+            onClick={() => navigate(basePath)}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Inventory Type List</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Add Inventory Type</span>
+        </div>
+        
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          ADD INVENTORY TYPE
+        </h1>
+      <div style={{ padding: '24px', marginTop: '20px', borderRadius: '3px', background: '#fff' }}>
         <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Name Field */}

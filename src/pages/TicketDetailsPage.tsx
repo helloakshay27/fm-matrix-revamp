@@ -10,7 +10,7 @@ import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import { Select as MuiSelect } from '@mui/material';
+import { Select as MuiSelect, Tooltip } from '@mui/material';
 import MenuItem from '@mui/material/MenuItem';
 import { TextField } from '@mui/material';
 import { Button as MuiButton } from '@mui/material';
@@ -39,18 +39,18 @@ const CustomMultiValue = (props) => (
         props.removeProps.onClick();
       }}
       style={{
-          position: "absolute",
-          top: "-4px",
-          right: "-4px",
-          fontSize: "6px",
-          fontWeight: "500",
-          color: "#000",
-          cursor: "pointer",
-          lineHeight: "1",
-          border: "1.5px solid #000",
-          borderRadius: "50%",
-          padding: "2px",
-        }}
+        position: "absolute",
+        top: "-4px",
+        right: "-4px",
+        fontSize: "6px",
+        fontWeight: "500",
+        color: "#000",
+        cursor: "pointer",
+        lineHeight: "1",
+        border: "1.5px solid #000",
+        borderRadius: "50%",
+        padding: "2px",
+      }}
     >
       ✕
     </div>
@@ -170,16 +170,17 @@ const formatTimeToDDHHMM = (timeString: string | null | undefined): string => {
 };
 
 const formatTicketAgeing = (ageingSeconds: number): string => {
-  if (!ageingSeconds || ageingSeconds === 0) return '00:00:00';
+  if (!ageingSeconds || ageingSeconds === 0) return '00:00:00:00';
 
   // ageingSeconds is already in seconds, no conversion needed
   const totalSeconds = ageingSeconds;
 
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const days = Math.floor(totalSeconds / (24 * 60 * 60));
+  const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+  const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
   const seconds = totalSeconds % 60;
 
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  return `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
 // Helper function to calculate balance TAT
@@ -1960,7 +1961,7 @@ export const TicketDetailsPage = () => {
                                   </div>
                                 </div>
                                 <div className="bg-white p-3" style={{ width: '75%', borderRadius: '4px' }}>
-                                  <div className="grid grid-cols-3  gap-4">
+                                  <div className="grid grid-cols-3 gap-3">
                                     {tatGridRows.flat().map((cell, idx) => (
                                       <div key={idx} className="flex justify-between items-center">
                                         <span className="text-[14px] text-left leading-tight text-gray-500 tracking-wide pr-2">
@@ -1969,10 +1970,7 @@ export const TicketDetailsPage = () => {
                                         <span className={`text-[13px] md:text-[14px] font-semibold ${cell.isExceeded ? 'text-red-600' : 'text-gray-900'}`}>
                                           {cell.isExceeded && cell.label === 'Balance TAT' ? (
                                             <>
-                                              <p>{cell.value}</p>
-                                              <p className="text-[11px] text-red-500 italic ml-2">
-                                                (Exceeded)
-                                              </p>
+                                                Exceeded                                            
                                             </>
                                           ) : (
                                             cell.value
@@ -1994,7 +1992,7 @@ export const TicketDetailsPage = () => {
                                 {getPriorityLabel(ticketData.priority)}
                               </button>
                             </div>
-                            <div className="flex mb-2">
+                            <div className="flex items-center mb-2">
                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <mask id="mask0_9118_15345" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="2" y="0" width="20" height="23">
                                   <path d="M12 21.9995C16.6945 21.9995 20.5 18.194 20.5 13.4995C20.5 8.80501 16.6945 4.99951 12 4.99951C7.3055 4.99951 3.5 8.80501 3.5 13.4995C3.5 18.194 7.3055 21.9995 12 21.9995Z" fill="white" stroke="white" strokeWidth="2" strokeLinejoin="round" />
@@ -2005,7 +2003,7 @@ export const TicketDetailsPage = () => {
                                   <path d="M0 0H24V24H0V0Z" fill="#434343" />
                                 </g>
                               </svg>
-                              <span style={{ fontSize: 16, fontWeight: 600 }} className="text-black ml-1">
+                              <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">
                                 {formatTicketAgeing(currentAgeing)}
                               </span>
                             </div>
@@ -2105,7 +2103,6 @@ export const TicketDetailsPage = () => {
                         ))}
                       </CardContent>
                     </Card>
-
                   ) : (
                     /* No Data Available Message */
                     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -2298,106 +2295,106 @@ export const TicketDetailsPage = () => {
 
                           {/* Right: Root Cause + Notes (stacked) */}
                           <div className="w-full lg:w-[38%] min-w-0">
-                           <div className="min-w-0 relative">
-      <div className="relative w-full">
-        {/* Floating label on border */}
-        <label
-          style={{
-            position: "absolute",
-            top: "-10px",
-            left: "12px",
-            background: "#fff",
-            padding: "0 6px",
-            fontWeight: 500,
-            fontSize: "14px",
-            color: "#1A1A1A",
-            zIndex: 10,
-          }}
-        >
-          Root Cause Analysis
-        </label>
+                            <div className="min-w-0 relative">
+                              <div className="relative w-full">
+                                {/* Floating label on border */}
+                                <label
+                                  style={{
+                                    position: "absolute",
+                                    top: "-10px",
+                                    left: "12px",
+                                    background: "#fff",
+                                    padding: "0 6px",
+                                    fontWeight: 500,
+                                    fontSize: "14px",
+                                    color: "#1A1A1A",
+                                    zIndex: 10,
+                                  }}
+                                >
+                                  Root Cause Analysis
+                                </label>
 
-        {/* React Select */}
-        <Select
-          isMulti
-          value={(() => {
-            if (!ticketData.root_cause) return [];
-            const rootCauseString =
-              typeof ticketData.root_cause === "string"
-                ? ticketData.root_cause
-                : Array.isArray(ticketData.root_cause)
-                ? ticketData.root_cause.join(", ")
-                : "";
+                                {/* React Select */}
+                                <Select
+                                  isMulti
+                                  value={(() => {
+                                    if (!ticketData.root_cause) return [];
+                                    const rootCauseString =
+                                      typeof ticketData.root_cause === "string"
+                                        ? ticketData.root_cause
+                                        : Array.isArray(ticketData.root_cause)
+                                          ? ticketData.root_cause.join(", ")
+                                          : "";
 
-            if (!rootCauseString) return [];
+                                    if (!rootCauseString) return [];
 
-            const rootCauseValues = rootCauseString.split(",").map((s) => s.trim());
-            const matchedTemplates = communicationTemplates.filter(
-              (t) =>
-                t.identifier === "Root Cause Analysis" &&
-                rootCauseValues.includes(t.identifier_action)
-            );
+                                    const rootCauseValues = rootCauseString.split(",").map((s) => s.trim());
+                                    const matchedTemplates = communicationTemplates.filter(
+                                      (t) =>
+                                        t.identifier === "Root Cause Analysis" &&
+                                        rootCauseValues.includes(t.identifier_action)
+                                    );
 
-            return matchedTemplates.map((t) => ({
-              value: t.id,
-              label: t.identifier_action,
-            }));
-          })()}
-          onChange={(selectedOptions) => {
-            const selectedIds = selectedOptions
-              ? selectedOptions.map((opt) => opt.value)
-              : [];
-            handleRootCauseChange(selectedIds);
-            setSelectedOptions(selectedOptions);
-          }}
-          options={communicationTemplates
-            .filter((t) => t.identifier === "Root Cause Analysis")
-            .map((t) => ({
-              value: t.id,
-              label: t.identifier_action,
-            }))}
-          placeholder="Select Root Cause Analysis..."
-          styles={customStyles}
-          components={{
-            MultiValue: CustomMultiValue,
-            MultiValueRemove: () => null,
-          }}
-          closeMenuOnSelect={false}
-        />
-      </div>
-    </div>
-{ticketData.root_cause && (
-    <div
-      className="space-y-2 min-w-0"
-      style={{ fontSize: "14px", fontWeight: "500" }}
-    >
-      {(() => {
-        const selectedValues =
-          typeof ticketData.root_cause === "string"
-            ? ticketData.root_cause.split(",").map((s) => s.trim())
-            : Array.isArray(ticketData.root_cause)
-            ? ticketData.root_cause
-            : [ticketData.root_cause];
+                                    return matchedTemplates.map((t) => ({
+                                      value: t.id,
+                                      label: t.identifier_action,
+                                    }));
+                                  })()}
+                                  onChange={(selectedOptions) => {
+                                    const selectedIds = selectedOptions
+                                      ? selectedOptions.map((opt) => opt.value)
+                                      : [];
+                                    handleRootCauseChange(selectedIds);
+                                    setSelectedOptions(selectedOptions);
+                                  }}
+                                  options={communicationTemplates
+                                    .filter((t) => t.identifier === "Root Cause Analysis")
+                                    .map((t) => ({
+                                      value: t.id,
+                                      label: t.identifier_action,
+                                    }))}
+                                  placeholder="Select Root Cause Analysis..."
+                                  styles={customStyles}
+                                  components={{
+                                    MultiValue: CustomMultiValue,
+                                    MultiValueRemove: () => null,
+                                  }}
+                                  closeMenuOnSelect={false}
+                                />
+                              </div>
+                            </div>
+                            {ticketData.root_cause && (
+                              <div
+                                className="space-y-2 min-w-0"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const selectedValues =
+                                    typeof ticketData.root_cause === "string"
+                                      ? ticketData.root_cause.split(",").map((s) => s.trim())
+                                      : Array.isArray(ticketData.root_cause)
+                                        ? ticketData.root_cause
+                                        : [ticketData.root_cause];
 
-        return selectedValues.map((value, index) => {
-          const matchedTemplate = communicationTemplates.find(
-            (template) =>
-              template.identifier === "Root Cause Analysis" &&
-              template.identifier_action === value
-          );
-          return (
-            <div
-              key={index}
-              className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-              style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-            >
-              {matchedTemplate?.body || value}
-            </div>
-          );
-        });
-      })()}
-    </div>
-  )}
+                                  return selectedValues.map((value, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      (template) =>
+                                        template.identifier === "Root Cause Analysis" &&
+                                        template.identifier_action === value
+                                    );
+                                    return (
+                                      <div
+                                        key={index}
+                                        className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                        style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                      >
+                                        {matchedTemplate?.body || value}
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
                             <div className="flex flex-col min-w-0 mt-4">
                               <span className="text-[11px] tracking-wide text-[#6B6B6B] mb-1">
                                 Additional Notes
@@ -3165,49 +3162,92 @@ export const TicketDetailsPage = () => {
                             const isWord = /\.(doc|docx)$/i.test(url) ||
                               attachment.doctype?.includes('document') ||
                               attachment.doctype?.includes('word');
+                            const isDownloadable = isPdf || isExcel || isWord;
 
                             return (
                               <div
                                 key={attachment.id || idx}
-                                className="flex relative flex-col items-center border rounded-lg w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                               >
                                 {isImage ? (
-                                  <img
-                                    src={url}
-                                    alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
-                                    className="w-full h-full object-cover rounded-md border"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
-                                  />
+                                  <>
+                                    <button
+                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                      title="View"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: attachment.id || 0,
+                                          document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
+                                          url: url,
+                                          document_url: url,
+                                          document: url,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      type="button"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    <img
+                                      src={url}
+                                      alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
+                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: attachment.id || 0,
+                                          document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
+                                          url: url,
+                                          document_url: url,
+                                          document: url,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  </>
                                 ) : isPdf ? (
-                                  <div
-                                    className="flex items-center justify-center border rounded-md text-red-600 bg-white"
-                                    style={{ width: '150px', height: '150px' }}
-                                  >
-                                    <FileText className="w-12 h-12" />
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
                                   </div>
                                 ) : isExcel ? (
-                                  <div
-                                    className="flex items-center justify-center border rounded-md text-green-600 bg-white"
-                                    style={{ width: '150px', height: '150px' }}
-                                  >
-                                    <FileSpreadsheet className="w-12 h-12" />
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                    <FileSpreadsheet className="w-6 h-6" />
                                   </div>
                                 ) : isWord ? (
-                                  <div
-                                    className="flex items-center justify-center border rounded-md text-blue-600 bg-white"
-                                    style={{ width: '150px', height: '150px' }}
-                                  >
-                                    <FileText className="w-12 h-12" />
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
                                   </div>
                                 ) : (
-                                  <div
-                                    className="flex items-center justify-center border rounded-md text-gray-600 bg-white"
-                                    style={{ width: '150px', height: '150px' }}
-                                  >
-                                    <File className="w-12 h-12" />
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                    <File className="w-6 h-6" />
                                   </div>
+                                )}
+                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                  {attachment.document_name ||
+                                    attachment.document_file_name ||
+                                    url.split('/').pop() ||
+                                    `Document_${attachment.id || idx + 1}`}
+                                </span>
+                                {isDownloadable && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                    onClick={() => {
+                                      setSelectedDoc({
+                                        id: attachment.id || 0,
+                                        document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
+                                        url: url,
+                                        document_url: url,
+                                        document: url,
+                                      });
+                                      setShowImagePreview(true);
+                                    }}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
                                 )}
                               </div>
                             );
@@ -3807,7 +3847,7 @@ export const TicketDetailsPage = () => {
                                   </div>
                                 </div>
                                 <div className="bg-white p-3" style={{ width: '75%', borderRadius: '4px' }}>
-                                  <div className="grid grid-cols-3  gap-4">
+                                  <div className="grid grid-cols-3 gap-3">
                                     {tatGridRows.flat().map((cell, idx) => (
                                       <div key={idx} className="flex justify-between items-center">
                                         <span className="text-[14px] text-left leading-tight text-gray-500 tracking-wide pr-2">
@@ -3816,10 +3856,7 @@ export const TicketDetailsPage = () => {
                                         <span className={`text-[13px] md:text-[14px] font-semibold ${cell.isExceeded ? 'text-red-600' : 'text-gray-900'}`}>
                                           {cell.isExceeded && cell.label === 'Balance TAT' ? (
                                             <>
-                                              <p>{cell.value}</p>
-                                              <p className="text-[11px] text-red-500 italic ml-2">
-                                                (Exceeded)
-                                              </p>
+                                                Exceeded                                            
                                             </>
                                           ) : (
                                             cell.value
@@ -3841,7 +3878,7 @@ export const TicketDetailsPage = () => {
                                 {getPriorityLabel(ticketData.priority)}
                               </button>
                             </div>
-                            <div className="flex mb-2">
+                            <div className="flex items-center mb-2">
                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <mask id="mask0_9118_15345" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="2" y="0" width="20" height="23">
                                   <path d="M12 21.9995C16.6945 21.9995 20.5 18.194 20.5 13.4995C20.5 8.80501 16.6945 4.99951 12 4.99951C7.3055 4.99951 3.5 8.80501 3.5 13.4995C3.5 18.194 7.3055 21.9995 12 21.9995Z" fill="white" stroke="white" strokeWidth="2" strokeLinejoin="round" />
@@ -3852,7 +3889,7 @@ export const TicketDetailsPage = () => {
                                   <path d="M0 0H24V24H0V0Z" fill="#434343" />
                                 </g>
                               </svg>
-                              <span style={{ fontSize: 16, fontWeight: 600 }} className="text-black ml-1">
+                              <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">
                                 {formatTicketAgeing(currentAgeing)}
                               </span>
                             </div>
@@ -4011,259 +4048,259 @@ export const TicketDetailsPage = () => {
               </div>
             </div>
 
-              <Card className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header (consistent) */}
-                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        Ticket Management
-                      </h3>
-                      {ticketData.closure_date === null || ticketData.closure_date === undefined || ticketData.closure_date === '' && (
-                        <span className="w-2 h-2 rounded-full bg-[#4BE2B9]" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {ticketData.is_golden_ticket && (
-                        <button
-                          type="button"
-                          className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#EDEAE3]"
-                          title="Favourite"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
-                            <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
-                            <path d="M17.6229 19.896C17.6103 19.896 17.5977 19.8926 17.5864 19.8862L10.998 16.0584L4.40068 19.8732C4.38954 19.8795 4.37736 19.8826 4.36471 19.8826C4.35021 19.8826 4.3357 19.879 4.32352 19.8696C4.30055 19.8541 4.2901 19.8267 4.2966 19.8006L6.05905 12.6117L0.235078 7.77705C0.213845 7.75947 0.205725 7.73112 0.214311 7.7052C0.223361 7.67996 0.247029 7.66172 0.275107 7.65972L7.95284 7.04474L10.9502 0.241834C10.9614 0.216923 10.9866 0.200684 11.0147 0.200684C11.0147 0.200684 11.0147 0.200684 11.0149 0.200684C11.0432 0.200684 11.0685 0.217032 11.0794 0.241943L14.062 7.05063L21.7385 7.68085C21.7665 7.68307 21.7902 7.70121 21.7992 7.72701C21.8076 7.75281 21.7994 7.78105 21.7783 7.7984L15.9439 12.6213L17.6909 19.8137C17.6973 19.8397 17.6862 19.8674 17.6638 19.883C17.6512 19.8916 17.6371 19.896 17.6229 19.896Z" fill="url(#paint1_linear_9118_15308)" />
-                            <path d="M7.99743 7.10811L11.0112 0.268066L14.0103 7.11412L21.7291 7.7479L15.8627 12.5975L17.6192 19.8291L10.9944 15.9802L4.36114 19.8159L6.13322 12.5877L0.277344 7.72644L7.99743 7.10811Z" fill="url(#paint2_linear_9118_15308)" />
-                            <path d="M11.1891 11.551C11.1439 11.4959 11.0748 11.4633 11.0016 11.4633C11.0013 11.4633 11.0013 11.4633 11.0009 11.4633C10.928 11.4633 10.8587 11.4956 10.8138 11.5507L8.37693 14.534L10.5906 11.395C10.6317 11.3368 10.6425 11.2637 10.6201 11.197C10.5972 11.1303 10.5441 11.0772 10.4752 11.053L6.76172 9.75321L10.5606 10.8015C10.5824 10.8077 10.6044 10.8107 10.6263 10.8107C10.6762 10.8107 10.7253 10.7958 10.7663 10.7672C10.8257 10.7258 10.8619 10.6606 10.8644 10.5904L11.0063 6.80371L11.1405 10.5907C11.143 10.6611 11.179 10.7263 11.2382 10.7677C11.2793 10.7962 11.3287 10.8113 11.3782 10.8113C11.4 10.8113 11.4222 10.8084 11.4438 10.8026L15.245 9.76189L11.5286 11.054C11.4599 11.0783 11.4064 11.1311 11.3835 11.1977C11.3608 11.2647 11.3714 11.3376 11.4124 11.396L13.6195 14.5391L11.1891 11.551Z" fill="white" />
-                            <path d="M10.6435 10.0628L8.08027 6.91957L11.0111 0.267578L10.6435 10.0628ZM21.7289 7.74752H21.7291L14.2765 7.13554L11.9655 10.4201L21.7289 7.74752ZM9.90642 11.0964L0.277344 7.72606L5.98598 12.4647L9.90642 11.0964ZM11.961 11.7709L17.6192 19.8288L15.9261 12.8597L11.961 11.7709ZM4.36114 19.8153L10.7915 16.0971L10.6454 12.1225L4.36114 19.8153Z" fill="url(#paint3_linear_9118_15308)" />
-                            <path d="M11.3577 10.0658L11.0112 0.267578L13.9241 6.91623L11.3577 10.0658ZM7.72152 7.12998L0.277344 7.72606L10.0372 10.4191L7.72152 7.12998ZM21.7289 7.74752L12.0992 11.0962L16.0235 12.464L21.7289 7.74752ZM11.2154 16.1082L17.6191 19.8288L11.3594 12.1331L11.2154 16.1082ZM10.0325 11.7743L6.06523 12.8657L4.36126 19.8154V19.8152L10.0325 11.7743Z" fill="url(#paint4_linear_9118_15308)" />
-                            <defs>
-                              <radialGradient id="paint0_radial_9118_15308" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11.0059 10.0489) scale(10.7481 10.3019)">
-                                <stop stopColor="#D08B01" />
-                                <stop offset="0.5758" stopColor="#F2B145" />
-                                <stop offset="1" stopColor="#F8F3BC" />
-                              </radialGradient>
-                              <linearGradient id="paint1_linear_9118_15308" x1="0.211178" y1="10.0483" x2="21.8026" y2="10.0483" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#F6DB89" />
-                                <stop offset="1" stopColor="#F8F7DA" />
-                              </linearGradient>
-                              <linearGradient id="paint2_linear_9118_15308" x1="0.277344" y1="10.0486" x2="21.7291" y2="10.0486" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#ED9017" />
-                                <stop offset="0.1464" stopColor="#F09F23" />
-                                <stop offset="0.4262" stopColor="#F6C642" />
-                                <stop offset="0.4945" stopColor="#F8D04A" />
-                                <stop offset="1" stopColor="#F6E6B5" />
-                              </linearGradient>
-                              <linearGradient id="paint3_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7291" y2="10.0482" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#ED9017" />
-                                <stop offset="0.1464" stopColor="#F09F23" />
-                                <stop offset="0.4262" stopColor="#F6C642" />
-                                <stop offset="0.4945" stopColor="#F8D04A" />
-                                <stop offset="1" stopColor="#F6E6B5" />
-                              </linearGradient>
-                              <linearGradient id="paint4_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7288" y2="10.0482" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#DF8D00" />
-                                <stop offset="0.0848" stopColor="#FFD006" />
-                                <stop offset="0.2242" stopColor="#F4AD06" />
-                                <stop offset="0.85" stopColor="#F4AD06" />
-                                <stop offset="0.8777" stopColor="#F2A807" />
-                                <stop offset="0.9093" stopColor="#EC9B09" />
-                                <stop offset="0.9428" stopColor="#E2840D" />
-                                <stop offset="0.9773" stopColor="#D46412" />
-                                <stop offset="1" stopColor="#C94B16" />
-                              </linearGradient>
-                            </defs>
-                          </svg>
-                        </button>
-                      )}
-                      {ticketData.is_flagged && (
-                        <button
-                          type="button"
-                          className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#EDEAE3]"
-                          title="Flag"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
-                            <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
-                          </svg>
-                        </button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                      // onClick={handleUpdate}
-                      >
-                        <Edit className="w-4 h-4 mr-1" /> Edit
-                      </Button>
-                    </div>
+            <Card className="w-full bg-white rounded-lg shadow-sm border">
+              {/* Header (consistent) */}
+              <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
                   </div>
+                  <h3 className="text-lg font-semibold uppercase text-black">
+                    Ticket Management
+                  </h3>
+                  {ticketData.closure_date === null || ticketData.closure_date === undefined || ticketData.closure_date === '' && (
+                    <span className="w-2 h-2 rounded-full bg-[#4BE2B9]" />
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {ticketData.is_golden_ticket && (
+                    <button
+                      type="button"
+                      className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#EDEAE3]"
+                      title="Favourite"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
+                        <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
+                        <path d="M17.6229 19.896C17.6103 19.896 17.5977 19.8926 17.5864 19.8862L10.998 16.0584L4.40068 19.8732C4.38954 19.8795 4.37736 19.8826 4.36471 19.8826C4.35021 19.8826 4.3357 19.879 4.32352 19.8696C4.30055 19.8541 4.2901 19.8267 4.2966 19.8006L6.05905 12.6117L0.235078 7.77705C0.213845 7.75947 0.205725 7.73112 0.214311 7.7052C0.223361 7.67996 0.247029 7.66172 0.275107 7.65972L7.95284 7.04474L10.9502 0.241834C10.9614 0.216923 10.9866 0.200684 11.0147 0.200684C11.0147 0.200684 11.0147 0.200684 11.0149 0.200684C11.0432 0.200684 11.0685 0.217032 11.0794 0.241943L14.062 7.05063L21.7385 7.68085C21.7665 7.68307 21.7902 7.70121 21.7992 7.72701C21.8076 7.75281 21.7994 7.78105 21.7783 7.7984L15.9439 12.6213L17.6909 19.8137C17.6973 19.8397 17.6862 19.8674 17.6638 19.883C17.6512 19.8916 17.6371 19.896 17.6229 19.896Z" fill="url(#paint1_linear_9118_15308)" />
+                        <path d="M7.99743 7.10811L11.0112 0.268066L14.0103 7.11412L21.7291 7.7479L15.8627 12.5975L17.6192 19.8291L10.9944 15.9802L4.36114 19.8159L6.13322 12.5877L0.277344 7.72644L7.99743 7.10811Z" fill="url(#paint2_linear_9118_15308)" />
+                        <path d="M11.1891 11.551C11.1439 11.4959 11.0748 11.4633 11.0016 11.4633C11.0013 11.4633 11.0013 11.4633 11.0009 11.4633C10.928 11.4633 10.8587 11.4956 10.8138 11.5507L8.37693 14.534L10.5906 11.395C10.6317 11.3368 10.6425 11.2637 10.6201 11.197C10.5972 11.1303 10.5441 11.0772 10.4752 11.053L6.76172 9.75321L10.5606 10.8015C10.5824 10.8077 10.6044 10.8107 10.6263 10.8107C10.6762 10.8107 10.7253 10.7958 10.7663 10.7672C10.8257 10.7258 10.8619 10.6606 10.8644 10.5904L11.0063 6.80371L11.1405 10.5907C11.143 10.6611 11.179 10.7263 11.2382 10.7677C11.2793 10.7962 11.3287 10.8113 11.3782 10.8113C11.4 10.8113 11.4222 10.8084 11.4438 10.8026L15.245 9.76189L11.5286 11.054C11.4599 11.0783 11.4064 11.1311 11.3835 11.1977C11.3608 11.2647 11.3714 11.3376 11.4124 11.396L13.6195 14.5391L11.1891 11.551Z" fill="white" />
+                        <path d="M10.6435 10.0628L8.08027 6.91957L11.0111 0.267578L10.6435 10.0628ZM21.7289 7.74752H21.7291L14.2765 7.13554L11.9655 10.4201L21.7289 7.74752ZM9.90642 11.0964L0.277344 7.72606L5.98598 12.4647L9.90642 11.0964ZM11.961 11.7709L17.6192 19.8288L15.9261 12.8597L11.961 11.7709ZM4.36114 19.8153L10.7915 16.0971L10.6454 12.1225L4.36114 19.8153Z" fill="url(#paint3_linear_9118_15308)" />
+                        <path d="M11.3577 10.0658L11.0112 0.267578L13.9241 6.91623L11.3577 10.0658ZM7.72152 7.12998L0.277344 7.72606L10.0372 10.4191L7.72152 7.12998ZM21.7289 7.74752L12.0992 11.0962L16.0235 12.464L21.7289 7.74752ZM11.2154 16.1082L17.6191 19.8288L11.3594 12.1331L11.2154 16.1082ZM10.0325 11.7743L6.06523 12.8657L4.36126 19.8154V19.8152L10.0325 11.7743Z" fill="url(#paint4_linear_9118_15308)" />
+                        <defs>
+                          <radialGradient id="paint0_radial_9118_15308" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11.0059 10.0489) scale(10.7481 10.3019)">
+                            <stop stopColor="#D08B01" />
+                            <stop offset="0.5758" stopColor="#F2B145" />
+                            <stop offset="1" stopColor="#F8F3BC" />
+                          </radialGradient>
+                          <linearGradient id="paint1_linear_9118_15308" x1="0.211178" y1="10.0483" x2="21.8026" y2="10.0483" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="#F6DB89" />
+                            <stop offset="1" stopColor="#F8F7DA" />
+                          </linearGradient>
+                          <linearGradient id="paint2_linear_9118_15308" x1="0.277344" y1="10.0486" x2="21.7291" y2="10.0486" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="#ED9017" />
+                            <stop offset="0.1464" stopColor="#F09F23" />
+                            <stop offset="0.4262" stopColor="#F6C642" />
+                            <stop offset="0.4945" stopColor="#F8D04A" />
+                            <stop offset="1" stopColor="#F6E6B5" />
+                          </linearGradient>
+                          <linearGradient id="paint3_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7291" y2="10.0482" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="#ED9017" />
+                            <stop offset="0.1464" stopColor="#F09F23" />
+                            <stop offset="0.4262" stopColor="#F6C642" />
+                            <stop offset="0.4945" stopColor="#F8D04A" />
+                            <stop offset="1" stopColor="#F6E6B5" />
+                          </linearGradient>
+                          <linearGradient id="paint4_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7288" y2="10.0482" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="#DF8D00" />
+                            <stop offset="0.0848" stopColor="#FFD006" />
+                            <stop offset="0.2242" stopColor="#F4AD06" />
+                            <stop offset="0.85" stopColor="#F4AD06" />
+                            <stop offset="0.8777" stopColor="#F2A807" />
+                            <stop offset="0.9093" stopColor="#EC9B09" />
+                            <stop offset="0.9428" stopColor="#E2840D" />
+                            <stop offset="0.9773" stopColor="#D46412" />
+                            <stop offset="1" stopColor="#C94B16" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                    </button>
+                  )}
+                  {ticketData.is_flagged && (
+                    <button
+                      type="button"
+                      className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#EDEAE3]"
+                      title="Flag"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
+                        <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
+                      </svg>
+                    </button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                  // onClick={handleUpdate}
+                  >
+                    <Edit className="w-4 h-4 mr-1" /> Edit
+                  </Button>
+                </div>
+              </div>
 
-                  {/* Body (consistent background / border like Location card) */}
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-4 overflow-hidden">
-                    {(() => {
-                      const mgmtFields = [
-                        { label: 'Update Status', value: ticketData.issue_status || 'Pending' },
-                        { label: 'Severity', value: ticketData.severity || '-' },
-                        { label: 'Select Vendor', value: ticketData.vendors && ticketData.vendors.length > 0 ? ticketData.vendors.map(v => v.name || v).join(', ') : '-' },
-                        { label: 'Assigned To', value: ticketData.assigned_to || '-' },
-                        { label: 'Source', value: ticketData.asset_service || 'Asset' },
+              {/* Body (consistent background / border like Location card) */}
+              <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-4 overflow-hidden">
+                {(() => {
+                  const mgmtFields = [
+                    { label: 'Update Status', value: ticketData.issue_status || 'Pending' },
+                    { label: 'Severity', value: ticketData.severity || '-' },
+                    { label: 'Select Vendor', value: ticketData.vendors && ticketData.vendors.length > 0 ? ticketData.vendors.map(v => v.name || v).join(', ') : '-' },
+                    { label: 'Assigned To', value: ticketData.assigned_to || '-' },
+                    { label: 'Source', value: ticketData.asset_service || 'Asset' },
 
-                        { label: 'Expected Visit Date', value: ticketData.visit_date ? formatDate(ticketData.visit_date) : '-' },
-                        { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
-                        { label: 'Scope', value: ticketData.issue_related_to || 'FM' },
-                        { label: 'Mode', value: ticketData.complaint_mode || 'App' },
-                        { label: 'Identification', value: ticketData.proactive_reactive || 'Proactive' },
-                      ];
+                    { label: 'Expected Visit Date', value: ticketData.visit_date ? formatDate(ticketData.visit_date) : '-' },
+                    { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
+                    { label: 'Scope', value: ticketData.issue_related_to || 'FM' },
+                    { label: 'Mode', value: ticketData.complaint_mode || 'App' },
+                    { label: 'Identification', value: ticketData.proactive_reactive || 'Proactive' },
+                  ];
 
-                      // Split into two vertical columns
-                      const midpoint = Math.ceil(mgmtFields.length / 2);
-                      const colA = mgmtFields.slice(0, midpoint);
-                      const colB = mgmtFields.slice(midpoint);
+                  // Split into two vertical columns
+                  const midpoint = Math.ceil(mgmtFields.length / 2);
+                  const colA = mgmtFields.slice(0, midpoint);
+                  const colB = mgmtFields.slice(midpoint);
 
-                      return (
-                        <div className="flex flex-col lg:flex-row gap-10">
-                          {/* Left: two vertical columns of key/value pairs */}
-                          <div className="flex-1 flex gap-16 min-w-0">
-                            {[colA, colB].map((col, ci) => (
-                              <div key={ci} className="flex flex-col gap-4 min-w-[280px] flex-1">
-                                {col.map((field) => (
-                                  <div key={field.label} className="flex text-[14px] leading-snug min-w-0">
-                                    <div className="w-[180px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                      {field.label}
-                                    </div>
-                                    <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                                      {field.value}
-                                    </div>
-                                  </div>
-                                ))}
+                  return (
+                    <div className="flex flex-col lg:flex-row gap-10">
+                      {/* Left: two vertical columns of key/value pairs */}
+                      <div className="flex-1 flex gap-16 min-w-0">
+                        {[colA, colB].map((col, ci) => (
+                          <div key={ci} className="flex flex-col gap-4 min-w-[280px] flex-1">
+                            {col.map((field) => (
+                              <div key={field.label} className="flex text-[14px] leading-snug min-w-0">
+                                <div className="w-[180px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                  {field.label}
+                                </div>
+                                <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                  {field.value}
+                                </div>
                               </div>
                             ))}
                           </div>
+                        ))}
+                      </div>
 
-                          {/* Right: Root Cause + Notes (stacked) */}
-                          <div className="w-full lg:w-[38%] min-w-0">
-                           <div className="min-w-0 relative">
-      <div className="relative w-full">
-        {/* Floating label on border */}
-        <label
-          style={{
-            position: "absolute",
-            top: "-10px",
-            left: "12px",
-            background: "#fff",
-            padding: "0 6px",
-            fontWeight: 500,
-            fontSize: "14px",
-            color: "#1A1A1A",
-            zIndex: 10,
-          }}
-        >
-          Root Cause Analysis
-        </label>
+                      {/* Right: Root Cause + Notes (stacked) */}
+                      <div className="w-full lg:w-[38%] min-w-0">
+                        <div className="min-w-0 relative">
+                          <div className="relative w-full">
+                            {/* Floating label on border */}
+                            <label
+                              style={{
+                                position: "absolute",
+                                top: "-10px",
+                                left: "12px",
+                                background: "#fff",
+                                padding: "0 6px",
+                                fontWeight: 500,
+                                fontSize: "14px",
+                                color: "#1A1A1A",
+                                zIndex: 10,
+                              }}
+                            >
+                              Root Cause Analysis
+                            </label>
 
-        {/* React Select */}
-        <Select
-          isMulti
-          value={(() => {
-            if (!ticketData.root_cause) return [];
-            const rootCauseString =
-              typeof ticketData.root_cause === "string"
-                ? ticketData.root_cause
-                : Array.isArray(ticketData.root_cause)
-                ? ticketData.root_cause.join(", ")
-                : "";
+                            {/* React Select */}
+                            <Select
+                              isMulti
+                              value={(() => {
+                                if (!ticketData.root_cause) return [];
+                                const rootCauseString =
+                                  typeof ticketData.root_cause === "string"
+                                    ? ticketData.root_cause
+                                    : Array.isArray(ticketData.root_cause)
+                                      ? ticketData.root_cause.join(", ")
+                                      : "";
 
-            if (!rootCauseString) return [];
+                                if (!rootCauseString) return [];
 
-            const rootCauseValues = rootCauseString.split(",").map((s) => s.trim());
-            const matchedTemplates = communicationTemplates.filter(
-              (t) =>
-                t.identifier === "Root Cause Analysis" &&
-                rootCauseValues.includes(t.identifier_action)
-            );
+                                const rootCauseValues = rootCauseString.split(",").map((s) => s.trim());
+                                const matchedTemplates = communicationTemplates.filter(
+                                  (t) =>
+                                    t.identifier === "Root Cause Analysis" &&
+                                    rootCauseValues.includes(t.identifier_action)
+                                );
 
-            return matchedTemplates.map((t) => ({
-              value: t.id,
-              label: t.identifier_action,
-            }));
-          })()}
-          onChange={(selectedOptions) => {
-            const selectedIds = selectedOptions
-              ? selectedOptions.map((opt) => opt.value)
-              : [];
-            handleRootCauseChange(selectedIds);
-            setSelectedOptions(selectedOptions);
-          }}
-          options={communicationTemplates
-            .filter((t) => t.identifier === "Root Cause Analysis")
-            .map((t) => ({
-              value: t.id,
-              label: t.identifier_action,
-            }))}
-          placeholder="Select Root Cause Analysis..."
-          styles={customStyles}
-          components={{
-            MultiValue: CustomMultiValue,
-            MultiValueRemove: () => null,
-          }}
-          closeMenuOnSelect={false}
-        />
-      </div>
-    </div>
-{ticketData.root_cause && (
-    <div
-      className="space-y-2 min-w-0"
-      style={{ fontSize: "14px", fontWeight: "500" }}
-    >
-      {(() => {
-        const selectedValues =
-          typeof ticketData.root_cause === "string"
-            ? ticketData.root_cause.split(",").map((s) => s.trim())
-            : Array.isArray(ticketData.root_cause)
-            ? ticketData.root_cause
-            : [ticketData.root_cause];
-
-        return selectedValues.map((value, index) => {
-          const matchedTemplate = communicationTemplates.find(
-            (template) =>
-              template.identifier === "Root Cause Analysis" &&
-              template.identifier_action === value
-          );
-          return (
-            <div
-              key={index}
-              className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-              style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-            >
-              {matchedTemplate?.body || value}
-            </div>
-          );
-        });
-      })()}
-    </div>
-  )}
-                            <div className="flex flex-col min-w-0 mt-4">
-                              <span className="text-[11px] tracking-wide text-[#6B6B6B] mb-1">
-                                Additional Notes
-                              </span>
-                              <div
-                                className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-                              >
-                                {ticketData.notes ||
-                                  ticketData.heading ||
-                                  ticketData.text ||
-                                  'No additional notes available'}
-                              </div>
-                            </div>
+                                return matchedTemplates.map((t) => ({
+                                  value: t.id,
+                                  label: t.identifier_action,
+                                }));
+                              })()}
+                              onChange={(selectedOptions) => {
+                                const selectedIds = selectedOptions
+                                  ? selectedOptions.map((opt) => opt.value)
+                                  : [];
+                                handleRootCauseChange(selectedIds);
+                                setSelectedOptions(selectedOptions);
+                              }}
+                              options={communicationTemplates
+                                .filter((t) => t.identifier === "Root Cause Analysis")
+                                .map((t) => ({
+                                  value: t.id,
+                                  label: t.identifier_action,
+                                }))}
+                              placeholder="Select Root Cause Analysis..."
+                              styles={customStyles}
+                              components={{
+                                MultiValue: CustomMultiValue,
+                                MultiValueRemove: () => null,
+                              }}
+                              closeMenuOnSelect={false}
+                            />
                           </div>
                         </div>
-                      );
-                    })()}
-                  </div>
-                </Card>
+                        {ticketData.root_cause && (
+                          <div
+                            className="space-y-2 min-w-0"
+                            style={{ fontSize: "14px", fontWeight: "500" }}
+                          >
+                            {(() => {
+                              const selectedValues =
+                                typeof ticketData.root_cause === "string"
+                                  ? ticketData.root_cause.split(",").map((s) => s.trim())
+                                  : Array.isArray(ticketData.root_cause)
+                                    ? ticketData.root_cause
+                                    : [ticketData.root_cause];
+
+                              return selectedValues.map((value, index) => {
+                                const matchedTemplate = communicationTemplates.find(
+                                  (template) =>
+                                    template.identifier === "Root Cause Analysis" &&
+                                    template.identifier_action === value
+                                );
+                                return (
+                                  <div
+                                    key={index}
+                                    className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                    style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                  >
+                                    {matchedTemplate?.body || value}
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        )}
+                        <div className="flex flex-col min-w-0 mt-4">
+                          <span className="text-[11px] tracking-wide text-[#6B6B6B] mb-1">
+                            Additional Notes
+                          </span>
+                          <div
+                            className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                            style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+                          >
+                            {ticketData.notes ||
+                              ticketData.heading ||
+                              ticketData.text ||
+                              'No additional notes available'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </Card>
 
             {/* Cost Involve */}
             <Card className="w-full bg-white rounded-lg shadow-sm border">
@@ -5011,56 +5048,93 @@ export const TicketDetailsPage = () => {
                         const isWord = /\.(doc|docx)$/i.test(url) ||
                           attachment.doctype?.includes('document') ||
                           attachment.doctype?.includes('word');
+                        const isDownloadable = isPdf || isExcel || isWord;
 
                         return (
                           <div
                             key={attachment.id || idx}
-                            className="flex relative flex-col items-center border rounded-lg w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                           >
                             {isImage ? (
-                              <img
-                                src={url}
-                                alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
-                                className="w-full h-full object-cover rounded-md border"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
+                              <>
+                                <button
+                                  className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                  title="View"
+                                  onClick={() => {
+                                    setSelectedDoc({
+                                      id: attachment.id || 0,
+                                      document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
+                                      url: url,
+                                      document_url: url,
+                                      document: url,
+                                    });
+                                    setShowImagePreview(true);
+                                  }}
+                                  type="button"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <img
+                                  src={url}
+                                  alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
+                                  className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedDoc({
+                                      id: attachment.id || 0,
+                                      document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
+                                      url: url,
+                                      document_url: url,
+                                      document: url,
+                                    });
+                                    setShowImagePreview(true);
+                                  }}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              </>
                             ) : isPdf ? (
-                              <div
-                                className="flex items-center justify-center border rounded-md text-red-600 bg-white"
-                                style={{ width: '150px', height: '150px' }}
-                              >
-                                <FileText className="w-12 h-12" />
+                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                <FileText className="w-6 h-6" />
                               </div>
                             ) : isExcel ? (
-                              <div
-                                className="flex items-center justify-center border rounded-md text-green-600 bg-white"
-                                style={{ width: '150px', height: '150px' }}
-                              >
-                                <FileSpreadsheet className="w-12 h-12" />
+                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                <FileSpreadsheet className="w-6 h-6" />
                               </div>
                             ) : isWord ? (
-                              <div
-                                className="flex items-center justify-center border rounded-md text-blue-600 bg-white"
-                                style={{ width: '150px', height: '150px' }}
-                              >
-                                <FileText className="w-12 h-12" />
+                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                <FileText className="w-6 h-6" />
                               </div>
                             ) : (
-                              <div
-                                className="flex items-center justify-center border rounded-md text-gray-600 bg-white"
-                                style={{ width: '150px', height: '150px' }}
-                              >
-                                <File className="w-12 h-12" />
+                              <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                <File className="w-6 h-6" />
                               </div>
                             )}
-                            {/* <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                  {attachment.document_name ||
-                    attachment.document_file_name ||
-                    url.split('/').pop() ||
-                    `Document_${attachment.id || idx + 1}`}
-                </span> */}
+                            <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                              {attachment.document_name ||
+                                attachment.document_file_name ||
+                                url.split('/').pop() ||
+                                `Document_${attachment.id || idx + 1}`}
+                            </span>
+                            {isDownloadable && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    id: attachment.id || 0,
+                                    document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
+                                    url: url,
+                                    document_url: url,
+                                    document: url,
+                                  });
+                                  setShowImagePreview(true);
+                                }}
+                              >
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
                         );
                       })}
@@ -6283,38 +6357,42 @@ export const TicketDetailsPage = () => {
                         </TableCell>
                         <TableCell>{request.cancelled_by || "-"}</TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // Check if request has attachments
-                                if (
-                                  request.attachments &&
-                                  request.attachments.length > 0
-                                ) {
-                                  const attachment = request.attachments[0]; // Take first attachment
-                                  const imageUrl = attachment.url;
-                                  if (imageUrl) {
-                                    // Set selectedDoc for AttachmentPreviewModal
-                                    setSelectedDoc({
-                                      id: attachment.id || 0, // Use 0 if no ID (for S3 direct URLs)
-                                      document_name: `Cost Approval Request ${request.id || index + 1}`,
-                                      url: imageUrl,
-                                    });
-                                    setShowImagePreview(true);
+                          {request.attachments && request.attachments.length > 0 && (
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Check if request has attachments
+                                  if (
+                                    request.attachments &&
+                                    request.attachments.length > 0
+                                  ) {
+                                    const attachment = request.attachments[0]; // Take first attachment
+                                    const imageUrl = attachment.document || attachment.url;
+                                    if (imageUrl) {
+                                      // Set selectedDoc for AttachmentPreviewModal
+                                      setSelectedDoc({
+                                        id: attachment.id || 0,
+                                        document_name: `Cost Approval Request ${request.id || index + 1}`,
+                                        url: imageUrl,
+                                        document_url: imageUrl,
+                                        document: imageUrl,
+                                      });
+                                      setShowImagePreview(true);
+                                    }
+                                  } else {
+                                    toast.error(
+                                      "No attachments found for this request"
+                                    );
                                   }
-                                } else {
-                                  toast.error(
-                                    "No attachments found for this request"
-                                  );
-                                }
-                              }}
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </Button>
-                          </div>
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                View
+                              </Button>
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -6362,7 +6440,15 @@ export const TicketDetailsPage = () => {
                           {log.priority || "-"}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {log.log_comment || "No comments"}
+                          {log.log_comment && log.log_comment.length > 5 ? (
+                            <Tooltip title={log.log_comment} arrow>
+                              <span className="cursor-help">
+                                {log.log_comment.substring(0, 5)}...
+                              </span>
+                            </Tooltip>
+                          ) : (
+                            log.log_comment || "No comments"
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

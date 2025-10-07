@@ -374,6 +374,14 @@ export const ViewPerformancePage = () => {
     setShowActionPanel((prev) => !prev);
   };
 
+  const selectionActions = [
+    { 
+      label: 'View Details', 
+      icon: BarChart3, 
+      onClick: () => navigate(-1)
+    },
+  ];
+
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-2 sm:gap-3">
       <Button 
@@ -385,10 +393,6 @@ export const ViewPerformancePage = () => {
       </Button>
     </div>
   );
-
-  const selectionActions = [
-    { label: 'View Details', icon: BarChart3, onClick: () => console.log('View details') },
-  ];
 
   // Filter handlers
   const handleOpenFilterModal = () => {
