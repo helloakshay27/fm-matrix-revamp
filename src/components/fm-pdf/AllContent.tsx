@@ -1245,18 +1245,6 @@ const AllContent = () => {
     }, [centerWiseConsumables, topConsumableHeaders]);
 
 
-    const inventoryData = [
-        { site: "Sai Radhe, Bund Garden", lastQuarter: 15000, currentQuarter: 14000 },
-        { site: "Westport, Baner", lastQuarter: 10000, currentQuarter: 9000 },
-        { site: "Peninsula Corporate Park, Lower Parel", lastQuarter: 13000, currentQuarter: 12000 },
-        { site: "Koncord Towers, Bund Garden", lastQuarter: 7000, currentQuarter: 8000 },
-        { site: "Nandan Probiz, Balewadi", lastQuarter: 11000, currentQuarter: 13000 },
-        { site: "Aeromall, Viman nagar", lastQuarter: 7500, currentQuarter: 7000 },
-        { site: "Raheja Mindspace, Hitec City", lastQuarter: 12000, currentQuarter: 10000 },
-        { site: "Technopolis, Salt Lake", lastQuarter: 8500, currentQuarter: 7000 },
-        { site: "Max House, Okhla", lastQuarter: 10500, currentQuarter: 9000 },
-        { site: "Baani- The Statement, Gurgaon", lastQuarter: 10000, currentQuarter: 8500 },
-    ];
 
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
@@ -1314,7 +1302,7 @@ const AllContent = () => {
         const displayStock = formatStock(stock);
 
         return (
-            <td className="border border-black w-20 h-14 p-1">
+            <td className="border border-black w-28 h-14 p-1 print:w-24">
                 <div className="relative w-full h-full bg-white">
                     <svg
                         className="absolute top-0 left-0 w-full h-full"
@@ -1322,13 +1310,23 @@ const AllContent = () => {
                         preserveAspectRatio="none"
                         style={{ pointerEvents: 'none' }}
                     >
+                        {/* top-right diagonal fill */}
                         <polygon points="0,0 100,0 100,100" style={{ fill: '#C4B89D' }} />
                     </svg>
 
-                    <div className="absolute top-[2px] right-[4px] text-white font-semibold text-xs print:text-black">
+                    {/* Capital (top-right), truncate to avoid overlap */}
+                    <div
+                        className="absolute top-[2px] right-[4px] text-white font-semibold leading-none text-[10px] print:text-[8px] print:text-black max-w-[44px] overflow-hidden text-ellipsis whitespace-nowrap text-right"
+                        title={String(displayCapital)}
+                    >
                         {displayCapital}
                     </div>
-                    <div className="absolute bottom-[2px] left-[4px] text-black text-xs print:text-black">
+
+                    {/* Stock (bottom-left), truncate to avoid overlap */}
+                    <div
+                        className="absolute bottom-[2px] left-[4px] text-black leading-none text-[10px] print:text-[8px] max-w-[44px] overflow-hidden text-ellipsis whitespace-nowrap"
+                        title={String(displayStock)}
+                    >
                         {displayStock}
                     </div>
                 </div>
@@ -3766,7 +3764,7 @@ const AllContent = () => {
                 }
             `}</style>
                         <div className="mb-4 print:mb-1 print:mt-4 ">
-                            <h1 className="text-lg font-bold md:text-lg mb-4 print:text-[14px] print:mb-1 print:py-0">
+                            <h1 className="text-lg font-bold md:text-lg mb-4 print:text-[14px] print:mb-1 print:py-0 print:ml-4">
                                 Overstock Analysis – Top 10 Items
                             </h1>
                             <hr className="my-2 border-gray-300 print:border-gray-300" />
@@ -3797,7 +3795,7 @@ const AllContent = () => {
                                             {itemss.map((item, rowIdx) => (
                                                 <tr key={rowIdx}>
                                                     <td
-                                                        className="p-2 text-xs text-left font-semibold bg-white w-[180px] align-top whitespace-normal break-words leading-tight mx-0 my-0 
+                                                        className="p-2 text-xs text-center item-center font-semibold bg-white w-[180px] align-center whitespace-normal break-words leading-tight mx-0 my-0 
                                     print:text-[9px] print:font-semibold print:bg-white print:w-[160px] print:text-left print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
                                                     >
                                                         {item.name}
@@ -3828,6 +3826,20 @@ const AllContent = () => {
                                                         {site}
                                                     </th>
                                                 ))}
+                                            </tr>
+                                            {/* X-axis label spanning all site columns */}
+                                            <tr>
+                                                <th
+                                                    className="w-[180px] bg-white mx-0 my-0 
+                                print:w-[160px] print:bg-white print:mx-0 print:my-1"
+                                                ></th>
+                                                <th
+                                                    colSpan={sitesk.length}
+                                                    className="text-center bg-white px-2 py-1 text-sm font-semibold tracking-wide mx-0 my-0 
+                                print:text-[9px] print:font-semibold print:bg-white print:mx-0 print:my-1"
+                                                >
+                                                    Sites
+                                                </th>
                                             </tr>
                                         </tfoot>
                                     </table>

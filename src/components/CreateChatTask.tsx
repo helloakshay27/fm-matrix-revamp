@@ -18,6 +18,7 @@ import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { X } from "lucide-react";
 import { Button } from "./ui/button";
 import { useLocation } from "react-router-dom";
+import { toast } from "sonner";
 
 const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -133,7 +134,38 @@ const CreateChatTask = ({
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
+    const validateForm = () => {
+        if (!formData.title) {
+            toast.error("Title is required");
+            return false;
+        }
+        if (!formData.description) {
+            toast.error("Description is required");
+            return false;
+        }
+        if (!formData.priority) {
+            toast.error("Priority is required");
+            return false;
+        }
+        if (!formData.assignTo) {
+            toast.error("Assign To is required");
+            return false;
+        }
+        if (!formData.deadline) {
+            toast.error("Deadline is required");
+            return false;
+        }
+        if (formData.observers.length === 0) {
+            toast.error("Observers are required");
+            return false;
+        }
+        return true;
+    }
+
     const handleSubmit = async () => {
+        if (!validateForm()) {
+            return;
+        }
         const submissionData = {
             task_management: {
                 title: formData.title,
@@ -141,8 +173,8 @@ const CreateChatTask = ({
                 priority: formData.priority,
                 responsible_person_id: formData.assignTo,
                 target_date: formData.deadline,
-                estimated_hours: formData.estHours,
-                estimated_min: formData.estMinutes,
+                estimated_hour: Number(formData.estHours),
+                estimated_min: Number(formData.estMinutes),
                 observer_ids: formData.observers,
                 focus_mode: formData.focusMode,
                 ...(!editMode && id && path.includes("messages") && { conversation_id: id }),
@@ -203,7 +235,7 @@ const CreateChatTask = ({
                 <div className="space-y-6 mt-4">
                     <div className="grid grid-cols-1 gap-6">
                         <TextField
-                            label="Title"
+                            label={<>Title<span className="text-red-600">*</span></>}
                             placeholder="Enter title"
                             fullWidth
                             variant="outlined"
@@ -215,7 +247,7 @@ const CreateChatTask = ({
                     </div>
                     <div className="grid grid-cols-1 gap-6">
                         <TextField
-                            label="Description"
+                            label={<>Description<span className="text-red-600">*</span></>}
                             placeholder="Enter description"
                             fullWidth
                             variant="outlined"
@@ -248,7 +280,7 @@ const CreateChatTask = ({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                            <InputLabel shrink>Priority*</InputLabel>
+                            <InputLabel shrink>Priority<span className="text-red-600">*</span></InputLabel>
                             <Select
                                 value={formData.priority}
                                 onChange={(e) => handleChange("priority", e.target.value as string)}
@@ -262,7 +294,7 @@ const CreateChatTask = ({
                         </FormControl>
 
                         <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                            <InputLabel shrink>Assign To*</InputLabel>
+                            <InputLabel shrink>Assign To<span className="text-red-600">*</span></InputLabel>
                             <Select
                                 value={formData.assignTo}
                                 onChange={(e) => handleChange("assignTo", e.target.value as string)}
@@ -279,7 +311,7 @@ const CreateChatTask = ({
                         </FormControl>
 
                         <TextField
-                            label="Deadline"
+                            label={<>Deadline<span className="text-red-600">*</span></>}
                             type="date"
                             fullWidth
                             variant="outlined"
@@ -316,7 +348,7 @@ const CreateChatTask = ({
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         <div className="sm:col-span-3">
                             <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                                <InputLabel shrink>Observer</InputLabel>
+                                <InputLabel shrink>Observer<span className="text-red-600">*</span></InputLabel>
                                 <Select
                                     multiple
                                     value={formData.observers}

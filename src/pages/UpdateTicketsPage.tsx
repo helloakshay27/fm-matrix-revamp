@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Upload, X, Download, User, Ticket, Settings, FileText, Users, AlertTriangle, Building, DollarSign } from "lucide-react";
+import { ArrowLeft, Upload, X, Download, User, Ticket, Settings, FileText, Users, AlertTriangle, Building, DollarSign, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/utils/apiClient";
 import { getToken, getUser } from "@/utils/auth";
@@ -80,6 +80,72 @@ interface ServiceOption {
   service_name: string;
 }
 
+// Add location interfaces
+interface AreaResponse {
+  id: number;
+  name: string;
+  wing_id: string;
+  building_id: string;
+  wing?: {
+    id: number;
+    name: string;
+  };
+  building?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface BuildingResponse {
+  id: number;
+  name: string;
+  site_id: string;
+  wings?: Array<{
+    id: number;
+    name: string;
+  }>;
+  areas?: Array<{
+    id: number;
+    name: string;
+    wing_id: string;
+  }>;
+}
+
+interface WingResponse {
+  id: number;
+  name: string;
+  building_id: string;
+  building?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface FloorResponse {
+  id: number;
+  name: string;
+  wing_id: number;
+  area_id: number;
+  building_id: string;
+  wing?: {
+    id: number;
+    name: string;
+  };
+  area?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface RoomResponse {
+  id: number;
+  name: string;
+  floor_id: number;
+  wing_id: number;
+  area_id: string;
+  building_id: string;
+}
+
 const UpdateTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -124,6 +190,12 @@ const UpdateTicketsPage: React.FC = () => {
     selectedService: "",
     shortTermImpact: "",
     longTermImpact: "",
+    // Add location fields
+    area: '',
+    building: '',
+    wing: '',
+    floor: '',
+    room: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -177,6 +249,24 @@ const UpdateTicketsPage: React.FC = () => {
       isFromAPI?: boolean; // Add flag to distinguish API data from new requests
     }>
   >([]);
+  const [areas, setAreas] = useState<AreaResponse[]>([]);
+  const [buildings, setBuildings] = useState<BuildingResponse[]>([]);
+  const [wings, setWings] = useState<WingResponse[]>([]);
+  const [floors, setFloors] = useState<FloorResponse[]>([]);
+  const [rooms, setRooms] = useState<RoomResponse[]>([]);
+
+  // Loading state for locations
+  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [loadingWings, setLoadingWings] = useState(false);
+  const [loadingFloors, setLoadingFloors] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+
+  // Filtered location state
+  const [filteredBuildings, setFilteredBuildings] = useState<BuildingResponse[]>([]);
+  const [filteredWings, setFilteredWings] = useState<WingResponse[]>([]);
+  const [filteredFloors, setFilteredFloors] = useState<FloorResponse[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<RoomResponse[]>([]);
 
   // Field styles for Material-UI components
   const fieldStyles = {
@@ -202,6 +292,259 @@ const UpdateTicketsPage: React.FC = () => {
     },
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [statusResponse, usersResponse, complaintModesResponse, templatesResponse] =
+          await Promise.all([
+            apiClient.get("/pms/admin/complaint_statuses.json"),
+            apiClient.get("/pms/users/get_escalate_to_users.json"),
+            apiClient.get("/pms/admin/complaint_modes.json"),
+            apiClient.get(API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES),
+          ]);
+
+        setComplaintStatuses(statusResponse.data || []);
+        setFmUsers(usersResponse.data.users || []);
+        setComplaintModes(complaintModesResponse.data || []);
+        setCommunicationTemplates(Array.isArray(templatesResponse.data) ? templatesResponse.data : []);
+        console.log("📋 Communication templates loaded:", templatesResponse.data);
+        
+        // Load location data
+        await loadLocationData();
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load form data.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+    dispatch(fetchHelpdeskCategories());
+  }, [toast, dispatch]);
+
+  // Add location data loading functions
+  const loadLocationData = async () => {
+    await Promise.all([
+      loadAreas(),
+      loadBuildings(),
+      loadWings(),
+      loadFloors(),
+      loadRooms()
+    ]);
+  };
+
+  const loadAreas = async () => {
+    setLoadingAreas(true);
+    try {
+      const url = getFullUrl('/pms/areas.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch areas');
+      const data = await response.json();
+      setAreas(data.areas || []);
+    } catch (error) {
+      console.error('Error loading areas:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load areas",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingAreas(false);
+    }
+  };
+
+  const loadBuildings = async () => {
+    setLoadingBuildings(true);
+    try {
+      const url = getFullUrl('/pms/buildings.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch buildings');
+      const data = await response.json();
+      setBuildings(data.pms_buildings || []);
+    } catch (error) {
+      console.error('Error loading buildings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load buildings",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingBuildings(false);
+    }
+  };
+
+  const loadWings = async () => {
+    setLoadingWings(true);
+    try {
+      const url = getFullUrl('/pms/wings.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch wings');
+      const data = await response.json();
+      setWings(data.wings || []);
+    } catch (error) {
+      console.error('Error loading wings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load wings",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingWings(false);
+    }
+  };
+
+  const loadFloors = async () => {
+    setLoadingFloors(true);
+    try {
+      const url = getFullUrl('/pms/floors.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch floors');
+      const data = await response.json();
+      setFloors(data.floors || []);
+    } catch (error) {
+      console.error('Error loading floors:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load floors",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingFloors(false);
+    }
+  };
+
+  const loadRooms = async () => {
+    setLoadingRooms(true);
+    try {
+      const url = getFullUrl('/pms/rooms.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch rooms');
+      const data = await response.json();
+      setRooms(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading rooms:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load rooms",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  // Handle location changes with cascading filters
+  const handleAreaChange = (areaId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      area: areaId,
+      building: '',
+      wing: '',
+      floor: '',
+      room: ''
+    }));
+    
+    if (areaId) {
+      const selectedArea = areas.find(a => a.id === parseInt(areaId));
+      if (selectedArea) {
+        const filtered = buildings.filter(b => b.id === parseInt(selectedArea.building_id));
+        setFilteredBuildings(filtered);
+      }
+    } else {
+      setFilteredBuildings([]);
+    }
+    setFilteredWings([]);
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+  };
+
+  const handleBuildingChange = (buildingId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      building: buildingId,
+      wing: '',
+      floor: '',
+      room: ''
+    }));
+    
+    if (buildingId) {
+      const filtered = wings.filter(w => w.building_id === buildingId);
+      setFilteredWings(filtered);
+    } else {
+      setFilteredWings([]);
+    }
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+  };
+
+  const handleWingChange = (wingId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      wing: wingId,
+      floor: '',
+      room: ''
+    }));
+    
+    if (wingId) {
+      const filtered = floors.filter(f => f.wing_id === parseInt(wingId));
+      setFilteredFloors(filtered);
+    } else {
+      setFilteredFloors([]);
+    }
+    setFilteredRooms([]);
+  };
+
+  const handleFloorChange = (floorId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      floor: floorId,
+      room: ''
+    }));
+    
+    if (floorId) {
+      const filtered = rooms.filter(r => r.floor_id === parseInt(floorId));
+      setFilteredRooms(filtered);
+    } else {
+      setFilteredRooms([]);
+    }
+  };
+
   // Fetch ticket data for editing
   const fetchTicketData = async (ticketId: string) => {
     try {
@@ -212,242 +555,106 @@ const UpdateTicketsPage: React.FC = () => {
       const ticketData = response.data;
 
       console.log("📥 Received ticket data:", ticketData);
-      console.log("📋 Category type:", ticketData.category_type);
-      console.log("📋 Sub category type:", ticketData.sub_category_type);
 
       // Store original API data for later use FIRST
       setTicketApiData(ticketData);
 
-      // Find the category ID that matches the category name from API
-      const matchingCategory = helpdeskData?.helpdesk_categories?.find(
-        (category) => category.name === ticketData.category_type
+      // Match category, mode, status, and users
+      const matchedCategory = helpdeskData?.helpdesk_categories.find(
+        (cat) => cat.name === ticketData.category_type
       );
-
-      // Find the complaint mode ID that matches the mode name from API
-      console.log("🔍 Looking for complaint mode match:", ticketData.complaint_mode);
-      console.log("🔍 Available complaint modes:", complaintModes.map(m => ({ id: m.id, name: m.name })));
-      
-      const matchingMode = complaintModes.find(
-        (mode) => mode.name === ticketData.complaint_mode
+      const matchedMode = complaintModes.find((mode) => mode.name === ticketData.complaint_mode);
+      const matchedStatus = complaintStatuses.find(
+        (status) => status.id === ticketData.complaint_status_id
       );
-      console.log("✅ Found matching complaint mode:", matchingMode);
+      const assignedUser = fmUsers.find((user) => user.id === ticketData.assigned_to);
 
-      // Find the status ID that matches the status name from API
-      const matchingStatus = complaintStatuses.find(
-        (status) => status.name === ticketData.issue_status
-      );
-
-      // Find the responsible person ID that matches the name from API
-      console.log(
-        "👤 Looking for responsible_person match:",
-        ticketData.responsible_person
-      );
-      const matchingResponsiblePerson = fmUsers.find((user) => {
-        const fullName = user.full_name;
-        const apiResponsiblePerson =
-          ticketData.responsible_person?.trim() || "";
-        console.log(
-          "🔍 Comparing responsible person:",
-          fullName,
-          "with:",
-          apiResponsiblePerson
-        );
-
-        // Try exact match first
-        if (fullName === apiResponsiblePerson) return true;
-
-        // Try partial matches
-        if (
-          apiResponsiblePerson.includes(fullName) ||
-          fullName.includes(apiResponsiblePerson)
-        )
-          return true;
-
-        // Try case-insensitive match
-        if (fullName.toLowerCase() === apiResponsiblePerson.toLowerCase())
-          return true;
-
-        return false;
-      });
-      console.log(
-        "✅ Found matching responsible person:",
-        matchingResponsiblePerson
-      );
-
-      // Find the user ID that matches the assigned_to name from API
-      console.log("👤 Looking for assigned_to match:", ticketData.assigned_to);
-      console.log("👥 Available fmUsers:", fmUsers);
-      const matchingUser = fmUsers.find((user) => {
-        const fullName = user.full_name;
-        const apiAssignedTo = ticketData.assigned_to?.trim() || "";
-        console.log("🔍 Comparing:", fullName, "with:", apiAssignedTo);
-
-        // Try exact match first
-        if (fullName === apiAssignedTo) return true;
-
-        // Try partial matches
-        if (
-          apiAssignedTo.includes(fullName) ||
-          fullName.includes(apiAssignedTo)
-        )
-          return true;
-
-        // Try case-insensitive match
-        if (fullName.toLowerCase() === apiAssignedTo.toLowerCase()) return true;
-
-        return false;
-      });
-      console.log("✅ Found matching user:", matchingUser);
-
-      // Populate form with API data
+      // Populate form with API data including location
       setFormData((prev) => ({
         ...prev,
         title: ticketData.heading || "",
-        adminPriority: ticketData.priority ? ticketData.priority.toLowerCase() : "",
-        severity: ticketData.severity || "",
-        selectedStatus: matchingStatus?.id.toString() || "",
+        categoryType: matchedCategory ? matchedCategory.id.toString() : "",
+        subCategoryType: ticketData.sub_category_type || "",
         proactiveReactive: ticketData.proactive_reactive || "",
-        serviceType: ticketData.service_type || "",
-        externalPriority: ticketData.external_priority || "",
-        preventiveAction: ticketData.preventive_action || "",
-        impact: ticketData.short_term_impact || "", // Map short_term_impact from API to impact field
-        correction: ticketData.correction || "",
-        rootCause: ticketData.root_cause || "",
-        categoryType: matchingCategory?.id.toString() || "",
-        subCategoryType: "", // Will be set after subcategories are fetched
-        assignTo: matchingUser?.id.toString() || "",
-        mode: matchingMode?.id.toString() || "",
-        responsiblePerson: matchingResponsiblePerson?.id.toString() || "",
-        complaintType: ticketData.issue_type || "",
-        issueRelatedTo: ticketData.issue_related_to || "",
-        refNumber: ticketData.reference_number || "",
-        correctiveAction: ticketData.corrective_action || "",
-        selectedAsset: "", // Will be set after fetching assets/services if needed
-        selectedService: "", // Will be set after fetching assets/services if needed
-        longTermImpact: ticketData.impact || "", // Map impact from API to longTermImpact field
-        associatedTo: {
-          asset: ticketData.asset_service === "Asset",
-          service: ticketData.asset_service === "Service",
-        },
+        assignTo: assignedUser ? assignedUser.id.toString() : "",
+        mode: matchedMode ? matchedMode.id.toString() : "",
+        serviceType: ticketData.service_or_asset || "",
+        selectedStatus: matchedStatus ? matchedStatus.id.toString() : "",
+        comments: ticketData.comment || "",
+        // Add location fields from API
+        area: '', // Area needs to be derived from building's area
+        building: ticketData.tower_id?.toString() || "",
+        floor: ticketData.floor_id?.toString() || "",
+        room: ticketData.room_id?.toString() || "",
+        wing: ticketData.wing_id?.toString() || "",
       }));
 
-      console.log(
-        "💾 Stored subcategory for later matching:",
-        ticketData.sub_category_type
-      );
-
-      // Set review date if available
-      console.log("Review tracking from API:", ticketData.review_tracking);
-      if (ticketData.review_tracking && ticketData.review_tracking !== null) {
-        // Check if it's in DD/MM/YYYY format
-        const dateMatch = ticketData.review_tracking.match(
-          /^(\d{2})\/(\d{2})\/(\d{4})$/
-        );
-        if (dateMatch) {
-          const [, day, month, year] = dateMatch;
-          // Convert to YYYY-MM-DD format for input[type="date"]
-          const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-          setReviewDate(formattedDate);
-          console.log("Set review date from DD/MM/YYYY format:", formattedDate);
-        } else {
-          // Try ISO format as fallback
-          const date = new Date(ticketData.review_tracking);
-          if (!isNaN(date.getTime())) {
-            // Convert to YYYY-MM-DD format for input[type="date"]
-            const formattedDate = date.toISOString().split('T')[0];
-            setReviewDate(formattedDate);
-            console.log("Set review date from ISO format:", formattedDate);
-          } else {
-            console.log("Invalid date value:", ticketData.review_tracking);
+      // Trigger cascading filters for location if data exists
+      if (ticketData.tower_id) {
+        const buildingId = ticketData.tower_id.toString();
+        
+        // Filter wings for this building
+        const wingsForBuilding = wings.filter(w => w.building_id === buildingId);
+        setFilteredWings(wingsForBuilding);
+        
+        if (ticketData.wing_id) {
+          const wingId = ticketData.wing_id.toString();
+          const floorsForWing = floors.filter(f => f.wing_id === parseInt(wingId));
+          setFilteredFloors(floorsForWing);
+          
+          if (ticketData.floor_id) {
+            const floorId = ticketData.floor_id.toString();
+            const roomsForFloor = rooms.filter(r => r.floor_id === parseInt(floorId));
+            setFilteredRooms(roomsForFloor);
           }
         }
-      } else {
-        console.log("No review tracking date available");
-        setReviewDate("");
       }
 
-      // Fetch sub-categories if category is set
-      if (matchingCategory?.id) {
-        console.log(
-          "🔄 Fetching subcategories for category ID:",
-          matchingCategory.id
-        );
-        console.log(
-          "🎯 Target subcategory to match:",
-          ticketData.sub_category_type
-        );
-
-        // Pass the target subcategory name to fetchSubCategories
-        await fetchSubCategories(
-          matchingCategory.id.toString(),
-          ticketData.sub_category_type
-        );
-      } else {
-        console.log(
-          "❌ No matching category found for:",
-          ticketData.category_type
-        );
+      // Fetch assets and services based on ticket data
+      if (ticketData.asset_service === "Asset" && ticketData.asset_or_service_id) {
+        setFormData(prev => ({ 
+          ...prev, 
+          associatedTo: { asset: true, service: false },
+          selectedAsset: ticketData.asset_or_service_id.toString(),
+          selectedService: "",
+        }));
+        fetchAssets(false); // Don't auto-select during manual changes
+      } else if (ticketData.asset_service === "Service" && ticketData.asset_or_service_id) {
+        setFormData(prev => ({ 
+          ...prev, 
+          associatedTo: { asset: false, service: true },
+          selectedAsset: "",
+          selectedService: ticketData.asset_or_service_id.toString(),
+        }));
+        fetchServices(false); // Don't auto-select during manual changes
       }
 
-      // Fetch assets/services if associated to asset or service
-      console.log("🏢 Asset service type from API:", ticketData.asset_service);
-      console.log(
-        "🆔 Asset or service ID from API:",
-        ticketData.asset_or_service_id
-      );
-
-      if (ticketData.asset_service === "Asset") {
-        console.log("🔄 Fetching assets for Asset selection");
-        await fetchAssets();
-        // Asset matching is now handled inside fetchAssets function
-      } else if (ticketData.asset_service === "Service") {
-        console.log("🔄 Fetching services for Service selection");
-        await fetchServices();
-        // Service matching is now handled inside fetchServices function
-      }
-
-      // Handle cost approval requests if available
-      console.log("💰 Cost approval data from API:", ticketData.requests);
-      if (ticketData.requests && Array.isArray(ticketData.requests)) {
-        const formattedRequests = ticketData.requests.map((request: any) => ({
-          id: request.id.toString(),
-          amount: request.amount.toString(),
-          comments: request.comment || "",
-          createdOn: request.created_on || "",
-          createdBy: request.created_by || "",
-          attachments: request.attachments || [],
-          approvals: request.approvals || {
-            L1: "Na",
-            L2: "Na",
-            L3: "Na",
-            L4: "Na",
-            L5: "Na",
-          },
-          masterStatus: request.master_status || "Pending",
-          cancelledBy: request.cancelled_by || "NA",
-          action: request.action || null,
+      // Load cost approval requests if cost is involved
+      if (ticketData.cost_involved) {
+        const costRequests = ticketData.cost_approval_requests_attributes || [];
+        const mappedRequests = costRequests.map((req: any) => ({
+          id: req.id,
+          amount: req.cost,
+          comments: req.comment,
+          createdOn: new Date(req.created_at).toLocaleString(),
+          createdBy: req.created_by_name || "Unknown",
+          approvals: req.approvals || {},
+          masterStatus: req.master_status,
+          cancelledBy: req.cancelled_by_name || null,
+          attachments: req.attachments_attributes ? req.attachments_attributes.map((att: any) => att.document) : [],
           isFromAPI: true, // Mark as API data
         }));
-
-        console.log(
-          "💰 Formatted cost approval requests from API:",
-          formattedRequests
-        );
-
-        // Only set API requests, don't add to existing array to avoid duplicates
-        setCostApprovalRequests(formattedRequests);
-
-        // Set cost involved to true if there are any requests
-        if (formattedRequests.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            costInvolved: true,
-          }));
-        }
+        setCostApprovalRequests(mappedRequests);
       } else {
-        console.log("💰 No cost approval requests found in API data");
-        // Only clear if no API data, preserve any new user-added requests
-        setCostApprovalRequests((prev) => prev.filter((req) => !req.isFromAPI));
+        setCostApprovalRequests([]);
+      }
+
+      // Fetch sub-categories based on category selection
+      if (ticketData.category_type) {
+        fetchSubCategories(ticketData.category_type, ticketData.sub_category_type);
+      } else {
+        setSubCategories([]);
+        setFormData(prev => ({ ...prev, subCategoryType: "" }));
       }
     } catch (error) {
       console.error("Error fetching ticket data:", error);
@@ -461,10 +668,7 @@ const UpdateTicketsPage: React.FC = () => {
 
   useEffect(() => {
     // If we have an ID from the URL, fetch the ticket data
-    if (
-      id &&
-      helpdeskData?.helpdesk_categories
-    ) {
+    if (id && helpdeskData?.helpdesk_categories && complaintModes.length > 0 && fmUsers.length > 0 && complaintStatuses.length > 0) {
       fetchTicketData(id);
     }
     // If we have selected tickets from navigation state, use the first one
@@ -492,6 +696,7 @@ const UpdateTicketsPage: React.FC = () => {
     fmUsers,
     complaintStatuses,
   ]);
+
 
   // Define fetchAssets and fetchServices before useEffect hooks to avoid hoisting issues
   const fetchAssets = useCallback(async (shouldSetSelectedValue = true) => {
@@ -780,43 +985,25 @@ const UpdateTicketsPage: React.FC = () => {
     }
   }, [formData.associatedTo, formData.selectedAsset, formData.selectedService, assetOptions, serviceOptions]);
 
+  // Load communication templates on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchTemplates = async () => {
+      setLoadingTemplates(true);
       try {
-        setIsLoading(true);
-        const [statusResponse, usersResponse, complaintModesResponse, templatesResponse] =
-          await Promise.all([
-            apiClient.get("/pms/admin/complaint_statuses.json"),
-            apiClient.get("/pms/users/get_escalate_to_users.json"),
-            apiClient.get("/pms/admin/complaint_modes.json"),
-            apiClient.get(API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES),
-          ]);
-
-        setComplaintStatuses(statusResponse.data || []);
-        setFmUsers(usersResponse.data.users || []);
-        setComplaintModes(complaintModesResponse.data || []);
-        setCommunicationTemplates(Array.isArray(templatesResponse.data) ? templatesResponse.data : []);
-        console.log("📋 Communication templates loaded:", templatesResponse.data);
+        const response = await apiClient.get(API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES);
+        const templates = response.data || [];
+        setCommunicationTemplates(templates);
       } catch (error) {
-        console.error("Error fetching data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load form data.",
-          variant: "destructive",
-        });
+        console.error("Error loading communication templates:", error);
       } finally {
-        setIsLoading(false);
+        setLoadingTemplates(false);
       }
     };
 
-    fetchData();
-    dispatch(fetchHelpdeskCategories());
-  }, [toast, dispatch]);
+    fetchTemplates();
+  }, []);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
+  // Handle form field changes
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({
       ...prev,
@@ -832,6 +1019,7 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
+  // Fetch sub-categories based on category selection
   const fetchSubCategories = async (
     categoryId: string,
     targetSubCategoryName?: string
@@ -974,7 +1162,7 @@ const UpdateTicketsPage: React.FC = () => {
       setShowCostPopup(true);
     } else {
       // Only clear new requests, keep API requests
-      setCostApprovalRequests((prev) => prev.filter((req) => req.isFromAPI));
+      setCostApprovalRequests((prev) => prev.filter((req) => !req.isFromAPI));
       setCostPopupData({ cost: "", description: "", attachments: [] });
     }
   };
@@ -1284,6 +1472,23 @@ const UpdateTicketsPage: React.FC = () => {
         formData.costInvolved ? "true" : "false"
       );
 
+      // Add location parameters to formData with correct keys
+      if (formData.area) {
+        formDataToSend.append("complaint[area_id]", formData.area);
+      }
+      if (formData.building) {
+        formDataToSend.append("complaint[tower_id]", formData.building);
+      }
+      if (formData.wing) {
+        formDataToSend.append("complaint[wing_id]", formData.wing);
+      }
+      if (formData.floor) {
+        formDataToSend.append("complaint[floor_id]", formData.floor);
+      }
+      if (formData.room) {
+        formDataToSend.append("complaint[room_id]", formData.room);
+      }
+
       // Add cost approval data if cost is involved
       console.log("💰 Cost involved:", formData.costInvolved);
       console.log("💰 All cost approval requests:", costApprovalRequests);
@@ -1468,10 +1673,21 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
+  const handleBackToList = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full p-6">
         {/* Header */}
+        <button
+                  onClick={handleBackToList}
+                  className="flex items-center gap-1 hover:text-gray-800 mb-4"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Ticket List
+                </button>
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">UPDATE TICKET</h1>
         </div>
@@ -2128,63 +2344,156 @@ const UpdateTicketsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Additional Details section continues with remaining fields */}
-            {/* <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6"> */}
-              {/* Reference Number */}
-              {/* <div className="space-y-1">
-                <TextField
-                  label="Reference Number"
-                  placeholder="Enter reference number"
-                  value={formData.refNumber}
-                  onChange={(e) => handleInputChange("refNumber", e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
-              </div> */}
-
-              {/* Corrective Action */}
-             
-
-              {/* Service Type */}
-              {/* <div className="space-y-1">
-                <FormControl
-                  fullWidth
-                  variant="outlined"
-                  sx={{ '& .MuiInputBase-root': fieldStyles }}
-                >
-                  <InputLabel shrink>Service Type</InputLabel>
-                  <MuiSelect
-                    value={formData.serviceType}
-                    onChange={(e) => handleInputChange("serviceType", e.target.value)}
-                    label="Service Type"
-                    notched
-                    displayEmpty
+            {/* Section 5: Location Details */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-3 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                    <MapPin size={16} color="#C72030" />
+                  </span>
+                  Location Details
+                </h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Area */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
                   >
-                    <MenuItem value="">
-                      <span className="text-gray-500">Select service type</span>
-                    </MenuItem>
-                    {[
-                      { id: 'product', name: 'Product' },
-                      { id: 'service', name: 'Service' }
-                    ].map((type) => (
-                      <MenuItem key={type.id} value={type.id.toString()}>
-                        {type.name}
+                    <InputLabel shrink>Area</InputLabel>
+                    <MuiSelect
+                      value={formData.area}
+                      onChange={(e) => handleAreaChange(e.target.value)}
+                      label="Area"
+                      notched
+                      displayEmpty
+                      disabled={loadingAreas}
+                    >
+                      <MenuItem value="">
+                        {loadingAreas ? "Loading..." : "Select Area"}
                       </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div> */}
-            {/* </div> */}
+                      {areas.map((area) => (
+                        <MenuItem key={area.id} value={area.id.toString()}>
+                          {area.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
 
-        {/* Section 5: Issue Related To */}
+                  {/* Building */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  >
+                    <InputLabel shrink>Building</InputLabel>
+                    <MuiSelect
+                      value={formData.building}
+                      onChange={(e) => handleBuildingChange(e.target.value)}
+                      label="Building"
+                      notched
+                      displayEmpty
+                      disabled={loadingBuildings || !formData.area}
+                    >
+                      <MenuItem value="">
+                        {loadingBuildings ? "Loading..." : 
+                         !formData.area ? "Select Area First" : "Select Building"}
+                      </MenuItem>
+                      {filteredBuildings.map((building) => (
+                        <MenuItem key={building.id} value={building.id.toString()}>
+                          {building.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  {/* Wing */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  >
+                    <InputLabel shrink>Wing</InputLabel>
+                    <MuiSelect
+                      value={formData.wing}
+                      onChange={(e) => handleWingChange(e.target.value)}
+                      label="Wing"
+                      notched
+                      displayEmpty
+                      disabled={loadingWings || !formData.building}
+                    >
+                      <MenuItem value="">
+                        {loadingWings ? "Loading..." : 
+                         !formData.building ? "Select Building First" : "Select Wing"}
+                      </MenuItem>
+                      {filteredWings.map((wing) => (
+                        <MenuItem key={wing.id} value={wing.id.toString()}>
+                          {wing.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  {/* Floor */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  >
+                    <InputLabel shrink>Floor</InputLabel>
+                    <MuiSelect
+                      value={formData.floor}
+                      onChange={(e) => handleFloorChange(e.target.value)}
+                      label="Floor"
+                      notched
+                      displayEmpty
+                      disabled={loadingFloors || !formData.wing}
+                    >
+                      <MenuItem value="">
+                        {loadingFloors ? "Loading..." : 
+                         !formData.wing ? "Select Wing First" : "Select Floor"}
+                      </MenuItem>
+                      {filteredFloors.map((floor) => (
+                        <MenuItem key={floor.id} value={floor.id.toString()}>
+                          {floor.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  {/* Room */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  >
+                    <InputLabel shrink>Room</InputLabel>
+                    <MuiSelect
+                      value={formData.room}
+                      onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                      label="Room"
+                      notched
+                      displayEmpty
+                      disabled={loadingRooms || !formData.floor}
+                    >
+                      <MenuItem value="">
+                        {loadingRooms ? "Loading..." : 
+                         !formData.floor ? "Select Floor First" : "Select Room"}
+                      </MenuItem>
+                      {filteredRooms.map((room) => (
+                        <MenuItem key={room.id} value={room.id.toString()}>
+                          {room.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 6: Issue Related To */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
@@ -2365,7 +2674,6 @@ const UpdateTicketsPage: React.FC = () => {
                       accentColor: '#C72030',
                       width: '12px',
                       height: '12px',
-                      borderColor: '#C72030',
                     }}
                     className="mr-2"
                   />
@@ -2376,7 +2684,7 @@ const UpdateTicketsPage: React.FC = () => {
           </div>
         </div>
 
-            {/* Section 6: Cost Approval Requests */}
+            {/* Section 7: Cost Approval Requests */}
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="px-6 py-3 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900 flex items-center">

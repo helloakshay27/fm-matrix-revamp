@@ -44,7 +44,7 @@ import wingsReducer from './slices/wingsSlice'
 import floorsReducer from './slices/floorsSlice'
 import zonesReducer from './slices/zonesSlice'
 import roomsReducer from './slices/roomsSlice'
-import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
+import { addCurrencyReducer, getCurrencyReducer, updateCurrencyReducer } from './slices/currencySlice'
 import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
 import { createUserGroupReducer, fetchUserGroupIdReducer, fetchUserGroupsReducer, updateUserGroupReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
@@ -153,8 +153,9 @@ export const store = configureStore({
     updateService: updateServiceReducer,
 
     // Currency
-    // addCurrency: addCurrencyReducer,
+    addCurrency: addCurrencyReducer,
     getCurrency: getCurrencyReducer,
+    updateCurrency: updateCurrencyReducer,
 
     fetchSuppliers: fetchSuppliersReducer,
     fetchUnits: fetchUnitsReducer,

@@ -111,6 +111,9 @@ interface Vendor {
         all_level_approved: boolean;
     };
     average_rating: number | null;
+    created_by?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 
@@ -236,7 +239,21 @@ const DetailsVendorPage = () => {
                             </h1>
                         </div>
                         <div className="text-sm text-gray-600">
-                            Vendor ID: {vendor?.id} • PAN: {vendor?.pan_number || '--'}
+                            Vendor # {vendor?.id} • Created by{" "}
+                            {vendor?.created_by || vendor?.first_name && vendor?.last_name 
+                                ? `${vendor.first_name} ${vendor.last_name}`.trim() 
+                                : "Unknown"} 
+                            {vendor?.updated_at && (() => {
+                                const date = new Date(vendor.updated_at);
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const year = date.getFullYear();
+                                let hours = date.getHours();
+                                const minutes = String(date.getMinutes()).padStart(2, '0');
+                                const ampm = hours >= 12 ? 'PM' : 'AM';
+                                hours = hours % 12 || 12;
+                                return `• Last updated ${day}/${month}/${year}, ${hours}:${minutes}${ampm}`;
+                            })()}
                         </div>
                     </div>
                 </div>

@@ -6,8 +6,6 @@ import {
   Navigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Provider } from "react-redux";
-import { store } from "./store/store";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
@@ -767,6 +765,7 @@ import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
 import TabularResponseDetailsPage from "./pages/TabularResponseDetailsPage";
+import CurrencyPage from "./pages/CurrencyPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -796,30 +795,36 @@ function App() {
   }, []);
 
 
-  // Check authentication and fetch currency on app load
+  // Check authentication and fetch currency when site is available
+  const selectedSite = useAppSelector((s) => s.site.selectedSite);
   useEffect(() => {
     if (!baseUrl || !token) return;
+    const urlSiteId = new URLSearchParams(window.location.search).get('site_id') || '';
+    const id = (selectedSite?.id ? String(selectedSite.id) : '')
+      || urlSiteId
+      || localStorage.getItem('selectedSiteId')
+      || '';
+    if (!id) return;
 
     const fetchCurrency = async () => {
       try {
-        const response = await dispatch(
-          getCurrency({
-            baseUrl,
-            token,
-            currency: isOmanSite ? "Oman" : "Indian Rupees",
-          })
+        const response: any = await dispatch(
+          getCurrency({ baseUrl, token, id })
         ).unwrap();
-        localStorage.setItem("currency", response[0].value);
+        const currency = Array.isArray(response) && response[0]?.currency ? response[0].currency : '';
+        const currencySymbol = Array.isArray(response) && response[0]?.symbol ? response[0].symbol : '';
+        if (currency) localStorage.setItem('currency', currency);
+        if (currencySymbol) localStorage.setItem('currencySymbol', currencySymbol);
       } catch (error) {
         console.log(error);
       }
     };
 
     fetchCurrency();
-  }, [baseUrl, token]);
+  }, [baseUrl, token, selectedSite?.id, dispatch]);
 
   return (
-    <Provider store={store}>
+    <>
       {/* <Router> */}
       <QueryClientProvider client={queryClient}>
         <EnhancedSelectProvider>
@@ -1222,6 +1227,11 @@ function App() {
                   <Route
                     path="/settings/checklist-setup/groups"
                     element={<ChecklistGroupsPage />}
+                  />
+
+                  <Route
+                    path="/settings/currency"
+                    element={<CurrencyPage />}
                   />
 
                   <Route
@@ -1842,7 +1852,7 @@ function App() {
                     element={<SurveyResponseDashboard />}
                   />
 
-                    <Route
+                  <Route
                     path="/maintenance/survey/response/:surveyId/:responseId"
                     element={<TabularResponseDetailsPage />}
                   />
@@ -3360,7 +3370,7 @@ function App() {
         </EnhancedSelectProvider>
       </QueryClientProvider>
       {/* </Router> */}
-    </Provider>
+    </>
   );
 }
 

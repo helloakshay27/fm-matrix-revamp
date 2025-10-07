@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   FileText,
   HelpCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,6 +62,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { EmojiEmotions, QuestionMark, QuestionMarkRounded } from "@mui/icons-material";
 import TabularResponseDetailsPage from "./TabularResponseDetailsPage";
+import html2pdf from 'html2pdf.js'; // Add this import for PDF generation
 // Recharts imported above
 // import TabularResponseDetailsPage from "./TabularResponseDetailsPage";
 
@@ -154,6 +156,8 @@ interface SurveyQuestion {
   question: string;
   options: SurveyOption[];
   question_type?: string; // Add optional question type field
+  qtype?: string; // Add qtype field from API response
+  total_responses?: number; // Add total_responses field from API response
 }
 
 interface SurveyDetail {
@@ -243,6 +247,14 @@ interface CSATResponse {
     suggested_y_max: number;
   };
   buckets: CSATBucket[];
+}
+
+// Location filters interface
+interface LocationFilters {
+  buildingIds?: string[];
+  wingIds?: string[];
+  floorIds?: string[];
+  roomIds?: string[];
 }
 
 // Chart data interfaces
@@ -589,7 +601,7 @@ export const SurveyResponseDetailPage = () => {
   }, []);
 
   // Fetch Customer Satisfaction Score data
-  const fetchCSATData = useCallback(async () => {
+  const fetchCSATData = useCallback(async (fromDate?: Date, toDate?: Date, locationFilters?: LocationFilters) => {
     if (!surveyId) return;
     
     try {
@@ -597,6 +609,42 @@ export const SurveyResponseDetailPage = () => {
       const baseUrl = getFullUrl('/pms/admin/snag_checklists/customer_satisfaction_score');
       const url = new URL(baseUrl);
       url.searchParams.append('survey_id', surveyId);
+
+      // Add date filters if provided
+      if (fromDate) {
+        const fromDateStr = fromDate.toISOString().split("T")[0];
+        url.searchParams.append("from_date", fromDateStr);
+      }
+
+      if (toDate) {
+        const toDateStr = toDate.toISOString().split("T")[0];
+        url.searchParams.append("to_date", toDateStr);
+      }
+
+      // Add location filters if provided
+      if (locationFilters?.buildingIds && locationFilters.buildingIds.length > 0) {
+        locationFilters.buildingIds.forEach(buildingId => {
+          url.searchParams.append("q[survey_mapping_building_id_in][]", buildingId);
+        });
+      }
+
+      if (locationFilters?.wingIds && locationFilters.wingIds.length > 0) {
+        locationFilters.wingIds.forEach(wingId => {
+          url.searchParams.append("q[survey_mapping_wing_id_in][]", wingId);
+        });
+      }
+
+      if (locationFilters?.floorIds && locationFilters.floorIds.length > 0) {
+        locationFilters.floorIds.forEach(floorId => {
+          url.searchParams.append("q[survey_mapping_floor_id_in][]", floorId);
+        });
+      }
+
+      if (locationFilters?.roomIds && locationFilters.roomIds.length > 0) {
+        locationFilters.roomIds.forEach(roomId => {
+          url.searchParams.append("q[survey_mapping_room_id_in][]", roomId);
+        });
+      }
       
       if (API_CONFIG.TOKEN) {
         url.searchParams.append('access_token', API_CONFIG.TOKEN);
@@ -664,7 +712,7 @@ export const SurveyResponseDetailPage = () => {
   }, [surveyId]);
 
   // Fetch Heat Map data
-  const fetchHeatMapData = useCallback(async () => {
+  const fetchHeatMapData = useCallback(async (fromDate?: Date, toDate?: Date, locationFilters?: LocationFilters) => {
     if (!surveyId) return;
     
     try {
@@ -673,13 +721,39 @@ export const SurveyResponseDetailPage = () => {
       const url = new URL(baseUrl);
       url.searchParams.append('survey_id', surveyId);
       
-      // Add date range parameters - use last 5 days as default
-      const toDate = new Date();
-      const fromDate = new Date();
-      fromDate.setDate(toDate.getDate() - 4); // Last 5 days
+      // Only add date range parameters when provided (from filters)
+      if (fromDate) {
+        url.searchParams.append('from_date', fromDate.toISOString().split('T')[0]);
+      }
       
-      url.searchParams.append('from_date', fromDate.toISOString().split('T')[0]);
-      url.searchParams.append('to_date', toDate.toISOString().split('T')[0]);
+      if (toDate) {
+        url.searchParams.append('to_date', toDate.toISOString().split('T')[0]);
+      }
+
+      // Add location filters if provided
+      if (locationFilters?.buildingIds && locationFilters.buildingIds.length > 0) {
+        locationFilters.buildingIds.forEach(buildingId => {
+          url.searchParams.append("q[survey_mapping_building_id_in][]", buildingId);
+        });
+      }
+
+      if (locationFilters?.wingIds && locationFilters.wingIds.length > 0) {
+        locationFilters.wingIds.forEach(wingId => {
+          url.searchParams.append("q[survey_mapping_wing_id_in][]", wingId);
+        });
+      }
+
+      if (locationFilters?.floorIds && locationFilters.floorIds.length > 0) {
+        locationFilters.floorIds.forEach(floorId => {
+          url.searchParams.append("q[survey_mapping_floor_id_in][]", floorId);
+        });
+      }
+
+      if (locationFilters?.roomIds && locationFilters.roomIds.length > 0) {
+        locationFilters.roomIds.forEach(roomId => {
+          url.searchParams.append("q[survey_mapping_room_id_in][]", roomId);
+        });
+      }
       
       if (API_CONFIG.TOKEN) {
         url.searchParams.append('access_token', API_CONFIG.TOKEN);
@@ -1010,7 +1084,7 @@ export const SurveyResponseDetailPage = () => {
 
   // API function to fetch survey details using the new endpoint
   const fetchSurveyDetails = useCallback(
-    async (surveyId: string, fromDate?: Date, toDate?: Date, mappingId?: string) => {
+    async (surveyId: string, fromDate?: Date, toDate?: Date, mappingId?: string, locationFilters?: LocationFilters) => {
       try {
         // Validate survey ID
         if (!surveyId || surveyId.trim() === "") {
@@ -1040,6 +1114,31 @@ export const SurveyResponseDetailPage = () => {
         // Add mapping filter if provided
         if (mappingId && mappingId.trim() !== "") {
           urlWithParams.searchParams.append("mapping_id", mappingId.trim());
+        }
+
+        // Add location filters if provided
+        if (locationFilters?.buildingIds && locationFilters.buildingIds.length > 0) {
+          locationFilters.buildingIds.forEach(buildingId => {
+            urlWithParams.searchParams.append("q[building_id_in][]", buildingId);
+          });
+        }
+
+        if (locationFilters?.wingIds && locationFilters.wingIds.length > 0) {
+          locationFilters.wingIds.forEach(wingId => {
+            urlWithParams.searchParams.append("q[wing_id_in][]", wingId);
+          });
+        }
+
+        if (locationFilters?.floorIds && locationFilters.floorIds.length > 0) {
+          locationFilters.floorIds.forEach(floorId => {
+            urlWithParams.searchParams.append("q[floor_id_in][]", floorId);
+          });
+        }
+
+        if (locationFilters?.roomIds && locationFilters.roomIds.length > 0) {
+          locationFilters.roomIds.forEach(roomId => {
+            urlWithParams.searchParams.append("q[room_id_in][]", roomId);
+          });
         }
 
         // Add access_token from API_CONFIG if available
@@ -1723,6 +1822,16 @@ export const SurveyResponseDetailPage = () => {
     return standardOptions;
   };
 
+  // Helper function to get actual option text for rating questions (when qtype='rating')
+  const getActualRatingOptions = (actualOptions: SurveyOption[]) => {
+    // Return options in their original order with actual text
+    return actualOptions.map((option, index) => ({
+      name: option.option || `Option ${index + 1}`,
+      value: Math.floor(option.response_count || 0), // Ensure integer values
+      color: "#C4AE9D"
+    }));
+  };
+
   // Helper function to get standardized rating options
   const getStandardizedRatingOptions = (actualOptions: SurveyOption[]) => {
     const standardOptions = [
@@ -1881,28 +1990,48 @@ export const SurveyResponseDetailPage = () => {
           );
 
           // Determine question type and return standardized data if needed
-          const questionType = getQuestionType(question.options);
+          // First check if qtype is available from API
+          if (question.qtype) {
+            if (question.qtype === "rating") {
+              console.log(`🎯 Using actual option text for filtered rating question ${questionId} (qtype='rating')`);
+              // For filtered data, use the filtered options with their actual text
+              return filteredOptionsData;
+            } else if (question.qtype === "emoji") {
+              console.log(`🎯 Using standardized emoji options for filtered question ${questionId} (qtype='emoji')`);
+              return getStandardizedEmojiOptions(
+                filteredOptionsData.map((item) => ({
+                  option_id: 0,
+                  option: item.name,
+                  response_count: item.value,
+                  type: "emoji",
+                }))
+              );
+            }
+          } else {
+            // Fallback to original logic when qtype is not available
+            const questionType = getQuestionType(question.options);
 
-          if (questionType === "rating") {
-            // console.log(`🎯 Using standardized rating options for filtered question ${questionId}`);
-            return getStandardizedRatingOptions(
-              filteredOptionsData.map((item) => ({
-                option_id: 0,
-                option: item.name,
-                response_count: item.value,
-                type: "rating",
-              }))
-            );
-          } else if (questionType === "emoji") {
-            // console.log(`🎯 Using standardized emoji options for filtered question ${questionId}`);
-            return getStandardizedEmojiOptions(
-              filteredOptionsData.map((item) => ({
-                option_id: 0,
-                option: item.name,
-                response_count: item.value,
-                type: "emoji",
-              }))
-            );
+            if (questionType === "rating") {
+              // console.log(`🎯 Using standardized rating options for filtered question ${questionId} (fallback)`);
+              return getStandardizedRatingOptions(
+                filteredOptionsData.map((item) => ({
+                  option_id: 0,
+                  option: item.name,
+                  response_count: item.value,
+                  type: "rating",
+                }))
+              );
+            } else if (questionType === "emoji") {
+              // console.log(`🎯 Using standardized emoji options for filtered question ${questionId} (fallback)`);
+              return getStandardizedEmojiOptions(
+                filteredOptionsData.map((item) => ({
+                  option_id: 0,
+                  option: item.name,
+                  response_count: item.value,
+                  type: "emoji",
+                }))
+              );
+            }
           }
 
           return filteredOptionsData;
@@ -1913,18 +2042,34 @@ export const SurveyResponseDetailPage = () => {
         const useBarChart = shouldUseBarChart(questionId);
 
         if (useBarChart) {
-          const questionType = getQuestionType(question.options);
+          // First check if qtype is available from API
+          if (question.qtype) {
+            if (question.qtype === "rating") {
+              console.log(
+                `🎯 Using actual option text for rating question ${questionId} (qtype='rating')`
+              );
+              return getActualRatingOptions(question.options);
+            } else if (question.qtype === "emoji") {
+              console.log(
+                `🎯 Using standardized emoji options for question ${questionId} (qtype='emoji')`
+              );
+              return getStandardizedEmojiOptions(question.options);
+            }
+          } else {
+            // Fallback to original logic when qtype is not available
+            const questionType = getQuestionType(question.options);
 
-          if (questionType === "rating") {
-            console.log(
-              `🎯 Using standardized rating options for question ${questionId}`
-            );
-            return getStandardizedRatingOptions(question.options);
-          } else if (questionType === "emoji") {
-            console.log(
-              `🎯 Using standardized emoji options for question ${questionId}`
-            );
-            return getStandardizedEmojiOptions(question.options);
+            if (questionType === "rating") {
+              console.log(
+                `🎯 Using standardized rating options for question ${questionId} (fallback)`
+              );
+              return getStandardizedRatingOptions(question.options);
+            } else if (questionType === "emoji") {
+              console.log(
+                `🎯 Using standardized emoji options for question ${questionId} (fallback)`
+              );
+              return getStandardizedEmojiOptions(question.options);
+            }
           }
         }
 
@@ -1978,7 +2123,30 @@ export const SurveyResponseDetailPage = () => {
 
   // Helper function to get axis labels based on question type
   const getAxisLabels = (questionId: number) => {
-    // First check the actual response data for answer_type
+    // First check survey details data for qtype (primary source)
+    if (surveyDetailsData?.survey_details?.surveys?.[0]) {
+      const surveyDetail = surveyDetailsData.survey_details.surveys[0];
+      const question = surveyDetail.questions?.find(
+        (q) => q.question_id === questionId
+      );
+
+      if (question && question.qtype) {
+        const qtype = question.qtype;
+        if (qtype === "emoji") {
+          return {
+            xAxisLabel: "Response Type",
+            yAxisLabel: "Number of Responses"
+          };
+        } else if (qtype === "rating") {
+          return {
+            xAxisLabel: "Options", // Use "Options" for actual option text
+            yAxisLabel: "Number of Responses"
+          };
+        }
+      }
+    }
+
+    // Fallback: check the actual response data for answer_type
     const filteredResponses = getSummaryFilteredResponseData();
     const responseAnswer = filteredResponses
       .flatMap(response => response.answers || [])
@@ -1992,13 +2160,13 @@ export const SurveyResponseDetailPage = () => {
         };
       } else if (responseAnswer.answer_type === "rating") {
         return {
-          xAxisLabel: "Star Rating",
+          xAxisLabel: "Star Rating", // Fallback uses star rating
           yAxisLabel: "Number of Responses"
         };
       }
     }
 
-    // Fallback to survey details data
+    // Final fallback to survey details data
     if (surveyDetailsData?.survey_details?.surveys?.[0]) {
       const surveyDetail = surveyDetailsData.survey_details.surveys[0];
       const question = surveyDetail.questions?.find(
@@ -2014,7 +2182,7 @@ export const SurveyResponseDetailPage = () => {
           };
         } else if (questionType === "rating") {
           return {
-            xAxisLabel: "Star Rating",
+            xAxisLabel: "Star Rating", // Fallback uses star rating
             yAxisLabel: "Number of Responses"
           };
         }
@@ -2030,7 +2198,35 @@ export const SurveyResponseDetailPage = () => {
 
   // Helper function to determine if question should use bar chart or pie chart
   const shouldUseBarChart = (questionId: number): boolean => {
-    // First check the actual response data for answer_type
+    // First check survey details data for qtype (primary source)
+    if (surveyDetailsData?.survey_details?.surveys?.[0]) {
+      const surveyDetail = surveyDetailsData.survey_details.surveys[0];
+      const question = surveyDetail.questions?.find(
+        (q) => q.question_id === questionId
+      );
+
+      if (question && question.qtype) {
+        const qtype = question.qtype;
+        console.log(`🔍 Question ${questionId} qtype: ${qtype}`);
+        
+        // Use bar chart for rating and emoji types only
+        const useBarChart = qtype === 'rating' || qtype === 'emoji';
+        
+        if (useBarChart) {
+          console.log(
+            `🎯 Found ${qtype} question ${questionId}: "${question.question}"`
+          );
+        } else {
+          console.log(
+            `🚫 Using pie chart for ${qtype} question ${questionId}: "${question.question}"`
+          );
+        }
+
+        return useBarChart;
+      }
+    }
+
+    // Fallback: check the actual response data for answer_type
     const filteredResponses = getSummaryFilteredResponseData();
     const responseAnswer = filteredResponses
       .flatMap(response => response.answers || [])
@@ -2053,7 +2249,7 @@ export const SurveyResponseDetailPage = () => {
       return useBarChart;
     }
 
-    // Fallback to survey details data
+    // Final fallback to survey details data
     if (surveyDetailsData?.survey_details?.surveys?.[0]) {
       const surveyDetail = surveyDetailsData.survey_details.surveys[0];
       const question = surveyDetail.questions?.find(
@@ -2103,7 +2299,7 @@ export const SurveyResponseDetailPage = () => {
     // console.log(
     //   `🔍 Chart type for question ${questionId} ("${questionText.substring(
     //     0,
-    //     50
+    //   50
     //   )}..."): ${chartType} (useBarChart: ${useBarChart})`
     // );
 
@@ -2914,11 +3110,31 @@ export const SurveyResponseDetailPage = () => {
         const fromDate = filters.dateRange?.from;
         const toDate = filters.dateRange?.to;
 
-        const surveyDetailsResponse = await fetchSurveyDetails(
-          surveyId,
-          fromDate,
-          toDate
-        );
+        // Build location filters object
+        const locationFilters: LocationFilters = {};
+        
+        if (filters.buildingId) {
+          locationFilters.buildingIds = [filters.buildingId];
+        }
+        
+        if (filters.wingId) {
+          locationFilters.wingIds = [filters.wingId];
+        }
+        
+        if (filters.floorId) {
+          locationFilters.floorIds = [filters.floorId];
+        }
+        
+        if (filters.roomId) {
+          locationFilters.roomIds = [filters.roomId];
+        }
+
+        // Fetch survey details, heat map data and CSAT data with filters
+        const [surveyDetailsResponse] = await Promise.all([
+          fetchSurveyDetails(surveyId, fromDate, toDate, undefined, locationFilters),
+          fetchHeatMapData(fromDate, toDate, locationFilters),
+          fetchCSATData(fromDate, toDate, locationFilters)
+        ]);
 
         setSurveyDetailsData(surveyDetailsResponse);
 
@@ -2929,19 +3145,19 @@ export const SurveyResponseDetailPage = () => {
           // console.log("📊 Survey data updated with filters:", surveyDetail);
         } else {
           console.warn("⚠️ No survey data found for the applied filters");
-          toast.info("No data found for the selected date range");
+          toast.info("No data found for the selected filters");
         }
       } catch (error) {
         console.error(
           "❌ Error refetching survey details with filters:",
           error
         );
-        toast.error("Failed to apply date filters to survey data");
+        toast.error("Failed to apply filters to survey data");
       } finally {
         setIsLoading(false);
       }
     },
-    [surveyId, fetchSurveyDetails]
+    [surveyId, fetchSurveyDetails, fetchHeatMapData, fetchCSATData]
   );
 
   console.log("surveyDetails", surveyDetailsData);
@@ -3098,6 +3314,16 @@ export const SurveyResponseDetailPage = () => {
         setSurveyDetailsData(originalSurveyDetailsData);
       }
 
+      // Refetch heat map and CSAT data without filters
+      try {
+        await Promise.all([
+          fetchHeatMapData(),
+          fetchCSATData()
+        ]);
+      } catch (error) {
+        console.error("Error refreshing chart data:", error);
+      }
+
       // Show success toast for summary filter reset
       toast.success("Summary filters cleared successfully");
     } else {
@@ -3115,7 +3341,7 @@ export const SurveyResponseDetailPage = () => {
       }
     }
     // Keep modal open after clearing filters
-  }, [activeFilterTab, originalSurveyData, originalSurveyDetailsData, fetchResponseListData]);
+  }, [activeFilterTab, originalSurveyData, originalSurveyDetailsData, fetchResponseListData, fetchHeatMapData, fetchCSATData]);
 
   const getActiveFiltersCount = useCallback(() => {
     const filters =
@@ -3187,6 +3413,48 @@ export const SurveyResponseDetailPage = () => {
       closedTickets
     };
   }, [getDisplayTicketData]);
+
+  // PDF download state for summary
+  const [isDownloadingSummary, setIsDownloadingSummary] = useState(false);
+  const summaryContentRef = useRef<HTMLDivElement>(null);
+
+  // Handle PDF download for summary tab
+  const handleDownloadSummaryPDF = async () => {
+    if (!surveyData || !summaryContentRef.current) {
+      toast.error("No summary data available to download");
+      return;
+    }
+    
+    setIsDownloadingSummary(true);
+    try {
+      const element = summaryContentRef.current;
+
+      // Temporarily hide the toolbar (filter and download buttons) for PDF capture
+      const toolbar = element.querySelector('.flex.items-center.justify-between.mb-6.print\\:hidden') as HTMLElement;
+      const originalDisplay = toolbar ? toolbar.style.display : '';
+      if (toolbar) toolbar.style.display = 'none';
+
+      const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `survey_summary_${surveyId}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, logging: true, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+
+      await html2pdf().from(element).set(opt).save();
+
+      // Restore toolbar display
+      if (toolbar) toolbar.style.display = originalDisplay;
+
+      toast.success('Survey summary PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating summary PDF:', error);
+      toast.error('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsDownloadingSummary(false);
+    }
+  };
 
   // Export Modal Component
   const ExportModal = useMemo(() => (
@@ -3730,6 +3998,33 @@ export const SurveyResponseDetailPage = () => {
               {/* <Button variant="outline" size="icon" title="Export">
                 <Download className="w-4 h-4" />
               </Button> */}
+               {/* <Button
+                  onClick={handleDownloadSummaryPDF}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                  disabled={isDownloadingSummary || !surveyData}
+                >
+                  {isDownloadingSummary ? (
+                    <span>Generating PDF...</span>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download PDF
+                    </>
+                  )}
+                </Button> */}
+                 <Button
+                            variant="outline"
+                            size="icon"
+                            title="Export"
+                            onClick={handleDownloadSummaryPDF}
+                            disabled={isDownloadingSummary || !surveyData}
+                          >
+                            {isDownloadingSummary ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                          </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -3801,7 +4096,7 @@ export const SurveyResponseDetailPage = () => {
 
           <TabsContent value="summary" className="">
             {/* Summary Tab Header with Filter */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 print:hidden">
               {/* <h2 className="text-lg font-semibold text-gray-800">
                 Survey Analytics Summary
               </h2> */}
@@ -3866,72 +4161,75 @@ export const SurveyResponseDetailPage = () => {
                     </span>
                   )}
                 </Button> */}
+               
               </div>
             </div>
 
-            {/* Summary Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-              {/* Total Questions */}
+            {/* Summary Content - Ref for PDF capture */}
+            <div ref={summaryContentRef}>
+              {/* Summary Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                {/* Total Questions */}
 
-               <Card className="bg-[#F6F4EE]">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <HelpCircle className="w-5 h-5 text-[#C72030]" />
+                 <Card className="bg-[#F6F4EE]">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
+                        <HelpCircle className="w-5 h-5 text-[#C72030]" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-semibold text-[#C72030]">
+                          {surveyData.csat ? surveyData.csat.toFixed(2) : '0.00'}
+                        </p>
+                        <p className="text-sm text-gray-600">CSAT</p>
+                        {Object.keys(summaryCurrentFilters).length > 0 && (
+                          <p className="text-xs text-gray-500">Filtered data shown</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xl font-semibold text-[#C72030]">
-                        {surveyData.csat ? surveyData.csat.toFixed(2) : '0.00'}
-                      </p>
-                      <p className="text-sm text-gray-600">CSAT</p>
-                      {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">Filtered data shown</p>
-                      )}
+                  </CardContent>
+                </Card>
+                <Card className="bg-[#F6F4EE]">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
+                        <HelpCircle className="w-5 h-5 text-[#C72030]" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-semibold text-[#C72030]">
+                          {surveyData.questions?.length || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">Total Questions</p>
+                        {Object.keys(summaryCurrentFilters).length > 0 && (
+                          <p className="text-xs text-gray-500">Filtered data shown</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="bg-[#F6F4EE]">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <HelpCircle className="w-5 h-5 text-[#C72030]" />
-                    </div>
-                    <div>
-                      <p className="text-xl font-semibold text-[#C72030]">
-                        {surveyData.questions?.length || 0}
-                      </p>
-                      <p className="text-sm text-gray-600">Total Questions</p>
-                      {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">Filtered data shown</p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* Positive */}
-              <Card className="bg-[#F6F4EE]">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
-                      <Smile className="w-5 h-5 text-[#C72030]" />
+                {/* Positive */}
+                <Card className="bg-[#F6F4EE]">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
+                        <Smile className="w-5 h-5 text-[#C72030]" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-semibold text-[#C72030]">
+                          {surveyData.positive_responses || 0}
+                        </p>
+                        <p className="text-sm text-gray-600">Positive</p>
+                        {Object.keys(summaryCurrentFilters).length > 0 && (
+                          <p className="text-xs text-gray-500">Filtered data shown</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xl font-semibold text-[#C72030]">
-                        {surveyData.positive_responses || 0}
-                      </p>
-                      <p className="text-sm text-gray-600">Positive</p>
-                      {Object.keys(summaryCurrentFilters).length > 0 && (
-                        <p className="text-xs text-gray-500">Filtered data shown</p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* Negative */}
-              <Card className="bg-[#F6F4EE]">
+                {/* Negative */}
+                <Card className="bg-[#F6F4EE]">
   <CardContent className="p-6">
     <div className="flex items-center gap-3">
       <div className="w-12 h-12 bg-[#C7203014] flex items-center justify-center rounded-full">
@@ -3962,690 +4260,768 @@ export const SurveyResponseDetailPage = () => {
 </Card>
 
 
-              {/* Placeholder for 4th card (optional) */}
-            </div>
+                {/* Placeholder for 4th card (optional) */}
+              </div>
 
-            {/* Overall Question Response Distribution */}
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                  </div>
-                  <span>
-                    {/* OVERALL QUESTION RESPONSE DISTRIBUTION */}
-                    Q1.
-                    </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SurveyAnalyticsCard
-                  title="Overall Question Response Distribution"
-                  type="statusDistribution"
-                  data={typeof getResponseDistributionData === "function" ? getResponseDistributionData() : []}
-                  dateRange={{
-                    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-                    endDate: new Date(),
-                  }}
-                  onDownload={typeof handleDownloadResponseChart === "function" ? handleDownloadResponseChart : undefined}
-                  customStyle={{
-                    pieChart: {
-                      outerRadius: 140,
-                      innerRadius: 90,
-                      height: 300,
-                    }
-                  }}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Overall Response Distribution */}
-            {/* <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                  </div>
-                  
-                  Q2.
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SurveyAnalyticsCard
-                  title="Rate Your Experience"
-                  type="statusDistribution"
-                  data={getResponseDistributionData()}
-                  dateRange={{
-                    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-                    endDate: new Date(),
-                  }}
-                  onDownload={handleDownloadResponseChart}
-                />
-              </CardContent>
-            </Card> */}
-
-            {/* Emoji Response Summary */}
-
-
-            {/* Questions Response Details */}
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                     <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                  </div>
-                  {/* QUESTION RESPONSE DETAILS */}
-                  <span>Q2.</span>
-
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-              {surveyData.questions.map((question: SurveyQuestion, index: number) => {
-                const totalResponses =
-                  question.options?.reduce(
-                    (sum, opt) => sum + opt.response_count,
-                    0
-                  ) || 0;
-                const responseTexts =
-                  question.options
-                    ?.filter((opt) => opt.response_count > 0)
-                    .map(
-                      (opt) =>
-                        `${opt.option} (${opt.response_count} responses)`
-                    ) || [];
-
-                // Check if question has any options configured
-                const hasOptions =
-                  question.options && question.options.length > 0;
+              {/* Overall Question Response Distribution - Hide if no data */}
+              {(() => {
+                const responseData = typeof getResponseDistributionData === "function" ? getResponseDistributionData() : [];
+                // Hide card if no meaningful data (only shows "No data available")
+                if (!responseData || responseData.length === 0 || (responseData.length === 1 && responseData[0].name === "No data available")) {
+                  return null;
+                }
 
                 return (
-                  <div
-                    key={question.question_id}
-                    className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="font-medium text-gray-800 mb-1 text-base">
-                          <span className="text-[#C72030] font-semibold mr-2">
-                            Q{index + 1}.
+                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                    <CardHeader className="bg-[#F6F4EE] mb-6">
+                      <CardTitle className="text-lg flex items-center">
+                        <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                          <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                        </div>
+                        <span>
+                          Overall Question Response Distribution
+                         
                           </span>
-                          {question.question}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {hasOptions
-                            ? `${totalResponses} Responses`
-                            : "No options configured"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Question Response Distribution Chart - Dynamic Type */}
-                    <div className="mb-4">
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       <SurveyAnalyticsCard
-                        title={(() => {
-                          // Only show specific emoji/rating titles if shouldUseBarChart returns true
-                          const useBarChart = shouldUseBarChart(question.question_id);
-
-                          if (useBarChart) {
-                            const questionType = getQuestionType(
-                              question.options || []
-                            );
-                            if (questionType === "rating") {
-                              return "Rating Response";
-                            } else if (questionType === "emoji") {
-                              return "Emoji Responses";
-                            }
-                          }
-
-                          // For all multiple choice questions (not using bar charts), show generic title
-                          return `Response Distribution: ${question.question.substring(
-                            0,
-                            50
-                          )}${question.question.length > 50 ? "..." : ""
-                            }`;
-                        })()}
-                        type={getChartType(question.question_id)}
-                        data={getQuestionOptionsData(question.question_id)}
+                        title="Overall Question Response Distribution"
+                        type="statusDistribution"
+                        data={responseData}
                         dateRange={{
-                          startDate: new Date(
-                            Date.now() - 30 * 24 * 60 * 60 * 1000
-                          ),
+                          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
                           endDate: new Date(),
                         }}
-                        xAxisLabel={getAxisLabels(question.question_id).xAxisLabel}
-                        yAxisLabel={getAxisLabels(question.question_id).yAxisLabel}
-                        onDownload={() => {
-                          // console.log(
-                          //   `Download chart for question ${question.question_id}`
-                          // );
-                          toast.success(
-                            `Chart for question ${question.question_id} download initiated`
-                          );
+                        onDownload={typeof handleDownloadResponseChart === "function" ? handleDownloadResponseChart : undefined}
+                        customStyle={{
+                          pieChart: {
+                            outerRadius: 140,
+                            innerRadius: 90,
+                            height: 300,
+                          }
                         }}
                       />
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 );
-              })}
-                </div>
-              </CardContent>
-            </Card>
+              })()}
 
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                  </div>
-                  {/* EMOJI RESPONSE SUMMARY */}
-                  Q3.
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {(() => {
-                  const emojiData = getEmojiResponseData();
-                  
-                  // Define all standard emoji options
-                  const standardEmojis = [
-                    { name: "Amazing", emoji: "😀" },
-                    { name: "Good", emoji: "😊" },
-                    { name: "Okay", emoji: "😐" },
-                    { name: "Bad", emoji: "😞" },
-                    { name: "Terrible", emoji: "😢" }
-                  ];
-                  
-                  // Calculate total responses to get accurate percentages
-                  const totalResponses = emojiData.reduce((sum, item) => sum + item.count, 0);
-                  
-                  // Create display data with all emojis, showing 0% for missing ones
-                  const displayData = standardEmojis.map(standard => {
-                    const found = emojiData.find(item => 
-                      item.name.toLowerCase() === standard.name.toLowerCase()
-                    );
-                    
-                    return {
-                      emoji: standard.emoji,
-                      name: standard.name,
-                      count: found ? found.count : 0,
-                      percentage: found ? found.percentage : 0
-                    };
-                  });
-
-                  return (
-                    <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                      <div className="text-center py-6">
-                        <div className="flex justify-center items-center gap-8 mb-4">
-                          {displayData.map((item, index) => (
-                            <div key={index} className="flex flex-col items-center">
-                              <div className="text-3xl mb-2">{item.emoji}</div>
-                              <div className="text-sm font-medium text-gray-700 mb-1">{item.name}</div>
-                              <div className="text-sm text-gray-600">
-                                {item.percentage}% ({item.count})
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
-
-            {/* Response Category with CSAT (Static) */}
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                  </div>
-                  Q4.
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {(() => {
-                  // Static data to mirror the provided UI
-                  const totalResponses = 2;
-                  const skipped = 11;
-                  const rows: Array<{
-                    category: string;
-                    pct: number; // percentage of responses
-                    count: number; // raw count
-                    csat: number; // 0 means show '-'
-                  }> = [
-                      { category: "WC Cleaning", pct: 50, count: 1, csat: 2 },
-                      { category: "HBT Roll", pct: 0, count: 0, csat: 0 },
-                      { category: "Dirty Floor", pct: 0, count: 0, csat: 0 },
-                      { category: "Tissue Paper Missing", pct: 50, count: 1, csat: 1 },
-                      { category: "Washbasin area", pct: 0, count: 0, csat: 0 },
-                      { category: "Soap Missing", pct: 50, count: 1, csat: 2 },
-                    ];
-                  const maxCsat = Math.max(1, ...rows.map((r) => r.csat));
-
-                  return (
-                    <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                      <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
-                        <span>
-                          <span className="font-medium">Total Response:</span> {totalResponses}
-                        </span>
-                        <span>
-                          <span className="font-medium">Skipped:</span> {skipped}
-                        </span>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-t border-b border-gray-300">
-                              <th className="text-left font-semibold px-6 py-3 w-1/2">Response Category</th>
-                              <th className="text-left font-semibold px-6 py-3 w-1/4">Responses</th>
-                              <th className="text-left font-semibold px-6 py-3 w-1/4">CSAT</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {rows.map((r, idx) => (
-                              <tr key={r.category} className={idx !== rows.length - 1 ? "border-b border-gray-300" : ""}>
-                                <td className="px-6 py-3 text-gray-800">{r.category}</td>
-                                <td className="px-6 py-3 text-gray-800">{r.pct}% ({r.count})</td>
-                                <td className="px-6 py-3 text-gray-800">
-                                  {r.csat > 0 ? (
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-20 h-3 bg-gray-200 rounded-sm overflow-hidden">
-                                        <div
-                                          className="h-3 bg-[#C72030]"
-                                          style={{ width: `${(r.csat / maxCsat) * 100}%` }}
-                                        />
-                                      </div>
-                                      <span className="text-gray-800 text-sm">{r.csat}</span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-gray-400">-</span>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
-
-             <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              {/* Overall Response Distribution */}
+              {/* <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
                 <CardHeader className="bg-[#F6F4EE] mb-6">
                   <CardTitle className="text-lg flex items-center">
                     <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                       <HelpCircle className="h-4 w-4 text-[#C72030]" />
                     </div>
-                    Customer Satisfaction Score.
+                    
+                    Q2.
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {(() => {
-                    // Use API data if available, otherwise show loading or empty state
-                    if (loadingCSAT) {
-                      return (
-                        <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                          <div className="px-6 py-8 text-center text-gray-500">
-                            Loading Customer Satisfaction Score data...
-                          </div>
-                        </div>
-                      );
-                    }
+                  <SurveyAnalyticsCard
+                    title="Rate Your Experience"
+                    type="statusDistribution"
+                    data={getResponseDistributionData()}
+                    dateRange={{
+                      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                      endDate: new Date(),
+                    }}
+                    onDownload={handleDownloadResponseChart}
+                  />
+                </CardContent>
+              </Card> */}
 
-                    if (!csatData) {
-                      return (
-                        <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                          <div className="px-6 py-8 text-center text-gray-500">
-                            No Customer Satisfaction Score data available
-                          </div>
-                        </div>
-                      );
-                    }
+              {/* Emoji Response Summary */}
 
-                    // Transform API data into chart-ready format
-                    const buckets = csatData.buckets || [];
-                    const summary = csatData.summary;
-                    const dateRangeText = summary.date_range_label;
+
+              {/* Questions Response Details - Now individual cards are created for each question type below */}
+
+   {(() => {
+                // Get all multiple choice questions from survey details
+                const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
+                  (q: SurveyQuestion) => {
+                    // Filter for multiple choice questions (exclude rating and emoji)
+                    if (q.qtype) {
+                      return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
+                    }
                     
-                    console.log('Processing CSAT data:', { buckets, summary, dateRangeText });
+                    // Fallback: exclude questions that would be handled by rating/emoji cards
+                    return !shouldUseBarChart(q.question_id);
+                  }
+                ) || [];
 
-                    // Create rows for the table
-                    type Row = {
-                      dateLabel: string;
-                      csat: number;
-                      changePct: number;
-                      negPct: number;
-                      negCount: number;
-                      posPct: number; 
-                      posCount: number;
-                      total: number;
-                      neutral: number;
+                if (multipleChoiceQuestions.length === 0) {
+                  return null; // Don't show anything if no multiple choice questions
+                }
+
+                return multipleChoiceQuestions.map((mcQuestion: SurveyQuestion, questionIndex: number) => {
+                  // Calculate total responses for this multiple choice question
+                  const totalResponses = mcQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
+                  
+                  // Hide card if no responses
+                  if (totalResponses === 0) {
+                    return null;
+                  }
+                  
+                  // Multiple choice questions start from Q1, Q2, etc. since they appear first in UI
+                  const questionNumber = questionIndex + 1;
+                  
+                  // Create display data for multiple choice options
+                  const multipleChoiceColors = ["#D5DBDB", "#C4B99D", "#DAD6CA"]; // Three colors for pie chart segments
+                  const mcData = mcQuestion.options?.map((option, index) => {
+                    const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
+
+                    return {
+                      name: option.option || `Option ${index + 1}`,
+                      value: option.response_count || 0,
+                      color: multipleChoiceColors[index % multipleChoiceColors.length] // Cycle through the three colors
                     };
+                  }).filter(item => item.value > 0) || []; // Only show options with responses
 
-                    const rows: Row[] = buckets.map((bucket, index) => {
-                      console.log('Processing bucket:', bucket);
-                      const total = bucket.total;
-                      const prevBucket = index > 0 ? buckets[index - 1] : null;
-                      const changePct = prevBucket && prevBucket.csat !== null && bucket.csat !== null
-                        ? ((bucket.csat - prevBucket.csat) / prevBucket.csat) * 100
-                        : bucket.change_pct || 0;
-                      
-                      // Use the percentage values directly from API
-                      const negPct = Math.round(bucket.negative_pct || 0);
-                      const posPct = Math.round(bucket.positive_pct || 0);
+                  return (
+                    <Card key={mcQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                      <CardHeader className="bg-[#F6F4EE] mb-6">
+                        <CardTitle className="text-lg flex items-center">
+                          <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                            <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                          </div>
+                          <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
+                          {mcQuestion.question}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <SurveyAnalyticsCard
+                          title="Response Distribution"
+                          type="statusDistribution"
+                          data={mcData}
+                          dateRange={{
+                            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                            endDate: new Date(),
+                          }}
+                          onDownload={() => {
+                            toast.success(`Chart for multiple choice question "${mcQuestion.question}" download initiated`);
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
+                  );
+                }).filter(Boolean);
+              })()}
+              {/* Dynamic Rating Question Cards */}
+              {(() => {
+                // Get all rating questions from survey details
+                const ratingQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
+                  (q: SurveyQuestion) => q.qtype === "rating"
+                ) || [];
 
-                      const row = {
-                        dateLabel: bucket.label || new Date(bucket.start).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        }),
-                        csat: bucket.csat || 0,
-                        changePct,
-                        negPct,
-                        negCount: bucket.negative_count || 0,
-                        posPct,
-                        posCount: bucket.positive_count || 0,
-                        total: bucket.total || 0,
-                        neutral: 0 // Not provided in new API, calculate if needed
-                      };
-                      
-                      console.log('Processed row:', row);
-                      return row;
-                    });
+                if (ratingQuestions.length === 0) {
+                  return null; // Don't show anything if no rating questions
+                }
 
-                    // If no buckets data, create a summary row
-                    if (rows.length === 0 && summary.responses > 0) {
-                      const total = summary.responses;
-                      const negPct = total > 0 ? Math.round((summary.negative / total) * 100) : 0;
-                      const posPct = total > 0 ? Math.round((summary.positive / total) * 100) : 0;
-                      
-                      rows.push({
-                        dateLabel: dateRangeText || "Summary",
-                        csat: summary.csat_avg || 0,
-                        changePct: 0,
-                        negPct,
-                        negCount: summary.negative,
-                        posPct,
-                        posCount: summary.positive,
-                        total: summary.responses,
-                        neutral: summary.neutral
-                      });
+                return ratingQuestions.map((ratingQuestion: SurveyQuestion, questionIndex: number) => {
+                  // Calculate total responses for this rating question
+                  const totalResponses = ratingQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
+                  
+                  // Hide card if no responses
+                  if (totalResponses === 0) {
+                    return null;
+                  }
+                  
+                  // Get count of multiple choice questions to continue numbering after them
+                  const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
+                    (q: SurveyQuestion) => {
+                      if (q.qtype) {
+                        return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
+                      }
+                      return !shouldUseBarChart(q.question_id);
                     }
+                  ) || [];
+                  const questionNumber = multipleChoiceQuestions.length + questionIndex + 1;
+                  
+                  // Create display data for rating options with actual option text
+                  const ratingData = ratingQuestion.options?.map((option, index) => {
+                    const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
 
-                    const maxTotal = Math.max(1, summary.suggested_y_max || Math.max(...rows.map(r => r.total), 1));
-                    const BAR_AREA_HEIGHT = 240;
-                    const colorPositive = "#C4AE9D";
-                    const colorNegative = "#C72030";
+                    return {
+                      name: option.option || `Option ${index + 1}`,
+                      count: option.response_count || 0,
+                      percentage: percentage
+                    };
+                  }) || [];
 
-                    const ChangeTag = ({ value }: { value: number }) => {
-                      if (value > 0) {
+                  return (
+                    <Card key={ratingQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                      <CardHeader className="bg-[#F6F4EE] mb-6">
+                        <CardTitle className="text-lg flex items-center">
+                          <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                            <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                          </div>
+                          <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
+                          {ratingQuestion.question}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <SurveyAnalyticsCard
+                          title="Rating Response"
+                          type="surveyDistributions"
+                          data={ratingData.map(item => ({
+                            name: item.name,
+                            value: item.count,
+                            color: "#C4AE9D"
+                          }))}
+                          dateRange={{
+                            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                            endDate: new Date(),
+                          }}
+                          xAxisLabel="Rating Options"
+                          yAxisLabel="Response Count"
+                          onDownload={() => {
+                            toast.success(`Chart for rating question "${ratingQuestion.question}" download initiated`);
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
+                  );
+                }).filter(Boolean);
+              })()}
+
+              {/* Dynamic Emoji Question Cards */}
+              {(() => {
+                // Get all emoji questions from survey details
+                const emojiQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
+                  (q: SurveyQuestion) => q.qtype === "emoji"
+                ) || [];
+
+                if (emojiQuestions.length === 0) {
+                  return null; // Hide card if no emoji questions
+                }
+
+                return emojiQuestions.map((emojiQuestion: SurveyQuestion, questionIndex: number) => {
+                  // Calculate total responses for this question
+                  const totalResponses = emojiQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
+                  
+                  // Hide card if no responses
+                  if (totalResponses === 0) {
+                    return null;
+                  }
+                  
+                  // Get count of multiple choice and rating questions to continue numbering after them
+                  const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
+                    (q: SurveyQuestion) => {
+                      if (q.qtype) {
+                        return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
+                      }
+                      return !shouldUseBarChart(q.question_id);
+                    }
+                  ) || [];
+                  const ratingQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
+                    (q: SurveyQuestion) => q.qtype === "rating"
+                  ) || [];
+                  const questionNumber = multipleChoiceQuestions.length + ratingQuestions.length + questionIndex + 1;
+                  
+                  // Fixed emoji sequence based on position (1st, 2nd, 3rd, 4th, 5th option)
+                  const fixedEmojis = ['😞', '😟', '😐', '😊', '😁'];
+                  
+                  // Create display data with fixed emoji sequence
+                  const displayData = emojiQuestion.options?.map((option, index) => {
+                    const emoji = fixedEmojis[index] || '😐'; // Use fixed emoji by position, fallback to neutral
+                    const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
+
+                    return {
+                      emoji: emoji,
+                      name: option.option || 'Unknown',
+                      count: option.response_count || 0,
+                      percentage: percentage
+                    };
+                  }) || [];
+
+                  return (
+                    <Card key={emojiQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                      <CardHeader className="bg-[#F6F4EE] mb-6">
+                        <CardTitle className="text-lg flex items-center">
+                          <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                            <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                          </div>
+                          <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
+                          {emojiQuestion.question}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                          <div className="text-center py-6">
+                            {displayData.length > 0 ? (
+                              <div className="flex justify-center items-center gap-8 mb-4">
+                                {displayData.map((item, index) => (
+                                  <div key={index} className="flex flex-col items-center">
+                                    <div className="text-3xl mb-2">{item.emoji}</div>
+                                    <div className="text-sm font-medium text-gray-700 mb-1 capitalize">{item.name}</div>
+                                    <div className="text-sm text-gray-600">
+                                      {item.percentage}% ({item.count})
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-gray-500">No responses available for this question</div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                }).filter(Boolean);
+              })()}
+
+              {/* Dynamic Multiple Choice Question Cards */}
+             
+
+              {/* Response Category - Hide if no data */}
+              {(() => {
+                // Get dynamic data from API response
+                const surveyDetails = surveyDetailsData?.survey_details?.surveys?.[0];
+                const responseCategories = surveyDetails?.response_categories || [];
+                const totalComplaints = surveyDetails?.total_complaints || 0;
+                const skipped = surveyDetails?.skipped || 0;
+
+                // Calculate total responses from response categories
+                const totalCategoryResponses = responseCategories.reduce((sum, category) => sum + category.responses_count, 0);
+
+                // Hide card if no response categories
+                if (responseCategories.length === 0) {
+                  return null;
+                }
+
+                return (
+                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                    <CardHeader className="bg-[#F6F4EE] mb-6">
+                      <CardTitle className="text-lg flex items-center">
+                        <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                          <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                        </div>
+                        Response by Category
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {(() => {
+
+                    return (
+                      <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                        <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
+                          <span>
+                            <span className="font-medium">Total Response:</span> {totalCategoryResponses}
+                          </span>
+                          {/* <span>
+                            <span className="font-medium">Skipped:</span> {skipped}
+                          </span> */}
+                          <span>
+                            <span className="font-medium">Total Complaints:</span> {totalComplaints}
+                          </span>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-t border-b border-gray-300">
+                                <th className="text-left font-semibold px-6 py-3 w-1/2">Response Category</th>
+                                <th className="text-left font-semibold px-6 py-3 w-1/4">Responses</th>
+                                {/* <th className="text-left font-semibold px-6 py-3 w-1/4">CSAT</th> */}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {responseCategories.length > 0 ? (
+                                responseCategories.map((category, idx) => (
+                                  <tr key={category.heading} className={idx !== responseCategories.length - 1 ? "border-b border-gray-300" : ""}>
+                                    <td className="px-6 py-3 text-gray-800">{category.heading}</td>
+                                    <td className="px-6 py-3 text-gray-800">{category.responses_percent.toFixed(1)}% ({category.responses_count})</td>
+                                    {/* <td className="px-6 py-3 text-gray-800">
+                                    {r.csat > 0 ? (
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-20 h-3 bg-gray-200 rounded-sm overflow-hidden">
+                                          <div
+                                            className="h-3 bg-[#C72030]"
+                                            style={{ width: `${(r.csat / maxCsat) * 100}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-gray-800 text-sm">{r.csat}</span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-gray-400">-</span>
+                                    )}
+                                  </td> */}
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan={2} className="px-6 py-8 text-center text-gray-500">
+                                    No response categories available
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
+               {/* Customer Satisfaction Score - Hide if no data */}
+               {(() => {
+                 // Use API data if available, otherwise hide card
+                 if (loadingCSAT || !csatData) {
+                   return null; // Hide card if loading or no data
+                 }
+
+                 return (
+                   <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                     <CardHeader className="bg-[#F6F4EE] mb-6">
+                       <CardTitle className="text-lg flex items-center">
+                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                         </div>
+                         Customer Satisfaction Score.
+                       </CardTitle>
+                     </CardHeader>
+                     <CardContent>
+                       {(() => {
+
+                      // Transform API data into chart-ready format
+                      const buckets = csatData.buckets || [];
+                      const summary = csatData.summary;
+                      const dateRangeText = summary.date_range_label;
+                      
+                      console.log('Processing CSAT data:', { buckets, summary, dateRangeText });
+
+                      // Create rows for the table
+                      type Row = {
+                        dateLabel: string;
+                        csat: number;
+                        changePct: number;
+                        negPct: number;
+                        negCount: number;
+                        posPct: number; 
+                        posCount: number;
+                        total: number;
+                        neutral: number;
+                      };
+
+                      const rows: Row[] = buckets.map((bucket, index) => {
+                        console.log('Processing bucket:', bucket);
+                        const total = bucket.total;
+                        const prevBucket = index > 0 ? buckets[index - 1] : null;
+                        const changePct = prevBucket && prevBucket.csat !== null && bucket.csat !== null
+                          ? ((bucket.csat - prevBucket.csat) / prevBucket.csat) * 100
+                          : bucket.change_pct || 0;
+                        
+                        // Use the percentage values directly from API
+                        const negPct = Math.round(bucket.negative_pct || 0);
+                        const posPct = Math.round(bucket.positive_pct || 0);
+
+                        const row = {
+                          dateLabel: bucket.label || new Date(bucket.start).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          }),
+                          csat: bucket.csat || 0,
+                          changePct,
+                          negPct,
+                          negCount: bucket.negative_count || 0,
+                          posPct,
+                          posCount: bucket.positive_count || 0,
+                          total: bucket.total || 0,
+                          neutral: 0 // Not provided in new API, calculate if needed
+                        };
+                        
+                        console.log('Processed row:', row);
+                        return row;
+                      });
+
+                      // If no buckets data, create a summary row
+                      if (rows.length === 0 && summary.responses > 0) {
+                        const total = summary.responses;
+                        const negPct = total > 0 ? Math.round((summary.negative / total) * 100) : 0;
+                        const posPct = total > 0 ? Math.round((summary.positive / total) * 100) : 0;
+                        
+                        rows.push({
+                          dateLabel: dateRangeText || "Summary",
+                          csat: summary.csat_avg || 0,
+                          changePct: 0,
+                          negPct,
+                          negCount: summary.negative,
+                          posPct,
+                          posCount: summary.positive,
+                          total: summary.responses,
+                          neutral: summary.neutral
+                        });
+                      }
+
+                      const maxTotal = Math.max(1, summary.suggested_y_max || Math.max(...rows.map(r => r.total), 1));
+                      const BAR_AREA_HEIGHT = 240;
+                      const colorPositive = "#C4AE9D";
+                      const colorNegative = "#C72030";
+
+                      const ChangeTag = ({ value }: { value: number }) => {
+                        if (value > 0) {
+                          return (
+                            <span className="ml-2 text-xs px-1.5 py-0.5 rounded border" style={{ background: "#E6F4EA", color: "#1E7E34", borderColor: "#B5DFCB" }}>
+                              +{value.toFixed(2)}%
+                            </span>
+                          );
+                        }
+                        if (value < 0) {
+                          return (
+                            <span className="ml-2 text-xs px-1.5 py-0.5 rounded border" style={{ background: "#FCE8E6", color: "#C72030", borderColor: "#F5C2C7" }}>
+                              {value.toFixed(2)}%
+                            </span>
+                          );
+                        }
                         return (
-                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded border" style={{ background: "#E6F4EA", color: "#1E7E34", borderColor: "#B5DFCB" }}>
-                            +{value.toFixed(2)}%
+                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded border text-gray-600" style={{ background: "#F3F4F6", borderColor: "#E5E7EB" }}>
+                            0%
                           </span>
                         );
-                      }
-                      if (value < 0) {
-                        return (
-                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded border" style={{ background: "#FCE8E6", color: "#C72030", borderColor: "#F5C2C7" }}>
-                            {value.toFixed(2)}%
-                          </span>
-                        );
-                      }
+                      };
+
                       return (
-                        <span className="ml-2 text-xs px-1.5 py-0.5 rounded border text-gray-600" style={{ background: "#F3F4F6", borderColor: "#E5E7EB" }}>
-                          0%
-                        </span>
+                        <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                          {/* Date range */}
+                          <div className="px-6 pt-4 text-sm text-gray-700">{dateRangeText}</div>
+
+                          {/* Chart area */}
+                          <div className="px-6 pt-4 pb-6">
+                            <div className="bg-white" style={{ height: BAR_AREA_HEIGHT + 60 }}>
+                              <ResponsiveContainer width="100%" height={BAR_AREA_HEIGHT + 40}>
+                                <BarChart
+                                  data={rows.map(r => ({
+                                    date: r.dateLabel,
+                                    Positive: r.posCount,
+                                    Negative: r.negCount,
+                                  }))}
+                                  margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
+                                >
+                                  <CartesianGrid vertical={false} stroke="#E5E7EB" />
+                                  <XAxis 
+                                    dataKey="date" 
+                                    tick={{ fontSize: 12, fill: '#6B7280' }} 
+                                    tickMargin={10} 
+                                    axisLine={{ stroke: '#9CA3AF' }} 
+                                  />
+                                  <YAxis 
+                                    domain={[0, maxTotal]} 
+                                    tick={{ fontSize: 12, fill: '#6B7280' }} 
+                                    axisLine={{ stroke: '#9CA3AF' }} 
+                                  />
+                                  <Tooltip formatter={(val: number, name: string) => [val, name]} />
+                                  <Bar dataKey="Negative" stackId="a" fill="#C72030" radius={[0,0,0,0]} barSize={36} />
+                                  <Bar dataKey="Positive" stackId="a" fill="#C4AE9D" radius={[0,0,0,0]} barSize={36} />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+
+                          {/* Table */}
+                          <div className="px-6 pb-6">
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="border border-gray-300">
+                                    <th className="text-left font-semibold px-6 py-3 w-1/4">&nbsp;</th>
+                                    <th className="text-left font-semibold px-6 py-3 w-1/4">CSAT</th>
+                                    <th className="text-left font-semibold px-6 py-3 w-1/4">Negative</th>
+                                    <th className="text-left font-semibold px-6 py-3 w-1/4">Positive</th>
+                                    <th className="text-left font-semibold px-6 py-3 w-[90px]">Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {rows.length > 0 ? rows.map((r, idx) => (
+                                    <tr key={idx} className="border-x border-b border-gray-300">
+                                      <td className="px-6 py-3 text-gray-800">{r.dateLabel}</td>
+                                      <td className="px-6 py-3 text-gray-800">
+                                        {r.csat.toFixed(2)} <ChangeTag value={r.changePct} />
+                                      </td>
+                                      <td className="px-6 py-3 text-gray-800">{r.negPct}% ({r.negCount})</td>
+                                      <td className="px-6 py-3 text-gray-800">{r.posPct}% ({r.posCount})</td>
+                                      <td className="px-6 py-3 text-gray-800">{r.total}</td>
+                                    </tr>
+                                  )) : (
+                                    <tr className="border-x border-b border-gray-300">
+                                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                        No CSAT data available for the selected period
+                                      </td>
+                                    </tr>
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
                       );
+                    })()}
+                     </CardContent>
+                   </Card>
+                 );
+               })()}
+                 {/* Heat Map - Hide if no data */}
+                 {(() => {
+                   // Use API data if available, otherwise hide card
+                   if (loadingHeatMap || !heatMapData) {
+                     return null; // Hide card if loading or no data
+                   }
+
+                   return (
+                     <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                       <CardHeader className="bg-[#F6F4EE] mb-6">
+                         <CardTitle className="text-lg flex items-center">
+                           <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                             <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                           </div>
+                           Heat Map
+                         </CardTitle>
+                       </CardHeader>
+                       <CardContent>
+                         {(() => {
+
+                    // Transform API data into display format
+                    const { columns, rows, matrix, totals, scale } = heatMapData;
+                    const dates = columns.map(col => col.label);
+                    const hours = rows.map(row => row.label);
+                    
+                    console.log('Processing Heat Map data:', { columns, rows, matrix, totals, scale });
+
+                    // Function to get cell color based on value and scale
+                    const getCellColor = (value: number) => {
+                      if (value === 0) return "";
+                      
+                      const { breaks, classes } = scale;
+                      let classIndex = 0;
+                      
+                      for (let i = 0; i < breaks.length - 1; i++) {
+                        if (value >= breaks[i] && value < breaks[i + 1]) {
+                          classIndex = i;
+                          break;
+                        }
+                      }
+                      
+                      // If value is >= the last break, use the last class
+                      if (value >= breaks[breaks.length - 1]) {
+                        classIndex = classes.length - 1;
+                      }
+                      
+                      const className = classes[classIndex];
+                      switch (className) {
+                        case "light":
+                          return "bg-[#E4EAED]";
+                        case "dark":
+                          return "bg-[#BFCBD3]";
+                        default:
+                          return "";
+                      }
                     };
 
                     return (
                       <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                        {/* Date range */}
-                        <div className="px-6 pt-4 text-sm text-gray-700">{dateRangeText}</div>
-
-                        {/* Chart area */}
-                        <div className="px-6 pt-4 pb-6">
-                          <div className="bg-white" style={{ height: BAR_AREA_HEIGHT + 60 }}>
-                            <ResponsiveContainer width="100%" height={BAR_AREA_HEIGHT + 40}>
-                              <BarChart
-                                data={rows.map(r => ({
-                                  date: r.dateLabel,
-                                  Positive: r.posCount,
-                                  Negative: r.negCount,
-                                }))}
-                                margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
-                              >
-                                <CartesianGrid vertical={false} stroke="#E5E7EB" />
-                                <XAxis 
-                                  dataKey="date" 
-                                  tick={{ fontSize: 12, fill: '#6B7280' }} 
-                                  tickMargin={10} 
-                                  axisLine={{ stroke: '#9CA3AF' }} 
-                                />
-                                <YAxis 
-                                  domain={[0, maxTotal]} 
-                                  tick={{ fontSize: 12, fill: '#6B7280' }} 
-                                  axisLine={{ stroke: '#9CA3AF' }} 
-                                />
-                                <Tooltip formatter={(val: number, name: string) => [val, name]} />
-                                <Bar dataKey="Negative" stackId="a" fill="#C72030" radius={[0,0,0,0]} barSize={36} />
-                                <Bar dataKey="Positive" stackId="a" fill="#C4AE9D" radius={[0,0,0,0]} barSize={36} />
-                              </BarChart>
-                            </ResponsiveContainer>
-                          </div>
+                        <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
+                          <span>
+                            <span className="font-medium">Total Response:</span> {totals.responses}
+                          </span>
+                          <span>
+                            <span className="font-medium">Skipped:</span> {totals.skipped}
+                          </span>
                         </div>
 
-                        {/* Table */}
-                        <div className="px-6 pb-6">
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border border-gray-300">
-                                  <th className="text-left font-semibold px-6 py-3 w-1/4">&nbsp;</th>
-                                  <th className="text-left font-semibold px-6 py-3 w-1/4">CSAT</th>
-                                  <th className="text-left font-semibold px-6 py-3 w-1/4">Negative</th>
-                                  <th className="text-left font-semibold px-6 py-3 w-1/4">Positive</th>
-                                  <th className="text-left font-semibold px-6 py-3 w-[90px]">Total</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {rows.length > 0 ? rows.map((r, idx) => (
-                                  <tr key={idx} className="border-x border-b border-gray-300">
-                                    <td className="px-6 py-3 text-gray-800">{r.dateLabel}</td>
-                                    <td className="px-6 py-3 text-gray-800">
-                                      {r.csat.toFixed(2)} <ChangeTag value={r.changePct} />
-                                    </td>
-                                    <td className="px-6 py-3 text-gray-800">{r.negPct}% ({r.negCount})</td>
-                                    <td className="px-6 py-3 text-gray-800">{r.posPct}% ({r.posCount})</td>
-                                    <td className="px-6 py-3 text-gray-800">{r.total}</td>
-                                  </tr>
-                                )) : (
-                                  <tr className="border-x border-b border-gray-300">
-                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                                      No CSAT data available for the selected period
-                                    </td>
-                                  </tr>
-                                )}
-                              </tbody>
-                            </table>
+                        {/* Grid + Time labels */}
+                        <div className="relative px-6 pb-6">
+                          <div className="flex items-start gap-2">
+                            {/* Y-axis time labels */}
+                            <div className="w-16 select-none">
+                              {/* Top spacer to align first grid row */}
+                              <div className="h-[36px]" />
+                              {hours.map((h, i) => (
+                                <div key={h + i} className="h-[36px] text-xs text-gray-600 flex items-center justify-end">
+                                  {h}
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Scrollable grid and date footer kept together so they stay in sync */}
+                            <div id="heatmap-scroll" className="overflow-x-auto border-l border-gray-300">
+                              <div className="inline-block">
+                                {/* Grid */}
+                                <div
+                                  className="grid border-t border-r border-gray-300"
+                                  style={{
+                                    gridTemplateColumns: `repeat(${dates.length}, 140px)`,
+                                    gridTemplateRows: `repeat(${hours.length}, 36px)`,
+                                    minWidth: `${dates.length * 140}px`,
+                                  }}
+                                >
+                                  {/* Column header spacer row */}
+                                  {dates.map((_, ci) => (
+                                    <div key={"hdr-" + ci} className="border-b border-gray-300" />
+                                  ))}
+
+                                  {/* Cells */}
+                                  {hours.map((_, ri) =>
+                                    dates.map((_, ci) => {
+                                      const value = matrix[ri] ? matrix[ri][ci] || 0 : 0;
+                                      const cellColor = getCellColor(value);
+                                      return (
+                                        <div
+                                          key={`c-${ri}-${ci}`}
+                                          className={`border-b border-l border-gray-300 ${cellColor} flex items-center justify-center`}
+                                          title={value > 0 ? `${value} responses at ${hours[ri]} on ${dates[ci]}` : undefined}
+                                        >
+                                          {value > 0 && (
+                                            <span className="text-xs text-gray-700 font-medium">
+                                              {value}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })
+                                  )}
+                                </div>
+
+                                {/* Date labels row */}
+                                <div
+                                  className="grid"
+                                  style={{ gridTemplateColumns: `repeat(${dates.length}, 140px)` }}
+                                >
+                                  {dates.map((d, ci) => (
+                                    <div key={"dl-" + ci} className="text-xs text-gray-600 py-3 text-center">
+                                      {d}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
                           </div>
+
+                          {/* Right arrow overlay to scroll */}
+                          <button
+                            type="button"
+                            aria-label="Scroll right"
+                            onClick={() => {
+                              const el = document.getElementById("heatmap-scroll");
+                              if (el) el.scrollBy({ left: 300, behavior: "smooth" });
+                            }}
+                            className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-600 hover:text-gray-800 shadow rounded-full p-1 border border-gray-200"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
                         </div>
                       </div>
                     );
                   })()}
                 </CardContent>
               </Card>
-               <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                    <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                  </div>
-                  Heat Map
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {(() => {
-                  // Use API data if available, otherwise show loading or empty state
-                  if (loadingHeatMap) {
-                    return (
-                      <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                        <div className="px-6 py-8 text-center text-gray-500">
-                          Loading Heat Map data...
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  if (!heatMapData) {
-                    return (
-                      <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                        <div className="px-6 py-8 text-center text-gray-500">
-                          No Heat Map data available
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  // Transform API data into display format
-                  const { columns, rows, matrix, totals, scale } = heatMapData;
-                  const dates = columns.map(col => col.label);
-                  const hours = rows.map(row => row.label);
-                  
-                  console.log('Processing Heat Map data:', { columns, rows, matrix, totals, scale });
-
-                  // Function to get cell color based on value and scale
-                  const getCellColor = (value: number) => {
-                    if (value === 0) return "";
-                    
-                    const { breaks, classes } = scale;
-                    let classIndex = 0;
-                    
-                    for (let i = 0; i < breaks.length - 1; i++) {
-                      if (value >= breaks[i] && value < breaks[i + 1]) {
-                        classIndex = i;
-                        break;
-                      }
-                    }
-                    
-                    // If value is >= the last break, use the last class
-                    if (value >= breaks[breaks.length - 1]) {
-                      classIndex = classes.length - 1;
-                    }
-                    
-                    const className = classes[classIndex];
-                    switch (className) {
-                      case "light":
-                        return "bg-[#E4EAED]";
-                      case "dark":
-                        return "bg-[#BFCBD3]";
-                      default:
-                        return "";
-                    }
-                  };
-
-                  return (
-                    <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                      <div className="px-6 py-4 text-sm text-gray-800 flex items-center gap-10">
-                        <span>
-                          <span className="font-medium">Total Response:</span> {totals.responses}
-                        </span>
-                        <span>
-                          <span className="font-medium">Skipped:</span> {totals.skipped}
-                        </span>
-                      </div>
-
-                      {/* Grid + Time labels */}
-                      <div className="relative px-6 pb-6">
-                        <div className="flex items-start gap-2">
-                          {/* Y-axis time labels */}
-                          <div className="w-16 select-none">
-                            {/* Top spacer to align first grid row */}
-                            <div className="h-[36px]" />
-                            {hours.map((h, i) => (
-                              <div key={h + i} className="h-[36px] text-xs text-gray-600 flex items-center justify-end">
-                                {h}
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Scrollable grid and date footer kept together so they stay in sync */}
-                          <div id="heatmap-scroll" className="overflow-x-auto border-l border-gray-300">
-                            <div className="inline-block">
-                              {/* Grid */}
-                              <div
-                                className="grid border-t border-r border-gray-300"
-                                style={{
-                                  gridTemplateColumns: `repeat(${dates.length}, 140px)`,
-                                  gridTemplateRows: `repeat(${hours.length}, 36px)`,
-                                  minWidth: `${dates.length * 140}px`,
-                                }}
-                              >
-                                {/* Column header spacer row */}
-                                {dates.map((_, ci) => (
-                                  <div key={"hdr-" + ci} className="border-b border-gray-300" />
-                                ))}
-
-                                {/* Cells */}
-                                {hours.map((_, ri) =>
-                                  dates.map((_, ci) => {
-                                    const value = matrix[ri] ? matrix[ri][ci] || 0 : 0;
-                                    const cellColor = getCellColor(value);
-                                    return (
-                                      <div
-                                        key={`c-${ri}-${ci}`}
-                                        className={`border-b border-l border-gray-300 ${cellColor} flex items-center justify-center`}
-                                        title={value > 0 ? `${value} responses at ${hours[ri]} on ${dates[ci]}` : undefined}
-                                      >
-                                        {value > 0 && (
-                                          <span className="text-xs text-gray-700 font-medium">
-                                            {value}
-                                          </span>
-                                        )}
-                                      </div>
-                                    );
-                                  })
-                                )}
-                              </div>
-
-                              {/* Date labels row */}
-                              <div
-                                className="grid"
-                                style={{ gridTemplateColumns: `repeat(${dates.length}, 140px)` }}
-                              >
-                                {dates.map((d, ci) => (
-                                  <div key={"dl-" + ci} className="text-xs text-gray-600 py-3 text-center">
-                                    {d}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Right arrow overlay to scroll */}
-                        <button
-                          type="button"
-                          aria-label="Scroll right"
-                          onClick={() => {
-                            const el = document.getElementById("heatmap-scroll");
-                            if (el) el.scrollBy({ left: 300, behavior: "smooth" });
-                          }}
-                          className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-600 hover:text-gray-800 shadow rounded-full p-1 border border-gray-200"
-                        >
-                          <ChevronRight className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
+            );
+          })()}
+          </div>
           </TabsContent>
 
           <TabsContent value="tabular" className="">

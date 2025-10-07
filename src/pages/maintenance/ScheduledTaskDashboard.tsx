@@ -332,7 +332,7 @@ export const ScheduledTaskDashboard = () => {
 
       if (filters.dateFrom) queryParams.append('q[start_date_gteq]', filters.dateFrom);
       if (filters.dateTo) queryParams.append('q[start_date_lteq]', filters.dateTo);
-      if (filters.checklist) queryParams.append('q[custom_form_form_name_cont]', encodeURIComponent(filters.checklist));
+      if (filters.checklist) queryParams.append('q[custom_form_form_name_cont]', filters.checklist);
       if (filters.scheduleType) queryParams.append('sch_type', filters.scheduleType);
       if (filters.type) queryParams.append('s[custom_form_schedule_type_eq]', filters.type);
       if (filters.assetGroupId) queryParams.append('q[asset_pms_asset_group_id_eq]', filters.assetGroupId);
@@ -351,19 +351,19 @@ export const ScheduledTaskDashboard = () => {
 
       // Add general search functionality for checklist and asset
       if (searchTerm && searchTerm.trim()) {
-        // Try multiple search parameters that the API might understand
-        queryParams.append('q[custom_form_form_name_cont]', encodeURIComponent(searchTerm.trim()));
+        // URLSearchParams automatically encodes the values, no need for manual encoding
+        queryParams.append('q[custom_form_form_name_cont]', searchTerm.trim());
         // queryParams.append('q[asset_asset_name_cont]', searchTerm.trim());
       }
 
       // Add specific checklist search from advanced filters
       if (filters.searchChecklist && filters.searchChecklist.trim()) {
-        queryParams.append('q[custom_form_form_name_cont]', encodeURIComponent(filters.searchChecklist.trim()));
+        queryParams.append('q[custom_form_form_name_cont]', filters.searchChecklist.trim());
       }
 
       // Add specific task ID search from advanced filters
       if (filters.searchTaskId && filters.searchTaskId.trim()) {
-        queryParams.append('q[id_cont]', encodeURIComponent(filters.searchTaskId.trim()));
+        queryParams.append('q[id_cont]', filters.searchTaskId.trim());
       }
 
       const apiUrl = getFullUrl(`/pms/users/scheduled_tasks.json?&${queryParams.toString()}`);

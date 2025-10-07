@@ -23,6 +23,12 @@ const columns = [
         defaultVisible: true,
     },
     {
+        key: 'priority',
+        label: 'Priority',
+        sortable: true,
+        defaultVisible: true,
+    },
+    {
         key: 'duration',
         label: 'Duration',
         sortable: true,
@@ -43,6 +49,7 @@ const formattedData = (data) => {
         responsible: item.responsible_person.name,
         duration: item.duration,
         endDate: item.target_date,
+        priority: item?.priority?.charAt(0).toUpperCase() + item?.priority?.slice(1) || "-",
     }));
 }
 

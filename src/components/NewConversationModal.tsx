@@ -3,7 +3,7 @@ import { Input } from "./ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppDispatch } from "@/store/hooks";
 import { createConversation, createGroup } from "@/store/slices/channelSlice";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
 const NewConversationModal = ({
@@ -12,19 +12,35 @@ const NewConversationModal = ({
     searchQuery,
     setSearchQuery,
     setNewConversationModal,
+    conversations,
 }) => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
+    const currentUserId = JSON.parse(localStorage.getItem("user"))?.id;
 
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [groupName, setGroupName] = useState("");
 
+    const availableUsers = useMemo(() => {
+        const conversationUserIds = new Set();
+
+        conversations.forEach((conversation) => {
+            if (conversation.sender_id === currentUserId) {
+                conversationUserIds.add(conversation.recipient_id);
+            } else if (conversation.recipient_id === currentUserId) {
+                conversationUserIds.add(conversation.sender_id);
+            }
+        });
+
+        return filteredUsers.filter(user => !conversationUserIds.has(user.id));
+    }, [filteredUsers, conversations, currentUserId]);
+
     const handleCreateConversation = async (id: string) => {
         const payload = {
             conversation: {
-                sender_id: JSON.parse(localStorage.getItem("user"))?.id,
+                sender_id: currentUserId,
                 recipient_id: id,
             },
         };
@@ -49,7 +65,7 @@ const NewConversationModal = ({
             project_space: {
                 name: groupName,
                 user_ids: selectedUsers,
-                created_by_id: JSON.parse(localStorage.getItem("user"))?.id,
+                created_by_id: currentUserId,
                 resource_type: "Pms::Site",
                 resource_id: localStorage.getItem('selectedSiteId')
             },
@@ -127,25 +143,31 @@ const NewConversationModal = ({
                     </div>
 
                     <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-0">
-                        {filteredUsers.map((user) => (
-                            <div
-                                key={user.id}
-                                className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-gray-100 transition"
-                                onClick={() => handleCreateConversation(user.id)}
-                            >
-                                <div className="w-9 h-9 rounded-full bg-[#F2EEE9] flex items-center justify-center font-medium text-[#c72030]">
-                                    {user.full_name.charAt(0)}
+                        {availableUsers.length > 0 ? (
+                            availableUsers.map((user) => (
+                                <div
+                                    key={user.id}
+                                    className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-gray-100 transition"
+                                    onClick={() => handleCreateConversation(user.id)}
+                                >
+                                    <div className="w-9 h-9 rounded-full bg-[#F2EEE9] flex items-center justify-center font-medium text-[#c72030]">
+                                        {user.full_name.charAt(0)}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium text-gray-800">
+                                            {user.full_name}
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                            Click to start chat
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-gray-800">
-                                        {user.full_name}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                        Click to start chat
-                                    </span>
-                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center text-gray-500 text-sm py-8">
+                                {searchQuery ? "No users found" : "All users already have conversations"}
                             </div>
-                        ))}
+                        )}
                     </div>
                 </TabsContent>
 

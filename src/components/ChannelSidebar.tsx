@@ -140,7 +140,7 @@ const ChannelSidebar = () => {
                 </button>
 
                 {isGroupsOpen && (
-                    <div className="pl-6 space-y-1">
+                    <div className="pl-6 space-y-1 max-h-[15rem] overflow-auto">
                         {groups.map((group) => (
                             <div
                                 className={`text-sm text-gray-700 cursor-pointer hover:bg-gray-50 py-1 px-2 rounded ${group.id === Number(id)
@@ -166,6 +166,7 @@ const ChannelSidebar = () => {
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                     setNewConversationModal={setNewConversationModal}
+                    conversations={conversations}
                 />
             )}
         </div>
