@@ -6,8 +6,6 @@ import {
   Navigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Provider } from "react-redux";
-import { store } from "./store/store";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
@@ -767,6 +765,7 @@ import GroupConversation from "./components/GroupConversation";
 import ChannelTasksAll from "./pages/ChannelTasksAll";
 import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
 import TabularResponseDetailsPage from "./pages/TabularResponseDetailsPage";
+import CurrencyPage from "./pages/CurrencyPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -806,10 +805,10 @@ function App() {
           getCurrency({
             baseUrl,
             token,
-            currency: isOmanSite ? "Oman" : "Indian Rupees",
+            id: localStorage.getItem("selectedSiteId") || "",
           })
         ).unwrap();
-        localStorage.setItem("currency", response[0].value);
+        localStorage.setItem("currency", response[0].currency);
       } catch (error) {
         console.log(error);
       }
@@ -819,7 +818,7 @@ function App() {
   }, [baseUrl, token]);
 
   return (
-    <Provider store={store}>
+    <>
       {/* <Router> */}
       <QueryClientProvider client={queryClient}>
         <EnhancedSelectProvider>
@@ -1222,6 +1221,11 @@ function App() {
                   <Route
                     path="/settings/checklist-setup/groups"
                     element={<ChecklistGroupsPage />}
+                  />
+
+                  <Route
+                    path="/settings/currency"
+                    element={<CurrencyPage />}
                   />
 
                   <Route
@@ -3360,7 +3364,7 @@ function App() {
         </EnhancedSelectProvider>
       </QueryClientProvider>
       {/* </Router> */}
-    </Provider>
+    </>
   );
 }
 

@@ -74,6 +74,7 @@ import {
   Wallet,
   Trash,
   ChartColumnIncreasing,
+  IndianRupee,
 } from "lucide-react";
 import { template } from "lodash";
 
@@ -1246,6 +1247,14 @@ const modulesByPackage = {
     //   icon: Currency,
     //   href: '/settings/currency',
     // }
+
+    {
+      name: "Common Modules",
+      icon: IndianRupee,
+      subItems: [
+        { name: "Currency", href: "/settings/currency" },
+      ]
+    },
   ],
 };
 

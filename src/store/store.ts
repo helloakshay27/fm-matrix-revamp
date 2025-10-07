@@ -153,7 +153,7 @@ export const store = configureStore({
     updateService: updateServiceReducer,
 
     // Currency
-    // addCurrency: addCurrencyReducer,
+    addCurrency: addCurrencyReducer,
     getCurrency: getCurrencyReducer,
 
     fetchSuppliers: fetchSuppliersReducer,
