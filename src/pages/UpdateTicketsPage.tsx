@@ -265,6 +265,7 @@ const UpdateTicketsPage: React.FC = () => {
   // Filtered location state
   const [filteredBuildings, setFilteredBuildings] = useState<BuildingResponse[]>([]);
   const [filteredWings, setFilteredWings] = useState<WingResponse[]>([]);
+  const [filteredAreas, setFilteredAreas] = useState<AreaResponse[]>([]);
   const [filteredFloors, setFilteredFloors] = useState<FloorResponse[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<RoomResponse[]>([]);
 
@@ -365,10 +366,14 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
-  const loadBuildings = async () => {
+  const loadBuildings = async (siteId?: string) => {
     setLoadingBuildings(true);
     try {
-      const url = getFullUrl('/pms/buildings.json');
+      // Use site_id in API call if provided, otherwise load all buildings
+      const url = siteId 
+        ? getFullUrl(`/pms/sites/${siteId}/buildings.json`)
+        : getFullUrl('/pms/buildings.json');
+      
       const options = {
         method: 'GET',
         headers: {
@@ -378,7 +383,7 @@ const UpdateTicketsPage: React.FC = () => {
       const response = await fetch(url, options);
       if (!response.ok) throw new Error('Failed to fetch buildings');
       const data = await response.json();
-      setBuildings(data.pms_buildings || []);
+      setBuildings(data.pms_buildings || data || []);
     } catch (error) {
       console.error('Error loading buildings:', error);
       toast({
@@ -391,10 +396,14 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
-  const loadWings = async () => {
+  const loadWings = async (buildingId?: string) => {
     setLoadingWings(true);
     try {
-      const url = getFullUrl('/pms/wings.json');
+      // Add building_id as query parameter if provided
+      const url = buildingId
+        ? getFullUrl(`/pms/wings.json?building_id=${buildingId}`)
+        : getFullUrl('/pms/wings.json');
+      
       const options = {
         method: 'GET',
         headers: {
@@ -417,10 +426,14 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
-  const loadFloors = async () => {
+  const loadFloors = async (wingId?: string) => {
     setLoadingFloors(true);
     try {
-      const url = getFullUrl('/pms/floors.json');
+      // Add wing_id as query parameter if provided
+      const url = wingId
+        ? getFullUrl(`/pms/floors.json?wing_id=${wingId}`)
+        : getFullUrl('/pms/floors.json');
+      
       const options = {
         method: 'GET',
         headers: {
@@ -443,10 +456,14 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
-  const loadRooms = async () => {
+  const loadRooms = async (floorId?: string) => {
     setLoadingRooms(true);
     try {
-      const url = getFullUrl('/pms/rooms.json');
+      // Add floor_id as query parameter if provided
+      const url = floorId
+        ? getFullUrl(`/pms/rooms.json?floor_id=${floorId}`)
+        : getFullUrl('/pms/rooms.json');
+      
       const options = {
         method: 'GET',
         headers: {
@@ -469,79 +486,152 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
-  // Handle location changes with cascading filters
-  const handleAreaChange = (areaId: string) => {
+  // Handle location changes with cascading API calls
+  const handleAreaChange = async (areaId: string) => {
     setFormData(prev => ({ 
       ...prev, 
       area: areaId,
-      building: '',
-      wing: '',
       floor: '',
       room: ''
     }));
     
-    if (areaId) {
-      const selectedArea = areas.find(a => a.id === parseInt(areaId));
-      if (selectedArea) {
-        const filtered = buildings.filter(b => b.id === parseInt(selectedArea.building_id));
-        setFilteredBuildings(filtered);
-      }
-    } else {
-      setFilteredBuildings([]);
-    }
-    setFilteredWings([]);
+    // Clear dependent dropdowns
     setFilteredFloors([]);
     setFilteredRooms([]);
+    
+    if (areaId) {
+      // Call floors API with area_id parameter
+      try {
+        setLoadingFloors(true);
+        const url = getFullUrl(`/pms/floors.json?area_id=${areaId}`);
+        const options = {
+          method: 'GET',
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        };
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredFloors(data.floors || []);
+        }
+      } catch (error) {
+        console.error('Error loading floors for area:', error);
+      } finally {
+        setLoadingFloors(false);
+      }
+    }
   };
 
-  const handleBuildingChange = (buildingId: string) => {
+  const handleBuildingChange = async (buildingId: string) => {
     setFormData(prev => ({ 
       ...prev, 
       building: buildingId,
       wing: '',
+      area: '',
       floor: '',
       room: ''
     }));
     
-    if (buildingId) {
-      const filtered = wings.filter(w => w.building_id === buildingId);
-      setFilteredWings(filtered);
-    } else {
-      setFilteredWings([]);
-    }
+    // Clear dependent dropdowns
+    setFilteredWings([]);
+    setFilteredAreas([]);
     setFilteredFloors([]);
     setFilteredRooms([]);
+    
+    if (buildingId) {
+      // Call wings API with building_id parameter
+      try {
+        setLoadingWings(true);
+        const url = getFullUrl(`/pms/wings.json?building_id=${buildingId}`);
+        const options = {
+          method: 'GET',
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        };
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredWings(data.wings || []);
+        }
+      } catch (error) {
+        console.error('Error loading wings for building:', error);
+      } finally {
+        setLoadingWings(false);
+      }
+    }
   };
 
-  const handleWingChange = (wingId: string) => {
+  const handleWingChange = async (wingId: string) => {
     setFormData(prev => ({ 
       ...prev, 
       wing: wingId,
+      area: '',
       floor: '',
       room: ''
     }));
     
-    if (wingId) {
-      const filtered = floors.filter(f => f.wing_id === parseInt(wingId));
-      setFilteredFloors(filtered);
-    } else {
-      setFilteredFloors([]);
-    }
+    // Clear dependent dropdowns
+    setFilteredAreas([]);
+    setFilteredFloors([]);
     setFilteredRooms([]);
+    
+    if (wingId) {
+      // Call areas API with wing_id parameter
+      try {
+        setLoadingAreas(true);
+        const url = getFullUrl(`/pms/areas.json?wing_id=${wingId}`);
+        const options = {
+          method: 'GET',
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        };
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredAreas(data.areas || []);
+        }
+      } catch (error) {
+        console.error('Error loading areas for wing:', error);
+      } finally {
+        setLoadingAreas(false);
+      }
+    }
   };
 
-  const handleFloorChange = (floorId: string) => {
+  const handleFloorChange = async (floorId: string) => {
     setFormData(prev => ({ 
       ...prev, 
       floor: floorId,
       room: ''
     }));
     
+    // Clear dependent dropdown
+    setFilteredRooms([]);
+    
     if (floorId) {
-      const filtered = rooms.filter(r => r.floor_id === parseInt(floorId));
-      setFilteredRooms(filtered);
-    } else {
-      setFilteredRooms([]);
+      // Call rooms API with floor_id parameter
+      try {
+        setLoadingRooms(true);
+        const url = getFullUrl(`/pms/rooms.json?floor_id=${floorId}`);
+        const options = {
+          method: 'GET',
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        };
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredRooms(Array.isArray(data) ? data : (data.rooms || []));
+        }
+      } catch (error) {
+        console.error('Error loading rooms for floor:', error);
+      } finally {
+        setLoadingRooms(false);
+      }
     }
   };
 
@@ -650,8 +740,8 @@ const UpdateTicketsPage: React.FC = () => {
       }
 
       // Fetch sub-categories based on category selection
-      if (ticketData.category_type) {
-        fetchSubCategories(ticketData.category_type, ticketData.sub_category_type);
+      if (matchedCategory && matchedCategory.id) {
+        fetchSubCategories(matchedCategory.id.toString(), ticketData.sub_category_type);
       } else {
         setSubCategories([]);
         setFormData(prev => ({ ...prev, subCategoryType: "" }));
@@ -2356,32 +2446,6 @@ const UpdateTicketsPage: React.FC = () => {
               </div>
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Area */}
-                  <FormControl
-                    fullWidth
-                    variant="outlined"
-                    sx={{ '& .MuiInputBase-root': fieldStyles }}
-                  >
-                    <InputLabel shrink>Area</InputLabel>
-                    <MuiSelect
-                      value={formData.area}
-                      onChange={(e) => handleAreaChange(e.target.value)}
-                      label="Area"
-                      notched
-                      displayEmpty
-                      disabled={loadingAreas}
-                    >
-                      <MenuItem value="">
-                        {loadingAreas ? "Loading..." : "Select Area"}
-                      </MenuItem>
-                      {areas.map((area) => (
-                        <MenuItem key={area.id} value={area.id.toString()}>
-                          {area.name}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-
                   {/* Building */}
                   <FormControl
                     fullWidth
@@ -2395,13 +2459,12 @@ const UpdateTicketsPage: React.FC = () => {
                       label="Building"
                       notched
                       displayEmpty
-                      disabled={loadingBuildings || !formData.area}
+                      disabled={loadingBuildings}
                     >
                       <MenuItem value="">
-                        {loadingBuildings ? "Loading..." : 
-                         !formData.area ? "Select Area First" : "Select Building"}
+                        {loadingBuildings ? "Loading..." : "Select Building"}
                       </MenuItem>
-                      {filteredBuildings.map((building) => (
+                      {buildings.map((building) => (
                         <MenuItem key={building.id} value={building.id.toString()}>
                           {building.name}
                         </MenuItem>
@@ -2436,6 +2499,33 @@ const UpdateTicketsPage: React.FC = () => {
                     </MuiSelect>
                   </FormControl>
 
+                  {/* Area */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  >
+                    <InputLabel shrink>Area</InputLabel>
+                    <MuiSelect
+                      value={formData.area}
+                      onChange={(e) => handleAreaChange(e.target.value)}
+                      label="Area"
+                      notched
+                      displayEmpty
+                      disabled={loadingAreas || !formData.wing}
+                    >
+                      <MenuItem value="">
+                        {loadingAreas ? "Loading..." : 
+                         !formData.wing ? "Select Wing First" : "Select Area"}
+                      </MenuItem>
+                      {filteredAreas.map((area) => (
+                        <MenuItem key={area.id} value={area.id.toString()}>
+                          {area.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
                   {/* Floor */}
                   <FormControl
                     fullWidth
@@ -2449,11 +2539,11 @@ const UpdateTicketsPage: React.FC = () => {
                       label="Floor"
                       notched
                       displayEmpty
-                      disabled={loadingFloors || !formData.wing}
+                      disabled={loadingFloors || !formData.area}
                     >
                       <MenuItem value="">
                         {loadingFloors ? "Loading..." : 
-                         !formData.wing ? "Select Wing First" : "Select Floor"}
+                         !formData.area ? "Select Area First" : "Select Floor"}
                       </MenuItem>
                       {filteredFloors.map((floor) => (
                         <MenuItem key={floor.id} value={floor.id.toString()}>

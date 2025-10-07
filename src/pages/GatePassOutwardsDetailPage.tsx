@@ -669,10 +669,10 @@ export const GatePassOutwardsDetailPage = () => {
                   {(handoverView[selectedItemIndex ?? -1].attachments || []).length > 0 ? (
                     handoverView[selectedItemIndex ?? -1].attachments.map((attachment: any) => {
                       const url = attachment.document || attachment.url || `${API_CONFIG.BASE_URL}/attachments/${attachment.id}`;
-                      const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.document_file_name || '');
-                      const isPdf = /\.pdf$/i.test(attachment.document_file_name || '');
-                      const isExcel = /\.(xls|xlsx|csv)$/i.test(attachment.document_file_name || '');
-                      const isWord = /\.(doc|docx)$/i.test(attachment.document_file_name || '');
+                      const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                      const isPdf = /\.pdf$/i.test(url);
+                      const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                      const isWord = /\.(doc|docx)$/i.test(url);
                       const isDownloadable = isPdf || isExcel || isWord;
 
                       return (
@@ -699,7 +699,7 @@ export const GatePassOutwardsDetailPage = () => {
                               </button>
                               <img
                                 src={url}
-                                alt={attachment.document_file_name || `Document_${attachment.id}`}
+                                alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
                                 className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                                 onClick={() => {
                                   setSelectedDoc({
@@ -729,7 +729,10 @@ export const GatePassOutwardsDetailPage = () => {
                             </div>
                           )}
                           <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                            {attachment.document_file_name || `Document_${attachment.id}`}
+                            {attachment.document_name ||
+                              attachment.document_file_name ||
+                              url.split('/').pop() ||
+                              `Document_${attachment.id}`}
                           </span>
                           {isDownloadable && (
                             <Button
@@ -737,13 +740,14 @@ export const GatePassOutwardsDetailPage = () => {
                               variant="ghost"
                               className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
                               onClick={() => {
-                                setSelectedDoc({
-                                  ...attachment,
-                                  url,
-                                  type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
-                                });
-                                setIsModalOpen(true);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = attachment.document_name || attachment.document_file_name || url.split('/').pop() || 'document';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
                               }}
+                              title="Download"
                             >
                               <Download className="w-4 h-4" />
                             </Button>
