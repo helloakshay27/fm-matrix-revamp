@@ -739,6 +739,11 @@ const modulesByPackage = {
           href: "/finance/pending-approvals",
           color: "text-[#1a1a1a]",
         },
+        {
+          name: "Deletion Requests",
+          href: "/finance/deletion-requests",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     { name: "Invoices", icon: Receipt, href: "/finance/invoices" },

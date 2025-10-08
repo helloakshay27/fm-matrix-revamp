@@ -17,6 +17,7 @@ import {
   FileSpreadsheet,
   File,
   Eye,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -32,6 +33,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   FormControl,
   InputLabel,
@@ -208,6 +210,7 @@ export const ServicePRDetailsPage = () => {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [showEditWbsModal, setShowEditWbsModal] = useState(false);
   const [wbsCodes, setWbsCodes] = useState([]);
+  const [openDeletionModal, setOpenDeletionModal] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
   }>({});
@@ -433,6 +436,29 @@ export const ServicePRDetailsPage = () => {
     }
   }, [dispatch, id, levelId, userId, rejectComment, navigate]);
 
+  const handleDelete = async () => {
+    const payload = {
+      deletion_request: {
+        resource_id: id,
+        resource_type: "Pms::WorkOrder",
+        approve: false
+      }
+    }
+    try {
+      await axios.post(`https://${baseUrl}/deletion_requests.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      toast.success("Deletion request raised successfully")
+      setOpenDeletionModal(false)
+    } catch (error) {
+      console.log(error)
+      toast.error("Failed to raise deletion request")
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved":
@@ -557,6 +583,18 @@ export const ServicePRDetailsPage = () => {
             <Rss className="w-4 h-4 mr-1" />
             Feeds
           </Button>
+          {
+            servicePR?.all_level_approved && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 btn-primary"
+                onClick={() => setOpenDeletionModal(true)}
+              >
+                Raise Deletion Request
+              </Button>
+            )
+          }
           {
             buttonCondition.editWbsCode && (
               <Button
@@ -1130,6 +1168,31 @@ export const ServicePRDetailsPage = () => {
               className="bg-[#C72030] text-white hover:bg-[#a61b27]"
             >
               Update
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={openDeletionModal}
+          onClose={() => setOpenDeletionModal(false)}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AlertTriangle size={24} color="#d32f2f" />
+            Confirm Deletion Request
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to raise a deletion request? This action will initiate the deletion process.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setOpenDeletionModal(false)} variant="outline">
+              Cancel
+            </Button>
+            <Button onClick={handleDelete}>
+              Yes
             </Button>
           </DialogActions>
         </Dialog>
