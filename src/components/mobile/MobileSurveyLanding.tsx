@@ -57,8 +57,14 @@ interface SurveyMapping {
     name: string;
     questions_count: number;
     snag_attach?: string;
+    survey_attachment?: SurveyAttach[];
     snag_questions: SurveyQuestion[];
   };
+}
+
+interface SurveyAttach { 
+  id: string;
+  url: string;
 }
 
 interface SurveyAnswers {
@@ -1471,7 +1477,7 @@ export const MobileSurveyLanding: React.FC = () => {
             <div className="text-center mb-6">
               <img
                 src={
-                  surveyData?.snag_checklist?.snag_attach || "/9019830 1.png"
+                  surveyData?.snag_checklist?.survey_attachment?.url || "/9019830 1.png"
                 }
                 alt="Survey Illustration"
                 className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto"

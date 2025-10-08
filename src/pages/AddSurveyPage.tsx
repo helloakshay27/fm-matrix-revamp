@@ -41,6 +41,7 @@ interface Question {
     title: string;
     files: File[];
   }>;
+  questionImage?: File | null;
 }
 
 interface Category {
@@ -191,6 +192,7 @@ export const AddSurveyPage = () => {
       text: "",
       answerType: "",
       mandatory: false,
+      questionImage: null,
     };
     setQuestions([...questions, newQuestion]);
   };
@@ -558,6 +560,12 @@ export const AddSurveyPage = () => {
         formData.append(`question[][quest_mandatory]`, question.mandatory.toString());
         formData.append(`question[][image_mandatory]`, 'false');
 
+        // Handle question image upload
+        if (question.questionImage) {
+          formData.append(`snag_checklist[survey_image]`, question.questionImage);
+          fileCounter++;
+        }
+
         // Add options for multiple-choice, rating, and emojis
         if (["multiple-choice", "rating", "emojis"].includes(question.answerType) && question.answerOptions) {
           question.answerOptions.forEach((option, optionIndex) => {
@@ -607,6 +615,10 @@ export const AddSurveyPage = () => {
         console.log(`   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : "description"}`);
         console.log(`   question[][quest_mandatory]: ${question.mandatory}`);
 
+        if (question.questionImage) {
+          console.log(`   survey_image: ${question.questionImage.name} (${(question.questionImage.size / 1024).toFixed(2)} KB)`);
+        }
+
         if (["multiple-choice", "rating", "emojis"].includes(question.answerType) && question.answerOptions) {
           question.answerOptions.forEach((option, optIndex) => {
             console.log(`   question[][quest_options][][option_name]: "${option.text}"`);
@@ -642,14 +654,14 @@ export const AddSurveyPage = () => {
       console.log(`\n4. Summary:`);
       console.log(`   Total FormData fields: ${allKeys.length}`);
       console.log(`   Total files: ${fileCounter}`);
-      console.log(`   File keys: ${allKeys.filter(key => key.includes('[icons][]')).length}`);
+      console.log(`   File keys: ${allKeys.filter(key => key.includes('[icons][]') || key.includes('survey_image')).length}`);
 
       console.log(
         "\n5. FormData Request Summary:",
         {
           total_fields: Array.from(formData.keys()).length,
           total_files: fileCounter,
-          file_fields: Array.from(formData.keys()).filter(key => key.includes('[icons][]')).length
+          file_fields: Array.from(formData.keys()).filter(key => key.includes('[icons][]') || key.includes('survey_image')).length
         }
       );
 
@@ -787,6 +799,9 @@ export const AddSurveyPage = () => {
                 </MuiSelect>
               </FormControl>
 
+              {/* Survey Image Upload */}
+              
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="create-ticket"
@@ -839,7 +854,64 @@ export const AddSurveyPage = () => {
                 </FormControl>
               </div>
             )}
+            <div className="space-y-2 mt-3">
+                <label className="text-sm font-medium text-gray-700">
+                  Upload Image
+                </label>
+                <div className="flex items-center gap-4 grid grid-cols-3">
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        // For now, we'll add this to the first question or handle it differently
+                        if (file && questions.length > 0) {
+                          handleQuestionChange(questions[0].id, "questionImage", file);
+                        }
+                      }}
+                      className="hidden"
+                      id="survey-image"
+                      disabled={isSubmitting}
+                    />
+                    <label
+                      htmlFor="survey-image"
+                      className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                        isSubmitting
+                          ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
+                      }`}
+                    >
+                      {questions.length > 0 && questions[0].questionImage
+                        ? `Selected: ${questions[0].questionImage.name}`
+                        : "Click to upload question image"}
+                    </label>
+                  </div>
+                  {questions.length > 0 && questions[0].questionImage && (
+                    <Button
+                      onClick={() => handleQuestionChange(questions[0].id, "questionImage", null)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-400 hover:text-red-500 p-2"
+                      disabled={isSubmitting}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+                {questions.length > 0 && questions[0].questionImage && (
+                  <div className="mt-2">
+                    <img
+                      src={URL.createObjectURL(questions[0].questionImage)}
+                      alt="Question preview"
+                      className="max-w-full h-32 object-cover rounded-lg border"
+                      onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                    />
+                  </div>
+                )}
+              </div>
           </div>
+          
         </div>
 
         {/* Section 2: Questions */}
