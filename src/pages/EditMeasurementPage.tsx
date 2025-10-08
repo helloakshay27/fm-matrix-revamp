@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, FileChartColumnIncreasing, RefreshCw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
@@ -228,120 +228,102 @@ export default function EditMeasurementPage() {
           </Button>
         </div>
       ) : (
-        /* Form Card */
-        <Card className="bg-white border border-gray-200 rounded-none shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-              EDIT MEASUREMENT
+        <Card className="mx-auto ">
+          <CardHeader className="bg-[#f6f4ee] border-b">
+            <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <span className="inline-flex items-center">
+                <FileChartColumnIncreasing className="w-5 h-5" color='#C72030' />
+              </span>
+              <span className="text-[#C72030]">Edit Utilizations</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Measurement Reading Section */}
-              <div className="bg-orange-50 border-l-4 border-[#C72030] p-4 rounded-none">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">3</span>
-                  </div>
-                  <h3 className="text-[#C72030] font-medium text-sm uppercase tracking-wide">
-                    MEASUREMENT READING
-                  </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Asset Name
+                  </label>
+                  <Input
+                    value={formData.assetName}
+                    readOnly
+                    className="h-10 border border-gray-300 rounded-none bg-gray-50"
+                    placeholder="Asset Name"
+                  />
                 </div>
-
-                {/* Asset Information (Read-only) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Asset Name
-                    </label>
-                    <Input
-                      value={formData.assetName}
-                      readOnly
-                      className="h-10 border border-gray-300 rounded-none bg-gray-50"
-                      placeholder="Asset Name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Parameter Name
-                    </label>
-                    <Input
-                      value={formData.parameterName}
-                      readOnly
-                      className="h-10 border border-gray-300 rounded-none bg-gray-50"
-                      placeholder="Parameter Name"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Parameter Name
+                  </label>
+                  <Input
+                    value={formData.parameterName}
+                    readOnly
+                    className="h-10 border border-gray-300 rounded-none bg-gray-50"
+                    placeholder="Parameter Name"
+                  />
                 </div>
+              </div>
 
-                {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Opening */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Opening
-                    </label>
-                    <Input
-                      value={formData.opening}
-                      onChange={(e) => handleInputChange('opening', e.target.value)}
-                      className="h-10 border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                      placeholder="0.0"
-                      type="number"
-                      step="0.01"
-                    />
-                  </div>
-
-                  {/* Closing (Reading) */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Reading (MSR Value)
-                    </label>
-                    <Input
-                      value={formData.reading}
-                      onChange={(e) => handleInputChange('reading', e.target.value)}
-                      className="h-10 border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                      placeholder="MSR Value"
-                      type="number"
-                      step="0.01"
-                    />
-                  </div>
-
-                  {/* Consumption */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Consumption
-                    </label>
-                    <Input
-                      value={formData.consumption}
-                      onChange={(e) => handleInputChange('consumption', e.target.value)}
-                      className="h-10 border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                      placeholder="Enter Consumption"
-                      type="number"
-                      step="0.01"
-                    />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Opening
+                  </label>
+                  <Input
+                    value={formData.opening}
+                    onChange={(e) => handleInputChange('opening', e.target.value)}
+                    className="h-10 border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    placeholder="0.0"
+                    type="number"
+                    step="0.01"
+                  />
                 </div>
-
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-4 mt-8">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCancel}
-                    disabled={saving}
-                    className="px-8 py-2 h-10 rounded-none font-medium"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={saving}
-                    className="bg-[#6B2D5C] hover:bg-[#5A2449] text-white px-8 py-2 h-10 rounded-none font-medium transition-colors duration-200 flex items-center gap-2"
-                  >
-                    {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-                    {saving ? 'Updating...' : 'Update'}
-                  </Button>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Reading (MSR Value)
+                  </label>
+                  <Input
+                    value={formData.reading}
+                    onChange={(e) => handleInputChange('reading', e.target.value)}
+                    className="h-10 border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    placeholder="MSR Value"
+                    type="number"
+                    step="0.01"
+                  />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Consumption
+                  </label>
+                  <Input
+                    value={formData.consumption}
+                    onChange={(e) => handleInputChange('consumption', e.target.value)}
+                    className="h-10 border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                    placeholder="Enter Consumption"
+                    type="number"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 mt-8">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={saving}
+                  className="px-8 py-2 h-10 rounded-none font-medium"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="bg-[#6B2D5C] hover:bg-[#5A2449] text-white px-8 py-2 h-10 rounded-none font-medium transition-colors duration-200 flex items-center gap-2"
+                >
+                  {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
+                  {saving ? 'Updating...' : 'Update'}
+                </Button>
               </div>
             </form>
           </CardContent>

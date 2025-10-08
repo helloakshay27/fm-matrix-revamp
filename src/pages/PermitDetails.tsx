@@ -1688,34 +1688,7 @@ export const PermitDetails = () => {
                     </Section>
                 )} */}
 
-                {/* Permit Resume Section */}
-                {permitData.permit_resume && permitData.permit_resume.length > 0 && (
-                    <Section
-                        title="PERMIT RESUME"
-                        icon={<RefreshCw />}
-                        sectionKey="resume"
-                        activeSection={activeSection}
-                        setActiveSection={setActiveSection}
-                    >
-                        <div className="space-y-3">
-                            {permitData.permit_resume.map((resume: any, index: number) => (
-                                <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                                    <h4 className="font-medium text-gray-900 mb-2">Resume {index + 1}</h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                        <div>
-                                            <span className="text-gray-600">Date: </span>
-                                            <span className="text-gray-900">{formatDate(resume.date) || "N/A"}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-600">Status: </span>
-                                            <span className="text-gray-900">{resume.status || "N/A"}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </Section>
-                )}
+
 
                 {/* Manpower Details Section */}
                 {permitData.manpower_details && permitData.manpower_details.length > 0 && (
@@ -2821,6 +2794,46 @@ export const PermitDetails = () => {
                                     )}
                                 </Button>
                             </div>
+                        </div>
+                    </Section>
+                )}
+                {/* Permit Resume Section */}
+                {permitData.permit_resume && (
+                    <Section
+                        title="PERMIT RESUME"
+                        icon={<RefreshCw />}
+                        sectionKey="resume"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
+                        <div className="space-y-3">
+                            {/* {permitData.permit_resume.map((resume: any, index: number) => ( */}
+                            <div className="p-4 bg-gray-50 rounded-lg">
+                                <h4 className="font-medium text-gray-900 mb-2">Resume </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span className="text-gray-600">Reason for Resume: </span>
+                                        <span className="text-gray-900">{permitData.permit_resume?.reason_for_resume || "-"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Resume Date: </span>
+                                        <span className="text-gray-900">{formatDateWithTimezone(permitData.permit_resume?.resume_date) || "-"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Created By: </span>
+                                        <span className="text-gray-900">{permitData.permit_resume?.created_by?.full_name || "-"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Assignees: </span>
+                                        <span className="text-gray-900">{permitData.permit_resume?.assignees || "-"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Attachments Count: </span>
+                                        <span className="text-gray-900">{permitData.permit_resume?.attachments_count?.toString() || "0"}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {/* ))} */}
                         </div>
                     </Section>
                 )}
