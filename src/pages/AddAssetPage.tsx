@@ -2432,25 +2432,24 @@ const AddAssetPage = () => {
       Land: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["land_type", "location", "area"],
       },
       Building: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["building_type", "location", "built_up_area"],
       },
       "Leasehold Improvement": {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["improvement_description", "location_site"],
       },
       Vehicle: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [
           "vehicle_type",
           "make_model",
@@ -2460,31 +2459,30 @@ const AddAssetPage = () => {
       "Furniture & Fixtures": {
         ...baseValidationRules,
         locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "IT Equipment": {
         ...baseValidationRules,
         locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: [],
         categorySpecificFields: [],
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
         locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "Tools & Instruments": {
         ...baseValidationRules,
         locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       Meter: {
         ...baseValidationRules,
         locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
     };
@@ -2540,8 +2538,8 @@ const AddAssetPage = () => {
         return checkFieldsCompleted(rules.purchaseFields || []);
       case "dates":
         return checkFieldsCompleted(rules.datesFields || []);
-      case "warranty":
-        return checkFieldsCompleted(rules.warrantyFields || []);
+      // case "warranty":
+      //   return checkFieldsCompleted(rules.warrantyFields || []);
       default:
         return false;
     }
@@ -2720,7 +2718,7 @@ const AddAssetPage = () => {
       Land: {
         ...baseValidationRules,
         locationFields: [], // Land doesn't require location selection as it IS a location
-        warrantyFields: [], // Land typically doesn't have warranty
+        // warrantyFields: [], // Land typically doesn't have warranty
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Land
           // 'land_type', // From Basic Identification (required: true)
@@ -2731,7 +2729,7 @@ const AddAssetPage = () => {
       Building: {
         ...baseValidationRules,
         locationFields: [], // Buildings are locations themselves
-        warrantyFields: [], // Buildings typically don't have warranty expiry
+        // warrantyFields: [], // Buildings typically don't have warranty expiry
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Building
           "building_type", // From Basic Identification (required: true)
@@ -2742,7 +2740,7 @@ const AddAssetPage = () => {
       "Leasehold Improvement": {
         ...baseValidationRules,
         locationFields: [], // Improvements are tied to specific leased properties
-        warrantyFields: [], // Improvements typically don't have warranty expiry
+        // warrantyFields: [], // Improvements typically don't have warranty expiry
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Leasehold Improvement
           "improvement_description", // From Basic Identification (required: true)
@@ -2752,7 +2750,7 @@ const AddAssetPage = () => {
       Vehicle: {
         ...baseValidationRules,
         locationFields: [], // Vehicles are mobile, don't require fixed location
-        warrantyFields: ["warranty_expiry"], // Vehicles typically have warranty
+        // warrantyFields: ["warranty_expiry"], // Vehicles typically have warranty
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Vehicle
           "vehicle_type", // From Basic Identification (required: true)
@@ -2763,31 +2761,30 @@ const AddAssetPage = () => {
       "Furniture & Fixtures": {
         ...baseValidationRules,
         locationFields: ["site", "building"], // Furniture needs location
-        warrantyFields: ["warranty_expiry"], // Furniture typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "IT Equipment": {
         ...baseValidationRules,
         locationFields: ["site", "building"], // IT Equipment needs location
-        warrantyFields: ["warranty_expiry"], // IT Equipment typically has warranty
+        // warrantyFields: ["warranty_expiry"], // IT Equipment typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
         locationFields: ["site", "building"], // Machinery needs location
-        warrantyFields: ["warranty_expiry"], // Machinery typically has warranty
+        // warrantyFields: ["warranty_expiry"], // Machinery typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Tools & Instruments": {
         ...baseValidationRules,
         locationFields: ["site", "building"], // Tools need location
-        warrantyFields: ["warranty_expiry"], // Tools typically have warranty
+        // warrantyFields: ["warranty_expiry"], // Tools typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       Meter: {
         ...baseValidationRules,
         locationFields: ["site", "building"], // Meters need location
-        warrantyFields: ["warranty_expiry"], // Meters typically have warranty
+        // warrantyFields: ["warranty_expiry"], // Meters typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
     };
@@ -2938,18 +2935,18 @@ const AddAssetPage = () => {
     }
 
     // 6. Validate warranty fields (category-specific)
-    for (const field of currentCategoryRules.warrantyFields || []) {
-      if (!formData[field]) {
-        const fieldDisplayName =
-          fieldDisplayNames[field] ||
-          field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-        toast.error(`${fieldDisplayName} Required`, {
-          description: `Please select the ${fieldDisplayName.toLowerCase()} for ${selectedAssetCategory}.`,
-          duration: 4000,
-        });
-        return [`${fieldDisplayName} is required for ${selectedAssetCategory}`];
-      }
-    }
+    // for (const field of currentCategoryRules.warrantyFields || []) {
+    //   if (!formData[field]) {
+    //     const fieldDisplayName =
+    //       fieldDisplayNames[field] ||
+    //       field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    //     toast.error(`${fieldDisplayName} Required`, {
+    //       description: `Please select the ${fieldDisplayName.toLowerCase()} for ${selectedAssetCategory}.`,
+    //       duration: 4000,
+    //     });
+    //     return [`${fieldDisplayName} is required for ${selectedAssetCategory}`];
+    //   }
+    // }
 
     // 7. Validate category-specific required fields from assetFieldsConfig
     for (const fieldName of currentCategoryRules.categorySpecificFields || []) {
@@ -3176,13 +3173,10 @@ const AddAssetPage = () => {
 
   const handleSaveAndShow = () => {
     setSubmitting(true);
-    // Validate mandatory fields one by one
     const validationErrors = validateMandatoryFields();
     setValidationErrors(validationErrors);
 
     if (validationErrors.length > 0) {
-      // Since we're showing individual toasts in validateMandatoryFields,
-      // we just need to scroll to the first error field and return
       setTimeout(() => {
         const firstErrorField = document.querySelector(
           ".MuiTextField-root .Mui-error input, .MuiFormControl-root .Mui-error, input:invalid"
@@ -12562,7 +12556,7 @@ const AddAssetPage = () => {
           <button
             onClick={handleSaveAndShow}
             className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md   text-sm sm:text-base"
-            disabled={submitting}
+            // disabled={submitting}
           >
             Save & Show Details
           </button>
