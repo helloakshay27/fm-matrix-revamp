@@ -97,11 +97,11 @@ const customStyles = {
   }),
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isSelected 
-      ? "#C72030" 
-      : state.isFocused 
-      ? "#F6F4EE" 
-      : "#fff",
+    backgroundColor: state.isSelected
+      ? "#C72030"
+      : state.isFocused
+        ? "#F6F4EE"
+        : "#fff",
     color: state.isSelected ? "#fff" : "#1A1A1A",
     fontSize: "14px",
     padding: "8px 12px",
@@ -161,7 +161,7 @@ const singleSelectStyles = {
     padding: "4px 8px",
     color: state.isFocused ? "#C72030" : "#666",
     cursor: "pointer",
-    "&:hover": { 
+    "&:hover": {
       color: "#C72030",
     },
   }),
@@ -179,11 +179,11 @@ const singleSelectStyles = {
   }),
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isSelected 
-      ? "#C72030" 
-      : state.isFocused 
-      ? "#F6F4EE" 
-      : "#fff",
+    backgroundColor: state.isSelected
+      ? "#C72030"
+      : state.isFocused
+        ? "#F6F4EE"
+        : "#fff",
     color: state.isSelected ? "#fff" : "#1A1A1A",
     fontSize: "14px",
     padding: "8px 12px",
@@ -418,8 +418,8 @@ export const TicketDetailsPage = () => {
       cost: '',
       attachment: '',
       attachmentFiles: []
-    }]);
-  };
+    }])
+  }
   const removeCostRow = () => {
     setCostRows(prev => prev.length > 1 ? prev.slice(0, -1) : prev);
   };
@@ -580,10 +580,10 @@ export const TicketDetailsPage = () => {
     fetchResponsiblePersons();
   }, []);
 
-  console.log("corrective:-------------------",communicationTemplates
-                              .filter(template => template.identifier === "Corrective Action" && template?.active === true)
-                              .map(t => ({ value: t.id, label: t.identifier_action })));
-  
+  console.log("corrective:-------------------", communicationTemplates
+    .filter(template => template.identifier === "Corrective Action" && template?.active === true)
+    .map(t => ({ value: t.id, label: t.identifier_action })));
+
 
   // Fetch suppliers
   useEffect(() => {
@@ -790,13 +790,13 @@ export const TicketDetailsPage = () => {
     }
   };
 
-  // Handle Preventive Action change with auto-save
-  const handlePreventiveActionChange = async (selectedValue: string) => {
+  // Handle Preventive Action change with auto-save (multi-select)
+  const handlePreventiveActionChange = async (selectedOptions: Array<{ value: number; label: string }>) => {
     try {
       // Handle clear/unselect case
-      if (!selectedValue || selectedValue === '') {
+      if (!selectedOptions || selectedOptions.length === 0) {
         console.log('🔄 Clearing preventive action');
-        
+
         // Update local state
         setTicketData((prev) => {
           if (!prev) return prev;
@@ -835,24 +835,17 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      // Find the template by identifier_action
-      const selectedTemplate = communicationTemplates.find(
-        template => template.identifier === "Preventive Action" && template.identifier_action === selectedValue
-      );
-
-      if (!selectedTemplate) {
-        console.error('Selected preventive action template not found');
-        return;
-      }
-
-      const templateId = selectedTemplate.id;
+      // Get template IDs from selected options
+      const templateIds = selectedOptions.map(option => option.value);
+      const templateLabels = selectedOptions.map(option => option.label).join(', ');
 
       // Update local state
       setTicketData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          preventive_action: selectedValue
+          preventive_action: templateLabels,
+          preventive_action_template_ids: templateIds
         };
       });
 
@@ -862,11 +855,13 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      console.log('🔄 Auto-saving preventive action template ID:', templateId);
+      console.log('🔄 Auto-saving preventive action template IDs:', templateIds);
 
       const formDataToSend = new FormData();
       formDataToSend.append('complaint_log[complaint_id]', id);
-      formDataToSend.append('preventive_action[template_ids][]', String(templateId));
+      templateIds.forEach(templateId => {
+        formDataToSend.append('preventive_action[template_ids][]', String(templateId));
+      });
 
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
@@ -893,13 +888,13 @@ export const TicketDetailsPage = () => {
     }
   };
 
-  // Handle Corrective Action change with auto-save
-  const handleCorrectiveActionChange = async (selectedValue: string) => {
+  // Handle Corrective Action change with auto-save (multi-select)
+  const handleCorrectiveActionChange = async (selectedOptions: Array<{ value: number; label: string }>) => {
     try {
       // Handle clear/unselect case
-      if (!selectedValue || selectedValue === '') {
+      if (!selectedOptions || selectedOptions.length === 0) {
         console.log('🔄 Clearing corrective action');
-        
+
         // Update local state
         setTicketData((prev) => {
           if (!prev) return prev;
@@ -938,24 +933,17 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      // Find the template by identifier_action
-      const selectedTemplate = communicationTemplates.find(
-        template => template.identifier === "Corrective Action" && template.identifier_action === selectedValue
-      );
-
-      if (!selectedTemplate) {
-        console.error('Selected corrective action template not found');
-        return;
-      }
-
-      const templateId = selectedTemplate.id;
+      // Get template IDs from selected options
+      const templateIds = selectedOptions.map(option => option.value);
+      const templateLabels = selectedOptions.map(option => option.label).join(', ');
 
       // Update local state
       setTicketData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          corrective_action: selectedValue
+          corrective_action: templateLabels,
+          corrective_action_template_ids: templateIds
         };
       });
 
@@ -965,11 +953,13 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      console.log('🔄 Auto-saving corrective action template ID:', templateId);
+      console.log('🔄 Auto-saving corrective action template IDs:', templateIds);
 
       const formDataToSend = new FormData();
       formDataToSend.append('complaint_log[complaint_id]', id);
-      formDataToSend.append('corrective_action[template_ids][]', String(templateId));
+      templateIds.forEach(templateId => {
+        formDataToSend.append('corrective_action[template_ids][]', String(templateId));
+      });
 
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
@@ -996,13 +986,13 @@ export const TicketDetailsPage = () => {
     }
   };
 
-  // Handle Short-term Impact change with auto-save
-  const handleShortTermImpactChange = async (selectedValue: string) => {
+  // Handle Short-term Impact change with auto-save (multi-select)
+  const handleShortTermImpactChange = async (selectedOptions: Array<{ value: number; label: string }>) => {
     try {
       // Handle clear/unselect case
-      if (!selectedValue || selectedValue === '') {
+      if (!selectedOptions || selectedOptions.length === 0) {
         console.log('🔄 Clearing short-term impact');
-        
+
         // Update local state
         setTicketData((prev) => {
           if (!prev) return prev;
@@ -1041,24 +1031,17 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      // Find the template by identifier_action
-      const selectedTemplate = communicationTemplates.find(
-        template => template.identifier === "Short-term Impact" && template.identifier_action === selectedValue
-      );
-
-      if (!selectedTemplate) {
-        console.error('Selected short-term impact template not found');
-        return;
-      }
-
-      const templateId = selectedTemplate.id;
+      // Get template IDs from selected options
+      const templateIds = selectedOptions.map(option => option.value);
+      const templateLabels = selectedOptions.map(option => option.label).join(', ');
 
       // Update local state
       setTicketData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          short_term_impact: selectedValue
+          short_term_impact: templateLabels,
+          short_term_impact_template_ids: templateIds
         };
       });
 
@@ -1068,11 +1051,13 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      console.log('🔄 Auto-saving short-term impact template ID:', templateId);
+      console.log('🔄 Auto-saving short-term impact template IDs:', templateIds);
 
       const formDataToSend = new FormData();
       formDataToSend.append('complaint_log[complaint_id]', id);
-      formDataToSend.append('short_term_impact[template_ids][]', String(templateId));
+      templateIds.forEach(templateId => {
+        formDataToSend.append('short_term_impact[template_ids][]', String(templateId));
+      });
 
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
@@ -1099,13 +1084,13 @@ export const TicketDetailsPage = () => {
     }
   };
 
-  // Handle Long-term Impact change with auto-save
-  const handleLongTermImpactChange = async (selectedValue: string) => {
+  // Handle Long-term Impact change with auto-save (multi-select)
+  const handleLongTermImpactChange = async (selectedOptions: Array<{ value: number; label: string }>) => {
     try {
       // Handle clear/unselect case
-      if (!selectedValue || selectedValue === '') {
+      if (!selectedOptions || selectedOptions.length === 0) {
         console.log('🔄 Clearing long-term impact');
-        
+
         // Update local state
         setTicketData((prev) => {
           if (!prev) return prev;
@@ -1144,24 +1129,17 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      // Find the template by identifier_action
-      const selectedTemplate = communicationTemplates.find(
-        template => template.identifier === "Long-term Impact" && template.identifier_action === selectedValue
-      );
-
-      if (!selectedTemplate) {
-        console.error('Selected long-term impact template not found');
-        return;
-      }
-
-      const templateId = selectedTemplate.id;
+      // Get template IDs from selected options
+      const templateIds = selectedOptions.map(option => option.value);
+      const templateLabels = selectedOptions.map(option => option.label).join(', ');
 
       // Update local state
       setTicketData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          impact: selectedValue
+          impact: templateLabels,
+          long_term_impact_template_ids: templateIds
         };
       });
 
@@ -1171,11 +1149,13 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      console.log('🔄 Auto-saving long-term impact template ID:', templateId);
+      console.log('🔄 Auto-saving long-term impact template IDs:', templateIds);
 
       const formDataToSend = new FormData();
       formDataToSend.append('complaint_log[complaint_id]', id);
-      formDataToSend.append('impact[template_ids][]', String(templateId));
+      templateIds.forEach(templateId => {
+        formDataToSend.append('impact[template_ids][]', String(templateId));
+      });
 
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
@@ -1461,8 +1441,9 @@ export const TicketDetailsPage = () => {
       setSubmittingCostApproval(false);
     }
   };
-{console.log("communicationTemplates:--------",communicationTemplates)
-                      }
+  {
+    console.log("communicationTemplates:--------", communicationTemplates)
+  }
   // Add useEffect to initialize and update ageing
   useEffect(() => {
     if (ticketData?.ticket_ageing_minutes) {
@@ -1630,100 +1611,68 @@ export const TicketDetailsPage = () => {
     return matchedPerson ? matchedPerson.id.toString() : ticketData.responsible_person;
   };
 
-  // Helper function to get template value for Preventive Action
-  const getPreventiveActionValue = () => {
-    if (!ticketData?.preventive_action) return '';
-    
-    console.log('🔍 Preventive Action Debug:', {
-      ticketDataValue: ticketData.preventive_action,
-      availableTemplates: communicationTemplates
-        .filter(t => t.identifier === "Preventive Action" && t.active === true)
-        .map(t => ({ id: t.id, action: t.identifier_action }))
-    });
-    
-    // Check if the value matches any template's identifier_action
-    const matchedTemplate = communicationTemplates.find(
-      template => template.identifier === "Preventive Action" &&
-                 template.identifier_action === ticketData.preventive_action &&
-                 template.active === true
+  // Helper function to get template values for Preventive Action (multi-select)
+  const getPreventiveActionValues = () => {
+    if (!ticketData?.preventive_action_template_ids || !Array.isArray(ticketData.preventive_action_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Preventive Action" &&
+        template.active === true
     );
-    
-    console.log('🔍 Preventive Action Matched:', matchedTemplate ? matchedTemplate.identifier_action : 'No match');
-    
-    // Return matched value or the original value from ticket data
-    return matchedTemplate ? matchedTemplate.identifier_action : ticketData.preventive_action;
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
   };
 
-  // Helper function to get template value for Short-term Impact
-  const getShortTermImpactValue = () => {
-    if (!ticketData?.short_term_impact) return '';
-    
-    console.log('🔍 Short-term Impact Debug:', {
-      ticketDataValue: ticketData.short_term_impact,
-      availableTemplates: communicationTemplates
-        .filter(t => t.identifier === "Short-term Impact" && t.active === true)
-        .map(t => ({ id: t.id, action: t.identifier_action }))
-    });
-    
-    // Check if the value matches any template's identifier_action
-    const matchedTemplate = communicationTemplates.find(
-      template => template.identifier === "Short-term Impact" &&
-                 template.identifier_action === ticketData.short_term_impact &&
-                 template.active === true
+  // Helper function to get template values for Short-term Impact (multi-select)
+  const getShortTermImpactValues = () => {
+    if (!ticketData?.short_term_impact_template_ids || !Array.isArray(ticketData.short_term_impact_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Short-term Impact" &&
+        template.active === true
     );
-    
-    console.log('🔍 Short-term Impact Matched:', matchedTemplate ? matchedTemplate.identifier_action : 'No match');
-    
-    // Return matched value or the original value from ticket data
-    return matchedTemplate ? matchedTemplate.identifier_action : ticketData.short_term_impact;
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
   };
 
-  // Helper function to get template value for Corrective Action
-  const getCorrectiveActionValue = () => {
-    if (!ticketData?.corrective_action) return '';
-    
-    console.log('🔍 Corrective Action Debug:', {
-      ticketDataValue: ticketData.corrective_action,
-      availableTemplates: communicationTemplates
-        .filter(t => t.identifier === "Corrective Action" && t.active === true)
-        .map(t => ({ id: t.id, action: t.identifier_action }))
-    });
-    
-    // Check if the value matches any template's identifier_action
-    const matchedTemplate = communicationTemplates.find(
-      template => template.identifier === "Corrective Action" &&
-                 template.identifier_action === ticketData.corrective_action &&
-                 template.active === true
+  // Helper function to get template values for Corrective Action (multi-select)
+  const getCorrectiveActionValues = () => {
+    if (!ticketData?.corrective_action_template_ids || !Array.isArray(ticketData.corrective_action_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Corrective Action" &&
+        template.active === true
     );
-    
-    console.log('🔍 Corrective Action Matched:', matchedTemplate ? matchedTemplate.identifier_action : 'No match');
-    
-    // Return matched value or the original value from ticket data
-    return matchedTemplate ? matchedTemplate.identifier_action : ticketData.corrective_action;
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
   };
 
-  // Helper function to get template value for Long-term Impact
-  const getLongTermImpactValue = () => {
-    if (!ticketData?.impact) return '';
-    
-    console.log('🔍 Long-term Impact Debug:', {
-      ticketDataValue: ticketData.impact,
-      availableTemplates: communicationTemplates
-        .filter(t => t.identifier === "Long-term Impact" && t.active === true)
-        .map(t => ({ id: t.id, action: t.identifier_action }))
-    });
-    
-    // Check if the value matches any template's identifier_action
-    const matchedTemplate = communicationTemplates.find(
-      template => template.identifier === "Long-term Impact" &&
-                 template.identifier_action === ticketData.impact &&
-                 template.active === true
+  // Helper function to get template values for Long-term Impact (multi-select)
+  const getLongTermImpactValues = () => {
+    if (!ticketData?.long_term_impact_template_ids || !Array.isArray(ticketData.long_term_impact_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Long-term Impact" &&
+        template.active === true
     );
-    
-    console.log('🔍 Long-term Impact Matched:', matchedTemplate ? matchedTemplate.identifier_action : 'No match');
-    
-    // Return matched value or the original value from ticket data
-    return matchedTemplate ? matchedTemplate.identifier_action : ticketData.impact;
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
   };
 
   // Helper function to get Root Cause Analysis values for React Select
@@ -1732,24 +1681,24 @@ export const TicketDetailsPage = () => {
     if (ticketData?.rca_template_ids && Array.isArray(ticketData.rca_template_ids)) {
       // Filter out duplicate IDs using Set
       const uniqueIds = [...new Set(ticketData.rca_template_ids)];
-      
+
       console.log('🔍 Root Cause Analysis Template IDs from API:', uniqueIds);
-      
+
       // Find templates by IDs
       const matchedTemplates = communicationTemplates.filter(
         (t) =>
           uniqueIds.includes(t.id) &&
           t.identifier === "Root Cause Analysis"
       );
-      
+
       console.log('🔍 Root Cause Analysis Matched Templates:', matchedTemplates.map(t => ({ id: t.id, action: t.identifier_action })));
-      
+
       return matchedTemplates.map((t) => ({
         value: t.id,
         label: t.identifier_action,
       }));
     }
-    
+
     // Fallback: Use text matching if no template IDs
     if (!ticketData.root_cause) return [];
     const rootCauseString =
@@ -1804,9 +1753,9 @@ export const TicketDetailsPage = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex flex-col gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-  {ticketData.heading || "Ticket Summary"}
-</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+              {ticketData.heading || "Ticket Summary"}
+            </h1>
 
             <div className="text-sm text-gray-600">
               Ticket #{ticketData.ticket_number || "-"} • Created by{" "}
@@ -2376,8 +2325,8 @@ export const TicketDetailsPage = () => {
                               <div className="flex items-start mb-4">
                                 <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Description</span>
                                 <span className="text-gray-900 font-medium break-words overflow-wrap-anywhere" style={{ fontSize: '14px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-  {ticketData.heading || 'No description available'}
-</span>
+                                  {ticketData.heading || 'No description available'}
+                                </span>
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="">
@@ -2420,8 +2369,8 @@ export const TicketDetailsPage = () => {
                                             {/* Dynamic value */}
                                             <span
                                               className={`text-[13px] md:text-[14px] font-semibold whitespace-nowrap ${cell.isExceeded && cell.label === 'Balance TAT'
-                                                  ? 'text-red-600'
-                                                  : 'text-gray-900'
+                                                ? 'text-red-600'
+                                                : 'text-gray-900'
                                                 }`}
                                             >
                                               {cell.isExceeded && cell.label === 'Balance TAT'
@@ -2803,16 +2752,16 @@ export const TicketDetailsPage = () => {
                                 {(() => {
                                   // Use template IDs from API with duplicate filtering
                                   const uniqueIds = [...new Set(ticketData.rca_template_ids)];
-                                  
+
                                   return uniqueIds.map((templateId, index) => {
                                     const matchedTemplate = communicationTemplates.find(
                                       (template) =>
                                         template.id === templateId &&
                                         template.identifier === "Root Cause Analysis"
                                     );
-                                    
+
                                     if (!matchedTemplate) return null;
-                                    
+
                                     return (
                                       <div
                                         key={`rca-display-${templateId}`}
@@ -3317,7 +3266,7 @@ export const TicketDetailsPage = () => {
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Ticket Closure
                       </h3>
-                      
+
                     </div>
                     <Button
                       variant="outline"
@@ -3333,89 +3282,6 @@ export const TicketDetailsPage = () => {
                   <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
                     {/* Two row / two column panels */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {/* Preventive Action */}
-                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                        <div className="relative w-full">
-                          {/* Floating label on border */}
-                          <label
-                            style={{
-                              position: "absolute",
-                              top: "-10px",
-                              left: "12px",
-                              background: "#fff",
-                              padding: "0 6px",
-                              fontWeight: 500,
-                              fontSize: "14px",
-                              color: "#1A1A1A",
-                              zIndex: 10,
-                            }}
-                          >
-                            Preventive Action
-                          </label>
-
-                          {/* React Select */}
-                          <Select
-                            value={(() => {
-                              const value = getPreventiveActionValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Preventive Action" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handlePreventiveActionChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handlePreventiveActionChange('');
-                              }
-                            }}
-                            options={communicationTemplates
-                              .filter((t) => t.identifier === "Preventive Action" && t.active === true)
-                              .map((t) => ({
-                                value: t.id,
-                                label: t.identifier_action,
-                              }))}
-                            placeholder="Select Preventive Action"
-                            styles={singleSelectStyles}
-                            isClearable
-                          />
-                        </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
-                          {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.preventive_action) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Preventive Action" &&
-                                  template.identifier_action === ticketData.preventive_action &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.preventive_action_template_ids && Array.isArray(ticketData.preventive_action_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Preventive Action"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            return ticketData.preventive_action || 'No preventive action description available';
-                          })()}
-                        </div>
-                      </div>
-
                       {/* Short-term Impact */}
                       <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                         <div className="relative w-full">
@@ -3438,23 +3304,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={(() => {
-                              const value = getShortTermImpactValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Short-term Impact" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleShortTermImpactChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleShortTermImpactChange('');
-                              }
+                            value={getShortTermImpactValues()}
+                            onChange={(selectedOptions) => {
+                              handleShortTermImpactChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Short-term Impact" && t.active === true)
@@ -3463,38 +3315,36 @@ export const TicketDetailsPage = () => {
                                 label: t.identifier_action,
                               }))}
                             placeholder="Select Short-term Impact"
-                            styles={singleSelectStyles}
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
                             isClearable
                           />
                         </div>
-                        
-                        <div className="mt-4 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1 space-y-1">
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 overflow-y-auto pr-1">
                           {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.short_term_impact) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Short-term Impact" &&
-                                  template.identifier_action === ticketData.short_term_impact &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+                            if (!ticketData?.short_term_impact_template_ids || ticketData.short_term_impact_template_ids.length === 0) {
+                              return 'No short-term impact description available';
                             }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.short_term_impact_template_ids && Array.isArray(ticketData.short_term_impact_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Short-term Impact"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+
+                            const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Short-term Impact"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No short-term impact description available';
                             }
-                            
-                            return ticketData.short_term_impact || 'No short-term impact description available';
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`short-term-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
                           })()}
                         </div>
                       </div>
@@ -3521,23 +3371,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={(() => {
-                              const value = getCorrectiveActionValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Corrective Action" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleCorrectiveActionChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleCorrectiveActionChange('');
-                              }
+                            value={getCorrectiveActionValues()}
+                            onChange={(selectedOptions) => {
+                              handleCorrectiveActionChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Corrective Action" && t.active === true)
@@ -3546,38 +3382,36 @@ export const TicketDetailsPage = () => {
                                 label: t.identifier_action,
                               }))}
                             placeholder="Select Corrective Action"
-                            styles={singleSelectStyles}
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
                             isClearable
                           />
                         </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 overflow-y-auto pr-1">
                           {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.corrective_action) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Corrective Action" &&
-                                  template.identifier_action === ticketData.corrective_action &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+                            if (!ticketData?.corrective_action_template_ids || ticketData.corrective_action_template_ids.length === 0) {
+                              return 'No corrective action description available';
                             }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.corrective_action_template_ids && Array.isArray(ticketData.corrective_action_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Corrective Action"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+
+                            const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Corrective Action"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No corrective action description available';
                             }
-                            
-                            return ticketData.corrective_action || 'No corrective action description available';
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`corrective-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
                           })()}
                         </div>
                       </div>
@@ -3604,23 +3438,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={(() => {
-                              const value = getLongTermImpactValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Long-term Impact" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleLongTermImpactChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleLongTermImpactChange('');
-                              }
+                            value={getLongTermImpactValues()}
+                            onChange={(selectedOptions) => {
+                              handleLongTermImpactChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Long-term Impact" && t.active === true)
@@ -3629,38 +3449,36 @@ export const TicketDetailsPage = () => {
                                 label: t.identifier_action,
                               }))}
                             placeholder="Select Long-term Impact"
-                            styles={singleSelectStyles}
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
                             isClearable
                           />
                         </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 overflow-y-auto pr-1">
                           {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.impact) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Long-term Impact" &&
-                                  template.identifier_action === ticketData.impact &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+                            if (!ticketData?.long_term_impact_template_ids || ticketData.long_term_impact_template_ids.length === 0) {
+                              return 'No long-term impact description available';
                             }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.long_term_impact_template_ids && Array.isArray(ticketData.long_term_impact_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Long-term Impact"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+
+                            const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Long-term Impact"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No long-term impact description available';
                             }
-                            
-                            return ticketData.impact || 'No long-term impact description available';
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`long-term-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
                           })()}
                         </div>
                       </div>
@@ -3703,13 +3521,13 @@ export const TicketDetailsPage = () => {
                               const matchedPerson = responsiblePersons.find(
                                 p => p.id.toString() === value
                               );
-                              return matchedPerson ? { 
-                                value: matchedPerson.id, 
+                              return matchedPerson ? {
+                                value: matchedPerson.id,
                                 label: `${matchedPerson.full_name}${matchedPerson.employee_type ? ` (${matchedPerson.employee_type})` : ''}`
                               } : null;
                             })()}
                             onChange={(selectedOption) => {
-                              if (selectedOption) {
+                              if (selectedOption && 'value' in selectedOption) {
                                 handleResponsiblePersonChange(selectedOption.value.toString());
                               }
                             }}
@@ -4110,7 +3928,7 @@ export const TicketDetailsPage = () => {
                           <div className="mb-3">
                             <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                               <InputLabel shrink>Template</InputLabel>
-                              <Select
+                              <MuiSelect
                                 label="Template"
                                 notched
                                 displayEmpty
@@ -4142,7 +3960,7 @@ export const TicketDetailsPage = () => {
                                     {template.identifier_action}
                                   </MenuItem>
                                 ))}
-                              </Select>
+                              </MuiSelect>
                             </FormControl>
                           </div>
 
@@ -4212,7 +4030,7 @@ export const TicketDetailsPage = () => {
                           <div className="mb-3">
                             <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                               <InputLabel shrink>Template</InputLabel>
-                              <Select
+                              <MuiSelect
                                 label="Template"
                                 notched
                                 displayEmpty
@@ -4244,7 +4062,7 @@ export const TicketDetailsPage = () => {
                                     {template.identifier_action}
                                   </MenuItem>
                                 ))}
-                              </Select>
+                              </MuiSelect>
                             </FormControl>
                           </div>
 
@@ -4474,8 +4292,8 @@ export const TicketDetailsPage = () => {
                               <div className="flex items-start mb-4">
                                 <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Description</span>
                                 <span className="text-gray-900 font-medium break-words overflow-wrap-anywhere" style={{ fontSize: '14px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-  {ticketData.heading || 'No description available'}
-</span>
+                                  {ticketData.heading || 'No description available'}
+                                </span>
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="">
@@ -4518,8 +4336,8 @@ export const TicketDetailsPage = () => {
                                             {/* Dynamic value */}
                                             <span
                                               className={`text-[13px] md:text-[14px] font-semibold whitespace-nowrap ${cell.isExceeded && cell.label === 'Balance TAT'
-                                                  ? 'text-red-600'
-                                                  : 'text-gray-900'
+                                                ? 'text-red-600'
+                                                : 'text-gray-900'
                                                 }`}
                                             >
                                               {cell.isExceeded && cell.label === 'Balance TAT'
@@ -4901,16 +4719,16 @@ export const TicketDetailsPage = () => {
                                 {(() => {
                                   // Use template IDs from API with duplicate filtering
                                   const uniqueIds = [...new Set(ticketData.rca_template_ids)];
-                                  
+
                                   return uniqueIds.map((templateId, index) => {
                                     const matchedTemplate = communicationTemplates.find(
                                       (template) =>
                                         template.id === templateId &&
                                         template.identifier === "Root Cause Analysis"
                                     );
-                                    
+
                                     if (!matchedTemplate) return null;
-                                    
+
                                     return (
                                       <div
                                         key={`rca-display-${templateId}`}
@@ -5415,7 +5233,7 @@ export const TicketDetailsPage = () => {
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Ticket Closure
                       </h3>
-                      
+
                     </div>
                     <Button
                       variant="outline"
@@ -5431,89 +5249,6 @@ export const TicketDetailsPage = () => {
                   <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
                     {/* Two row / two column panels */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {/* Preventive Action */}
-                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                        <div className="relative w-full">
-                          {/* Floating label on border */}
-                          <label
-                            style={{
-                              position: "absolute",
-                              top: "-10px",
-                              left: "12px",
-                              background: "#fff",
-                              padding: "0 6px",
-                              fontWeight: 500,
-                              fontSize: "14px",
-                              color: "#1A1A1A",
-                              zIndex: 10,
-                            }}
-                          >
-                            Preventive Action
-                          </label>
-
-                          {/* React Select */}
-                          <Select
-                            value={(() => {
-                              const value = getPreventiveActionValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Preventive Action" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handlePreventiveActionChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handlePreventiveActionChange('');
-                              }
-                            }}
-                            options={communicationTemplates
-                              .filter((t) => t.identifier === "Preventive Action" && t.active === true)
-                              .map((t) => ({
-                                value: t.id,
-                                label: t.identifier_action,
-                              }))}
-                            placeholder="Select Preventive Action"
-                            styles={singleSelectStyles}
-                            isClearable
-                          />
-                        </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
-                          {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.preventive_action) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Preventive Action" &&
-                                  template.identifier_action === ticketData.preventive_action &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.preventive_action_template_ids && Array.isArray(ticketData.preventive_action_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Preventive Action"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            return ticketData.preventive_action || 'No preventive action description available';
-                          })()}
-                        </div>
-                      </div>
-
                       {/* Short-term Impact */}
                       <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                         <div className="relative w-full">
@@ -5536,23 +5271,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={(() => {
-                              const value = getShortTermImpactValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Short-term Impact" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleShortTermImpactChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleShortTermImpactChange('');
-                              }
+                            value={getShortTermImpactValues()}
+                            onChange={(selectedOptions) => {
+                              handleShortTermImpactChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Short-term Impact" && t.active === true)
@@ -5561,38 +5282,36 @@ export const TicketDetailsPage = () => {
                                 label: t.identifier_action,
                               }))}
                             placeholder="Select Short-term Impact"
-                            styles={singleSelectStyles}
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
                             isClearable
                           />
                         </div>
-                        
-                        <div className="mt-4 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1 space-y-1">
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 overflow-y-auto pr-1">
                           {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.short_term_impact) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Short-term Impact" &&
-                                  template.identifier_action === ticketData.short_term_impact &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+                            if (!ticketData?.short_term_impact_template_ids || ticketData.short_term_impact_template_ids.length === 0) {
+                              return 'No short-term impact description available';
                             }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.short_term_impact_template_ids && Array.isArray(ticketData.short_term_impact_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Short-term Impact"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+
+                            const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Short-term Impact"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No short-term impact description available';
                             }
-                            
-                            return ticketData.short_term_impact || 'No short-term impact description available';
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`short-term-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
                           })()}
                         </div>
                       </div>
@@ -5619,23 +5338,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={(() => {
-                              const value = getCorrectiveActionValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Corrective Action" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleCorrectiveActionChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleCorrectiveActionChange('');
-                              }
+                            value={getCorrectiveActionValues()}
+                            onChange={(selectedOptions) => {
+                              handleCorrectiveActionChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Corrective Action" && t.active === true)
@@ -5644,38 +5349,36 @@ export const TicketDetailsPage = () => {
                                 label: t.identifier_action,
                               }))}
                             placeholder="Select Corrective Action"
-                            styles={singleSelectStyles}
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
                             isClearable
                           />
                         </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 overflow-y-auto pr-1">
                           {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.corrective_action) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Corrective Action" &&
-                                  template.identifier_action === ticketData.corrective_action &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+                            if (!ticketData?.corrective_action_template_ids || ticketData.corrective_action_template_ids.length === 0) {
+                              return 'No corrective action description available';
                             }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.corrective_action_template_ids && Array.isArray(ticketData.corrective_action_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Corrective Action"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+
+                            const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Corrective Action"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No corrective action description available';
                             }
-                            
-                            return ticketData.corrective_action || 'No corrective action description available';
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`corrective-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
                           })()}
                         </div>
                       </div>
@@ -5702,23 +5405,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={(() => {
-                              const value = getLongTermImpactValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Long-term Impact" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleLongTermImpactChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleLongTermImpactChange('');
-                              }
+                            value={getLongTermImpactValues()}
+                            onChange={(selectedOptions) => {
+                              handleLongTermImpactChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Long-term Impact" && t.active === true)
@@ -5727,38 +5416,36 @@ export const TicketDetailsPage = () => {
                                 label: t.identifier_action,
                               }))}
                             placeholder="Select Long-term Impact"
-                            styles={singleSelectStyles}
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
                             isClearable
                           />
                         </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 overflow-y-auto pr-1">
                           {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.impact) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Long-term Impact" &&
-                                  template.identifier_action === ticketData.impact &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+                            if (!ticketData?.long_term_impact_template_ids || ticketData.long_term_impact_template_ids.length === 0) {
+                              return 'No long-term impact description available';
                             }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.long_term_impact_template_ids && Array.isArray(ticketData.long_term_impact_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Long-term Impact"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+
+                            const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Long-term Impact"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No long-term impact description available';
                             }
-                            
-                            return ticketData.impact || 'No long-term impact description available';
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`long-term-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
                           })()}
                         </div>
                       </div>
@@ -5801,13 +5488,13 @@ export const TicketDetailsPage = () => {
                               const matchedPerson = responsiblePersons.find(
                                 p => p.id.toString() === value
                               );
-                              return matchedPerson ? { 
-                                value: matchedPerson.id, 
+                              return matchedPerson ? {
+                                value: matchedPerson.id,
                                 label: `${matchedPerson.full_name}${matchedPerson.employee_type ? ` (${matchedPerson.employee_type})` : ''}`
                               } : null;
                             })()}
                             onChange={(selectedOption) => {
-                              if (selectedOption) {
+                              if (selectedOption && 'value' in selectedOption) {
                                 handleResponsiblePersonChange(selectedOption.value.toString());
                               }
                             }}
@@ -6208,7 +5895,7 @@ export const TicketDetailsPage = () => {
                           <div className="mb-3">
                             <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                               <InputLabel shrink>Template</InputLabel>
-                              <Select
+                              <MuiSelect
                                 label="Template"
                                 notched
                                 displayEmpty
@@ -6240,7 +5927,7 @@ export const TicketDetailsPage = () => {
                                     {template.identifier_action}
                                   </MenuItem>
                                 ))}
-                              </Select>
+                              </MuiSelect>
                             </FormControl>
                           </div>
 
@@ -6310,7 +5997,7 @@ export const TicketDetailsPage = () => {
                           <div className="mb-3">
                             <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                               <InputLabel shrink>Template</InputLabel>
-                              <Select
+                              <MuiSelect
                                 label="Template"
                                 notched
                                 displayEmpty
@@ -6342,7 +6029,7 @@ export const TicketDetailsPage = () => {
                                     {template.identifier_action}
                                   </MenuItem>
                                 ))}
-                              </Select>
+                              </MuiSelect>
                             </FormControl>
                           </div>
 
@@ -7330,4 +7017,4 @@ export const TicketDetailsPage = () => {
       />
     </div>
   );
-};
+}

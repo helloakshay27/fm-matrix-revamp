@@ -1164,6 +1164,7 @@ import { CSS } from '@dnd-kit/utilities';
 import AssetStatisticsSelector from '@/components/AssetStatisticsSelector';
 import { AssetAnalyticsSelector } from '@/components/AssetAnalyticsSelector';
 import type { Asset as TableAsset } from '@/hooks/useAssets';
+import { DataArray } from '@mui/icons-material';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -1803,7 +1804,7 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={stats} onCardClick={handleStatCardClick} />
+              <AssetStats stats={data} onCardClick={handleStatCardClick} />
 
               <div className="relative">
                 <AssetDataTable

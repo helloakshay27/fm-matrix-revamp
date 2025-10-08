@@ -768,6 +768,7 @@ import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
 import TabularResponseDetailsPage from "./pages/TabularResponseDetailsPage";
 import CurrencyPage from "./pages/CurrencyPage";
 import { LockedUsersDashboard } from "./pages/settings/LockedUsersDashboard";
+import { PRDeletionRequests } from "./pages/PRDeletionRequests";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1993,6 +1994,10 @@ function App() {
                   <Route
                     path="/finance/pending-approvals"
                     element={<PendingApprovalsDashboard />}
+                  />
+                  <Route
+                    path="/finance/deletion-requests"
+                    element={<PRDeletionRequests />}
                   />
                   <Route
                     path="/finance/invoice"

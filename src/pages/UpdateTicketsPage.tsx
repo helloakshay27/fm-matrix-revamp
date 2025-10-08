@@ -2108,48 +2108,53 @@ const UpdateTicketsPage: React.FC = () => {
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                       <InputLabel shrink>Preventive Action</InputLabel>
                       <MuiSelect
+                        multiple
                         value={(() => {
-                          // Priority 1: Use template IDs from formData
+                          // Use template IDs from formData to find selected template actions
                           if (formData.preventiveActionTemplateIds && formData.preventiveActionTemplateIds.length > 0) {
-                            const template = communicationTemplates.find(
-                              t => t.id === formData.preventiveActionTemplateIds[0]
-                            );
-                            return template?.identifier_action || "";
+                            return formData.preventiveActionTemplateIds
+                              .map(id => {
+                                const template = communicationTemplates.find(t => t.id === id);
+                                return template?.identifier_action || "";
+                              })
+                              .filter(action => action !== "");
                           }
-                          // Fallback: Use string value
-                          return formData.preventiveAction;
+                          return [];
                         })()}
                         onChange={(e) => {
-                          const selectedValue = e.target.value;
-                          handleInputChange("preventiveAction", selectedValue);
-
-                          // Find the template and store its ID
-                          const selectedTemplate = communicationTemplates.find(
-                            t => t.identifier === "Preventive Action" && t.identifier_action === selectedValue
-                          );
-                          if (selectedTemplate) {
-                            setFormData(prev => ({
-                              ...prev,
-                              preventiveActionTemplateIds: [selectedTemplate.id]
-                            }));
-                            console.log('📝 Preventive Action Template ID stored:', selectedTemplate.id);
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              preventiveActionTemplateIds: []
-                            }));
-                          }
+                          const selectedValues = e.target.value as string[];
+                          
+                          // Find all selected templates and store their IDs
+                          const selectedTemplateIds = selectedValues
+                            .map(value => {
+                              const template = communicationTemplates.find(
+                                t => t.identifier === "Preventive Action" && t.identifier_action === value
+                              );
+                              return template?.id;
+                            })
+                            .filter((id): id is number => id !== undefined);
+                          
+                          setFormData(prev => ({
+                            ...prev,
+                            preventiveActionTemplateIds: selectedTemplateIds,
+                            preventiveAction: selectedValues.join(", ")
+                          }));
+                          console.log('📝 Preventive Action Template IDs stored:', selectedTemplateIds);
                         }}
                         label="Preventive Action"
                         notched
                         displayEmpty
                         disabled={loadingTemplates}
+                        renderValue={(selected) => {
+                          const selectedArray = selected as string[];
+                          if (selectedArray.length === 0) {
+                            return <span className="text-gray-500">
+                              {loadingTemplates ? 'Loading templates...' : 'Select preventive action'}
+                            </span>;
+                          }
+                          return selectedArray.join(", ");
+                        }}
                       >
-                        <MenuItem value="">
-                          <span className="text-gray-500">
-                            {loadingTemplates ? 'Loading templates...' : 'Select preventive action'}
-                          </span>
-                        </MenuItem>
                         {communicationTemplates
                           .filter(template => template.identifier === "Preventive Action" && template?.active === true)
                           .map((template) => (
@@ -2543,48 +2548,53 @@ const UpdateTicketsPage: React.FC = () => {
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                       <InputLabel shrink>Short-term Impact</InputLabel>
                       <MuiSelect
+                        multiple
                         value={(() => {
-                          // Priority 1: Use template IDs from formData
+                          // Use template IDs from formData to find selected template actions
                           if (formData.shortTermImpactTemplateIds && formData.shortTermImpactTemplateIds.length > 0) {
-                            const template = communicationTemplates.find(
-                              t => t.id === formData.shortTermImpactTemplateIds[0]
-                            );
-                            return template?.identifier_action || "";
+                            return formData.shortTermImpactTemplateIds
+                              .map(id => {
+                                const template = communicationTemplates.find(t => t.id === id);
+                                return template?.identifier_action || "";
+                              })
+                              .filter(action => action !== "");
                           }
-                          // Fallback: Use string value
-                          return formData.impact;
+                          return [];
                         })()}
                         onChange={(e) => {
-                          const selectedValue = e.target.value;
-                          handleInputChange("impact", selectedValue);
-
-                          // Find the template and store its ID
-                          const selectedTemplate = communicationTemplates.find(
-                            t => t.identifier === "Short-term Impact" && t.identifier_action === selectedValue
-                          );
-                          if (selectedTemplate) {
-                            setFormData(prev => ({
-                              ...prev,
-                              shortTermImpactTemplateIds: [selectedTemplate.id]
-                            }));
-                            console.log('📝 Short-term Impact Template ID stored:', selectedTemplate.id);
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              shortTermImpactTemplateIds: []
-                            }));
-                          }
+                          const selectedValues = e.target.value as string[];
+                          
+                          // Find all selected templates and store their IDs
+                          const selectedTemplateIds = selectedValues
+                            .map(value => {
+                              const template = communicationTemplates.find(
+                                t => t.identifier === "Short-term Impact" && t.identifier_action === value
+                              );
+                              return template?.id;
+                            })
+                            .filter((id): id is number => id !== undefined);
+                          
+                          setFormData(prev => ({
+                            ...prev,
+                            shortTermImpactTemplateIds: selectedTemplateIds,
+                            impact: selectedValues.join(", ")
+                          }));
+                          console.log('📝 Short-term Impact Template IDs stored:', selectedTemplateIds);
                         }}
                         label="Short-term Impact"
                         notched
                         displayEmpty
                         disabled={loadingTemplates}
+                        renderValue={(selected) => {
+                          const selectedArray = selected as string[];
+                          if (selectedArray.length === 0) {
+                            return <span className="text-gray-500">
+                              {loadingTemplates ? 'Loading templates...' : 'Select short-term impact'}
+                            </span>;
+                          }
+                          return selectedArray.join(", ");
+                        }}
                       >
-                        <MenuItem value="">
-                          <span className="text-gray-500">
-                            {loadingTemplates ? 'Loading templates...' : 'Select short-term impact'}
-                          </span>
-                        </MenuItem>
                         {communicationTemplates
                           .filter(template => template.identifier === "Short-term Impact" && template?.active === true)
                           .map((template) => (
@@ -2621,48 +2631,53 @@ const UpdateTicketsPage: React.FC = () => {
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                       <InputLabel shrink>Long-term Impact</InputLabel>
                       <MuiSelect
+                        multiple
                         value={(() => {
-                          // Priority 1: Use template IDs from formData
+                          // Use template IDs from formData to find selected template actions
                           if (formData.longTermImpactTemplateIds && formData.longTermImpactTemplateIds.length > 0) {
-                            const template = communicationTemplates.find(
-                              t => t.id === formData.longTermImpactTemplateIds[0]
-                            );
-                            return template?.identifier_action || "";
+                            return formData.longTermImpactTemplateIds
+                              .map(id => {
+                                const template = communicationTemplates.find(t => t.id === id);
+                                return template?.identifier_action || "";
+                              })
+                              .filter(action => action !== "");
                           }
-                          // Fallback: Use string value
-                          return formData.longTermImpact;
+                          return [];
                         })()}
                         onChange={(e) => {
-                          const selectedValue = e.target.value;
-                          handleInputChange("longTermImpact", selectedValue);
-
-                          // Find the template and store its ID
-                          const selectedTemplate = communicationTemplates.find(
-                            t => t.identifier === "Long-term Impact" && t.identifier_action === selectedValue
-                          );
-                          if (selectedTemplate) {
-                            setFormData(prev => ({
-                              ...prev,
-                              longTermImpactTemplateIds: [selectedTemplate.id]
-                            }));
-                            console.log('📝 Long-term Impact Template ID stored:', selectedTemplate.id);
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              longTermImpactTemplateIds: []
-                            }));
-                          }
+                          const selectedValues = e.target.value as string[];
+                          
+                          // Find all selected templates and store their IDs
+                          const selectedTemplateIds = selectedValues
+                            .map(value => {
+                              const template = communicationTemplates.find(
+                                t => t.identifier === "Long-term Impact" && t.identifier_action === value
+                              );
+                              return template?.id;
+                            })
+                            .filter((id): id is number => id !== undefined);
+                          
+                          setFormData(prev => ({
+                            ...prev,
+                            longTermImpactTemplateIds: selectedTemplateIds,
+                            longTermImpact: selectedValues.join(", ")
+                          }));
+                          console.log('📝 Long-term Impact Template IDs stored:', selectedTemplateIds);
                         }}
                         label="Long-term Impact"
                         notched
                         displayEmpty
                         disabled={loadingTemplates}
+                        renderValue={(selected) => {
+                          const selectedArray = selected as string[];
+                          if (selectedArray.length === 0) {
+                            return <span className="text-gray-500">
+                              {loadingTemplates ? 'Loading templates...' : 'Select long-term impact'}
+                            </span>;
+                          }
+                          return selectedArray.join(", ");
+                        }}
                       >
-                        <MenuItem value="">
-                          <span className="text-gray-500">
-                            {loadingTemplates ? 'Loading templates...' : 'Select long-term impact'}
-                          </span>
-                        </MenuItem>
                         {communicationTemplates
                           .filter(template => template.identifier === "Long-term Impact" && template?.active === true)
                           .map((template) => (
@@ -2696,48 +2711,53 @@ const UpdateTicketsPage: React.FC = () => {
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                       <InputLabel shrink>Corrective Action</InputLabel>
                       <MuiSelect
+                        multiple
                         value={(() => {
-                          // Priority 1: Use template IDs from formData
+                          // Use template IDs from formData to find selected template actions
                           if (formData.correctiveActionTemplateIds && formData.correctiveActionTemplateIds.length > 0) {
-                            const template = communicationTemplates.find(
-                              t => t.id === formData.correctiveActionTemplateIds[0]
-                            );
-                            return template?.identifier_action || "";
+                            return formData.correctiveActionTemplateIds
+                              .map(id => {
+                                const template = communicationTemplates.find(t => t.id === id);
+                                return template?.identifier_action || "";
+                              })
+                              .filter(action => action !== "");
                           }
-                          // Fallback: Use string value
-                          return formData.correctiveAction;
+                          return [];
                         })()}
                         onChange={(e) => {
-                          const selectedValue = e.target.value;
-                          handleInputChange("correctiveAction", selectedValue);
-
-                          // Find the template and store its ID
-                          const selectedTemplate = communicationTemplates.find(
-                            t => t.identifier === "Corrective Action" && t.identifier_action === selectedValue
-                          );
-                          if (selectedTemplate) {
-                            setFormData(prev => ({
-                              ...prev,
-                              correctiveActionTemplateIds: [selectedTemplate.id]
-                            }));
-                            console.log('📝 Corrective Action Template ID stored:', selectedTemplate.id);
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              correctiveActionTemplateIds: []
-                            }));
-                          }
+                          const selectedValues = e.target.value as string[];
+                          
+                          // Find all selected templates and store their IDs
+                          const selectedTemplateIds = selectedValues
+                            .map(value => {
+                              const template = communicationTemplates.find(
+                                t => t.identifier === "Corrective Action" && t.identifier_action === value
+                              );
+                              return template?.id;
+                            })
+                            .filter((id): id is number => id !== undefined);
+                          
+                          setFormData(prev => ({
+                            ...prev,
+                            correctiveActionTemplateIds: selectedTemplateIds,
+                            correctiveAction: selectedValues.join(", ")
+                          }));
+                          console.log('📝 Corrective Action Template IDs stored:', selectedTemplateIds);
                         }}
                         label="Corrective Action"
                         notched
                         displayEmpty
                         disabled={loadingTemplates}
+                        renderValue={(selected) => {
+                          const selectedArray = selected as string[];
+                          if (selectedArray.length === 0) {
+                            return <span className="text-gray-500">
+                              {loadingTemplates ? 'Loading templates...' : 'Select corrective action'}
+                            </span>;
+                          }
+                          return selectedArray.join(", ");
+                        }}
                       >
-                        <MenuItem value="">
-                          <span className="text-gray-500">
-                            {loadingTemplates ? 'Loading templates...' : 'Select corrective action'}
-                          </span>
-                        </MenuItem>
                         {communicationTemplates
                           .filter(template => template.identifier === "Corrective Action" && template?.active === true)
                           .map((template) => (

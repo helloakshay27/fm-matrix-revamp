@@ -408,6 +408,11 @@ const modulesByPackage = {
       href: "/master/communication-template",
       subItems: [
         {
+          name: "Communication Template",
+          href: "/master/communication-template",
+          color: "text-[#1a1a1a]",
+        },
+        {
           name: "Root Cause Analysis",
           href: "/master/template/root-cause-analysis",
           color: "text-[#1a1a1a]",
@@ -732,6 +737,11 @@ const modulesByPackage = {
         {
           name: "Pending Approvals",
           href: "/finance/pending-approvals",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Deletion Requests",
+          href: "/finance/deletion-requests",
           color: "text-[#1a1a1a]",
         },
       ],
