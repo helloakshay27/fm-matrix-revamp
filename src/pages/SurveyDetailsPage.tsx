@@ -504,14 +504,11 @@ export const SurveyDetailsPage = () => {
                                                   </div>
                                                 </div>
                                                 {icon.url && (
-                                                  <a
-                                                    href={icon.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                                  >
-                                                    View
-                                                  </a>
+                                                  <img
+                                                    src={icon.url}
+                                                    alt={icon.file_name}
+                                                    className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                                                  />
                                                 )}
                                               </div>
                                             ))}

@@ -1233,9 +1233,9 @@ export const EditSurveyPage = () => {
                                     alt="Existing survey image"
                                     className="max-w-full h-32 object-cover rounded-lg border"
                                   />
-                                  {/* <p className="text-xs text-gray-500 mt-1">
+                                  <p className="text-xs text-gray-500 mt-1">
                                     Current image: {existingSurveyImage.file_name}
-                                  </p> */}
+                                  </p>
                                 </div>
                               )}
                             </div>
