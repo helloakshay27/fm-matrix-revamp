@@ -865,6 +865,58 @@ export const TaskSubmissionPage: React.FC = () => {
     }
   };
 
+  const handleSaveToDraft = () => {
+    const apiSteps = taskDetails?.steps;
+
+    // Count how many questions have been answered
+    const answeredCount = Object.keys(formData.checklist).filter(key => {
+      const item = formData.checklist[key];
+      return item.value && (Array.isArray(item.value) ? item.value.length > 0 : item.value !== "");
+    }).length;
+
+    const totalQuestions = dynamicChecklist.length;
+    
+    // Count photos based on workflow type
+    let savedItems = [];
+    
+    // Only show photos for multi-step workflow (apiSteps !== 1)
+    if (apiSteps !== 1) {
+      if (formData.beforePhoto) savedItems.push("Before Photo");
+      if (formData.afterPhoto) savedItems.push("After Photo");
+    }
+    
+    // Always show checklist items if answered
+    if (answeredCount > 0) savedItems.push(`${answeredCount}/${totalQuestions} Checklist Items`);
+
+    // Save to localStorage as draft
+    const draftData = {
+      taskId: id,
+      formData: {
+        ...formData,
+        // Convert Files to base64 for storage
+        beforePhoto: formData.beforePhoto ? "saved" : null,
+        afterPhoto: formData.afterPhoto ? "saved" : null,
+      },
+      savedAt: new Date().toISOString(),
+      currentStep,
+      completedSteps,
+    };
+
+    try {
+      localStorage.setItem(`task_draft_${id}`, JSON.stringify(draftData));
+      
+      sonnerToast.success(
+        `Draft saved successfully! ${savedItems.length > 0 ? savedItems.join(", ") : "No data"} saved.`,
+        {
+          duration: 4000,
+        }
+      );
+    } catch (error) {
+      console.error("Failed to save draft:", error);
+      sonnerToast.error("Failed to save draft. Please try again.");
+    }
+  };
+
   const handleSuccessClose = () => {
     setShowSuccessModal(false);
     navigate(`/maintenance/task/details/${id}`);
@@ -2351,113 +2403,6 @@ export const TaskSubmissionPage: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
-
-              {/* Step 3 - After Photo (Active) */}
-       
-
-              <Card className="border border-gray-200 shadow-sm">
-                <div className="figma-card-header">
-                  <div className="flex items-center gap-3">
-                    <div className="figma-card-icon-wrapper">
-                      <User className="figma-card-icon" />
-                    </div>
-                    <Typography variant="body1" className="figma-card-title">
-                      Pre-Post Inspection Info
-
-
-                    </Typography>
-                  </div>
-                </div>
-
-                <CardContent className="figma-card-content">
-                  <div className="space-y-6">
-                    <div>
-                      <Typography
-                        variant="body2"
-                        className="font-medium text-gray-900 mb-4"
-                      >
-                        Attach After Photograph
-                      </Typography>
-
-                      {formData.afterPhoto ? (
-                        <div className="space-y-4">
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <Typography
-                              variant="body2"
-                              className="font-medium text-gray-900 mb-3"
-                            >
-                              After
-                            </Typography>
-                            <div className="flex items-start gap-4">
-                              <img
-                                src={URL.createObjectURL(formData.afterPhoto)}
-                                alt="After"
-                                className="w-24 h-24 object-cover rounded border border-gray-200"
-                              />
-                              <div className="flex-1">
-                                <FormControl
-                                  fullWidth
-                                  variant="outlined"
-                                  size="small"
-                                >
-                                  <InputLabel>Name</InputLabel>
-                                  <MuiSelect
-                                    value={getAssignedUserName()}
-                                    label="Name"
-                                    disabled={true}
-                                  >
-                                    <MenuItem value={getAssignedUserName()}>
-                                      {getAssignedUserName()}
-                                    </MenuItem>
-                                  </MuiSelect>
-                                </FormControl>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Change Photo Button */}
-                          <div className="flex justify-center">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-[#C72030] border-[#C72030] hover:bg-red-50"
-                              onClick={() => afterPhotoRef.current?.click()}
-                            >
-                              <Camera className="w-4 h-4 mr-2" />
-                              {getPhotoActionText(true)}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          className="border-2 border-dashed border-[#C72030] rounded-lg p-12 text-center cursor-pointer hover:border-[#B11E2A] hover:bg-red-50 transition-colors"
-                          onClick={() => afterPhotoRef.current?.click()}
-                        >
-                          {React.createElement(getPhotoActionIcon(false), {
-                            className: "w-8 h-8 text-[#C72030] mx-auto mb-3",
-                          })}
-                          <Typography
-                            variant="body2"
-                            className="text-[#C72030] font-medium"
-                          >
-                            {getPhotoActionText(false)}
-                          </Typography>
-                        </div>
-                      )}
-
-                      <input
-                        ref={afterPhotoRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) =>
-                          handleFileUpload("after", e.target.files?.[0] || null)
-                        }
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           );
 
@@ -2899,8 +2844,8 @@ export const TaskSubmissionPage: React.FC = () => {
 
       {/* Navigation Buttons */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4">
-        <div className="flex justify-between items-center">
-          <div>
+        <div className="flex justify-center gap-3 items-center">
+          {/* <div>
             {currentStep > 1 && (
               <Button
                 variant="outline"
@@ -2910,16 +2855,20 @@ export const TaskSubmissionPage: React.FC = () => {
                 Back
               </Button>
             )}
-          </div>
+          </div> */}
 
-          <div className="flex items-center gap-4">
+          {/* Middle Section - Save to Draft */}
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
+              onClick={handleSaveToDraft}
               className="border-gray-300 text-gray-600 hover:bg-gray-50 px-6 py-2"
             >
               Save to draft
             </Button>
+          </div>
 
+          <div className="flex items-center gap-4">
             {currentStep < steps.length ? (
               <Button
                 onClick={handleNext}
