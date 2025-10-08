@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
     Typography,
     Radio,
@@ -7,198 +9,225 @@ import {
     FormControl,
     TextField,
     Button,
-} from '@mui/material';
+    Dialog,
+    DialogContent,
+} from "@mui/material";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const PermitSafetyCheckForm = () => {
-    const [formData, setFormData] = useState({});
-    const [file, setFile] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [questions, setQuestions] = useState([]);
-    const [answers, setAnswers] = useState({});
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const permitId = searchParams.get("id");
+    const urlToken = searchParams.get("token");
+    // Use token from URL, sessionStorage, or localStorage
+    const [token, setToken] = useState(() => urlToken || sessionStorage.getItem("mobile_token") || localStorage.getItem("token"));
 
+    // Store token from URL for future use (mobile pattern)
     useEffect(() => {
-        const fetchChecklistData = async () => {
-            let baseUrl = localStorage.getItem('baseUrl');
-            if (!baseUrl) return;
-            // Remove 'localhost' if present
-            if (baseUrl.includes('localhost')) {
-                baseUrl = baseUrl.replace('localhost', '').replace(/\/+$/, '');
-            }
-            // Remove any trailing slashes
-            baseUrl = baseUrl.replace(/\/+$/, '');
+        if (urlToken) {
+            localStorage.setItem("token", urlToken);
+            sessionStorage.setItem("mobile_token", urlToken);
+            setToken(urlToken);
+        }
+    }, [urlToken]);
+    const [questions, setQuestions] = useState<any[]>([]);
+    const [answers, setAnswers] = useState<Record<
+        number,
+        { question_id: number; answer_type: string; remarks: string }
+    >>({});
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [showDialog, setShowDialog] = useState(false);
+    const navigate = useNavigate();
+
+    // Fetch questions dynamically
+    useEffect(() => {
+        const fetchQuestions = async () => {
             try {
-                const token = 'OyGvi3ObQlXrQrfKnFUytBzaaMZBrdrHLKcFu1JYKjI';
-                const url = `https://${baseUrl}/pms/permits/13765/safety_checklist_data?token=${token}`;
-                const response = await fetch(url, {
+                const baseUrl = localStorage.getItem("baseUrl")?.replace(/\/+$/, "");
+                if (!permitId || !token) return;
+                const url = `https://${baseUrl}/pms/permits/${permitId}/safety_checklist_data`;
+
+                const res = await axios.get(url, {
                     headers: {
-                        'Content-Type': 'application/json'
-                    }
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
                 });
-                if (!response.ok) throw new Error('Failed to fetch checklist data');
-                const data = await response.json();
+                const data = res.data;
+
                 setQuestions(data.questions || []);
-                setAnswers(data.answers || {});
-                // Pre-fill formData with API answers
-                const initialFormData = {};
-                (data.questions || []).forEach(q => {
-                    if (data.answers && data.answers[q.id]) {
-                        initialFormData[`q${q.id}_response`] = data.answers[q.id].answer_type;
-                        initialFormData[`q${q.id}_remarks`] = data.answers[q.id].remarks || '';
-                    }
+
+                // Pre-fill answers if backend already returned saved answers
+                const initialAnswers: typeof answers = {};
+                (data.questions || []).forEach((q: any) => {
+                    initialAnswers[q.id] = {
+                        question_id: q.id,
+                        answer_type: data.answers?.[q.id]?.answer_type || "",
+                        remarks: data.answers?.[q.id]?.remarks || "",
+                    };
                 });
-                setFormData(initialFormData);
+                setAnswers(initialAnswers);
             } catch (err) {
-                // Optionally handle error
+                console.error("Failed to fetch questions:", err);
             }
         };
-        fetchChecklistData();
-    }, []);
+        fetchQuestions();
+    }, [permitId, token]);
 
-    const handleRadioChange = (qid, value) => {
-        setFormData(prev => ({
+    const handleChange = (id: number, field: string, value: string) => {
+        setAnswers((prev) => ({
             ...prev,
-            [`q${qid}_response`]: value
+            [id]: { ...prev[id], [field]: value, question_id: id },
         }));
     };
 
-    const handleRemarksChange = (qid, value) => {
-        setFormData(prev => ({
-            ...prev,
-            [`q${qid}_remarks`]: value
-        }));
-    };
-
-    const handleFileChange = (event) => {
-        setFile(event.target.files[0]);
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) setSelectedFile(file);
     };
 
     const handleSubmit = async () => {
-        if (isSubmitting) return;
-        setIsSubmitting(true);
+        setLoading(true);
         try {
-            let baseUrl = localStorage.getItem('baseUrl');
-            if (!baseUrl) throw new Error('Base URL not found');
+            const baseUrl = localStorage.getItem("baseUrl")?.replace(/\/+$/, "");
+            if (!permitId || !token) return;
+            const url = `https://${baseUrl}/pms/permits/${permitId}/submit_checklist_form.json`;
 
-            const token = 'OyGvi3ObQlXrQrfKnFUytBzaaMZBrdrHLKcFu1JYKjI';
-            const permitId = 13765; // You may want to make this dynamic
-            const url = `https://${baseUrl}/pms/permits/${permitId}/submit_checklist_form.json?token=${token}`;
+            const formData = new FormData();
 
-            // Build question answers object
-            const questionPayload = {};
-            questions.forEach(q => {
-                questionPayload[q.id] = {
-                    question_id: q.id,
-                    answer_type: formData[`q${q.id}_response`] || '',
-                    remarks: formData[`q${q.id}_remarks`] || ''
-                };
-            });
+            // Map Yes/No to p/n if needed
+            const payload = Object.fromEntries(
+                Object.entries(answers).map(([id, q]) => [
+                    id,
+                    {
+                        question_id: q.question_id,
+                        answer_type:
+                            q.answer_type === "Yes"
+                                ? "p"
+                                : q.answer_type === "No"
+                                    ? "n"
+                                    : q.answer_type,
+                        remarks: q.remarks || "",
+                    },
+                ])
+            );
 
-            // Build FormData for multipart
-            const formDataToSend = new FormData();
-            formDataToSend.append('question', JSON.stringify(questionPayload));
-            if (file) {
-                formDataToSend.append('quest_map[image]', file);
+            formData.append("question", JSON.stringify(payload));
+
+            if (selectedFile) {
+                formData.append("quest_map[image]", selectedFile);
             }
 
-            const response = await fetch(url, {
-                method: 'POST',
-                body: formDataToSend
+            await axios.post(url, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data",
+                },
             });
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || 'Failed to submit checklist form');
-            }
-            alert('Form submitted successfully!');
+
+            // Show success dialog
+            setShowDialog(true);
+            setTimeout(() => {
+                setShowDialog(false);
+                // navigate(-1); // go back to previous page
+            }, 3000);
         } catch (err) {
-            alert('Error submitting form: ' + (err?.message || 'Unknown error'));
+            console.error("Submit error:", err);
+            alert("Error submitting checklist. Please try again.");
         } finally {
-            setIsSubmitting(false);
+            setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-white-50 p-4 sm:p-6">
+        <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
             <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-md p-6">
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#C72030', mb: 4, textAlign: 'center' }}>
+                <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "#C72030", mb: 4, textAlign: "center" }}
+                >
                     Permit Safety Check Form
                 </Typography>
-                {questions.map((question, idx) => (
-                    <div key={question.id} className="mb-6 pb-4 border-b border-gray-200">
-                        <Typography variant="body1" sx={{ mb: 2, fontWeight: 500, color: '#333' }}>
-                            {idx + 1}) {question.text}
+
+                {questions.map((q, idx) => (
+                    <div key={q.id} className="mb-6 pb-4 border-b border-gray-200">
+                        <Typography variant="body1" sx={{ mb: 2, fontWeight: 500, color: "#333" }}>
+                            {idx + 1}) {q.text}
                         </Typography>
-                        <div className="flex flex-col gap-2">
-                            <div>
-                                <Typography variant="body2" sx={{ mb: 1, color: '#666' }}>
-                                    Response:
-                                </Typography>
-                                <FormControl>
-                                    <RadioGroup
-                                        row
-                                        value={formData[`q${question.id}_response`] || ''}
-                                        onChange={(e) => handleRadioChange(question.id, e.target.value)}
-                                    >
-                                        {question.options && question.options.map(opt => (
-                                            <FormControlLabel
-                                                key={opt.id}
-                                                value={opt.value}
-                                                control={<Radio size="small" />}
-                                                label={opt.label}
-                                                sx={{ mr: 3 }}
-                                            />
-                                        ))}
-                                    </RadioGroup>
-                                </FormControl>
-                            </div>
-                            <div>
-                                <TextField
-                                    fullWidth
-                                    placeholder="Remarks"
-                                    variant="outlined"
-                                    size="small"
-                                    value={formData[`q${question.id}_remarks`] || ''}
-                                    onChange={(e) => handleRemarksChange(question.id, e.target.value)}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            bgcolor: 'white',
-                                            borderRadius: '8px',
-                                        }
-                                    }}
-                                />
-                            </div>
-                        </div>
+
+                        <FormControl component="fieldset">
+                            <RadioGroup
+                                row
+                                value={answers[q.id]?.answer_type || ""}
+                                onChange={(e) => handleChange(q.id, "answer_type", e.target.value)}
+                            >
+                                {q.options?.map((opt: any) => (
+                                    <FormControlLabel
+                                        key={opt.id}
+                                        value={opt.value}
+                                        control={<Radio size="small" />}
+                                        label={opt.label}
+                                        sx={{ mr: 3 }}
+                                    />
+                                ))}
+                            </RadioGroup>
+                        </FormControl>
+
+                        <TextField
+                            fullWidth
+                            placeholder="Remarks"
+                            variant="outlined"
+                            size="small"
+                            value={answers[q.id]?.remarks || ""}
+                            onChange={(e) => handleChange(q.id, "remarks", e.target.value)}
+                            sx={{
+                                mt: 2,
+                                "& .MuiOutlinedInput-root": { bgcolor: "white", borderRadius: "8px" },
+                            }}
+                        />
                     </div>
                 ))}
+
+                {/* File upload */}
                 <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
                     <Button
                         variant="contained"
                         component="label"
-                        style={{ backgroundColor: '#C72030' }}
-                        className="text-white hover:bg-[#C72030]/90 flex items-center px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: "#C72030" }}
                     >
-                        Choose a file...
-                        <input
-                            type="file"
-                            hidden
-                            onChange={handleFileChange}
-                        />
+                        Choose a file
+                        <input type="file" hidden onChange={handleFileChange} />
                     </Button>
-                    <Typography variant="body2" sx={{ color: '#666' }}>
-                        {file ? file.name : 'No file chosen'}
+                    <Typography variant="body2" sx={{ color: "#666" }}>
+                        {selectedFile ? selectedFile.name : "No file chosen"}
                     </Typography>
                 </div>
+
                 <div className="mt-8 text-center">
                     <Button
                         variant="contained"
                         onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        style={{ backgroundColor: isSubmitting ? '#9ca3af' : '#C72030' }}
-                        className="text-white hover:bg-[#C72030]/90 flex items-center px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-semibold text-base"
+                        disabled={loading}
+                        style={{ backgroundColor: loading ? "#9ca3af" : "#C72030" }}
+                        className="text-white px-8 py-2 rounded-lg font-semibold text-base"
                     >
-                        Submit
+                        {loading ? "Submitting..." : "Submit"}
                     </Button>
                 </div>
             </div>
+
+            {/* Success dialog */}
+            <Dialog open={showDialog} PaperProps={{ sx: { borderRadius: 4, p: 4 } }}>
+                <DialogContent sx={{ textAlign: "center" }}>
+                    <Typography variant="h5" sx={{ color: "#C72030", fontWeight: "bold", mb: 1 }}>
+                        THANK YOU!
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: "#555" }}>
+                        Your safety checklist has been submitted successfully.
+                    </Typography>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

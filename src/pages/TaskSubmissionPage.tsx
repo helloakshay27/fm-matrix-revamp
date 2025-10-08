@@ -865,6 +865,58 @@ export const TaskSubmissionPage: React.FC = () => {
     }
   };
 
+  const handleSaveToDraft = () => {
+    const apiSteps = taskDetails?.steps;
+
+    // Count how many questions have been answered
+    const answeredCount = Object.keys(formData.checklist).filter(key => {
+      const item = formData.checklist[key];
+      return item.value && (Array.isArray(item.value) ? item.value.length > 0 : item.value !== "");
+    }).length;
+
+    const totalQuestions = dynamicChecklist.length;
+    
+    // Count photos based on workflow type
+    let savedItems = [];
+    
+    // Only show photos for multi-step workflow (apiSteps !== 1)
+    if (apiSteps !== 1) {
+      if (formData.beforePhoto) savedItems.push("Before Photo");
+      if (formData.afterPhoto) savedItems.push("After Photo");
+    }
+    
+    // Always show checklist items if answered
+    if (answeredCount > 0) savedItems.push(`${answeredCount}/${totalQuestions} Checklist Items`);
+
+    // Save to localStorage as draft
+    const draftData = {
+      taskId: id,
+      formData: {
+        ...formData,
+        // Convert Files to base64 for storage
+        beforePhoto: formData.beforePhoto ? "saved" : null,
+        afterPhoto: formData.afterPhoto ? "saved" : null,
+      },
+      savedAt: new Date().toISOString(),
+      currentStep,
+      completedSteps,
+    };
+
+    try {
+      localStorage.setItem(`task_draft_${id}`, JSON.stringify(draftData));
+      
+      sonnerToast.success(
+        `Draft saved successfully! ${savedItems.length > 0 ? savedItems.join(", ") : "No data"} saved.`,
+        {
+          duration: 4000,
+        }
+      );
+    } catch (error) {
+      console.error("Failed to save draft:", error);
+      sonnerToast.error("Failed to save draft. Please try again.");
+    }
+  };
+
   const handleSuccessClose = () => {
     setShowSuccessModal(false);
     navigate(`/maintenance/task/details/${id}`);
@@ -1399,10 +1451,10 @@ export const TaskSubmissionPage: React.FC = () => {
                                   variant="outlined"
                                   size="small"
                                 >
-                                  <InputLabel>Enter Your Name</InputLabel>
+                                  <InputLabel>Name</InputLabel>
                                   <MuiSelect
                                     value={getAssignedUserName()}
-                                    label="Enter Your Name"
+                                    label="Name"
                                     disabled={true}
                                   >
                                     <MenuItem value={getAssignedUserName()}>
@@ -1515,10 +1567,10 @@ export const TaskSubmissionPage: React.FC = () => {
                             size="small"
                             disabled
                           >
-                            <InputLabel>Enter Your Name</InputLabel>
+                            <InputLabel>Name</InputLabel>
                             <MuiSelect
                               value={getAssignedUserName()}
-                              label="Enter Your Name"
+                              label="Name"
                               disabled
                             >
                               <MenuItem value={getAssignedUserName()}>
@@ -1553,6 +1605,226 @@ export const TaskSubmissionPage: React.FC = () => {
                       <Typography variant="body1" className="text-gray-600">
                         No checklist items available for this task.
                       </Typography>
+                    </div>
+                  ) : groupedChecklist.length > 0 ? (
+                    <div className="space-y-6">
+                      {groupedChecklist.map((section, sectionIndex) => (
+                        <div key={section.sectionKey} className="space-y-4">
+                          {/* Section Header */}
+                          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="text-base font-semibold text-gray-800">
+                                  {section.group_name}
+                                </h4>
+                                {section.sub_group_name && (
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {section.sub_group_name}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                                Section {sectionIndex + 1}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Section Questions */}
+                          <div className="space-y-8">
+                            {section.questions.map((item: any, index: number) => (
+                              <div key={item.id} className="space-y-4">
+                                <Typography
+                                  variant="body2"
+                                  className="font-medium text-gray-900"
+                                >
+                                  {index + 1}. {item.question}
+                                  {item.required && <span className="text-red-500 ml-1">*</span>}
+                                </Typography>
+
+                                {item.type === "text" && (
+                                  <TextField
+                                    placeholder="Enter your value..."
+                                    fullWidth
+                                    variant="outlined"
+                                    type={
+                                      item.question
+                                        .toLowerCase()
+                                        .includes("voltage") ||
+                                      item.question
+                                        .toLowerCase()
+                                        .includes("current") ||
+                                      item.question.toLowerCase().includes("power") ||
+                                      item.question.toLowerCase().includes("time")
+                                        ? "number"
+                                        : "text"
+                                    }
+                                    value={formData.checklist[item.id]?.value || ""}
+                                    onChange={(e) =>
+                                      handleChecklistChange(
+                                        item.id,
+                                        "value",
+                                        e.target.value
+                                      )
+                                    }
+                                    className=""
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        backgroundColor: "white",
+                                        "& fieldset": {
+                                          borderColor: "#D1D5DB",
+                                        },
+                                        "&:hover fieldset": {
+                                          borderColor: "#9CA3AF",
+                                        },
+                                      },
+                                    }}
+                                  />
+                                )}
+
+                                {item.type === "radio" && (
+                                  <RadioGroup
+                                    value={formData.checklist[item.id]?.value || ""}
+                                    onChange={(e) =>
+                                      handleChecklistChange(
+                                        item.id,
+                                        "value",
+                                        e.target.value
+                                      )
+                                    }
+                                    className=""
+                                  >
+                                    {item.options?.map((option) => (
+                                      <FormControlLabel
+                                        key={option}
+                                        value={option}
+                                        control={
+                                          <Radio
+                                            sx={{
+                                              color: "#C72030",
+                                              "&.Mui-checked": { color: "#C72030" },
+                                            }}
+                                          />
+                                        }
+                                        label={option}
+                                        className="mb-1"
+                                      />
+                                    ))}
+                                  </RadioGroup>
+                                )}
+
+                                {item.type === "checkbox" && (
+                                  <div className="">
+                                    {item.options?.map((option) => (
+                                      <FormControlLabel
+                                        key={option}
+                                        control={
+                                          <Checkbox
+                                            checked={
+                                              Array.isArray(formData.checklist[item.id]?.value) &&
+                                              formData.checklist[item.id].value.includes(option)
+                                            }
+                                            onChange={(e) => {
+                                              const currentValues = Array.isArray(formData.checklist[item.id]?.value)
+                                                ? formData.checklist[item.id].value
+                                                : [];
+                                              const newValues = e.target.checked
+                                                ? [...currentValues, option]
+                                                : currentValues.filter((v: string) => v !== option);
+                                              handleChecklistChange(item.id, "value", newValues);
+                                            }}
+                                            sx={{
+                                              color: "#C72030",
+                                              "&.Mui-checked": { color: "#C72030" },
+                                            }}
+                                          />
+                                        }
+                                        label={option}
+                                        className="block mb-1"
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+
+                                <div className="">
+                                  <TextField
+                                    placeholder="Add your comment..."
+                                    fullWidth
+                                    multiline
+                                    minRows={3}
+                                    variant="outlined"
+                                    value={formData.checklist[item.id]?.comment || ""}
+                                    onChange={(e) =>
+                                      handleChecklistChange(
+                                        item.id,
+                                        "comment",
+                                        e.target.value
+                                      )
+                                    }
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        backgroundColor: "white",
+                                        "& fieldset": {
+                                          borderColor: "#D1D5DB",
+                                        },
+                                        "&:hover fieldset": {
+                                          borderColor: "#9CA3AF",
+                                        },
+                                      },
+                                    }}
+                                  />
+                                </div>
+
+                                {formData.checklist[item.id]?.attachment && (
+                                  <div className="">
+                                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
+                                      <img
+                                        src={URL.createObjectURL(
+                                          formData.checklist[item.id].attachment
+                                        )}
+                                        alt="Attachment"
+                                        className="w-16 h-16 object-cover rounded border"
+                                      />
+                                      <Typography
+                                        variant="body2"
+                                        className="flex-1 text-gray-700"
+                                      >
+                                        {formData.checklist[item.id].attachment.name}
+                                      </Typography>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-[#C72030] border-[#C72030] hover:bg-red-50"
+                                    onClick={() => {
+                                      const input = document.createElement("input");
+                                      input.type = "file";
+                                      input.accept = "image/*";
+                                      input.onchange = (e) => {
+                                        const file = (e.target as HTMLInputElement)
+                                          .files?.[0];
+                                        if (file) {
+                                          handleChecklistChange(
+                                            item.id,
+                                            "attachment",
+                                            file
+                                          );
+                                        }
+                                      };
+                                      input.click();
+                                    }}
+                                  >
+                                    Add Attachment
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="space-y-8">
@@ -1806,10 +2078,10 @@ export const TaskSubmissionPage: React.FC = () => {
                             size="small"
                             disabled
                           >
-                            <InputLabel>Enter Your Name</InputLabel>
+                            <InputLabel>Name</InputLabel>
                             <MuiSelect
                               value={getAssignedUserName()}
-                              label="Enter Your Name"
+                              label="Name"
                               disabled
                             >
                               <MenuItem value={getAssignedUserName()}>
@@ -1856,6 +2128,155 @@ export const TaskSubmissionPage: React.FC = () => {
                         No checklist items available for this task.
                       </Typography>
                     </div>
+                  ) : groupedChecklist.length > 0 ? (
+                    <div className="space-y-6">
+                      {groupedChecklist.map((section, sectionIndex) => (
+                        <div key={section.sectionKey} className="space-y-3">
+                          {/* Section Header */}
+                          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="text-base font-semibold text-gray-800">
+                                  {section.group_name}
+                                </h4>
+                                {section.sub_group_name && (
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {section.sub_group_name}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                                Section {sectionIndex + 1}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Section Questions (Disabled) */}
+                          <div className="space-y-6">
+                            {section.questions.map((item: any, index: number) => (
+                              <div key={item.id} className="space-y-3">
+                                <Typography
+                                  variant="body2"
+                                  className="font-medium text-gray-900"
+                                >
+                                  {index + 1}. {item.question}
+                                </Typography>
+
+                                {item.type === "text" && (
+                                  <TextField
+                                    placeholder="Enter your value..."
+                                    fullWidth
+                                    variant="outlined"
+                                    value={formData.checklist[item.id]?.value || ""}
+                                    disabled
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        backgroundColor: "#f9fafb",
+                                        "& fieldset": {
+                                          borderColor: "#D1D5DB",
+                                        },
+                                      },
+                                    }}
+                                  />
+                                )}
+
+                                {item.type === "radio" && (
+                                  <RadioGroup
+                                    value={formData.checklist[item.id]?.value || ""}
+                                    className=""
+                                  >
+                                    {item.options?.map((option) => (
+                                      <FormControlLabel
+                                        key={option}
+                                        value={option}
+                                        control={
+                                          <Radio
+                                            sx={{
+                                              color: "#C72030",
+                                              "&.Mui-checked": { color: "#C72030" },
+                                            }}
+                                            disabled
+                                          />
+                                        }
+                                        label={option}
+                                        className="mb-1"
+                                        disabled
+                                      />
+                                    ))}
+                                  </RadioGroup>
+                                )}
+
+                                {item.type === "checkbox" && (
+                                  <div className="">
+                                    {item.options?.map((option) => (
+                                      <FormControlLabel
+                                        key={option}
+                                        control={
+                                          <Checkbox
+                                            checked={
+                                              Array.isArray(formData.checklist[item.id]?.value) &&
+                                              formData.checklist[item.id].value.includes(option)
+                                            }
+                                            disabled
+                                            sx={{
+                                              color: "#C72030",
+                                              "&.Mui-checked": { color: "#C72030" },
+                                            }}
+                                          />
+                                        }
+                                        label={option}
+                                        className="block mb-1"
+                                        disabled
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+
+                                <div className="">
+                                  <TextField
+                                    placeholder="Add your comment..."
+                                    fullWidth
+                                    multiline
+                                    minRows={2}
+                                    variant="outlined"
+                                    value={formData.checklist[item.id]?.comment || ""}
+                                    disabled
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        backgroundColor: "#f9fafb",
+                                        "& fieldset": {
+                                          borderColor: "#D1D5DB",
+                                        },
+                                      },
+                                    }}
+                                  />
+                                </div>
+
+                                {formData.checklist[item.id]?.attachment && (
+                                  <div className="">
+                                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded border">
+                                      <img
+                                        src={URL.createObjectURL(
+                                          formData.checklist[item.id].attachment
+                                        )}
+                                        alt="Attachment"
+                                        className="w-16 h-16 object-cover rounded border"
+                                      />
+                                      <Typography
+                                        variant="body2"
+                                        className="flex-1 text-gray-700"
+                                      >
+                                        {formData.checklist[item.id].attachment.name}
+                                      </Typography>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   ) : (
                     <div className="space-y-6">
                       {dynamicChecklist.map((item, index) => (
@@ -1866,6 +2287,24 @@ export const TaskSubmissionPage: React.FC = () => {
                           >
                             {index + 1}. {item.question}
                           </Typography>
+
+                          {item.type === "text" && (
+                            <TextField
+                              placeholder="Enter your value..."
+                              fullWidth
+                              variant="outlined"
+                              value={formData.checklist[item.id]?.value || ""}
+                              disabled
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  backgroundColor: "#f9fafb",
+                                  "& fieldset": {
+                                    borderColor: "#D1D5DB",
+                                  },
+                                },
+                              }}
+                            />
+                          )}
 
                           {item.type === "radio" && (
                             <RadioGroup
@@ -1891,6 +2330,32 @@ export const TaskSubmissionPage: React.FC = () => {
                                 />
                               ))}
                             </RadioGroup>
+                          )}
+
+                          {item.type === "checkbox" && (
+                            <div className="">
+                              {item.options?.map((option) => (
+                                <FormControlLabel
+                                  key={option}
+                                  control={
+                                    <Checkbox
+                                      checked={
+                                        Array.isArray(formData.checklist[item.id]?.value) &&
+                                        formData.checklist[item.id].value.includes(option)
+                                      }
+                                      disabled
+                                      sx={{
+                                        color: "#C72030",
+                                        "&.Mui-checked": { color: "#C72030" },
+                                      }}
+                                    />
+                                  }
+                                  label={option}
+                                  className="block mb-1"
+                                  disabled
+                                />
+                              ))}
+                            </div>
                           )}
 
                           <div className="">
@@ -1936,113 +2401,6 @@ export const TaskSubmissionPage: React.FC = () => {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-
-              {/* Step 3 - After Photo (Active) */}
-       
-
-              <Card className="border border-gray-200 shadow-sm">
-                <div className="figma-card-header">
-                  <div className="flex items-center gap-3">
-                    <div className="figma-card-icon-wrapper">
-                      <User className="figma-card-icon" />
-                    </div>
-                    <Typography variant="body1" className="figma-card-title">
-                      Pre-Post Inspection Info
-
-
-                    </Typography>
-                  </div>
-                </div>
-
-                <CardContent className="figma-card-content">
-                  <div className="space-y-6">
-                    <div>
-                      <Typography
-                        variant="body2"
-                        className="font-medium text-gray-900 mb-4"
-                      >
-                        Attach After Photograph
-                      </Typography>
-
-                      {formData.afterPhoto ? (
-                        <div className="space-y-4">
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <Typography
-                              variant="body2"
-                              className="font-medium text-gray-900 mb-3"
-                            >
-                              After
-                            </Typography>
-                            <div className="flex items-start gap-4">
-                              <img
-                                src={URL.createObjectURL(formData.afterPhoto)}
-                                alt="After"
-                                className="w-24 h-24 object-cover rounded border border-gray-200"
-                              />
-                              <div className="flex-1">
-                                <FormControl
-                                  fullWidth
-                                  variant="outlined"
-                                  size="small"
-                                >
-                                  <InputLabel>Enter Your Name</InputLabel>
-                                  <MuiSelect
-                                    value={getAssignedUserName()}
-                                    label="Enter Your Name"
-                                    disabled={true}
-                                  >
-                                    <MenuItem value={getAssignedUserName()}>
-                                      {getAssignedUserName()}
-                                    </MenuItem>
-                                  </MuiSelect>
-                                </FormControl>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Change Photo Button */}
-                          <div className="flex justify-center">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-[#C72030] border-[#C72030] hover:bg-red-50"
-                              onClick={() => afterPhotoRef.current?.click()}
-                            >
-                              <Camera className="w-4 h-4 mr-2" />
-                              {getPhotoActionText(true)}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          className="border-2 border-dashed border-[#C72030] rounded-lg p-12 text-center cursor-pointer hover:border-[#B11E2A] hover:bg-red-50 transition-colors"
-                          onClick={() => afterPhotoRef.current?.click()}
-                        >
-                          {React.createElement(getPhotoActionIcon(false), {
-                            className: "w-8 h-8 text-[#C72030] mx-auto mb-3",
-                          })}
-                          <Typography
-                            variant="body2"
-                            className="text-[#C72030] font-medium"
-                          >
-                            {getPhotoActionText(false)}
-                          </Typography>
-                        </div>
-                      )}
-
-                      <input
-                        ref={afterPhotoRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) =>
-                          handleFileUpload("after", e.target.files?.[0] || null)
-                        }
-                      />
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -2194,6 +2552,102 @@ export const TaskSubmissionPage: React.FC = () => {
                       <Typography variant="body1" className="text-gray-600">
                         No checklist items available for this task.
                       </Typography>
+                    </div>
+                  ) : groupedChecklist.length > 0 ? (
+                    <div className="space-y-6">
+                      {groupedChecklist.map((section, sectionIndex) => (
+                        <div key={section.sectionKey} className="space-y-3">
+                          {/* Section Header */}
+                          <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="text-base font-semibold text-gray-800">
+                                  {section.group_name}
+                                </h4>
+                                {section.sub_group_name && (
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {section.sub_group_name}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                                Section {sectionIndex + 1}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Section Table */}
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                    Help Text
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                    Activities
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                    Input
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                    Comments
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                    Attachment
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-200">
+                                {section.questions.map((item: any) => {
+                                  const answer = formData.checklist[item.id]?.value;
+                                  const comment = formData.checklist[item.id]?.comment;
+                                  const attachment = formData.checklist[item.id]?.attachment;
+
+                                  return (
+                                    <tr key={item.id} className="hover:bg-gray-50">
+                                      <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                        <span className="text-xs"></span>
+                                      </td>
+                                      <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                        <span className="text-xs">{item.question}</span>
+                                      </td>
+                                      <td className="px-4 py-3 text-xs border-b border-gray-100">
+                                        <span className="text-xs">
+                                          {Array.isArray(answer) 
+                                            ? answer.length > 0 
+                                              ? answer.join(", ") 
+                                              : "-"
+                                            : answer || "-"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                        <span className="text-xs">{comment || "-"}</span>
+                                      </td>
+                                      <td className="px-4 py-3 text-xs text-gray-900 border-b border-gray-100">
+                                        {attachment ? (
+                                          <div className="flex items-center gap-2">
+                                            <img
+                                              src={URL.createObjectURL(attachment)}
+                                              alt="Attachment"
+                                              className="w-8 h-8 object-cover rounded border border-gray-200"
+                                            />
+                                            <span className="text-xs text-gray-600 truncate max-w-20">
+                                              {attachment.name}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <span className="text-xs">-</span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -2390,8 +2844,8 @@ export const TaskSubmissionPage: React.FC = () => {
 
       {/* Navigation Buttons */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4">
-        <div className="flex justify-between items-center">
-          <div>
+        <div className="flex justify-center gap-3 items-center">
+          {/* <div>
             {currentStep > 1 && (
               <Button
                 variant="outline"
@@ -2401,16 +2855,20 @@ export const TaskSubmissionPage: React.FC = () => {
                 Back
               </Button>
             )}
-          </div>
+          </div> */}
 
-          <div className="flex items-center gap-4">
+          {/* Middle Section - Save to Draft */}
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
+              onClick={handleSaveToDraft}
               className="border-gray-300 text-gray-600 hover:bg-gray-50 px-6 py-2"
             >
               Save to draft
             </Button>
+          </div>
 
+          <div className="flex items-center gap-4">
             {currentStep < steps.length ? (
               <Button
                 onClick={handleNext}

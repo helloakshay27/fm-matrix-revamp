@@ -407,14 +407,14 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
         >
           <Eye className="w-4 h-4" />
         </button>
-        <button
+        {/* <button
           onClick={() => org?.id && handleEdit(org.id)}
           className="p-1 text-green-600 hover:bg-green-50 rounded"
           title="Edit"
           disabled={!canEditOrganization || !org?.id}
         >
           <Edit className="w-4 h-4" />
-        </button>
+        </button> */}
         {/* <button
           onClick={() => org?.id && handleDelete(org.id)}
           className="p-1 text-red-600 hover:bg-red-50 rounded"

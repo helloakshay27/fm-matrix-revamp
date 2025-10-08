@@ -386,6 +386,17 @@ export const UtilityRequestDashboard = () => {
     }
   };
 
+  const leftActions = (
+    <Button
+      onClick={handleAdd}
+      className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
+    >
+      <Plus className="w-4 h-4" />
+      Add
+    </Button>
+  )
+
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Breadcrumb */}
@@ -398,13 +409,7 @@ export const UtilityRequestDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3 justify-between">
-        <Button
-          onClick={handleAdd}
-          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </Button>
+
         {/* <Button
             onClick={handleRefresh}
             className="bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border border-gray-300"
@@ -438,9 +443,9 @@ export const UtilityRequestDashboard = () => {
             data={filteredData}
             columns={columns}
             renderCell={renderCell}
-            onSelectAll={handleSelectAll}
-            onSelectItem={handleSelectItem}
-            selectedItems={selectedItems}
+            // onSelectAll={handleSelectAll}
+            // onSelectItem={handleSelectItem}
+            // selectedItems={selectedItems}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             enableSearch={false}
@@ -449,8 +454,9 @@ export const UtilityRequestDashboard = () => {
             pagination={true}
             pageSize={15}
             emptyMessage="No customer consumption data found"
-            selectable={true}
+            // selectable={true}
             storageKey="utility-request-table"
+            leftActions={leftActions}
           />
         </div>
       )}

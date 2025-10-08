@@ -859,12 +859,12 @@ const modulesByPackage = {
       href: "/vas/parking",
       subItems: [
         {
-          name: "Parking Booking",
+          name: "Parking Allocation",
           href: "/vas/parking",
           color: "text-[#1a1a1a]",
         },
         {
-          name: "Parking Allocation",
+          name: "Parking Booking",
           href: "/vas/parking/site-wise-bookings",
           color: "text-[#1a1a1a]",
         },

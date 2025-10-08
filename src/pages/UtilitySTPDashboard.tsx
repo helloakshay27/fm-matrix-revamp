@@ -322,22 +322,22 @@ const UtilitySTPDashboard = () => {
             <StatsCard
               title="Total Asset"
               value={stats.total.toString()}
-              icon={<Package className="w-8 h-8" />}
+              icon={<Package className="w-8 h-8" color='#c72030' />}
             />
             <StatsCard
               title="In Use"
               value={stats.inUse.toString()}
-              icon={<CheckCircle className="w-8 h-8" />}
+              icon={<CheckCircle className="w-8 h-8" color='#c72030' />}
             />
             <StatsCard
               title="Breakdown"
               value={stats.breakdown.toString()}
-              icon={<AlertTriangle className="w-8 h-8" />}
+              icon={<AlertTriangle className="w-8 h-8" color='#c72030' />}
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3">
+          {/* <div className="flex flex-wrap gap-3">
             <Button
               onClick={handleAdd}
               className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
@@ -379,7 +379,7 @@ const UtilitySTPDashboard = () => {
             >
               In-Active Assets
             </Button>
-          </div>
+          </div> */}
 
           {/* STP Asset Data Table */}
           <div className="relative">

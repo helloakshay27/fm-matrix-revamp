@@ -404,14 +404,14 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
         >
           <Eye className="w-4 h-4" />
         </button>
-        <button
+        {/* <button
           onClick={() => company?.id && handleEdit(company.id)}
           className="p-1 text-green-600 hover:bg-green-50 rounded"
           title="Edit"
           disabled={!canEditCompany || !company?.id}
         >
           <Edit className="w-4 h-4" />
-        </button>
+        </button> */}
         {/* <button
           onClick={() => company?.id && handleDelete(company.id)}
           className="p-1 text-red-600 hover:bg-red-50 rounded"
