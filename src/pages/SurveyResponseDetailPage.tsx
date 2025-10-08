@@ -28,6 +28,11 @@ import {
   Loader2,
   Settings,
 } from "lucide-react";
+import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
+import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
+import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
+import { renderToStaticMarkup } from "react-dom/server";
+import html2pdf from 'html2pdf.js';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,7 +68,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { EmojiEmotions, Pending, QuestionMark, QuestionMarkRounded } from "@mui/icons-material";
 import TabularResponseDetailsPage from "./TabularResponseDetailsPage";
-import html2pdf from 'html2pdf.js'; // Add this import for PDF generation
+import { JobSheetPDFGenerator } from "@/components/JobSheetPDFGenerator";
 // Recharts imported above
 // import TabularResponseDetailsPage from "./TabularResponseDetailsPage";
 
@@ -3483,17 +3488,15 @@ export const SurveyResponseDetailPage = () => {
     };
   }, [getDisplayTicketData]);
 
-  // PDF download state for summary
   const [isDownloadingSummary, setIsDownloadingSummary] = useState(false);
   const summaryContentRef = useRef<HTMLDivElement>(null);
 
-  // Handle PDF download for summary tab
   const handleDownloadSummaryPDF = async () => {
     if (!surveyData || !summaryContentRef.current) {
       toast.error("No summary data available to download");
       return;
     }
-    
+
     setIsDownloadingSummary(true);
     try {
       const element = summaryContentRef.current;
@@ -3503,15 +3506,61 @@ export const SurveyResponseDetailPage = () => {
       const originalDisplay = toolbar ? toolbar.style.display : '';
       if (toolbar) toolbar.style.display = 'none';
 
+      // Render the logo components as JSX elements
+      const oigLogo = renderToStaticMarkup(<OIG_LOGO_CODE />);
+      const viLogo = renderToStaticMarkup(<VI_LOGO_CODE />);
+      const defaultLogo = renderToStaticMarkup(<DEFAULT_LOGO_CODE />);
+
+      const headerHTML = `
+      <div style="position: relative; width: 100%; height: 50px;">
+        <div style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          z-index: 10;
+          background-color: #C4B89D59;
+          height: 45px;
+          width: 1000px;
+          display: inline-block;
+          padding: 8px 0 0 8px;
+        ">${defaultLogo}</div>
+      </div>
+    `;
+
+      const fullContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              ${JobSheetPDFGenerator}
+              .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #D9D9D9; background-color: #F6F4EE; }
+              .logo { margin: 0 10px; }
+              /* Force card header alignment */
+              [class*="MuiCardHeader-root"] { display: flex !important; align-items: center !important; min-height: 60px !important; padding: 16px !important; }
+              [class*="MuiCardHeader-content"] { flex: 1 !important; }
+              [class*="MuiCardHeader-title"] { font-size: 18px !important; font-weight: 600 !important; color: #000 !important; margin: 0 !important; display: flex !important; align-items: center !important; gap: 12px !important; }
+              [class*="MuiCardHeader-title"] div[class*="rounded-full"] { margin-right: 0 !important; }
+              /* Additional fallback selectors */
+              .text-lg { font-size: 18px !important; }
+              div[class*="flex items-center"] { align-items: center !important; }
+            </style>
+          </head>
+          <body>
+            ${headerHTML}
+            <div style="padding: 5px 30px 30px 30px;">${element.innerHTML}</div>
+          </body>
+        </html>
+      `;
+
       const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
+        margin: 0,
         filename: `survey_summary_${surveyId}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { scale: 2, logging: true, useCORS: true },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' as const }
       };
 
-      await html2pdf().from(element).set(opt).save();
+      await html2pdf().from(fullContent).set(opt).save();
 
       // Restore toolbar display
       if (toolbar) toolbar.style.display = originalDisplay;

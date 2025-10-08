@@ -347,7 +347,18 @@ export const AddSurveyPage = () => {
     if (!question) return;
 
     const currentOptionsCount = question.answerOptions?.length || 0;
-    if (currentOptionsCount >= 5) return; // Limit to 5 options
+
+    // Different limits based on answer type
+    if (question.answerType === "rating" || question.answerType === "emojis") {
+      if (currentOptionsCount >= 5) {
+        toast.error("Maximum Options Reached", {
+          description: `You can only add up to 5 options for ${question.answerType === "rating" ? "rating" : "emojis"} questions.`,
+          duration: 3000,
+        });
+        return;
+      }
+    }
+    // For multiple-choice, no limit is applied
 
     // Always start with empty text to allow user input for both ratings and emojis
     const newOptionText = "";
@@ -690,10 +701,18 @@ export const AddSurveyPage = () => {
       if (error.response) {
         console.error("Response data:", error.response.data);
         console.error("Response status:", error.response.status);
-        toast.error("Failed to Create Survey", {
-          description: error.response.data?.message || error.response.statusText || "Unknown error occurred",
-          duration: 5000,
-        });
+
+        if (error.response.status === 422) {
+          toast.error("Name Already Taken", {
+            description: "The survey name has already been taken. Please choose a different name.",
+            duration: 5000,
+          });
+        } else {
+          toast.error("Failed to Create Survey", {
+            description: error.response.data?.message || error.response.statusText || "Unknown error occurred",
+            duration: 5000,
+          });
+        }
       } else if (error.request) {
         toast.error("Network Error", {
           description: "Unable to connect to server. Please check your connection.",

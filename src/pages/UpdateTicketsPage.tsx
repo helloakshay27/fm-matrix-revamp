@@ -3110,16 +3110,34 @@ const UpdateTicketsPage: React.FC = () => {
 
                 {/* Comments Section */}
                 <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Add Comments
-                  </label>
-                  <Textarea
-                    value={formData.comments}
-                    onChange={(e) => handleInputChange("comments", e.target.value)}
-                    rows={4}
-                    className="text-base border rounded min-h-[100px] w-full border-gray-300 bg-white px-3 py-2 focus:outline-none"
-                    placeholder="Add comment"
-                  />
+                  <div className="relative w-full">
+  <textarea
+    id="comments"
+    value={formData.comments}
+    onChange={(e) => handleInputChange("comments", e.target.value)}
+    rows={4}
+    placeholder=" "
+    className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+      focus:outline-none 
+      focus:border-[2px] 
+      focus:border-[rgb(25,118,210)] 
+      resize-vertical"
+  />
+
+  <label
+    htmlFor="comments"
+    className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+      peer-placeholder-shown:top-4
+      peer-placeholder-shown:text-base
+      peer-placeholder-shown:text-gray-400
+      peer-focus:-top-[10px]
+      peer-focus:text-sm
+      peer-focus:text-[rgb(25,118,210)]"
+  >
+    Add comment
+  </label>
+</div>
+
                   <div className="mt-2">
                     <label className="flex items-center">
                       <input

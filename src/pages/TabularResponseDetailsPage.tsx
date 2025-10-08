@@ -18,7 +18,13 @@ import { getFullUrl, API_CONFIG } from "@/config/apiConfig";
 import { apiClient } from '@/utils/apiClient';
 import { toast } from "sonner";
 import { EmojiEmotions } from "@mui/icons-material";
-import html2pdf from 'html2pdf.js'; // Add this import for PDF generation
+import html2pdf from 'html2pdf.js';
+import { renderToStaticMarkup } from "react-dom/server";
+import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
+import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
+import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
+import { JobSheetPDFStyles } from "./JobSheetPDFStyles";
+import { JobSheetPDFGenerator } from "@/components/JobSheetPDFGenerator";
 
 interface ResponseComplaint {
   complaint_id: number;
@@ -63,7 +69,6 @@ interface ResponseListData {
   responses: SurveyResponse[];
 }
 
-// Survey detail interfaces for API data
 interface SurveyDetail {
   survey_id: number;
   survey_name: string;
@@ -78,7 +83,6 @@ interface SurveyDetailsResponse {
   };
 }
 
-// Filter interface for responses
 interface ResponseFilters {
   dateRange?: {
     from?: Date;
@@ -96,7 +100,6 @@ interface ResponseFilters {
   room?: string;
 }
 
-// Location interfaces for dropdowns
 interface BuildingItem {
   id: number;
   name: string;
@@ -157,19 +160,17 @@ export default function TabularResponseDetailsPage({
   const responseId = responseIdProp ?? routeParams.responseId;
   const navigate = useNavigate();
 
-  const contentRef = useRef<HTMLDivElement>(null); // Add ref for PDF capture
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const [loading, setLoading] = useState(true);
   const [response, setResponse] = useState<SurveyResponse | null>(null);
   const [search, setSearch] = useState("");
   const [surveyData, setSurveyData] = useState<SurveyDetail | null>(null);
 
-  // Filter state
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<ResponseFilters>({});
   const [formFilters, setFormFilters] = useState<ResponseFilters>({});
 
-  // Location dropdown data and loading states
   const [buildings, setBuildings] = useState<BuildingItem[]>([]);
   const [wings, setWings] = useState<WingItem[]>([]);
   const [areas, setAreas] = useState<AreaItem[]>([]);
@@ -182,14 +183,11 @@ export default function TabularResponseDetailsPage({
   const [loadingFloors, setLoadingFloors] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
 
-  // Local state for date inputs
   const [localFromDate, setLocalFromDate] = useState("");
   const [localToDate, setLocalToDate] = useState("");
 
-  // PDF download state
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // API function to fetch survey details
   const fetchSurveyDetails = useCallback(async (surveyId: string) => {
     try {
       if (!surveyId || surveyId.trim() === "") {
@@ -223,8 +221,6 @@ export default function TabularResponseDetailsPage({
     }
   }, []);
 
-  // API fetch functions for location dropdowns
-
   const fetchBuildings = useCallback(async (surveyId: string) => {
     if (!surveyId) {
       setBuildings([]);
@@ -245,7 +241,6 @@ export default function TabularResponseDetailsPage({
       if (!response.ok) throw new Error(`Failed to fetch buildings: ${response.status}`);
       const data = await response.json();
       
-      // Adjust based on actual API response structure
       const buildingsData = Array.isArray(data?.buildings) ? data.buildings : Array.isArray(data) ? data : [];
       console.log('Setting buildings data for survey:', buildingsData);
       setBuildings(buildingsData);
@@ -270,7 +265,6 @@ export default function TabularResponseDetailsPage({
       const response = await apiClient.get(`/pms/buildings/${buildingId}/wings.json`);
       console.log('Wings API response:', response.data);
 
-      // Extract wings from nested structure: [].wings
       const wingsData = Array.isArray(response.data)
         ? response.data.map((item: { wings?: WingItem }) => item.wings).filter(Boolean) as WingItem[]
         : [];
@@ -345,7 +339,6 @@ export default function TabularResponseDetailsPage({
       const response = await apiClient.get(`/pms/floors/${floorId}/rooms.json`);
       console.log('Rooms API response:', response.data);
 
-      // Extract rooms from nested structure: [].rooms
       const roomsData = Array.isArray(response.data)
         ? response.data.map((item: { rooms?: RoomItem }) => item.rooms).filter(Boolean) as RoomItem[]
         : [];
@@ -360,14 +353,12 @@ export default function TabularResponseDetailsPage({
     }
   }, []);
 
-  // Load buildings when opening the filter modal
   useEffect(() => {
     if (showFilterModal && surveyId) {
       fetchBuildings(surveyId);
     }
   }, [showFilterModal, surveyId, fetchBuildings]);
 
-  // Fetch wings when building changes
   useEffect(() => {
     const fetchWingsEffect = async () => {
       if (!formFilters.buildingId) {
@@ -388,7 +379,6 @@ export default function TabularResponseDetailsPage({
     fetchWingsEffect();
   }, [formFilters.buildingId, fetchWings]);
 
-  // Fetch areas when wing changes
   useEffect(() => {
     const fetchAreasEffect = async () => {
       if (!formFilters.wingId) {
@@ -408,7 +398,6 @@ export default function TabularResponseDetailsPage({
     fetchAreasEffect();
   }, [formFilters.wingId, fetchAreas]);
 
-  // Fetch floors when area changes
   useEffect(() => {
     const fetchFloorsEffect = async () => {
       if (!formFilters.areaId) {
@@ -427,7 +416,6 @@ export default function TabularResponseDetailsPage({
     fetchFloorsEffect();
   }, [formFilters.areaId, fetchFloors]);
 
-  // Fetch rooms when floor changes
   useEffect(() => {
     const fetchRoomsEffect = async () => {
       if (!formFilters.floorId) {
@@ -441,7 +429,6 @@ export default function TabularResponseDetailsPage({
     fetchRoomsEffect();
   }, [formFilters.floorId, fetchRooms]);
 
-  // Field styles for MUI components
   const fieldStyles = useMemo(() => ({
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -460,7 +447,6 @@ export default function TabularResponseDetailsPage({
         zIndex: 9999,
       },
     },
-    // Prevent focus conflicts with Dialog - same as AssetFilterDialog
     disablePortal: false,
     disableAutoFocus: true,
     disableEnforceFocus: true,
@@ -473,9 +459,7 @@ export default function TabularResponseDetailsPage({
       try {
         setLoading(true);
         
-        // Fetch both response details and survey data in parallel
         const [responseData, surveyDetailsData] = await Promise.all([
-          // Fetch single response
           (async () => {
             const baseUrl = getFullUrl(`/survey_mappings/response_list.json`);
             const url = new URL(baseUrl);
@@ -487,11 +471,9 @@ export default function TabularResponseDetailsPage({
             const data: ResponseListData = await res.json();
             return data;
           })(),
-          // Fetch survey details
           fetchSurveyDetails(surveyId)
         ]);
 
-        // Set response data
         const found = (responseData.responses || []).find(
           r => String(r.response_id) === String(responseId)
         );
@@ -500,7 +482,6 @@ export default function TabularResponseDetailsPage({
           toast.error("Response not found");
         }
 
-        // Set survey data for summary cards
         if (surveyDetailsData?.survey_details?.surveys?.length > 0) {
           const surveyDetail = surveyDetailsData.survey_details.surveys[0];
           setSurveyData(surveyDetail);
@@ -517,7 +498,6 @@ export default function TabularResponseDetailsPage({
     fetchData();
   }, [surveyId, responseId, fetchSurveyDetails]);
 
-  // Sync local date state with form filters when modal opens
   useEffect(() => {
     if (showFilterModal) {
       setLocalFromDate(
@@ -533,7 +513,6 @@ export default function TabularResponseDetailsPage({
     }
   }, [showFilterModal, formFilters]);
 
-  // Date handlers
   const handleFromDateChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
@@ -566,7 +545,6 @@ export default function TabularResponseDetailsPage({
     []
   );
 
-  // Filter handlers
   const handleFilterClick = useCallback(() => {
     setFormFilters({ ...currentFilters });
     setShowFilterModal(true);
@@ -579,14 +557,12 @@ export default function TabularResponseDetailsPage({
   }, [formFilters]);
 
   const handleClearFilters = useCallback(async () => {
-    // Clear all form fields
     const emptyFilters: ResponseFilters = {};
     setFormFilters(emptyFilters);
     setCurrentFilters(emptyFilters);
     setLocalFromDate("");
     setLocalToDate("");
 
-    // Clear dependent data arrays
     setBuildings([]);
     setWings([]);
     setAreas([]);
@@ -613,12 +589,10 @@ export default function TabularResponseDetailsPage({
     [getActiveFiltersCount]
   );
 
-  // Memoized date values
   const minDateValue = useMemo(() => {
     return localFromDate || undefined;
   }, [localFromDate]);
 
-  // Handle change functions similar to AssetFilterDialog
   const handleBuildingChange = (value: string) => {
     setFormFilters(prev => ({
       ...prev,
@@ -688,7 +662,6 @@ export default function TabularResponseDetailsPage({
     );
   }, [response, search]);
 
-  // Handle PDF download using html2pdf to capture exact UI
   const handleDownloadPDF = async () => {
     if (!response || !contentRef.current) {
       toast.error("No response data available to download");
@@ -699,22 +672,87 @@ export default function TabularResponseDetailsPage({
     try {
       const element = contentRef.current;
 
-      // Temporarily hide the toolbar (search and download button) for PDF capture
       const toolbar = element.querySelector('.flex.items-center.justify-between.mb-4.print\\:hidden') as HTMLElement;
       const originalDisplay = toolbar ? toolbar.style.display : '';
       if (toolbar) toolbar.style.display = 'none';
 
+      // Render the logo components as JSX elements
+      const oigLogo = renderToStaticMarkup(<OIG_LOGO_CODE />);
+      const viLogo = renderToStaticMarkup(<VI_LOGO_CODE />);
+      const defaultLogo = renderToStaticMarkup(<DEFAULT_LOGO_CODE />);
+
+      const headerHTML = `
+      <div style="position: relative; width: 100%; height: 50px;">
+        <div style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          z-index: 10;
+          background-color: #C4B89D59;
+          height: 45px;
+          width: 1000px;
+          display: inline-block;
+          padding: 8px 0 0 8px;
+        ">${defaultLogo}</div>
+      </div>
+    `;
+    
+
+    const fullContent = `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <style>
+        ${JobSheetPDFGenerator}
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #D9D9D9; background-color: #F6F4EE; }
+        .logo { margin: 0 10px; }
+        .card-header {
+          display: flex;
+          align-items: center;
+          background-color: #F6F4EE;
+          padding: 10px;
+          margin-bottom: 8px;
+        }
+        .card-title {
+          display: flex;
+          align-items: center;
+          gap: 12px; /* Equivalent to space-x-3 in Tailwind */
+          font-size: 16px;
+          font-weight: 600;
+        }
+        .card-title .icon-wrapper {
+          width: 32px;
+          height: 32px;
+          background-color: #E5E0D3;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .card-title .icon-wrapper svg {
+          width: 16px;
+          height: 16px;
+          color: #C72030;
+        }
+      </style>
+    </head>
+    <body>
+      ${headerHTML}
+      <div style="padding: 5px 30px 30px 30px;">${element.innerHTML}</div>
+    </body>
+  </html>
+`;
+
       const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
+        margin: 0,
         filename: `survey_response_${response.response_id}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { scale: 2, logging: true, useCORS: true },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' as const }
       };
 
-      await html2pdf().from(element).set(opt).save();
+      await html2pdf().from(fullContent).set(opt).save();
 
-      // Restore toolbar display
       if (toolbar) toolbar.style.display = originalDisplay;
 
       toast.success('Survey response PDF downloaded successfully!');
@@ -728,22 +766,6 @@ export default function TabularResponseDetailsPage({
 
   return (
     <div ref={contentRef} className={`${inline ? "p-0" : "p-4 sm:p-6"} ${inline ? "" : "min-h-screen"}`}>
-      {/* <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => (onBack ? onBack() : navigate(-1))}
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" /> Back
-          </Button>
-          <h1 className="text-2xl font-bold text-[#1A1A1A]">
-            {response?.survey_name || "Survey Response"}
-          </h1>
-        </div>
-      </div> */}
-
-      {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 mt-6">
         <Card className="bg-[#F6F4EE]">
           <CardContent className="p-6">
@@ -788,16 +810,8 @@ export default function TabularResponseDetailsPage({
         </Card>
       </div>
 
-      {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 print:hidden">
         <div className="relative max-w-sm">
-          {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          /> */}
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -816,7 +830,6 @@ export default function TabularResponseDetailsPage({
         </div>
       </div>
 
-      {/* Survey Response Detail */}
       <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className="bg-[#F6F4EE] mb-2">
           <CardTitle className="text-lg flex items-center">
@@ -866,14 +879,13 @@ export default function TabularResponseDetailsPage({
         </CardContent>
       </Card>
 
-      {/* Answers Table */}
       <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className="bg-[#F6F4EE] mb-2">
           <CardTitle className="text-lg flex items-center">
-            <div className="w-8 h-8 bg-[#E5E0D3] text-white rounded-full flex items-center justify-center mr-3">
+            <div className="w-10 h-10 bg-[#E5E0D3] text-white rounded-full flex items-center justify-center mr-3">
               <FileText className="h-4 w-4 text-[#C72030]" />
             </div>
-            Survey Responses detail
+           <span className=""> Survey Responses Detail</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -925,7 +937,6 @@ export default function TabularResponseDetailsPage({
         </CardContent>
       </Card>
 
-      {/* Filter Modal */}
       <Dialog open={showFilterModal} onOpenChange={setShowFilterModal} modal={false}>
         <DialogContent
           className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto"
@@ -940,11 +951,9 @@ export default function TabularResponseDetailsPage({
             >
               <X className="h-4 w-4" />
             </Button>
-
           </DialogHeader>
 
           <div className="space-y-6 pt-4">
-            {/* Date Range Section */}
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-[#C72030]">Date Range</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -970,7 +979,6 @@ export default function TabularResponseDetailsPage({
               </div>
             </div>
 
-            {/* Location Details Section */}
             <div>
               <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -1028,7 +1036,7 @@ export default function TabularResponseDetailsPage({
                     ))}
                   </MuiSelect>
                 </FormControl>
-                 <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Floor</InputLabel>
                   <MuiSelect
                     label="Floor"
@@ -1065,16 +1073,9 @@ export default function TabularResponseDetailsPage({
                   </MuiSelect>
                 </FormControl>
               </div>
-              {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
-                
-              </div> */}
-              {/* <div className="grid grid-cols-2 gap-4 mt-4">
-               
-              </div> */}
             </div>
           </div>
 
-          {/* Modal Actions */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <Button 
               variant="secondary" 
