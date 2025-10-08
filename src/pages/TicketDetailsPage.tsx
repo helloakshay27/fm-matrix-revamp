@@ -97,11 +97,11 @@ const customStyles = {
   }),
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isSelected 
-      ? "#C72030" 
-      : state.isFocused 
-      ? "#F6F4EE" 
-      : "#fff",
+    backgroundColor: state.isSelected
+      ? "#C72030"
+      : state.isFocused
+        ? "#F6F4EE"
+        : "#fff",
     color: state.isSelected ? "#fff" : "#1A1A1A",
     fontSize: "14px",
     padding: "8px 12px",
@@ -161,7 +161,7 @@ const singleSelectStyles = {
     padding: "4px 8px",
     color: state.isFocused ? "#C72030" : "#666",
     cursor: "pointer",
-    "&:hover": { 
+    "&:hover": {
       color: "#C72030",
     },
   }),
@@ -179,11 +179,11 @@ const singleSelectStyles = {
   }),
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isSelected 
-      ? "#C72030" 
-      : state.isFocused 
-      ? "#F6F4EE" 
-      : "#fff",
+    backgroundColor: state.isSelected
+      ? "#C72030"
+      : state.isFocused
+        ? "#F6F4EE"
+        : "#fff",
     color: state.isSelected ? "#fff" : "#1A1A1A",
     fontSize: "14px",
     padding: "8px 12px",
@@ -418,8 +418,8 @@ export const TicketDetailsPage = () => {
       cost: '',
       attachment: '',
       attachmentFiles: []
-    }]);
-  };
+    }])
+  }
   const removeCostRow = () => {
     setCostRows(prev => prev.length > 1 ? prev.slice(0, -1) : prev);
   };
@@ -580,10 +580,10 @@ export const TicketDetailsPage = () => {
     fetchResponsiblePersons();
   }, []);
 
-  console.log("corrective:-------------------",communicationTemplates
-                              .filter(template => template.identifier === "Corrective Action" && template?.active === true)
-                              .map(t => ({ value: t.id, label: t.identifier_action })));
-  
+  console.log("corrective:-------------------", communicationTemplates
+    .filter(template => template.identifier === "Corrective Action" && template?.active === true)
+    .map(t => ({ value: t.id, label: t.identifier_action })));
+
 
   // Fetch suppliers
   useEffect(() => {
@@ -790,13 +790,13 @@ export const TicketDetailsPage = () => {
     }
   };
 
-  // Handle Preventive Action change with auto-save
-  const handlePreventiveActionChange = async (selectedValue: string) => {
+  // Handle Preventive Action change with auto-save (multi-select)
+  const handlePreventiveActionChange = async (selectedOptions: Array<{ value: number; label: string }>) => {
     try {
       // Handle clear/unselect case
-      if (!selectedValue || selectedValue === '') {
+      if (!selectedOptions || selectedOptions.length === 0) {
         console.log('🔄 Clearing preventive action');
-        
+
         // Update local state
         setTicketData((prev) => {
           if (!prev) return prev;
@@ -835,24 +835,17 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      // Find the template by identifier_action
-      const selectedTemplate = communicationTemplates.find(
-        template => template.identifier === "Preventive Action" && template.identifier_action === selectedValue
-      );
-
-      if (!selectedTemplate) {
-        console.error('Selected preventive action template not found');
-        return;
-      }
-
-      const templateId = selectedTemplate.id;
+      // Get template IDs from selected options
+      const templateIds = selectedOptions.map(option => option.value);
+      const templateLabels = selectedOptions.map(option => option.label).join(', ');
 
       // Update local state
       setTicketData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          preventive_action: selectedValue
+          preventive_action: templateLabels,
+          preventive_action_template_ids: templateIds
         };
       });
 
@@ -862,11 +855,13 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      console.log('🔄 Auto-saving preventive action template ID:', templateId);
+      console.log('🔄 Auto-saving preventive action template IDs:', templateIds);
 
       const formDataToSend = new FormData();
       formDataToSend.append('complaint_log[complaint_id]', id);
-      formDataToSend.append('preventive_action[template_ids][]', String(templateId));
+      templateIds.forEach(templateId => {
+        formDataToSend.append('preventive_action[template_ids][]', String(templateId));
+      });
 
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
@@ -893,13 +888,13 @@ export const TicketDetailsPage = () => {
     }
   };
 
-  // Handle Corrective Action change with auto-save
-  const handleCorrectiveActionChange = async (selectedValue: string) => {
+  // Handle Corrective Action change with auto-save (multi-select)
+  const handleCorrectiveActionChange = async (selectedOptions: Array<{ value: number; label: string }>) => {
     try {
       // Handle clear/unselect case
-      if (!selectedValue || selectedValue === '') {
+      if (!selectedOptions || selectedOptions.length === 0) {
         console.log('🔄 Clearing corrective action');
-        
+
         // Update local state
         setTicketData((prev) => {
           if (!prev) return prev;
@@ -938,24 +933,17 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      // Find the template by identifier_action
-      const selectedTemplate = communicationTemplates.find(
-        template => template.identifier === "Corrective Action" && template.identifier_action === selectedValue
-      );
-
-      if (!selectedTemplate) {
-        console.error('Selected corrective action template not found');
-        return;
-      }
-
-      const templateId = selectedTemplate.id;
+      // Get template IDs from selected options
+      const templateIds = selectedOptions.map(option => option.value);
+      const templateLabels = selectedOptions.map(option => option.label).join(', ');
 
       // Update local state
       setTicketData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          corrective_action: selectedValue
+          corrective_action: templateLabels,
+          corrective_action_template_ids: templateIds
         };
       });
 
@@ -965,11 +953,13 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      console.log('🔄 Auto-saving corrective action template ID:', templateId);
+      console.log('🔄 Auto-saving corrective action template IDs:', templateIds);
 
       const formDataToSend = new FormData();
       formDataToSend.append('complaint_log[complaint_id]', id);
-      formDataToSend.append('corrective_action[template_ids][]', String(templateId));
+      templateIds.forEach(templateId => {
+        formDataToSend.append('corrective_action[template_ids][]', String(templateId));
+      });
 
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
@@ -996,13 +986,13 @@ export const TicketDetailsPage = () => {
     }
   };
 
-  // Handle Short-term Impact change with auto-save
-  const handleShortTermImpactChange = async (selectedValue: string) => {
+  // Handle Short-term Impact change with auto-save (multi-select)
+  const handleShortTermImpactChange = async (selectedOptions: Array<{ value: number; label: string }>) => {
     try {
       // Handle clear/unselect case
-      if (!selectedValue || selectedValue === '') {
+      if (!selectedOptions || selectedOptions.length === 0) {
         console.log('🔄 Clearing short-term impact');
-        
+
         // Update local state
         setTicketData((prev) => {
           if (!prev) return prev;
@@ -1041,24 +1031,17 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      // Find the template by identifier_action
-      const selectedTemplate = communicationTemplates.find(
-        template => template.identifier === "Short-term Impact" && template.identifier_action === selectedValue
-      );
-
-      if (!selectedTemplate) {
-        console.error('Selected short-term impact template not found');
-        return;
-      }
-
-      const templateId = selectedTemplate.id;
+      // Get template IDs from selected options
+      const templateIds = selectedOptions.map(option => option.value);
+      const templateLabels = selectedOptions.map(option => option.label).join(', ');
 
       // Update local state
       setTicketData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          short_term_impact: selectedValue
+          short_term_impact: templateLabels,
+          short_term_impact_template_ids: templateIds
         };
       });
 
@@ -1068,11 +1051,13 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      console.log('🔄 Auto-saving short-term impact template ID:', templateId);
+      console.log('🔄 Auto-saving short-term impact template IDs:', templateIds);
 
       const formDataToSend = new FormData();
       formDataToSend.append('complaint_log[complaint_id]', id);
-      formDataToSend.append('short_term_impact[template_ids][]', String(templateId));
+      templateIds.forEach(templateId => {
+        formDataToSend.append('short_term_impact[template_ids][]', String(templateId));
+      });
 
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
@@ -1099,13 +1084,13 @@ export const TicketDetailsPage = () => {
     }
   };
 
-  // Handle Long-term Impact change with auto-save
-  const handleLongTermImpactChange = async (selectedValue: string) => {
+  // Handle Long-term Impact change with auto-save (multi-select)
+  const handleLongTermImpactChange = async (selectedOptions: Array<{ value: number; label: string }>) => {
     try {
       // Handle clear/unselect case
-      if (!selectedValue || selectedValue === '') {
+      if (!selectedOptions || selectedOptions.length === 0) {
         console.log('🔄 Clearing long-term impact');
-        
+
         // Update local state
         setTicketData((prev) => {
           if (!prev) return prev;
@@ -1144,24 +1129,17 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      // Find the template by identifier_action
-      const selectedTemplate = communicationTemplates.find(
-        template => template.identifier === "Long-term Impact" && template.identifier_action === selectedValue
-      );
-
-      if (!selectedTemplate) {
-        console.error('Selected long-term impact template not found');
-        return;
-      }
-
-      const templateId = selectedTemplate.id;
+      // Get template IDs from selected options
+      const templateIds = selectedOptions.map(option => option.value);
+      const templateLabels = selectedOptions.map(option => option.label).join(', ');
 
       // Update local state
       setTicketData((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          impact: selectedValue
+          impact: templateLabels,
+          long_term_impact_template_ids: templateIds
         };
       });
 
@@ -1171,11 +1149,13 @@ export const TicketDetailsPage = () => {
         return;
       }
 
-      console.log('🔄 Auto-saving long-term impact template ID:', templateId);
+      console.log('🔄 Auto-saving long-term impact template IDs:', templateIds);
 
       const formDataToSend = new FormData();
       formDataToSend.append('complaint_log[complaint_id]', id);
-      formDataToSend.append('impact[template_ids][]', String(templateId));
+      templateIds.forEach(templateId => {
+        formDataToSend.append('impact[template_ids][]', String(templateId));
+      });
 
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
@@ -1461,8 +1441,9 @@ export const TicketDetailsPage = () => {
       setSubmittingCostApproval(false);
     }
   };
-{console.log("communicationTemplates:--------",communicationTemplates)
-                      }
+  {
+    console.log("communicationTemplates:--------", communicationTemplates)
+  }
   // Add useEffect to initialize and update ageing
   useEffect(() => {
     if (ticketData?.ticket_ageing_minutes) {
@@ -1630,100 +1611,68 @@ export const TicketDetailsPage = () => {
     return matchedPerson ? matchedPerson.id.toString() : ticketData.responsible_person;
   };
 
-  // Helper function to get template value for Preventive Action
-  const getPreventiveActionValue = () => {
-    if (!ticketData?.preventive_action) return '';
-    
-    console.log('🔍 Preventive Action Debug:', {
-      ticketDataValue: ticketData.preventive_action,
-      availableTemplates: communicationTemplates
-        .filter(t => t.identifier === "Preventive Action" && t.active === true)
-        .map(t => ({ id: t.id, action: t.identifier_action }))
-    });
-    
-    // Check if the value matches any template's identifier_action
-    const matchedTemplate = communicationTemplates.find(
-      template => template.identifier === "Preventive Action" &&
-                 template.identifier_action === ticketData.preventive_action &&
-                 template.active === true
+  // Helper function to get template values for Preventive Action (multi-select)
+  const getPreventiveActionValues = () => {
+    if (!ticketData?.preventive_action_template_ids || !Array.isArray(ticketData.preventive_action_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Preventive Action" &&
+        template.active === true
     );
-    
-    console.log('🔍 Preventive Action Matched:', matchedTemplate ? matchedTemplate.identifier_action : 'No match');
-    
-    // Return matched value or the original value from ticket data
-    return matchedTemplate ? matchedTemplate.identifier_action : ticketData.preventive_action;
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
   };
 
-  // Helper function to get template value for Short-term Impact
-  const getShortTermImpactValue = () => {
-    if (!ticketData?.short_term_impact) return '';
-    
-    console.log('🔍 Short-term Impact Debug:', {
-      ticketDataValue: ticketData.short_term_impact,
-      availableTemplates: communicationTemplates
-        .filter(t => t.identifier === "Short-term Impact" && t.active === true)
-        .map(t => ({ id: t.id, action: t.identifier_action }))
-    });
-    
-    // Check if the value matches any template's identifier_action
-    const matchedTemplate = communicationTemplates.find(
-      template => template.identifier === "Short-term Impact" &&
-                 template.identifier_action === ticketData.short_term_impact &&
-                 template.active === true
+  // Helper function to get template values for Short-term Impact (multi-select)
+  const getShortTermImpactValues = () => {
+    if (!ticketData?.short_term_impact_template_ids || !Array.isArray(ticketData.short_term_impact_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Short-term Impact" &&
+        template.active === true
     );
-    
-    console.log('🔍 Short-term Impact Matched:', matchedTemplate ? matchedTemplate.identifier_action : 'No match');
-    
-    // Return matched value or the original value from ticket data
-    return matchedTemplate ? matchedTemplate.identifier_action : ticketData.short_term_impact;
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
   };
 
-  // Helper function to get template value for Corrective Action
-  const getCorrectiveActionValue = () => {
-    if (!ticketData?.corrective_action) return '';
-    
-    console.log('🔍 Corrective Action Debug:', {
-      ticketDataValue: ticketData.corrective_action,
-      availableTemplates: communicationTemplates
-        .filter(t => t.identifier === "Corrective Action" && t.active === true)
-        .map(t => ({ id: t.id, action: t.identifier_action }))
-    });
-    
-    // Check if the value matches any template's identifier_action
-    const matchedTemplate = communicationTemplates.find(
-      template => template.identifier === "Corrective Action" &&
-                 template.identifier_action === ticketData.corrective_action &&
-                 template.active === true
+  // Helper function to get template values for Corrective Action (multi-select)
+  const getCorrectiveActionValues = () => {
+    if (!ticketData?.corrective_action_template_ids || !Array.isArray(ticketData.corrective_action_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Corrective Action" &&
+        template.active === true
     );
-    
-    console.log('🔍 Corrective Action Matched:', matchedTemplate ? matchedTemplate.identifier_action : 'No match');
-    
-    // Return matched value or the original value from ticket data
-    return matchedTemplate ? matchedTemplate.identifier_action : ticketData.corrective_action;
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
   };
 
-  // Helper function to get template value for Long-term Impact
-  const getLongTermImpactValue = () => {
-    if (!ticketData?.impact) return '';
-    
-    console.log('🔍 Long-term Impact Debug:', {
-      ticketDataValue: ticketData.impact,
-      availableTemplates: communicationTemplates
-        .filter(t => t.identifier === "Long-term Impact" && t.active === true)
-        .map(t => ({ id: t.id, action: t.identifier_action }))
-    });
-    
-    // Check if the value matches any template's identifier_action
-    const matchedTemplate = communicationTemplates.find(
-      template => template.identifier === "Long-term Impact" &&
-                 template.identifier_action === ticketData.impact &&
-                 template.active === true
+  // Helper function to get template values for Long-term Impact (multi-select)
+  const getLongTermImpactValues = () => {
+    if (!ticketData?.long_term_impact_template_ids || !Array.isArray(ticketData.long_term_impact_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Long-term Impact" &&
+        template.active === true
     );
-    
-    console.log('🔍 Long-term Impact Matched:', matchedTemplate ? matchedTemplate.identifier_action : 'No match');
-    
-    // Return matched value or the original value from ticket data
-    return matchedTemplate ? matchedTemplate.identifier_action : ticketData.impact;
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
   };
 
   // Helper function to get Root Cause Analysis values for React Select
@@ -1732,24 +1681,24 @@ export const TicketDetailsPage = () => {
     if (ticketData?.rca_template_ids && Array.isArray(ticketData.rca_template_ids)) {
       // Filter out duplicate IDs using Set
       const uniqueIds = [...new Set(ticketData.rca_template_ids)];
-      
+
       console.log('🔍 Root Cause Analysis Template IDs from API:', uniqueIds);
-      
+
       // Find templates by IDs
       const matchedTemplates = communicationTemplates.filter(
         (t) =>
           uniqueIds.includes(t.id) &&
           t.identifier === "Root Cause Analysis"
       );
-      
+
       console.log('🔍 Root Cause Analysis Matched Templates:', matchedTemplates.map(t => ({ id: t.id, action: t.identifier_action })));
-      
+
       return matchedTemplates.map((t) => ({
         value: t.id,
         label: t.identifier_action,
       }));
     }
-    
+
     // Fallback: Use text matching if no template IDs
     if (!ticketData.root_cause) return [];
     const rootCauseString =
@@ -1804,9 +1753,9 @@ export const TicketDetailsPage = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex flex-col gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-  {ticketData.heading || "Ticket Summary"}
-</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+              {ticketData.heading || "Ticket Summary"}
+            </h1>
 
             <div className="text-sm text-gray-600">
               Ticket #{ticketData.ticket_number || "-"} • Created by{" "}
@@ -2376,8 +2325,8 @@ export const TicketDetailsPage = () => {
                               <div className="flex items-start mb-4">
                                 <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Description</span>
                                 <span className="text-gray-900 font-medium break-words overflow-wrap-anywhere" style={{ fontSize: '14px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-  {ticketData.heading || 'No description available'}
-</span>
+                                  {ticketData.heading || 'No description available'}
+                                </span>
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="">
@@ -2420,8 +2369,8 @@ export const TicketDetailsPage = () => {
                                             {/* Dynamic value */}
                                             <span
                                               className={`text-[13px] md:text-[14px] font-semibold whitespace-nowrap ${cell.isExceeded && cell.label === 'Balance TAT'
-                                                  ? 'text-red-600'
-                                                  : 'text-gray-900'
+                                                ? 'text-red-600'
+                                                : 'text-gray-900'
                                                 }`}
                                             >
                                               {cell.isExceeded && cell.label === 'Balance TAT'
@@ -2803,16 +2752,16 @@ export const TicketDetailsPage = () => {
                                 {(() => {
                                   // Use template IDs from API with duplicate filtering
                                   const uniqueIds = [...new Set(ticketData.rca_template_ids)];
-                                  
+
                                   return uniqueIds.map((templateId, index) => {
                                     const matchedTemplate = communicationTemplates.find(
                                       (template) =>
                                         template.id === templateId &&
                                         template.identifier === "Root Cause Analysis"
                                     );
-                                    
+
                                     if (!matchedTemplate) return null;
-                                    
+
                                     return (
                                       <div
                                         key={`rca-display-${templateId}`}
@@ -3317,7 +3266,7 @@ export const TicketDetailsPage = () => {
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Ticket Closure
                       </h3>
-                      
+
                     </div>
                     <Button
                       variant="outline"
@@ -3333,89 +3282,6 @@ export const TicketDetailsPage = () => {
                   <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
                     {/* Two row / two column panels */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {/* Preventive Action */}
-                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                        <div className="relative w-full">
-                          {/* Floating label on border */}
-                          <label
-                            style={{
-                              position: "absolute",
-                              top: "-10px",
-                              left: "12px",
-                              background: "#fff",
-                              padding: "0 6px",
-                              fontWeight: 500,
-                              fontSize: "14px",
-                              color: "#1A1A1A",
-                              zIndex: 10,
-                            }}
-                          >
-                            Preventive Action
-                          </label>
-
-                          {/* React Select */}
-                          <Select
-                            value={(() => {
-                              const value = getPreventiveActionValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Preventive Action" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handlePreventiveActionChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handlePreventiveActionChange('');
-                              }
-                            }}
-                            options={communicationTemplates
-                              .filter((t) => t.identifier === "Preventive Action" && t.active === true)
-                              .map((t) => ({
-                                value: t.id,
-                                label: t.identifier_action,
-                              }))}
-                            placeholder="Select Preventive Action"
-                            styles={singleSelectStyles}
-                            isClearable
-                          />
-                        </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
-                          {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.preventive_action) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Preventive Action" &&
-                                  template.identifier_action === ticketData.preventive_action &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.preventive_action_template_ids && Array.isArray(ticketData.preventive_action_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Preventive Action"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            return ticketData.preventive_action || 'No preventive action description available';
-                          })()}
-                        </div>
-                      </div>
-
                       {/* Short-term Impact */}
                       <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                         <div className="relative w-full">
@@ -3438,23 +3304,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={(() => {
-                              const value = getShortTermImpactValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Short-term Impact" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleShortTermImpactChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleShortTermImpactChange('');
-                              }
+                            value={getShortTermImpactValues()}
+                            onChange={(selectedOptions) => {
+                              handleShortTermImpactChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Short-term Impact" && t.active === true)
@@ -3463,38 +3315,36 @@ export const TicketDetailsPage = () => {
                                 label: t.identifier_action,
                               }))}
                             placeholder="Select Short-term Impact"
-                            styles={singleSelectStyles}
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
                             isClearable
                           />
                         </div>
-                        
-                        <div className="mt-4 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1 space-y-1">
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 overflow-y-auto pr-1">
                           {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.short_term_impact) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Short-term Impact" &&
-                                  template.identifier_action === ticketData.short_term_impact &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+                            if (!ticketData?.short_term_impact_template_ids || ticketData.short_term_impact_template_ids.length === 0) {
+                              return 'No short-term impact description available';
                             }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.short_term_impact_template_ids && Array.isArray(ticketData.short_term_impact_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Short-term Impact"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+
+                            const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Short-term Impact"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No short-term impact description available';
                             }
-                            
-                            return ticketData.short_term_impact || 'No short-term impact description available';
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`short-term-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
                           })()}
                         </div>
                       </div>
@@ -3521,23 +3371,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={(() => {
-                              const value = getCorrectiveActionValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Corrective Action" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleCorrectiveActionChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleCorrectiveActionChange('');
-                              }
+                            value={getCorrectiveActionValues()}
+                            onChange={(selectedOptions) => {
+                              handleCorrectiveActionChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Corrective Action" && t.active === true)
@@ -3546,38 +3382,36 @@ export const TicketDetailsPage = () => {
                                 label: t.identifier_action,
                               }))}
                             placeholder="Select Corrective Action"
-                            styles={singleSelectStyles}
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
                             isClearable
                           />
                         </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 overflow-y-auto pr-1">
                           {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.corrective_action) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Corrective Action" &&
-                                  template.identifier_action === ticketData.corrective_action &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+                            if (!ticketData?.corrective_action_template_ids || ticketData.corrective_action_template_ids.length === 0) {
+                              return 'No corrective action description available';
                             }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.corrective_action_template_ids && Array.isArray(ticketData.corrective_action_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Corrective Action"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+
+                            const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Corrective Action"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No corrective action description available';
                             }
-                            
-                            return ticketData.corrective_action || 'No corrective action description available';
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`corrective-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
                           })()}
                         </div>
                       </div>
@@ -3604,23 +3438,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={(() => {
-                              const value = getLongTermImpactValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Long-term Impact" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleLongTermImpactChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleLongTermImpactChange('');
-                              }
+                            value={getLongTermImpactValues()}
+                            onChange={(selectedOptions) => {
+                              handleLongTermImpactChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Long-term Impact" && t.active === true)
@@ -3629,38 +3449,36 @@ export const TicketDetailsPage = () => {
                                 label: t.identifier_action,
                               }))}
                             placeholder="Select Long-term Impact"
-                            styles={singleSelectStyles}
+                            styles={customStyles}
+                            components={{ MultiValue: CustomMultiValue }}
+                            isMulti
+                            closeMenuOnSelect={false}
                             isClearable
                           />
                         </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
+
+                        <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 overflow-y-auto pr-1">
                           {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.impact) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Long-term Impact" &&
-                                  template.identifier_action === ticketData.impact &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+                            if (!ticketData?.long_term_impact_template_ids || ticketData.long_term_impact_template_ids.length === 0) {
+                              return 'No long-term impact description available';
                             }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.long_term_impact_template_ids && Array.isArray(ticketData.long_term_impact_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Long-term Impact"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
+
+                            const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                            const matchedTemplates = communicationTemplates.filter(
+                              template => uniqueIds.includes(template.id) &&
+                                template.identifier === "Long-term Impact"
+                            );
+
+                            if (matchedTemplates.length === 0) {
+                              return 'No long-term impact description available';
                             }
-                            
-                            return ticketData.impact || 'No long-term impact description available';
+
+                            return matchedTemplates.map((template, index) => (
+                              <div key={`long-term-${template.id}`}>
+                                {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                <div>{template.body || template.identifier_action}</div>
+                              </div>
+                            ));
                           })()}
                         </div>
                       </div>
@@ -3703,13 +3521,13 @@ export const TicketDetailsPage = () => {
                               const matchedPerson = responsiblePersons.find(
                                 p => p.id.toString() === value
                               );
-                              return matchedPerson ? { 
-                                value: matchedPerson.id, 
+                              return matchedPerson ? {
+                                value: matchedPerson.id,
                                 label: `${matchedPerson.full_name}${matchedPerson.employee_type ? ` (${matchedPerson.employee_type})` : ''}`
                               } : null;
                             })()}
                             onChange={(selectedOption) => {
-                              if (selectedOption) {
+                              if (selectedOption && 'value' in selectedOption) {
                                 handleResponsiblePersonChange(selectedOption.value.toString());
                               }
                             }}
@@ -4110,7 +3928,7 @@ export const TicketDetailsPage = () => {
                           <div className="mb-3">
                             <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                               <InputLabel shrink>Template</InputLabel>
-                              <Select
+                              <MuiSelect
                                 label="Template"
                                 notched
                                 displayEmpty
@@ -4142,7 +3960,7 @@ export const TicketDetailsPage = () => {
                                     {template.identifier_action}
                                   </MenuItem>
                                 ))}
-                              </Select>
+                              </MuiSelect>
                             </FormControl>
                           </div>
 
@@ -4212,7 +4030,7 @@ export const TicketDetailsPage = () => {
                           <div className="mb-3">
                             <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                               <InputLabel shrink>Template</InputLabel>
-                              <Select
+                              <MuiSelect
                                 label="Template"
                                 notched
                                 displayEmpty
@@ -4244,7 +4062,7 @@ export const TicketDetailsPage = () => {
                                     {template.identifier_action}
                                   </MenuItem>
                                 ))}
-                              </Select>
+                              </MuiSelect>
                             </FormControl>
                           </div>
 
@@ -4435,2102 +4253,6 @@ export const TicketDetailsPage = () => {
               </TabsContent>
             </Tabs>
           </TabsContent>
-
-          <TabsContent value="details" className="space-y-8 p-6">
-
-                <div className="space-y-6">
-                  {/* Check if there's any ticket data to display */}
-                  {hasData(ticketData.heading) ||
-                    hasData(ticketData.issue_status) ||
-                    hasData(ticketData.sub_category_type) ||
-                    hasData(ticketData.created_by_name) ||
-                    hasData(ticketData.created_date) ||
-                    hasData(ticketData.created_time) ||
-                    hasData(ticketData.created_at) ||
-                    hasData(ticketData.category_type) ||
-                    hasData(ticketData.ticket_number) ||
-                    hasData(ticketData.updated_by) ||
-                    hasData(ticketData.complaint_mode) ||
-                    hasData(ticketData.priority) ||
-                    hasData(ticketData.external_priority) ||
-                    hasData(ticketData.priority_status) ||
-                    hasData(ticketData.effective_priority) ||
-                    hasData(ticketData.assigned_to) ? (
-
-
-                    <Card className="w-full">
-                      <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                        <div style={{ width: '40px', height: '40px' }} className="rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                          <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
-                        </div>
-                        <h3 className="text-lg font-semibold uppercase text-black">
-                          Ticket Details
-                        </h3>
-                      </div>
-                      <div className="px-6 bg-[#dfd9cb]">
-                        <div className="flex justify-between py-4 border-b border-[#dfd9cb]">
-                          <div className='w-full '>
-                            <div className="">
-                              <div className="flex items-start mb-4">
-                                <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Description</span>
-                                <span className="text-gray-900 font-medium break-words overflow-wrap-anywhere" style={{ fontSize: '14px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-  {ticketData.heading || 'No description available'}
-</span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <div className="">
-                                  <div className="flex items-start mb-4">
-                                    <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Category</span>
-                                    <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
-                                      {ticketData.category_type || '-'}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-start mb-4">
-                                    <span className="text-gray-500 min-w-[110px]" style={{ fontSize: '14px' }}>Sub Category</span>
-                                    <span className="text-gray-900 font-medium" style={{ fontSize: '14px' }}>
-                                      {ticketData.sub_category_type || '-'}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="bg-white p-4" style={{ width: '75%', borderRadius: '4px' }}>
-                                  <div className="grid grid-cols-3 w-full items-center gap-4">
-                                    {tatGridRows.flat().map((cell, idx) => {
-                                      // Determine column alignment
-                                      const colAlign =
-                                        idx % 3 === 0
-                                          ? 'justify-start'
-                                          : idx % 3 === 1
-                                            ? 'justify-center'
-                                            : 'justify-end';
-
-                                      return (
-                                        <div
-                                          key={idx}
-                                          className={`flex ${colAlign} w-full`}
-                                        >
-                                          {/* Inner flex box for key-value pair with fixed key width and 20px gap */}
-                                          <div className="flex items-center gap-[20px]">
-                                            {/* Fixed width label to align values */}
-                                            <span className="text-[14px] text-gray-500 whitespace-nowrap" style={{ minWidth: cell.label === 'Response TAT' ? '90px' : '5px' }}>
-                                              {cell.label}
-                                            </span>
-
-                                            {/* Dynamic value */}
-                                            <span
-                                              className={`text-[13px] md:text-[14px] font-semibold whitespace-nowrap ${cell.isExceeded && cell.label === 'Balance TAT'
-                                                  ? 'text-red-600'
-                                                  : 'text-gray-900'
-                                                }`}
-                                            >
-                                              {cell.isExceeded && cell.label === 'Balance TAT'
-                                                ? 'Exceeded'
-                                                : cell.value}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex flex-col justify-around" style={{ textAlign: 'center', marginLeft: '20px' }}>
-                            <button className='w-full py-1 bg-black rounded-full text-white mb-2 text-xs px-3'>
-                              {ticketData.issue_status || '-'}
-                            </button>
-                            <div className='mb-2'>
-                              <button className='w-full py-1 bg-[#FFCFCF] rounded-full text-[#C72030] text-xs px-3 font-semibold'>
-                                {getPriorityLabel(ticketData.priority)}
-                              </button>
-                            </div>
-                            <div className="flex items-center mb-2">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                <mask id="mask0_9118_15345" style={{ maskType: "luminance" }} maskUnits="userSpaceOnUse" x="2" y="0" width="20" height="23">
-                                  <path d="M12 21.9995C16.6945 21.9995 20.5 18.194 20.5 13.4995C20.5 8.80501 16.6945 4.99951 12 4.99951C7.3055 4.99951 3.5 8.80501 3.5 13.4995C3.5 18.194 7.3055 21.9995 12 21.9995Z" fill="white" stroke="white" strokeWidth="2" strokeLinejoin="round" />
-                                  <path d="M15.5 1.99951H8.5M19 4.99951L17.5 6.49951" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                  <path d="M12 9V13.5" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </mask>
-                                <g mask="url(#mask0_9118_15345)">
-                                  <path d="M0 0H24V24H0V0Z" fill="#434343" />
-                                </g>
-                              </svg>
-                              <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">
-                                {formatTicketAgeing(currentAgeing)}
-                              </span>
-                            </div>
-                            <div className="flex justify-center items-center gap-2 mb-2">
-                              {ticketData.is_executive_ecalation === true && (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 16 18" fill="none">
-                                <path d="M12.36 9.76C14.31 10.42 16 11.5 16 13V18H0V13C0 11.5 1.69 10.42 3.65 9.76L4.27 11L4.5 11.5C3 11.96 1.9 12.62 1.9 13V16.1H6.12L7 11.03L6.06 9.15C6.68 9.08 7.33 9.03 8 9.03C8.67 9.03 9.32 9.08 9.94 9.15L9 11.03L9.88 16.1H14.1V13C14.1 12.62 13 11.96 11.5 11.5L11.73 11L12.36 9.76ZM8 2C6.9 2 6 2.9 6 4C6 5.1 6.9 6 8 6C9.1 6 10 5.1 10 4C10 2.9 9.1 2 8 2ZM8 8C5.79 8 4 6.21 4 4C4 1.79 5.79 0 8 0C10.21 0 12 1.79 12 4C12 6.21 10.21 8 8 8Z" fill="black" />
-                              </svg>)}
-                              {ticketData.is_golden_ticket && (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
-                                  <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
-                                  <path d="M17.6229 19.896C17.6103 19.896 17.5977 19.8926 17.5864 19.8862L10.998 16.0584L4.40068 19.8732C4.38954 19.8795 4.37736 19.8826 4.36471 19.8826C4.35021 19.8826 4.3357 19.879 4.32352 19.8696C4.30055 19.8541 4.2901 19.8267 4.2966 19.8006L6.05905 12.6117L0.235078 7.77705C0.213845 7.75947 0.205725 7.73112 0.214311 7.7052C0.223361 7.67996 0.247029 7.66172 0.275107 7.65972L7.95284 7.04474L10.9502 0.241834C10.9614 0.216923 10.9866 0.200684 11.0147 0.200684C11.0147 0.200684 11.0147 0.200684 11.0149 0.200684C11.0432 0.200684 11.0685 0.217032 11.0794 0.241943L14.062 7.05063L21.7385 7.68085C21.7665 7.68307 21.7902 7.70121 21.7992 7.72701C21.8076 7.75281 21.7994 7.78105 21.7783 7.7984L15.9439 12.6213L17.6909 19.8137C17.6973 19.8397 17.6862 19.8674 17.6638 19.883C17.6512 19.8916 17.6371 19.896 17.6229 19.896Z" fill="url(#paint1_linear_9118_15308)" />
-                                  <path d="M7.99743 7.10811L11.0112 0.268066L14.0103 7.11412L21.7291 7.7479L15.8627 12.5975L17.6192 19.8291L10.9944 15.9802L4.36114 19.8159L6.13322 12.5877L0.277344 7.72644L7.99743 7.10811Z" fill="url(#paint2_linear_9118_15308)" />
-                                  <path d="M11.1891 11.551C11.1439 11.4959 11.0748 11.4633 11.0016 11.4633C11.0013 11.4633 11.0013 11.4633 11.0009 11.4633C10.928 11.4633 10.8587 11.4956 10.8138 11.5507L8.37693 14.534L10.5906 11.395C10.6317 11.3368 10.6425 11.2637 10.6201 11.197C10.5972 11.1303 10.5441 11.0772 10.4752 11.053L6.76172 9.75321L10.5606 10.8015C10.5824 10.8077 10.6044 10.8107 10.6263 10.8107C10.6762 10.8107 10.7253 10.7958 10.7663 10.7672C10.8257 10.7258 10.8619 10.6606 10.8644 10.5904L11.0063 6.80371L11.1405 10.5907C11.143 10.6611 11.179 10.7263 11.2382 10.7677C11.2793 10.7962 11.3287 10.8113 11.3782 10.8113C11.4 10.8113 11.4222 10.8084 11.4438 10.8026L15.245 9.76189L11.5286 11.054C11.4599 11.0783 11.4064 11.1311 11.3835 11.1977C11.3608 11.2647 11.3714 11.3376 11.4124 11.396L13.6195 14.5391L11.1891 11.551Z" fill="white" />
-                                  <path d="M10.6435 10.0628L8.08027 6.91957L11.0111 0.267578L10.6435 10.0628ZM21.7289 7.74752H21.7291L14.2765 7.13554L11.9655 10.4201L21.7289 7.74752ZM9.90642 11.0964L0.277344 7.72606L5.98598 12.4647L9.90642 11.0964ZM11.961 11.7709L17.6192 19.8288L15.9261 12.8597L11.961 11.7709ZM4.36114 19.8153L10.7915 16.0971L10.6454 12.1225L4.36114 19.8153Z" fill="url(#paint3_linear_9118_15308)" />
-                                  <path d="M11.3577 10.0658L11.0112 0.267578L13.9241 6.91623L11.3577 10.0658ZM7.72152 7.12998L0.277344 7.72606L10.0372 10.4191L7.72152 7.12998ZM21.7289 7.74752L12.0992 11.0962L16.0235 12.464L21.7289 7.74752ZM11.2154 16.1082L17.6191 19.8288L11.3594 12.1331L11.2154 16.1082ZM10.0325 11.7743L6.06523 12.8657L4.36126 19.8154V19.8152L10.0325 11.7743Z" fill="url(#paint4_linear_9118_15308)" />
-                                  <defs>
-                                    <radialGradient id="paint0_radial_9118_15308" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11.0059 10.0489) scale(10.7481 10.3019)">
-                                      <stop stopColor="#D08B01" />
-                                      <stop offset="0.5758" stopColor="#F2B145" />
-                                      <stop offset="1" stopColor="#F8F3BC" />
-                                    </radialGradient>
-                                    <linearGradient id="paint1_linear_9118_15308" x1="0.211178" y1="10.0483" x2="21.8026" y2="10.0483" gradientUnits="userSpaceOnUse">
-                                      <stop stopColor="#F6DB89" />
-                                      <stop offset="1" stopColor="#F8F7DA" />
-                                    </linearGradient>
-                                    <linearGradient id="paint2_linear_9118_15308" x1="0.277344" y1="10.0486" x2="21.7291" y2="10.0486" gradientUnits="userSpaceOnUse">
-                                      <stop stopColor="#ED9017" />
-                                      <stop offset="0.1464" stopColor="#F09F23" />
-                                      <stop offset="0.4262" stopColor="#F6C642" />
-                                      <stop offset="0.4945" stopColor="#F8D04A" />
-                                      <stop offset="1" stopColor="#F6E6B5" />
-                                    </linearGradient>
-                                    <linearGradient id="paint3_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7291" y2="10.0482" gradientUnits="userSpaceOnUse">
-                                      <stop stopColor="#ED9017" />
-                                      <stop offset="0.1464" stopColor="#F09F23" />
-                                      <stop offset="0.4262" stopColor="#F6C642" />
-                                      <stop offset="0.4945" stopColor="#F8D04A" />
-                                      <stop offset="1" stopColor="#F6E6B5" />
-                                    </linearGradient>
-                                    <linearGradient id="paint4_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7288" y2="10.0482" gradientUnits="userSpaceOnUse">
-                                      <stop stopColor="#DF8D00" />
-                                      <stop offset="0.0848" stopColor="#FFD006" />
-                                      <stop offset="0.2242" stopColor="#F4AD06" />
-                                      <stop offset="0.85" stopColor="#F4AD06" />
-                                      <stop offset="0.8777" stopColor="#F2A807" />
-                                      <stop offset="0.9093" stopColor="#EC9B09" />
-                                      <stop offset="0.9428" stopColor="#E2840D" />
-                                      <stop offset="0.9773" stopColor="#D46412" />
-                                      <stop offset="1" stopColor="#C94B16" />
-                                    </linearGradient>
-                                  </defs>
-                                </svg>
-                              )}
-                              {ticketData.is_flagged && (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
-                                  <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
-                                </svg>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <CardContent className="pt-6">
-                        {[
-                          [
-                            { label: 'Issue Type', value: ticketData.issue_type || '-' },
-                            { label: 'Assigned To', value: ticketData.assigned_to || '-' },
-                            { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
-                            { label: 'Association', value: ticketData.service_or_asset || '-' },
-                          ],
-                          [
-                            { label: 'Created By', value: ticketData.created_by_name || '-' },
-                            { label: 'Updated By', value: ticketData.updated_by || '-' },
-                            { label: 'Mode', value: ticketData.complaint_mode || '-' },
-                            { label: 'Identification', value: ticketData.proactive_reactive || '-' },
-                          ],
-                        ].map((row, rIdx) => (
-                          <div
-                            key={rIdx}
-                            className="grid grid-cols-2 md:grid-cols-4 gap-6"
-                          >
-                            {row
-                              .filter(f => hasData(f.value))
-                              .map(field => (
-                                <div key={field.label} className="mb-4">
-                                  <div className="flex">
-                                    <div className="w-[120px] text-[14px] leading-tight text-gray-500 tracking-wide pr-2">
-                                      {field.label}
-                                    </div>
-                                    <div className="text-[14px] font-semibold text-gray-900">
-                                      {field.value}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    /* No Data Available Message */
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <FileText className="w-16 h-16 text-gray-300 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-500 mb-2">
-                        No Data Available
-                      </h3>
-                      <p className="text-gray-400 max-w-sm">
-                        There is no ticket information available to display at this
-                        time.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <ClipboardList className="w-6 h-6 text-[#C72030]" />
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        Association
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Body */}
-                  <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
-                      {[
-                        { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
-                        { label: 'Group', value: ticketData.asset_group || '-' },
-                        { label: 'Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Criticality', value: ticketData.asset_criticality ? 'Critical' : 'Non Critical' },
-
-                        { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
-                        { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
-                        { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Under Warranty', value: ticketData.warranty ? 'Yes' : 'No' },
-
-                        { label: 'Category', value: ticketData.asset_type_category || '-' },
-                        { label: 'Allocated', value: ticketData.assigned_to || '-' },
-                        { label: 'AMC Type', value: 'Comprehensive' },
-                        { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
-                      ].map(field => (
-                        <div key={field.label} className="flex items-start">
-                          <div className="w-[140px] text-[14px] leading-tight text-gray-500 tracking-wide flex-shrink-0">
-                            {field.label}
-                          </div>
-                          <div className="text-[14px] font-semibold text-gray-900 flex-1">
-                            {field.value}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <Card className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header (consistent) */}
-                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        Ticket Management
-                      </h3>
-                      {ticketData.closure_date === null || ticketData.closure_date === undefined || ticketData.closure_date === '' && (
-                        <span className="w-2 h-2 rounded-full bg-[#4BE2B9]" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {ticketData.is_golden_ticket && (
-                        <button
-                          type="button"
-                          className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#EDEAE3]"
-                          title="Favourite"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="23" height="21" viewBox="0 0 23 21" fill="none">
-                            <path d="M17.6219 20.0977C17.5715 20.0977 17.5214 20.085 17.4765 20.0585L10.9967 16.2938L4.5084 20.0459C4.46385 20.0719 4.41384 20.0844 4.36383 20.0844C4.3057 20.0844 4.24792 20.0676 4.19919 20.0329C4.10788 19.9695 4.06564 19.8599 4.09105 19.7548L5.82438 12.6847L0.0968238 7.92979C0.011544 7.85906 -0.0211751 7.74629 0.013865 7.64365C0.0486731 7.54111 0.144281 7.4686 0.256711 7.45937L7.80786 6.85484L10.756 0.164147C10.7997 0.0643917 10.9014 0 11.0139 0C11.0141 0 11.0143 0 11.0143 0C11.127 0 11.2288 0.0649467 11.2721 0.164479L14.2058 6.86118L21.7552 7.48095C21.8678 7.49029 21.9631 7.56302 21.9981 7.66555C22.0328 7.7682 22 7.88108 21.9144 7.95136L16.1762 12.6948L17.8943 19.7686C17.9202 19.8736 17.8774 19.983 17.7858 20.0464C17.7373 20.0806 17.6793 20.0977 17.6219 20.0977Z" fill="url(#paint0_radial_9118_15308)" />
-                            <path d="M17.6229 19.896C17.6103 19.896 17.5977 19.8926 17.5864 19.8862L10.998 16.0584L4.40068 19.8732C4.38954 19.8795 4.37736 19.8826 4.36471 19.8826C4.35021 19.8826 4.3357 19.879 4.32352 19.8696C4.30055 19.8541 4.2901 19.8267 4.2966 19.8006L6.05905 12.6117L0.235078 7.77705C0.213845 7.75947 0.205725 7.73112 0.214311 7.7052C0.223361 7.67996 0.247029 7.66172 0.275107 7.65972L7.95284 7.04474L10.9502 0.241834C10.9614 0.216923 10.9866 0.200684 11.0147 0.200684C11.0147 0.200684 11.0147 0.200684 11.0149 0.200684C11.0432 0.200684 11.0685 0.217032 11.0794 0.241943L14.062 7.05063L21.7385 7.68085C21.7665 7.68307 21.7902 7.70121 21.7992 7.72701C21.8076 7.75281 21.7994 7.78105 21.7783 7.7984L15.9439 12.6213L17.6909 19.8137C17.6973 19.8397 17.6862 19.8674 17.6638 19.883C17.6512 19.8916 17.6371 19.896 17.6229 19.896Z" fill="url(#paint1_linear_9118_15308)" />
-                            <path d="M7.99743 7.10811L11.0112 0.268066L14.0103 7.11412L21.7291 7.7479L15.8627 12.5975L17.6192 19.8291L10.9944 15.9802L4.36114 19.8159L6.13322 12.5877L0.277344 7.72644L7.99743 7.10811Z" fill="url(#paint2_linear_9118_15308)" />
-                            <path d="M11.1891 11.551C11.1439 11.4959 11.0748 11.4633 11.0016 11.4633C11.0013 11.4633 11.0013 11.4633 11.0009 11.4633C10.928 11.4633 10.8587 11.4956 10.8138 11.5507L8.37693 14.534L10.5906 11.395C10.6317 11.3368 10.6425 11.2637 10.6201 11.197C10.5972 11.1303 10.5441 11.0772 10.4752 11.053L6.76172 9.75321L10.5606 10.8015C10.5824 10.8077 10.6044 10.8107 10.6263 10.8107C10.6762 10.8107 10.7253 10.7958 10.7663 10.7672C10.8257 10.7258 10.8619 10.6606 10.8644 10.5904L11.0063 6.80371L11.1405 10.5907C11.143 10.6611 11.179 10.7263 11.2382 10.7677C11.2793 10.7962 11.3287 10.8113 11.3782 10.8113C11.4 10.8113 11.4222 10.8084 11.4438 10.8026L15.245 9.76189L11.5286 11.054C11.4599 11.0783 11.4064 11.1311 11.3835 11.1977C11.3608 11.2647 11.3714 11.3376 11.4124 11.396L13.6195 14.5391L11.1891 11.551Z" fill="white" />
-                            <path d="M10.6435 10.0628L8.08027 6.91957L11.0111 0.267578L10.6435 10.0628ZM21.7289 7.74752H21.7291L14.2765 7.13554L11.9655 10.4201L21.7289 7.74752ZM9.90642 11.0964L0.277344 7.72606L5.98598 12.4647L9.90642 11.0964ZM11.961 11.7709L17.6192 19.8288L15.9261 12.8597L11.961 11.7709ZM4.36114 19.8153L10.7915 16.0971L10.6454 12.1225L4.36114 19.8153Z" fill="url(#paint3_linear_9118_15308)" />
-                            <path d="M11.3577 10.0658L11.0112 0.267578L13.9241 6.91623L11.3577 10.0658ZM7.72152 7.12998L0.277344 7.72606L10.0372 10.4191L7.72152 7.12998ZM21.7289 7.74752L12.0992 11.0962L16.0235 12.464L21.7289 7.74752ZM11.2154 16.1082L17.6191 19.8288L11.3594 12.1331L11.2154 16.1082ZM10.0325 11.7743L6.06523 12.8657L4.36126 19.8154V19.8152L10.0325 11.7743Z" fill="url(#paint4_linear_9118_15308)" />
-                            <defs>
-                              <radialGradient id="paint0_radial_9118_15308" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11.0059 10.0489) scale(10.7481 10.3019)">
-                                <stop stopColor="#D08B01" />
-                                <stop offset="0.5758" stopColor="#F2B145" />
-                                <stop offset="1" stopColor="#F8F3BC" />
-                              </radialGradient>
-                              <linearGradient id="paint1_linear_9118_15308" x1="0.211178" y1="10.0483" x2="21.8026" y2="10.0483" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#F6DB89" />
-                                <stop offset="1" stopColor="#F8F7DA" />
-                              </linearGradient>
-                              <linearGradient id="paint2_linear_9118_15308" x1="0.277344" y1="10.0486" x2="21.7291" y2="10.0486" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#ED9017" />
-                                <stop offset="0.1464" stopColor="#F09F23" />
-                                <stop offset="0.4262" stopColor="#F6C642" />
-                                <stop offset="0.4945" stopColor="#F8D04A" />
-                                <stop offset="1" stopColor="#F6E6B5" />
-                              </linearGradient>
-                              <linearGradient id="paint3_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7291" y2="10.0482" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#ED9017" />
-                                <stop offset="0.1464" stopColor="#F09F23" />
-                                <stop offset="0.4262" stopColor="#F6C642" />
-                                <stop offset="0.4945" stopColor="#F8D04A" />
-                                <stop offset="1" stopColor="#F6E6B5" />
-                              </linearGradient>
-                              <linearGradient id="paint4_linear_9118_15308" x1="0.277344" y1="10.0482" x2="21.7288" y2="10.0482" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#DF8D00" />
-                                <stop offset="0.0848" stopColor="#FFD006" />
-                                <stop offset="0.2242" stopColor="#F4AD06" />
-                                <stop offset="0.85" stopColor="#F4AD06" />
-                                <stop offset="0.8777" stopColor="#F2A807" />
-                                <stop offset="0.9093" stopColor="#EC9B09" />
-                                <stop offset="0.9428" stopColor="#E2840D" />
-                                <stop offset="0.9773" stopColor="#D46412" />
-                                <stop offset="1" stopColor="#C94B16" />
-                              </linearGradient>
-                            </defs>
-                          </svg>
-                        </button>
-                      )}
-                      {ticketData.is_flagged && (
-                        <button
-                          type="button"
-                          className="w-8 h-8 flex items-center justify-center rounded hover:bg-[#EDEAE3]"
-                          title="Flag"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
-                            <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
-                          </svg>
-                        </button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                      // onClick={handleUpdate}
-                      >
-                        <Edit className="w-4 h-4 mr-1" /> Edit
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Body (consistent background / border like Location card) */}
-                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-4 overflow-hidden">
-                    {(() => {
-                      const mgmtFields = [
-                        { label: 'Update Status', value: ticketData.issue_status || 'Pending' },
-                        { label: 'Severity', value: ticketData.severity || '-' },
-                        { label: 'Select Vendor', value: ticketData.vendors && ticketData.vendors.length > 0 ? ticketData.vendors.map(v => v.name || v).join(', ') : '-' },
-                        { label: 'Assigned To', value: ticketData.assigned_to || '-' },
-                        { label: 'Source', value: ticketData.asset_service || 'Asset' },
-
-                        { label: 'Expected Visit Date', value: ticketData.visit_date ? formatDate(ticketData.visit_date) : '-' },
-                        { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
-                        { label: 'Scope', value: ticketData.issue_related_to || 'FM' },
-                        { label: 'Mode', value: ticketData.complaint_mode || 'App' },
-                        { label: 'Identification', value: ticketData.proactive_reactive || 'Proactive' },
-                      ];
-
-                      // Split into two vertical columns
-                      const midpoint = Math.ceil(mgmtFields.length / 2);
-                      const colA = mgmtFields.slice(0, midpoint);
-                      const colB = mgmtFields.slice(midpoint);
-
-                      return (
-                        <div className="flex flex-col lg:flex-row gap-10">
-                          {/* Left: two vertical columns of key/value pairs */}
-                          <div className="flex-1 flex gap-16 min-w-0">
-                            {[colA, colB].map((col, ci) => (
-                              <div key={ci} className="flex flex-col gap-4 min-w-[280px] flex-1">
-                                {col.map((field) => (
-                                  <div key={field.label} className="flex text-[14px] leading-snug min-w-0">
-                                    <div className="w-[180px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                      {field.label}
-                                    </div>
-                                    <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
-                                      {field.value}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Right: Root Cause + Notes (stacked) */}
-                          <div className="w-full lg:w-[38%] min-w-0">
-                            <div className="min-w-0 relative">
-                              <div className="relative w-full">
-                                {/* Floating label on border */}
-                                <label
-                                  style={{
-                                    position: "absolute",
-                                    top: "-10px",
-                                    left: "12px",
-                                    background: "#fff",
-                                    padding: "0 6px",
-                                    fontWeight: 500,
-                                    fontSize: "14px",
-                                    color: "#1A1A1A",
-                                    zIndex: 10,
-                                  }}
-                                >
-                                  Root Cause Analysis
-                                </label>
-
-                                {/* React Select */}
-                                <Select
-                                  isMulti
-                                  value={getRootCauseAnalysisValues()}
-                                  onChange={(selectedOptions) => {
-                                    const selectedIds = selectedOptions
-                                      ? selectedOptions.map((opt) => opt.value)
-                                      : [];
-                                    handleRootCauseChange(selectedIds);
-                                  }}
-                                  options={communicationTemplates
-                                    .filter((t) => t.identifier === "Root Cause Analysis")
-                                    .map((t) => ({
-                                      value: t.id,
-                                      label: t.identifier_action,
-                                    }))}
-                                  placeholder="Select Root Cause Analysis..."
-                                  styles={customStyles}
-                                  components={{
-                                    MultiValue: CustomMultiValue,
-                                    MultiValueRemove: () => null,
-                                  }}
-                                  closeMenuOnSelect={false}
-                                />
-                              </div>
-                            </div>
-                            {(ticketData.rca_template_ids && ticketData.rca_template_ids.length > 0) && (
-                              <div
-                                className="space-y-2 min-w-0 mt-4"
-                                style={{ fontSize: "14px", fontWeight: "500" }}
-                              >
-                                {(() => {
-                                  // Use template IDs from API with duplicate filtering
-                                  const uniqueIds = [...new Set(ticketData.rca_template_ids)];
-                                  
-                                  return uniqueIds.map((templateId, index) => {
-                                    const matchedTemplate = communicationTemplates.find(
-                                      (template) =>
-                                        template.id === templateId &&
-                                        template.identifier === "Root Cause Analysis"
-                                    );
-                                    
-                                    if (!matchedTemplate) return null;
-                                    
-                                    return (
-                                      <div
-                                        key={`rca-display-${templateId}`}
-                                        className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                        style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                      >
-                                        {matchedTemplate.body || matchedTemplate.identifier_action}
-                                      </div>
-                                    );
-                                  });
-                                })()}
-                              </div>
-                            )}
-                            <div className="flex flex-col min-w-0 mt-4">
-                              <span className="text-[11px] tracking-wide text-[#6B6B6B] mb-1">
-                                Additional Notes
-                              </span>
-                              <div
-                                className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
-                              >
-                                {ticketData.notes ||
-                                  ticketData.heading ||
-                                  ticketData.text ||
-                                  'No additional notes available'}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </Card>
-
-                {/* Cost Involve */}
-                <Card className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9] rounded-t-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <DollarSign className="w-6 h-6 text-[#C72030]" />
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        Cost Involve
-                      </h3>
-                    </div>
-
-                    {/* Slider Toggle (Yes / No) */}
-                    <div className="flex items-center gap-2 text-[11px] font-medium select-none">
-                      <span className={costInvolveEnabled ? "text-[#1A1A1A]" : "text-gray-400"}>
-                        Yes
-                      </span>
-                      <div
-                        role="switch"
-                        aria-checked={costInvolveEnabled}
-                        aria-label={costInvolveEnabled ? "Deactivate cost involve" : "Activate cost involve"}
-                        tabIndex={0}
-                        onClick={() => setCostInvolveEnabled(v => !v)}
-                        onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCostInvolveEnabled(v => !v)}
-                        className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C72030] ${costInvolveEnabled ? 'bg-[#C72030]' : 'bg-gray-300'}`}
-                      >
-                        <span
-                          className={`inline-block w-4 h-4 transform bg-white rounded-full shadow transition-transform ${costInvolveEnabled ? 'translate-x-6' : 'translate-x-1'}`}
-                        />
-                      </div>
-                      <span className={!costInvolveEnabled ? "text-[#1A1A1A]" : "text-gray-400"}>
-                        No
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Body (rendered only when active) */}
-                  {costInvolveEnabled && (
-                    <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-4 sm:px-5 pt-4 pb-6">
-                      {/* Form Rows */}
-                      {costRows.map((row) => (
-                        <div key={row.id} className="mb-6 last:mb-0">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* Left Column */}
-                            <div className="space-y-4">
-                              <TextField
-                                label={
-                                  <span style={{ fontSize: '14px' }}>
-                                    Quotation <span style={{ color: "red" }}>*</span>
-                                  </span>
-                                }
-                                placeholder="Enter Quotation"
-                                fullWidth
-                                value={row.quotation}
-                                onChange={e =>
-                                  setCostRows(prev =>
-                                    prev.map(r => r.id === row.id ? { ...r, quotation: e.target.value } : r)
-                                  )
-                                }
-                                sx={{
-                                  '& .MuiInputBase-root': {
-                                    backgroundColor: '#F2F2F2',
-                                    borderRadius: '4px',
-                                  },
-                                  '& .MuiOutlinedInput-root': {
-                                    '& fieldset': {
-                                      borderColor: '#DAD7D0',
-                                    },
-                                    '&:hover fieldset': {
-                                      borderColor: '#C72030',
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                      borderColor: '#C72030',
-                                    },
-                                  },
-                                  '& .MuiInputBase-input': {
-                                    fontSize: '14px',
-                                    padding: '10px 12px',
-                                  },
-                                }}
-                              />
-
-                              <TextField
-                                label={
-                                  <span style={{ fontSize: '14px' }}>
-                                    Cost <span style={{ color: "red" }}>*</span>
-                                  </span>
-                                }
-                                placeholder="Enter Cost"
-                                type="text"
-                                fullWidth
-                                value={row.cost}
-                                onChange={e => {
-                                  const value = e.target.value;
-                                  // Allow empty string
-                                  if (value === '') {
-                                    setCostRows(prev =>
-                                      prev.map(r => r.id === row.id ? { ...r, cost: value } : r)
-                                    );
-                                    return;
-                                  }
-                                  // Validate: allow only numbers and up to 2 decimal places
-                                  const regex = /^\d*\.?\d{0,2}$/;
-                                  if (regex.test(value) && Number(value) >= 0) {
-                                    setCostRows(prev =>
-                                      prev.map(r => r.id === row.id ? { ...r, cost: value } : r)
-                                    );
-                                  }
-                                }}
-                                sx={{
-                                  '& .MuiInputBase-root': {
-                                    backgroundColor: '#F2F2F2',
-                                    borderRadius: '4px',
-                                  },
-                                  '& .MuiOutlinedInput-root': {
-                                    '& fieldset': {
-                                      borderColor: '#DAD7D0',
-                                    },
-                                    '&:hover fieldset': {
-                                      borderColor: '#C72030',
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                      borderColor: '#C72030',
-                                    },
-                                  },
-                                  '& .MuiInputBase-input': {
-                                    fontSize: '14px',
-                                    padding: '10px 12px',
-                                  },
-                                }}
-                              />
-                            </div>
-
-                            {/* Middle Column */}
-                            <div className="space-y-4">
-                              <FormControl
-                                fullWidth
-                                sx={{
-                                  '& .MuiInputBase-root': {
-                                    backgroundColor: '#F2F2F2',
-                                    borderRadius: '4px',
-                                  },
-                                  '& .MuiOutlinedInput-root': {
-                                    '& fieldset': {
-                                      borderColor: '#DAD7D0',
-                                    },
-                                    '&:hover fieldset': {
-                                      borderColor: '#C72030',
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                      borderColor: '#C72030',
-                                    },
-                                  },
-                                  '& .MuiInputBase-input': {
-                                    fontSize: '14px',
-                                    padding: '10px 12px',
-                                  },
-                                  '& .MuiInputLabel-root': {
-                                    fontSize: '14px',
-                                    '&.Mui-focused': {
-                                      color: '#C72030',
-                                    },
-                                  },
-                                }}
-                              >
-                                <InputLabel id={`vendor-label-${row.id}`}>
-                                  <span style={{ fontSize: '14px' }}>
-                                    Vendor <span style={{ color: "red" }}>*</span>
-                                  </span>
-                                </InputLabel>
-                                <MuiSelect
-                                  labelId={`vendor-label-${row.id}`}
-                                  label="Vendor *"
-                                  value={row.vendor_id}
-                                  onChange={e => {
-                                    const selectedVendorId = e.target.value;
-                                    const selectedVendor = suppliers.find(s => s.id.toString() === selectedVendorId);
-                                    setCostRows(prev =>
-                                      prev.map(r => r.id === row.id ? {
-                                        ...r,
-                                        vendor: selectedVendor?.company_name || '',
-                                        vendor_id: selectedVendorId
-                                      } : r)
-                                    );
-                                  }}
-                                  disabled={loadingSuppliers}
-                                  displayEmpty
-                                >
-                                  <MenuItem value="">
-                                    <span style={{ color: '#aaa' }}>
-                                      {loadingSuppliers ? 'Loading vendors...' : 'Select Vendor'}
-                                    </span>
-                                  </MenuItem>
-                                  {suppliers.map((supplier) => (
-                                    <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                                      {supplier.company_name || supplier.email}
-                                    </MenuItem>
-                                  ))}
-                                </MuiSelect>
-                              </FormControl>
-
-                              {/* File Input for Attachments */}
-                              <div>
-                                <input
-                                  type="file"
-                                  id={`cost-file-input-${row.id}`}
-                                  multiple
-                                  accept="image/*,.pdf,.doc,.docx"
-                                  onChange={(e) => handleCostAttachmentChange(row.id, e)}
-                                  style={{ display: 'none' }}
-                                />
-                                <label htmlFor={`cost-file-input-${row.id}`}>
-                                  <MuiButton
-                                    variant="outlined"
-                                    component="span"
-                                    fullWidth
-                                    startIcon={<Paperclip className="w-4 h-4" />}
-                                    sx={{
-                                      borderColor: '#DAD7D0',
-                                      color: '#1A1A1A',
-                                      textTransform: 'none',
-                                      fontFamily: 'Work Sans, sans-serif',
-                                      fontWeight: 500,
-                                      borderRadius: '4px',
-                                      padding: '10px 12px',
-                                      backgroundColor: '#F2F2F2',
-                                      justifyContent: 'flex-start',
-                                      fontSize: '14px',
-                                      '&:hover': {
-                                        borderColor: '#C72030',
-                                        backgroundColor: '#F2F2F2',
-                                      },
-                                    }}
-                                  >
-                                    {row.attachmentFiles.length > 0
-                                      ? `${row.attachmentFiles.length} file(s) selected`
-                                      : 'Choose Attachments'}
-                                  </MuiButton>
-                                </label>
-                                {row.attachmentFiles.length > 0 && (
-                                  <div className="mt-2 text-[11px] text-gray-600">
-                                    {row.attachmentFiles.map((file, idx) => (
-                                      <div key={idx} className="truncate">
-                                        • {file.name} ({(file.size / 1024).toFixed(2)} KB)
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Right Column (Description) */}
-                            <div className="space-y-4">
-                              <TextField
-                                label={
-                                  <span style={{ fontSize: '14px' }}>
-                                    Description <span style={{ color: "red" }}>*</span>
-                                  </span>
-                                }
-                                placeholder="Enter Description"
-                                fullWidth
-                                multiline
-                                minRows={6}
-                                value={row.description}
-                                onChange={e =>
-                                  setCostRows(prev =>
-                                    prev.map(r => r.id === row.id ? { ...r, description: e.target.value } : r)
-                                  )
-                                }
-                                sx={{
-                                  '&.MuiFormControl-root': {
-                                    marginTop: '0 !important',
-                                    marginBottom: '0 !important',
-                                  },
-                                  '& .MuiInputBase-root': {
-                                    backgroundColor: '#F2F2F2',
-                                    borderRadius: '4px',
-                                  },
-                                  '& .MuiOutlinedInput-root': {
-                                    '& fieldset': {
-                                      borderColor: '#DAD7D0',
-                                    },
-                                    '&:hover fieldset': {
-                                      borderColor: '#C72030',
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                      borderColor: '#C72030',
-                                    },
-                                  },
-                                  '& textarea': {
-                                    width: "100% !important",
-                                    resize: "both",
-                                    overflow: "auto",
-                                    boxSizing: "border-box",
-                                    display: "block",
-                                    fontSize: '14px',
-                                    padding: '10px 12px',
-                                  },
-                                  '& textarea[aria-hidden="true"]': {
-                                    display: "none !important",
-                                  },
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Add / Remove Row Buttons */}
-                      <div className="flex justify-end gap-4 mt-4 pr-2">
-                        <button
-                          type="button"
-                          onClick={addCostRow}
-                          className="text-[#C72030] text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2"
-                          title="Add Row"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={removeCostRow}
-                          disabled={costRows.length <= 1}
-                          className={`text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2 ${costRows.length <= 1 ? 'opacity-50 cursor-not-allowed' : 'text-[#C72030]'
-                            }`}
-                          title="Remove Row"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Submit Cost Approval Button */}
-                      <div className="flex justify-center mt-6">
-                        <button
-                          type="button"
-                          onClick={handleSubmitCostApproval}
-                          disabled={submittingCostApproval}
-                          className={`bg-[#C72030] text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
-                            ? 'opacity-50 cursor-not-allowed'
-                            : 'hover:bg-[#A01828]'
-                            }`}
-                        >
-                          {submittingCostApproval ? 'Submitting...' : 'Submit Cost Approval'}
-                        </button>
-                      </div>
-
-                      {/* Table - Display actual requests data from API */}
-                      <div className="mt-6 border border-[#D9D9D9] rounded-lg overflow-hidden">
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full text-[11px]">
-                            <thead>
-                              <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
-                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5', 'Status'].map(h => (
-                                  <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
-                                    {h}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {ticketData.requests && ticketData.requests.length > 0 ? (
-                                ticketData.requests.map(request => (
-                                  <tr key={request.id} className="bg-white even:bg-[#FAFAF9] hover:bg-[#F6F4EE] transition-colors">
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A] font-medium">
-                                      {request.id}
-                                    </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A] font-semibold">
-                                      ₹{parseFloat(request.amount || '0').toFixed(2)}
-                                    </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
-                                      {request.comment || '-'}
-                                    </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
-                                      {request.created_on}
-                                    </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-[#1A1A1A]">
-                                      {request.created_by}
-                                    </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
-                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L1 === 'Approved'
-                                        ? 'bg-green-100 text-green-700'
-                                        : request.approvals?.L1 === 'Rejected'
-                                          ? 'bg-red-100 text-red-700'
-                                          : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                        {request.approvals?.L1 || '-'}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
-                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L2 === 'Approved'
-                                        ? 'bg-green-100 text-green-700'
-                                        : request.approvals?.L2 === 'Rejected'
-                                          ? 'bg-red-100 text-red-700'
-                                          : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                        {request.approvals?.L2 || '-'}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
-                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L3 === 'Approved'
-                                        ? 'bg-green-100 text-green-700'
-                                        : request.approvals?.L3 === 'Rejected'
-                                          ? 'bg-red-100 text-red-700'
-                                          : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                        {request.approvals?.L3 || '-'}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
-                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L4 === 'Approved'
-                                        ? 'bg-green-100 text-green-700'
-                                        : request.approvals?.L4 === 'Rejected'
-                                          ? 'bg-red-100 text-red-700'
-                                          : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                        {request.approvals?.L4 || '-'}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
-                                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-medium ${request.approvals?.L5 === 'Approved'
-                                        ? 'bg-green-100 text-green-700'
-                                        : request.approvals?.L5 === 'Rejected'
-                                          ? 'bg-red-100 text-red-700'
-                                          : 'bg-gray-100 text-gray-600'
-                                        }`}>
-                                        {request.approvals?.L5 || '-'}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC]">
-                                      <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
-                                        ? 'bg-yellow-100 text-yellow-700'
-                                        : request.master_status === 'Approved'
-                                          ? 'bg-green-100 text-green-700'
-                                          : request.master_status === 'Rejected'
-                                            ? 'bg-red-100 text-red-700'
-                                            : 'bg-gray-100 text-gray-700'
-                                        }`}>
-                                        {request.master_status}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                ))
-                              ) : (
-                                <tr className="bg-white">
-                                  <td colSpan={11} className="px-4 py-6 border border-[#E5E2DC] text-gray-500 text-center">
-                                    <div className="flex flex-col items-center gap-2">
-                                      <DollarSign className="w-8 h-8 text-gray-300" />
-                                      <span className="text-sm">No cost approval requests found</span>
-                                    </div>
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </Card>
-
-                {/* Ticket Closure (Figma-aligned) */}
-                <Card className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        Ticket Closure
-                      </h3>
-                      
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                    // onClick={handleUpdate}
-                    >
-                      <Edit className="w-4 h-4 mr-1" /> Edit
-                    </Button>
-                  </div>
-
-                  {/* Body */}
-                  <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
-                    {/* Two row / two column panels */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      {/* Preventive Action */}
-                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                        <div className="relative w-full">
-                          {/* Floating label on border */}
-                          <label
-                            style={{
-                              position: "absolute",
-                              top: "-10px",
-                              left: "12px",
-                              background: "#fff",
-                              padding: "0 6px",
-                              fontWeight: 500,
-                              fontSize: "14px",
-                              color: "#1A1A1A",
-                              zIndex: 10,
-                            }}
-                          >
-                            Preventive Action
-                          </label>
-
-                          {/* React Select */}
-                          <Select
-                            value={(() => {
-                              const value = getPreventiveActionValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Preventive Action" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handlePreventiveActionChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handlePreventiveActionChange('');
-                              }
-                            }}
-                            options={communicationTemplates
-                              .filter((t) => t.identifier === "Preventive Action" && t.active === true)
-                              .map((t) => ({
-                                value: t.id,
-                                label: t.identifier_action,
-                              }))}
-                            placeholder="Select Preventive Action"
-                            styles={singleSelectStyles}
-                            isClearable
-                          />
-                        </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
-                          {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.preventive_action) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Preventive Action" &&
-                                  template.identifier_action === ticketData.preventive_action &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.preventive_action_template_ids && Array.isArray(ticketData.preventive_action_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Preventive Action"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            return ticketData.preventive_action || 'No preventive action description available';
-                          })()}
-                        </div>
-                      </div>
-
-                      {/* Short-term Impact */}
-                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                        <div className="relative w-full">
-                          {/* Floating label on border */}
-                          <label
-                            style={{
-                              position: "absolute",
-                              top: "-10px",
-                              left: "12px",
-                              background: "#fff",
-                              padding: "0 6px",
-                              fontWeight: 500,
-                              fontSize: "14px",
-                              color: "#1A1A1A",
-                              zIndex: 10,
-                            }}
-                          >
-                            Short-term Impact
-                          </label>
-
-                          {/* React Select */}
-                          <Select
-                            value={(() => {
-                              const value = getShortTermImpactValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Short-term Impact" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleShortTermImpactChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleShortTermImpactChange('');
-                              }
-                            }}
-                            options={communicationTemplates
-                              .filter((t) => t.identifier === "Short-term Impact" && t.active === true)
-                              .map((t) => ({
-                                value: t.id,
-                                label: t.identifier_action,
-                              }))}
-                            placeholder="Select Short-term Impact"
-                            styles={singleSelectStyles}
-                            isClearable
-                          />
-                        </div>
-                        
-                        <div className="mt-4 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1 space-y-1">
-                          {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.short_term_impact) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Short-term Impact" &&
-                                  template.identifier_action === ticketData.short_term_impact &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.short_term_impact_template_ids && Array.isArray(ticketData.short_term_impact_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Short-term Impact"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            return ticketData.short_term_impact || 'No short-term impact description available';
-                          })()}
-                        </div>
-                      </div>
-
-                      {/* Corrective Action */}
-                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                        <div className="relative w-full">
-                          {/* Floating label on border */}
-                          <label
-                            style={{
-                              position: "absolute",
-                              top: "-10px",
-                              left: "12px",
-                              background: "#fff",
-                              padding: "0 6px",
-                              fontWeight: 500,
-                              fontSize: "14px",
-                              color: "#1A1A1A",
-                              zIndex: 10,
-                            }}
-                          >
-                            Corrective Action
-                          </label>
-
-                          {/* React Select */}
-                          <Select
-                            value={(() => {
-                              const value = getCorrectiveActionValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Corrective Action" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleCorrectiveActionChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleCorrectiveActionChange('');
-                              }
-                            }}
-                            options={communicationTemplates
-                              .filter((t) => t.identifier === "Corrective Action" && t.active === true)
-                              .map((t) => ({
-                                value: t.id,
-                                label: t.identifier_action,
-                              }))}
-                            placeholder="Select Corrective Action"
-                            styles={singleSelectStyles}
-                            isClearable
-                          />
-                        </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
-                          {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.corrective_action) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Corrective Action" &&
-                                  template.identifier_action === ticketData.corrective_action &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.corrective_action_template_ids && Array.isArray(ticketData.corrective_action_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Corrective Action"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            return ticketData.corrective_action || 'No corrective action description available';
-                          })()}
-                        </div>
-                      </div>
-
-                      {/* Long-term Impact */}
-                      <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                        <div className="relative w-full">
-                          {/* Floating label on border */}
-                          <label
-                            style={{
-                              position: "absolute",
-                              top: "-10px",
-                              left: "12px",
-                              background: "#fff",
-                              padding: "0 6px",
-                              fontWeight: 500,
-                              fontSize: "14px",
-                              color: "#1A1A1A",
-                              zIndex: 10,
-                            }}
-                          >
-                            Long-term Impact
-                          </label>
-
-                          {/* React Select */}
-                          <Select
-                            value={(() => {
-                              const value = getLongTermImpactValue();
-                              if (!value) return null;
-                              const matchedTemplate = communicationTemplates.find(
-                                t => t.identifier === "Long-term Impact" && 
-                                     t.identifier_action === value &&
-                                     t.active === true
-                              );
-                              return matchedTemplate ? { value: matchedTemplate.id, label: matchedTemplate.identifier_action } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleLongTermImpactChange(selectedOption.label);
-                              } else {
-                                // Handle clear/unselect - call API without template ID
-                                handleLongTermImpactChange('');
-                              }
-                            }}
-                            options={communicationTemplates
-                              .filter((t) => t.identifier === "Long-term Impact" && t.active === true)
-                              .map((t) => ({
-                                value: t.id,
-                                label: t.identifier_action,
-                              }))}
-                            placeholder="Select Long-term Impact"
-                            styles={singleSelectStyles}
-                            isClearable
-                          />
-                        </div>
-                        
-                        <div className="mt-4 space-y-1 text-[14px] font-medium text-[#000000] leading-[16px] max-h-32 pr-1">
-                          {(() => {
-                            // Primary: Use text matching (updated immediately on selection)
-                            if (ticketData?.impact) {
-                              const matchedTemplate = communicationTemplates.find(
-                                template => template.identifier === "Long-term Impact" &&
-                                  template.identifier_action === ticketData.impact &&
-                                  template.active === true
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            // Fallback: Use template IDs from API
-                            if (ticketData?.long_term_impact_template_ids && Array.isArray(ticketData.long_term_impact_template_ids)) {
-                              const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
-                              const matchedTemplate = communicationTemplates.find(
-                                template => uniqueIds.includes(template.id) &&
-                                  template.identifier === "Long-term Impact"
-                              );
-                              if (matchedTemplate?.body) {
-                                return matchedTemplate.body;
-                              }
-                            }
-                            
-                            return ticketData.impact || 'No long-term impact description available';
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bottom Row: Review Date & Responsible Person */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                      <div className="flex items-start text-[12px]">
-                        <span className="w-[120px] text-[#6B6B6B]">Review Date</span>
-                        <span className="ml-4 font-semibold text-[#1A1A1A]">
-                          {ticketData.review_tracking
-                            ? ticketData.review_tracking
-                            : '-'}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="relative w-full">
-                          {/* Floating label on border */}
-                          <label
-                            style={{
-                              position: "absolute",
-                              top: "-10px",
-                              left: "12px",
-                              background: "#fff",
-                              padding: "0 6px",
-                              fontWeight: 500,
-                              fontSize: "14px",
-                              color: "#1A1A1A",
-                              zIndex: 10,
-                            }}
-                          >
-                            Responsible Person
-                          </label>
-
-                          {/* React Select */}
-                          <Select
-                            value={(() => {
-                              const value = getResponsiblePersonValue();
-                              if (!value) return null;
-                              const matchedPerson = responsiblePersons.find(
-                                p => p.id.toString() === value
-                              );
-                              return matchedPerson ? { 
-                                value: matchedPerson.id, 
-                                label: `${matchedPerson.full_name}${matchedPerson.employee_type ? ` (${matchedPerson.employee_type})` : ''}`
-                              } : null;
-                            })()}
-                            onChange={(selectedOption) => {
-                              if (selectedOption) {
-                                handleResponsiblePersonChange(selectedOption.value.toString());
-                              }
-                            }}
-                            options={responsiblePersons.map((person) => ({
-                              value: person.id,
-                              label: `${person.full_name}${person.employee_type ? ` (${person.employee_type})` : ''}`,
-                            }))}
-                            placeholder={loadingResponsiblePersons ? "Loading..." : "Select Responsible Person"}
-                            styles={singleSelectStyles}
-                            isDisabled={loadingResponsiblePersons}
-                            isClearable
-                          />
-                        </div>
-
-                        {/* Show current value if it doesn't match any option */}
-                        {ticketData.responsible_person &&
-                          !responsiblePersons.find(p => p.full_name === ticketData.responsible_person) && (
-                            <div className="mt-1 text-[11px] text-[#6B6B6B] italic">
-                              Current: {ticketData.responsible_person}
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Location Details
-                    </h3>
-                  </div>
-
-                  <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="relative w-full px-4">
-                      <div
-                        className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
-                        style={{
-                          left: `calc(9%)`,
-                          right: `calc(9%)`,
-                        }}
-                      />
-
-                      <div className="flex justify-between items-start relative z-1">
-                        {[
-                          { label: "Site", value: ticketData.site_name || "-" },
-                          { label: "Building", value: ticketData.building_name || "-" },
-                          { label: "Wing", value: ticketData.wing_name || "-" },
-                          { label: "Floor", value: ticketData.floor_name || "-" },
-                          { label: "Area", value: ticketData.area_name || "-" },
-                          { label: "Room", value: ticketData.room_name || "-" },
-                        ].map((item, index) => (
-                          <div
-                            key={`location-${index}`}
-                            className="flex flex-col items-center w-full text-center"
-                          >
-                            <div className="text-sm text-gray-500 mb-2 mt-1">
-                              {item.label}
-                            </div>
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
-                            <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
-                              {item.value}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {ticketData.documents && (
-                  <Card className="w-full bg-white rounded-lg shadow-sm border">
-                    <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <Paperclip className="w-6 h-6" style={{ color: '#C72030' }} />
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        Attachments
-                      </h3>
-                    </div>
-
-                    <CardContent className="pt-4 bg-[#FAFAF8] border border-t-0 border-[#D9D9D9]">
-                      {Array.isArray(ticketData.documents) && ticketData.documents.length > 0 ? (
-                        <div className="flex items-center flex-wrap gap-4">
-                          {ticketData.documents.map((attachment: any, idx: number) => {
-                            const url = attachment.document || attachment.document_url || attachment.url || attachment.attachment_url || '';
-                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
-                            const isPdf = /\.pdf$/i.test(url) || attachment.doctype === 'application/pdf';
-                            const isExcel = /\.(xls|xlsx|csv)$/i.test(url) ||
-                              attachment.doctype?.includes('spreadsheet') ||
-                              attachment.doctype?.includes('excel');
-                            const isWord = /\.(doc|docx)$/i.test(url) ||
-                              attachment.doctype?.includes('document') ||
-                              attachment.doctype?.includes('word');
-                            const isDownloadable = isPdf || isExcel || isWord;
-
-                            return (
-                              <div
-                                key={attachment.id || idx}
-                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                              >
-                                {isImage ? (
-                                  <>
-                                    <button
-                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                      title="View"
-                                      onClick={() => {
-                                        setSelectedDoc({
-                                          id: attachment.id || 0,
-                                          document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
-                                          url: url,
-                                          document_url: url,
-                                          document: url,
-                                        });
-                                        setShowImagePreview(true);
-                                      }}
-                                      type="button"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </button>
-                                    <img
-                                      src={url}
-                                      alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`}
-                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                      onClick={() => {
-                                        setSelectedDoc({
-                                          id: attachment.id || 0,
-                                          document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
-                                          url: url,
-                                          document_url: url,
-                                          document: url,
-                                        });
-                                        setShowImagePreview(true);
-                                      }}
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                      }}
-                                    />
-                                  </>
-                                ) : isPdf ? (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                    <FileText className="w-6 h-6" />
-                                  </div>
-                                ) : isExcel ? (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                    <FileSpreadsheet className="w-6 h-6" />
-                                  </div>
-                                ) : isWord ? (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                    <FileText className="w-6 h-6" />
-                                  </div>
-                                ) : (
-                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                    <File className="w-6 h-6" />
-                                  </div>
-                                )}
-                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                                  {attachment.document_name ||
-                                    attachment.document_file_name ||
-                                    url.split('/').pop() ||
-                                    `Document_${attachment.id || idx + 1}`}
-                                </span>
-                                {isDownloadable && (
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                    onClick={() => {
-                                      setSelectedDoc({
-                                        id: attachment.id || 0,
-                                        document_name: attachment.document_name || attachment.document_file_name || `Document_${attachment.id || idx + 1}`,
-                                        url: url,
-                                        document_url: url,
-                                        document: url,
-                                      });
-                                      setShowImagePreview(true);
-                                    }}
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-gray-400">No attachments</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {isModalOpen && selectedDoc && (
-                  <div
-                    className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    <div
-                      className="max-w-4xl max-h-[90vh] bg-white rounded-lg p-4"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold truncate">
-                          {selectedDoc.document_name ||
-                            selectedDoc.document_file_name ||
-                            selectedDoc.url?.split('/').pop() ||
-                            `Document_${selectedDoc.id}`}
-                        </h3>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
-                              if (!selectedDoc.id) {
-                                toast.error('Unable to download: No document ID found');
-                                return;
-                              }
-
-                              try {
-                                const { API_CONFIG } = await import('@/config/apiConfig');
-                                const baseUrl = API_CONFIG.BASE_URL;
-                                const token = localStorage.getItem('token');
-
-                                const cleanBaseUrl = baseUrl
-                                  .replace(/^https?:\/\//, '')
-                                  .replace(/\/$/, '');
-                                const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${selectedDoc.id}?show_file=true`;
-
-                                const response = await fetch(downloadUrl, {
-                                  method: 'GET',
-                                  headers: {
-                                    Authorization: `Bearer ${token}`,
-                                    Accept: '*/*',
-                                  },
-                                  mode: 'cors',
-                                });
-
-                                if (response.ok) {
-                                  const blob = await response.blob();
-                                  const fileExtension =
-                                    selectedDoc.doctype?.split('/').pop() ||
-                                    selectedDoc.url?.split('.').pop()?.toLowerCase() ||
-                                    'file';
-                                  const documentName = `document_${selectedDoc.id}.${fileExtension}`;
-
-                                  const url = window.URL.createObjectURL(blob);
-                                  const link = window.document.createElement('a');
-                                  link.href = url;
-                                  link.download = documentName;
-                                  link.style.display = 'none';
-                                  window.document.body.appendChild(link);
-                                  link.click();
-
-                                  setTimeout(() => {
-                                    window.document.body.removeChild(link);
-                                    window.URL.revokeObjectURL(url);
-                                  }, 100);
-
-                                  toast.success('File downloaded successfully');
-                                } else {
-                                  throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                                }
-                              } catch (error) {
-                                console.error('Error downloading file:', error);
-                                toast.error(`Failed to download: ${error.message}`);
-                              }
-                            }}
-                          >
-                            <Download className="w-4 h-4 mr-1" />
-                            Download
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsModalOpen(false)}
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Close
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="max-h-[70vh] overflow-auto">
-                        {selectedDoc.type === 'image' ? (
-                          <img
-                            src={selectedDoc.url}
-                            alt={selectedDoc.document_name || 'Document'}
-                            className="max-w-full h-auto rounded-md"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              (target.nextSibling as HTMLElement).style.display = 'block';
-                            }}
-                          />
-                        ) : (
-                          <div className="text-center py-8">
-                            <FileText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                            <p className="text-gray-600 mb-4">
-                              Preview not available for this file type
-                            </p>
-                            <Button
-                              onClick={async () => {
-                                // Same download logic as above
-                                if (!selectedDoc.id) {
-                                  toast.error('Unable to download: No document ID found');
-                                  return;
-                                }
-
-                                try {
-                                  const { API_CONFIG } = await import('@/config/apiConfig');
-                                  const baseUrl = API_CONFIG.BASE_URL;
-                                  const token = localStorage.getItem('token');
-
-                                  const cleanBaseUrl = baseUrl
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/\/$/, '');
-                                  const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${selectedDoc.id}?show_file=true`;
-
-                                  const response = await fetch(downloadUrl, {
-                                    method: 'GET',
-                                    headers: {
-                                      Authorization: `Bearer ${token}`,
-                                      Accept: '*/*',
-                                    },
-                                    mode: 'cors',
-                                  });
-
-                                  if (response.ok) {
-                                    const blob = await response.blob();
-                                    const fileExtension =
-                                      selectedDoc.doctype?.split('/').pop() ||
-                                      selectedDoc.url?.split('.').pop()?.toLowerCase() ||
-                                      'file';
-                                    const documentName = `document_${selectedDoc.id}.${fileExtension}`;
-
-                                    const url = window.URL.createObjectURL(blob);
-                                    const link = window.document.createElement('a');
-                                    link.href = url;
-                                    link.download = documentName;
-                                    link.style.display = 'none';
-                                    window.document.body.appendChild(link);
-                                    link.click();
-
-                                    setTimeout(() => {
-                                      window.document.body.removeChild(link);
-                                      window.URL.revokeObjectURL(url);
-                                    }, 100);
-
-                                    toast.success('File downloaded successfully');
-                                  } else {
-                                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                                  }
-                                } catch (error) {
-                                  console.error('Error downloading file:', error);
-                                  toast.error(`Failed to download: ${error.message}`);
-                                }
-                              }}
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Download File
-                            </Button>
-                          </div>
-                        )}
-                        <div className="hidden text-center py-8 text-gray-500">
-                          Failed to load preview
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <Card className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <MessageSquare className="w-6 h-6" style={{ color: '#C72030' }} />
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        Comments
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Body */}
-                  <div className="bg-[#FAFAF8]">
-                    <div className="flex flex-col md:flex-row gap-3 px-2">
-                      {/* Internal Comments Section */}
-                      <div className="flex-1">
-                        <div className="bg-white w-full text-center py-0.5 bg-[#fafafa] border-[#D9D9D9]">
-                          <h4 className="text-[18px] font-regular text-[#000000]">Internal</h4>
-                        </div>
-
-                        <div className="mt-4 ml-2">
-                          {/* Template Dropdown */}
-                          <div className="mb-3">
-                            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                              <InputLabel shrink>Template</InputLabel>
-                              <Select
-                                label="Template"
-                                notched
-                                displayEmpty
-                                value={selectedInternalTemplate}
-                                onChange={(e) => {
-                                  const templateId = e.target.value;
-                                  setSelectedInternalTemplate(templateId);
-                                  // Auto-populate the textarea with the selected template's body
-                                  if (templateId) {
-                                    const selectedTemplateData = communicationTemplates.find(t => t.id === templateId);
-                                    setInternalCommentText(selectedTemplateData?.body || '');
-                                  } else {
-                                    setInternalCommentText('');
-                                  }
-                                }}
-                                disabled={loadingTemplates}
-                                sx={{
-                                  fontSize: '11px',
-                                  height: '40px',
-                                }}
-                              >
-                                <MenuItem value="">
-                                  <span style={{ color: '#aaa' }}>
-                                    {loadingTemplates ? 'Loading templates...' : 'Select Template'}
-                                  </span>
-                                </MenuItem>
-                                {communicationTemplates.map((template) => (
-                                  <MenuItem key={template.id} value={template.id}>
-                                    {template.identifier_action}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                          </div>
-
-                          {/* Comment Input */}
-                          <div className="mb-4">
-                            <textarea
-                              className="w-full min-h-[100px] px-3 py-2 text-[11px] bg-white border border-[#D9D9D9] rounded resize-vertical focus:outline-none focus:border-[#C72030]"
-                              placeholder="Add your internal comment..."
-                              value={internalCommentText}
-                              onChange={(e) => setInternalCommentText(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        {/* Show selected files */}
-                        {internalAttachments.length > 0 && (
-                          <div className="mb-2 text-[11px] text-gray-600 ml-2">
-                            <strong>Selected files:</strong>
-                            <ul className="list-disc pl-5">
-                              {internalAttachments.map((file, idx) => (
-                                <li key={idx}>{file.name} ({(file.size / 1024).toFixed(2)} KB)</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {/* Add Attachment Button */}
-                        <input
-                          type="file"
-                          id="internal-file-input"
-                          multiple
-                          accept="image/*,.pdf,.doc,.docx"
-                          onChange={handleInternalFileChange}
-                          style={{ display: 'none' }}
-                        />
-                        <MuiButton
-                          variant="outlined"
-                          component="label"
-                          htmlFor="internal-file-input"
-                          sx={{
-                            marginLeft: '8px',
-                            borderColor: '#C72030',
-                            color: '#C72030',
-                            textTransform: 'none',
-                            fontFamily: 'Work Sans, sans-serif',
-                            fontWeight: 500,
-                            borderRadius: '0',
-                            padding: '8px 16px',
-                            '&:hover': {
-                              borderColor: '#B8252F',
-                              backgroundColor: 'rgba(199, 32, 48, 0.04)',
-                            },
-                          }}
-                        >
-                          Add Attachment
-                        </MuiButton>
-                      </div>
-
-                      {/* Customer Comments Section */}
-                      <div className="flex-1">
-                        <div className="bg-white w-full text-center py-0.5 bg-[#fafafa] border-[#D9D9D9]">
-                          <h4 className="text-[18px] font-regular text-[#000000]">Customer</h4>
-                        </div>
-
-                        <div className="mt-4 mr-2">
-
-
-                          {/* Template Dropdown */}
-                          <div className="mb-3">
-                            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                              <InputLabel shrink>Template</InputLabel>
-                              <Select
-                                label="Template"
-                                notched
-                                displayEmpty
-                                value={selectedCustomerTemplate}
-                                onChange={(e) => {
-                                  const templateId = e.target.value;
-                                  setSelectedCustomerTemplate(templateId);
-                                  // Auto-populate the textarea with the selected template's body
-                                  if (templateId) {
-                                    const selectedTemplateData = communicationTemplates.find(t => t.id === templateId);
-                                    setCommentText(selectedTemplateData?.body || '');
-                                  } else {
-                                    setCommentText('');
-                                  }
-                                }}
-                                disabled={loadingTemplates}
-                                sx={{
-                                  fontSize: '11px',
-                                  height: '40px',
-                                }}
-                              >
-                                <MenuItem value="">
-                                  <span style={{ color: '#aaa' }}>
-                                    {loadingTemplates ? 'Loading templates...' : 'Select Template'}
-                                  </span>
-                                </MenuItem>
-                                {communicationTemplates.map((template) => (
-                                  <MenuItem key={template.id} value={template.id}>
-                                    {template.identifier_action}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                          </div>
-
-                          {/* Comment Input */}
-                          <div className="mb-4">
-                            <textarea
-                              className="w-full min-h-[100px] px-3 py-2 text-[11px] bg-white border border-[#D9D9D9] rounded resize-vertical focus:outline-none focus:border-[#C72030]"
-                              placeholder="Add your customer comment..."
-                              value={commentText}
-                              onChange={(e) => setCommentText(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        {/* Show selected files */}
-                        {customerAttachments.length > 0 && (
-                          <div className="mb-2 text-[11px] text-gray-600 mr-2">
-                            <strong>Selected files:</strong>
-                            <ul className="list-disc pl-5">
-                              {customerAttachments.map((file, idx) => (
-                                <li key={idx}>{file.name} ({(file.size / 1024).toFixed(2)} KB)</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {/* Add Attachment Button */}
-                        <input
-                          type="file"
-                          id="customer-file-input"
-                          multiple
-                          accept="image/*,.pdf,.doc,.docx"
-                          onChange={handleCustomerFileChange}
-                          style={{ display: 'none' }}
-                        />
-                        <MuiButton
-                          variant="outlined"
-                          component="label"
-                          htmlFor="customer-file-input"
-                          sx={{
-                            borderColor: '#C72030',
-                            color: '#C72030',
-                            textTransform: 'none',
-                            fontFamily: 'Work Sans, sans-serif',
-                            fontWeight: 500,
-                            borderRadius: '0',
-                            padding: '8px 16px',
-                            '&:hover': {
-                              borderColor: '#B8252F',
-                              backgroundColor: 'rgba(199, 32, 48, 0.04)',
-                            },
-                          }}
-                        >
-                          Add Attachment
-                        </MuiButton>
-                      </div>
-                    </div>
-
-                    {/* Submit Comment Button (centered) */}
-                    <div className="flex justify-center mt-6 pb-6">
-                      <button
-                        type="button"
-                        onClick={handleSubmitComment}
-                        disabled={submittingComment}
-                        className={`bg-[#C72030] text-white text-[12px] font-medium px-6 py-2 transition-colors ${submittingComment
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:bg-[#A01828]'
-                          }`}
-                      >
-                        {submittingComment ? 'Submitting...' : 'Submit Comment'}
-                      </button>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Logs Card – Adjusted Alignment */}
-                <Card className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <div className="w-6 h-6">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 18 26" fill="none">
-                            <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M5 8.09082H13M5 13.0908H9" stroke="#C72030" stroke-width="2" stroke-linecap="round" />
-                          </svg>
-                        </div>
-                      </div>
-                      <h3 className="text-lg font-semibold uppercase text-black">
-                        Logs
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Body */}
-                  <div className="bg-[#FAFAF8] relative px-6 pt-6 pb-8 pl-8">
-                    {complaintLogs.length === 0 ? (
-                      <div className="text-xs text-gray-400">No logs available</div>
-                    ) : (
-                      (() => {
-                        const sorted = [...complaintLogs].sort(
-                          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                        );
-
-                        return (
-                          <>
-                            <div className="pl-8 pt-2 relative">
-                              {/* Vertical Progress Line */}
-                              <div className="flex ml-1 mt-[-10px] mb-4 items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="26" viewBox="0 0 18 26" fill="none">
-                                  <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                  <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                  <path d="M5 8.09082H13M5 13.0908H9" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" />
-                                </svg>
-                                <h4 style={{ marginLeft: '8px', fontWeight: '500', color: '#C72030' }}>Logs</h4>
-                              </div>
-
-                              {/* Container for dots and line */}
-                              <div className="relative">
-                                {/* Vertical line - stops before the last dot */}
-                                {sorted.length > 1 && (
-                                  <div
-                                    className="absolute left-[13px] top-0 w-[2px] bg-[#C72030]"
-                                    style={{
-                                      height: `calc(100% - ${sorted.length > 0 ? '48px' : '0px'})`
-                                    }}
-                                  />
-                                )}
-
-                                <div className="space-y-6">
-                                  {sorted.map((log, i) => {
-                                    const isLast = i === sorted.length - 1;
-                                    const currentDate = formatLogDate(log.created_at);
-                                    const previousDate = i > 0 ? formatLogDate(sorted[i - 1].created_at) : null;
-                                    const showDate = currentDate !== previousDate;
-
-                                    return (
-                                      <div key={log.id || i} className="relative flex items-start gap-3">
-                                        {/* Dot aligned exactly on line */}
-                                        <div className="relative">
-                                          <span
-                                            className={`block w-3 h-3 rounded-full border-2 ml-2 bg-[#C72030] border-[#C72030]`}
-                                          />
-                                        </div>
-
-                                        {/* Log Content */}
-                                        <div className="text-[12px] leading-snug">
-                                          {/* Date on top - only show if different from previous log */}
-                                          {showDate && (
-                                            <div className="text-[#1A1A1A] text-[16px] font-semibold mb-1">
-                                              {currentDate}
-                                            </div>
-                                          )}
-
-                                          {/* Time, Status, and By on same line */}
-                                          <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-[#6B6B6B] text-[12px]">
-                                              {formatLogTime(log.created_at)}
-                                            </span>
-                                            <span className="font-semibold text-[#1A1A1A] text-[16px]">
-                                              {log.log_status === null || log.log_status === undefined || log.log_status === '' ? 'Status Changed' : log.log_status}
-                                            </span>
-                                            {log.log_by && (
-                                              <span className="text-[#1A1A1A] text-[16px]">
-                                                By <span className="text-[#1A1A1A]">{log.log_by}</span>
-                                              </span>
-                                            )}
-                                          </div>
-
-                                          {/* Comment below */}
-                                          {log.log_comment && (
-                                            <div className="text-[#2C2C2C] text-[16px] leading-[20px]">
-                                              {log.log_comment}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          </>
-                        );
-                      })()
-                    )}
-                  </div>
-                </Card>
-              </TabsContent>
 
           <TabsContent value="creator-info" className="p-4 sm:p-6">
             <div className="space-y-6">
@@ -7330,4 +5052,4 @@ export const TicketDetailsPage = () => {
       />
     </div>
   );
-};
+}
