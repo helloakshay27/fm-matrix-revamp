@@ -356,7 +356,7 @@ const modulesByPackage = {
           color: "text-[#1a1a1a]",
         },
         {
-          name: "OCCUPANT USERS",
+          name: "Occupant Users",
           href: "/master/user/occupant-users",
           color: "text-[#1a1a1a]",
         },
