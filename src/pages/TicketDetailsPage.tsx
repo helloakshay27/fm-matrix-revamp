@@ -36,7 +36,10 @@ const CustomMultiValue = (props) => (
     <div
       onClick={(e) => {
         e.stopPropagation();
-        props.removeProps.onClick();
+        e.preventDefault();
+        if (props.removeProps && props.removeProps.onClick) {
+          props.removeProps.onClick(e);
+        }
       }}
       style={{
         position: "absolute",
@@ -746,7 +749,7 @@ export const TicketDetailsPage = () => {
 
       // Add each template ID with array notation
       templateIds.forEach(templateId => {
-        formDataToSend.append('root_cause[rca_template_ids][]', String(templateId));
+        formDataToSend.append('root_cause[template_ids][]', String(templateId));
       });
 
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
@@ -772,7 +775,7 @@ export const TicketDetailsPage = () => {
         return {
           ...prev,
           root_cause: rootCauseString,
-          root_cause_ids: templateIds
+          rca_template_ids: templateIds
         };
       });
 
@@ -2794,7 +2797,7 @@ export const TicketDetailsPage = () => {
                             </div>
                             {(ticketData.rca_template_ids && ticketData.rca_template_ids.length > 0) && (
                               <div
-                                className="space-y-2 min-w-0"
+                                className="space-y-2 min-w-0 mt-4"
                                 style={{ fontSize: "14px", fontWeight: "500" }}
                               >
                                 {(() => {
@@ -2812,7 +2815,7 @@ export const TicketDetailsPage = () => {
                                     
                                     return (
                                       <div
-                                        key={index}
+                                        key={`rca-display-${templateId}`}
                                         className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
                                         style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
                                       >
@@ -3763,7 +3766,7 @@ export const TicketDetailsPage = () => {
                           { label: "Room", value: ticketData.room_name || "-" },
                         ].map((item, index) => (
                           <div
-                            key={index}
+                            key={`location-${index}`}
                             className="flex flex-col items-center w-full text-center"
                           >
                             <div className="text-sm text-gray-500 mb-2 mt-1">
@@ -4892,7 +4895,7 @@ export const TicketDetailsPage = () => {
                             </div>
                             {(ticketData.rca_template_ids && ticketData.rca_template_ids.length > 0) && (
                               <div
-                                className="space-y-2 min-w-0"
+                                className="space-y-2 min-w-0 mt-4"
                                 style={{ fontSize: "14px", fontWeight: "500" }}
                               >
                                 {(() => {
@@ -4910,7 +4913,7 @@ export const TicketDetailsPage = () => {
                                     
                                     return (
                                       <div
-                                        key={index}
+                                        key={`rca-display-${templateId}`}
                                         className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
                                         style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
                                       >
@@ -5861,7 +5864,7 @@ export const TicketDetailsPage = () => {
                           { label: "Room", value: ticketData.room_name || "-" },
                         ].map((item, index) => (
                           <div
-                            key={index}
+                            key={`location-${index}`}
                             className="flex flex-col items-center w-full text-center"
                           >
                             <div className="text-sm text-gray-500 mb-2 mt-1">
@@ -7181,7 +7184,7 @@ export const TicketDetailsPage = () => {
                   </TableHeader>
                   <TableBody>
                     {ticketData.requests.map((request, index) => (
-                      <TableRow key={index}>
+                      <TableRow key={`log-${index}`}>
                         <TableCell className="font-medium">
                           {request.id || `REQ-${index + 1}`}
                         </TableCell>

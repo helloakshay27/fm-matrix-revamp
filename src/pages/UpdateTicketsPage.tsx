@@ -752,6 +752,16 @@ const UpdateTicketsPage: React.FC = () => {
         correction: ticketData.correction || "",
         // Root Cause
         rootCause: ticketData.root_cause || "",
+        // Root Cause Template IDs from API
+        rootCauseTemplateIds: ticketData.rca_template_ids || [],
+        // Preventive Action Template IDs from API
+        preventiveActionTemplateIds: ticketData.preventive_action_template_ids || [],
+        // Corrective Action Template IDs from API
+        correctiveActionTemplateIds: ticketData.corrective_action_template_ids || [],
+        // Short-term Impact Template IDs from API
+        shortTermImpactTemplateIds: ticketData.short_term_impact_template_ids || [],
+        // Long-term Impact Template IDs from API
+        longTermImpactTemplateIds: ticketData.long_term_impact_template_ids || [],
         // Service Type - bind from API
         serviceType: ticketData.service_type || "",
         // Associated To (Asset or Service) - using asset_service field
@@ -1482,7 +1492,7 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   // Handle Root Cause multi-select change with auto-save
-  // Handle Root Cause multi-select change (only updates state, API call happens on Save)
+  // Handle Root Cause multi-select change (only updates state, API call happens on Save) 
   const handleRootCauseChange = (selectedValues: string | string[] | number | number[]) => {
     // Convert to array of numbers (template IDs)
     let templateIds: number[] = [];
@@ -2098,7 +2108,17 @@ const UpdateTicketsPage: React.FC = () => {
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                       <InputLabel shrink>Preventive Action</InputLabel>
                       <MuiSelect
-                        value={formData.preventiveAction}
+                        value={(() => {
+                          // Priority 1: Use template IDs from formData
+                          if (formData.preventiveActionTemplateIds && formData.preventiveActionTemplateIds.length > 0) {
+                            const template = communicationTemplates.find(
+                              t => t.id === formData.preventiveActionTemplateIds[0]
+                            );
+                            return template?.identifier_action || "";
+                          }
+                          // Fallback: Use string value
+                          return formData.preventiveAction;
+                        })()}
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           handleInputChange("preventiveAction", selectedValue);
@@ -2523,7 +2543,17 @@ const UpdateTicketsPage: React.FC = () => {
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                       <InputLabel shrink>Short-term Impact</InputLabel>
                       <MuiSelect
-                        value={formData.impact}
+                        value={(() => {
+                          // Priority 1: Use template IDs from formData
+                          if (formData.shortTermImpactTemplateIds && formData.shortTermImpactTemplateIds.length > 0) {
+                            const template = communicationTemplates.find(
+                              t => t.id === formData.shortTermImpactTemplateIds[0]
+                            );
+                            return template?.identifier_action || "";
+                          }
+                          // Fallback: Use string value
+                          return formData.impact;
+                        })()}
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           handleInputChange("impact", selectedValue);
@@ -2591,7 +2621,17 @@ const UpdateTicketsPage: React.FC = () => {
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                       <InputLabel shrink>Long-term Impact</InputLabel>
                       <MuiSelect
-                        value={formData.longTermImpact}
+                        value={(() => {
+                          // Priority 1: Use template IDs from formData
+                          if (formData.longTermImpactTemplateIds && formData.longTermImpactTemplateIds.length > 0) {
+                            const template = communicationTemplates.find(
+                              t => t.id === formData.longTermImpactTemplateIds[0]
+                            );
+                            return template?.identifier_action || "";
+                          }
+                          // Fallback: Use string value
+                          return formData.longTermImpact;
+                        })()}
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           handleInputChange("longTermImpact", selectedValue);
@@ -2656,7 +2696,17 @@ const UpdateTicketsPage: React.FC = () => {
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                       <InputLabel shrink>Corrective Action</InputLabel>
                       <MuiSelect
-                        value={formData.correctiveAction}
+                        value={(() => {
+                          // Priority 1: Use template IDs from formData
+                          if (formData.correctiveActionTemplateIds && formData.correctiveActionTemplateIds.length > 0) {
+                            const template = communicationTemplates.find(
+                              t => t.id === formData.correctiveActionTemplateIds[0]
+                            );
+                            return template?.identifier_action || "";
+                          }
+                          // Fallback: Use string value
+                          return formData.correctiveAction;
+                        })()}
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           handleInputChange("correctiveAction", selectedValue);
