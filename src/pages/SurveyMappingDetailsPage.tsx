@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import { LocationSelectionPanel } from "@/components/LocationSelectionPanel";
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info, Download, Star, ChevronDown, FileText, LogsIcon, File, FileIcon, Radio } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { apiClient } from '@/utils/apiClient';
+import { getAuthHeader, getFullUrl } from '@/config/apiConfig';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { QuestionMark } from '@mui/icons-material';
+// Questions table item interface
+interface QuestionsTableItem {
+  qnumber: string;
+  id: number;
+  descr: string;
+  qtype: string;
+  options: SurveyQuestion;
+  active: number;
+  created_by: string;
+  created_at: string;
+}
 
 interface QRCodeData {
   id: number;
@@ -89,14 +101,19 @@ interface SurveyMappingDetail {
   created_by: string;
 }
 
-interface QuestionsTableItem {
-  qnumber: string;
-  id: number;
-  descr: string;
-  qtype: string;
-  options: SurveyQuestion;
+interface LocationTableItem {
+  mapping_id: number;
+  site: string;
+  building: string;
+  wing: string | null;
+  floor: string | null;
+  area: string | null;
+  room: string | null;
+  qr_code: string;
   created_by: string;
   created_at: string;
+  active: boolean;
+  survey_id: number;
 }
 
 export const SurveyMappingDetailsPage = () => {
@@ -394,6 +411,7 @@ export const SurveyMappingDetailsPage = () => {
       draggable: false,
       defaultVisible: true,
     },
+   
     {
       key: "created_by",
       label: "Created By",
@@ -404,6 +422,13 @@ export const SurveyMappingDetailsPage = () => {
     {
       key: "created_at",
       label: "Created Date",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "status",
+      label: "Status",
       sortable: false,
       draggable: false,
       defaultVisible: true,
@@ -419,6 +444,7 @@ export const SurveyMappingDetailsPage = () => {
       descr: question.descr,
       qtype: question.qtype.replace(/_/g, ' '),
       options: question,
+      active: question.active,
       created_by: question.created_by || "—",
       created_at: formatDate(question.created_at),
     }));
@@ -426,11 +452,67 @@ export const SurveyMappingDetailsPage = () => {
 
   // Custom cell renderer for questions table
   const renderQuestionCell = (item: QuestionsTableItem, columnKey: string): React.ReactNode => {
-    if (columnKey === "options") {
-      const question = item.options as SurveyQuestion;
-      return renderQuestionOptions(question);
+    switch (columnKey) {
+      case "options": {
+        const question = item.options as SurveyQuestion;
+        return renderQuestionOptions(question);
+      }
+      case 'status': {
+        return (
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => handleQuestionStatusToggle(item)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                item.active ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+            >
+              <div className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                item.active ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
+        );
+      }
+      default:
+        return item[columnKey as keyof QuestionsTableItem] as React.ReactNode;
     }
-    return item[columnKey];
+  };
+
+  // Handle status toggle for individual questions
+  const handleQuestionStatusToggle = async (item: QuestionsTableItem) => {
+    // Convert active from number (0/1) to boolean for toggle logic
+    const currentStatus = Boolean(item.active);
+    const newStatus = !currentStatus; // Toggle between true/false
+
+    try {
+      // Use apiClient instead of fetch to avoid CORS issues
+      await apiClient.put(`/snag_questions/${item.id}.json`, {
+        question_id: item.id,
+        active: newStatus // Send as boolean (true/false) as requested
+      });
+
+      // Update local state on success - update the question in the questions array
+      setMapping(prev => {
+        if (!prev) return prev;
+
+        const updatedQuestions = prev.questions.map(question =>
+          question.id === item.id
+            ? { ...question, active: newStatus ? 1 : 0 }
+            : question
+        );
+
+        return {
+          ...prev,
+          questions: updatedQuestions
+        };
+      });
+
+      toast.success(`Question status ${newStatus ? 'activated' : 'deactivated'}`);
+
+    } catch (error: unknown) {
+      console.error('Error toggling question status:', error);
+      toast.error("Failed to toggle question status");
+    }
   };
 
   // Handle status toggle for individual mappings
