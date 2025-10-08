@@ -3,26 +3,26 @@ export const OIG_LOGO_CODE = () => {
     <svg
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
-      width={180}
+      width={60}
       height={60}
-      viewBox="0 0 325 274"
+      viewBox="0 0 31 22"
       fill="none"
     >
-      <rect width={325} height={274} fill="url(#pattern0_4116_1359)" />
+      <rect width={31} height={22} fill="url(#pattern0_11532_5549)" />
       <defs>
         <pattern
-          id="pattern0_4116_1359"
+          id="pattern0_11532_5549"
           patternContentUnits="objectBoundingBox"
           width={1}
           height={1}
         >
           <use
-            xlinkHref="#image0_4116_1359"
-            transform="matrix(0.00307692 0 0 0.00364964 -1.20308 -1.54745)"
+            xlinkHref="#image0_11532_5549"
+            transform="matrix(0.00328975 0 0 0.00475315 -1.3339 -2.23864)"
           />
         </pattern>
         <image
-          id="image0_4116_1359"
+          id="image0_11532_5549"
           width={1099}
           height={1099}
           preserveAspectRatio="none"
