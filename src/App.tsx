@@ -770,6 +770,7 @@ import CurrencyPage from "./pages/CurrencyPage";
 import { LockedUsersDashboard } from "./pages/settings/LockedUsersDashboard";
 import { PRDeletionRequests } from "./pages/PRDeletionRequests";
 import { DirectPDFDownloadPage } from "./pages/DirectPDFDownloadPage";
+import { DeletedPRs } from "./pages/DeletedPRs";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -967,9 +968,9 @@ function App() {
                   element={<PasswordResetSuccessPage />}
                 />
 
-                 <Route 
-                  path="/direct-pdf-download/:taskId" 
-                  element={<DirectPDFDownloadPage />} 
+                <Route
+                  path="/direct-pdf-download/:taskId"
+                  element={<DirectPDFDownloadPage />}
                 />
                 <Route
                   path="/dashboard"
@@ -2004,6 +2005,10 @@ function App() {
                   <Route
                     path="/finance/deletion-requests"
                     element={<PRDeletionRequests />}
+                  />
+                  <Route
+                    path="/finance/deleted-prs"
+                    element={<DeletedPRs />}
                   />
                   <Route
                     path="/finance/invoice"

@@ -2,7 +2,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
-import { fetchDeletionRequests } from "@/store/slices/pendingApprovalSlice";
+import { fetchDeletedPRs } from "@/store/slices/pendingApprovalSlice";
 import { Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -52,44 +52,36 @@ const columns: ColumnConfig[] = [
     },
 ];
 
-export const PRDeletionRequests = () => {
+export const DeletedPRs = () => {
     const navigate = useNavigate();
-    const dispatch = useAppDispatch();
+    const dispatch = useAppDispatch()
     const token = localStorage.getItem("token")
     const baseUrl = localStorage.getItem("baseUrl")
 
     const [loading, setLoading] = useState(false)
-    const [deletionRequests, setDeletionRequests] = useState([]);
+    const [deletedPRs, setDeletedPRs] = useState([])
 
-    const getDeletionRequests = async () => {
+    const getDeletedPRs = async () => {
         try {
-            setLoading(true)
-            const response = await dispatch(fetchDeletionRequests({ baseUrl, token, page: 1 })).unwrap()
-            const formattedResponse = response.pending_data.map((item: any) => ({
+            const response = await dispatch(fetchDeletedPRs({ baseUrl, token })).unwrap()
+            const formattedResponse = response.deletion_requests.map((item: any) => ({
                 id: item.resource_id,
                 type:
-                    item.resource_type === "Pms::PurchaseOrder" && item.letter_of_indent === true
+                    item.resource_type === "Pms::PurchaseOrder"
                         ? "Material PR"
-                        : item.resource_type === "Pms::WorkOrder" && item.letter_of_indent === true
+                        : item.resource_type === "Pms::WorkOrder"
                             ? "Service PR"
                             : "",
                 prNo: item.reference_number,
-                siteName: item.site_name,
-                level: item.approval_level_name,
-                level_id: item.level_id,
-                user_id: item.user_id,
-                delete_request_id: item.delete_request_id
             }));
-            setDeletionRequests(formattedResponse)
+            setDeletedPRs(formattedResponse)
         } catch (error) {
             console.log(error)
-        } finally {
-            setLoading(false)
         }
     }
 
     useEffect(() => {
-        getDeletionRequests()
+        getDeletedPRs()
     }, [])
 
     const renderCell = (item: any, columnKey: string) => {
@@ -107,7 +99,7 @@ export const PRDeletionRequests = () => {
                     className="p-1"
                     onClick={() =>
                         navigate(
-                            `/${url}/${item.id}?level_id=${item.level_id}&user_id=${item.user_id}&request_id=${item.delete_request_id}&type=delete-request`
+                            `/${url}/${item.id}`
                         )
                     }
                 >
@@ -120,9 +112,8 @@ export const PRDeletionRequests = () => {
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-3">PR Deletion Requests</h1>
             <EnhancedTable
-                data={deletionRequests}
+                data={deletedPRs}
                 columns={columns}
                 renderCell={renderCell}
                 storageKey="pr-deletion-requests-table"
