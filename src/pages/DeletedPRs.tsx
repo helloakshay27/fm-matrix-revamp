@@ -112,6 +112,7 @@ export const DeletedPRs = () => {
 
     return (
         <div className="p-6">
+            <h1 className="text-2xl font-bold mb-3">Deleted PRs</h1>
             <EnhancedTable
                 data={deletedPRs}
                 columns={columns}
