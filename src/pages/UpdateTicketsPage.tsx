@@ -185,6 +185,10 @@ const UpdateTicketsPage: React.FC = () => {
     selectedStatus: "",
     rootCause: "",
     rootCauseTemplateIds: [] as number[], // Store template IDs for API submission
+    preventiveActionTemplateIds: [] as number[], // Store preventive action template IDs
+    correctiveActionTemplateIds: [] as number[], // Store corrective action template IDs
+    shortTermImpactTemplateIds: [] as number[], // Store short-term impact template IDs
+    longTermImpactTemplateIds: [] as number[], // Store long-term impact template IDs
     correction: "",
     selectedAsset: "",
     selectedService: "",
@@ -657,46 +661,179 @@ const UpdateTicketsPage: React.FC = () => {
       const matchedStatus = complaintStatuses.find(
         (status) => status.id === ticketData.complaint_status_id
       );
-      const assignedUser = fmUsers.find((user) => user.id === ticketData.assigned_to);
+      
+      // Match assigned user by name (API returns name, not ID)
+      const assignedUser = fmUsers.find((user) => user.full_name === ticketData.assigned_to);
+      
+      // Match responsible person by name if available
+      const responsiblePersonUser = ticketData.responsible_person 
+        ? fmUsers.find((user) => user.full_name === ticketData.responsible_person)
+        : null;
+      
+      console.log("👤 Matching assigned user:", {
+        apiAssignedTo: ticketData.assigned_to,
+        matchedUser: assignedUser,
+        responsiblePerson: ticketData.responsible_person,
+        matchedResponsiblePerson: responsiblePersonUser,
+      });
 
-      // Populate form with API data including location
+      // Find location IDs by matching names from API response
+      let buildingId = "";
+      let wingId = "";
+      let areaId = "";
+      let floorId = ticketData.floor_id?.toString() || "";
+      let roomId = ticketData.room_id?.toString() || "";
+
+      // Match building by name
+      if (ticketData.building_name) {
+        const matchedBuilding = buildings.find(b => b.name === ticketData.building_name);
+        if (matchedBuilding) {
+          buildingId = matchedBuilding.id.toString();
+        }
+      }
+
+      // Populate form with API data including ALL fields from the response
+      console.log("📋 Setting form data with values:", {
+        adminPriority: ticketData.priority,
+        severity: ticketData.severity,
+        issueRelatedTo: ticketData.issue_related_to,
+        refNumber: ticketData.reference_number,
+        externalPriority: ticketData.external_priority,
+        assignTo: ticketData.assigned_to,
+        responsiblePerson: ticketData.responsible_person,
+        correctiveAction: ticketData.corrective_action,
+        preventiveAction: ticketData.preventive_action,
+        shortTermImpact: ticketData.short_term_impact,
+        longTermImpact: ticketData.impact,
+        issueType: ticketData.issue_type,
+      });
+
+      console.log("📋 Available templates:", {
+        preventiveTemplates: communicationTemplates.filter(t => t.identifier === "Preventive Action"),
+        correctiveTemplates: communicationTemplates.filter(t => t.identifier === "Corrective Action"),
+        shortTermTemplates: communicationTemplates.filter(t => t.identifier === "Short-term Impact"),
+        longTermTemplates: communicationTemplates.filter(t => t.identifier === "Long-term Impact"),
+      });
+
       setFormData((prev) => ({
         ...prev,
         title: ticketData.heading || "",
         categoryType: matchedCategory ? matchedCategory.id.toString() : "",
         subCategoryType: ticketData.sub_category_type || "",
         proactiveReactive: ticketData.proactive_reactive || "",
-        assignTo: assignedUser ? assignedUser.id.toString() : "",
+        assignTo: assignedUser ? assignedUser.id.toString() : "", // Use matched user ID
         mode: matchedMode ? matchedMode.id.toString() : "",
         serviceType: ticketData.service_or_asset || "",
         selectedStatus: matchedStatus ? matchedStatus.id.toString() : "",
         comments: ticketData.comment || "",
-        // Add location fields from API
-        area: '', // Area needs to be derived from building's area
-        building: ticketData.tower_id?.toString() || "",
-        floor: ticketData.floor_id?.toString() || "",
-        room: ticketData.room_id?.toString() || "",
-        wing: ticketData.wing_id?.toString() || "",
+        // Responsible Person
+        responsiblePerson: responsiblePersonUser ? responsiblePersonUser.id.toString() : "",
+        // Complaint Type (from issue_type)
+        complaintType: ticketData.issue_type || "",
+        // Admin Priority
+        adminPriority: ticketData.priority || "",
+        // Severity
+        severity: ticketData.severity || "",
+        // Issue Related To
+        issueRelatedTo: ticketData.issue_related_to || "",
+        // Reference Number
+        refNumber: ticketData.reference_number || "",
+        // External Priority
+        externalPriority: ticketData.external_priority || "",
+        // Corrective Action - directly use the value from API
+        correctiveAction: ticketData.corrective_action || "",
+        // Preventive Action - directly use the value from API
+        preventiveAction: ticketData.preventive_action || "",
+        // Impact (Short Term Impact) - directly use the value from API
+        impact: ticketData.short_term_impact || "",
+        // Long Term Impact - directly use the value from API
+        longTermImpact: ticketData.impact || "",
+        // Correction
+        correction: ticketData.correction || "",
+        // Root Cause
+        rootCause: ticketData.root_cause || "",
+        // Service Type - bind from API
+        serviceType: ticketData.service_type || "",
+        // Associated To (Asset or Service) - using asset_service field
+        associatedTo: {
+          asset: ticketData.asset_service === "Asset",
+          service: ticketData.asset_service === "Service"
+        },
+        // Location fields from API (using IDs from response)
+        building: buildingId,
+        wing: wingId,
+        area: areaId,
+        floor: floorId,
+        room: roomId,
       }));
 
-      // Trigger cascading filters for location if data exists
-      if (ticketData.tower_id) {
-        const buildingId = ticketData.tower_id.toString();
-        
-        // Filter wings for this building
-        const wingsForBuilding = wings.filter(w => w.building_id === buildingId);
-        setFilteredWings(wingsForBuilding);
-        
-        if (ticketData.wing_id) {
-          const wingId = ticketData.wing_id.toString();
-          const floorsForWing = floors.filter(f => f.wing_id === parseInt(wingId));
-          setFilteredFloors(floorsForWing);
-          
-          if (ticketData.floor_id) {
-            const floorId = ticketData.floor_id.toString();
-            const roomsForFloor = rooms.filter(r => r.floor_id === parseInt(floorId));
-            setFilteredRooms(roomsForFloor);
+      console.log("✅ Form data updated successfully");
+
+      // Trigger cascading API calls for location if data exists
+      if (buildingId) {
+        // Call wings API with building_id parameter
+        try {
+          const url = getFullUrl(`/pms/wings.json?building_id=${buildingId}`);
+          const options = {
+            method: 'GET',
+            headers: {
+              Authorization: getAuthHeader(),
+            },
+          };
+          const response = await fetch(url, options);
+          if (response.ok) {
+            const data = await response.json();
+            const wingsData = data.wings || [];
+            setFilteredWings(wingsData);
+            
+            // Match wing by name after fetching wings
+            if (ticketData.wing_name) {
+              const matchedWing = wingsData.find((w: any) => w.name === ticketData.wing_name);
+              if (matchedWing) {
+                wingId = matchedWing.id.toString();
+                setFormData(prev => ({ ...prev, wing: wingId }));
+                
+                // Call areas API with wing_id parameter
+                const areasUrl = getFullUrl(`/pms/areas.json?wing_id=${wingId}`);
+                const areasResponse = await fetch(areasUrl, options);
+                if (areasResponse.ok) {
+                  const areasData = await areasResponse.json();
+                  const areas = areasData.areas || [];
+                  setFilteredAreas(areas);
+                  
+                  // Match area by name after fetching areas
+                  if (ticketData.area_name) {
+                    const matchedArea = areas.find((a: any) => a.name === ticketData.area_name);
+                    if (matchedArea) {
+                      areaId = matchedArea.id.toString();
+                      setFormData(prev => ({ ...prev, area: areaId }));
+                      
+                      // Call floors API with area_id parameter
+                      const floorsUrl = getFullUrl(`/pms/floors.json?area_id=${areaId}`);
+                      const floorsResponse = await fetch(floorsUrl, options);
+                      if (floorsResponse.ok) {
+                        const floorsData = await floorsResponse.json();
+                        const floors = floorsData.floors || [];
+                        setFilteredFloors(floors);
+                        
+                        // If we have floor_id, fetch rooms
+                        if (floorId) {
+                          const roomsUrl = getFullUrl(`/pms/rooms.json?floor_id=${floorId}`);
+                          const roomsResponse = await fetch(roomsUrl, options);
+                          if (roomsResponse.ok) {
+                            const roomsData = await roomsResponse.json();
+                            setFilteredRooms(Array.isArray(roomsData) ? roomsData : (roomsData.rooms || []));
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
+        } catch (error) {
+          console.error('Error loading location cascade for ticket:', error);
         }
       }
 
@@ -717,6 +854,38 @@ const UpdateTicketsPage: React.FC = () => {
           selectedService: ticketData.asset_or_service_id.toString(),
         }));
         fetchServices(false); // Don't auto-select during manual changes
+      }
+
+      // Set review tracking date if available
+      if (ticketData.review_tracking) {
+        // Convert review_tracking date from DD/MM/YYYY to YYYY-MM-DD format
+        const dateStr = ticketData.review_tracking;
+        if (dateStr.includes('/')) {
+          // Format is DD/MM/YYYY, convert to YYYY-MM-DD
+          const parts = dateStr.split('/');
+          if (parts.length === 3) {
+            const [day, month, year] = parts;
+            const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            setReviewDate(formattedDate);
+            console.log('📅 Review date converted from', dateStr, 'to', formattedDate);
+          }
+        } else if (dateStr.includes('T')) {
+          // Format is ISO timestamp, extract date part
+          const reviewDateStr = dateStr.split('T')[0];
+          setReviewDate(reviewDateStr);
+          console.log('📅 Review date extracted from ISO:', reviewDateStr);
+        } else {
+          // Assume already in correct format
+          setReviewDate(dateStr);
+        }
+      }
+
+      // Set cost involved flag
+      if (ticketData.cost_involved !== undefined) {
+        setFormData(prev => ({ 
+          ...prev, 
+          costInvolved: ticketData.cost_involved 
+        }));
       }
 
       // Load cost approval requests if cost is involved
@@ -758,7 +927,15 @@ const UpdateTicketsPage: React.FC = () => {
 
   useEffect(() => {
     // If we have an ID from the URL, fetch the ticket data
-    if (id && helpdeskData?.helpdesk_categories && complaintModes.length > 0 && fmUsers.length > 0 && complaintStatuses.length > 0) {
+    // Wait for all required data including buildings and templates to be loaded
+    if (id && 
+        helpdeskData?.helpdesk_categories && 
+        complaintModes.length > 0 && 
+        fmUsers.length > 0 && 
+        complaintStatuses.length > 0 &&
+        buildings.length > 0 &&
+        communicationTemplates.length > 0) { // Add templates check
+      console.log("✅ All data loaded, fetching ticket data for ID:", id);
       fetchTicketData(id);
     }
     // If we have selected tickets from navigation state, use the first one
@@ -785,6 +962,8 @@ const UpdateTicketsPage: React.FC = () => {
     complaintModes,
     fmUsers,
     complaintStatuses,
+    buildings, // Add buildings dependency
+    communicationTemplates, // Add templates dependency
   ]);
 
 
@@ -1538,6 +1717,46 @@ const UpdateTicketsPage: React.FC = () => {
         console.log('⚠️ No root cause template IDs to submit');
       }
       
+      // Add preventive action template IDs with array notation
+      if (formData.preventiveActionTemplateIds && formData.preventiveActionTemplateIds.length > 0) {
+        formData.preventiveActionTemplateIds.forEach(templateId => {
+          formDataToSend.append('preventive_action[template_ids][]', String(templateId));
+        });
+        console.log('📝 Adding preventive action template IDs:', formData.preventiveActionTemplateIds);
+      } else {
+        console.log('⚠️ No preventive action template IDs to submit');
+      }
+      
+      // Add corrective action template IDs with array notation
+      if (formData.correctiveActionTemplateIds && formData.correctiveActionTemplateIds.length > 0) {
+        formData.correctiveActionTemplateIds.forEach(templateId => {
+          formDataToSend.append('corrective_action[template_ids][]', String(templateId));
+        });
+        console.log('📝 Adding corrective action template IDs:', formData.correctiveActionTemplateIds);
+      } else {
+        console.log('⚠️ No corrective action template IDs to submit');
+      }
+      
+      // Add short-term impact template IDs with array notation
+      if (formData.shortTermImpactTemplateIds && formData.shortTermImpactTemplateIds.length > 0) {
+        formData.shortTermImpactTemplateIds.forEach(templateId => {
+          formDataToSend.append('short_term_impact[template_ids][]', String(templateId));
+        });
+        console.log('📝 Adding short-term impact template IDs:', formData.shortTermImpactTemplateIds);
+      } else {
+        console.log('⚠️ No short-term impact template IDs to submit');
+      }
+      
+      // Add long-term impact template IDs with array notation
+      if (formData.longTermImpactTemplateIds && formData.longTermImpactTemplateIds.length > 0) {
+        formData.longTermImpactTemplateIds.forEach(templateId => {
+          formDataToSend.append('long_term_impact[template_ids][]', String(templateId));
+        });
+        console.log('📝 Adding long-term impact template IDs:', formData.longTermImpactTemplateIds);
+      } else {
+        console.log('⚠️ No long-term impact template IDs to submit');
+      }
+      
       formDataToSend.append("complaint[short_term_impact]", formData.impact || "");
       formDataToSend.append("complaint[correction]", formData.correction || "");
       formDataToSend.append("complaint[impact]", formData.longTermImpact || "");
@@ -1835,7 +2054,27 @@ const UpdateTicketsPage: React.FC = () => {
                       <InputLabel shrink>Preventive Action</InputLabel>
                       <MuiSelect
                         value={formData.preventiveAction}
-                        onChange={(e) => handleInputChange("preventiveAction", e.target.value)}
+                        onChange={(e) => {
+                          const selectedValue = e.target.value;
+                          handleInputChange("preventiveAction", selectedValue);
+                          
+                          // Find the template and store its ID
+                          const selectedTemplate = communicationTemplates.find(
+                            t => t.identifier === "Preventive Action" && t.identifier_action === selectedValue
+                          );
+                          if (selectedTemplate) {
+                            setFormData(prev => ({
+                              ...prev,
+                              preventiveActionTemplateIds: [selectedTemplate.id]
+                            }));
+                            console.log('📝 Preventive Action Template ID stored:', selectedTemplate.id);
+                          } else {
+                            setFormData(prev => ({
+                              ...prev,
+                              preventiveActionTemplateIds: []
+                            }));
+                          }
+                        }}
                         label="Preventive Action"
                         notched
                         displayEmpty
@@ -2103,11 +2342,11 @@ const UpdateTicketsPage: React.FC = () => {
                         <MenuItem value="">
                           <span className="text-gray-500">Select admin priority</span>
                         </MenuItem>
-                        <MenuItem value="p1">P1 - Critical</MenuItem>
-                        <MenuItem value="p2">P2 - Very High</MenuItem>
-                        <MenuItem value="p3">P3 - High</MenuItem>
-                        <MenuItem value="p4">P4 - Medium</MenuItem>
-                        <MenuItem value="p5">P5 - Low</MenuItem>
+                        <MenuItem value="P1">P1 - Critical</MenuItem>
+                        <MenuItem value="P2">P2 - Very High</MenuItem>
+                        <MenuItem value="P3">P3 - High</MenuItem>
+                        <MenuItem value="P4">P4 - Medium</MenuItem>
+                        <MenuItem value="P5">P5 - Low</MenuItem>
                       </MuiSelect>
                     </FormControl>
                   </div>
@@ -2255,31 +2494,6 @@ const UpdateTicketsPage: React.FC = () => {
                           ))}
                       </MuiSelect>
                     </FormControl>
-
-                    {/* Show selected root cause descriptions from template body */}
-                    {formData.rootCause && (
-                      <div className="mt-2 space-y-2" style={{ fontSize: '14px', fontWeight: 'medium' }}>
-                        {(() => {
-                          const selectedValues = typeof formData.rootCause === 'string' 
-                            ? formData.rootCause.split(',').map(s => s.trim()) 
-                            : Array.isArray(formData.rootCause) 
-                              ? formData.rootCause 
-                              : [formData.rootCause];
-                          
-                          return selectedValues.map((value, index) => {
-                            const matchedTemplate = communicationTemplates.find(
-                              template => template.identifier === "Root Cause Analysis" &&
-                                template.identifier_action === value
-                            );
-                            return (
-                              <div key={index}>
-                                {matchedTemplate?.body || value}
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    )}
                   </div>
 
                   {/* Short-term Impact */}
@@ -2288,7 +2502,27 @@ const UpdateTicketsPage: React.FC = () => {
                       <InputLabel shrink>Short-term Impact</InputLabel>
                       <MuiSelect
                         value={formData.impact}
-                        onChange={(e) => handleInputChange("impact", e.target.value)}
+                        onChange={(e) => {
+                          const selectedValue = e.target.value;
+                          handleInputChange("impact", selectedValue);
+                          
+                          // Find the template and store its ID
+                          const selectedTemplate = communicationTemplates.find(
+                            t => t.identifier === "Short-term Impact" && t.identifier_action === selectedValue
+                          );
+                          if (selectedTemplate) {
+                            setFormData(prev => ({
+                              ...prev,
+                              shortTermImpactTemplateIds: [selectedTemplate.id]
+                            }));
+                            console.log('📝 Short-term Impact Template ID stored:', selectedTemplate.id);
+                          } else {
+                            setFormData(prev => ({
+                              ...prev,
+                              shortTermImpactTemplateIds: []
+                            }));
+                          }
+                        }}
                         label="Short-term Impact"
                         notched
                         displayEmpty
@@ -2336,7 +2570,27 @@ const UpdateTicketsPage: React.FC = () => {
                       <InputLabel shrink>Long-term Impact</InputLabel>
                       <MuiSelect
                         value={formData.longTermImpact}
-                        onChange={(e) => handleInputChange("longTermImpact", e.target.value)}
+                        onChange={(e) => {
+                          const selectedValue = e.target.value;
+                          handleInputChange("longTermImpact", selectedValue);
+                          
+                          // Find the template and store its ID
+                          const selectedTemplate = communicationTemplates.find(
+                            t => t.identifier === "Long-term Impact" && t.identifier_action === selectedValue
+                          );
+                          if (selectedTemplate) {
+                            setFormData(prev => ({
+                              ...prev,
+                              longTermImpactTemplateIds: [selectedTemplate.id]
+                            }));
+                            console.log('📝 Long-term Impact Template ID stored:', selectedTemplate.id);
+                          } else {
+                            setFormData(prev => ({
+                              ...prev,
+                              longTermImpactTemplateIds: []
+                            }));
+                          }
+                        }}
                         label="Long-term Impact"
                         notched
                         displayEmpty
@@ -2381,7 +2635,27 @@ const UpdateTicketsPage: React.FC = () => {
                   <InputLabel shrink>Corrective Action</InputLabel>
                   <MuiSelect
                     value={formData.correctiveAction}
-                    onChange={(e) => handleInputChange("correctiveAction", e.target.value)}
+                    onChange={(e) => {
+                      const selectedValue = e.target.value;
+                      handleInputChange("correctiveAction", selectedValue);
+                      
+                      // Find the template and store its ID
+                      const selectedTemplate = communicationTemplates.find(
+                        t => t.identifier === "Corrective Action" && t.identifier_action === selectedValue
+                      );
+                      if (selectedTemplate) {
+                        setFormData(prev => ({
+                          ...prev,
+                          correctiveActionTemplateIds: [selectedTemplate.id]
+                        }));
+                        console.log('📝 Corrective Action Template ID stored:', selectedTemplate.id);
+                      } else {
+                        setFormData(prev => ({
+                          ...prev,
+                          correctiveActionTemplateIds: []
+                        }));
+                      }
+                    }}
                     label="Corrective Action"
                     notched
                     displayEmpty

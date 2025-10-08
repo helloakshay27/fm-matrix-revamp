@@ -29,6 +29,7 @@ import { fetchAllowedCompanies } from "@/store/slices/projectSlice";
 import { RootState } from "@/store/store";
 import { toast } from "sonner";
 import { ticketManagementAPI } from "@/services/ticketManagementAPI";
+import axios from "axios";
 
 // Define interfaces for data shapes
 interface UserAccount {
@@ -92,6 +93,7 @@ interface UserData {
   user_type?: string;
   role_id?: number;
   urgency_email_enabled?: boolean;
+  user_category_id?: number;
   lock_user_permission?: LockUserPermission;
 }
 
@@ -116,6 +118,7 @@ interface FormData {
   selectedSites: string[];
   selectedCompanies: string[];
   lastWorkingDate: string;
+  selectUserCategory: string | number;
 }
 
 interface Payload {
@@ -143,6 +146,7 @@ interface Payload {
     entity_id: string | number;
     supplier_id: string | number;
     employee_type: string;
+    user_category_id: string | number;
   };
   lock_user_permission?: number;
 }
@@ -205,6 +209,7 @@ export const EditFMUserPage = () => {
     (state: RootState) => state.project
   );
 
+  const [userCategories, setUserCategories] = useState([])
   const [userAccount, setUserAccount] = useState<UserAccount>({});
   const [lockId, setLockId] = useState<number | undefined>();
   const [loadingSubmitting, setLoadingSubmitting] = useState<boolean>(false);
@@ -229,8 +234,23 @@ export const EditFMUserPage = () => {
     selectedSites: [],
     selectedCompanies: [],
     lastWorkingDate: "",
+    selectUserCategory: ""
   });
   const [userData, setUserData] = useState<UserData>({});
+
+  const fetchUserCategories = async () => {
+    try {
+      const categories = await axios.get(`https://${baseUrl}/pms/admin/user_categories.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setUserCategories(categories.data);
+    } catch (error) {
+      console.error('Error loading user categories:', error);
+      toast.error('Failed to load user categories');
+    }
+  }
 
   useEffect(() => {
     dispatch(fetchEntities());
@@ -238,6 +258,7 @@ export const EditFMUserPage = () => {
     dispatch(fetchUnits({ baseUrl, token }));
     dispatch(fetchDepartmentData());
     dispatch(fetchRoles({ baseUrl, token }));
+    fetchUserCategories();
     if (userId) {
       dispatch(fetchAllowedSites(userId));
     }
@@ -308,6 +329,7 @@ export const EditFMUserPage = () => {
             ? userData.lock_user_permission?.access_to || []
             : [],
         lastWorkingDate: userData.lock_user_permission?.last_working_date || "",
+        selectUserCategory: userData.user_category_id
       });
     } else {
       console.log("userData not found for id:", id);
@@ -395,6 +417,7 @@ export const EditFMUserPage = () => {
         entity_id: formData.selectEntity,
         supplier_id: formData.supplier,
         employee_type: formData.employeeType,
+        user_category_id: formData.selectUserCategory,
       },
       lock_user_permission: lockId,
     };
@@ -901,6 +924,28 @@ export const EditFMUserPage = () => {
                       shrink: true
                     }}
                   />
+                </div>
+
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select User Category</InputLabel>
+                    <Select
+                      value={formData.selectUserCategory}
+                      onChange={(e) => handleInputChange('selectUserCategory', e.target.value.toString())}
+                      label="Select User Category"
+                      displayEmpty
+                      required
+                    >
+                      <MenuItem value="">Select User Category</MenuItem>
+                      {
+                        userCategories?.map((category) => (
+                          <MenuItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </MenuItem>
+                        ))
+                      }
+                    </Select>
+                  </FormControl>
                 </div>
               </div>
             </Box>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import { LocationSelectionPanel } from "@/components/LocationSelectionPanel";
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info, Download, Star, ChevronDown, FileText, LogsIcon, File, FileIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info, Download, Star, ChevronDown, FileText, LogsIcon, File, FileIcon, Radio } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { apiClient } from '@/utils/apiClient';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -86,21 +86,17 @@ interface SurveyMappingDetail {
   questions_count: number;
   mappings: SurveyMapping[];
   questions: SurveyQuestion[];
+  created_by: string;
 }
 
-interface LocationTableItem {
-  mapping_id: number;
-  site: string;
-  building: string;
-  wing: string | null;
-  floor: string | null;
-  area: string | null;
-  room: string | null;
-  qr_code: string | null;
+interface QuestionsTableItem {
+  qnumber: string;
+  id: number;
+  descr: string;
+  qtype: string;
+  options: SurveyQuestion;
   created_by: string;
   created_at: string;
-  active: boolean;
-  survey_id: number;
 }
 
 export const SurveyMappingDetailsPage = () => {
@@ -269,13 +265,13 @@ export const SurveyMappingDetailsPage = () => {
       draggable: false,
       defaultVisible: true,
     },
-    {
-      key: "site",
-      label: "Site",
-      sortable: false,
-      draggable: false,
-      defaultVisible: true,
-    },
+    // {
+    //   key: "site",
+    //   label: "Site",
+    //   sortable: false,
+    //   draggable: false,
+    //   defaultVisible: true,
+    // },
     {
       key: "building",
       label: "Building",
@@ -345,7 +341,6 @@ export const SurveyMappingDetailsPage = () => {
   const locationTableData = React.useMemo((): LocationTableItem[] => {
     if (!mapping || !mapping.mappings) return [];
     
-    // Return all mappings as separate rows
     return mapping.mappings.map(mappingItem => ({
       mapping_id: mappingItem.id,
       site: mappingItem.site_name,
@@ -361,6 +356,82 @@ export const SurveyMappingDetailsPage = () => {
       survey_id: mappingItem.survey_id,
     }));
   }, [mapping]);
+
+  // Questions table configuration
+  const questionsTableColumns: ColumnConfig[] = [
+    {
+      key: "qnumber",
+      label: "Q",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "id",
+      label: "ID",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "descr",
+      label: "Question",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    // {
+    //   key: "qtype",
+    //   label: "Type",
+    //   sortable: false,
+    //   draggable: false,
+    //   defaultVisible: true,
+    // },
+    {
+      key: "options",
+      label: "Input Type",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "created_by",
+      label: "Created By",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "created_at",
+      label: "Created Date",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+  ];
+
+  // Prepare questions data for table
+  const questionsTableData = React.useMemo(() => {
+    if (!mapping || !mapping.questions) return [];
+    return mapping.questions.map((question, index) => ({
+      qnumber: `Q${index + 1}`,
+      id: question.id,
+      descr: question.descr,
+      qtype: question.qtype.replace(/_/g, ' '),
+      options: question,
+      created_by: question.created_by || "—",
+      created_at: formatDate(question.created_at),
+    }));
+  }, [mapping]);
+
+  // Custom cell renderer for questions table
+  const renderQuestionCell = (item: QuestionsTableItem, columnKey: string): React.ReactNode => {
+    if (columnKey === "options") {
+      const question = item.options as SurveyQuestion;
+      return renderQuestionOptions(question);
+    }
+    return item[columnKey];
+  };
 
   // Handle status toggle for individual mappings
   const handleStatusToggle = async (item: LocationTableItem) => {
@@ -401,49 +472,39 @@ export const SurveyMappingDetailsPage = () => {
   const renderLocationCell = (item: LocationTableItem, columnKey: string): React.ReactNode => {
     switch (columnKey) {
       case 'mapping_id':
-        return <Badge variant="outline" className="text-xs">#{item.mapping_id}</Badge>;
+        return <span >{item.mapping_id}</span>;
+        // <Badge variant="outline" className="text-xs">
+         
+          // </Badge>;
       case 'site':
-        return <span className="font-medium">{item.site}</span>;
+        return <span >{item.site}</span>;
       case 'building':
-        return <span className="font-medium">{item.building}</span>;
+        return <span >{item.building}</span>;
       case 'wing':
-        return item.wing ? <span className="font-medium">{item.wing}</span> : <span className="text-gray-400">—</span>;
+        return item.wing ? <span >{item.wing}</span> : <span className="text-gray-400">—</span>;
       case 'floor':
-        return item.floor ? <span className="font-medium">{item.floor}</span> : <span className="text-gray-400">—</span>;
+        return item.floor ? <span >{item.floor}</span> : <span className="text-gray-400">—</span>;
       case 'area':
-        return item.area ? <span className="font-medium">{item.area}</span> : <span className="text-gray-400">—</span>;
+        return item.area ? <span >{item.area}</span> : <span className="text-gray-400">—</span>;
       case 'room':
-        return item.room ? <span className="font-medium">{item.room}</span> : <span className="text-gray-400">—</span>;
+        return item.room ? <span >{item.room}</span> : <span className="text-gray-400">—</span>;
       case 'qr_code':
         return item.qr_code ? (
-          <div className="flex flex-col items-center gap-2">
-            <img 
+          <div className="flex items-center gap-2">
+            <img
               src={item.qr_code}
               alt="QR Code"
-              className="w-16 h-16 object-contain border border-gray-200 rounded cursor-pointer hover:scale-110 transition-transform"
+              className="w-5 h-5 object-contain border border-gray-200 rounded cursor-pointer hover:scale-110 transition-transform"
               onClick={() => window.open(item.qr_code, '_blank')}
               title="Click to view full size"
             />
-            <div className="flex gap-1">
-              {/* <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => window.open(item.qr_code, '_blank')}
-                className="text-xs px-2 py-1"
-              >
-                <Eye className="w-3 h-3 mr-1" />
-                View
-              </Button> */}
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handleDownloadQRCode(item.qr_code!, item.mapping_id)}
-                className="text-xs px-2 py-1"
-              >
-                <Download className="w-3 h-3 mr-1" />
-                Download
-              </Button>
-            </div>
+            <span
+              onClick={() => handleDownloadQRCode(item.qr_code!, item.mapping_id)}
+              className="text-xs px-2 py-1 text-black cursor-pointer hover:underline"
+              title="Download QR Code"
+            >
+              Download
+            </span>
           </div>
         ) : (
           <span className="text-gray-400 text-sm">No QR Code</span>
@@ -484,24 +545,64 @@ export const SurveyMappingDetailsPage = () => {
                    questionType.includes('smiley') || 
                    questionType.includes('emotion');
 
-    // Handle rating questions
-    if (isRating) {
+    // Handle specific question types as per user request
+    if (question.qtype === 'rating') {
+      return <span className="text-yellow-400 text-sm">⭐</span>;
+    }
+
+    if (question.qtype === 'emoji') {
+      return <span className="text-1xl">😊</span>;
+    }
+
+    if (question.qtype === 'multiple') {
       return (
-        <div className="flex flex-col">
-          {/* Visual star display */}
-          <div className="flex items-center">
-            <div className="flex items-center gap-1">
-              {Array.from({ length: 5 }, (_, i) => (
-                <Star 
-                  key={i} 
-                  className="w-4 h-4 text-yellow-400 fill-yellow-400"
-                />
-              ))}
-            </div>
-            {/* <span className="text-xs text-gray-600">Rating Scale</span> */}
+        <div>
+          <span className="text-sm">Radio Button</span>
+          <div className="flex flex-wrap gap-2">
+            {/* {question.options && question.options.length > 0 ? (
+              question.options.map((option, optIndex) => (
+                <span key={optIndex} className="text-sm">{option.qname}</span>
+              ))
+            ) : (
+              <span className="text-gray-400">No options</span>
+            )} */}
           </div>
-          {/* Show configured options if available */}
-          {question.options && question.options.length > 0 ? (
+        </div>
+      );
+    }
+
+    // Existing logic for other types
+    // Check if it might be a numeric rating based on option names
+    const isNumericRating = question.options.every(opt => /^\d+$/.test(opt.qname.trim()));
+    
+    if (isNumericRating) {
+      const ratings = question.options
+        .map(opt => parseInt(opt.qname) || 0)
+        .filter(rating => rating > 0);
+      
+      if (ratings.length > 0) {
+        const maxRating = Math.max(...ratings);
+        const minRating = Math.min(...ratings);
+        
+        return (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                {Array.from({ length: maxRating }, (_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`w-4 h-4 ${
+                      i < minRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-gray-600">
+                {minRating !== maxRating ? `${minRating}-${maxRating}` : `${maxRating}`} 
+                {' '}
+                {maxRating === 1 ? 'star' : 'stars'}
+              </span>
+            </div>
             <div className="flex flex-wrap gap-1">
               {question.options.map((option, optIndex) => (
                 <span
@@ -518,11 +619,9 @@ export const SurveyMappingDetailsPage = () => {
                 </span>
               ))}
             </div>
-          ) : (
-            <span className="text-xs text-gray-500"></span>
-          )}
-        </div>
-      );
+          </div>
+        );
+      }
     }
 
     // Handle emoji questions
@@ -937,7 +1036,7 @@ export const SurveyMappingDetailsPage = () => {
         <p className="text-xl font-semibold capitalize text-[#C72030]">
           {mapping.check_type || "N/A"}
         </p>
-        <p className="text-sm text-gray-600">Check Type</p>
+        <p className="text-sm text-gray-600">Question Type</p>
       </div>
     </div>
   </CardContent>
@@ -964,31 +1063,30 @@ export const SurveyMappingDetailsPage = () => {
                       {mapping.name}
                     </span>
                   </div>
+                   <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Question Type:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {/* <Badge variant="outline" className="capitalize"> */}
+                        {mapping.check_type}
+                      {/* </Badge> */}
+                    </span>
+                  </div>
                   <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Survey ID:</span>{" "}
                     <span className="font-medium text-gray-800">
                       #{mapping.id}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-800">
-                    <span className="text-gray-500">Check Type:</span>{" "}
-                    <span className="font-medium text-gray-800">
-                      <Badge variant="outline" className="capitalize">
-                        {mapping.check_type}
-                      </Badge>
-                    </span>
-                  </div>
-                 <div className="text-sm text-gray-800">
-  <span className="text-gray-500">Status:</span>{" "}
-  <span className="font-medium text-gray-800">
-    {mapping.active ? "Active" : "Inactive"}
-  </span>
-</div>
-
-                  <div className="text-sm text-gray-800">
+                  {/* <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Total Locations:</span>{" "}
                     <span className="font-medium text-gray-800">
                       {mapping.mappings?.length || 0}
+                    </span>
+                  </div> */}
+                   <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Total Associations:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {mapping.no_of_associations || 0}
                     </span>
                   </div>
                   <div className="text-sm text-gray-800">
@@ -997,10 +1095,29 @@ export const SurveyMappingDetailsPage = () => {
                       {mapping.questions_count || 0}
                     </span>
                   </div>
+                 
                   <div className="text-sm text-gray-800">
-                    <span className="text-gray-500">Associations:</span>{" "}
+                    <span className="text-gray-500">Status:</span>{" "}
                     <span className="font-medium text-gray-800">
-                      {mapping.no_of_associations || 0}
+                      {mapping.active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Created By:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {mapping.created_by || mapping.mappings?.[0]?.created_by || "N/A"}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Created On:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {mapping.created_at ? formatDate(mapping.created_at) : mapping.mappings?.[0]?.created_at ? formatDate(mapping.mappings[0].created_at) : "N/A"}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-800">
+                    <span className="text-gray-500">Last Updated:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {mapping.updated_at ? formatDate(mapping.updated_at) : mapping.mappings?.[0]?.updated_at ? formatDate(mapping.mappings[0].updated_at) : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -1074,77 +1191,20 @@ export const SurveyMappingDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Q#</TableHead>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Question</TableHead>
-                        <TableHead>Type</TableHead>
-                        {/* <TableHead>Question Number</TableHead> */}
-                        {/* <TableHead>Status</TableHead> */}
-                        <TableHead>Options</TableHead>
-                        <TableHead>Created By</TableHead>
-                        <TableHead>Created Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="bg-white">
-                      {mapping.questions && mapping.questions.length > 0 ? (
-                        mapping.questions.map((question, index) => (
-                          <TableRow key={question.id}>
-                            <TableCell>
-                              {/* <Badge variant="outline" className="text-xs"> */}
-                                Q{index + 1}
-                              {/* </Badge> */}
-                            </TableCell>
-                            <TableCell>{question.id}</TableCell>
-                            <TableCell className="max-w-xs">
-                              <div className="truncate" title={question.descr}>
-                                {question.descr}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-xs capitalize">
-                                {question.qtype.replace(/_/g, ' ')}
-                              </div>
-                            </TableCell>
-                            {/* <TableCell>
-                              <Badge variant="secondary" className="text-xs">
-                                {question.qnumber}
-                              </Badge>
-                            </TableCell> */}
-                            {/* <TableCell>
-                              {question.active ? (
-                                <Badge variant="default" className="text-xs">
-                                  Active
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary" className="text-xs">
-                                  Inactive
-                                </Badge>
-                              )}
-                            </TableCell> */}
-                            <TableCell>
-                              {renderQuestionOptions(question)}
-                            </TableCell>
-                            <TableCell>{question.created_by || "—"}</TableCell>
-                            <TableCell>{formatDate(question.created_at)}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={9}
-                            className="text-center text-gray-600"
-                          >
-                            No questions available.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                <EnhancedTable
+                  data={questionsTableData}
+                  columns={questionsTableColumns}
+                  renderCell={renderQuestionCell}
+                  getItemId={(item: QuestionsTableItem) => String(item.id)}
+                  storageKey="survey-questions-table"
+                  className="min-w-[800px] bg-[#F6F7F7]"
+                  emptyMessage="No questions available"
+                  enableSearch={true}
+                  enableSelection={false}
+                  hideTableExport={false}
+                  hideTableSearch={false}
+                  pagination={true}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -1183,7 +1243,7 @@ export const SurveyMappingDetailsPage = () => {
                   onSelectAll={handleSelectAll}
                   getItemId={(item: LocationTableItem) => String(item.mapping_id)}
                   storageKey="location-details-table"
-                  className="min-w-[1200px]"
+                  className="min-w-[1200px] bg-[#F6F7F7]"
                   emptyMessage="No location details found"
                   enableSearch={true}
                   enableSelection={false}

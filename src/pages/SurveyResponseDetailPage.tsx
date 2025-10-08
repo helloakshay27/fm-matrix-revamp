@@ -26,6 +26,7 @@ import {
   FileText,
   HelpCircle,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,7 +61,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
-import { EmojiEmotions, QuestionMark, QuestionMarkRounded } from "@mui/icons-material";
+import { EmojiEmotions, Pending, QuestionMark, QuestionMarkRounded } from "@mui/icons-material";
 import TabularResponseDetailsPage from "./TabularResponseDetailsPage";
 import html2pdf from 'html2pdf.js'; // Add this import for PDF generation
 // Recharts imported above
@@ -109,6 +110,28 @@ interface ResponseComplaint {
   created_at: string;
   status?: string;
   updated_by?: string;
+  sub_category_type?: string;
+  priority?: string;
+  site_name?: string;
+  complaint_type?: string;
+  complaint_mode?: string | null;
+  service_or_asset?: string | null;
+  asset_or_service_name?: string | null;
+  task_id?: string | null;
+  proactive_reactive?: string | null;
+  review_tracking_date?: string | null;
+  response_escalation?: string;
+  response_tat?: number;
+  response_time?: string | null;
+  escalation_response_name?: string;
+  resolution_escalation?: string;
+  resolution_tat?: number | null;
+  resolution_time?: string | null;
+  escalation_resolution_name?: string;
+  status_detail?: {
+    name: string;
+    color_code: string;
+  };
 }
 
 interface SurveyResponse {
@@ -306,6 +329,27 @@ interface TicketData {
   created_by: string;
   created_at: string;
   location: string;
+  sub_category_type?: string;
+  priority?: string;
+  site_name?: string;
+  complaint_type?: string;
+  complaint_mode?: string | null;
+  asset_or_service_name?: string | null;
+  task_id?: string | null;
+  proactive_reactive?: string | null;
+  review_tracking_date?: string | null;
+  response_escalation?: string;
+  response_tat?: number;
+  response_time?: string | null;
+  escalation_response_name?: string;
+  resolution_escalation?: string;
+  resolution_tat?: number | null;
+  resolution_time?: string | null;
+  escalation_resolution_name?: string;
+  status_detail?: {
+    name: string;
+    color_code: string;
+  };
 }
 
 // Filter interface for survey responses
@@ -2676,7 +2720,7 @@ export const SurveyResponseDetailPage = () => {
                   category: complaint.category || "-",
                   assignee: complaint.assignee || "-",
                   status: complaint.status || "Pending",
-                  updated_by: complaint.updated_by || "-",
+                  assigned_to: complaint.assigned_to || "-",
                   created_by: "-",
                   created_at: new Date(complaint.created_at).toLocaleString(
                     "en-GB",
@@ -2691,6 +2735,27 @@ export const SurveyResponseDetailPage = () => {
                   ),
                   location: `${response.location?.building_name || ""}, ${response.location?.wing_name || ""
                     }`,
+                  sub_category_type: complaint.sub_category_type || "-",
+                  created_by: complaint.created_by || "-",
+                  assigned_to: complaint.assigned_to || "-",
+                  icon_category: complaint.icon_category || "-",
+                  priority: complaint.priority || "-",
+                  site_name: complaint.site_name || "-",
+                  complaint_type: complaint.complaint_type || "-",
+                  complaint_mode: complaint.complaint_mode || "-",
+                  asset_or_service_name: complaint.asset_or_service_name || "-",
+                  task_id: complaint.task_id || "-",
+                  proactive_reactive: complaint.proactive_reactive || "-",
+                  review_tracking_date: complaint.review_tracking_date || "-",
+                  response_escalation: complaint.response_escalation || "-",
+                  response_tat: complaint.response_tat || 0,
+                  response_time: complaint.response_time || "-",
+                  escalation_response_name: complaint.escalation_response_name || "-",
+                  resolution_escalation: complaint.resolution_escalation || "-",
+                  resolution_tat: complaint.resolution_tat || 0,
+                  resolution_time: complaint.resolution_time || "-",
+                  escalation_resolution_name: complaint.escalation_resolution_name || "-",
+                  status_detail: complaint.status_detail || { name: complaint.status || "-", color_code: "#60A8C0" },
                 });
               }
             });
@@ -2813,57 +2878,39 @@ export const SurveyResponseDetailPage = () => {
 
   // Static columns for ticket data
   const getTicketColumns = () => [
-    // {
-    //   key: "complaint_id",
-    //   label: "Complaint ID",
-    //   defaultVisible: true,
-    //   sortable: true,
-    // },
     {
       key: "ticket_number",
-      label: "ID",
+      label: "Ticket ID",
       defaultVisible: true,
       sortable: true,
     },
-    { key: "heading", label: "Title", defaultVisible: true, sortable: true },
-    {
-      key: "category",
-      label: "Category",
-      defaultVisible: true,
-      sortable: true,
-    },
-    {
-      key: "assignee",
-      label: "Assignee",
-      defaultVisible: true,
-      sortable: true,
-    },
-    {
-      key: "status",
-      label: "Status",
-      defaultVisible: true,
-      sortable: true,
-    },
-    // {
-    //   key: "updated_by",
-    //   label: "Updated By",
-    //   defaultVisible: true,
-    //   sortable: true,
-    // },
-    // {
-    //   key: "created_by",
-    //   label: "Created By",
-    //   defaultVisible: true,
-    //   sortable: true,
-    // },
-    // { key: 'priority', label: 'Priority', defaultVisible: true, sortable: true },
-    {
-      key: "created_at",
-      label: "Created On",
-      defaultVisible: true,
-      sortable: true,
-    },
-    // { key: 'description', label: 'Description', defaultVisible: true, sortable: true },
+    { key: "heading", label: "Heading", defaultVisible: true, sortable: true },
+    // { key: "icon_category", label: "Icon Category", defaultVisible: true, sortable: true },
+    { key: "category", label: "Category", defaultVisible: true, sortable: true },
+    { key: "sub_category_type", label: "Sub Category", defaultVisible: true, sortable: true },
+    { key: "created_by", label: "Created By", defaultVisible: true, sortable: true },
+    { key: "assigned_to", label: "Assigned To", defaultVisible: true, sortable: true },
+    { key: "status", label: "Status", defaultVisible: true, sortable: true },
+   
+    { key: "priority", label: "Priority", defaultVisible: true, sortable: true },
+    { key: "site_name", label: "Site", defaultVisible: true, sortable: true },
+    { key: "created_at", label: "Created At", defaultVisible: true, sortable: true },
+    { key: "complaint_type", label: "Ticket Type", defaultVisible: true, sortable: true },
+    { key: "complaint_mode", label: "Complaint Mode", defaultVisible: true, sortable: true },
+    { key: "asset_or_service_name", label: "Asset/Service Name", defaultVisible: true, sortable: true },
+    { key: "task_id", label: "Task ID", defaultVisible: true, sortable: true },
+    { key: "proactive_reactive", label: "Proactive/Reactive", defaultVisible: true, sortable: true },
+    { key: "review_tracking_date", label: "Review", defaultVisible: true, sortable: true },
+    { key: "response_escalation", label: "Response Escalation", defaultVisible: true, sortable: true },
+    { key: "response_tat", label: "Response TAT (Min)", defaultVisible: true, sortable: true },
+    { key: "response_time", label: "Response Time (D:H:M)", defaultVisible: true, sortable: true },
+    { key: "escalation_response_name", label: "Response Escalation Level", defaultVisible: true, sortable: true },
+    { key: "resolution_escalation", label: "Resolution Escalation", defaultVisible: true, sortable: true },
+    { key: "resolution_tat", label: "Resolution TAT (Min)", defaultVisible: true, sortable: true },
+    { key: "resolution_time", label: "Resolution Time (D:H:M)", defaultVisible: true, sortable: true },
+    { key: "escalation_resolution_name", label: "Resolution Escalation Level", defaultVisible: true, sortable: true },
+   
+   
   ];
 
   // Filter functions
@@ -3407,10 +3454,32 @@ export const SurveyResponseDetailPage = () => {
       ticket.status && (ticket.status.toLowerCase() === 'closed' || ticket.status.toLowerCase() === 'resolved')
     ).length;
 
+    // Calculate in-progress tickets (In Progress, In-Progress, Progress, etc.)
+    const inProgressTickets = ticketData.filter(ticket =>
+      ticket.status && (
+        ticket.status.toLowerCase().includes('progress') ||
+        ticket.status.toLowerCase().includes('in-progress') ||
+        ticket.status.toLowerCase() === 'working' ||
+        ticket.status.toLowerCase() === 'ongoing'
+      )
+    ).length;
+
+    // Calculate pending tickets (Pending, Open, New, etc.)
+    const pendingTickets = ticketData.filter(ticket =>
+      ticket.status && (
+        ticket.status.toLowerCase() === 'pending' ||
+        ticket.status.toLowerCase() === 'open' ||
+        ticket.status.toLowerCase() === 'new' ||
+        ticket.status.toLowerCase() === 'assigned'
+      )
+    ).length;
+
     return {
       totalTickets,
       openTickets,
-      closedTickets
+      closedTickets,
+      inProgressTickets,
+      pendingTickets
     };
   }, [getDisplayTicketData]);
 
@@ -5147,7 +5216,7 @@ export const SurveyResponseDetailPage = () => {
 
           <TabsContent value="tickets" className="mt-5">
             {/* Ticket Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
               {/* Total Tickets */}
               <Card className="bg-[#F6F4EE]">
                 <CardContent className="p-6">
@@ -5177,6 +5246,38 @@ export const SurveyResponseDetailPage = () => {
                         {getTicketStatistics().openTickets}
                       </p>
                       <p className="text-sm text-gray-600">Open Tickets</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-[#F6F4EE]">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <Settings className="w-5 h-5 text-[#C72030]" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold text-[#C72030]">
+                        {getTicketStatistics().inProgressTickets}
+                      </p>
+                      <p className="text-sm text-gray-600">In Progress</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-[#F6F4EE]">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-[#C7203014] flex items-center justify-center rounded-full">
+                      <Pending className="w-5 h-5 text-[#C72030]" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-semibold text-[#C72030]">
+                        {getTicketStatistics().pendingTickets}
+                      </p>
+                      <p className="text-sm text-gray-600">Pending</p>
                     </div>
                   </div>
                 </CardContent>
@@ -5237,11 +5338,24 @@ export const SurveyResponseDetailPage = () => {
                         </span>
                       );
                     }
-                    if (columnKey === "category") {
-                      const category = item.category || "-";
+                    if (columnKey === "status") {
+                      return (
+                        <span
+                          className="px-2 py-1 text-xs rounded-full"
+                          style={{
+                            backgroundColor: item.status_detail?.color_code || '#60A8C0',
+                            color: '#ffffff'
+                          }}
+                        >
+                          {item.status_detail?.name || item.status || "-"}
+                        </span>
+                      );
+                    }
+                    if (columnKey === "priority") {
+                      const priority = item.priority || "-";
                       return (
                         <span className="px-2 py-1 rounded-full text-xs font-medium">
-                          <TruncatedText text={category} maxLength={15} />
+                          <TruncatedText text={priority} maxLength={15} />
                         </span>
                       );
                     }
@@ -5264,7 +5378,9 @@ export const SurveyResponseDetailPage = () => {
                         </span>
                       );
                     }
-                    return item[columnKey as keyof TicketData];
+                    // Handle null/undefined values for new columns
+                    const value = item[columnKey as keyof TicketData];
+                    return value !== null && value !== undefined ? String(value) : "-";
                   }}
                 />
               </CardContent>
