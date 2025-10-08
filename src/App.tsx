@@ -769,6 +769,7 @@ import TabularResponseDetailsPage from "./pages/TabularResponseDetailsPage";
 import CurrencyPage from "./pages/CurrencyPage";
 import { LockedUsersDashboard } from "./pages/settings/LockedUsersDashboard";
 import { PRDeletionRequests } from "./pages/PRDeletionRequests";
+import { DirectPDFDownloadPage } from "./pages/DirectPDFDownloadPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -964,6 +965,11 @@ function App() {
                 <Route
                   path="/password-reset-success"
                   element={<PasswordResetSuccessPage />}
+                />
+
+                 <Route 
+                  path="/direct-pdf-download/:taskId" 
+                  element={<DirectPDFDownloadPage />} 
                 />
                 <Route
                   path="/dashboard"
