@@ -307,7 +307,7 @@ export const MobileSurveyLanding: React.FC = () => {
         { length: currentQuestion.snag_quest_options?.length || 5 },
         (_, index) => ({
           rating: index + 1,
-          optionIndex: currentQuestion.snag_quest_options.length - 1 - index,
+          optionIndex: index,
         })
       );
 
@@ -1137,11 +1137,11 @@ export const MobileSurveyLanding: React.FC = () => {
               if (question.snag_quest_options) {
                 // Map rating to option based on API structure
                 const ratingToOptionMapping = [
-                  { rating: 1, optionIndex: 4 }, // 1 star (last option)
-                  { rating: 2, optionIndex: 3 }, // 2 stars
+                  { rating: 1, optionIndex: 0 }, // 1 star (first option)
+                  { rating: 2, optionIndex: 1 }, // 2 stars
                   { rating: 3, optionIndex: 2 }, // 3 stars
-                  { rating: 4, optionIndex: 1 }, // 4 stars
-                  { rating: 5, optionIndex: 0 }, // 5 stars (first option)
+                  { rating: 4, optionIndex: 3 }, // 4 stars
+                  { rating: 5, optionIndex: 4 }, // 5 stars (last option)
                 ];
                 const mapping = ratingToOptionMapping.find(
                   (opt) => opt.rating === answer.rating
@@ -1294,7 +1294,7 @@ export const MobileSurveyLanding: React.FC = () => {
       { length: question.snag_quest_options.length },
       (_, index) => ({
         rating: index + 1,
-        optionIndex: question.snag_quest_options.length - 1 - index,
+        optionIndex: index,
       })
     );
     const selected = mapping.find((m) => m.rating === rating);
@@ -1795,7 +1795,6 @@ export const MobileSurveyLanding: React.FC = () => {
                         </button>
                       ))}
                     </div>
-
                     {selectedRating && (
                       <div className="text-center">
                         <span className="text-base sm:text-lg font-medium text-gray-700">
