@@ -208,7 +208,7 @@ export const SurveyDetailsPage = () => {
             <>
               {/* Question Basic Information */}
               <div className="mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Question Title
@@ -225,8 +225,35 @@ export const SurveyDetailsPage = () => {
                       {snagChecklist?.questions_count || 0} Questions
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ticket Category
+                    </label>
+                    <div className="text-base font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
+                      {snagChecklist.ticket_configs?.category || "Not Assigned"}
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* Survey Image Preview */}
+              {snagChecklist.survey_attachment && (
+                <div className="mt-6 mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Survey Image
+                  </label>
+                  <div className="mt-2">
+                    <img
+                      src={snagChecklist.survey_attachment.url}
+                      alt="Survey attachment"
+                      className="max-w-full h-32 object-cover rounded-lg border shadow-sm"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {snagChecklist.survey_attachment.file_name}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Questions Section */}
               {!loading && snagChecklist && (
