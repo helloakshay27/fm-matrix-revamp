@@ -102,6 +102,8 @@ interface ParkingBooking {
   qr_code: QRCode;
   can_cancel: CanCancel;
   url: string;
+  booking_schedule_time: string;
+  booking_schedule_slot_time: string;
 }
 
 interface PaginationInfo {
@@ -255,6 +257,8 @@ const ParkingBookingListSiteWise = () => {
       employee_email: booking.user.email,
       schedule_date: booking.booking_date,
       booking_schedule: booking.booking_schedule,
+      booking_schedule_time: booking.booking_schedule_time,
+      booking_schedule_slot_time: booking.booking_schedule_slot_time,
       category: booking.parking_configuration.parking_category.name,
       building: booking.parking_configuration.building_name,
       floor: booking.parking_configuration.floor_name,
@@ -347,7 +351,8 @@ const ParkingBookingListSiteWise = () => {
     { key: 'employee_name', label: 'Employee Name', visible: true },
     { key: 'employee_email', label: 'Employee Email ID', visible: true },
     { key: 'schedule_date', label: 'Schedule Date', visible: true },
-    { key: 'booking_schedule', label: 'Booking Time', visible: true },
+    { key: 'booking_schedule_time', label: 'Booking Time', visible: true },
+    { key: 'booking_schedule_slot_time', label: 'Booking Slots', visible: true },
     { key: 'category', label: 'Category', visible: true },
     { key: 'building', label: 'Building', visible: true },
     { key: 'floor', label: 'Floor', visible: true },
@@ -1249,7 +1254,8 @@ const ParkingBookingListSiteWise = () => {
               {isColumnVisible('employee_name') && <TableHead className="font-semibold">Employee Name</TableHead>}
               {isColumnVisible('employee_email') && <TableHead className="font-semibold">Employee Email ID</TableHead>}
               {isColumnVisible('schedule_date') && <TableHead className="font-semibold">Schedule Date</TableHead>}
-              {isColumnVisible('booking_schedule') && <TableHead className="font-semibold">Booking Time</TableHead>}
+              {isColumnVisible('booking_schedule_time') && <TableHead className="font-semibold">Booking Time</TableHead>}
+              {isColumnVisible('booking_schedule_slot_time') && <TableHead className="font-semibold">Booking Slots</TableHead>}
               {isColumnVisible('category') && <TableHead className="font-semibold">Category</TableHead>}
               {isColumnVisible('building') && <TableHead className="font-semibold">Building</TableHead>}
               {isColumnVisible('floor') && <TableHead className="font-semibold">Floor</TableHead>}
@@ -1296,7 +1302,8 @@ const ParkingBookingListSiteWise = () => {
                     <TableCell>{row.employee_email}</TableCell>
                   )}
                   {isColumnVisible('schedule_date') && <TableCell>{row.schedule_date}</TableCell>}
-                  {isColumnVisible('booking_schedule') && <TableCell>{row.booking_schedule}</TableCell>}
+                  {isColumnVisible('booking_schedule_time') && <TableCell>{row.booking_schedule_time}</TableCell>}
+                  {isColumnVisible('booking_schedule_slot_time') && <TableCell>{row.booking_schedule_slot_time}</TableCell>}
                   {isColumnVisible('category') && (
                     <TableCell>
                       <div className="flex items-center gap-1">
