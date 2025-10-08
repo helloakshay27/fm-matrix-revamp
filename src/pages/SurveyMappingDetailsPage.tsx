@@ -1074,7 +1074,7 @@ export const SurveyMappingDetailsPage = () => {
          <p className="text-xl font-semibold text-[#C72030]">
           {mapping.mappings?.length || 0}
         </p>
-        <p className="text-sm text-gray-600">Locations</p>
+        <p className="text-sm text-gray-600">Location Association</p>
       </div>
     </div>
   </CardContent>
@@ -1133,7 +1133,7 @@ export const SurveyMappingDetailsPage = () => {
     <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
       <FileText className="h-5 w-5 text-[#C72030]" />
     </div>
-    SURVEY INFORMATION
+    Survey Information
   </CardTitle>
 </CardHeader>
 
@@ -1156,6 +1156,7 @@ export const SurveyMappingDetailsPage = () => {
                   <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Survey ID:</span>{" "}
                     <span className="font-medium text-gray-800">
+
                       #{mapping.id}
                     </span>
                   </div>
@@ -1180,7 +1181,7 @@ export const SurveyMappingDetailsPage = () => {
                  
                   <div className="text-sm text-gray-800">
                     <span className="text-gray-500">Status:</span>{" "}
-                    <span className="font-medium text-gray-800">
+                    <span className="font-medium text-red-800">
                       {mapping.active ? "Active" : "Inactive"}
                     </span>
                   </div>
@@ -1268,7 +1269,7 @@ export const SurveyMappingDetailsPage = () => {
     <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
       <QuestionMark className="h-5 w-5 text-[#C72030]" />
     </div>
-                  SURVEY QUESTIONS 
+                  Survey Question 
                   {/* ({mapping.questions?.length || 0}) */}
                 </CardTitle>
               </CardHeader>
@@ -1299,7 +1300,7 @@ export const SurveyMappingDetailsPage = () => {
     <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
       <MapPin className="h-5 w-5 text-[#C72030]" />
     </div>
-                  LOCATION DETAILS 
+                  Location Details
                   {/* ({mapping.mappings?.length || 0} Locations) */}
                 </CardTitle>
               </CardHeader>
