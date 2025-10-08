@@ -314,7 +314,7 @@ const UpdateTicketsPage: React.FC = () => {
         setComplaintModes(complaintModesResponse.data || []);
         setCommunicationTemplates(Array.isArray(templatesResponse.data) ? templatesResponse.data : []);
         console.log("📋 Communication templates loaded:", templatesResponse.data);
-        
+
         // Load location data
         await loadLocationData();
       } catch (error) {
@@ -374,10 +374,10 @@ const UpdateTicketsPage: React.FC = () => {
     setLoadingBuildings(true);
     try {
       // Use site_id in API call if provided, otherwise load all buildings
-      const url = siteId 
+      const url = siteId
         ? getFullUrl(`/pms/sites/${siteId}/buildings.json`)
         : getFullUrl('/pms/buildings.json');
-      
+
       const options = {
         method: 'GET',
         headers: {
@@ -407,7 +407,7 @@ const UpdateTicketsPage: React.FC = () => {
       const url = buildingId
         ? getFullUrl(`/pms/wings.json?building_id=${buildingId}`)
         : getFullUrl('/pms/wings.json');
-      
+
       const options = {
         method: 'GET',
         headers: {
@@ -437,7 +437,7 @@ const UpdateTicketsPage: React.FC = () => {
       const url = wingId
         ? getFullUrl(`/pms/floors.json?wing_id=${wingId}`)
         : getFullUrl('/pms/floors.json');
-      
+
       const options = {
         method: 'GET',
         headers: {
@@ -467,7 +467,7 @@ const UpdateTicketsPage: React.FC = () => {
       const url = floorId
         ? getFullUrl(`/pms/rooms.json?floor_id=${floorId}`)
         : getFullUrl('/pms/rooms.json');
-      
+
       const options = {
         method: 'GET',
         headers: {
@@ -492,17 +492,17 @@ const UpdateTicketsPage: React.FC = () => {
 
   // Handle location changes with cascading API calls
   const handleAreaChange = async (areaId: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       area: areaId,
       floor: '',
       room: ''
     }));
-    
+
     // Clear dependent dropdowns
     setFilteredFloors([]);
     setFilteredRooms([]);
-    
+
     if (areaId) {
       // Call floors API with area_id parameter
       try {
@@ -528,21 +528,21 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   const handleBuildingChange = async (buildingId: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       building: buildingId,
       wing: '',
       area: '',
       floor: '',
       room: ''
     }));
-    
+
     // Clear dependent dropdowns
     setFilteredWings([]);
     setFilteredAreas([]);
     setFilteredFloors([]);
     setFilteredRooms([]);
-    
+
     if (buildingId) {
       // Call wings API with building_id parameter
       try {
@@ -568,19 +568,19 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   const handleWingChange = async (wingId: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       wing: wingId,
       area: '',
       floor: '',
       room: ''
     }));
-    
+
     // Clear dependent dropdowns
     setFilteredAreas([]);
     setFilteredFloors([]);
     setFilteredRooms([]);
-    
+
     if (wingId) {
       // Call areas API with wing_id parameter
       try {
@@ -606,15 +606,15 @@ const UpdateTicketsPage: React.FC = () => {
   };
 
   const handleFloorChange = async (floorId: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       floor: floorId,
       room: ''
     }));
-    
+
     // Clear dependent dropdown
     setFilteredRooms([]);
-    
+
     if (floorId) {
       // Call rooms API with floor_id parameter
       try {
@@ -661,15 +661,15 @@ const UpdateTicketsPage: React.FC = () => {
       const matchedStatus = complaintStatuses.find(
         (status) => status.id === ticketData.complaint_status_id
       );
-      
+
       // Match assigned user by name (API returns name, not ID)
       const assignedUser = fmUsers.find((user) => user.full_name === ticketData.assigned_to);
-      
+
       // Match responsible person by name if available
-      const responsiblePersonUser = ticketData.responsible_person 
+      const responsiblePersonUser = ticketData.responsible_person
         ? fmUsers.find((user) => user.full_name === ticketData.responsible_person)
         : null;
-      
+
       console.log("👤 Matching assigned user:", {
         apiAssignedTo: ticketData.assigned_to,
         matchedUser: assignedUser,
@@ -785,14 +785,14 @@ const UpdateTicketsPage: React.FC = () => {
             const data = await response.json();
             const wingsData = data.wings || [];
             setFilteredWings(wingsData);
-            
+
             // Match wing by name after fetching wings
             if (ticketData.wing_name) {
               const matchedWing = wingsData.find((w: any) => w.name === ticketData.wing_name);
               if (matchedWing) {
                 wingId = matchedWing.id.toString();
                 setFormData(prev => ({ ...prev, wing: wingId }));
-                
+
                 // Call areas API with wing_id parameter
                 const areasUrl = getFullUrl(`/pms/areas.json?wing_id=${wingId}`);
                 const areasResponse = await fetch(areasUrl, options);
@@ -800,14 +800,14 @@ const UpdateTicketsPage: React.FC = () => {
                   const areasData = await areasResponse.json();
                   const areas = areasData.areas || [];
                   setFilteredAreas(areas);
-                  
+
                   // Match area by name after fetching areas
                   if (ticketData.area_name) {
                     const matchedArea = areas.find((a: any) => a.name === ticketData.area_name);
                     if (matchedArea) {
                       areaId = matchedArea.id.toString();
                       setFormData(prev => ({ ...prev, area: areaId }));
-                      
+
                       // Call floors API with area_id parameter
                       const floorsUrl = getFullUrl(`/pms/floors.json?area_id=${areaId}`);
                       const floorsResponse = await fetch(floorsUrl, options);
@@ -815,7 +815,7 @@ const UpdateTicketsPage: React.FC = () => {
                         const floorsData = await floorsResponse.json();
                         const floors = floorsData.floors || [];
                         setFilteredFloors(floors);
-                        
+
                         // If we have floor_id, fetch rooms
                         if (floorId) {
                           const roomsUrl = getFullUrl(`/pms/rooms.json?floor_id=${floorId}`);
@@ -839,16 +839,16 @@ const UpdateTicketsPage: React.FC = () => {
 
       // Fetch assets and services based on ticket data
       if (ticketData.asset_service === "Asset" && ticketData.asset_or_service_id) {
-        setFormData(prev => ({ 
-          ...prev, 
+        setFormData(prev => ({
+          ...prev,
           associatedTo: { asset: true, service: false },
           selectedAsset: ticketData.asset_or_service_id.toString(),
           selectedService: "",
         }));
         fetchAssets(false); // Don't auto-select during manual changes
       } else if (ticketData.asset_service === "Service" && ticketData.asset_or_service_id) {
-        setFormData(prev => ({ 
-          ...prev, 
+        setFormData(prev => ({
+          ...prev,
           associatedTo: { asset: false, service: true },
           selectedAsset: "",
           selectedService: ticketData.asset_or_service_id.toString(),
@@ -882,9 +882,9 @@ const UpdateTicketsPage: React.FC = () => {
 
       // Set cost involved flag
       if (ticketData.cost_involved !== undefined) {
-        setFormData(prev => ({ 
-          ...prev, 
-          costInvolved: ticketData.cost_involved 
+        setFormData(prev => ({
+          ...prev,
+          costInvolved: ticketData.cost_involved
         }));
       }
 
@@ -928,13 +928,13 @@ const UpdateTicketsPage: React.FC = () => {
   useEffect(() => {
     // If we have an ID from the URL, fetch the ticket data
     // Wait for all required data including buildings and templates to be loaded
-    if (id && 
-        helpdeskData?.helpdesk_categories && 
-        complaintModes.length > 0 && 
-        fmUsers.length > 0 && 
-        complaintStatuses.length > 0 &&
-        buildings.length > 0 &&
-        communicationTemplates.length > 0) { // Add templates check
+    if (id &&
+      helpdeskData?.helpdesk_categories &&
+      complaintModes.length > 0 &&
+      fmUsers.length > 0 &&
+      complaintStatuses.length > 0 &&
+      buildings.length > 0 &&
+      communicationTemplates.length > 0) { // Add templates check
       console.log("✅ All data loaded, fetching ticket data for ID:", id);
       fetchTicketData(id);
     }
@@ -1122,25 +1122,25 @@ const UpdateTicketsPage: React.FC = () => {
   // Handle asset/service loading when associatedTo changes
   useEffect(() => {
     console.log("🔄 AssociatedTo change detected:", formData.associatedTo);
-    
+
     // Fetch assets when asset checkbox is checked and we don't have asset options yet
     if (formData.associatedTo.asset && assetOptions.length === 0 && !isLoadingAssets) {
       console.log("🔄 Fetching assets due to checkbox change");
       fetchAssets(false); // Don't auto-select during manual changes
     }
-    
+
     // Fetch services when service checkbox is checked and we don't have service options yet
     if (formData.associatedTo.service && serviceOptions.length === 0 && !isLoadingServices) {
       console.log("🔄 Fetching services due to checkbox change");
       fetchServices(false); // Don't auto-select during manual changes
     }
   }, [
-    formData.associatedTo, 
-    assetOptions.length, 
-    serviceOptions.length, 
-    isLoadingAssets, 
-    isLoadingServices, 
-    fetchAssets, 
+    formData.associatedTo,
+    assetOptions.length,
+    serviceOptions.length,
+    isLoadingAssets,
+    isLoadingServices,
+    fetchAssets,
     fetchServices
   ]);
 
@@ -1160,17 +1160,17 @@ const UpdateTicketsPage: React.FC = () => {
     // If we have ticket data with asset/service info but haven't set the selection yet
     if (ticketApiData && ticketApiData.asset_or_service_id) {
       const targetId = ticketApiData.asset_or_service_id.toString();
-      
+
       // Handle asset synchronization
-      if (ticketApiData.asset_service === "Asset" && 
-          assetOptions.length > 0 && 
-          (!formData.selectedAsset || !formData.associatedTo.asset)) {
-        
+      if (ticketApiData.asset_service === "Asset" &&
+        assetOptions.length > 0 &&
+        (!formData.selectedAsset || !formData.associatedTo.asset)) {
+
         console.log("🔄 Attempting asset synchronization with ID:", targetId);
-        const matchingAsset = assetOptions.find(asset => 
+        const matchingAsset = assetOptions.find(asset =>
           asset.id.toString() === targetId
         );
-        
+
         if (matchingAsset) {
           console.log("✅ Synchronizing asset selection:", matchingAsset.name);
           setFormData(prev => ({
@@ -1186,17 +1186,17 @@ const UpdateTicketsPage: React.FC = () => {
           console.log("❌ Asset not found in options for ID:", targetId);
         }
       }
-      
+
       // Handle service synchronization
-      if (ticketApiData.asset_service === "Service" && 
-          serviceOptions.length > 0 && 
-          (!formData.selectedService || !formData.associatedTo.service)) {
-        
+      if (ticketApiData.asset_service === "Service" &&
+        serviceOptions.length > 0 &&
+        (!formData.selectedService || !formData.associatedTo.service)) {
+
         console.log("🔄 Attempting service synchronization with ID:", targetId);
-        const matchingService = serviceOptions.find(service => 
+        const matchingService = serviceOptions.find(service =>
           service.id.toString() === targetId
         );
-        
+
         if (matchingService) {
           console.log("✅ Synchronizing service selection:", matchingService.service_name);
           setFormData(prev => ({
@@ -1377,7 +1377,7 @@ const UpdateTicketsPage: React.FC = () => {
     checked: boolean
   ) => {
     console.log("📋 Checkbox change:", { group, field, checked });
-    
+
     setFormData((prev) => ({
       ...prev,
       [group]: {
@@ -1436,6 +1436,51 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
+  // Helper function to get Root Cause Analysis values from ticket data
+  const getRootCauseAnalysisValues = () => {
+    // First priority: Use formData.rootCauseTemplateIds (user's current selections)
+    if (formData.rootCauseTemplateIds && formData.rootCauseTemplateIds.length > 0) {
+      console.log('🔍 Root Cause Analysis Template IDs from formData:', formData.rootCauseTemplateIds);
+      return formData.rootCauseTemplateIds;
+    }
+    
+    // Second priority: Use template IDs from API if available (initial load)
+    if (ticketApiData?.rca_template_ids && Array.isArray(ticketApiData.rca_template_ids)) {
+      // Filter out duplicate IDs using Set
+      const uniqueIds = [...new Set(ticketApiData.rca_template_ids)];
+      
+      console.log('🔍 Root Cause Analysis Template IDs from API:', uniqueIds);
+      
+      // Find templates by IDs
+      const matchedTemplates = communicationTemplates.filter(
+        (t) =>
+          uniqueIds.includes(t.id) &&
+          t.identifier === "Root Cause Analysis"
+      );
+      
+      console.log('🔍 Root Cause Analysis Matched Templates:', matchedTemplates.map(t => ({ id: t.id, action: t.identifier_action })));
+      
+      // Return array of IDs for Material-UI Select
+      return matchedTemplates.map((t) => t.id);
+    }
+    
+    // Fallback: Use text matching if no template IDs
+    if (!formData.rootCause && !ticketApiData?.root_cause) return [];
+    
+    const rootCauseString = formData.rootCause || ticketApiData?.root_cause || '';
+    
+    if (!rootCauseString) return [];
+
+    const rootCauseValues = rootCauseString.split(",").map((s) => s.trim());
+    const matchedTemplates = communicationTemplates.filter(
+      (t) =>
+        t.identifier === "Root Cause Analysis" &&
+        rootCauseValues.includes(t.identifier_action)
+    );
+
+    return matchedTemplates.map((t) => t.id);
+  };
+
   // Handle Root Cause multi-select change with auto-save
   // Handle Root Cause multi-select change (only updates state, API call happens on Save)
   const handleRootCauseChange = (selectedValues: string | string[] | number | number[]) => {
@@ -1446,17 +1491,17 @@ const UpdateTicketsPage: React.FC = () => {
     } else {
       templateIds = [typeof selectedValues === 'number' ? selectedValues : parseInt(String(selectedValues))];
     }
-    
+
     // Filter out any NaN values
     templateIds = templateIds.filter(id => !isNaN(id));
 
     // Update local state with the selected template text for display
     const selectedTemplates = communicationTemplates.filter(t => templateIds.includes(t.id));
     const rootCauseString = selectedTemplates.map(t => t.identifier_action).join(', ');
-    
+
     // Store both the display string and the template IDs
-    setFormData((prev) => ({ 
-      ...prev, 
+    setFormData((prev) => ({
+      ...prev,
       rootCause: rootCauseString,
       rootCauseTemplateIds: templateIds // Store IDs for submission
     }));
@@ -1700,13 +1745,13 @@ const UpdateTicketsPage: React.FC = () => {
         "complaint[complaint_mode_id]",
         formData.mode || ""
       );
-      
+
       // Add severity
       formDataToSend.append(
         "complaint[severity]",
         formData.severity || ""
       );
-      
+
       // Add root cause template IDs with array notation
       if (formData.rootCauseTemplateIds && formData.rootCauseTemplateIds.length > 0) {
         formData.rootCauseTemplateIds.forEach(templateId => {
@@ -1716,7 +1761,7 @@ const UpdateTicketsPage: React.FC = () => {
       } else {
         console.log('⚠️ No root cause template IDs to submit');
       }
-      
+
       // Add preventive action template IDs with array notation
       if (formData.preventiveActionTemplateIds && formData.preventiveActionTemplateIds.length > 0) {
         formData.preventiveActionTemplateIds.forEach(templateId => {
@@ -1726,7 +1771,7 @@ const UpdateTicketsPage: React.FC = () => {
       } else {
         console.log('⚠️ No preventive action template IDs to submit');
       }
-      
+
       // Add corrective action template IDs with array notation
       if (formData.correctiveActionTemplateIds && formData.correctiveActionTemplateIds.length > 0) {
         formData.correctiveActionTemplateIds.forEach(templateId => {
@@ -1736,7 +1781,7 @@ const UpdateTicketsPage: React.FC = () => {
       } else {
         console.log('⚠️ No corrective action template IDs to submit');
       }
-      
+
       // Add short-term impact template IDs with array notation
       if (formData.shortTermImpactTemplateIds && formData.shortTermImpactTemplateIds.length > 0) {
         formData.shortTermImpactTemplateIds.forEach(templateId => {
@@ -1746,7 +1791,7 @@ const UpdateTicketsPage: React.FC = () => {
       } else {
         console.log('⚠️ No short-term impact template IDs to submit');
       }
-      
+
       // Add long-term impact template IDs with array notation
       if (formData.longTermImpactTemplateIds && formData.longTermImpactTemplateIds.length > 0) {
         formData.longTermImpactTemplateIds.forEach(templateId => {
@@ -1756,7 +1801,7 @@ const UpdateTicketsPage: React.FC = () => {
       } else {
         console.log('⚠️ No long-term impact template IDs to submit');
       }
-      
+
       formDataToSend.append("complaint[short_term_impact]", formData.impact || "");
       formDataToSend.append("complaint[correction]", formData.correction || "");
       formDataToSend.append("complaint[impact]", formData.longTermImpact || "");
@@ -1991,12 +2036,12 @@ const UpdateTicketsPage: React.FC = () => {
       <div className="w-full p-6">
         {/* Header */}
         <button
-                  onClick={handleBackToList}
-                  className="flex items-center gap-1 hover:text-gray-800 mb-4"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Ticket List
-                </button>
+          onClick={handleBackToList}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Ticket List
+        </button>
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">UPDATE TICKET</h1>
         </div>
@@ -2057,7 +2102,7 @@ const UpdateTicketsPage: React.FC = () => {
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           handleInputChange("preventiveAction", selectedValue);
-                          
+
                           // Find the template and store its ID
                           const selectedTemplate = communicationTemplates.find(
                             t => t.identifier === "Preventive Action" && t.identifier_action === selectedValue
@@ -2440,42 +2485,19 @@ const UpdateTicketsPage: React.FC = () => {
                         label="Root Cause Analysis"
                         notched
                         displayEmpty
-                        value={(() => {
-                          if (!formData.rootCause) return [];
-                          
-                          // Convert rootCause to string
-                          let rootCauseString = '';
-                          if (typeof formData.rootCause === 'string') {
-                            rootCauseString = formData.rootCause;
-                          } else if (Array.isArray(formData.rootCause)) {
-                            rootCauseString = (formData.rootCause as any[]).join(', ');
-                          } else {
-                            rootCauseString = String(formData.rootCause);
-                          }
-                          
-                          if (!rootCauseString) return [];
-                          
-                          // Split and match with templates to get IDs
-                          const rootCauseValues = rootCauseString.split(',').map(s => s.trim());
-                          const matchedTemplates = communicationTemplates.filter(
-                            template => template.identifier === "Root Cause Analysis" &&
-                              rootCauseValues.includes(template.identifier_action)
-                          );
-                          
-                          return matchedTemplates.map(t => t.id);
-                        })()}
+                        value={getRootCauseAnalysisValues()}
                         onChange={(e) => handleRootCauseChange(e.target.value)}
                         renderValue={(selected) => {
                           if (!selected || (Array.isArray(selected) && selected.length === 0)) {
                             return <span style={{ color: '#aaa' }}>Select Root Cause Analysis</span>;
                           }
-                          
+
                           // Convert selected IDs back to display text
                           const selectedIds = Array.isArray(selected) ? selected : [selected];
                           const selectedTemplates = communicationTemplates.filter(
                             t => selectedIds.includes(t.id)
                           );
-                          
+
                           return selectedTemplates.map(t => t.identifier_action).join(', ');
                         }}
                         disabled={loadingTemplates}
@@ -2505,7 +2527,7 @@ const UpdateTicketsPage: React.FC = () => {
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           handleInputChange("impact", selectedValue);
-                          
+
                           // Find the template and store its ID
                           const selectedTemplate = communicationTemplates.find(
                             t => t.identifier === "Short-term Impact" && t.identifier_action === selectedValue
@@ -2573,7 +2595,7 @@ const UpdateTicketsPage: React.FC = () => {
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           handleInputChange("longTermImpact", selectedValue);
-                          
+
                           // Find the template and store its ID
                           const selectedTemplate = communicationTemplates.find(
                             t => t.identifier === "Long-term Impact" && t.identifier_action === selectedValue
@@ -2612,98 +2634,98 @@ const UpdateTicketsPage: React.FC = () => {
                     </FormControl>
                   </div>
 
-                   <div className="space-y-1">
-                <TextField
-                  label="Reference Number"
-                  placeholder="Enter reference number"
-                  value={formData.refNumber}
-                  onChange={(e) => handleInputChange("refNumber", e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
-              </div>
-               <div className="space-y-1">
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Corrective Action</InputLabel>
-                  <MuiSelect
-                    value={formData.correctiveAction}
-                    onChange={(e) => {
-                      const selectedValue = e.target.value;
-                      handleInputChange("correctiveAction", selectedValue);
-                      
-                      // Find the template and store its ID
-                      const selectedTemplate = communicationTemplates.find(
-                        t => t.identifier === "Corrective Action" && t.identifier_action === selectedValue
-                      );
-                      if (selectedTemplate) {
-                        setFormData(prev => ({
-                          ...prev,
-                          correctiveActionTemplateIds: [selectedTemplate.id]
-                        }));
-                        console.log('📝 Corrective Action Template ID stored:', selectedTemplate.id);
-                      } else {
-                        setFormData(prev => ({
-                          ...prev,
-                          correctiveActionTemplateIds: []
-                        }));
-                      }
-                    }}
-                    label="Corrective Action"
-                    notched
-                    displayEmpty
-                    disabled={loadingTemplates}
-                  >
-                    <MenuItem value="">
-                      <span className="text-gray-500">
-                        {loadingTemplates ? 'Loading templates...' : 'Select corrective action'}
-                      </span>
-                    </MenuItem>
-                    {communicationTemplates
-                      .filter(template => template.identifier === "Corrective Action" && template?.active === true)
-                      .map((template) => (
-                        <MenuItem key={template.id} value={template.identifier_action}>
-                          {template.identifier_action}
+                  <div className="space-y-1">
+                    <TextField
+                      label="Reference Number"
+                      placeholder="Enter reference number"
+                      value={formData.refNumber}
+                      onChange={(e) => handleInputChange("refNumber", e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                      }}
+                      InputProps={{
+                        sx: fieldStyles,
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Corrective Action</InputLabel>
+                      <MuiSelect
+                        value={formData.correctiveAction}
+                        onChange={(e) => {
+                          const selectedValue = e.target.value;
+                          handleInputChange("correctiveAction", selectedValue);
+
+                          // Find the template and store its ID
+                          const selectedTemplate = communicationTemplates.find(
+                            t => t.identifier === "Corrective Action" && t.identifier_action === selectedValue
+                          );
+                          if (selectedTemplate) {
+                            setFormData(prev => ({
+                              ...prev,
+                              correctiveActionTemplateIds: [selectedTemplate.id]
+                            }));
+                            console.log('📝 Corrective Action Template ID stored:', selectedTemplate.id);
+                          } else {
+                            setFormData(prev => ({
+                              ...prev,
+                              correctiveActionTemplateIds: []
+                            }));
+                          }
+                        }}
+                        label="Corrective Action"
+                        notched
+                        displayEmpty
+                        disabled={loadingTemplates}
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">
+                            {loadingTemplates ? 'Loading templates...' : 'Select corrective action'}
+                          </span>
                         </MenuItem>
-                      ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-                <div className="space-y-1">
-                <FormControl
-                  fullWidth
-                  variant="outlined"
-                  sx={{ '& .MuiInputBase-root': fieldStyles }}
-                >
-                  <InputLabel shrink>Service Type</InputLabel>
-                  <MuiSelect
-                    value={formData.serviceType}
-                    onChange={(e) => handleInputChange("serviceType", e.target.value)}
-                    label="Service Type"
-                    notched
-                    displayEmpty
-                  >
-                    <MenuItem value="">
-                      <span className="text-gray-500">Select service type</span>
-                    </MenuItem>
-                    {[
-                      { id: 'product', name: 'Product' },
-                      { id: 'service', name: 'Service' }
-                    ].map((type) => (
-                      <MenuItem key={type.id} value={type.id.toString()}>
-                        {type.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
+                        {communicationTemplates
+                          .filter(template => template.identifier === "Corrective Action" && template?.active === true)
+                          .map((template) => (
+                            <MenuItem key={template.id} value={template.identifier_action}>
+                              {template.identifier_action}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Service Type</InputLabel>
+                      <MuiSelect
+                        value={formData.serviceType}
+                        onChange={(e) => handleInputChange("serviceType", e.target.value)}
+                        label="Service Type"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select service type</span>
+                        </MenuItem>
+                        {[
+                          { id: 'product', name: 'Product' },
+                          { id: 'service', name: 'Service' }
+                        ].map((type) => (
+                          <MenuItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2762,8 +2784,8 @@ const UpdateTicketsPage: React.FC = () => {
                       disabled={loadingWings || !formData.building}
                     >
                       <MenuItem value="">
-                        {loadingWings ? "Loading..." : 
-                         !formData.building ? "Select Building First" : "Select Wing"}
+                        {loadingWings ? "Loading..." :
+                          !formData.building ? "Select Building First" : "Select Wing"}
                       </MenuItem>
                       {filteredWings.map((wing) => (
                         <MenuItem key={wing.id} value={wing.id.toString()}>
@@ -2789,8 +2811,8 @@ const UpdateTicketsPage: React.FC = () => {
                       disabled={loadingAreas || !formData.wing}
                     >
                       <MenuItem value="">
-                        {loadingAreas ? "Loading..." : 
-                         !formData.wing ? "Select Wing First" : "Select Area"}
+                        {loadingAreas ? "Loading..." :
+                          !formData.wing ? "Select Wing First" : "Select Area"}
                       </MenuItem>
                       {filteredAreas.map((area) => (
                         <MenuItem key={area.id} value={area.id.toString()}>
@@ -2816,8 +2838,8 @@ const UpdateTicketsPage: React.FC = () => {
                       disabled={loadingFloors || !formData.area}
                     >
                       <MenuItem value="">
-                        {loadingFloors ? "Loading..." : 
-                         !formData.area ? "Select Area First" : "Select Floor"}
+                        {loadingFloors ? "Loading..." :
+                          !formData.area ? "Select Area First" : "Select Floor"}
                       </MenuItem>
                       {filteredFloors.map((floor) => (
                         <MenuItem key={floor.id} value={floor.id.toString()}>
@@ -2843,8 +2865,8 @@ const UpdateTicketsPage: React.FC = () => {
                       disabled={loadingRooms || !formData.floor}
                     >
                       <MenuItem value="">
-                        {loadingRooms ? "Loading..." : 
-                         !formData.floor ? "Select Floor First" : "Select Room"}
+                        {loadingRooms ? "Loading..." :
+                          !formData.floor ? "Select Floor First" : "Select Room"}
                       </MenuItem>
                       {filteredRooms.map((room) => (
                         <MenuItem key={room.id} value={room.id.toString()}>
@@ -2858,195 +2880,195 @@ const UpdateTicketsPage: React.FC = () => {
             </div>
 
             {/* Section 6: Issue Related To */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <Building size={16} color="#C72030" />
-              </span>
-              Issue Related To
-            </h2>
-          </div>
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Issue Related To */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-3 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                    <Building size={16} color="#C72030" />
+                  </span>
                   Issue Related To
-                </label>
-                <div className="flex gap-6">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="issueRelatedTo"
-                      value="Projects"
-                      checked={formData.issueRelatedTo === "Projects"}
-                      onChange={(e) => handleInputChange("issueRelatedTo", e.target.value)}
-                      style={{
-                        accentColor: "#C72030",
-                        width: "16px",
-                        height: "16px",
-                        borderColor: "#C72030",
-                      }}
-                    />
-                    <span className="text-sm text-gray-700">Project</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="issueRelatedTo"
-                      value="FM"
-                      checked={formData.issueRelatedTo === "FM"}
-                      onChange={(e) =>
-                        handleInputChange("issueRelatedTo", e.target.value)
-                      }
-                      style={{
-                        accentColor: "#C72030",
-                        width: "16px",
-                        height: "16px",
-                        borderColor: "#C72030",
-                      }}
-                    />
-                    <span className="text-sm text-gray-700">FM</span>
-                  </label>
-                </div>
+                </h2>
               </div>
-
-              {/* Associated To */}
-              <div className="space-y-1">
-
-                <label className="block text-sm font-medium text-gray-700 mb-2">Associated To</label>
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  <div className="flex gap-6">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="associatedTo"
-                        value="asset"
-                        checked={formData.associatedTo.asset}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData((prev) => ({
-                              ...prev,
-                              associatedTo: { asset: true, service: false },
-                              selectedService: "", // Reset service selection
-                            }));
-                            fetchAssets(false); // Don't auto-select when manually changing
-                          }
-                        }}
-                        style={{
-                          accentColor: "#C72030",
-                          width: "16px",
-                          height: "16px",
-                          borderColor: "#C72030",
-                        }}
-                      />
-                      <span className="text-sm text-gray-700">Asset</span>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Issue Related To */}
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Issue Related To
                     </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="associatedTo"
-                        value="service"
-                        checked={formData.associatedTo.service}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData((prev) => ({
-                              ...prev,
-                              associatedTo: { asset: false, service: true },
-                              selectedAsset: "", // Reset asset selection
-                            }));
-                            fetchServices(false); // Don't auto-select when manually changing
+                    <div className="flex gap-6">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="issueRelatedTo"
+                          value="Projects"
+                          checked={formData.issueRelatedTo === "Projects"}
+                          onChange={(e) => handleInputChange("issueRelatedTo", e.target.value)}
+                          style={{
+                            accentColor: "#C72030",
+                            width: "16px",
+                            height: "16px",
+                            borderColor: "#C72030",
+                          }}
+                        />
+                        <span className="text-sm text-gray-700">Project</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="issueRelatedTo"
+                          value="FM"
+                          checked={formData.issueRelatedTo === "FM"}
+                          onChange={(e) =>
+                            handleInputChange("issueRelatedTo", e.target.value)
                           }
-                        }}
+                          style={{
+                            accentColor: "#C72030",
+                            width: "16px",
+                            height: "16px",
+                            borderColor: "#C72030",
+                          }}
+                        />
+                        <span className="text-sm text-gray-700">FM</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Associated To */}
+                  <div className="space-y-1">
+
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Associated To</label>
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      <div className="flex gap-6">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="associatedTo"
+                            value="asset"
+                            checked={formData.associatedTo.asset}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  associatedTo: { asset: true, service: false },
+                                  selectedService: "", // Reset service selection
+                                }));
+                                fetchAssets(false); // Don't auto-select when manually changing
+                              }
+                            }}
+                            style={{
+                              accentColor: "#C72030",
+                              width: "16px",
+                              height: "16px",
+                              borderColor: "#C72030",
+                            }}
+                          />
+                          <span className="text-sm text-gray-700">Asset</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="associatedTo"
+                            value="service"
+                            checked={formData.associatedTo.service}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  associatedTo: { asset: false, service: true },
+                                  selectedAsset: "", // Reset asset selection
+                                }));
+                                fetchServices(false); // Don't auto-select when manually changing
+                              }
+                            }}
+                            style={{
+                              accentColor: "#C72030",
+                              width: "16px",
+                              height: "16px",
+                              borderColor: "#C72030",
+                            }}
+                          />
+                          <span className="text-sm text-gray-700">Service</span>
+                        </label>
+                      </div>
+                      {(formData.associatedTo.asset || formData.associatedTo.service) && (
+                        <FormControl
+                          fullWidth
+                          variant="outlined"
+                          sx={{
+                            minWidth: 260, // Increased width
+                            maxWidth: 340, // Optional: limit max width
+                            ...fieldStyles,
+                          }}
+                        >
+                          <InputLabel shrink>{formData.associatedTo.asset ? "Select Asset" : "Select Service"}</InputLabel>
+                          <MuiSelect
+                            value={formData.associatedTo.asset ? formData.selectedAsset : formData.selectedService}
+                            onChange={(e) => {
+                              if (formData.associatedTo.asset) {
+                                handleInputChange("selectedAsset", e.target.value);
+                              } else {
+                                handleInputChange("selectedService", e.target.value);
+                              }
+                            }}
+                            label={formData.associatedTo.asset ? "Select Asset" : "Select Service"}
+                            notched
+                            displayEmpty
+                            disabled={isLoadingAssets || isLoadingServices}
+                          >
+                            <MenuItem value="">
+                              <span className="text-gray-500">{isLoadingAssets || isLoadingServices ? "Loading..." : `Select ${formData.associatedTo.asset ? "Asset" : "Service"}`}</span>
+                            </MenuItem>
+                            {formData.associatedTo.asset && assetOptions.length > 0 &&
+                              assetOptions.map((asset) => (
+                                <MenuItem key={asset.id} value={asset.id.toString()}>
+                                  {asset.name}
+                                </MenuItem>
+                              ))}
+                            {formData.associatedTo.service && serviceOptions.length > 0 &&
+                              serviceOptions.map((service) => (
+                                <MenuItem key={service.id} value={service.id.toString()}>
+                                  {service.service_name}
+                                </MenuItem>
+                              ))}
+                          </MuiSelect>
+                        </FormControl>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Comments Section */}
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Add Comments
+                  </label>
+                  <Textarea
+                    value={formData.comments}
+                    onChange={(e) => handleInputChange("comments", e.target.value)}
+                    rows={4}
+                    className="text-base border rounded min-h-[100px] w-full border-gray-300 bg-white px-3 py-2 focus:outline-none"
+                    placeholder="Add comment"
+                  />
+                  <div className="mt-2">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.costInvolved}
+                        onChange={(e) => handleCostInvolvedChange(e.target.checked)}
                         style={{
-                          accentColor: "#C72030",
-                          width: "16px",
-                          height: "16px",
-                          borderColor: "#C72030",
+                          accentColor: '#C72030',
+                          width: '12px',
+                          height: '12px',
                         }}
+                        className="mr-2"
                       />
-                      <span className="text-sm text-gray-700">Service</span>
+                      Cost Involved
                     </label>
                   </div>
-                  {(formData.associatedTo.asset || formData.associatedTo.service) && (
-                    <FormControl
-                      fullWidth
-                      variant="outlined"
-                      sx={{
-                        minWidth: 260, // Increased width
-                        maxWidth: 340, // Optional: limit max width
-                        ...fieldStyles,
-                      }}
-                    >
-                      <InputLabel shrink>{formData.associatedTo.asset ? "Select Asset" : "Select Service"}</InputLabel>
-                      <MuiSelect
-                        value={formData.associatedTo.asset ? formData.selectedAsset : formData.selectedService}
-                        onChange={(e) => {
-                          if (formData.associatedTo.asset) {
-                            handleInputChange("selectedAsset", e.target.value);
-                          } else {
-                            handleInputChange("selectedService", e.target.value);
-                          }
-                        }}
-                        label={formData.associatedTo.asset ? "Select Asset" : "Select Service"}
-                        notched
-                        displayEmpty
-                        disabled={isLoadingAssets || isLoadingServices}
-                      >
-                        <MenuItem value="">
-                          <span className="text-gray-500">{isLoadingAssets || isLoadingServices ? "Loading..." : `Select ${formData.associatedTo.asset ? "Asset" : "Service"}`}</span>
-                        </MenuItem>
-                        {formData.associatedTo.asset && assetOptions.length > 0 &&
-                          assetOptions.map((asset) => (
-                            <MenuItem key={asset.id} value={asset.id.toString()}>
-                              {asset.name}
-                            </MenuItem>
-                          ))}
-                        {formData.associatedTo.service && serviceOptions.length > 0 &&
-                          serviceOptions.map((service) => (
-                            <MenuItem key={service.id} value={service.id.toString()}>
-                              {service.service_name}
-                            </MenuItem>
-                          ))}
-                      </MuiSelect>
-                    </FormControl>
-                  )}
                 </div>
               </div>
             </div>
-
-            {/* Comments Section */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add Comments
-              </label>
-              <Textarea
-                value={formData.comments}
-                onChange={(e) => handleInputChange("comments", e.target.value)}
-                rows={4}
-                className="text-base border rounded min-h-[100px] w-full border-gray-300 bg-white px-3 py-2 focus:outline-none"
-                placeholder="Add comment"
-              />
-              <div className="mt-2">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.costInvolved}
-                    onChange={(e) => handleCostInvolvedChange(e.target.checked)}
-                    style={{
-                      accentColor: '#C72030',
-                      width: '12px',
-                      height: '12px',
-                    }}
-                    className="mr-2"
-                  />
-                  Cost Involved
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
 
             {/* Section 7: Cost Approval Requests */}
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -3260,12 +3282,16 @@ const UpdateTicketsPage: React.FC = () => {
                   <input
                     type="number"
                     value={costPopupData.cost}
-                    onChange={(e) =>
-                      setCostPopupData((prev) => ({
-                        ...prev,
-                        cost: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      const regex = /^\d*\.?\d{0,2}$/;
+                      if (regex.test(value) && Number(value) >= 0) {
+                        setCostPopupData(prev =>
+                          ({ ...prev, cost: value })
+                        );
+                      }
+                    }}
                     placeholder="Enter Cost"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   />
