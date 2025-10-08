@@ -1163,6 +1163,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import AssetStatisticsSelector from '@/components/AssetStatisticsSelector';
 import { AssetAnalyticsSelector } from '@/components/AssetAnalyticsSelector';
+import type { Asset as TableAsset } from '@/hooks/useAssets';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -1368,7 +1369,7 @@ export const AssetDashboard = () => {
   }, [reduxCustomFields]);
 
   // Transform assets
-  const transformedAssets = assets.map((asset, index) => ({
+  const transformedAssets: TableAsset[] = assets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
     serialNumber: (currentPage - 1) * 15 + index + 1,
@@ -1377,11 +1378,18 @@ export const AssetDashboard = () => {
     siteName: asset.site_name || '',
     building: asset.building || null,
     wing: asset.wing || null,
-    area: asset.area || null,
+    area:
+      (asset.area && typeof asset.area === 'object')
+        ? asset.area
+        : (asset.pms_area && typeof asset.pms_area === 'object')
+          ? asset.pms_area
+          : (typeof asset.area === 'string')
+            ? { name: asset.area }
+            : (asset.area_name ? { name: asset.area_name } : null),
     pmsRoom: asset.pms_room || null,
     assetGroup: asset.pms_asset_group || asset.asset_group || '',
     assetSubGroup: asset.sub_group || asset.asset_sub_group || '',
-    assetType: asset.asset_type || '',
+    assetType: Boolean(asset.asset_type),
     purchaseCost: asset.purchase_cost || 0,
     currentBookValue: asset.current_book_value || 0,
     floor: asset.pms_floor || null,
@@ -1402,6 +1410,17 @@ export const AssetDashboard = () => {
     warranty: asset.warranty || '',
     amc: asset.amc || '',
     ...availableCustomFields.reduce((acc, field) => {
+      const coreKeysToSkip = new Set([
+        'id', 'name', 'asset_number', 'status', 'site_name',
+        'building', 'wing', 'floor', 'area', 'pms_room',
+        'asset_group', 'sub_group', 'asset_type', 'asset_type_category',
+        'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
+        'allocation_type', 'useful_life', 'depreciation_method',
+        'accumulated_depreciation', 'current_book_value', 'disposal_date',
+        'model_number', 'manufacturer', 'critical', 'commisioning_date',
+        'warranty', 'amc'
+      ]);
+      if (coreKeysToSkip.has(field.key)) return acc;
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
         acc[field.key] =
@@ -1413,9 +1432,9 @@ export const AssetDashboard = () => {
       }
       return acc;
     }, {} as Record<string, any>),
-  }));
+  })) as unknown as TableAsset[];
 
-  const transformedSearchedAssets = searchedAssets.map((asset, index) => ({
+  const transformedSearchedAssets: TableAsset[] = searchedAssets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
     serialNumber: (currentPage - 1) * 15 + index + 1,
@@ -1424,11 +1443,18 @@ export const AssetDashboard = () => {
     siteName: asset.siteName || '',
     building: asset.building || null,
     wing: asset.wing || null,
-    area: asset.area || null,
+    area:
+      (asset.area && typeof asset.area === 'object')
+        ? asset.area
+        : (asset.pms_area && typeof asset.pms_area === 'object')
+          ? asset.pms_area
+          : (typeof asset.area === 'string')
+            ? { name: asset.area }
+            : (asset.area_name ? { name: asset.area_name } : null),
     pmsRoom: asset.pmsRoom || null,
     assetGroup: asset.assetGroup || '',
     assetSubGroup: asset.assetSubGroup || '',
-    assetType: asset.assetType ? 'True' : 'False',
+    assetType: Boolean(asset.assetType),
     floor: null,
     category: asset.asset_type_category || '',
     purchased_on: asset.purchased_on || '',
@@ -1447,6 +1473,17 @@ export const AssetDashboard = () => {
     warranty: asset.warranty || '',
     amc: asset.amc || '',
     ...availableCustomFields.reduce((acc, field) => {
+      const coreKeysToSkip = new Set([
+        'id', 'name', 'asset_number', 'status', 'site_name',
+        'building', 'wing', 'floor', 'area', 'pms_room',
+        'asset_group', 'sub_group', 'asset_type', 'asset_type_category',
+        'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
+        'allocation_type', 'useful_life', 'depreciation_method',
+        'accumulated_depreciation', 'current_book_value', 'disposal_date',
+        'model_number', 'manufacturer', 'critical', 'commisioning_date',
+        'warranty', 'amc'
+      ]);
+      if (coreKeysToSkip.has(field.key)) return acc;
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
         acc[field.key] =
@@ -1458,10 +1495,10 @@ export const AssetDashboard = () => {
       }
       return acc;
     }, {} as Record<string, any>),
-  }));
+  })) as unknown as TableAsset[];
 
   // Use search results if search term exists
-  const displayAssets = searchTerm.trim() ? transformedSearchedAssets : transformedAssets;
+  const displayAssets: TableAsset[] = searchTerm.trim() ? transformedSearchedAssets : transformedAssets;
   const isSearchMode = searchTerm.trim().length > 0;
 
   // Use search pagination when in search mode
@@ -1766,7 +1803,7 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={data} onCardClick={handleStatCardClick} />
+              <AssetStats stats={stats} onCardClick={handleStatCardClick} />
 
               <div className="relative">
                 <AssetDataTable
