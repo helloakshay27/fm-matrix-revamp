@@ -272,7 +272,10 @@ export class JobSheetPDFGenerator {
           console.log(`✓ Successfully converted image to base64`);
         } catch (error) {
           console.error(`Failed to convert image to base64: ${originalSrc}`, error);
-          // Leave original src if conversion fails
+          // Use a transparent 1x1 pixel placeholder to avoid CORS tainting
+          img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+          img.alt = 'Image failed to load due to CORS';
+          console.log(`Replaced failed image with placeholder`);
         }
       });
       
@@ -558,10 +561,10 @@ export class JobSheetPDFGenerator {
       // Generate rows for this section with proper indexing
       const sectionRows = section.activities.map((item: any, index: number) => {
         const slNo = item.index || index + 1;
-        const inspectionPoint = item.activity || "";
+        const inspectionPoint = item.activity || item.label || "";
 
-        // Enhanced result handling
-        const inputValue = item.input_value;
+        // Enhanced result handling - support both input_value and userData fields
+        const inputValue = item.input_value || (Array.isArray(item.userData) ? item.userData[0] : item.userData);
         const result =
           inputValue !== null && inputValue !== undefined && inputValue !== ""
             ? inputValue
@@ -569,7 +572,8 @@ export class JobSheetPDFGenerator {
             ? ""
             : "Not Completed";
 
-        const remarks = item.comments || "";
+        // Support both comments and comment fields
+        const remarks = item.comments || item.comment || "";
 
         // Handle attachments - generate HTML for image thumbnails
         const hasAttachments =
@@ -580,16 +584,19 @@ export class JobSheetPDFGenerator {
         let attachmentDisplay = "-";
         if (hasAttachments) {
           const attachmentImages = item.attachments
-            .map((attachment: any) => {
+            .map((attachment: any, idx: number) => {
+              const attachmentUrl = typeof attachment === "string" ? attachment : attachment.url || attachment.file_url || "";
               return `<img 
-                src="${attachment}" 
-                style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px;"
-                onerror="console.error('Failed to load attachment:', this.src); this.style.display='none';"
-              />`;
+                src="${attachmentUrl}" 
+                alt="Attachment ${idx + 1}" 
+                crossorigin="anonymous"
+                style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px; display: inline-block;"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
+              /><span style="display:none; font-size: 18px; color: #999; margin: 2px;">📎</span>`;
             })
             .join("");
 
-          attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">${attachmentImages}</div>`;
+          attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 2px; align-items: center; justify-content: center;">${attachmentImages}</div>`;
         }
 
         return `
@@ -733,10 +740,10 @@ export class JobSheetPDFGenerator {
       const sectionRows = section.activities
         .map((item: any, index: number) => {
           const serialNumber = item.index || (pageNumber - 1) * 10 + index + 1;
-          const activity = item.activity || "";
+          const activity = item.activity || item.label || "";
 
-          // Handle null/empty input values properly
-          const inputValue = item.input_value;
+          // Handle null/empty input values properly - support both input_value and userData
+          const inputValue = item.input_value || (Array.isArray(item.userData) ? item.userData[0] : item.userData);
           const result =
             inputValue !== null && inputValue !== undefined && inputValue !== ""
               ? inputValue
@@ -744,7 +751,8 @@ export class JobSheetPDFGenerator {
               ? ""
               : "Not Completed";
 
-          const comments = item.comments || "";
+          // Support both comments and comment fields
+          const comments = item.comments || item.comment || "";
 
           // Handle attachments with image thumbnails (same as main section)
           const hasAttachments =
@@ -770,14 +778,15 @@ export class JobSheetPDFGenerator {
 
                 return `<img 
               src="${attachmentUrl}" 
-              alt="${attachmentName}" 
-              style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px;"
-              onerror="console.error('Failed to load attachment:', this.src); this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
-            /><span style="display:none; font-size: 10px; color: #999;">📎</span>`;
+              alt="${attachmentName}"
+              crossorigin="anonymous"
+              style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px; display: inline-block;"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
+            /><span style="display:none; font-size: 18px; color: #999; margin: 2px;">📎</span>`;
               })
               .join("");
 
-            attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">${attachmentImages}</div>`;
+            attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 2px; align-items: center; justify-content: center;">${attachmentImages}</div>`;
           }
 
           return `
@@ -1003,8 +1012,15 @@ export class JobSheetPDFGenerator {
                     beforeImageUrl
                       ? `<img src="${beforeImageUrl}" 
                          alt="Before Maintenance" 
-                         class="figma-maintenance-image" 
-                         onerror="console.error('Failed to load before image:', this.src)" />`
+                         class="figma-maintenance-image"
+                         crossorigin="anonymous"
+                         data-cors-warning="true"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                         <div style="display: none; padding: 30px; text-align: center; color: #999; font-size: 12px; border: 2px dashed #ddd; border-radius: 8px; background: #f9f9f9; align-items: center; justify-content: center; min-height: 150px; flex-direction: column;">
+                           <div style="font-size: 40px; margin-bottom: 10px;">📷</div>
+                           <div>Image unavailable</div>
+                           <div style="font-size: 10px; margin-top: 5px; color: #bbb;">(CORS restriction)</div>
+                         </div>`
                       : '<div class="figma-no-image">No image available</div>'
                   }
                   ${
@@ -1020,8 +1036,15 @@ export class JobSheetPDFGenerator {
                     afterImageUrl
                       ? `<img src="${afterImageUrl}" 
                          alt="After Maintenance" 
-                         class="figma-maintenance-image" 
-                         onerror="console.error('Failed to load after image:', this.src)" />`
+                         class="figma-maintenance-image"
+                         crossorigin="anonymous"
+                         data-cors-warning="true"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                         <div style="display: none; padding: 30px; text-align: center; color: #999; font-size: 12px; border: 2px dashed #ddd; border-radius: 8px; background: #f9f9f9; align-items: center; justify-content: center; min-height: 150px; flex-direction: column;">
+                           <div style="font-size: 40px; margin-bottom: 10px;">📷</div>
+                           <div>Image unavailable</div>
+                           <div style="font-size: 10px; margin-top: 5px; color: #bbb;">(CORS restriction)</div>
+                         </div>`
                       : '<div class="figma-no-image">No image available</div>'
                   }
                   ${
@@ -1214,15 +1237,15 @@ export class JobSheetPDFGenerator {
           resolve(base64);
         } catch (error) {
           console.error('Error converting image to base64:', error);
-          // If CORS fails, try fetching through API
-          this.fetchImageAsBase64(url).then(resolve).catch(reject);
+          // Don't try fetch API as it will also fail with CORS
+          reject(error);
         }
       };
       
-      img.onerror = () => {
-        console.warn(`Direct image load failed for: ${url}, trying fetch API`);
-        // Fallback to fetch API
-        this.fetchImageAsBase64(url).then(resolve).catch(reject);
+      img.onerror = (error) => {
+        console.warn(`Direct image load failed for: ${url}, CORS issue detected`);
+        // Don't try fetch API as it will also fail with CORS
+        reject(new Error(`Failed to load image: ${url}`));
       };
       
       img.src = url;
