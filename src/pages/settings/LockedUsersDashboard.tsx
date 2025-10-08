@@ -132,7 +132,7 @@ export const LockedUsersDashboard = () => {
     setUnlocking(true);
     try {
       const response = await fetch(
-        getFullUrl(`/pms/users/${selectedUser.id}/unlock_account.json`),
+        getFullUrl(`/pms/users/${selectedUser.id}/unlock_user.json`),
         {
           method: "GET",
           headers: {
