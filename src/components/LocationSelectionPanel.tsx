@@ -5,9 +5,15 @@ import { X, MoveRight, QrCode, Download, Trash2, Loader2 } from 'lucide-react';
 import { getFullUrl, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
 import { useToast } from '@/hooks/use-toast';
 
+interface LocationObject {
+  site_name: string;
+  building_name: string;
+  [key: string]: unknown;
+}
+
 interface LocationSelectionPanelProps {
   selectedLocations: number[];
-  selectedLocationObjects: any[];
+  selectedLocationObjects: LocationObject[];
   onMoveAssets: () => void;
   onPrintQR: () => void;
   onDownload: () => void;
@@ -35,8 +41,65 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
     onMoveAssets();
   };
 
-  const handlePrintQR = () => {
-    onPrintQR();
+  const handlePrintQR = async () => {
+    if (selectedLocations.length === 0) {
+      toast({
+        title: "No locations selected",
+        description: "Please select locations to print QR codes.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsPrintLoading(true);
+    try {
+      const surveyMappingIds = selectedLocations.join(',');
+      const apiUrl = getFullUrl(`/survey_mappings/print_qr_codes?survey_mapping_ids=${surveyMappingIds}`);
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to print QR codes: ${response.status}`);
+      }
+
+      // Assuming the API returns a blob or file response
+      const blob = await response.blob();
+
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary link element and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `qr_codes_${surveyMappingIds}.pdf`; // or whatever format the API returns
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "QR Codes Generated",
+        description: `Successfully generated QR codes for ${selectedLocations.length} location(s).`,
+      });
+
+    } catch (error) {
+      console.error('Error printing QR codes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate QR codes. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsPrintLoading(false);
+    }
   };
 
   const handleDownload = () => {
