@@ -74,14 +74,13 @@ const CurrencyPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const payload = {
-                currency: {
-                    currency: formData.currency,
-                    symbol: formData.symbol,
-                },
-            };
-
             if (editingCurrency) {
+                const payload = {
+                    currency: {
+                        currency: formData.currency,
+                        symbol: formData.symbol,
+                    },
+                };
                 await dispatch(
                     updateCurrency({
                         baseUrl,
@@ -93,6 +92,14 @@ const CurrencyPage = () => {
                 toast.success("Currency updated successfully");
                 await dispatch(getCurrency({ baseUrl, token, id: localStorage.getItem('selectedSiteId') }));
             } else {
+                const payload = {
+                    currency: {
+                        pms_company_setup_id: localStorage.getItem('selectedCompanyId'),
+                        currency: formData.currency,
+                        symbol: formData.symbol,
+                    },
+                    pms_site_ids: formData.sites,
+                };
                 await dispatch(
                     addCurrency({ data: payload, baseUrl: baseUrl!, token: token! }) as any
                 );
