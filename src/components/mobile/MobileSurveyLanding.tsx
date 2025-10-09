@@ -121,16 +121,22 @@ export const MobileSurveyLanding: React.FC = () => {
   console.log("Negative cmnt1", negativeComments1);
   console.log("Negative cmnt2", negativeComments2);
   console.log("Negative cmnt3", negativeComments3);
+  console.log("showGenericTags:", showGenericTags);
+  console.log("pendingNegativeType:", pendingNegativeType);
+  console.log("currentQuestionIndex:", currentQuestionIndex);
 
   // Get the appropriate negative comment state based on current question index
   const getCurrentNegativeComments = (): string => {
     switch (currentQuestionIndex) {
-      case 0:
+      case 0: {
         return negativeComments1;
-      case 1:
+      }
+      case 1: {
         return negativeComments2;
-      case 2:
+      }
+      case 2: {
         return negativeComments3;
+      }
       default:
         return negativeComments; // fallback to original for any additional questions
     }
@@ -236,7 +242,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
   // Handle option selection for multiple choice
   // Auto-progress based on selection (positive/negative)
-  const handleOptionSelect = (option: SurveyOption) => {
+  const handleOptionSelect = (option: SurveyOption): void => {
     setSelectedOptions([option]);
 
     // Auto-progress after selection
@@ -248,15 +254,28 @@ export const MobileSurveyLanding: React.FC = () => {
 
       // Check for negative option (option_type === 'n') from API response
       const hasNegative = option.option_type === "n";
+      console.log("Option selected:", option);
+      console.log("Has negative:", hasNegative);
+      console.log(
+        "Generic tags available:",
+        currentQuestion.generic_tags?.length || 0
+      );
+      console.log(
+        "Current question generic_tags:",
+        currentQuestion.generic_tags
+      );
+
       if (
         hasNegative &&
         currentQuestion.generic_tags &&
         currentQuestion.generic_tags.length > 0
       ) {
         // Negative response - go to generic tags page
+        console.log("Showing generic tags for negative response");
         setPendingNegativeType("multiple");
         setPendingNegativeAnswer([option]);
         setShowGenericTags(true);
+        return; // Important: exit early to prevent auto-progress
       } else {
         // Positive response - auto-progress
         // Save with the selected option data - pass option directly to ensure it's included
@@ -296,11 +315,6 @@ export const MobileSurveyLanding: React.FC = () => {
 
       const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
 
-      // Check if any rating option has option_type === 'n' for negative flow
-      const hasNegativeOption = currentQuestion.snag_quest_options?.some(
-        (option) => option.option_type === "n"
-      );
-
       // For rating questions, check if the selected rating corresponds to a negative option
       // Map rating to option index based on API options count
       const ratingToOptionIndex = Array.from(
@@ -320,12 +334,21 @@ export const MobileSurveyLanding: React.FC = () => {
         currentQuestion.snag_quest_options?.[selectedOptionMapping.optionIndex];
       const isNegativeRating = selectedOption?.option_type === "n";
 
+      console.log("Rating selected:", rating);
+      console.log("Selected option:", selectedOption);
+      console.log("Is negative rating:", isNegativeRating);
+      console.log(
+        "Generic tags available:",
+        currentQuestion.generic_tags?.length || 0
+      );
+
       if (
         isNegativeRating &&
         currentQuestion.generic_tags &&
         currentQuestion.generic_tags.length > 0
       ) {
         // Negative response - go to generic tags page
+        console.log("Showing generic tags for negative rating");
         setPendingNegativeType("rating");
         // Store both rating and the corresponding option for option_id
         setPendingNegativeAnswer({
@@ -333,6 +356,7 @@ export const MobileSurveyLanding: React.FC = () => {
           option: selectedOption,
         });
         setShowGenericTags(true);
+        return; // Important: exit early to prevent auto-progress
       } else {
         // Positive response - auto-progress
         // Save with the rating data
@@ -356,15 +380,17 @@ export const MobileSurveyLanding: React.FC = () => {
   const handleEmojiSelect = (rating: number, emoji: string, label: string) => {
     setSelectedRating(rating);
     const currentQuestion = getCurrentQuestion();
+    if (!currentQuestion) return;
+
     const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
 
     // For emoji/smiley questions, check if the selected rating corresponds to a negative option
-    // Map rating to option index based on API options count
+    // Map rating to option index based on API options count (default order: first option = highest rating)
     const ratingToOptionIndex = Array.from(
-      { length: currentQuestion?.snag_quest_options?.length || 5 },
+      { length: currentQuestion.snag_quest_options?.length || 5 },
       (_, index) => ({
-        rating: index + 1,
-        optionIndex: currentQuestion.snag_quest_options.length - 1 - index,
+        rating: currentQuestion.snag_quest_options!.length - index, // Highest rating first
+        optionIndex: index,
       })
     );
 
@@ -374,17 +400,27 @@ export const MobileSurveyLanding: React.FC = () => {
 
     const selectedOption =
       selectedOptionMapping &&
-      currentQuestion?.snag_quest_options?.[selectedOptionMapping.optionIndex];
+      currentQuestion.snag_quest_options?.[selectedOptionMapping.optionIndex];
     const isNegativeEmoji = selectedOption?.option_type === "n";
+
+    console.log("Emoji selected:", { rating, emoji, label });
+    console.log("Selected option:", selectedOption);
+    console.log("Is negative emoji:", isNegativeEmoji);
+    console.log(
+      "Generic tags available:",
+      currentQuestion.generic_tags?.length || 0
+    );
 
     if (
       isNegativeEmoji &&
-      currentQuestion?.generic_tags &&
+      currentQuestion.generic_tags &&
       currentQuestion.generic_tags.length > 0
     ) {
+      console.log("Showing generic tags for negative emoji");
       setPendingNegativeType(currentQuestion.qtype as "emoji" | "smiley");
       setPendingNegativeAnswer({ rating, emoji, label });
       setShowGenericTags(true);
+      return; // Important: exit early to prevent auto-progress
     } else {
       // For good ratings or no tags
       const answerData = saveCurrentAnswer(rating, emoji, label);
@@ -594,13 +630,12 @@ export const MobileSurveyLanding: React.FC = () => {
               (q) => q.id === currentQuestion.id
             );
             if (questionData?.snag_quest_options) {
-              // Map rating to option based on API structure
+              // Map rating to option based on API structure (default order: first option = highest rating)
               const ratingToOptionMapping = Array.from(
                 { length: questionData.snag_quest_options.length },
                 (_, index) => ({
-                  rating: index + 1,
-                  optionIndex:
-                    questionData.snag_quest_options.length - 1 - index,
+                  rating: questionData.snag_quest_options.length - index, // Highest rating first
+                  optionIndex: index,
                 })
               );
               const mapping = ratingToOptionMapping.find(
@@ -617,7 +652,7 @@ export const MobileSurveyLanding: React.FC = () => {
           }
           break;
 
-        case "rating":
+        case "rating": {
           if (currentAnswer.rating !== undefined) {
             surveyResponseItem.rating = currentAnswer.rating;
             surveyResponseItem.level_id = currentAnswer.rating; // New field: level_id
@@ -645,13 +680,12 @@ export const MobileSurveyLanding: React.FC = () => {
               (q) => q.id === currentQuestion.id
             );
             if (questionData?.snag_quest_options) {
-              // Map rating to option based on API structure
+              // Map rating to option based on API structure (default order: first option = highest rating)
               const ratingToOptionMapping = Array.from(
                 { length: questionData.snag_quest_options.length },
                 (_, index) => ({
-                  rating: index + 1,
-                  optionIndex:
-                    questionData.snag_quest_options.length - 1 - index,
+                  rating: questionData.snag_quest_options.length - index, // Highest rating first
+                  optionIndex: index,
                 })
               );
               const mapping = ratingToOptionMapping.find(
@@ -667,6 +701,7 @@ export const MobileSurveyLanding: React.FC = () => {
             }
           }
           break;
+        }
 
         case "input":
         case "text":
@@ -796,13 +831,12 @@ export const MobileSurveyLanding: React.FC = () => {
               (q) => q.id === currentQuestion.id
             );
             if (questionData?.snag_quest_options) {
-              // Map rating to option based on API structure
+              // Map rating to option based on API structure (default order: first option = highest rating)
               const ratingToOptionMapping = Array.from(
                 { length: questionData.snag_quest_options.length },
                 (_, index) => ({
-                  rating: index + 1,
-                  optionIndex:
-                    questionData.snag_quest_options.length - 1 - index,
+                  rating: questionData.snag_quest_options.length - index, // Highest rating first
+                  optionIndex: index,
                 })
               );
               const mapping = ratingToOptionMapping.find(
@@ -819,7 +853,7 @@ export const MobileSurveyLanding: React.FC = () => {
           }
           break;
 
-        case "rating":
+        case "rating": {
           if (answerData.rating !== undefined) {
             surveyResponseItem.rating = answerData.rating;
             surveyResponseItem.level_id = answerData.rating; // New field: level_id
@@ -842,6 +876,7 @@ export const MobileSurveyLanding: React.FC = () => {
             surveyResponseItem.option_id = answerData.optionId;
           }
           break;
+        }
 
         case "input":
         case "text":
@@ -1087,12 +1122,12 @@ export const MobileSurveyLanding: React.FC = () => {
             // For emoji questions, find and add option_id from API response
             if (answer.rating !== undefined) {
               if (question.snag_quest_options) {
-                // Map rating to option based on API structure
+                // Map rating to option based on API structure (default order: first option = highest rating)
                 const ratingToOptionMapping = Array.from(
                   { length: question.snag_quest_options.length },
                   (_, index) => ({
-                    rating: index + 1,
-                    optionIndex: question.snag_quest_options.length - 1 - index,
+                    rating: question.snag_quest_options.length - index, // Highest rating first
+                    optionIndex: index,
                   })
                 );
                 const mapping = ratingToOptionMapping.find(
@@ -1114,7 +1149,7 @@ export const MobileSurveyLanding: React.FC = () => {
             }
             break;
 
-          case "rating":
+          case "rating": {
             if (answer.rating !== undefined) {
               surveyResponseItem.rating = answer.rating;
               surveyResponseItem.level_id = answer.rating; // New field: level_id
@@ -1161,6 +1196,7 @@ export const MobileSurveyLanding: React.FC = () => {
               }
             }
             break;
+          }
 
           case "input":
           case "text":
@@ -1248,17 +1284,14 @@ export const MobileSurveyLanding: React.FC = () => {
       { emoji: "😞", label: "Terrible" },
     ];
 
-    // Reverse the order so that the first API option is the lowest rating, last is highest
-    return question.snag_quest_options
-      .slice()
-      .reverse()
-      .map((option, index) => ({
-        rating: index + 1, // 1 = lowest, up to N = highest
-        emoji: emojiMapping[index]?.emoji || "😐",
-        label: option.qname,
-        optionId: option.id,
-        option: option,
-      }));
+    // Use default order so that the first API option is the highest rating, last is lowest
+    return question.snag_quest_options.map((option, index) => ({
+      rating: question.snag_quest_options.length - index, // First option = highest rating
+      emoji: emojiMapping[index]?.emoji || "😐",
+      label: option.qname,
+      optionId: option.id,
+      option: option,
+    }));
   };
 
   // Get rating options from API response
@@ -1366,7 +1399,7 @@ export const MobileSurveyLanding: React.FC = () => {
         {/* Header with Logo */}
         <div className="bg-gray-50 py-4 px-4 text-center">
           <div className="flex justify-center items-center">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center overflow-hidden">
               {window.location.origin === "https://oig.gophygital.work" ? (
                 <img
                   src="/Without bkg.svg"
@@ -1377,12 +1410,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 <img
                   src="/gophygital-logo-min.jpg"
                   alt="Gophygital Logo"
-                  className="bg-white rounded"
-                  style={{
-                    backgroundColor: "#fff",
-                    maxWidth: "200%",
-                    height: "auto",
-                  }}
+                  className="w-full h-full object-contain bg-white rounded"
                 />
               )}
             </div>
@@ -1459,12 +1487,33 @@ export const MobileSurveyLanding: React.FC = () => {
   const isLastStep =
     currentQuestionIndex >= surveyData.snag_checklist.questions_count;
 
+  // Debug current question data
+  if (currentQuestion) {
+    console.log("Current question:", currentQuestion);
+    console.log("Current question generic_tags:", currentQuestion.generic_tags);
+    console.log(
+      "Generic tags length:",
+      currentQuestion.generic_tags?.length || 0
+    );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div
+      className="min-h-screen flex flex-col"
+      style={{
+        backgroundImage: `url(${
+          surveyData?.snag_checklist?.survey_attachment?.url || "/9019830 1.png"
+        })`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        filter: "brightness(0.85)",
+      }}
+    >
       {/* Header with Logo */}
-      <div className="bg-gray-50 py-4 px-4 text-center">
-        <div className="flex justify-center items-center">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+      <div className="bg-transparent py-4 px-4 mt-12">
+        <div className="flex justify-end items-start">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center overflow-hidden">
             {window.location.origin === "https://oig.gophygital.work" ? (
               <img
                 src="/Without bkg.svg"
@@ -1475,12 +1524,7 @@ export const MobileSurveyLanding: React.FC = () => {
               <img
                 src="/gophygital-logo-min.jpg"
                 alt="Gophygital Logo"
-                className="bg-white rounded"
-                style={{
-                  backgroundColor: "#fff",
-                  maxWidth: "200%",
-                  height: "auto",
-                }}
+                className="w-full h-full object-contain"
               />
             )}
           </div>
@@ -1489,27 +1533,20 @@ export const MobileSurveyLanding: React.FC = () => {
 
       {/* Progress Bar for Multi-Question Surveys */}
       {isMultiQuestion && (
-        <div className="bg-white px-4 sm:px-6 pb-3 shadow-sm">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs sm:text-sm text-gray-600">
-              Question{" "}
-              {Math.min(
-                currentQuestionIndex + 1,
-                surveyData.snag_checklist.questions_count
-              )}{" "}
-              of {surveyData.snag_checklist.questions_count}
-            </span>
-            <span className="text-xs sm:text-sm text-gray-600">
-              {getProgressPercentage()}%
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${getProgressPercentage()}%` }}
-            ></div>
-          </div>
-        </div>
+        <div></div>
+        // <div className="bg-white px-4 sm:px-6 pb-3 shadow-sm">
+        //   <div className="flex justify-between items-center mb-2">
+        //     {/* <span className="text-xs sm:text-sm text-gray-600">
+        //       {getProgressPercentage()}%
+        //     </span> */}
+        //   </div>
+        //   {/* <div className="w-full bg-gray-200 rounded-full h-2">
+        //     <div
+        //       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+        //       style={{ width: `${getProgressPercentage()}%` }}
+        //     ></div>
+        //   </div> */}
+        // </div>
       )}
 
       {/* Main Content */}
@@ -1523,11 +1560,12 @@ export const MobileSurveyLanding: React.FC = () => {
             (isLastStep && isMultiQuestion)) && (
             <div className="w-full flex justify-start mb-4">
               <button
+                type="button"
                 onClick={moveToPreviousQuestion}
-                className="flex items-center text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors"
+                className="flex items-center text-white/80 hover:text-white/100 text-sm font-medium transition-colors"
               >
                 <svg
-                  className="w-4 h-4 mr-1"
+                  className="w-4 h-4 mr-1 text-white/80"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1544,21 +1582,28 @@ export const MobileSurveyLanding: React.FC = () => {
             </div>
           )}
 
-          <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-black mb-4 text-center leading-tight">
-            {!showGenericTags && surveyData.survey_title}
-          </h1>
-
           {/* Show image only on first question or single question surveys */}
           {!showGenericTags && (
-            <div className="text-center mb-6">
-              <img
-                src={
-                  surveyData?.snag_checklist?.survey_attachment?.url ||
-                  "/9019830 1.png"
-                }
-                alt="Survey Illustration"
-                className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto"
-              />
+            <div
+              className="relative w-full mb-6"
+              style={{ minHeight: "240px" }}
+            >
+              <div
+                className="absolute inset-0 w-full h-full rounded-xl overflow-hidden"
+                style={{
+                  backgroundImage: `url(${
+                    surveyData?.snag_checklist?.survey_attachment?.[0]?.url ||
+                    ""
+                  })`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                  filter: "brightness(0.85)",
+                }}
+              ></div>
+              <div className="relative z-10 flex items-center justify-center w-full h-full">
+                {/* Optionally overlay content here */}
+              </div>
             </div>
           )}
 
@@ -1585,6 +1630,7 @@ export const MobileSurveyLanding: React.FC = () => {
               </div>
 
               <button
+                type="button"
                 onClick={handleSubmitSurvey}
                 disabled={isSubmitting}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
@@ -1601,29 +1647,59 @@ export const MobileSurveyLanding: React.FC = () => {
             </div>
           )}
 
+          <div className="w-full mt-20">
+            {/* Progress indicator */}
+            <div className="flex items-center space-x-3">
+              <span className="text-gray-50">
+                {!showGenericTags && (
+                  <>
+                    {Math.min(
+                      currentQuestionIndex + 1,
+                      surveyData.snag_checklist.questions_count
+                    )}
+                    /{surveyData.snag_checklist.questions_count}
+                  </>
+                )}
+              </span>
+            </div>
+
+            {/* Main title */}
+            <h1 className="text-3xl sm:text-4xl font-bold text-white/100 mb-2">
+              {!showGenericTags && surveyData?.survey_title}
+            </h1>
+
+            {/* Subtitle - only show when we have a current question and not showing generic tags */}
+            {currentQuestion && !showGenericTags && (
+              <p className="text-3xl  text-white/90 mb-6">
+                {currentQuestion.descr}
+              </p>
+            )}
+          </div>
+
           {/* Show Current Question */}
           {currentQuestion && !isLastStep && (
-            <div className="w-full space-y-4 mt-12">
-              {!showGenericTags && (
+            <div className="w-full space-y-4 ">
+              {/* {!showGenericTags && (
                 <div className="text-center">
                   <h3 className="text-lg font-semibold text-black leading-tight">
                     {currentQuestion.descr}
                   </h3>
                 </div>
               )}
-
+           */}
               <div className="space-y-4">
                 {/* Multiple Choice Question */}
                 {currentQuestion.qtype === "multiple" && !showGenericTags && (
                   <div className="space-y-4">
                     {currentQuestion.snag_quest_options.map((option) => (
                       <button
+                        type="button"
                         key={option.id}
                         onClick={() => handleOptionSelect(option)}
-                        className={`w-full p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${
+                        className={`w-full p-3 sm:p-4 rounded-xl border-2 text-left transition-all ${
                           selectedOptions.some((opt) => opt.id === option.id)
                             ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-200 bg-white hover:border-gray-300"
+                            : "border-gray-200 bg-white hover:border-black/30"
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -1669,6 +1745,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     </div>
 
                     <button
+                      type="button"
                       onClick={async () => {
                         const isSingleQuestion =
                           surveyData!.snag_checklist.questions_count === 1;
@@ -1708,6 +1785,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     </div>
 
                     <button
+                      type="button"
                       onClick={async () => {
                         const isSingleQuestion =
                           surveyData!.snag_checklist.questions_count === 1;
@@ -1747,6 +1825,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     </div>
 
                     <button
+                      type="button"
                       onClick={async () => {
                         const isSingleQuestion =
                           surveyData!.snag_checklist.questions_count === 1;
@@ -1774,9 +1853,10 @@ export const MobileSurveyLanding: React.FC = () => {
                 {/* Rating Question */}
                 {currentQuestion.qtype === "rating" && !showGenericTags && (
                   <>
-                    <div className="flex justify-center items-center space-x-2 sm:space-x-3 mt-20">
+                    <div className="flex justify-center items-center space-x-2 sm:space-x-3">
                       {getRatingOptions(currentQuestion).map((rating) => (
                         <button
+                          type="button"
                           key={rating}
                           onClick={() => handleRatingSelect(rating)}
                           className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all ${
@@ -1813,6 +1893,7 @@ export const MobileSurveyLanding: React.FC = () => {
                       <div className="flex justify-center items-start gap-2 sm:gap-3">
                         {getEmojiOptions(currentQuestion).map((option) => (
                           <button
+                            type="button"
                             key={option.rating}
                             onClick={() =>
                               handleEmojiSelect(
@@ -1821,7 +1902,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                 option.label
                               )
                             }
-                            className="flex flex-col items-center justify-start p-2 sm:p-3 rounded-lg hover:bg-gray-100 transition-colors flex-1 min-w-0"
+                            className="flex flex-col rounded-xl items-center justify-start p-2 sm:p-3 hover:bg-white/60 transition-colors flex-1 min-w-0"
                           >
                             <span className="text-3xl sm:text-4xl mb-2">
                               {option.emoji}
@@ -1839,11 +1920,11 @@ export const MobileSurveyLanding: React.FC = () => {
                 {showGenericTags && (
                   <>
                     <div className="text-center">
-                      <h4 className="text-lg font-semibold text-black mb-2">
+                      <h4 className="text-lg font-semibold text-white mb-2">
                         What specifically needs improvement?
                       </h4>
                       {selectedTags.length > 0 && (
-                        <p className="text-sm text-blue-600">
+                        <p className="text-sm text-blue-300">
                           {selectedTags.length} item
                           {selectedTags.length > 1 ? "s" : ""} selected
                         </p>
@@ -1857,6 +1938,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         );
                         return (
                           <button
+                            type="button"
                             key={tag.id}
                             onClick={() => handleGenericTagClick(tag)}
                             className={`p-3 sm:p-4 rounded-lg border-2 text-center transition-all ${
@@ -1905,12 +1987,13 @@ export const MobileSurveyLanding: React.FC = () => {
                     </div>
 
                     <button
+                      type="button"
                       onClick={async () => {
                         const isSingleQuestion =
                           surveyData!.snag_checklist.questions_count === 1;
 
                         // Save answer with tags and description, then proceed
-                        let answerData;
+                        let answerData: SurveyAnswers[number] | undefined;
                         const currentComments = getCurrentNegativeComments();
 
                         if (
@@ -2003,6 +2086,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => {
                         setShowGenericTags(false);
                         setSelectedTags([]);
