@@ -61,6 +61,25 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
   const [loadingUsers, setLoadingUsers] = useState(false);
   const { toast } = useToast();
 
+  // Add custom CSS for multi-select dropdown
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .css-1ng61k7-MuiNativeSelect-root-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input.MuiSelect-select {
+        height: 16px;
+        text-overflow: ellipsis;
+        white-space: normal;
+        overflow: hidden;
+        overflow-y: auto;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   // Reschedule form state
   const [rescheduleData, setRescheduleData] = useState({
     scheduleDate: new Date().toISOString().split("T")[0],
@@ -70,7 +89,8 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
 
   // Reassign form state
   const [reassignData, setReassignData] = useState({
-    assignedUserId: "",
+    assignedUserIds: [] as string[],
+    type: "checklist" as "checklist" | "task",
   });
 
   // Field styles for MUI components (exact same as TaskFilterDialog)
@@ -282,10 +302,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
   };
 
   const handleBulkReassign = async () => {
-    if (!reassignData.assignedUserId) {
+    if (reassignData.assignedUserIds.length === 0) {
       toast({
         title: "Error",
-        description: "Please select a user to reassign tasks to",
+        description: "Please select at least one user to reassign tasks to",
         variant: "destructive",
       });
       return;
@@ -298,7 +318,8 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     try {
       const payload = {
         task_occurrence_ids: selectedTasks.map((task) => parseInt(task.id)),
-        backup_assigned_to_id: parseInt(reassignData.assignedUserId),
+        backup_assigned_to_id: reassignData.assignedUserIds.map((id) => parseInt(id)),
+        type: reassignData.type,
       };
 
       await bulkTaskService.bulkReassign(payload);
@@ -318,7 +339,8 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
 
       // Reset form
       setReassignData({
-        assignedUserId: "",
+        assignedUserIds: [],
+        type: "checklist",
       });
     } catch (error) {
       console.error("Bulk reassign failed:", error);
@@ -560,16 +582,71 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
           <div className="space-y-6 p-4">
             <div>
               <h3 className="font-medium mb-4" style={{ color: "#C72030" }}>
+                Reassign Type
+              </h3>
+              <div className="flex gap-6">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="type-checklist"
+                    name="reassign-type"
+                    value="checklist"
+                    checked={reassignData.type === "checklist"}
+                    onChange={(e) =>
+                      setReassignData((prev) => ({
+                        ...prev,
+                        type: e.target.value as "checklist" | "task",
+                      }))
+                    }
+                    className="w-4 h-4 cursor-pointer accent-[#C72030]"
+                    style={{ accentColor: '#C72030' }}
+                  />
+                  <label
+                    htmlFor="type-checklist"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Checklist
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="type-task"
+                    name="reassign-type"
+                    value="task"
+                    checked={reassignData.type === "task"}
+                    onChange={(e) =>
+                      setReassignData((prev) => ({
+                        ...prev,
+                        type: e.target.value as "checklist" | "task",
+                      }))
+                    }
+                    className="w-4 h-4 cursor-pointer accent-[#C72030]"
+                    style={{ accentColor: '#C72030' }}
+                  />
+                  <label
+                    htmlFor="type-task"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Task
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-4" style={{ color: "#C72030" }}>
                 Reassign To
               </h3>
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Assigned To</InputLabel>
                 <MuiSelect
-                  value={reassignData.assignedUserId}
+                  multiple
+                  value={reassignData.assignedUserIds}
                   onChange={(e) =>
                     setReassignData((prev) => ({
                       ...prev,
-                      assignedUserId: e.target.value,
+                      assignedUserIds: typeof e.target.value === 'string' ? [e.target.value] : e.target.value,
                     }))
                   }
                   label="Assigned To"
@@ -577,10 +654,16 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                   disabled={loadingUsers}
                   MenuProps={selectMenuProps}
                   sx={fieldStyles}
+                  renderValue={(selected) => {
+                    if (selected.length === 0) {
+                      return <em>Select Users</em>;
+                    }
+                    return users
+                      .filter((user) => selected.includes(user.id))
+                      .map((user) => user.full_name)
+                      .join(", ");
+                  }}
                 >
-                  <MenuItem value="">
-                    <em>Select User</em>
-                  </MenuItem>
                   {loadingUsers ? (
                     <MenuItem disabled>
                       <div className="flex items-center gap-2">
@@ -591,6 +674,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                   ) : (
                     users.map((user) => (
                       <MenuItem key={user.id} value={user.id}>
+                        <Checkbox 
+                          checked={reassignData.assignedUserIds.includes(user.id)}
+                          className="mr-2"
+                        />
                         {user.full_name}
                       </MenuItem>
                     ))
@@ -604,7 +691,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                 onClick={handleBulkReassign}
                 style={{ backgroundColor: '#C72030' }}
                 className="text-white hover:bg-[#C72030]/90 flex-1 h-11"
-                disabled={!reassignData.assignedUserId || loadingUsers}
+                disabled={reassignData.assignedUserIds.length === 0 || loadingUsers}
               >
                 Reassign 
               </Button>
