@@ -3001,7 +3001,18 @@ const AddAssetPage = () => {
     }
 
     // Depreciation validation - only validate depreciation fields if purchase cost is entered
-    if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0) {
+    // and only for asset categories that have useful life fields
+    const categoriesWithUsefulLife = [
+      // "Leasehold Improvement",
+      "Furniture & Fixtures", 
+      "IT Equipment",
+      "Machinery & Equipment",
+      "Meter",
+      "Tools & Instruments"
+    ];
+    
+    if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0 && 
+        categoriesWithUsefulLife.includes(selectedAssetCategory)) {
       if (!formData.useful_life) {
         toast.error("Useful Life Required", {
           description:

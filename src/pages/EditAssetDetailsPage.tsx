@@ -3728,41 +3728,19 @@ export const EditAssetDetailsPage = () => {
       }
     }
 
-    // Depreciation validation (only when toggle is on AND category supports it)
-    const effectiveCategory = getEffectiveCategory();
-    const supportsDep = effectiveCategory && !["Building", "Land", "Leasehold Improvement"].includes(String(effectiveCategory));
-    // if (depreciationToggle && supportsDep) {
-    //   if (!formData.useful_life) {
-    //     toast.error("Useful Life Required", {
-    //       description:
-    //         "Please enter the useful life since Depreciation is enabled.",
-    //       duration: 4000,
-    //     });
-    //     return ["Useful Life is required for Depreciation"];
-    //   }
-
-    //   if (!formData.salvage_value) {
-    //     toast.error("Salvage Value Required", {
-    //       description:
-    //         "Please enter the salvage value since Depreciation is enabled.",
-    //       duration: 4000,
-    //     });
-    //     return ["Salvage Value is required for Depreciation"];
-    //   }
-
-    //   if (!formData.depreciation_rate) {
-    //     toast.error("Depreciation Rate Required", {
-    //       description:
-    //         "Please enter the depreciation rate since Depreciation is enabled.",
-    //       duration: 4000,
-    //     });
-    //     return ["Depreciation Rate is required for Depreciation"];
-    //   }
-    // }
-
+    // Depreciation validation - only validate depreciation fields if purchase cost is entered
+    // and only for asset categories that have useful life fields
+    const categoriesWithUsefulLife = [
+      // "Leasehold Improvement",
+      "Furniture & Fixtures", 
+      "IT Equipment",
+      "Machinery & Equipment",
+      "Meter",
+      "Tools & Instruments"
+    ];
     
-
-      if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0) {
+    if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0 && 
+        categoriesWithUsefulLife.includes(selectedAssetCategory)) {
       if (!formData.useful_life) {
         toast.error("Useful Life Required", {
           description:
