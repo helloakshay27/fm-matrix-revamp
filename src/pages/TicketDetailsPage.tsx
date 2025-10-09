@@ -1726,18 +1726,14 @@ export const TicketDetailsPage = () => {
     }
   };
   useEffect(() => {
-    if (ticketData?.ticket_ageing_minutes) {
-      // Convert minutes to seconds for real-time countdown
-      setCurrentAgeing(ticketData.ticket_ageing_minutes * 60);
-
-      // Update ageing every second for real-time countdown
-      const interval = setInterval(() => {
-        setCurrentAgeing(prev => prev + 1); // Only increment by 1
-      }, 1000); // 1000ms = 1 second
-
-      return () => clearInterval(interval);
-    }
-  }, [ticketData?.ticket_ageing_minutes]);
+  if (ticketData?.ticket_ageing_minutes) {
+    setCurrentAgeing(ticketData.ticket_ageing_minutes * 60);
+    const interval = setInterval(() => {
+      setCurrentAgeing(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }
+}, [ticketData?.ticket_ageing_minutes]);
 
   // Add useEffect to trigger balance TAT recalculation every second for real-time countdown
   useEffect(() => {
@@ -2710,10 +2706,13 @@ export const TicketDetailsPage = () => {
                               </svg>
                               <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">
                                 {
-                                  ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
-                                    ? '00:00:00'
-                                    : formatTicketAgeing(currentAgeing)
-                                }
+  ticketData.issue_status.toLowerCase() === "complete" ||
+  ticketData.issue_status.toLowerCase() === "close" ||
+  ticketData.issue_status.toLowerCase() === "closed" ||
+  ticketData.issue_status.toLowerCase() === "on hold"
+    ? '00:00:00:00'
+    : formatTicketAgeing(currentAgeing)
+}
                               </span>
                             </div>
                             <div className="flex justify-center items-center gap-2 mb-2">
@@ -5076,10 +5075,13 @@ export const TicketDetailsPage = () => {
                               </svg>
                               <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">
                                 {
-                                  ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
-                                    ? '00:00:00'
-                                    : formatTicketAgeing(currentAgeing)
-                                }
+  ticketData.issue_status.toLowerCase() === "complete" ||
+  ticketData.issue_status.toLowerCase() === "close" ||
+  ticketData.issue_status.toLowerCase() === "closed" ||
+  ticketData.issue_status.toLowerCase() === "on hold"
+    ? '00:00:00:00'
+    : formatTicketAgeing(currentAgeing)
+}
                               </span>
                             </div>
                             <div className="flex justify-center items-center gap-2 mb-2">
