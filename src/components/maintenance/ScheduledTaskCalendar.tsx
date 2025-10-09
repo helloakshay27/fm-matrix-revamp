@@ -240,7 +240,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         >
           <Filter className="h-4 w-4" />
           {activeFilterCount > 0 && (
-            <span className="ml-1 px-2 py-1 text-xs bg-purple-600 text-white rounded-full">
+            <span className="ml-1 px-2 py-1 text-xs bg-red-600 text-white rounded-full">
               {activeFilterCount}
             </span>
           )}
