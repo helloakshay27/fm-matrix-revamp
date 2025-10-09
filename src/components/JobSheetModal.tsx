@@ -30,14 +30,14 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const pdfGenerator = new JobSheetPDFGenerator();
 
-  React.useEffect(() => {
-    if (jobSheetData?.data?.job_sheet?.task_details?.task_comments || jobSheetData?.job_sheet?.task_details?.task_comments) {
-      setJobSheetComments(
-        jobSheetData?.data?.job_sheet?.task_details?.task_comments || 
-        jobSheetData?.job_sheet?.task_details?.task_comments
-      );
-    }
-  }, [jobSheetData]);
+  // React.useEffect(() => {
+  //   if (jobSheetData?.data?.job_sheet?.task_details?.task_comments || jobSheetData?.job_sheet?.task_details?.task_comments) {
+  //     setJobSheetComments(
+  //       jobSheetData?.data?.job_sheet?.task_details?.task_comments || 
+  //       jobSheetData?.job_sheet?.task_details?.task_comments
+  //     );
+  //   }
+  // }, [jobSheetData]);
 
   const handleJobSheetUpdate = async () => {
     if (!taskId) return;

@@ -1342,7 +1342,7 @@ export const TaskDetailsPage = () => {
         {/* Main Content */}
         <div className="space-y-6">
           {/* Pre-Post Inspection Info - Conditional rendering based on steps and before_after_enabled */}
-          {taskDetails?.steps == 3 && (
+          {taskDetails?.steps == 3 && taskDetails?.task_status== "Closed" && (
             <Card className="w-full bg-transparent shadow-none border-none">
               <div className="figma-card-header">
                 <div className="flex items-center gap-3">
@@ -1353,60 +1353,64 @@ export const TaskDetailsPage = () => {
                 </div>
               </div>
               <div className="figma-card-content">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">
-                        Before
-                      </h4>
-                      <div className="w-32 h-24 bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden">
-                        {getBeforeImageUrl() ? (
-                          <img
-                            src={getBeforeImageUrl()!}
-                            alt="Before inspection"
-                            className="w-full h-full object-cover rounded-lg"
-                            onError={(e) => handleImageError(e, "before")}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                            <div className="text-xs font-medium">BEFORE</div>
-                            <div className="text-xs mt-1">
-                              No Image Available
-                            </div>
+                <div className="flex gap-10 mb-6">
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900 mb-3">
+                      Before
+                    </h4>
+                    <div 
+                      className="bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden"
+                      style={{ width: '175.165px', height: '175.165px' }}
+                    >
+                      {getBeforeImageUrl() ? (
+                        <img
+                          src={getBeforeImageUrl()!}
+                          alt="Before inspection"
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={(e) => handleImageError(e, "before")}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                          <div className="text-sm font-medium">BEFORE</div>
+                          <div className="text-sm mt-1">
+                            No Image Available
                           </div>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">
-                        After
-                      </h4>
-                      <div className="w-32 h-24 bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden">
-                        {getAfterImageUrl() ? (
-                          <img
-                            src={getAfterImageUrl()!}
-                            alt="After inspection"
-                            className="w-full h-full object-cover rounded-lg"
-                            onError={(e) => handleImageError(e, "after")}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                            <div className="text-xs font-medium">AFTER</div>
-                            <div className="text-xs mt-1">
-                              No Image Available
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="pt-2">
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Name
-                    </label>
-                    <select className="w-48 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option>{getAssignedUserName()}</option>
-                    </select>
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900 mb-3">
+                      After
+                    </h4>
+                    <div 
+                      className="bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden"
+                      style={{ width: '175.165px', height: '175.165px' }}
+                    >
+                      {getAfterImageUrl() ? (
+                        <img
+                          src={getAfterImageUrl()!}
+                          alt="After inspection"
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={(e) => handleImageError(e, "after")}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                          <div className="text-sm font-medium">AFTER</div>
+                          <div className="text-sm mt-1">
+                            No Image Available
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-base font-semibold text-gray-900 mb-3 block">
+                    Name
+                  </label>
+                  <div className="w-80 px-4 py-3 border border-gray-300 rounded-md text-sm bg-gray-50">
+                    {getAssignedUserName()}
                   </div>
                 </div>
               </div>
@@ -1849,17 +1853,16 @@ export const TaskDetailsPage = () => {
           </Card>
 
           {/* Location Details */}
-          <div className="w-full bg-white rounded-lg shadow-sm border">
-            <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <MapPin className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Location Details</h3>
               </div>
-              <h3 className="text-lg font-semibold uppercase text-black">
-                Location Details
-              </h3>
             </div>
-
-            <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+            <div className="figma-card-content">
               <div className="relative w-full px-4">
                 <div
                   className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
@@ -1894,7 +1897,7 @@ export const TaskDetailsPage = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Activity */}
           <Card className="w-full bg-transparent shadow-none border-none">
