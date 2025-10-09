@@ -154,15 +154,24 @@ const MsafeDashboardVI: React.FC = () => {
     const day1ChartRef = useRef<HTMLDivElement | null>(null);
     const trainingChartRef = useRef<HTMLDivElement | null>(null);
 
-    const todayLabel = useMemo(
+    const today = useMemo(() => new Date(), []);
+
+    const weekdayLabel = useMemo(
         () =>
-            new Date().toLocaleDateString(undefined, {
+            today.toLocaleDateString(undefined, {
                 weekday: 'long',
+            }),
+        [today]
+    );
+
+    const dateLabel = useMemo(
+        () =>
+            today.toLocaleDateString(undefined, {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
             }),
-        []
+        [today]
     );
 
     // Cluster options loaded from API
@@ -2436,13 +2445,13 @@ const MsafeDashboardVI: React.FC = () => {
                 </Box>
 
                 {/* Right Section */}
-                <Stack direction="row" alignItems="center" spacing={5}>
+                <Stack direction="row" alignItems="center" spacing={7}>
                     <Box sx={{ textAlign: "left" }}>
                         <Typography
                             sx={{
-                                fontSize: "14px",
-                                opacity: 0.9,
-                                fontWeight: 400,
+                               fontSize: "14px",
+                                fontWeight: 600,
+                                lineHeight: 1.2,
                             }}
                         >
                             Welcome,
@@ -2450,7 +2459,6 @@ const MsafeDashboardVI: React.FC = () => {
                         <Typography
                             sx={{
                                 fontSize: "16px",
-                                fontWeight: 700,
                             }}
                         >
                             {firstName} {lastName}
@@ -2461,21 +2469,23 @@ const MsafeDashboardVI: React.FC = () => {
                         <Typography
                             sx={{
                                 fontSize: "14px",
-                                opacity: 0.9,
-                                fontWeight: 400,
+                                fontWeight: 600,
+                                lineHeight: 1.2,
                             }}
                         >
-                            {todayLabel}
+                            {weekdayLabel}
                         </Typography>
                         <Typography
                             sx={{
                                 fontSize: "14px",
-                                fontWeight: 500,
+                                opacity: 0.8,
+                                fontWeight: 400,
                             }}
                         >
-                            {/* {"2nd April, 2024"} */}
+                            {dateLabel}
                         </Typography>
                     </Box>
+
 
                     {/* <Box sx={{ display: "flex", alignItems: "center" }}>
                         <Avatar
