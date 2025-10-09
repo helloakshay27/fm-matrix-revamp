@@ -182,7 +182,7 @@ export const AddTicketDashboard = () => {
     subCategoryType: '',
     description: '',
     assignedTo: '',
-    proactiveReactive: '',
+    proactiveReactive: '', // will be set by effect below
     adminPriority: '',
     severity: '',
     referenceNumber: '',
@@ -196,6 +196,19 @@ export const AddTicketDashboard = () => {
     floor: '',
     room: ''
   });
+  // Set default proactiveReactive based on onBehalfOf selection
+  useEffect(() => {
+    let defaultValue = '';
+    if (onBehalfOf === 'self' || onBehalfOf === 'fm-user') {
+      defaultValue = 'Proactive';
+    } else if (onBehalfOf === 'occupant-user') {
+      defaultValue = 'Reactive';
+    }
+    setFormData(prev => ({
+      ...prev,
+      proactiveReactive: defaultValue
+    }));
+  }, [onBehalfOf]);
 
   // Load user account
   const loadUserAccount = async () => {
