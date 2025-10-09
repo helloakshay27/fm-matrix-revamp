@@ -161,7 +161,7 @@ export const EditSurveyPage = () => {
   // Destroy IDs tracking for smart deletion
 
   // Emoji and rating constants
-  const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
+  const EMOJIS = ["😁", "😊", "😐", "😟", "😞"];
   const RATING_STARS = ["1-star", "2-star", "3-star", "4-star", "5-star"];
 
   useEffect(() => {

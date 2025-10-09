@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
 // Removed unused imports related to location data to fix linter errors
 
-const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
+const EMOJIS = ["😁", "😊", "😐", "😟", "😞"];
 const RATINGS = ["1", "2", "3", "4", "5"];
 const RATING_STARS = ["1-star", "2-star", "3-star", "4-star", "5-star"];
 
@@ -170,7 +170,7 @@ export const SurveyDetailsPage = () => {
             <CardTitle className="text-lg font-semibold text-gray-900">
               Question Details
             </CardTitle>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               {!loading && snagChecklist && (
                 <>
                   {snagChecklist.check_type && (
@@ -192,7 +192,7 @@ export const SurveyDetailsPage = () => {
                   )}
                 </>
               )}
-            </div>
+            </div> */}
           </div>
         </CardHeader>
         <CardContent className="p-6">
@@ -456,7 +456,7 @@ export const SurveyDetailsPage = () => {
                                             readOnly
                                           />
                                         </div>
-                                        <div>
+                                        {/* <div>
                                           <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Files Uploaded
                                           </label>
@@ -465,56 +465,30 @@ export const SurveyDetailsPage = () => {
                                               ? `${tag.icons.length} file(s) uploaded`
                                               : "No files"}
                                           </div>
-                                        </div>
-                                      </div>
+                                        </div> */}
+                                     
                                       {tag.icons && tag.icons.length > 0 && (
                                         <div className="mt-4">
                                           <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Uploaded Files
                                           </label>
-                                          <div className="space-y-2">
+                                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                             {tag.icons.map((icon: GenericIcon) => (
-                                              <div
-                                                key={icon.id}
-                                                className="flex items-center justify-between p-2 bg-gray-50 rounded border"
-                                              >
-                                                <div className="flex items-center gap-3">
-                                                  <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                                                    <svg
-                                                      className="w-4 h-4 text-blue-600"
-                                                      fill="none"
-                                                      stroke="currentColor"
-                                                      viewBox="0 0 24 24"
-                                                    >
-                                                      <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                                      />
-                                                    </svg>
-                                                  </div>
-                                                  <div>
-                                                    <div className="text-sm font-medium text-gray-900">
-                                                      {icon.file_name}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500">
-                                                      {(icon.file_size / 1024).toFixed(2)} KB
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                                {icon.url && (
-                                                  <img
-                                                    src={icon.url}
-                                                    alt={icon.file_name}
-                                                    className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-                                                  />
-                                                )}
+                                              <div key={icon.id} className="mt-2">
+                                                <img
+                                                  src={icon.url}
+                                                  alt={icon.file_name}
+                                                  className="w-full h-20 object-cover rounded-lg border shadow-sm"
+                                                />
+                                                <p className="text-xs text-gray-500 mt-1 truncate">
+                                                  {icon.file_name}
+                                                </p>
                                               </div>
                                             ))}
                                           </div>
                                         </div>
                                       )}
+                                    </div>
                                     </div>
                                   ))}
                                 </div>
@@ -536,7 +510,7 @@ export const SurveyDetailsPage = () => {
                                 Mandatory
                               </label>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            {/* <div className="flex items-center space-x-2">
                               <Checkbox
                                 id={`img-mandatory-${question.id}`}
                                 checked={question.img_mandatory || false}
@@ -549,7 +523,7 @@ export const SurveyDetailsPage = () => {
                               >
                                 Image Mandatory
                               </label>
-                            </div>
+                            </div> */}
                           </div>
                         </CardContent>
                       </Card>

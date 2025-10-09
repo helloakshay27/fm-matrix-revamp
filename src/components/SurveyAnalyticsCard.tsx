@@ -97,7 +97,7 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
     return (
       <div className="relative flex items-center justify-center">
         <ResponsiveContainer width="100%" height={chartHeight}>
-          <PieChart>
+          <PieChart className="focus:outline-none">
             <Pie
               data={data}
               cx="50%"
@@ -142,10 +142,17 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
               labelLine={false}
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.color}
+                  style={{
+                    outline: 'none',
+                    stroke: 'none'
+                  }}
+                />
               ))}
             </Pie>
-            <Tooltip 
+            <Tooltip
               content={(props: TooltipProps<number, string>) => {
                 const { active, payload } = props;
                 if (active && payload && payload.length) {
