@@ -3113,7 +3113,6 @@ export const TicketDetailsPage = () => {
                                   style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
                                 >
                                   {ticketData.notes ||
-                                    ticketData.heading ||
                                     ticketData.text ||
                                     'No additional notes available'}
                                 </div>
@@ -4155,8 +4154,8 @@ export const TicketDetailsPage = () => {
                     {/* Bottom Row: Review Date & Responsible Person */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                       <div className="flex items-start text-[12px]">
-                        <span className="w-[120px] text-[#6B6B6B]">Review Date</span>
-                        <span className="ml-4 font-semibold text-[#1A1A1A]">
+                        <span className="w-[70px] text-[#6B6B6B]">Review Date</span>
+                        <span className="ml-2 font-semibold text-[#1A1A1A]">
                           {ticketData.review_tracking
                             ? ticketData.review_tracking
                             : '-'}
@@ -5469,7 +5468,6 @@ export const TicketDetailsPage = () => {
                               style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
                             >
                               {ticketData.notes ||
-                                ticketData.heading ||
                                 ticketData.text ||
                                 'No additional notes available'}
                             </div>
@@ -6511,8 +6509,8 @@ export const TicketDetailsPage = () => {
                 {/* Bottom Row: Review Date & Responsible Person */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                   <div className="flex items-start text-[12px]">
-                    <span className="w-[120px] text-[#6B6B6B]">Review Date</span>
-                    <span className="ml-4 font-semibold text-[#1A1A1A]">
+                    <span className="w-[70px] text-[#6B6B6B]">Review Date</span>
+                    <span className="ml-2 font-semibold text-[#1A1A1A]">
                       {ticketData.review_tracking
                         ? ticketData.review_tracking
                         : '-'}
