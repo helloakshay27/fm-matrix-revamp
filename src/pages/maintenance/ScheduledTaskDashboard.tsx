@@ -1028,21 +1028,9 @@ export const ScheduledTaskDashboard = () => {
             })}
           </div>
 
-          {/* Clear Filter Button and Download Button */}
-          {selectedStatus && (
-            <div className="flex justify-start gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedStatus(null)}
-                className="bg-white border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-              >
-                Clear Filter
-              </Button>
-            </div>
-          )}
 
           {/* Task Table */}
-          <div className=" rounded-lg">
+          <div className="rounded-lg">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="text-gray-500">Loading tasks...</div>
