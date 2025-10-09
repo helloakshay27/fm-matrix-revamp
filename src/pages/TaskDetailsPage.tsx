@@ -1849,97 +1849,52 @@ export const TaskDetailsPage = () => {
           </Card>
 
           {/* Location Details */}
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <MapPin className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Location Details</h3>
+          <div className="w-full bg-white rounded-lg shadow-sm border">
+            <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
               </div>
+              <h3 className="text-lg font-semibold uppercase text-black">
+                Location Details
+              </h3>
             </div>
-            <div className="figma-card-content">
-              <div className="relative">
-                {/* Stepper Line */}
+
+            <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+              <div className="relative w-full px-4">
                 <div
-                  className="location-stepper-line absolute top-8 left-6 right-6"
-                  style={{ zIndex: 1 }}
-                ></div>
+                  className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
+                  style={{
+                    left: `calc(9%)`,
+                    right: `calc(9%)`,
+                  }}
+                />
 
-                {/* Location Steps */}
-                <div
-                  className="grid grid-cols-6 gap-4 relative"
-                  style={{ zIndex: 2 }}
-                >
-                  {/* Site */}
-                  <div className="flex flex-col items-center">
-                    <div className="text-sm font-medium text-gray-600 mb-3">
-                      Site
+                <div className="flex justify-between items-start relative z-1">
+                  {[
+                    { label: "Site", value: taskDetails?.task_details?.location?.site || "-" },
+                    { label: "Building", value: taskDetails?.task_details?.location?.building || "-" },
+                    { label: "Wing", value: taskDetails?.task_details?.location?.wing || "-" },
+                    { label: "Floor", value: taskDetails?.task_details?.location?.floor || "-" },
+                    { label: "Area", value: taskDetails?.task_details?.location?.area || "-" },
+                    { label: "Room", value: taskDetails?.task_details?.location?.room || "-" },
+                  ].map((item, index) => (
+                    <div
+                      key={`location-${index}`}
+                      className="flex flex-col items-center w-full text-center"
+                    >
+                      <div className="text-sm text-gray-500 mb-2 mt-1">
+                        {item.label}
+                      </div>
+                      <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
+                      <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
+                        {item.value}
+                      </div>
                     </div>
-                    <div className="location-step-dot mb-3"></div>
-                    <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.site || "-"}
-                    </div>
-                  </div>
-
-                  {/* Building */}
-                  <div className="flex flex-col items-center">
-                    <div className="text-sm font-medium text-gray-600 mb-3">
-                      Building
-                    </div>
-                    <div className="location-step-dot mb-3"></div>
-                    <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.building || "-"}
-                    </div>
-                  </div>
-
-                  {/* Wing */}
-                  <div className="flex flex-col items-center">
-                    <div className="text-sm font-medium text-gray-600 mb-3">
-                      Wing
-                    </div>
-                    <div className="location-step-dot mb-3"></div>
-                    <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.wing || "-"}
-                    </div>
-                  </div>
-
-                  {/* Floor */}
-                  <div className="flex flex-col items-center">
-                    <div className="text-sm font-medium text-gray-600 mb-3">
-                      Floor
-                    </div>
-                    <div className="location-step-dot mb-3"></div>
-                    <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.floor || "-"}
-                    </div>
-                  </div>
-
-                  {/* Area */}
-                  <div className="flex flex-col items-center">
-                    <div className="text-sm font-medium text-gray-600 mb-3">
-                      Area
-                    </div>
-                    <div className="location-step-dot mb-3"></div>
-                    <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.area || "-"}
-                    </div>
-                  </div>
-
-                  {/* Room */}
-                  <div className="flex flex-col items-center">
-                    <div className="text-sm font-medium text-gray-600 mb-3">
-                      Room
-                    </div>
-                    <div className="location-step-dot mb-3"></div>
-                    <div className="text-sm font-semibold text-gray-900 text-center">
-                      {taskDetails?.task_details?.location?.room || "-"}
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Activity */}
           <Card className="w-full bg-transparent shadow-none border-none">
