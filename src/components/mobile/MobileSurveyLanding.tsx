@@ -57,8 +57,14 @@ interface SurveyMapping {
     name: string;
     questions_count: number;
     snag_attach?: string;
+    survey_attachment?: SurveyAttach[];
     snag_questions: SurveyQuestion[];
   };
+}
+
+interface SurveyAttach {
+  id: string;
+  url: string;
 }
 
 interface SurveyAnswers {
@@ -298,15 +304,20 @@ export const MobileSurveyLanding: React.FC = () => {
       // For rating questions, check if the selected rating corresponds to a negative option
       // Map rating to option index based on API options count
       const ratingToOptionIndex = Array.from(
-        { length: currentQuestion.snag_quest_options?.length || 5 }, 
-        (_, index) => ({ rating: index + 1, optionIndex: currentQuestion.snag_quest_options.length - 1 - index })
+        { length: currentQuestion.snag_quest_options?.length || 5 },
+        (_, index) => ({
+          rating: index + 1,
+          optionIndex: index,
+        })
       );
-      
+
       const selectedOptionMapping = ratingToOptionIndex.find(
         (opt) => opt.rating === rating
       );
-      
-      const selectedOption = selectedOptionMapping && currentQuestion.snag_quest_options?.[selectedOptionMapping.optionIndex];
+
+      const selectedOption =
+        selectedOptionMapping &&
+        currentQuestion.snag_quest_options?.[selectedOptionMapping.optionIndex];
       const isNegativeRating = selectedOption?.option_type === "n";
 
       if (
@@ -319,7 +330,7 @@ export const MobileSurveyLanding: React.FC = () => {
         // Store both rating and the corresponding option for option_id
         setPendingNegativeAnswer({
           rating,
-          option: selectedOption
+          option: selectedOption,
         });
         setShowGenericTags(true);
       } else {
@@ -350,15 +361,20 @@ export const MobileSurveyLanding: React.FC = () => {
     // For emoji/smiley questions, check if the selected rating corresponds to a negative option
     // Map rating to option index based on API options count
     const ratingToOptionIndex = Array.from(
-      { length: currentQuestion?.snag_quest_options?.length || 5 }, 
-      (_, index) => ({ rating: index + 1, optionIndex: currentQuestion.snag_quest_options.length - 1 - index })
+      { length: currentQuestion?.snag_quest_options?.length || 5 },
+      (_, index) => ({
+        rating: index + 1,
+        optionIndex: currentQuestion.snag_quest_options.length - 1 - index,
+      })
     );
-    
+
     const selectedOptionMapping = ratingToOptionIndex.find(
       (opt) => opt.rating === rating
     );
-    
-    const selectedOption = selectedOptionMapping && currentQuestion?.snag_quest_options?.[selectedOptionMapping.optionIndex];
+
+    const selectedOption =
+      selectedOptionMapping &&
+      currentQuestion?.snag_quest_options?.[selectedOptionMapping.optionIndex];
     const isNegativeEmoji = selectedOption?.option_type === "n";
 
     if (
@@ -580,14 +596,22 @@ export const MobileSurveyLanding: React.FC = () => {
             if (questionData?.snag_quest_options) {
               // Map rating to option based on API structure
               const ratingToOptionMapping = Array.from(
-                { length: questionData.snag_quest_options.length }, 
-                (_, index) => ({ rating: index + 1, optionIndex: questionData.snag_quest_options.length - 1 - index })
+                { length: questionData.snag_quest_options.length },
+                (_, index) => ({
+                  rating: index + 1,
+                  optionIndex:
+                    questionData.snag_quest_options.length - 1 - index,
+                })
               );
               const mapping = ratingToOptionMapping.find(
                 (opt) => opt.rating === currentAnswer.rating
               );
-              if (mapping && questionData.snag_quest_options[mapping.optionIndex]) {
-                surveyResponseItem.option_id = questionData.snag_quest_options[mapping.optionIndex].id;
+              if (
+                mapping &&
+                questionData.snag_quest_options[mapping.optionIndex]
+              ) {
+                surveyResponseItem.option_id =
+                  questionData.snag_quest_options[mapping.optionIndex].id;
               }
             }
           }
@@ -602,10 +626,14 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "star_rating";
           // Use dynamic label when available, fallback to star text
-          const ratingLabel = currentAnswer.label || getRatingLabel(currentQuestion, currentAnswer.rating);
-          surveyResponseItem.ans_descr = ratingLabel || `${currentAnswer.rating} star${
-            (currentAnswer.rating || 0) > 1 ? "s" : ""
-          }`;
+          const ratingLabel =
+            currentAnswer.label ||
+            getRatingLabel(currentQuestion, currentAnswer.rating);
+          surveyResponseItem.ans_descr =
+            ratingLabel ||
+            `${currentAnswer.rating} star${
+              (currentAnswer.rating || 0) > 1 ? "s" : ""
+            }`;
 
           // Add option_id mapping for rating questions from API response
           if (currentAnswer.optionId) {
@@ -619,14 +647,22 @@ export const MobileSurveyLanding: React.FC = () => {
             if (questionData?.snag_quest_options) {
               // Map rating to option based on API structure
               const ratingToOptionMapping = Array.from(
-                { length: questionData.snag_quest_options.length }, 
-                (_, index) => ({ rating: index + 1, optionIndex: questionData.snag_quest_options.length - 1 - index })
+                { length: questionData.snag_quest_options.length },
+                (_, index) => ({
+                  rating: index + 1,
+                  optionIndex:
+                    questionData.snag_quest_options.length - 1 - index,
+                })
               );
               const mapping = ratingToOptionMapping.find(
                 (opt) => opt.rating === currentAnswer.rating
               );
-              if (mapping && questionData.snag_quest_options[mapping.optionIndex]) {
-                surveyResponseItem.option_id = questionData.snag_quest_options[mapping.optionIndex].id;
+              if (
+                mapping &&
+                questionData.snag_quest_options[mapping.optionIndex]
+              ) {
+                surveyResponseItem.option_id =
+                  questionData.snag_quest_options[mapping.optionIndex].id;
               }
             }
           }
@@ -762,14 +798,22 @@ export const MobileSurveyLanding: React.FC = () => {
             if (questionData?.snag_quest_options) {
               // Map rating to option based on API structure
               const ratingToOptionMapping = Array.from(
-                { length: questionData.snag_quest_options.length }, 
-                (_, index) => ({ rating: index + 1, optionIndex: questionData.snag_quest_options.length - 1 - index })
+                { length: questionData.snag_quest_options.length },
+                (_, index) => ({
+                  rating: index + 1,
+                  optionIndex:
+                    questionData.snag_quest_options.length - 1 - index,
+                })
               );
               const mapping = ratingToOptionMapping.find(
                 (opt) => opt.rating === answerData.rating
               );
-              if (mapping && questionData.snag_quest_options[mapping.optionIndex]) {
-                surveyResponseItem.option_id = questionData.snag_quest_options[mapping.optionIndex].id;
+              if (
+                mapping &&
+                questionData.snag_quest_options[mapping.optionIndex]
+              ) {
+                surveyResponseItem.option_id =
+                  questionData.snag_quest_options[mapping.optionIndex].id;
               }
             }
           }
@@ -784,11 +828,15 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "star_rating";
           // Use dynamic label when available
-          const ratingLabelNeg = answerData.label || getRatingLabel(currentQuestion, answerData.rating);
-          surveyResponseItem.ans_descr = ratingLabelNeg || `${answerData.rating} star${
-            (answerData.rating || 0) > 1 ? "s" : ""
-          }`;
-          
+          const ratingLabelNeg =
+            answerData.label ||
+            getRatingLabel(currentQuestion, answerData.rating);
+          surveyResponseItem.ans_descr =
+            ratingLabelNeg ||
+            `${answerData.rating} star${
+              (answerData.rating || 0) > 1 ? "s" : ""
+            }`;
+
           // Add option_id for rating questions
           if (answerData.optionId) {
             surveyResponseItem.option_id = answerData.optionId;
@@ -1041,14 +1089,21 @@ export const MobileSurveyLanding: React.FC = () => {
               if (question.snag_quest_options) {
                 // Map rating to option based on API structure
                 const ratingToOptionMapping = Array.from(
-                  { length: question.snag_quest_options.length }, 
-                  (_, index) => ({ rating: index + 1, optionIndex: question.snag_quest_options.length - 1 - index })
+                  { length: question.snag_quest_options.length },
+                  (_, index) => ({
+                    rating: index + 1,
+                    optionIndex: question.snag_quest_options.length - 1 - index,
+                  })
                 );
                 const mapping = ratingToOptionMapping.find(
                   (opt) => opt.rating === answer.rating
                 );
-                if (mapping && question.snag_quest_options[mapping.optionIndex]) {
-                  surveyResponseItem.option_id = question.snag_quest_options[mapping.optionIndex].id;
+                if (
+                  mapping &&
+                  question.snag_quest_options[mapping.optionIndex]
+                ) {
+                  surveyResponseItem.option_id =
+                    question.snag_quest_options[mapping.optionIndex].id;
                 } else {
                   console.warn(
                     `[Multi-Submit ${question.qtype}] No option_id found for rating:`,
@@ -1067,10 +1122,11 @@ export const MobileSurveyLanding: React.FC = () => {
             // New fields for rating
             surveyResponseItem.answer_type = question.qtype;
             surveyResponseItem.answer_mode = "star_rating";
-            const ratingLabelMulti = answer.label || getRatingLabel(question, answer.rating);
-            surveyResponseItem.ans_descr = ratingLabelMulti || `${answer.rating} star${
-              (answer.rating || 0) > 1 ? "s" : ""
-            }`;
+            const ratingLabelMulti =
+              answer.label || getRatingLabel(question, answer.rating);
+            surveyResponseItem.ans_descr =
+              ratingLabelMulti ||
+              `${answer.rating} star${(answer.rating || 0) > 1 ? "s" : ""}`;
 
             // Add option_id mapping for rating questions from API response
             if (answer.optionId) {
@@ -1081,17 +1137,21 @@ export const MobileSurveyLanding: React.FC = () => {
               if (question.snag_quest_options) {
                 // Map rating to option based on API structure
                 const ratingToOptionMapping = [
-                  { rating: 1, optionIndex: 4 }, // 1 star (last option)
-                  { rating: 2, optionIndex: 3 }, // 2 stars
+                  { rating: 1, optionIndex: 0 }, // 1 star (first option)
+                  { rating: 2, optionIndex: 1 }, // 2 stars
                   { rating: 3, optionIndex: 2 }, // 3 stars
-                  { rating: 4, optionIndex: 1 }, // 4 stars
-                  { rating: 5, optionIndex: 0 }, // 5 stars (first option)
+                  { rating: 4, optionIndex: 3 }, // 4 stars
+                  { rating: 5, optionIndex: 4 }, // 5 stars (last option)
                 ];
                 const mapping = ratingToOptionMapping.find(
                   (opt) => opt.rating === answer.rating
                 );
-                if (mapping && question.snag_quest_options[mapping.optionIndex]) {
-                  surveyResponseItem.option_id = question.snag_quest_options[mapping.optionIndex].id;
+                if (
+                  mapping &&
+                  question.snag_quest_options[mapping.optionIndex]
+                ) {
+                  surveyResponseItem.option_id =
+                    question.snag_quest_options[mapping.optionIndex].id;
                 } else {
                   console.warn(
                     `[Multi-Submit ${question.qtype}] No option_id found for rating:`,
@@ -1165,7 +1225,10 @@ export const MobileSurveyLanding: React.FC = () => {
 
   // Get emoji options from API response
   const getEmojiOptions = (question: SurveyQuestion) => {
-    if (!question.snag_quest_options || question.snag_quest_options.length === 0) {
+    if (
+      !question.snag_quest_options ||
+      question.snag_quest_options.length === 0
+    ) {
       // Fallback to static options if no API options
       return [
         { rating: 5, emoji: "😄", label: "Amazing", optionId: 5 },
@@ -1194,27 +1257,45 @@ export const MobileSurveyLanding: React.FC = () => {
         emoji: emojiMapping[index]?.emoji || "😐",
         label: option.qname,
         optionId: option.id,
-        option: option
+        option: option,
       }));
   };
 
   // Get rating options from API response
   const getRatingOptions = (question: SurveyQuestion) => {
-    if (!question.snag_quest_options || question.snag_quest_options.length === 0) {
+    if (
+      !question.snag_quest_options ||
+      question.snag_quest_options.length === 0
+    ) {
       // Fallback to 5 stars if no API options
       return [1, 2, 3, 4, 5];
     }
 
     // Return array of rating numbers based on API options count
-    return Array.from({ length: question.snag_quest_options.length }, (_, index) => index + 1);
+    return Array.from(
+      { length: question.snag_quest_options.length },
+      (_, index) => index + 1
+    );
   };
 
   // Get dynamic label for a rating from API options
-  const getRatingLabel = (question: SurveyQuestion | null, rating?: number | null): string | undefined => {
-    if (!question || !rating || !question.snag_quest_options || question.snag_quest_options.length === 0) return undefined;
+  const getRatingLabel = (
+    question: SurveyQuestion | null,
+    rating?: number | null
+  ): string | undefined => {
+    if (
+      !question ||
+      !rating ||
+      !question.snag_quest_options ||
+      question.snag_quest_options.length === 0
+    )
+      return undefined;
     const mapping = Array.from(
       { length: question.snag_quest_options.length },
-      (_, index) => ({ rating: index + 1, optionIndex: question.snag_quest_options.length - 1 - index })
+      (_, index) => ({
+        rating: index + 1,
+        optionIndex: index,
+      })
     );
     const selected = mapping.find((m) => m.rating === rating);
     if (selected && question.snag_quest_options[selected.optionIndex]) {
@@ -1346,7 +1427,8 @@ export const MobileSurveyLanding: React.FC = () => {
                 </h3>
 
                 <p className="text-sm text-orange-700 mb-4">
-                  {surveyData.message || "This survey is currently inactive and not accepting responses."}
+                  {surveyData.message ||
+                    "This survey is currently inactive and not accepting responses."}
                 </p>
 
                 <div className="bg-white rounded-lg p-4 border border-orange-100">
@@ -1463,7 +1545,7 @@ export const MobileSurveyLanding: React.FC = () => {
           )}
 
           <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-black mb-4 text-center leading-tight">
-            {surveyData.survey_title}
+            {!showGenericTags && surveyData.survey_title}
           </h1>
 
           {/* Show image only on first question or single question surveys */}
@@ -1471,7 +1553,8 @@ export const MobileSurveyLanding: React.FC = () => {
             <div className="text-center mb-6">
               <img
                 src={
-                  surveyData?.snag_checklist?.snag_attach || "/9019830 1.png"
+                  surveyData?.snag_checklist?.survey_attachment?.url ||
+                  "/9019830 1.png"
                 }
                 alt="Survey Illustration"
                 className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto"
@@ -1520,10 +1603,10 @@ export const MobileSurveyLanding: React.FC = () => {
 
           {/* Show Current Question */}
           {currentQuestion && !isLastStep && (
-            <div className="w-full space-y-4">
+            <div className="w-full space-y-4 mt-12">
               {!showGenericTags && (
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-black mb-2 leading-tight">
+                  <h3 className="text-lg font-semibold text-black leading-tight">
                     {currentQuestion.descr}
                   </h3>
                 </div>
@@ -1532,7 +1615,7 @@ export const MobileSurveyLanding: React.FC = () => {
               <div className="space-y-4">
                 {/* Multiple Choice Question */}
                 {currentQuestion.qtype === "multiple" && !showGenericTags && (
-                  <div className="space-y-3 mt-10">
+                  <div className="space-y-4">
                     {currentQuestion.snag_quest_options.map((option) => (
                       <button
                         key={option.id}
@@ -1712,7 +1795,6 @@ export const MobileSurveyLanding: React.FC = () => {
                         </button>
                       ))}
                     </div>
-
                     {selectedRating && (
                       <div className="text-center">
                         <span className="text-base sm:text-lg font-medium text-gray-700">
@@ -1727,8 +1809,8 @@ export const MobileSurveyLanding: React.FC = () => {
                 {(currentQuestion.qtype === "emoji" ||
                   currentQuestion.qtype === "smiley") &&
                   !showGenericTags && (
-                    <div className="w-full mt-16">
-                      <div className={`grid gap-3 px-2 ${getEmojiOptions(currentQuestion).length === 4 ? 'grid-cols-4' : 'grid-cols-5'}`}>
+                    <div className="w-full">
+                      <div className="flex justify-center items-start gap-2 sm:gap-3">
                         {getEmojiOptions(currentQuestion).map((option) => (
                           <button
                             key={option.rating}
@@ -1739,12 +1821,12 @@ export const MobileSurveyLanding: React.FC = () => {
                                 option.label
                               )
                             }
-                            className="flex flex-col items-center justify-center p-3 rounded-lg hover:bg-gray-100 transition-colors min-h-[90px]"
+                            className="flex flex-col items-center justify-start p-2 sm:p-3 rounded-lg hover:bg-gray-100 transition-colors flex-1 min-w-0"
                           >
-                            <span className="text-3xl mb-2">
+                            <span className="text-3xl sm:text-4xl mb-2">
                               {option.emoji}
                             </span>
-                            <span className="text-xs text-gray-600 text-center leading-tight">
+                            <span className="text-xs sm:text-sm text-gray-600 text-center leading-tight break-words w-full">
                               {option.label}
                             </span>
                           </button>
@@ -1840,7 +1922,11 @@ export const MobileSurveyLanding: React.FC = () => {
                           "emoji" in pendingNegativeAnswer
                         ) {
                           // Type guard for emoji/smiley objects
-                          const emojiAnswer = pendingNegativeAnswer as { rating: number; emoji: string; label: string };
+                          const emojiAnswer = pendingNegativeAnswer as {
+                            rating: number;
+                            emoji: string;
+                            label: string;
+                          };
                           answerData = saveCurrentAnswer(
                             emojiAnswer.rating,
                             emojiAnswer.emoji,
@@ -1872,7 +1958,8 @@ export const MobileSurveyLanding: React.FC = () => {
                           );
                           // Store the option_id for later use in submission
                           if (answerData) {
-                            answerData.optionId = pendingNegativeAnswer.option.id;
+                            answerData.optionId =
+                              pendingNegativeAnswer.option.id;
                           }
                         }
 

@@ -43,6 +43,7 @@ const adminNavigationStructure = {
           { name: "Lock Module", href: "/ops-console/settings/account/lock-module" },
           { name: "Lock Function", href: "/ops-console/settings/account/lock-function" },
           { name: "Lock Sub Function", href: "/ops-console/settings/account/lock-sub-function" },
+          { name: "Locked Users", href: "/ops-console/settings/account/locked-users" },
         ],
       },
     ],

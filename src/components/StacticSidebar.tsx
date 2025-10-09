@@ -74,6 +74,7 @@ import {
   Wallet,
   Trash,
   ChartColumnIncreasing,
+  IndianRupee,
 } from "lucide-react";
 import { template } from "lodash";
 
@@ -350,12 +351,12 @@ const modulesByPackage = {
       href: "/master/user",
       subItems: [
         {
-          name: "FM User",
+          name: "FM Users",
           href: "/master/user/fm-users",
           color: "text-[#1a1a1a]",
         },
         {
-          name: "OCCUPANT USERS",
+          name: "Occupant Users",
           href: "/master/user/occupant-users",
           color: "text-[#1a1a1a]",
         },
@@ -406,6 +407,11 @@ const modulesByPackage = {
       icon: FileSpreadsheet,
       href: "/master/communication-template",
       subItems: [
+        {
+          name: "Communication Template",
+          href: "/master/communication-template",
+          color: "text-[#1a1a1a]",
+        },
         {
           name: "Root Cause Analysis",
           href: "/master/template/root-cause-analysis",
@@ -676,23 +682,23 @@ const modulesByPackage = {
         { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
       ],
     },
-    {
-      name: "Vi Miles",
-      icon: User,
-      href: "/safety/vi-miles",
-      subItems: [
-        {
-          name: "Vehicle Details",
-          href: "/safety/vi-miles/vehicle-details",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Vehicle Check In",
-          href: "/safety/vi-miles/vehicle-check-in",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
+    // {
+    //   name: "Vi Miles",
+    //   icon: User,
+    //   href: "/safety/vi-miles",
+    //   subItems: [
+    //     {
+    //       name: "Vehicle Details",
+    //       href: "/safety/vi-miles/vehicle-details",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //     {
+    //       name: "Vehicle Check In",
+    //       href: "/safety/vi-miles/vehicle-check-in",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //   ],
+    // },
     {
       name: "Check Hierarchy Levels",
       icon: FolderTree,
@@ -731,6 +737,16 @@ const modulesByPackage = {
         {
           name: "Pending Approvals",
           href: "/finance/pending-approvals",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Deletion Requests",
+          href: "/finance/deletion-requests",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Deleted PRs",
+          href: "/finance/deleted-prs",
           color: "text-[#1a1a1a]",
         },
       ],
@@ -858,12 +874,12 @@ const modulesByPackage = {
       href: "/vas/parking",
       subItems: [
         {
-          name: "Parking Booking",
+          name: "Parking Allocation",
           href: "/vas/parking",
           color: "text-[#1a1a1a]",
         },
         {
-          name: "Parking Allocation",
+          name: "Parking Booking",
           href: "/vas/parking/site-wise-bookings",
           color: "text-[#1a1a1a]",
         },
@@ -1246,6 +1262,14 @@ const modulesByPackage = {
     //   icon: Currency,
     //   href: '/settings/currency',
     // }
+
+    {
+      name: "Common Modules",
+      icon: IndianRupee,
+      subItems: [
+        { name: "Currency", href: "/settings/currency" },
+      ]
+    },
   ],
 };
 

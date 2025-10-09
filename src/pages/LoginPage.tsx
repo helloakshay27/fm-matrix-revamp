@@ -5,6 +5,7 @@ import { ArrowLeft, Building2, Check, Eye, EyeOff } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   getOrganizationsByEmail,
+  getOrganizationsByEmailAndAutoSelect,
   loginUser,
   saveUser,
   saveToken,
@@ -68,6 +69,55 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const isOmanSite = hostname.includes("oig.gophygital.work");
   // Check if it's VI site
   const isViSite = hostname.includes("vi-web.gophygital.work");
+
+  // Check URL for email and orgId parameters on component mount
+  React.useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const emailParam = searchParams.get('email');
+    const orgIdParam = searchParams.get('orgId');
+
+    if (emailParam) {
+      setEmail(emailParam);
+      
+      // Auto-fetch and select organization if orgId is provided
+      if (orgIdParam) {
+        handleAutoSelectOrganization(emailParam, orgIdParam);
+      }
+    }
+  }, [location.search]);
+
+  const handleAutoSelectOrganization = async (emailAddress: string, orgId: string) => {
+    if (!validateEmail(emailAddress)) {
+      toast.error("Invalid email address in URL.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { organizations: orgs, selectedOrg } = await getOrganizationsByEmailAndAutoSelect(emailAddress, orgId);
+      
+      setOrganizations(orgs);
+      
+      if (selectedOrg) {
+        // Auto-select the organization and move to password step
+        handleOrganizationSelect(selectedOrg);
+        toast.success(`Organization "${selectedOrg.name}" automatically selected.`);
+      } else {
+        // If orgId doesn't match, show organization selection step
+        setCurrentStep(2);
+        toast.info("Please select your organization.");
+      }
+      
+      if (orgs.length === 0) {
+        toast.error("No organizations found for this email address.");
+      }
+    } catch (error) {
+      toast.error("Failed to fetch organizations. Please try again.");
+      console.error("Auto-select organization error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const validateEmail = (email: string) => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
@@ -251,9 +301,26 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           ? navigate("/safety/m-safe/internal")
           : navigate(from, { replace: true });
       }, 500);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      toast.error("Invalid email or password. Please try again.");
+      
+      // Handle specific error messages from API
+      if (error?.status === 401) {
+        // Check for specific error messages
+        const errorMessage = error?.message?.toLowerCase() || '';
+        
+        if (errorMessage.includes('locked') || errorMessage.includes('lock')) {
+          toast.error("Your account has been locked. Please contact your administrator.");
+        } else {
+          toast.error("Invalid email or password. Please try again.");
+        }
+      } else if (error?.data?.error) {
+        toast.error(error.data.error);
+      } else if (error?.message) {
+        toast.error(error.message);
+      } else {
+        toast.error("An error occurred during login. Please try again.");
+      }
     } finally {
       setLoginLoading(false);
     }

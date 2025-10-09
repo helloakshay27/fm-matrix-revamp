@@ -288,7 +288,7 @@ export const EditAssetDetailsPage = () => {
     fetchRooms,
   } = useLocationData();
 
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(true);
 
   const [expandedSections, setExpandedSections] = useState({
     location: true,
@@ -297,7 +297,8 @@ export const EditAssetDetailsPage = () => {
     warranty: false,
     meterCategory: false,
     consumption: true,
-    nonConsumption: false,
+    // nonConsumption: false,
+     nonConsumption: true,
     assetAllocation: true,
     assetLoaned: false,
     amcDetails: true,
@@ -459,10 +460,10 @@ export const EditAssetDetailsPage = () => {
   );
   const [subGroupsLoading, setSubGroupsLoading] = useState(false);
 
-  const [itAssetsToggle, setItAssetsToggle] = useState(false);
+  // const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
   const [assetLoanedToggle, setAssetLoanedToggle] = useState(false);
-  const [depreciationToggle, setDepreciationToggle] = useState(false);
+  // const [depreciationToggle, setDepreciationToggle] = useState(false);
   const [meterCategoryType, setMeterCategoryType] = useState("");
   const [subCategoryType, setSubCategoryType] = useState("");
   const [meterType, setMeterType] = useState("");
@@ -536,7 +537,8 @@ export const EditAssetDetailsPage = () => {
     parent_meter_id: "",
     is_meter: false,
     asset_loaned: false,
-    depreciation_applicable: false,
+    // depreciation_applicable: false,
+     depreciation_applicable: true,
     useful_life: "",
     purchase_cost: "",
     purchased_on: "",
@@ -1234,9 +1236,23 @@ export const EditAssetDetailsPage = () => {
       ensureExtraField("purchased_on", asset?.purchased_on, "purchaseDetails", "Purchase Date");
       ensureExtraField("warranty_expiry", asset?.warranty_expiry, "purchaseDetails", "Warranty Expiry");
 
-      const finalCategory = categoryFromExtra || asset?.asset_type_category || "";
-      if (finalCategory) {
-        setSelectedAssetCategory(finalCategory);
+      const rawCategory = categoryFromExtra || asset?.asset_type_category || "";
+      if (rawCategory) {
+        // Normalize to match radio labels exactly
+        const normalized = String(rawCategory).trim();
+        const allowed = [
+          "Land",
+          "Building",
+          "Leasehold Improvement",
+          "Vehicle",
+          "Furniture & Fixtures",
+          "IT Equipment",
+          "Machinery & Equipment",
+          "Tools & Instruments",
+          "Meter",
+        ];
+        const match = allowed.find((c) => c.toLowerCase() === normalized.toLowerCase()) || normalized;
+        setSelectedAssetCategory(match);
       }
 
       // Prefill core fields not coming via extra_fields_attributes
@@ -1336,12 +1352,12 @@ export const EditAssetDetailsPage = () => {
       if (asset?.purchase_cost !== undefined && asset?.purchase_cost !== null) {
         setFormData((prev) => ({ ...prev, purchase_cost: String(asset.purchase_cost) }));
       }
-      if (typeof asset?.depreciation_applicable !== "undefined") {
-        const applicable = Boolean(asset.depreciation_applicable);
-        setFormData((prev) => ({ ...prev, depreciation_applicable: applicable }));
-        // Toggle UI section to visible when applicable
-        setDepreciationToggle(applicable);
-      }
+      // if (typeof asset?.depreciation_applicable !== "undefined") {
+      //   const applicable = Boolean(asset.depreciation_applicable);
+      //   setFormData((prev) => ({ ...prev, depreciation_applicable: applicable }));
+      //   // Toggle UI section to visible when applicable
+      //   setDepreciationToggle(applicable);
+      // }
       if (asset?.depreciation_method) {
         setFormData((prev) => ({ ...prev, depreciation_method: String(asset.depreciation_method) }));
       }
@@ -1463,7 +1479,7 @@ export const EditAssetDetailsPage = () => {
 
          // IT ASSETS DETAILS section
     if (asset.it_asset === true) {
-      setItAssetsToggle(true);
+      // setItAssetsToggle(true);
       setFormData((prev) => ({
         ...prev,
         it_asset: true,
@@ -2011,6 +2027,90 @@ export const EditAssetDetailsPage = () => {
       }
     }
 
+      // Purchase cost validation - clear depreciation fields if purchase cost is removed
+    if (field === "purchase_cost") {
+      if (!value || parseFloat(value) <= 0) {
+        // Clear depreciation fields when purchase cost is removed or zero
+        setFormData((prev) => ({
+          ...prev,
+          useful_life: "",
+          salvage_value: "",
+          depreciation_rate: "",
+        }));
+        toast.info("Depreciation Fields Cleared", {
+          description: "Depreciation fields have been cleared since purchase cost is not available.",
+          duration: 3000,
+        });
+      } else {
+        // Check if salvage value equals purchase cost
+        if (formData.salvage_value && parseFloat(formData.salvage_value) === parseFloat(value)) {
+          toast.error("Invalid Purchase Cost", {
+            description: "Purchase Cost cannot be equal to Salvage Value.",
+            duration: 4000,
+          });
+          return; // Don't update the field if validation fails
+        }
+
+        // Check if salvage value is greater than purchase cost
+        if (formData.salvage_value && parseFloat(formData.salvage_value) > parseFloat(value)) {
+          toast.error("Invalid Purchase Cost", {
+            description: "Purchase Cost cannot be less than Salvage Value.",
+            duration: 4000,
+          });
+          return; // Don't update the field if validation fails
+        }
+      }
+    }
+
+    // Salvage value validation - ensure it's not equal to or greater than purchase cost
+    if (field === "salvage_value" && value) {
+      if (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0) {
+        toast.error("Purchase Cost Required", {
+          description: "Please enter Purchase Cost before setting Salvage Value.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+
+      if (parseFloat(value) === parseFloat(formData.purchase_cost)) {
+        toast.error("Invalid Salvage Value", {
+          description: "Salvage Value cannot be equal to Purchase Cost.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+
+      if (parseFloat(value) > parseFloat(formData.purchase_cost)) {
+        toast.error("Invalid Salvage Value", {
+          description: "Salvage Value cannot be greater than Purchase Cost.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+    }
+
+    // Depreciation rate validation - ensure purchase cost is available
+    if (field === "depreciation_rate" && value) {
+      if (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0) {
+        toast.error("Purchase Cost Required", {
+          description: "Please enter Purchase Cost before setting Depreciation Rate.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+    }
+
+    // Useful life validation - ensure purchase cost is available
+    if (field === "useful_life" && value) {
+      if (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0) {
+        toast.error("Purchase Cost Required", {
+          description: "Please enter Purchase Cost before setting Useful Life.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+    }
+
     // Warranty date validation - ensure warranty expiry is not before purchase date
     if (field === "warranty_expiry" && value) {
       const purchaseDate = new Date(formData.purchased_on);
@@ -2297,56 +2397,84 @@ export const EditAssetDetailsPage = () => {
       return value;
     };
 
-    // Helper function to find original field ID
-    const findOriginalFieldId = (fieldName, groupName) => {
-      return originalExtraFieldsAttributes.find(
-        attr => attr.field_name === fieldName && attr.group_name === groupName
-      )?.id;
+    // Build a quick lookup of original attributes by group::field
+    const originalByKey = new Map<string, { id?: number; value?: any }>();
+    (originalExtraFieldsAttributes || []).forEach((attr: any) => {
+      const k = `${attr.group_name}::${attr.field_name}`;
+      originalByKey.set(k, { id: attr.id, value: attr.field_value });
+    });
+
+    // Helper to find original field ID and value
+    const findOriginal = (fieldName: string, groupName: string) => {
+      return originalByKey.get(`${groupName}::${fieldName}`);
     };
 
-    // Custom fields - only include fields with non-empty values
+    // Normalize field name: strip repeated `<group>_` prefixes if present
+    const normalizeFieldName = (fieldName: string, groupName: string) => {
+      let base = String(fieldName);
+      const prefix = `${groupName}_`;
+      while (base.startsWith(prefix)) {
+        base = base.slice(prefix.length);
+      }
+      return base;
+    };
+
+    // De-dup collector to avoid duplicates: last write wins
+    const candidates = new Map<string, any>();
+    const addOrReplace = (entry: any) => {
+      const key = `${entry.group_name}::${entry.field_name}`;
+      candidates.set(key, entry);
+    };
+
+    // Custom fields - only include fields with non-empty values and changes only
     Object.keys(customFields).forEach((sectionKey) => {
       (customFields[sectionKey] || []).forEach((field) => {
         // Only add field if it has a non-empty value
         if (!isEmpty(field.value)) {
           console.log(`Including custom field: ${field.name} = ${field.value}`);
-          const originalId = findOriginalFieldId(field.name, sectionKey);
-          extraFields.push({
-            ...(originalId && { id: originalId }),
+          const original = findOriginal(field.name, sectionKey);
+          const originalValue = original?.value ?? undefined;
+          if (String(field.value ?? "") !== String(originalValue ?? "")) {
+            addOrReplace({
+              ...(original?.id && { id: original.id }),
             field_name: field.name,
             field_value: field.value,
             group_name: sectionKey,
-            field_description: "custom_field",
+              field_description: "custom_field",
             _destroy: false,
           });
+          }
         } else {
           console.log(`Skipping empty custom field: ${field.name} (value: ${field.value})`);
         }
       });
     });
 
-    // IT Assets custom fields - only include fields with non-empty values
+    // IT Assets custom fields - only include fields with non-empty values and changes only
     Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
       (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
         // Only add field if it has a non-empty value
         if (!isEmpty(field.value)) {
           console.log(`Including IT assets field: ${field.name} = ${field.value}`);
-          const originalId = findOriginalFieldId(field.name, sectionKey);
-          extraFields.push({
-            ...(originalId && { id: originalId }),
+          const original = findOriginal(field.name, sectionKey);
+          const originalValue = original?.value ?? undefined;
+          if (String(field.value ?? "") !== String(originalValue ?? "")) {
+            addOrReplace({
+              ...(original?.id && { id: original.id }),
             field_name: field.name,
             field_value: field.value,
             group_name: sectionKey,
-            field_description: "custom_field",
+              field_description: "custom_field",
             _destroy: false,
           });
+          }
         } else {
           console.log(`Skipping empty IT assets field: ${field.name} (value: ${field.value})`);
         }
       });
     });
 
-    // Standard extra fields (dynamic) - with proper date formatting
+    // Standard extra fields (dynamic) - with proper date formatting; include changes only
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
       // Skip custom fields here to avoid duplicates; they are handled above via customFields/itAssetsCustomFields
       const isCustomFieldDesc = String(fieldObj?.fieldDescription || "").trim().toLowerCase() === "custom_field";
@@ -2361,16 +2489,20 @@ export const EditAssetDetailsPage = () => {
           fieldObj.value,
           fieldObj.fieldType
         );
-
-        const originalId = findOriginalFieldId(key, fieldObj.groupType);
-        extraFields.push({
-          ...(originalId && { id: originalId }),
-          field_name: key,
+        const groupName = String(fieldObj.groupType || "");
+        const baseName = normalizeFieldName(key, groupName);
+        const original = findOriginal(baseName, groupName);
+        const originalValue = original?.value ?? undefined;
+        if (String(processedValue ?? "") !== String(originalValue ?? "")) {
+          addOrReplace({
+            ...(original?.id && { id: original.id }),
+            field_name: baseName,
           field_value: processedValue,
-          group_name: fieldObj.groupType,
+            group_name: groupName,
           field_description: fieldObj.fieldDescription,
           _destroy: false,
         });
+        }
       } else {
         console.log(`Skipping empty standard field: ${key} (value: ${fieldObj?.value})`);
       }
@@ -2403,7 +2535,7 @@ export const EditAssetDetailsPage = () => {
           const key = `${attr.group_name}::${attr.field_name}`;
           if (!currentCustomKeys.has(key)) {
             // Not present anymore -> mark for destroy
-            extraFields.push({
+            addOrReplace({
               id: attr.id,
               field_name: attr.field_name,
               field_value: "",
@@ -2417,18 +2549,20 @@ export const EditAssetDetailsPage = () => {
       console.warn("Failed to compute custom field deletions", e);
     }
 
+    // Materialize from candidates, preserving insertion order
+    extraFields = Array.from(candidates.values());
     console.log("Final extra fields to send:", extraFields);
     return extraFields;
   };
 
-  const handleItAssetsToggleChange = (checked) => {
-    setItAssetsToggle(checked);
-    handleFieldChange("it_asset", checked);
-    setExpandedSections((prev) => ({
-      ...prev,
-      warranty: checked ? true : false,
-    }));
-  };
+  // const handleItAssetsToggleChange = (checked) => {
+  //   setItAssetsToggle(checked);
+  //   handleFieldChange("it_asset", checked);
+  //   setExpandedSections((prev) => ({
+  //     ...prev,
+  //     warranty: checked ? true : false,
+  //   }));
+  // };
   const handleMeterDetailsToggleChange = (checked) => {
     setMeterDetailsToggle(checked);
     handleFieldChange("is_meter", checked);
@@ -2445,14 +2579,14 @@ export const EditAssetDetailsPage = () => {
       assetLoaned: checked ? true : false,
     }));
   };
-  const handleDepreciationToggleChange = (checked) => {
-    setDepreciationToggle(checked);
-    handleFieldChange("depreciation_applicable", checked);
-    setExpandedSections((prev) => ({
-      ...prev,
-      nonConsumption: checked ? true : false,
-    }));
-  };
+  // const handleDepreciationToggleChange = (checked) => {
+  //   setDepreciationToggle(checked);
+  //   handleFieldChange("depreciation_applicable", checked);
+  //   setExpandedSections((prev) => ({
+  //     ...prev,
+  //     nonConsumption: checked ? true : false,
+  //   }));
+  // };
 
   // Fetch groups
   const fetchGroups = async () => {
@@ -2944,10 +3078,10 @@ export const EditAssetDetailsPage = () => {
   const toggleSection = (section) => {
     // Map section to its toggle (if any)
     const toggleMap = {
-      warranty: itAssetsToggle,
-      meterCategory: meterDetailsToggle,
+      // warranty: itAssetsToggle,
+      // meterCategory: meterDetailsToggle,
       assetLoaned: assetLoanedToggle,
-      nonConsumption: depreciationToggle,
+      // nonConsumption: depreciationToggle,
     };
 
     // If section has a toggle and it's disabled, do not open/collapse
@@ -3236,14 +3370,28 @@ export const EditAssetDetailsPage = () => {
     );
   };
 
+  // Resolve effective category for attachments (prefilled or chosen)
+  const getEffectiveCategory = () => {
+    // 1) UI selection
+    if (selectedAssetCategory) return selectedAssetCategory;
+    // 2) Form data (if prefilled)
+    const formDataCategory = (formData as any)?.asset_category;
+    if (formDataCategory) return String(formDataCategory);
+    // 3) Extra fields (prefilled from API)
+    const extraCat = extraFormFields?.asset_category?.value;
+    if (extraCat) return String(extraCat);
+    return "";
+  };
+
   // Helper function to get category-specific attachment arrays
   const getCategoryAttachments = () => {
-    if (!selectedAssetCategory) return {};
+    const effectiveCategory = getEffectiveCategory();
+    if (!effectiveCategory) return {};
 
-    const categoryKey = selectedAssetCategory
+    const categoryKey = effectiveCategory
       .toLowerCase()
       .replace(/\s+/g, "")
-      .replace("&", "");
+      .replace(/&/g, "");
 
     return {
       asset_image: attachments[`${categoryKey}AssetImage`] || [],
@@ -3530,7 +3678,25 @@ export const EditAssetDetailsPage = () => {
     }
 
     // Asset Loaned validation (if applicable toggle is on)
-    if (assetLoanedToggle) {
+    // if (assetLoanedToggle) {
+    //   if (!selectedLoanedVendorId) {
+    //     toast.error("Vendor Required for Asset Loaned", {
+    //       description: "Please select a vendor since Asset Loaned is enabled.",
+    //       duration: 4000,
+    //     });
+    //     return ["Vendor Name is required for Asset Loaned"];
+    //   }
+
+        // if (assetLoanedToggle) {
+          const categoriesWithAssetLoaned = [
+      "Furniture & Fixtures",
+      "IT Equipment",
+      "Machinery & Equipment",
+      "Meter",
+      "Tools & Instruments"
+    ];
+
+    if (categoriesWithAssetLoaned.includes(selectedAssetCategory) && assetLoanedToggle) {
       if (!selectedLoanedVendorId) {
         toast.error("Vendor Required for Asset Loaned", {
           description: "Please select a vendor since Asset Loaned is enabled.",
@@ -3538,6 +3704,7 @@ export const EditAssetDetailsPage = () => {
         });
         return ["Vendor Name is required for Asset Loaned"];
       }
+
 
       if (!formData.agreement_from_date) {
         toast.error("Agreement Start Date Required", {
@@ -3557,12 +3724,45 @@ export const EditAssetDetailsPage = () => {
       }
     }
 
-    // Depreciation validation (if applicable toggle is on)
-    if (depreciationToggle) {
+    // Depreciation validation (only when toggle is on AND category supports it)
+    const effectiveCategory = getEffectiveCategory();
+    const supportsDep = effectiveCategory && !["Building", "Land", "Leasehold Improvement"].includes(String(effectiveCategory));
+    // if (depreciationToggle && supportsDep) {
+    //   if (!formData.useful_life) {
+    //     toast.error("Useful Life Required", {
+    //       description:
+    //         "Please enter the useful life since Depreciation is enabled.",
+    //       duration: 4000,
+    //     });
+    //     return ["Useful Life is required for Depreciation"];
+    //   }
+
+    //   if (!formData.salvage_value) {
+    //     toast.error("Salvage Value Required", {
+    //       description:
+    //         "Please enter the salvage value since Depreciation is enabled.",
+    //       duration: 4000,
+    //     });
+    //     return ["Salvage Value is required for Depreciation"];
+    //   }
+
+    //   if (!formData.depreciation_rate) {
+    //     toast.error("Depreciation Rate Required", {
+    //       description:
+    //         "Please enter the depreciation rate since Depreciation is enabled.",
+    //       duration: 4000,
+    //     });
+    //     return ["Depreciation Rate is required for Depreciation"];
+    //   }
+    // }
+
+    
+
+      if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0) {
       if (!formData.useful_life) {
         toast.error("Useful Life Required", {
           description:
-            "Please enter the useful life since Depreciation is enabled.",
+            "Please enter the useful life for depreciation calculation when purchase cost is provided.",
           duration: 4000,
         });
         return ["Useful Life is required for Depreciation"];
@@ -3571,7 +3771,7 @@ export const EditAssetDetailsPage = () => {
       if (!formData.salvage_value) {
         toast.error("Salvage Value Required", {
           description:
-            "Please enter the salvage value since Depreciation is enabled.",
+            "Please enter the salvage value for depreciation calculation when purchase cost is provided.",
           duration: 4000,
         });
         return ["Salvage Value is required for Depreciation"];
@@ -3580,16 +3780,69 @@ export const EditAssetDetailsPage = () => {
       if (!formData.depreciation_rate) {
         toast.error("Depreciation Rate Required", {
           description:
-            "Please enter the depreciation rate since Depreciation is enabled.",
+            "Please enter the depreciation rate for depreciation calculation when purchase cost is provided.",
           duration: 4000,
         });
         return ["Depreciation Rate is required for Depreciation"];
       }
+
+      // Validate Purchase Cost is not equal to Salvage Value
+      if (parseFloat(formData.purchase_cost) === parseFloat(formData.salvage_value)) {
+        toast.error("Invalid Salvage Value", {
+          description: "Purchase Cost cannot be equal to Salvage Value.",
+          duration: 4000,
+        });
+        return ["Purchase Cost cannot be equal to Salvage Value"];
+      }
+
+      // Validate Salvage Value is not greater than Purchase Cost
+      if (parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)) {
+        toast.error("Invalid Salvage Value", {
+          description: "Salvage Value cannot be greater than Purchase Cost.",
+          duration: 4000,
+        });
+        return ["Salvage Value cannot be greater than Purchase Cost"];
+      }
     }
 
-    // Meter Details validation (if applicable toggle is on)
-    // IT Assets Details validation (if applicable toggle is on)
-    if (itAssetsToggle) {
+
+    // // Meter Details validation (if applicable toggle is on)
+    // // IT Assets Details validation (if applicable toggle is on)
+    // if (itAssetsToggle) {
+    //   // System Details required fields
+    //   const systemFields = [
+    //     { key: "os", label: "OS" },
+    //     { key: "memory", label: "Total Memory" },
+    //     { key: "processor", label: "Processor" },
+    //   ];
+    //   for (const field of systemFields) {
+    //     if (!itAssetDetails.system_details[field.key]) {
+    //       toast.error(`${field.label} Required`, {
+    //         description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
+    //         duration: 4000,
+    //       });
+    //       return [`${field.label} is required in IT ASSETS DETAILS`];
+    //     }
+    //   }
+    //   // Hardware Details required fields
+    //   const hardwareFields = [
+    //     { key: "model", label: "Model" },
+    //     { key: "serial_no", label: "Serial No." },
+    //     { key: "capacity", label: "Capacity" },
+    //   ];
+    //   for (const field of hardwareFields) {
+    //     if (!itAssetDetails.hardware[field.key]) {
+    //       toast.error(`${field.label} Required`, {
+    //         description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
+    //         duration: 4000,
+    //       });
+    //       return [`${field.label} is required in IT ASSETS DETAILS`];
+    //     }
+    //   }
+    // }
+
+
+     if (selectedAssetCategory === "IT Equipment") {
       // System Details required fields
       const systemFields = [
         { key: "os", label: "OS" },
@@ -3621,6 +3874,7 @@ export const EditAssetDetailsPage = () => {
         }
       }
     }
+
     if (
       meterDetailsToggle &&
       meterType === "SubMeter" &&
@@ -3804,7 +4058,8 @@ export const EditAssetDetailsPage = () => {
         it_meter: formData.it_meter,
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
-        depreciation_applicable: formData.depreciation_applicable,
+        // depreciation_applicable: formData.depreciation_applicable,
+         depreciation_applicable: true,
 
         // Meter fields
         meter_tag_type: formData.meter_tag_type,
@@ -4061,11 +4316,12 @@ export const EditAssetDetailsPage = () => {
       }
 
       // Add category-specific files dynamically
-      if (selectedAssetCategory) {
-        const categoryKey = selectedAssetCategory
+      const effectiveCategory = getEffectiveCategory();
+      if (effectiveCategory) {
+        const categoryKey = effectiveCategory
           .toLowerCase()
           .replace(/\s+/g, "")
-          .replace("&", "");
+          .replace(/&/g, "");
         const categoryAttachments = getCategoryAttachments();
 
         // Add asset image
@@ -4113,7 +4369,7 @@ export const EditAssetDetailsPage = () => {
         // Add category-specific attachments (if any)
         if (categoryAttachments.category_attachments) {
           categoryAttachments.category_attachments.forEach((file) =>
-            formDataObj.append(`${categoryKey}_attachments[]`, file)
+            formDataObj.append(`pms_asset[category_attachments][]`, file)
           );
         }
       }
@@ -4239,7 +4495,8 @@ export const EditAssetDetailsPage = () => {
 
   // Helper function to check if there are files to upload
   const hasFiles = () => {
-    if (!selectedAssetCategory) return false;
+    const effectiveCategory = getEffectiveCategory();
+    if (!effectiveCategory) return false;
 
     const categoryAttachments = getCategoryAttachments();
 
@@ -4259,6 +4516,13 @@ export const EditAssetDetailsPage = () => {
       (categoryAttachments.category_attachments &&
         categoryAttachments.category_attachments.length > 0)
     );
+  };
+
+  // Depreciation applicability by category
+  const categorySupportsDepreciation = (category: string) => {
+    // Explicitly disable for Building (requested). Extend list if needed.
+    if (!category) return true;
+    return category !== "Building";
   };
   // ...existing code...
 
@@ -4347,7 +4611,8 @@ export const EditAssetDetailsPage = () => {
         it_meter: formData.it_meter,
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
-        depreciation_applicable: formData.depreciation_applicable,
+        // depreciation_applicable: formData.depreciation_applicable,
+         depreciation_applicable: true,
         it_asset_eq: selectedAssetCategory === "IT Equipment",
 
         // Meter fields
@@ -4602,11 +4867,12 @@ export const EditAssetDetailsPage = () => {
       }
 
       // Add category-specific files dynamically
-      if (selectedAssetCategory) {
-        const categoryKey = selectedAssetCategory
+      const effectiveCategory = getEffectiveCategory();
+      if (effectiveCategory) {
+        const categoryKey = effectiveCategory
           .toLowerCase()
           .replace(/\s+/g, "")
-          .replace("&", "");
+          .replace(/&/g, "");
         const categoryAttachments = getCategoryAttachments();
 
         // Add asset image
@@ -4947,28 +5213,7 @@ export const EditAssetDetailsPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <TextField
-                      label="Asset Id/Code"
-                      placeholder="Enter unique identifier"
-                      variant="outlined"
-                      fullWidth
-                      value={extraFormFields.asset_number?.value || formData.asset_number || ""}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
-                      onChange={(e) => {
-                        handleFieldChange("asset_number", e.target.value);
-                        handleExtraFieldChange(
-                          "asset_number",
-                          e.target.value,
-                          "text",
-                          "basicIdentification",
-                          "Asset Id/Code"
-                        );
-                      }}
-                    />
+                   
                     <TextField
                       label={
                         <span>
@@ -4992,6 +5237,28 @@ export const EditAssetDetailsPage = () => {
                           "text",
                           "basicIdentification",
                           "Asset Name"
+                        );
+                      }}
+                    />
+                     <TextField
+                      label="Asset Id/Code"
+                      placeholder="Enter unique identifier"
+                      variant="outlined"
+                      fullWidth
+                      value={extraFormFields.asset_number?.value || formData.asset_number || ""}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(e) => {
+                        handleFieldChange("asset_number", e.target.value);
+                        handleExtraFieldChange(
+                          "asset_number",
+                          e.target.value,
+                          "text",
+                          "basicIdentification",
+                          "Asset Id/Code"
                         );
                       }}
                     />
@@ -5628,9 +5895,27 @@ export const EditAssetDetailsPage = () => {
                     multiline
                     rows={4}
                     value={extraFormFields.remarks?.value || ""}
-                    sx={{
+                    // sx={{
+                    //   "& .MuiOutlinedInput-root": {
+                    //     // height: { xs: '36px', md: '45px' }
+                    //   },
+                    // }}
+                      sx={{
                       "& .MuiOutlinedInput-root": {
-                        // height: { xs: '36px', md: '45px' }
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
                       },
                     }}
                     // onChange={e => handleFieldChange('remarks', e.target.value)}
@@ -5895,7 +6180,27 @@ export const EditAssetDetailsPage = () => {
                       }}
                     >
                       <InputLabel>Leased Property ID</InputLabel>
-                      <MuiSelect
+                        <TextField
+                      label="Leased Property ID"
+                      placeholder="Enter leased property ID"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                        onChange={(e) =>
+                        handleExtraFieldChange(
+                          "leased_property_id",
+                          e.target.value,
+                          "text",
+                          "leaseholdLocationAssoc",
+                          "Leased Property ID"
+                        )
+                      }
+                    />
+                      {/* <MuiSelect
                         label="Leased Property ID"
                         value={extraFormFields.leased_property_id?.value || ""}
                         onChange={(e) =>
@@ -5912,7 +6217,7 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Property 001">Property 001</MenuItem>
                         <MenuItem value="Property 002">Property 002</MenuItem>
                         <MenuItem value="Property 003">Property 003</MenuItem>
-                      </MuiSelect>
+                      </MuiSelect> */}
                     </FormControl>
                     {/* <TextField
                     label="Ownership Type"
@@ -8381,6 +8686,30 @@ export const EditAssetDetailsPage = () => {
                       </MuiSelect>
                     </FormControl>
 
+                      {extraFormFields.building_type?.value === 'Other (Manual Entry)' && (
+                        <TextField
+                          label="Other Building Type"
+                          placeholder="Enter other building type"
+                          variant="outlined"
+                          fullWidth
+                          value={extraFormFields.other_building_type?.value || ""}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: { xs: "36px", md: "45px" },
+                            },
+                          }}
+                          onChange={(e) =>
+                            handleExtraFieldChange(
+                              "other_building_type",
+                              e.target.value,
+                              "text",
+                              "buildingBasicId",
+                              "Other Building Type"
+                            )
+                          }
+                        />
+                      )}
+
                     {/* Custom Fields */}
                     {(customFields.buildingBasicId || []).map((field) => (
                       <div key={field.id} className="relative">
@@ -8604,6 +8933,31 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
+
+                      {extraFormFields.construction_type?.value === 'Other (Manual Entry)' && (
+                        <TextField
+                          label="Other Construction Type"
+                          placeholder="Enter other construction type"
+                          variant="outlined"
+                          fullWidth
+                          value={extraFormFields.other_construction_type?.value || ""}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: { xs: "36px", md: "45px" },
+                            },
+                          }}
+                          onChange={(e) =>
+                            handleExtraFieldChange(
+                              "other_construction_type",
+                              e.target.value,
+                              "text",
+                              "buildingConstruction",
+                              "Other Construction Type"
+                            )
+                          }
+                        />
+                      )}
+
                     <TextField
                       label="Number of Floors"
                       placeholder="e.g., G + 3 = 4"
@@ -9097,6 +9451,29 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
+                      {extraFormFields.building_use?.value === 'Other (Manual Entry)' && (
+                        <TextField
+                          label="Other Building Use"
+                          placeholder="Enter other building use"
+                          variant="outlined"
+                          fullWidth
+                          value={extraFormFields.other_building_use?.value || ""}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: { xs: "36px", md: "45px" },
+                            },
+                          }}
+                          onChange={(e) =>
+                            handleExtraFieldChange(
+                              "other_building_use",
+                              e.target.value,
+                              "text",
+                              "usage_and_compliance",
+                              "Other Building Use"
+                            )
+                          }
+                        />
+                      )}
                     <FormControl
                       fullWidth
                       sx={{
@@ -9155,7 +9532,7 @@ export const EditAssetDetailsPage = () => {
                       }}
                     >
                       <InputLabel>Structural Safety Certificate</InputLabel>
-                      <MuiSelect
+                      {/* <MuiSelect
                         label="Structural Safety Certificate"
                         value={extraFormFields.structural_safety_certificate?.value || ""}
                         onChange={(e) =>
@@ -9174,7 +9551,31 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Last Updated">
                           Last Updated Date Option
                         </MenuItem>
-                      </MuiSelect>
+                      </MuiSelect> */}
+
+                        <TextField
+                      label="Structural Safety Certificate"
+                      placeholder="Enter Structural Safety Certificate"
+                      variant="outlined"
+                      fullWidth
+                      type="date"
+                        value={extraFormFields.structural_safety_certificate?.value || ""}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(e) =>
+                        handleExtraFieldChange(
+                          "structural_safety_certificate",
+                          (e.target as HTMLInputElement).value,
+                          "date",
+                          "usage_and_compliance",
+                          "Structural Safety Certificate"
+                        )
+                      }
+
+                    />
                     </FormControl>
                     <FormControl
                       fullWidth
@@ -9205,6 +9606,32 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
+
+                                        {
+                      extraFormFields.utility_connections?.value === 'Other (Manual Entry)' && (
+                        <TextField
+                          label="Other Utility Connection"
+                          placeholder="Enter other utility connection"
+                          variant="outlined"
+                          fullWidth
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: { xs: "36px", md: "45px" },
+                            },
+                          }}
+                          onChange={(e) =>
+                            handleExtraFieldChange(
+                              "other_utility_connection",
+                              e.target.value,
+                              "text",
+                              "usage_and_compliance",
+                              "Other Utility Connection"
+                            )
+                          }
+                        />
+                      )
+
+                    }
 
                     {/* Custom Fields */}
                     {(customFields.buildingUsage || []).map((field) => (
@@ -9740,7 +10167,8 @@ export const EditAssetDetailsPage = () => {
                         }}
                       >
                         <InputLabel id="vendor-select-label" shrink>
-                          Vendor Name<span style={{ color: '#C72030' }}>*</span>
+                          Vendor Name
+                          {/* <span style={{ color: '#C72030' }}>*</span> */}
                         </InputLabel>
                         <MuiSelect
                           labelId="vendor-select-label"
@@ -10246,7 +10674,7 @@ export const EditAssetDetailsPage = () => {
                       IT ASSETS DETAILS
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2">
+                      {/* <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">
                           If Applicable
                         </span>
@@ -10274,7 +10702,7 @@ export const EditAssetDetailsPage = () => {
                             ></span>
                           </label>
                         </div>
-                      </div>
+                      </div> */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -10296,311 +10724,302 @@ export const EditAssetDetailsPage = () => {
                       )}
                     </div>
                   </div>
-                  {expandedSections.warranty && (
-                    <div
-                      className={`p-4 sm:p-6 ${!itAssetsToggle ? "opacity-50 pointer-events-none" : ""
-                        }`}
-                    >
-                      {/* System Details */}
-                      <div className="mb-6">
-                        <h3
-                          className="font-semibold mb-4"
-                          style={{
-                            color: itAssetsToggle ? "#C72030" : "#9CA3AF",
-                          }}
-                        >
-                          SYSTEM DETAILS
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          <TextField
-                            label="OS"
-                            placeholder="Enter OS"
-                            name="os"
-                            fullWidth
-                            variant="outlined"
-                            value={itAssetDetails.system_details.os}
-                            onChange={(e) =>
-                              handleItAssetDetailsChange(
-                                "system_details",
-                                "os",
-                                e.target.value
-                              )
-                            }
-                            disabled={!itAssetsToggle}
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                            InputProps={{
-                              sx: fieldStyles,
-                            }}
-                          />
-
-                          <TextField
-                            label="Total Memory"
-                            placeholder="Enter Total Memory"
-                            name="totalMemory"
-                            fullWidth
-                            variant="outlined"
-                            value={itAssetDetails.system_details.memory}
-                            onChange={(e) =>
-                              handleItAssetDetailsChange(
-                                "system_details",
-                                "memory",
-                                e.target.value
-                              )
-                            }
-                            disabled={!itAssetsToggle}
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                            InputProps={{
-                              sx: fieldStyles,
-                            }}
-                          />
-                          <TextField
-                            label="Processor"
-                            placeholder="Enter Processor"
-                            name="processor"
-                            fullWidth
-                            variant="outlined"
-                            value={itAssetDetails.system_details.processor}
-                            onChange={(e) =>
-                              handleItAssetDetailsChange(
-                                "system_details",
-                                "processor",
-                                e.target.value
-                              )
-                            }
-                            disabled={!itAssetsToggle}
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                            InputProps={{
-                              sx: fieldStyles,
-                            }}
-                          />
-
-                          {/* Custom Fields for System Details */}
-                          {(itAssetsCustomFields["System Details"] || []).map(
-                            (field) => (
-                              <div key={field.id} className="relative">
-                                <TextField
-                                  label={field.name}
-                                  placeholder={`Enter ${field.name}`}
-                                  value={field.value}
-                                  onChange={(e) =>
-                                    handleItAssetsCustomFieldChange(
-                                      "System Details",
-                                      field.id,
-                                      e.target.value
-                                    )
-                                  }
-                                  fullWidth
-                                  variant="outlined"
-                                  InputLabelProps={{
-                                    shrink: true,
-                                  }}
-                                  InputProps={{
-                                    sx: fieldStyles,
-                                  }}
-                                />
-                                <button
-                                  onClick={() =>
-                                    removeItAssetsCustomField(
-                                      "System Details",
-                                      field.id
-                                    )
-                                  }
-                                  className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Hardware Details */}
-                      <div>
-                        <div className="flex items-center gap-2 mb-4">
-                          {isEditingHardDiskHeading ? (
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                value={editingHardDiskHeadingText}
-                                onChange={(e) =>
-                                  setEditingHardDiskHeadingText(e.target.value)
-                                }
-                                className="font-semibold text-sm bg-transparent border-b focus:outline-none"
-                                style={{
-                                  color: "#C72030",
-                                  borderColor: "#C72030",
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    setHardDiskHeading(
-                                      editingHardDiskHeadingText
-                                    );
-                                    localStorage.setItem(
-                                      "hardDiskHeading",
-                                      editingHardDiskHeadingText
-                                    );
-                                    setIsEditingHardDiskHeading(false);
-                                  }
-                                  if (e.key === "Escape") {
-                                    setEditingHardDiskHeadingText(
-                                      hardDiskHeading
-                                    );
-                                    setIsEditingHardDiskHeading(false);
-                                  }
-                                }}
-                                autoFocus
-                              />
-                              <button
-                                onClick={() => {
-                                  setHardDiskHeading(editingHardDiskHeadingText);
-                                  localStorage.setItem(
-                                    "hardDiskHeading",
-                                    editingHardDiskHeadingText
-                                  );
-                                  setIsEditingHardDiskHeading(false);
-                                }}
-                                className="text-green-600 hover:text-green-700"
-                              >
-                                <Check className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <h3
-                                className="font-semibold"
-                                style={{ color: "#C72030" }}
-                              >
-                                {hardDiskHeading}
-                              </h3>
-                              <button
-                                onClick={() => {
-                                  setEditingHardDiskHeadingText(hardDiskHeading);
-                                  setIsEditingHardDiskHeading(true);
-                                }}
-                                className="text-gray-500 hover:text-red-600 transition-colors"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          <TextField
-                            label="Model"
-                            placeholder="Enter Model"
-                            name="hdModel"
-                            fullWidth
-                            variant="outlined"
-                            value={itAssetDetails.hardware.model}
-                            onChange={(e) =>
-                              handleItAssetDetailsChange(
-                                "hardware",
-                                "model",
-                                e.target.value
-                              )
-                            }
-                            disabled={!itAssetsToggle}
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                            InputProps={{
-                              sx: fieldStyles,
-                            }}
-                          />
-                          <TextField
-                            label="Serial No."
-                            placeholder="Enter Serial No."
-                            name="hdSerialNo"
-                            fullWidth
-                            variant="outlined"
-                            value={itAssetDetails.hardware.serial_no}
-                            onChange={(e) =>
-                              handleItAssetDetailsChange(
-                                "hardware",
-                                "serial_no",
-                                e.target.value
-                              )
-                            }
-                            disabled={!itAssetsToggle}
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                            InputProps={{
-                              sx: fieldStyles,
-                            }}
-                          />
-                          <TextField
-                            label="Capacity"
-                            placeholder="Enter Capacity"
-                            name="hdCapacity"
-                            fullWidth
-                            variant="outlined"
-                            value={itAssetDetails.hardware.capacity}
-                            onChange={(e) =>
-                              handleItAssetDetailsChange(
-                                "hardware",
-                                "capacity",
-                                e.target.value
-                              )
-                            }
-                            disabled={!itAssetsToggle}
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                            InputProps={{
-                              sx: fieldStyles,
-                            }}
-                          />
-
-                          {/* Custom Fields for Hardware Details */}
-                          {(itAssetsCustomFields["Hardware Details"] || []).map(
-                            (field) => (
-                              <div key={field.id} className="relative">
-                                <TextField
-                                  label={field.name}
-                                  placeholder={`Enter ${field.name}`}
-                                  value={field.value}
-                                  onChange={(e) =>
-                                    handleItAssetsCustomFieldChange(
-                                      "Hardware Details",
-                                      field.id,
-                                      e.target.value
-                                    )
-                                  }
-                                  fullWidth
-                                  variant="outlined"
-                                  InputLabelProps={{
-                                    shrink: true,
-                                  }}
-                                  InputProps={{
-                                    sx: fieldStyles,
-                                  }}
-                                />
-                                <button
-                                  onClick={() =>
-                                    removeItAssetsCustomField(
-                                      "Hardware Details",
-                                      field.id
-                                    )
-                                  }
-                                  className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                   {expandedSections.warranty && (
+                                     <div className="p-4 sm:p-6">
+                                       {/* System Details */}
+                                       <div className="mb-6">
+                                         <h3
+                                           className="font-semibold mb-4"
+                                           style={{
+                                             color: "#C72030",
+                                           }}
+                                         >
+                                           SYSTEM DETAILS
+                                         </h3>
+                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                           <TextField
+                                             label="OS"
+                                             placeholder="Enter OS"
+                                             name="os"
+                                             fullWidth
+                                             variant="outlined"
+                                             value={itAssetDetails.system_details.os}
+                                             onChange={(e) =>
+                                               handleItAssetDetailsChange(
+                                                 "system_details",
+                                                 "os",
+                                                 e.target.value
+                                               )
+                                             }
+                                             InputLabelProps={{
+                                               shrink: true,
+                                             }}
+                                             InputProps={{
+                                               sx: fieldStyles,
+                                             }}
+                                           />
+                 
+                                           <TextField
+                                             label="Total Memory"
+                                             placeholder="Enter Total Memory"
+                                             name="totalMemory"
+                                             fullWidth
+                                             variant="outlined"
+                                             value={itAssetDetails.system_details.memory}
+                                             onChange={(e) =>
+                                               handleItAssetDetailsChange(
+                                                 "system_details",
+                                                 "memory",
+                                                 e.target.value
+                                               )
+                                             }
+                                             InputLabelProps={{
+                                               shrink: true,
+                                             }}
+                                             InputProps={{
+                                               sx: fieldStyles,
+                                             }}
+                                           />
+                                           <TextField
+                                             label="Processor"
+                                             placeholder="Enter Processor"
+                                             name="processor"
+                                             fullWidth
+                                             variant="outlined"
+                                             value={itAssetDetails.system_details.processor}
+                                             onChange={(e) =>
+                                               handleItAssetDetailsChange(
+                                                 "system_details",
+                                                 "processor",
+                                                 e.target.value
+                                               )
+                                             }
+                                             InputLabelProps={{
+                                               shrink: true,
+                                             }}
+                                             InputProps={{
+                                               sx: fieldStyles,
+                                             }}
+                                           />
+                 
+                                           {/* Custom Fields for System Details */}
+                                           {(itAssetsCustomFields["System Details"] || []).map(
+                                             (field) => (
+                                               <div key={field.id} className="relative">
+                                                 <TextField
+                                                   label={field.name}
+                                                   placeholder={`Enter ${field.name}`}
+                                                   value={field.value}
+                                                   onChange={(e) =>
+                                                     handleItAssetsCustomFieldChange(
+                                                       "System Details",
+                                                       field.id,
+                                                       e.target.value
+                                                     )
+                                                   }
+                                                   fullWidth
+                                                   variant="outlined"
+                                                   InputLabelProps={{
+                                                     shrink: true,
+                                                   }}
+                                                   InputProps={{
+                                                     sx: fieldStyles,
+                                                   }}
+                                                 />
+                                                 <button
+                                                   onClick={() =>
+                                                     removeItAssetsCustomField(
+                                                       "System Details",
+                                                       field.id
+                                                     )
+                                                   }
+                                                   className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                                                 >
+                                                   <X className="w-4 h-4" />
+                                                 </button>
+                                               </div>
+                                             )
+                                           )}
+                                         </div>
+                                       </div>
+                 
+                                       {/* Hardware Details */}
+                                       <div>
+                                         <div className="flex items-center gap-2 mb-4">
+                                           {isEditingHardDiskHeading ? (
+                                             <div className="flex items-center gap-2">
+                                               <input
+                                                 type="text"
+                                                 value={editingHardDiskHeadingText}
+                                                 onChange={(e) =>
+                                                   setEditingHardDiskHeadingText(e.target.value)
+                                                 }
+                                                 className="font-semibold text-sm bg-transparent border-b focus:outline-none"
+                                                 style={{
+                                                   color: "#C72030",
+                                                   borderColor: "#C72030",
+                                                 }}
+                                                 onKeyDown={(e) => {
+                                                   if (e.key === "Enter") {
+                                                     setHardDiskHeading(
+                                                       editingHardDiskHeadingText
+                                                     );
+                                                     localStorage.setItem(
+                                                       "hardDiskHeading",
+                                                       editingHardDiskHeadingText
+                                                     );
+                                                     setIsEditingHardDiskHeading(false);
+                                                   }
+                                                   if (e.key === "Escape") {
+                                                     setEditingHardDiskHeadingText(
+                                                       hardDiskHeading
+                                                     );
+                                                     setIsEditingHardDiskHeading(false);
+                                                   }
+                                                 }}
+                                                 autoFocus
+                                               />
+                                               <button
+                                                 onClick={() => {
+                                                   setHardDiskHeading(editingHardDiskHeadingText);
+                                                   localStorage.setItem(
+                                                     "hardDiskHeading",
+                                                     editingHardDiskHeadingText
+                                                   );
+                                                   setIsEditingHardDiskHeading(false);
+                                                 }}
+                                                 className="text-green-600 hover:text-green-700"
+                                               >
+                                                 <Check className="w-4 h-4" />
+                                               </button>
+                                             </div>
+                                           ) : (
+                                             <div className="flex items-center gap-2">
+                                               <h3
+                                                 className="font-semibold"
+                                                 style={{ color: "#C72030" }}
+                                               >
+                                                 {hardDiskHeading}
+                                               </h3>
+                                               <button
+                                                 onClick={() => {
+                                                   setEditingHardDiskHeadingText(hardDiskHeading);
+                                                   setIsEditingHardDiskHeading(true);
+                                                 }}
+                                                 className="text-gray-500 hover:text-red-600 transition-colors"
+                                               >
+                                                 <Edit3 className="w-3 h-3" />
+                                               </button>
+                                             </div>
+                                           )}
+                                         </div>
+                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                           <TextField
+                                             label="Model"
+                                             placeholder="Enter Model"
+                                             name="hdModel"
+                                             fullWidth
+                                             variant="outlined"
+                                             value={itAssetDetails.hardware.model}
+                                             onChange={(e) =>
+                                               handleItAssetDetailsChange(
+                                                 "hardware",
+                                                 "model",
+                                                 e.target.value
+                                               )
+                                             }
+                                             InputLabelProps={{
+                                               shrink: true,
+                                             }}
+                                             InputProps={{
+                                               sx: fieldStyles,
+                                             }}
+                                           />
+                                           <TextField
+                                             label="Serial No."
+                                             placeholder="Enter Serial No."
+                                             name="hdSerialNo"
+                                             fullWidth
+                                             variant="outlined"
+                                             value={itAssetDetails.hardware.serial_no}
+                                             onChange={(e) =>
+                                               handleItAssetDetailsChange(
+                                                 "hardware",
+                                                 "serial_no",
+                                                 e.target.value
+                                               )
+                                             }
+                                             InputLabelProps={{
+                                               shrink: true,
+                                             }}
+                                             InputProps={{
+                                               sx: fieldStyles,
+                                             }}
+                                           />
+                                           <TextField
+                                             label="Capacity"
+                                             placeholder="Enter Capacity"
+                                             name="hdCapacity"
+                                             fullWidth
+                                             variant="outlined"
+                                             value={itAssetDetails.hardware.capacity}
+                                             onChange={(e) =>
+                                               handleItAssetDetailsChange(
+                                                 "hardware",
+                                                 "capacity",
+                                                 e.target.value
+                                               )
+                                             }
+                                             InputLabelProps={{
+                                               shrink: true,
+                                             }}
+                                             InputProps={{
+                                               sx: fieldStyles,
+                                             }}
+                                           />
+                 
+                                           {/* Custom Fields for Hardware Details */}
+                                           {(itAssetsCustomFields["Hardware Details"] || []).map(
+                                             (field) => (
+                                               <div key={field.id} className="relative">
+                                                 <TextField
+                                                   label={field.name}
+                                                   placeholder={`Enter ${field.name}`}
+                                                   value={field.value}
+                                                   onChange={(e) =>
+                                                     handleItAssetsCustomFieldChange(
+                                                       "Hardware Details",
+                                                       field.id,
+                                                       e.target.value
+                                                     )
+                                                   }
+                                                   fullWidth
+                                                   variant="outlined"
+                                                   InputLabelProps={{
+                                                     shrink: true,
+                                                   }}
+                                                   InputProps={{
+                                                     sx: fieldStyles,
+                                                   }}
+                                                 />
+                                                 <button
+                                                   onClick={() =>
+                                                     removeItAssetsCustomField(
+                                                       "Hardware Details",
+                                                       field.id
+                                                     )
+                                                   }
+                                                   className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                                                 >
+                                                   <X className="w-4 h-4" />
+                                                 </button>
+                                               </div>
+                                             )
+                                           )}
+                                         </div>
+                                       </div>
+                                     </div>
+                                   )}
                 </div>
               )}
 
@@ -11388,7 +11807,7 @@ export const EditAssetDetailsPage = () => {
                     <Plus className="w-4 h-4" />
                     Custom Field
                   </button> */}
-                    <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">If Applicable</span>
                       <div
                         className="relative inline-block w-12 h-6"
@@ -11416,7 +11835,7 @@ export const EditAssetDetailsPage = () => {
                           ></span>
                         </label>
                       </div>
-                    </div>
+                    </div> */}
                     {expandedSections.nonConsumption ? (
                       <ChevronUp className="w-5 h-5" />
                     ) : (
@@ -11425,19 +11844,21 @@ export const EditAssetDetailsPage = () => {
                   </div>
                 </div>
                 {expandedSections.nonConsumption && (
-                  <div
-                    className={`p-4 sm:p-6 ${!depreciationToggle ? "opacity-50 pointer-events-none" : ""
-                      }`}
-                  >
+                  // <div
+                  //   className={`p-4 sm:p-6 ${!depreciationToggle ? "opacity-50 pointer-events-none" : ""
+                  //     }`}
+                  // >
+                    <div className="p-4 sm:p-6">
                     <div className="space-y-6">
                       {/* Method Section */}
                       <div>
-                        <label
+                        {/* <label
                           className={`text-sm font-medium mb-4 block ${!depreciationToggle
                             ? "text-gray-400"
                             : "text-gray-700"
                             }`}
-                        >
+                        > */}
+                         <label className="text-sm font-medium mb-4 block text-gray-700">
                           Method
                         </label>
                         <div className="flex gap-8">
@@ -11447,7 +11868,7 @@ export const EditAssetDetailsPage = () => {
                               id="straight-line"
                               name="depreciationMethod"
                               value="straight_line"
-                              disabled={!depreciationToggle}
+                              // disabled={!depreciationToggle}
                               className="w-4 h-4 text-[#C72030] border-gray-300"
                               style={{
                                 accentColor: "#C72030",
@@ -11462,9 +11883,11 @@ export const EditAssetDetailsPage = () => {
                             />
                             <label
                               htmlFor="straight-line"
-                              className={`text-sm ${!depreciationToggle ? "text-gray-400" : ""
-                                }`}
-                            >
+                            //   className={`text-sm 
+                            //     ${!depreciationToggle ? "text-gray-400" : ""
+                            //     }`}
+                            // >
+                            className="text-sm">
                               Straight Line
                             </label>
                           </div>
@@ -11474,7 +11897,7 @@ export const EditAssetDetailsPage = () => {
                               id="wdv"
                               name="depreciationMethod"
                               value="wdv"
-                              disabled={!depreciationToggle}
+                              // disabled={!depreciationToggle}
                               className="w-4 h-4 text-[#C72030] border-gray-300"
                               style={{
                                 accentColor: "#C72030",
@@ -11489,8 +11912,9 @@ export const EditAssetDetailsPage = () => {
                             />
                             <label
                               htmlFor="wdv"
-                              className={`text-sm ${!depreciationToggle ? "text-gray-400" : ""
-                                }`}
+                              // className={`text-sm ${!depreciationToggle ? "text-gray-400" : ""
+                              //   }`}
+                               className="text-sm"
                             >
                               WDV
                             </label>
@@ -11502,14 +11926,18 @@ export const EditAssetDetailsPage = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <TextField
                           label={
-                            <span>
-                              Useful Life (Years){depreciationToggle && <span style={{ color: '#C72030' }}>*</span>}
+                            // <span>
+                            //   Useful Life (Years){depreciationToggle && <span style={{ color: '#C72030' }}>*</span>}
+                            // </span>
+                                                        <span>
+                              Useful Life (Years)<span style={{ color: '#C72030' }}>*</span>
                             </span>
                           }
                           placeholder="Enter years"
                           variant="outlined"
                           fullWidth
                           type="number"
+                            disabled={!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0}
                           sx={{
                             "& .MuiOutlinedInput-root": {
                               height: { xs: "36px", md: "45px" },
@@ -11537,11 +11965,12 @@ export const EditAssetDetailsPage = () => {
 
                         <TextField
                           required={
-                            depreciationToggle && !!formData.depreciation_method
+                           !!formData.depreciation_method
                           }
                           label={
                             <span>
-                              Salvage Value{depreciationToggle && <span style={{ color: '#C72030' }}>*</span>}
+                              {/* Salvage Value{depreciationToggle && <span style={{ color: '#C72030' }}>*</span>} */}
+                             Salvage Value{formData.depreciation_method && <span style={{ color: '#C72030' }}>*</span>}
                             </span>
                           }
                           placeholder="Enter Value"
@@ -11549,7 +11978,7 @@ export const EditAssetDetailsPage = () => {
                           fullWidth
                           variant="outlined"
                           type="number"
-                          disabled={!depreciationToggle}
+                           disabled={!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0}
                           InputLabelProps={{
                             shrink: true,
                           }}
@@ -11569,12 +11998,12 @@ export const EditAssetDetailsPage = () => {
                             },
                           }}
                           error={
-                            depreciationToggle &&
+                            // depreciationToggle &&
                             !!formData.depreciation_method &&
                             !formData.salvage_value
                           }
                           helperText={
-                            depreciationToggle &&
+                            // depreciationToggle &&
                               !!formData.depreciation_method &&
                               !formData.salvage_value
                               ? "Required"
@@ -11587,7 +12016,7 @@ export const EditAssetDetailsPage = () => {
                         />
                         <TextField
                           required={
-                            depreciationToggle && !!formData.depreciation_method
+                           !!formData.depreciation_method
                           }
                           label="Depreciation Rate"
                           placeholder="Enter Value"
@@ -11595,30 +12024,48 @@ export const EditAssetDetailsPage = () => {
                           fullWidth
                           type="number"
                           variant="outlined"
-                          disabled={!depreciationToggle}
+                          // disabled={!depreciationToggle}
+                             disabled={!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0}
                           InputLabelProps={{
                             shrink: true,
                           }}
                           InputProps={{
                             sx: fieldStyles,
                           }}
-                          error={
-                            depreciationToggle &&
+                        //   error={
+                        //     depreciationToggle &&
+                        //     !!formData.depreciation_method &&
+                        //     !formData.depreciation_rate
+                        //   }
+                        //   helperText={
+                        //     depreciationToggle &&
+                        //       !!formData.depreciation_method &&
+                        //       !formData.depreciation_rate
+                        //       ? "Required"
+                        //       : ""
+                        //   }
+                        //     value={formData.depreciation_rate || ""}
+                        //   onChange={(e) =>
+                        //     handleFieldChange("depreciation_rate", e.target.value)
+                        //   }
+                        // />
+                        error={
                             !!formData.depreciation_method &&
                             !formData.depreciation_rate
                           }
                           helperText={
-                            depreciationToggle &&
-                              !!formData.depreciation_method &&
+                            !!formData.depreciation_method &&
                               !formData.depreciation_rate
                               ? "Required"
-                              : ""
+                              : (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0)
+                                ? "Purchase Cost required first"
+                                : ""
                           }
-                            value={formData.depreciation_rate || ""}
+                          value={formData.depreciation_rate || ''}
                           onChange={(e) =>
                             handleFieldChange("depreciation_rate", e.target.value)
                           }
-                        />
+                          />
                       </div>
 
                       {/* Radio Options */}
@@ -11688,7 +12135,7 @@ export const EditAssetDetailsPage = () => {
                                       id="individual-asset"
                                       name="similar_product_type"
                                       value="individual"
-                                      disabled={!depreciationToggle}
+                                      // disabled={!depreciationToggle}
                                       className="w-4 h-4 text-[#C72030] border-gray-300"
                                       style={{
                                         accentColor: "#C72030",
@@ -11702,10 +12149,8 @@ export const EditAssetDetailsPage = () => {
                                     />
                                     <label
                                       htmlFor="individual-asset"
-                                      className={`text-sm font-medium ${!depreciationToggle
-                                        ? "text-gray-400"
-                                        : "text-gray-700"
-                                        }`}
+                                      className="text-sm font-medium text-gray-700"
+                                        
                                     >
                                       Individual Asset
                                     </label>
@@ -11718,7 +12163,7 @@ export const EditAssetDetailsPage = () => {
                                       id="group-asset"
                                       name="similar_product_type"
                                       value="group"
-                                      disabled={!depreciationToggle}
+                                      // disabled={!depreciationToggle}
                                       className="w-4 h-4 text-[#C72030] border-gray-300"
                                       style={{
                                         accentColor: "#C72030",
@@ -11732,10 +12177,11 @@ export const EditAssetDetailsPage = () => {
                                     />
                                     <label
                                       htmlFor="group-asset"
-                                      className={`text-sm font-medium ${!depreciationToggle
-                                        ? "text-gray-400"
-                                        : "text-gray-700"
-                                        }`}
+                                      // className={`text-sm font-medium ${!depreciationToggle
+                                      //   ? "text-gray-400"
+                                      //   : "text-gray-700"
+                                      //   }`}
+                                        className="text-sm font-medium text-gray-700"
                                     >
                                       Asset Group
                                     </label>
@@ -11761,7 +12207,7 @@ export const EditAssetDetailsPage = () => {
                                       handleFieldChange("selected_asset_ids", newAssets);
                                     }
                                   }}
-                                  disabled={!depreciationToggle || assetsLoading}
+                                  disabled={ assetsLoading}
                                 >
                                   <SelectTrigger className="w-full h-[45px] bg-white">
                                     <SelectValue
@@ -11838,7 +12284,7 @@ export const EditAssetDetailsPage = () => {
                                         fetchSubGroups(value);
                                       }}
                                       disabled={
-                                        !depreciationToggle || groupsLoading
+                                         groupsLoading
                                       }
                                     >
                                       <SelectTrigger className="w-full h-[45px] bg-white">
@@ -11875,7 +12321,7 @@ export const EditAssetDetailsPage = () => {
                                         )
                                       }
                                       disabled={
-                                        !depreciationToggle ||
+                                        // !depreciationToggle ||
                                         !formData.selected_group_id ||
                                         subGroupsLoading
                                       }
@@ -12040,7 +12486,7 @@ export const EditAssetDetailsPage = () => {
                             {allocationBasedOn === "department"
                               ? "Department"
                               : "Users"}
-                            <span style={{ color: '#C72030' }}>*</span>
+                            {/* <span style={{ color: '#C72030' }}>*</span> */}
                           </InputLabel>
                           <MuiSelect
                             labelId="allocation-select-label"
@@ -13075,7 +13521,7 @@ export const EditAssetDetailsPage = () => {
           <button
             onClick={handleSaveAndShow}
             className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md   text-sm sm:text-base"
-            disabled={submitting}
+            // disabled={submitting}
           >
             Save & Show Details
           </button>

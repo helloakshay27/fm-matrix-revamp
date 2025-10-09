@@ -259,7 +259,7 @@ export const VendorPermitForm = () => {
         securityName: '',
         securityDateTime: ''
     });
-
+    const [declarationChecked, setDeclarationChecked] = useState(false);
     // Attachments
     const [attachments, setAttachments] = useState<Attachment[]>([
         { id: '1', name: 'List of people to work', markYesNo: '', file: null },
@@ -272,8 +272,15 @@ export const VendorPermitForm = () => {
         setBasicInfo(prev => ({ ...prev, [field]: value }));
     };
 
+    // Only allow digits for emergencyContactNumber
     const handleDetailedInfoChange = (field: string, value: any) => {
-        setDetailedInfo(prev => ({ ...prev, [field]: value }));
+        if (field === 'emergencyContactNumber') {
+            // Remove non-digit characters and limit to 10 digits
+            const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
+            setDetailedInfo(prev => ({ ...prev, [field]: digitsOnly }));
+        } else {
+            setDetailedInfo(prev => ({ ...prev, [field]: value }));
+        }
     };
 
     const handleUtilityChange = (utility: string, checked: boolean) => {
@@ -417,6 +424,11 @@ export const VendorPermitForm = () => {
                     formData.append(`pms_permit_form[${checkpoint.parameters}]`, checkpoint.checked ? 'Req' : 'Not Req');
                 }
             });
+            const hasEmptyAssignTo = manpowerDetails.some(detail => !detail.assignTo.trim());
+            if (hasEmptyAssignTo) {
+                toast.error('Please fill in all Assign To fields.');
+                return;
+            }
 
             formData.append('pms_permit_form[contract_supervisor_name]', personsInfo.contractorsSupervisorName || '');
             formData.append('pms_permit_form[contract_supervisor_number]', personsInfo.contractSupervisorNumber || '');
@@ -431,6 +443,11 @@ export const VendorPermitForm = () => {
                     formData.append(`pms_permit_form[permit_form_external_assignees_attributes][${timestamp}][phone]`, detail.emergencyContact || '');
                 }
             });
+            if (!declarationChecked) {
+                toast.error('Please accept the declaration before submitting the form.');
+                return;
+            }
+            setLoading(true);
 
             // File attachments
             attachments.forEach((attachment) => {
@@ -762,12 +779,12 @@ export const VendorPermitForm = () => {
                                             >
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="By Company" id="ppe-company-haz" />
-                                                    <Label htmlFor="ppe-company-haz">by Company</Label>
+                                                    <Label htmlFor="ppe-company-haz">By Company</Label>
                                                     <Label className="text-xs text-gray-500 ml-2">(to be returned back to security)</Label>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="By Contractor" id="ppe-contractor-haz" />
-                                                    <Label htmlFor="ppe-contractor-haz">by Contractor</Label>
+                                                    <Label htmlFor="ppe-contractor-haz">By Contractor</Label>
                                                 </div>
                                             </RadioGroup>
                                         </div>
@@ -931,13 +948,34 @@ export const VendorPermitForm = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div>
+                                        {/* <div>
                                             <Label htmlFor="emergencyContactName">Emergency Contact Name :</Label>
                                             <Input id="emergencyContactName" value={detailedInfo.emergencyContactName} onChange={(e) => handleDetailedInfoChange('emergencyContactName', e.target.value)} placeholder="Enter Emergency Contact Name" />
+                                        </div> */}
+                                        <div>
+                                            <Label htmlFor="emergencyContactName">Emergency Contact Name :</Label>
+                                            <Input
+                                                id="emergencyContactName"
+                                                value={detailedInfo.emergencyContactName}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/[^a-zA-Z\s]/g, ""); // allows only letters & spaces
+                                                    handleDetailedInfoChange("emergencyContactName", value);
+                                                }}
+                                                placeholder="Enter Emergency Contact Name"
+                                            />
                                         </div>
+
                                         <div>
                                             <Label htmlFor="emergencyContactNumber">Emergency Contact Number :</Label>
-                                            <Input id="emergencyContactNumber" value={detailedInfo.emergencyContactNumber} onChange={(e) => handleDetailedInfoChange('emergencyContactNumber', e.target.value)} placeholder="Enter Emergency Contact Number" />
+                                            <Input
+                                                id="emergencyContactNumber"
+                                                value={detailedInfo.emergencyContactNumber}
+                                                onChange={(e) => handleDetailedInfoChange('emergencyContactNumber', e.target.value)}
+                                                placeholder="Enter Emergency Contact Number"
+                                                inputMode="numeric"
+                                                pattern="[0-9]{10}"
+                                                maxLength={10}
+                                            />
                                         </div>
                                     </div>
 
@@ -1097,14 +1135,52 @@ export const VendorPermitForm = () => {
 
                                 {/* Contractor's Supervisor Row */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
+                                    {/* <div>
                                         <Label htmlFor="contractorsSupervisorName">Contractor's Supervisor</Label>
                                         <Input id="contractorsSupervisorName" value={personsInfo.contractorsSupervisorName} onChange={(e) => setPersonsInfo(prev => ({ ...prev, contractorsSupervisorName: e.target.value }))} placeholder="Enter Contract Supervisor Name" />
-                                    </div>
+                                    </div> */}
                                     <div>
+                                        <Label htmlFor="contractorsSupervisorName">Contractor's Supervisor</Label>
+                                        <Input
+                                            id="contractorsSupervisorName"
+                                            value={personsInfo.contractorsSupervisorName}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Allow only letters and spaces
+                                                if (/^[A-Za-z\s]*$/.test(value)) {
+                                                    setPersonsInfo((prev) => ({
+                                                        ...prev,
+                                                        contractorsSupervisorName: value,
+                                                    }));
+                                                }
+                                            }}
+                                            placeholder="Enter Contract Supervisor Name"
+                                        />
+                                    </div>
+
+                                    {/* <div>
                                         <Label htmlFor="contractSupervisorNumber">Contact Number</Label>
                                         <Input id="contractSupervisorNumber" value={personsInfo.contractSupervisorNumber} onChange={(e) => setPersonsInfo(prev => ({ ...prev, contractSupervisorNumber: e.target.value }))} placeholder="Enter Contract Supervisor Number" />
+                                    </div> */}
+                                    <div>
+                                        <Label htmlFor="contractSupervisorNumber">Contact Number</Label>
+                                        <Input
+                                            id="contractSupervisorNumber"
+                                            value={personsInfo.contractSupervisorNumber}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Allow only numbers and max 10 digits
+                                                if (/^\d{0,10}$/.test(value)) {
+                                                    setPersonsInfo((prev) => ({
+                                                        ...prev,
+                                                        contractSupervisorNumber: value,
+                                                    }));
+                                                }
+                                            }}
+                                            placeholder="Enter Contract Supervisor Number"
+                                        />
                                     </div>
+
                                 </div>
 
                                 {/* Permit Issuer Row */}
@@ -1147,7 +1223,7 @@ export const VendorPermitForm = () => {
                                 {manpowerDetails.map((detail) => (
                                     <div key={detail.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
                                         <div>
-                                            <Label htmlFor={`assignTo-${detail.id}`}>Assign To*</Label>
+                                            <Label htmlFor={`assignTo-${detail.id}`}>Assign To <span style={{ color: '#C72030' }}>*</span></Label>
                                             <Input id={`assignTo-${detail.id}`} value={detail.assignTo} onChange={(e) => handleManpowerChange(detail.id, 'assignTo', e.target.value)} />
                                         </div>
                                         <div>
@@ -1156,7 +1232,19 @@ export const VendorPermitForm = () => {
                                         </div>
                                         <div>
                                             <Label htmlFor={`emergencyContact-${detail.id}`}>Emergency Cont. No.</Label>
-                                            <Input id={`emergencyContact-${detail.id}`} value={detail.emergencyContact} onChange={(e) => handleManpowerChange(detail.id, 'emergencyContact', e.target.value)} />
+                                            <Input
+                                                id={`emergencyContact-${detail.id}`}
+                                                value={detail.emergencyContact}
+                                                onChange={(e) => {
+                                                    // Only allow numbers and max 10 digits
+                                                    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                    handleManpowerChange(detail.id, 'emergencyContact', value);
+                                                }}
+                                                inputMode="numeric"
+                                                pattern="[0-9]{10}"
+                                                maxLength={10}
+                                                placeholder="Enter Emergency Contact Number"
+                                            />
                                         </div>
                                         <div className="flex items-end">
                                             {manpowerDetails.length > 1 && (
@@ -1183,7 +1271,7 @@ export const VendorPermitForm = () => {
                                 DECLARATION
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6 bg-white">
+                        {/* <CardContent className="p-6 bg-white">
                             <p className="text-sm text-gray-700 mb-4">
                                 Declaration - I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analysis JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally & physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Haven Infinite & Norms.
                             </p>
@@ -1203,6 +1291,36 @@ export const VendorPermitForm = () => {
                             </div>
 
 
+                        </CardContent> */}
+                        <CardContent className="p-6 bg-white">
+                            <p className="text-sm text-gray-700 mb-4">
+                                Declaration - I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analysis JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally & physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Haven Infinite & Norms.
+                            </p>
+                            <div className="flex items-center space-x-2 mb-6">
+                                <Checkbox
+                                    id="declaration-accept"
+                                    checked={declarationChecked}
+                                    onCheckedChange={(checked) => setDeclarationChecked(checked as boolean)}
+                                />
+                                <Label htmlFor="declaration-accept" className="text-sm font-medium text-gray-700 cursor-pointer">
+                                    I accept and declare the above statement to be true
+                                </Label>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <Label>Contractor Supervisor</Label>
+                                    <Input placeholder="Contractor Supervisor" disabled />
+                                </div>
+                                <div>
+                                    <Label>Permit Initiator</Label>
+                                    {/* <Input placeholder="Permit Initiator" disabled /> */}
+                                    <Input value={personsInfo.permitInitiatorName} disabled />
+                                </div>
+                                <div>
+                                    <Label>Permit Issuer</Label>
+                                    <Input placeholder="Permit Issuer" disabled />
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
 

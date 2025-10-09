@@ -263,7 +263,7 @@ const ChatTasks = () => {
     };
 
     const renderTaskTable = () => (
-        <>
+        <div className={`${!isGroupChat && "p-6"}`}>
             <EnhancedTable
                 data={tasks}
                 columns={columns}
@@ -295,7 +295,7 @@ const ChatTasks = () => {
                     </PaginationContent>
                 </Pagination>
             </div>
-        </>
+        </div>
     );
 
     if (!isGroupChat) {
@@ -303,7 +303,7 @@ const ChatTasks = () => {
     }
 
     return (
-        <div>
+        <div className='p-6'>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
                 <TabsList className="w-full bg-white border border-gray-200">
                     <TabsTrigger value="all" className="w-full flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">All Tasks</TabsTrigger>

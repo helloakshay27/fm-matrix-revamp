@@ -946,12 +946,12 @@ export const EditSurveyMapping = () => {
             Back to Survey Mapping
           </Button>
         </div>
-        <div className="text-sm text-gray-600">
+        {/* <div className="text-sm text-gray-600">
           {surveyMappings.filter(m => !m.markedForDeletion).length === 1 
             ? '1 Location Configuration' 
             : `${surveyMappings.filter(m => !m.markedForDeletion).length} Location Configurations`
           }
-        </div>
+        </div> */}
       </header>
 
       <Section title="Survey Selection" icon={<List className="w-3.5 h-3.5" />}>

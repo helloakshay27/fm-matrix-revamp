@@ -1546,6 +1546,7 @@ function AddWaterAssetDashboard() {
                         fullWidth
                         sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                         InputLabelProps={{ shrink: true }}
+                        disabled={formData.underWarranty !== 'yes'}
                       />
                     </div>
                     <div>
@@ -1559,6 +1560,7 @@ function AddWaterAssetDashboard() {
                         fullWidth
                         sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                         InputLabelProps={{ shrink: true }}
+                        disabled={formData.underWarranty !== 'yes'}
                       />
                     </div>
                     <div>
@@ -1572,6 +1574,7 @@ function AddWaterAssetDashboard() {
                         fullWidth
                         sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                         InputLabelProps={{ shrink: true }}
+                        disabled={formData.underWarranty !== 'yes'}
                       />
                     </div>
                   </div>

@@ -254,48 +254,43 @@ export class JobSheetPDFGenerator {
     document.body.appendChild(container);
 
     try {
-      // Wait longer for fonts and images to load - especially for remote S3 images
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Increased from 100ms to 1000ms
-      
-      // Pre-load all images before rendering
+      // Convert all images to base64 to avoid CORS issues
       const images = container.querySelectorAll('img');
-      console.log(`Pre-loading ${images.length} images before PDF generation`);
+      console.log(`Converting ${images.length} images to base64 to bypass CORS`);
       
-      const imageLoadPromises = Array.from(images).map((img: any) => {
-        return new Promise((resolve) => {
-          if (img.complete) {
-            console.log(`Image already loaded: ${img.src}`);
-            resolve(true);
-          } else {
-            img.onload = () => {
-              console.log(`Image loaded successfully: ${img.src}`);
-              resolve(true);
-            };
-            img.onerror = () => {
-              console.warn(`Image failed to load: ${img.src}`);
-              resolve(false); // Resolve anyway to not block PDF generation
-            };
-            // Force reload if needed
-            const src = img.src;
-            img.src = '';
-            img.src = src;
-          }
-        });
+      const imageConversionPromises = Array.from(images).map(async (img: any) => {
+        const originalSrc = img.src;
+        if (!originalSrc || originalSrc.startsWith('data:')) {
+          console.log(`Skipping already converted or invalid image: ${originalSrc}`);
+          return;
+        }
+
+        try {
+          console.log(`Converting image to base64: ${originalSrc}`);
+          const base64 = await this.imageToBase64(originalSrc);
+          img.src = base64;
+          console.log(`✓ Successfully converted image to base64`);
+        } catch (error) {
+          console.error(`Failed to convert image to base64: ${originalSrc}`, error);
+          // Use a transparent 1x1 pixel placeholder to avoid CORS tainting
+          img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+          img.alt = 'Image failed to load due to CORS';
+          console.log(`Replaced failed image with placeholder`);
+        }
       });
       
-      await Promise.all(imageLoadPromises);
-      console.log('All images pre-loaded, starting canvas rendering');
+      await Promise.all(imageConversionPromises);
+      console.log('All images converted to base64, starting canvas rendering');
 
       const canvas = await html2canvas(container, {
         scale: 2,
-        useCORS: false, // Disable CORS - use allowTaint instead
-        allowTaint: true, // Allow tainted canvas for CORS images
+        useCORS: false, // Disabled since we're using base64 images
+        allowTaint: true, // Allow since we've converted images to base64
         backgroundColor: "#ffffff",
         width: container.offsetWidth,
         height: container.scrollHeight,
-        logging: true, // Enable logging to debug image loading
-        imageTimeout: 15000, // Increased timeout for image loading
-        proxy: undefined, // Let browser handle images normally
+        logging: true,
+        imageTimeout: 0, // No timeout needed for base64 images
         onclone: (clonedDoc) => {
           // Ensure signature section is visible in cloned document
           const signatureSection =
@@ -305,22 +300,10 @@ export class JobSheetPDFGenerator {
               "position: relative !important; visibility: visible !important; display: block !important; opacity: 1 !important; z-index: 9999 !important;";
           }
           
-          // Pre-load and ensure images are visible in the cloned document
+          // Ensure all images are properly displayed
           const images = clonedDoc.querySelectorAll('img');
-          console.log(`Found ${images.length} images in cloned document`);
-          images.forEach((img: any, index: number) => {
-            const originalSrc = img.getAttribute('src') || img.getAttribute('data-image-url');
-            console.log(`Image ${index}: ${originalSrc}`);
-            
-            // Ensure image src is set and styles are correct
-            if (originalSrc && !img.src) {
-              img.src = originalSrc;
-            }
-            
+          images.forEach((img: any) => {
             img.style.cssText += "display: block !important; opacity: 1 !important; max-width: 100% !important; height: auto !important;";
-            
-            // Remove crossorigin attribute to avoid CORS issues
-            img.removeAttribute('crossorigin');
           });
         },
       });
@@ -578,10 +561,10 @@ export class JobSheetPDFGenerator {
       // Generate rows for this section with proper indexing
       const sectionRows = section.activities.map((item: any, index: number) => {
         const slNo = item.index || index + 1;
-        const inspectionPoint = item.activity || "";
+        const inspectionPoint = item.activity || item.label || "";
 
-        // Enhanced result handling
-        const inputValue = item.input_value;
+        // Enhanced result handling - support both input_value and userData fields
+        const inputValue = item.input_value || (Array.isArray(item.userData) ? item.userData[0] : item.userData);
         const result =
           inputValue !== null && inputValue !== undefined && inputValue !== ""
             ? inputValue
@@ -589,7 +572,8 @@ export class JobSheetPDFGenerator {
             ? ""
             : "Not Completed";
 
-        const remarks = item.comments || "";
+        // Support both comments and comment fields
+        const remarks = item.comments || item.comment || "";
 
         // Handle attachments - generate HTML for image thumbnails
         const hasAttachments =
@@ -600,17 +584,19 @@ export class JobSheetPDFGenerator {
         let attachmentDisplay = "-";
         if (hasAttachments) {
           const attachmentImages = item.attachments
-            .map((attachment: any) => {
+            .map((attachment: any, idx: number) => {
+              const attachmentUrl = typeof attachment === "string" ? attachment : attachment.url || attachment.file_url || "";
               return `<img 
-                src="${attachment}" 
-                style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px;"
+                src="${attachmentUrl}" 
+                alt="Attachment ${idx + 1}" 
                 crossorigin="anonymous"
-                onerror="this.style.display='none';"
-              />`;
+                style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px; display: inline-block;"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
+              /><span style="display:none; font-size: 18px; color: #999; margin: 2px;">📎</span>`;
             })
             .join("");
 
-          attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">${attachmentImages}</div>`;
+          attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 2px; align-items: center; justify-content: center;">${attachmentImages}</div>`;
         }
 
         return `
@@ -754,10 +740,10 @@ export class JobSheetPDFGenerator {
       const sectionRows = section.activities
         .map((item: any, index: number) => {
           const serialNumber = item.index || (pageNumber - 1) * 10 + index + 1;
-          const activity = item.activity || "";
+          const activity = item.activity || item.label || "";
 
-          // Handle null/empty input values properly
-          const inputValue = item.input_value;
+          // Handle null/empty input values properly - support both input_value and userData
+          const inputValue = item.input_value || (Array.isArray(item.userData) ? item.userData[0] : item.userData);
           const result =
             inputValue !== null && inputValue !== undefined && inputValue !== ""
               ? inputValue
@@ -765,7 +751,8 @@ export class JobSheetPDFGenerator {
               ? ""
               : "Not Completed";
 
-          const comments = item.comments || "";
+          // Support both comments and comment fields
+          const comments = item.comments || item.comment || "";
 
           // Handle attachments with image thumbnails (same as main section)
           const hasAttachments =
@@ -791,15 +778,15 @@ export class JobSheetPDFGenerator {
 
                 return `<img 
               src="${attachmentUrl}" 
-              alt="${attachmentName}" 
-              style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px;"
+              alt="${attachmentName}"
               crossorigin="anonymous"
+              style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin: 2px; display: inline-block;"
               onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
-            /><span style="display:none; font-size: 10px; color: #999;">📎</span>`;
+            /><span style="display:none; font-size: 18px; color: #999; margin: 2px;">📎</span>`;
               })
               .join("");
 
-            attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">${attachmentImages}</div>`;
+            attachmentDisplay = `<div style="display: flex; flex-wrap: wrap; gap: 2px; align-items: center; justify-content: center;">${attachmentImages}</div>`;
           }
 
           return `
@@ -1025,8 +1012,15 @@ export class JobSheetPDFGenerator {
                     beforeImageUrl
                       ? `<img src="${beforeImageUrl}" 
                          alt="Before Maintenance" 
-                         class="figma-maintenance-image" 
-                         crossorigin="anonymous" />`
+                         class="figma-maintenance-image"
+                         crossorigin="anonymous"
+                         data-cors-warning="true"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                         <div style="display: none; padding: 30px; text-align: center; color: #999; font-size: 12px; border: 2px dashed #ddd; border-radius: 8px; background: #f9f9f9; align-items: center; justify-content: center; min-height: 150px; flex-direction: column;">
+                           <div style="font-size: 40px; margin-bottom: 10px;">📷</div>
+                           <div>Image unavailable</div>
+                           <div style="font-size: 10px; margin-top: 5px; color: #bbb;">(CORS restriction)</div>
+                         </div>`
                       : '<div class="figma-no-image">No image available</div>'
                   }
                   ${
@@ -1042,8 +1036,15 @@ export class JobSheetPDFGenerator {
                     afterImageUrl
                       ? `<img src="${afterImageUrl}" 
                          alt="After Maintenance" 
-                         class="figma-maintenance-image" 
-                         crossorigin="anonymous" />`
+                         class="figma-maintenance-image"
+                         crossorigin="anonymous"
+                         data-cors-warning="true"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                         <div style="display: none; padding: 30px; text-align: center; color: #999; font-size: 12px; border: 2px dashed #ddd; border-radius: 8px; background: #f9f9f9; align-items: center; justify-content: center; min-height: 150px; flex-direction: column;">
+                           <div style="font-size: 40px; margin-bottom: 10px;">📷</div>
+                           <div>Image unavailable</div>
+                           <div style="font-size: 10px; margin-top: 5px; color: #bbb;">(CORS restriction)</div>
+                         </div>`
                       : '<div class="figma-no-image">No image available</div>'
                   }
                   ${
@@ -1200,5 +1201,86 @@ export class JobSheetPDFGenerator {
     console.log(`   - TOTAL: ${totalHeight}mm`);
 
     return totalHeight;
+  }
+
+  private async imageToBase64(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      // Create a temporary image
+      const img = new Image();
+      
+      // Set crossOrigin to try CORS first
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        try {
+          // Create a canvas element
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          
+          // Draw the image on canvas
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'));
+            return;
+          }
+          
+          // Fill with white background first (to avoid black background on transparent PNGs)
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Then draw the image on top
+          ctx.drawImage(img, 0, 0);
+          
+          // Convert to base64 - use PNG to preserve image quality and avoid compression artifacts
+          const base64 = canvas.toDataURL('image/png');
+          resolve(base64);
+        } catch (error) {
+          console.error('Error converting image to base64:', error);
+          // Don't try fetch API as it will also fail with CORS
+          reject(error);
+        }
+      };
+      
+      img.onerror = (error) => {
+        console.warn(`Direct image load failed for: ${url}, CORS issue detected`);
+        // Don't try fetch API as it will also fail with CORS
+        reject(new Error(`Failed to load image: ${url}`));
+      };
+      
+      img.src = url;
+    });
+  }
+
+  private async fetchImageAsBase64(url: string): Promise<string> {
+    try {
+      const response = await fetch(url, {
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            resolve(reader.result);
+          } else {
+            reject(new Error('Failed to convert blob to base64'));
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Fetch API failed:', error);
+      // Return a placeholder or the original URL
+      throw error;
+    }
   }
 }

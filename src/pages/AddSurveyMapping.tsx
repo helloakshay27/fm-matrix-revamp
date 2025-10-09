@@ -549,9 +549,9 @@ export const AddSurveyMapping = () => {
                         <MenuItem key={survey.id} value={survey.id}>
                           <Box>
                             <div className="font-medium">{survey.name}</div>
-                            <div className="text-xs text-gray-500">
+                            {/* <div className="text-xs text-gray-500">
                               Questions: {survey.questions_count} | Type: {survey.check_type}
-                            </div>
+                            </div> */}
                           </Box>
                         </MenuItem>
                       ))
@@ -654,8 +654,8 @@ export const AddSurveyMapping = () => {
                     <MenuItem value="">
                       <em>
                         {!mapping.selectedLocation.site 
-                          ? "Select a site first..." 
-                          : "Select a building..."
+                          ? "Select a site first" 
+                          : "Select a building"
                         }
                       </em>
                     </MenuItem>
@@ -694,8 +694,8 @@ export const AddSurveyMapping = () => {
                     <MenuItem value="">
                       <em>
                         {!mapping.selectedLocation.building 
-                          ? "Select a building first..." 
-                          : "Select a wing..."
+                          ? "Select a building first" 
+                          : "Select a wing"
                         }
                       </em>
                     </MenuItem>
@@ -734,8 +734,8 @@ export const AddSurveyMapping = () => {
                     <MenuItem value="">
                       <em>
                         {!mapping.selectedLocation.wing 
-                          ? "Select a wing first..." 
-                          : "Select an area..."
+                          ? "Select a wing first" 
+                          : "Select an area"
                         }
                       </em>
                     </MenuItem>
@@ -774,8 +774,8 @@ export const AddSurveyMapping = () => {
                     <MenuItem value="">
                       <em>
                         {!mapping.selectedLocation.area 
-                          ? "Select an area first..." 
-                          : "Select a floor..."
+                          ? "Select an area first" 
+                          : "Select a floor"
                         }
                       </em>
                     </MenuItem>
@@ -814,8 +814,8 @@ export const AddSurveyMapping = () => {
                     <MenuItem value="">
                       <em>
                         {!mapping.selectedLocation.floor 
-                          ? "Select a floor first..." 
-                          : "Select a room..."
+                          ? "Select a floor first" 
+                          : "Select a room"
                         }
                       </em>
                     </MenuItem>

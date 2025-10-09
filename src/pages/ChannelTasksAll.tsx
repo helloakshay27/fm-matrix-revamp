@@ -23,6 +23,12 @@ const columns = [
         defaultVisible: true,
     },
     {
+        key: 'priority',
+        label: 'Priority',
+        sortable: true,
+        defaultVisible: true,
+    },
+    {
         key: 'duration',
         label: 'Duration',
         sortable: true,
@@ -31,6 +37,12 @@ const columns = [
     {
         key: 'endDate',
         label: 'End Date',
+        sortable: true,
+        defaultVisible: true,
+    },
+    {
+        key: 'focus_mode',
+        label: 'Focus Mode',
         sortable: true,
         defaultVisible: true,
     },
@@ -43,6 +55,8 @@ const formattedData = (data) => {
         responsible: item.responsible_person.name,
         duration: item.duration,
         endDate: item.target_date,
+        priority: item?.priority?.charAt(0).toUpperCase() + item?.priority?.slice(1) || "-",
+        focus_mode: item?.focus_mode ? "Yes" : "No",
     }));
 }
 

@@ -65,6 +65,15 @@ interface Category {
   name: string;
 }
 
+interface SurveyImage {
+  id?: number;
+  file_name?: string;
+  content_type?: string;
+  file_size?: number;
+  updated_at?: string;
+  url?: string;
+}
+
 interface CategoryResponse {
   id: number;
   name: string;
@@ -141,13 +150,15 @@ export const EditSurveyPage = () => {
   const [questions, setQuestions] = useState<Question[]>([
     { id: "1", text: "", answerType: "", mandatory: false },
   ]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Destroy IDs tracking for smart deletion
+  const [surveyImage, setSurveyImage] = useState<File | null>(null);
+  const [existingSurveyImage, setExistingSurveyImage] = useState<SurveyImage | null>(null);
   const [destroyQuestionIds, setDestroyQuestionIds] = useState<string[]>([]);
   const [destroyTagIds, setDestroyTagIds] = useState<number[]>([]);
   const [destroyOptionIds, setDestroyOptionIds] = useState<number[]>([]);
   const [destroyIconIds, setDestroyIconIds] = useState<number[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Destroy IDs tracking for smart deletion
 
   // Emoji and rating constants
   const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
@@ -305,6 +316,19 @@ export const EditSurveyPage = () => {
           ? mappedQuestions
           : [{ id: "1", text: "", answerType: "", mandatory: false }]
       );
+
+      // Set existing survey image if available in survey_attachment format
+      if (surveyData.survey_attachment) {
+        setExistingSurveyImage({
+          id: surveyData.survey_attachment.id,
+          file_name: surveyData.survey_attachment.file_name,
+          content_type: surveyData.survey_attachment.content_type,
+          file_size: surveyData.survey_attachment.file_size,
+          updated_at: surveyData.survey_attachment.updated_at,
+          url: surveyData.survey_attachment.url
+        });
+      }
+
       setInitialLoading(false);
     } catch (error) {
       console.error("Error fetching Question data:", error);
@@ -826,6 +850,11 @@ export const EditSurveyPage = () => {
       formData.append("snag_checklist[name]", title);
       formData.append("snag_checklist[check_type]", checkType);
 
+      // Add survey image if provided
+      if (surveyImage) {
+        formData.append("snag_checklist[survey_image]", surveyImage);
+      }
+
       // Add ticket creation fields - send create_tickets flag and related data
       formData.append("create_ticket", createTicket ? "true" : "false");
       
@@ -1145,6 +1174,71 @@ export const EditSurveyPage = () => {
                   </div>
                 </div>
               )}
+                 <div className="space-y-2 mt-3">
+                              <label className="text-sm font-medium text-gray-700">
+                                Upload Image
+                              </label>
+                              <div className="flex items-center gap-4 grid grid-cols-3">
+                                <div className="flex-1">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0] || null;
+                                      setSurveyImage(file);
+                                    }}
+                                    className="hidden"
+                                    id="survey-image"
+                                    disabled={isSubmitting}
+                                  />
+                                  <label
+                                    htmlFor="survey-image"
+                                    className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                                      isSubmitting
+                                        ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
+                                        : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
+                                    }`}
+                                  >
+                                    {surveyImage
+                                      ? `Selected: ${surveyImage.name}`
+                                      : "Click to upload survey image"}
+                                  </label>
+                                </div>
+                                {surveyImage && (
+                                  <Button
+                                    onClick={() => setSurveyImage(null)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-gray-400 hover:text-red-500 p-2"
+                                    disabled={isSubmitting}
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                              {surveyImage && (
+                                <div className="mt-2">
+                                  <img
+                                    src={URL.createObjectURL(surveyImage)}
+                                    alt="Survey preview"
+                                    className="max-w-full h-32 object-cover rounded-lg border"
+                                    onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                                  />
+                                </div>
+                              )}
+                              {existingSurveyImage && !surveyImage && (
+                                <div className="mt-2">
+                                  <img
+                                    src={existingSurveyImage.url}
+                                    alt="Existing survey image"
+                                    className="max-w-full h-32 object-cover rounded-lg border"
+                                  />
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Current image: {existingSurveyImage.file_name}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
             </div>
           </CardContent>
         </Card>

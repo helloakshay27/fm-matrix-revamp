@@ -17,6 +17,7 @@ import {
   FileSpreadsheet,
   File,
   Eye,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -32,6 +33,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   FormControl,
   InputLabel,
@@ -43,6 +45,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { fetchWBS } from "@/store/slices/materialPRSlice";
+import { approveDeletionRequest } from "@/store/slices/pendingApprovalSlice";
 
 // Interfaces
 interface Company {
@@ -92,6 +95,7 @@ interface WorkOrder {
   wo_status?: string;
   term_condition?: string;
   all_level_approved?: boolean;
+  active?: boolean;
 }
 
 interface ServiceItem {
@@ -197,8 +201,10 @@ export const ServicePRDetailsPage = () => {
   const searchParams = new URLSearchParams(location.search);
   const levelId = searchParams.get("level_id");
   const userId = searchParams.get("user_id");
+  const requestId = searchParams.get("request_id");
   const shouldShowButtons = Boolean(levelId && userId);
 
+  const [isDeletionRequest, setIsDeletionRequest] = useState(false)
   const [servicePR, setServicePR] = useState<ServicePR>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
@@ -208,6 +214,7 @@ export const ServicePRDetailsPage = () => {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [showEditWbsModal, setShowEditWbsModal] = useState(false);
   const [wbsCodes, setWbsCodes] = useState([]);
+  const [openDeletionModal, setOpenDeletionModal] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
   }>({});
@@ -215,6 +222,12 @@ export const ServicePRDetailsPage = () => {
     showSap: false,
     editWbsCode: false,
   });
+
+  useEffect(() => {
+    if (searchParams.get("type") === "delete-request") {
+      setIsDeletionRequest(true)
+    }
+  }, [])
 
   // Fetch service PR data
   useEffect(() => {
@@ -372,31 +385,67 @@ export const ServicePRDetailsPage = () => {
     }
   }, [id]);
 
-  // Handle approve
-  const handleApprove = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
-    if (!baseUrl || !token || !id || !levelId || !userId) {
-      toast.error("Missing required configuration");
-      return;
-    }
-
+  const handleApproveDeletionRequest = async () => {
     const payload = {
       level_id: Number(levelId),
       user_id: Number(userId),
       approve: true,
-    };
-
-    try {
-      await dispatch(
-        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-      ).unwrap();
-      toast.success("Work Order approved successfully");
-      navigate(`/finance/pending-approvals`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to approve Work Order");
+      redirect: false
     }
-  }, [dispatch, id, levelId, userId, navigate]);
+    try {
+      await dispatch(approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })).unwrap();
+      toast.success("Deletion request approved successfully");
+      navigate(-1);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handleRejectDeletionRequest = async () => {
+    const payload = {
+      level_id: Number(levelId),
+      user_id: Number(userId),
+      approve: false,
+      redirect: false,
+      rejection_reason: rejectComment
+    }
+    try {
+      await dispatch(approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })).unwrap();
+      toast.success("Deletion request rejected successfully");
+      navigate(-1);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+
+  // Handle approve
+  const handleApprove = async () => {
+    if (isDeletionRequest) {
+      await handleApproveDeletionRequest();
+    } else {
+      if (!baseUrl || !token || !id || !levelId || !userId) {
+        toast.error("Missing required configuration");
+        return;
+      }
+
+      const payload = {
+        level_id: Number(levelId),
+        user_id: Number(userId),
+        approve: true,
+      };
+
+      try {
+        await dispatch(
+          approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+        ).unwrap();
+        toast.success("Work Order approved successfully");
+        navigate(`/finance/pending-approvals`);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to approve Work Order");
+      }
+    }
+  };
 
   // Handle reject
   const handleRejectConfirm = useCallback(async () => {
@@ -405,33 +454,58 @@ export const ServicePRDetailsPage = () => {
       return;
     }
 
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
-    if (!baseUrl || !token || !id || !levelId || !userId) {
-      toast.error("Missing required configuration");
-      return;
-    }
+    if (isDeletionRequest) {
+      await handleRejectDeletionRequest();
+    } else {
+      if (!baseUrl || !token || !id || !levelId || !userId) {
+        toast.error("Missing required configuration");
+        return;
+      }
 
-    const payload = {
-      level_id: Number(levelId),
-      user_id: Number(userId),
-      approve: false,
-      rejection_reason: rejectComment,
-    };
+      const payload = {
+        level_id: Number(levelId),
+        user_id: Number(userId),
+        approve: false,
+        rejection_reason: rejectComment,
+      };
 
-    try {
-      await dispatch(
-        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-      ).unwrap();
-      toast.success("Work Order rejected successfully");
-      navigate(`/finance/pending-approvals`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to reject Work Order");
-    } finally {
-      setOpenRejectDialog(false);
-      setRejectComment("");
+      try {
+        await dispatch(
+          approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+        ).unwrap();
+        toast.success("Work Order rejected successfully");
+        navigate(`/finance/pending-approvals`);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to reject Work Order");
+      } finally {
+        setOpenRejectDialog(false);
+        setRejectComment("");
+      }
     }
   }, [dispatch, id, levelId, userId, rejectComment, navigate]);
+
+  const handleDelete = async () => {
+    const payload = {
+      deletion_request: {
+        resource_id: id,
+        resource_type: "Pms::WorkOrder",
+        approve: false
+      }
+    }
+    try {
+      await axios.post(`https://${baseUrl}/deletion_requests.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      toast.success("Deletion request raised successfully")
+      setOpenDeletionModal(false)
+    } catch (error) {
+      console.log(error)
+      toast.error("Failed to raise deletion request")
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -502,74 +576,109 @@ export const ServicePRDetailsPage = () => {
       <div className="flex items-end justify-between">
         <h1 className="text-2xl font-semibold">Service PR Details</h1>
         <div className="flex items-center gap-2">
-          {buttonCondition.showSap && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={handleSendToSap}
-            >
-              Send To SAP Team
-            </Button>
-          )}
-          {
-            servicePR?.all_level_approved === null && !shouldShowButtons &&
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300"
-              onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button>
-          }
-          {
-            !shouldShowButtons && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
-                >
-                  <Copy className="w-4 h-4 mr-1" />
-                  Clone
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={handlePrint}
-                >
-                  <Printer className="w-4 h-4 mr-1" />
-                  Print
-                </Button>
-              </>
-            )
-          }
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-gray-300"
-            onClick={() => navigate(`/finance/service-pr/feeds/${id}`)}
-          >
-            <Rss className="w-4 h-4 mr-1" />
-            Feeds
-          </Button>
-          {
-            buttonCondition.editWbsCode && (
+          {!servicePR?.work_order?.active ? (
+            <>
               <Button
                 size="sm"
                 variant="outline"
-                className="border-gray-300 btn-primary"
-                onClick={() => setShowEditWbsModal(true)}
+                className="border-gray-300 !bg-[#C72030] !text-white cursor-default"
               >
-                Edit WBS Codes
+                Deleted
               </Button>
-            )
-          }
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                onClick={handlePrint}
+              >
+                <Printer className="w-4 h-4 mr-1" />
+                Print
+              </Button>
+            </>
+          ) : (
+            <>
+              {buttonCondition.showSap && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={handleSendToSap}
+                >
+                  Send To SAP Team
+                </Button>
+              )}
+
+              {servicePR?.all_level_approved === null && !shouldShowButtons && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300"
+                  onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+
+              {!shouldShowButtons && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                    onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Clone
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                    onClick={handlePrint}
+                  >
+                    <Printer className="w-4 h-4 mr-1" />
+                    Print
+                  </Button>
+                </>
+              )}
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300"
+                onClick={() => navigate(`/finance/service-pr/feeds/${id}`)}
+              >
+                <Rss className="w-4 h-4 mr-1" />
+                Feeds
+              </Button>
+
+              {servicePR?.all_level_approved && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 btn-primary"
+                  onClick={() => setOpenDeletionModal(true)}
+                >
+                  Raise Deletion Request
+                </Button>
+              )}
+
+              {buttonCondition.editWbsCode && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 btn-primary"
+                  onClick={() => setShowEditWbsModal(true)}
+                >
+                  Edit WBS Codes
+                </Button>
+              )}
+            </>
+          )}
         </div>
+
       </div>
 
       <TooltipProvider>
@@ -1052,7 +1161,7 @@ export const ServicePRDetailsPage = () => {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Reject Work Order</DialogTitle>
+          <DialogTitle>{isDeletionRequest ? "Reject Deletion Request" : "Reject Work Order"}</DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
@@ -1130,6 +1239,31 @@ export const ServicePRDetailsPage = () => {
               className="bg-[#C72030] text-white hover:bg-[#a61b27]"
             >
               Update
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={openDeletionModal}
+          onClose={() => setOpenDeletionModal(false)}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AlertTriangle size={24} color="#d32f2f" />
+            Confirm Deletion Request
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to raise a deletion request? This action will initiate the deletion process.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setOpenDeletionModal(false)} variant="outline">
+              Cancel
+            </Button>
+            <Button onClick={handleDelete}>
+              Yes
             </Button>
           </DialogActions>
         </Dialog>

@@ -221,14 +221,82 @@ export const EnergyDashboard = () => {
         </TabsList>
 
         <TabsContent value="list" className="mt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
+          {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
             <StatCard icon={<Zap />} label="Total Consumption" value={`${stats.totalConsumption.toFixed(1)} kWh`} />
             <StatCard icon={<TrendingUp />} label="Total Cost" value={`$${stats.totalCost.toFixed(2)}`} />
             <StatCard icon={<Activity />} label="Avg Efficiency" value={`${stats.avgEfficiency.toFixed(1)}%`} />
             <StatCard icon={<TrendingDown />} label="High Usage Alerts" value={stats.highUsageAlerts} />
             <StatCard icon={<Zap />} label="Total Meters" value={stats.totalMeters} />
             <StatCard icon={<TrendingUp />} label="Peak Consumption" value={`${stats.peakConsumption.toFixed(1)} kWh`} />
+          </div> */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
+            {/* Card 1 */}
+            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
+                <Zap />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-[#1A1A1A]">123.4 kWh</p>
+                <p className="text-sm font-medium text-[#1A1A1A]">Total Consumption</p>
+              </div>
+            </div>
+
+            {/* Card 2 */}
+            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
+                <TrendingUp />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-[#1A1A1A]">$456.78</p>
+                <p className="text-sm font-medium text-[#1A1A1A]">Total Cost</p>
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
+                <Activity />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-[#1A1A1A]">89%</p>
+                <p className="text-sm font-medium text-[#1A1A1A]">Avg Efficiency</p>
+              </div>
+            </div>
+
+            {/* Card 4 */}
+            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
+                <TrendingDown />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-[#1A1A1A]">5</p>
+                <p className="text-sm font-medium text-[#1A1A1A]">High Usage Alerts</p>
+              </div>
+            </div>
+
+            {/* Card 5 */}
+            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
+                <Zap />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-[#1A1A1A] ">12</p>
+                <p className="text-sm font-medium text-[#1A1A1A]">Total Meters</p>
+              </div>
+            </div>
+
+            {/* Card 6 */}
+            <div className="rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow flex items-center gap-4 cursor-pointer bg-[#f6f4ee]">
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded text-[#C72030]">
+                <TrendingUp />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold text-[#1A1A1A]">78.9 kWh</p>
+                <p className="text-sm font-medium text-[#1A1A1A]">Peak Consumption</p>
+              </div>
+            </div>
           </div>
+
 
           {/* <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
             <div className="flex items-center gap-2">

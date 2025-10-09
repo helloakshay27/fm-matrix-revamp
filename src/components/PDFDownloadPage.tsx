@@ -109,8 +109,8 @@ const PDFDownloadPage: React.FC = () => {
           <p className="text-sm text-gray-600 mt-1">Generate and download period based PDF or weekly summaries.</p>
         </div>
       </div>
-{/* 
-      <div className="bg-white rounded-lg border mt-6 mb-6">
+
+      {/* <div className="bg-white rounded-lg border mt-6 mb-6">
         <div className="flex p-4 items-center border-b">
           <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
             <Clock className="w-5 h-5 text-[#C72030]" />

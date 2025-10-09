@@ -419,7 +419,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
             loading={loading}
             renderActions={(country: CountryItem) => (
               <div className="flex items-center gap-2">
-                <Button
+                {/* <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleEdit(country.id)}
@@ -436,7 +436,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                   title="Delete"
                 >
                   <Trash2 className="h-4 w-4" />
-                </Button>
+                </Button> */}
               </div>
             )}
             renderCell={(country: CountryItem, columnKey: string) => {
