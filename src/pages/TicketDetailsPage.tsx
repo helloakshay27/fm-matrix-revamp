@@ -1726,14 +1726,20 @@ export const TicketDetailsPage = () => {
     }
   };
   useEffect(() => {
-  if (ticketData?.ticket_ageing_minutes) {
-    setCurrentAgeing(ticketData.ticket_ageing_minutes * 60);
+  if (ticketData?.created_at) {
+    // Calculate ageing in seconds from created_at to now
+    const createdTime = new Date(ticketData.created_at).getTime();
+    const now = Date.now();
+    const initialAgeingSeconds = Math.max(0, Math.floor((now - createdTime) / 1000));
+    setCurrentAgeing(initialAgeingSeconds);
+
     const interval = setInterval(() => {
       setCurrentAgeing(prev => prev + 1);
     }, 1000);
+
     return () => clearInterval(interval);
   }
-}, [ticketData?.ticket_ageing_minutes]);
+}, [ticketData?.created_at]);
 
   // Add useEffect to trigger balance TAT recalculation every second for real-time countdown
   useEffect(() => {
