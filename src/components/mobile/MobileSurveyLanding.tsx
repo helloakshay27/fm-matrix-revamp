@@ -1513,7 +1513,7 @@ export const MobileSurveyLanding: React.FC = () => {
       {/* Header with Logo */}
       <div className="bg-transparent py-4 px-4 mt-12">
         <div className="flex justify-end items-start">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center overflow-hidden">
+          <div className="w-16 h-16 sm:w-28 sm:h-24 flex items-center justify-center overflow-hidden">
             {window.location.origin === "https://oig.gophygital.work" ? (
               <img
                 src="/Without bkg.svg"
@@ -1647,34 +1647,39 @@ export const MobileSurveyLanding: React.FC = () => {
             </div>
           )}
 
-          <div className="w-full mt-20">
-            {/* Progress indicator */}
-            <div className="flex items-center space-x-3">
-              <span className="text-gray-50">
-                {!showGenericTags && (
-                  <>
-                    {Math.min(
-                      currentQuestionIndex + 1,
-                      surveyData.snag_checklist.questions_count
-                    )}
-                    /{surveyData.snag_checklist.questions_count}
-                  </>
-                )}
-              </span>
+          {!(
+            isLastStep &&
+            currentQuestionIndex === surveyData.snag_checklist.questions_count
+          ) && (
+            <div className="w-full mt-20">
+              {/* Progress indicator */}
+              <div className="flex items-center space-x-3">
+                <span className="text-gray-50">
+                  {!showGenericTags && (
+                    <>
+                      {Math.min(
+                        currentQuestionIndex + 1,
+                        surveyData.snag_checklist.questions_count
+                      )}
+                      /{surveyData.snag_checklist.questions_count}
+                    </>
+                  )}
+                </span>
+              </div>
+
+              {/* Main title */}
+              <h1 className="text-3xl sm:text-4xl font-bold text-white/100 mb-2">
+                {!showGenericTags && surveyData?.survey_title}
+              </h1>
+
+              {/* Subtitle - only show when we have a current question and not showing generic tags */}
+              {currentQuestion && !showGenericTags && (
+                <p className="text-3xl  text-white/90 mb-6">
+                  {currentQuestion.descr}
+                </p>
+              )}
             </div>
-
-            {/* Main title */}
-            <h1 className="text-3xl sm:text-4xl font-bold text-white/100 mb-2">
-              {!showGenericTags && surveyData?.survey_title}
-            </h1>
-
-            {/* Subtitle - only show when we have a current question and not showing generic tags */}
-            {currentQuestion && !showGenericTags && (
-              <p className="text-3xl  text-white/90 mb-6">
-                {currentQuestion.descr}
-              </p>
-            )}
-          </div>
+          )}
 
           {/* Show Current Question */}
           {currentQuestion && !isLastStep && (
