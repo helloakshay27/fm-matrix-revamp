@@ -36,7 +36,7 @@ export const AssetStats: React.FC<AssetStatsProps> = ({ stats, onCardClick }) =>
       value: typeof stats.total_value === 'number' ? stats.total_value.toLocaleString('en-IN') : stats.total_value,
       // icon: <DollarSign className="w-6 h-6 text-[#C72030]" />,
       // icon: <IndianRupee className="w-6 h-6 text-[#C72030]" />,
-      icon: <span className=" text-[#C72030] font-bold text-lg">OMR</span>,
+      icon: <span className="text-[#C72030] font-bold text-lg">{localStorage.getItem("currencySymbol")}</span>,
 
       filterType: "value",
     },
