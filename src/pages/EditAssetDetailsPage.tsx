@@ -580,6 +580,7 @@ export const EditAssetDetailsPage = () => {
       payment_term: "",
       no_of_visits: "",
       amc_cost: "",
+      visit_frequency: "",
     },
     asset_manuals: [],
     asset_insurances: [],
@@ -1466,6 +1467,7 @@ export const EditAssetDetailsPage = () => {
             payment_term: amc.payment_term ? String(amc.payment_term) : "",
             amc_first_service: amc.amc_first_service ? String(amc.amc_first_service) : "",
             no_of_visits: amc.no_of_visits ? String(amc.no_of_visits) : "",
+            visit_frequency: amc.visit_frequency ? String(amc.visit_frequency) : "",
             supplier_name: amc.supplier_name ? String(amc.supplier_name) : "",
           },
         }));
@@ -5629,7 +5631,7 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                        value={extraFormFields.currency?.value || ""}
+                        value={extraFormFields.currency?.value || (currency && currency.toLowerCase()) || ""}
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "currency",
@@ -6073,7 +6075,11 @@ export const EditAssetDetailsPage = () => {
                       }}
                     />
                     <TextField
-                      label="Asset Name"
+                      label={
+                        <span>
+                          Asset Name <span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       placeholder="e.g., Flooring, IT Cabling"
                       variant="outlined"
                       fullWidth
@@ -7182,7 +7188,11 @@ export const EditAssetDetailsPage = () => {
                       }}
                     />
                     <TextField
-                      label="Asset Name"
+                      label={
+                        <span>
+                          Asset Name <span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       placeholder="Name "
                       variant="outlined"
                       fullWidth
@@ -8643,7 +8653,11 @@ export const EditAssetDetailsPage = () => {
                       }}
                     />
                     <TextField
-                      label="Asset Name"
+                      label={
+                        <span>
+                          Asset Name <span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       placeholder="Enter building name"
                       variant="outlined"
                       fullWidth
@@ -9205,7 +9219,7 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          value={extraFormFields.acquisition_currency?.value || ""}
+                          value={extraFormFields.acquisition_currency?.value || (currency && currency.toLowerCase()) || ""}
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "acquisition_currency",
@@ -9281,7 +9295,7 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          value={extraFormFields.book_value_currency?.value || ""}
+                          value={extraFormFields.book_value_currency?.value || (currency && currency.toLowerCase()) || ""}
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "book_value_currency",
@@ -9330,7 +9344,7 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          value={extraFormFields.market_value_currency?.value || ""}
+                          value={extraFormFields.market_value_currency?.value || (currency && currency.toLowerCase()) || ""}
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "market_value_currency",
@@ -12742,8 +12756,8 @@ export const EditAssetDetailsPage = () => {
                 {expandedSections.amcDetails && (
                   <div className="p-4 sm:p-6">
                     <div className="space-y-6">
-                      {/* First Row - Vendor, Start Date, End Date, First Service, Payment Terms, No. of Visits */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                      {/* First Row - Vendor, Start Date, End Date, First Service, Payment Terms, No. of Visits, Visit Frequency */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
                         <FormControl
                           fullWidth
                           variant="outlined"
@@ -12979,6 +12993,39 @@ export const EditAssetDetailsPage = () => {
                             }
                           }}
                         />
+
+                        <FormControl
+                          fullWidth
+                          variant="outlined"
+                          sx={{
+                            minWidth: 120,
+                          }}
+                        >
+                          <InputLabel id="visit-frequency-select-label" shrink>
+                            Visit Frequency
+                          </InputLabel>
+                          <MuiSelect
+                            labelId="visit-frequency-select-label"
+                            label="Visit Frequency"
+                            value={formData.amc_detail.visit_frequency}
+                            sx={fieldStyles}
+                            onChange={(e) =>
+                              handleNestedFieldChange(
+                                "amc_detail",
+                                "visit_frequency",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <MenuItem value="">
+                              <em>Select Frequency</em>
+                            </MenuItem>
+                            <MenuItem value="monthly">Monthly</MenuItem>
+                            <MenuItem value="quarterly">Quarterly</MenuItem>
+                            <MenuItem value="semi_annually">Semi Annually</MenuItem>
+                            <MenuItem value="annually">Annually</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
 
                       {/* Second Row - AMC Cost */}
