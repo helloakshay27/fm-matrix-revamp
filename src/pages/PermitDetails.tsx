@@ -1496,17 +1496,17 @@ export const PermitDetails = () => {
                                 Upload JSA
                             </Button>
                         )}
-                        {(permitData.show_resume_permit_button || permitData.show_resume_button) && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setActiveSection(activeSection === "resume-permit" ? "" : "resume-permit")}
-                                className="bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
-                            >
-                                <RefreshCw className="w-4 h-4 mr-2" />
-                                Resume
-                            </Button>
-                        )}
+                        {/* {(permitData.show_resume_permit_button || permitData.show_resume_button) && ( */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setActiveSection(activeSection === "resume-permit" ? "" : "resume-permit")}
+                            className="bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
+                        >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Resume
+                        </Button>
+                        {/* )} */}
                         {permitData.show_print_form_button && (
                             <Button
                                 variant="outline"
