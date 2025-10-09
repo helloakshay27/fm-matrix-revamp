@@ -508,7 +508,9 @@ export const PermitToWorkDashboard = () => {
       case 'permit_type': {
         const bgColor = permit["color"] || '#E5E7EB';
         // If color is #6C3483, set text color to white
-        const textColor = bgColor.toLowerCase() === '#6c3483' ? '#fff' : '#222';
+        // const textColor = bgColor.toLowerCase() === '#6c3483' ? '#fff' : '#222';
+        const textColor = (bgColor.toLowerCase() === '#6c3483' || bgColor.toLowerCase() === '#008081') ? '#fff' : '#222';
+
         return (
           <span
             className="px-2 py-1 rounded text-sm font-semibold"
