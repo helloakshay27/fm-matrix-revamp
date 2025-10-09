@@ -18,6 +18,10 @@ import {
   File,
   Eye,
   AlertTriangle,
+  Contact,
+  ScrollText,
+  ClipboardList,
+  Images,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -727,233 +731,229 @@ export const ServicePRDetailsPage = () => {
 
       <div className="space-y-6">
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium text-center">
-              {servicePR.company?.site_name || "Company Details"}
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Contact className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">{servicePR.company?.site_name || "Company Details"}</h3>
+          </div>
           <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Phone</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.phone ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Email</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.email ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">PAN</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.pan ?? "-"}
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Phone</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.phone ?? "-"}
+                </span>
               </div>
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Fax</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.fax ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">GST</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.gst ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Address</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.address ?? "-"}
-                  </span>
-                </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Fax</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.fax ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Email</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.email ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">GST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.gst ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">PAN</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.pan ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Address</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.address ?? "-"}
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium text-center">
-              Service Purchase Request ({servicePR.work_order?.wo_status || "-"})
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ScrollText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Service Purchase Request</h3>
+          </div>
           <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">SPR Number</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.number ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">SPR Date</span>
-                  <span className="font-medium">
-                    :{" "}
-                    {servicePR.work_order?.wo_date
-                      ? format(
-                        new Date(servicePR.work_order.wo_date),
-                        "dd-MM-yyyy"
-                      )
-                      : "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Kind Attention
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.kind_attention ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Subject</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.subject ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Related To</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.related_to ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Payment Tenure(In Days)
-                  </span>
-                  <span className="font-medium">
-                    :{" "}
-                    {servicePR.work_order?.payment_terms?.payment_tenure ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Retention(%)
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.payment_terms?.retention ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">TDS(%)</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.payment_terms?.tds ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">QC(%)</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.payment_terms?.qc ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Advance Amount
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.advance_amount ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Description
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.description ?? "-"}
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">SPR Number</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.number ?? "-"}
+                </span>
               </div>
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">
-                    Reference No.
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.reference_no ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">ID</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.id ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">Contractor</span>
-                  <span className="font-medium">
-                    :{" "}
-                    {servicePR.work_order?.supplier_details?.company_name ??
-                      "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">Address</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.supplier_address?.address ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">Phone</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.supplier_details?.mobile1 ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">Email</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.supplier_details?.email ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">GST</span>
-                  <span className="font-medium">
-                    :{" "}
-                    {servicePR.work_order?.supplier_details?.gstin_number ??
-                      "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">PAN</span>
-                  <span className="font-medium">
-                    :{" "}
-                    {servicePR.work_order?.supplier_details?.pan_number ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">
-                    Work Category
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.work_category ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">
-                    Plant Detail
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.plant_detail ?? "-"}
-                  </span>
-                </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Reference No.</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.reference_no ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">SPR Date</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.wo_date
+                    ? format(new Date(servicePR.work_order.wo_date), "dd-MM-yyyy")
+                    : "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.id ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Kind Attention</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.kind_attention ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Contractor</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_details?.company_name ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Subject</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.subject ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Address</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_address?.address ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Related To</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.related_to ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Phone</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_details?.mobile1 ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Payment Tenure</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.payment_terms?.payment_tenure ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Email</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_details?.email ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Retention(%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.payment_terms?.retention ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">GST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_details?.gstin_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">TDS(%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.payment_terms?.tds ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">PAN</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_details?.pan_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">QC(%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.payment_terms?.qc ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Work Category</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.work_category ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Advance Amount</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.advance_amount ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Plant Detail</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.plant_detail ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Description</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.description ?? "-"}
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-medium">
-              Service Items Details
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ClipboardList className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Service Items Details</h3>
+          </div>
           <CardContent>
             <EnhancedTable
               data={serviceItems}
@@ -1015,11 +1015,12 @@ export const ServicePRDetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">
-              Terms & Conditions
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 px-6 pt-6 pb-1">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ScrollText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
+          </div>
           <CardContent className="text-wrap break-words">
             <p className="text-muted-foreground">
               {servicePR.work_order?.term_condition ??
@@ -1046,9 +1047,12 @@ export const ServicePRDetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Attachments</CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Images className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+          </div>
           <CardContent>
             {Array.isArray(servicePR.attachments) &&
               servicePR.attachments.length > 0 ? (

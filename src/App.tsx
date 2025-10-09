@@ -817,8 +817,8 @@ function App() {
         const response: any = await dispatch(
           getCurrency({ baseUrl, token, id })
         ).unwrap();
-        const currency = Array.isArray(response) && response[0]?.currency ? response[0].currency : '';
-        const currencySymbol = Array.isArray(response) && response[0]?.symbol ? response[0].symbol : '';
+        const currency = Array.isArray(response) && response[0]?.currency ? response[0].currency : 'INR';
+        const currencySymbol = Array.isArray(response) && response[0]?.symbol ? response[0].symbol : '₹';
         if (currency) localStorage.setItem('currency', currency);
         if (currencySymbol) localStorage.setItem('currencySymbol', currencySymbol);
       } catch (error) {

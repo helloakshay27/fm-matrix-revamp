@@ -2348,7 +2348,7 @@ const MsafeDashboardVI: React.FC = () => {
     };
 
     return (
-        <Box sx={{ bgcolor: '#f6f9ff', minHeight: '100%' }}>
+        <Box sx={{ bgcolor: '#f6f9ff', minHeight: '100%', pt: '70px' }}>
             {/* Top Header */}
             {/* <Box
                 sx={{
@@ -2395,6 +2395,12 @@ const MsafeDashboardVI: React.FC = () => {
 
             <Box
                 sx={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 1200,
+                    width: '100%',
                     bgcolor: "#EE0B0B",
                     color: "#fff",
                     py: 1.25,

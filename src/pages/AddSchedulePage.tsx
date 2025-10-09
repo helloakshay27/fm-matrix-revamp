@@ -213,6 +213,73 @@ interface ChecklistMappingsData {
 }
 
 export const AddSchedulePage = () => {
+  // Navigation buttons for each section except Mapping
+  const renderNavigationButtons = (stepIndex: number) => {
+    // Only show for steps except Mapping (stepIndex !== 4)
+    if (stepIndex === 4) return null;
+    return (
+      <div className="flex justify-end gap-4 mt-6 pt-4 sm:pt-6">
+        <RedButton
+          variant="contained"
+          onClick={handleProceedToSave}
+          disabled={isSubmitting}
+        >
+          Proceed to Save
+        </RedButton>
+        <DraftButton
+          variant="contained"
+          onClick={handleSaveToDraft}
+          disabled={isSubmitting}
+        >
+          Save to Draft
+        </DraftButton>
+      </div>
+    );
+  };
+
+  // Proceed to Save: same as Next
+  const handleProceedToSave = () => {
+    handleNext();
+  };
+
+  // Save to Draft: save current section data and move to next section
+  const handleSaveToDraft = () => {
+    // Save all relevant data to localStorage
+    saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
+    saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
+    saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
+    saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep);
+    saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, completedSteps);
+    saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
+    // Move to next section
+    if (activeStep < steps.length - 1) {
+      setActiveStep(activeStep + 1);
+      setEditingStep(activeStep + 1);
+    }
+  };
+
+  // On mount, restore draft if present
+  useEffect(() => {
+    const draftActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
+    const draftFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+    const draftQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
+    const draftTimeSetupData = loadFromLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA);
+    const draftCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
+    const draftAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
+    if (
+      draftActiveStep !== null &&
+      draftFormData !== null &&
+      draftQuestionSections !== null &&
+      draftTimeSetupData !== null
+    ) {
+      setActiveStep(draftActiveStep);
+      setFormData(draftFormData);
+      setQuestionSections(draftQuestionSections);
+      setTimeSetupData(draftTimeSetupData);
+      setCompletedSteps(draftCompletedSteps || []);
+      setAttachments(draftAttachments || []);
+    }
+  }, []);
   const navigate = useNavigate();
 
   // Stepper state
@@ -535,11 +602,29 @@ export const AddSchedulePage = () => {
     });
   };
 
-  // Initialize component with localStorage data or clear current step if refreshed on that step
+  // Only reset state if explicitly starting a new schedule, not on every mount/navigation
+  // On mount, restore draft if present
   useEffect(() => {
-    // Always clear local storage and reset to basic configuration if page is refreshed or browser back button is clicked
-    const resetState = () => {
-      clearAllFromLocalStorage();
+    const draftActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
+    const draftFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+    const draftQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
+    const draftTimeSetupData = loadFromLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA);
+    const draftCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
+    const draftAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
+    if (
+      draftActiveStep !== null &&
+      draftFormData !== null &&
+      draftQuestionSections !== null &&
+      draftTimeSetupData !== null
+    ) {
+      setActiveStep(draftActiveStep);
+      setFormData(draftFormData);
+      setQuestionSections(draftQuestionSections);
+      setTimeSetupData(draftTimeSetupData);
+      setCompletedSteps(draftCompletedSteps || []);
+      setAttachments(draftAttachments || []);
+    } else {
+      // Only reset if no draft exists
       setActiveStep(0);
       setCompletedSteps([]);
       setFormData({
@@ -548,7 +633,7 @@ export const AddSchedulePage = () => {
         activityName: '',
         description: '',
         checklistType: 'Individual',
-        checkInPhotograph: 'inactive', // <-- Add this line
+        checkInPhotograph: 'inactive',
         asset: [],
         service: [],
         assetGroup: '',
@@ -627,22 +712,7 @@ export const AddSchedulePage = () => {
         betweenMonthEnd: 'December'
       });
       setAttachments([]);
-    };
-
-    // Reset state on mount
-    resetState();
-
-    // Listen for browser back/forward navigation
-    window.addEventListener('popstate', resetState);
-
-    // Optionally, listen for page reload (F5, Ctrl+R)
-    window.addEventListener('beforeunload', resetState);
-
-    // Cleanup listeners on unmount
-    return () => {
-      window.removeEventListener('popstate', resetState);
-      window.removeEventListener('beforeunload', resetState);
-    };
+    }
   }, []);
 
   // Save form data to localStorage whenever it changes
@@ -5394,53 +5464,7 @@ export const AddSchedulePage = () => {
     }
   };
 
-  {/* Navigation Buttons */ }
-  <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
-    <div>
-      {activeStep > 0 && (
-        <button
-          onClick={handleBack}
-          className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
-          style={{ fontFamily: 'Work Sans, sans-serif' }}
-        >
-          Back
-        </button>
-      )}
-    </div>
-
-    <div className="flex gap-4">
-      {activeStep < steps.length - 1 ? (
-        <>
-          {activeStep === 3 ? ( // Time Setup step
-            <button
-              onClick={handleSave}
-              disabled={isSubmitting}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif' }}
-            >
-              {isSubmitting ? 'Saving...' : 'Save & Continue'}
-            </button>
-          ) : (
-            <button
-              onClick={handleNext}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif' }}
-            >
-              Next
-            </button>
-          )}
-        </>
-      ) : (
-        <button
-          onClick={handleFinish}
-          className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-          style={{ fontFamily: 'Work Sans, sans-serif' }}
-        >
-          Finish
-        </button>
-      )}
-    </div>
-  </div>
+  // ...navigation buttons replaced by renderNavigationButtons in renderSingleStep...
 
   const renderStepContent = () => {
     // Show only the current active step content
@@ -5616,53 +5640,28 @@ export const AddSchedulePage = () => {
         {renderStepContent()}
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
-        <div>
-          {activeStep > 0 && (
+      {/* Navigation Buttons - Only show Proceed to Save and Save to Draft except for Mapping section */}
+      {activeStep !== 4 && (
+        <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
+          <div></div>
+          <div className="flex gap-4">
             <button
-              onClick={handleBack}
-              className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-            >
-              Back
-            </button>
-          )}
-        </div>
-
-        <div className="flex gap-4">
-          {activeStep < steps.length - 1 ? (
-            <>
-              {activeStep === 3 ? ( // Time Setup step
-                <button
-                  onClick={handleSave}
-                  disabled={isSubmitting}
-                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-                >
-                  {isSubmitting ? 'Saving...' : 'Save & Continue'}
-                </button>
-              ) : (
-                <button
-                  onClick={handleNext}
-                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-                >
-                  Next
-                </button>
-              )}
-            </>
-          ) : (
-            <button
-              onClick={handleFinish}
+              onClick={handleProceedToSave}
               className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
               style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
             >
-              Finish
+              Proceed to Save
             </button>
-          )}
+            <button
+              onClick={handleSaveToDraft}
+              className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+            >
+              Save to Draft
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Completed Sections */}
       {renderCompletedSections()}
