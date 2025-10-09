@@ -711,20 +711,6 @@ export const TicketDetailsPage = () => {
     fetchSuppliers();
   }, []);
 
-  // Add useEffect to initialize and update ageing
-  useEffect(() => {
-    if (ticketData?.ticket_ageing_minutes) {
-      // Convert minutes to seconds for real-time countdown
-      setCurrentAgeing(ticketData.ticket_ageing_minutes * 60);
-
-      // Update ageing every second for real-time countdown
-      const interval = setInterval(() => {
-        setCurrentAgeing(prev => prev + 1);
-      }, 1000); // 1000ms = 1 second
-
-      return () => clearInterval(interval);
-    }
-  }, [ticketData?.ticket_ageing_minutes]);
 
   const handleBackToList = () => {
     navigate(-1);
@@ -1739,7 +1725,6 @@ export const TicketDetailsPage = () => {
       setSubmittingTicketMgmt(false);
     }
   };
-  // Add useEffect to initialize and update ageing
   useEffect(() => {
     if (ticketData?.ticket_ageing_minutes) {
       // Convert minutes to seconds for real-time countdown
@@ -1747,7 +1732,7 @@ export const TicketDetailsPage = () => {
 
       // Update ageing every second for real-time countdown
       const interval = setInterval(() => {
-        setCurrentAgeing(prev => prev + 1);
+        setCurrentAgeing(prev => prev + 1); // Only increment by 1
       }, 1000); // 1000ms = 1 second
 
       return () => clearInterval(interval);
@@ -1800,14 +1785,14 @@ export const TicketDetailsPage = () => {
       {
         label: 'Response TAT',
         value: hasData(ticketData.response_tat) && ticketData.issue_status === "Pending"
-          ? ticketData.issue_status === "Complete" || ticketData.issue_status === "Closed" || ticketData.issue_status === "On Hold"
+          ? ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
             ? '00:00:00'
             : formatMinutesToDDHHMM(ticketData.response_tat)
           : '00:00:00'
       },
       {
         label: 'Balance TAT',
-        value: responseBalanceTAT.value,
+        value:  ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold" ? '00:00:00' : responseBalanceTAT.value,
         isExceeded: responseBalanceTAT.isExceeded,
         exceededBy: responseBalanceTAT.exceededBy
       },
@@ -1845,14 +1830,15 @@ export const TicketDetailsPage = () => {
       {
         label: 'Resolution TAT',
         value: hasData(ticketData.resolution_tat)
-          ? ticketData.issue_status === "Complete" || ticketData.issue_status === "Closed" || ticketData.issue_status === "On Hold"
+          ? ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
             ? '00:00:00'
             : formatMinutesToDDHHMM(ticketData.resolution_tat)
           : '00:00:00'
       },
       {
         label: 'Balance TAT',
-        value: resolutionBalanceTAT.value,
+        value: ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold" ? '00:00:00' :
+         resolutionBalanceTAT.value,
         isExceeded: resolutionBalanceTAT.isExceeded,
         exceededBy: resolutionBalanceTAT.exceededBy
       },
@@ -1887,9 +1873,6 @@ export const TicketDetailsPage = () => {
       },
     ],
   ];
-
-  console.log("escNAme", ticketData.response_esc_name, ticketData.resolution_esc_name);
-
 
   // Helper function to find the matched responsible person
   const getResponsiblePersonValue = () => {
@@ -2334,7 +2317,7 @@ export const TicketDetailsPage = () => {
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
+                          {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
                             ? '00:00:00' :
                             formatMinutesToDDHHMM(ticketData.ticket_ageing_minutes) || formatTicketAgeingToDDHHMM(ticketData.ticket_ageing)
                           }
@@ -2378,7 +2361,7 @@ export const TicketDetailsPage = () => {
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
+                          {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
                             ? '00:00:00'
                             : formatMinutesToDDHHMM(ticketData.response_tat)
                           }
@@ -2423,7 +2406,7 @@ export const TicketDetailsPage = () => {
                           style={{ fontSize: 24 }}
                         >
                           {/* {formatTimeToDDHHMM(ticketData.resolution_time)} */}
-                          {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
+                          {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
                             ? '00:00:00'
                             : formatMinutesToDDHHMM(ticketData.resolution_tat)
                           }
@@ -2452,7 +2435,7 @@ export const TicketDetailsPage = () => {
                             style={{ fontSize: 24 }}
                           >
                             {/* {formatMinutesToDDHHMM(ticketData.balance_reponse_tat)} */}
-                            {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
+                            {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
                               ? '00:00:00'
                               : formatMinutesToDDHHMM(ticketData.balance_response_tat)
                             }
@@ -2514,7 +2497,7 @@ export const TicketDetailsPage = () => {
                             style={{ fontSize: 24 }}
                           >
                             {/* {formatMinutesToDDHHMM(ticketData.balance_resolution_tat)} */}
-                            {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold" ?
+                            {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold" ?
                               '00:00:00'
                               : formatMinutesToDDHHMM(ticketData.balance_resolution_tat)
                             }
@@ -2575,7 +2558,7 @@ export const TicketDetailsPage = () => {
                             style={{ fontSize: 24 }}
                           >
                             {/* {formatMinutesToDDHHMM(ticketData.golden_resp_time_minutes)} */}
-                            {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold" ?
+                            {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold" ?
                               '00:00:00'
                               : formatMinutesToDDHHMM(ticketData.golden_resp_time_minutes)
                             }
@@ -2726,7 +2709,11 @@ export const TicketDetailsPage = () => {
                                 </g>
                               </svg>
                               <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">
-                                {formatTicketAgeing(currentAgeing)}
+                                {
+                                  ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
+                                    ? '00:00:00'
+                                    : formatTicketAgeing(currentAgeing)
+                                }
                               </span>
                             </div>
                             <div className="flex justify-center items-center gap-2 mb-2">
