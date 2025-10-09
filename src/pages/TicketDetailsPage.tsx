@@ -1619,7 +1619,9 @@ export const TicketDetailsPage = () => {
       issue_related_to: ticketData?.issue_related_to || 'FM',
       complaint_mode_id: findModeId(),
       rca_template_ids: ticketData?.rca_template_ids || [],
-      additional_notes: ticketData?.notes || ticketData?.heading || ticketData?.text || '',
+      additional_notes: ticketData?.notes || '',
+      supplier_id: ticketData?.supplier_id ? ticketData.supplier_id.toString() : '',
+      proactive_reactive: ticketData?.proactive_reactive || '',
     };
 
     console.log('Final form data:', formData);
@@ -1686,7 +1688,13 @@ export const TicketDetailsPage = () => {
       if (ticketMgmtFormData.additional_notes) {
         queryParams.append('additional_notes', ticketMgmtFormData.additional_notes);
       }
-
+// Add vendor and identification to payload
+        if (ticketMgmtFormData.supplier_id) {
+          queryParams.append('complaint[supplier_id]', ticketMgmtFormData.supplier_id);
+        }
+        if (ticketMgmtFormData.proactive_reactive) {
+          queryParams.append('complaint[proactive_reactive]', ticketMgmtFormData.proactive_reactive);
+        }
       // Build the API URL with query parameters
       const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
       const apiUrl = `https://${baseUrl}/complaint_logs.json?${queryParams.toString()}`;
@@ -3167,6 +3175,25 @@ export const TicketDetailsPage = () => {
                                 <MenuItem value="Minor">Minor</MenuItem>
                               </MuiSelect>
                             </FormControl>
+                              {/* Vendor Dropdown */}
+                              <FormControl fullWidth size="small">
+                                <InputLabel>Vendor</InputLabel>
+                                <MuiSelect
+                                  value={ticketMgmtFormData.supplier_id || ''}
+                                  onChange={(e) => handleTicketMgmtInputChange('supplier_id', e.target.value)}
+                                  label="Vendor"
+                                  disabled={loadingSuppliers}
+                                >
+                                  <MenuItem value="">
+                                    <span className="text-gray-500">{loadingSuppliers ? 'Loading vendors...' : 'Select vendor'}</span>
+                                  </MenuItem>
+                                  {suppliers && suppliers.map((vendor) => (
+                                    <MenuItem key={vendor.id} value={vendor.id.toString()}>
+                                      {vendor.company_name}
+                                    </MenuItem>
+                                  ))}
+                                </MuiSelect>
+                              </FormControl>
 
                             <FormControl fullWidth size="small">
                               <InputLabel>Assigned To</InputLabel>
@@ -3261,6 +3288,21 @@ export const TicketDetailsPage = () => {
                                 ))}
                               </MuiSelect>
                             </FormControl>
+                              {/* Identification Dropdown */}
+                              <FormControl fullWidth size="small">
+                                <InputLabel>Identification</InputLabel>
+                                <MuiSelect
+                                  value={ticketMgmtFormData.proactive_reactive || ''}
+                                  onChange={(e) => handleTicketMgmtInputChange('proactive_reactive', e.target.value)}
+                                  label="Identification"
+                                >
+                                  <MenuItem value="">
+                                    <span className="text-gray-500">Select identification</span>
+                                  </MenuItem>
+                                  <MenuItem value="Proactive">Proactive</MenuItem>
+                                  <MenuItem value="Reactive">Reactive</MenuItem>
+                                </MuiSelect>
+                              </FormControl>
 
                           </div>
 
