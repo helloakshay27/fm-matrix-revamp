@@ -31,7 +31,9 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
-import { Edit, Trash2, Upload, Plus, X } from 'lucide-react';
+import ReactSelect from 'react-select';
+import { Label } from "@/components/ui/label";
+import { Edit, Plus, Trash2, Upload, X } from 'lucide-react';
 
 const categorySchema = z.object({
   categoryName: z.string().min(1, 'Category name is required'),
@@ -912,67 +914,60 @@ export const CategoryTypeTab: React.FC = () => {
                     <FormItem>
                       <FormLabel>Assign Engineers</FormLabel>
                       <FormControl>
-                        <>
-                          <Select
-                            onValueChange={(value) => {
-                              const selected = engineers.find(e => e.id.toString() === value);
-                              if (selected) {
-                                const currentValues = field.value || [];
-                                if (!currentValues.includes(selected.id)) {
-                                  field.onChange([...currentValues, selected.id]);
-                                }
+                        <div className="space-y-3">
+                          <ReactSelect
+                            isMulti
+                            options={engineers.map(engineer => ({
+                              value: engineer.id,
+                              label: engineer.full_name
+                            }))}
+                            onChange={(selected) => {
+                              if (!selected) {
+                                field.onChange([]);
+                                return;
                               }
+
+                              const newEngineers = selected.map(s => s.value);
+                              field.onChange(newEngineers);
                             }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select engineers">
-                                {field.value?.length ? `${field.value.length} engineers selected` : "Select engineers"}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {engineers.map((engineer) => (
-                                <SelectItem key={engineer.id} value={engineer.id.toString()}>
-                                  <div className="flex items-center gap-2">
-                                    <Checkbox
-                                      checked={field.value?.includes(engineer.id)}
-                                      onCheckedChange={(checked) => {
-                                        const currentValues = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...currentValues, engineer.id]);
-                                        } else {
-                                          field.onChange(currentValues.filter(id => id !== engineer.id));
-                                        }
-                                      }}
-                                    />
-                                    {engineer.full_name}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          
-                          {field.value?.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {field.value.map((engineerId) => {
-                                const engineer = engineers.find(e => e.id === engineerId);
-                                return engineer ? (
-                                  <span key={engineerId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100">
-                                    {engineer.full_name}
-                                    <button
-                                      type="button"
-                                      className="p-0.5 hover:bg-gray-200 rounded-full"
-                                      onClick={() => {
-                                        field.onChange(field.value?.filter(id => id !== engineerId));
-                                      }}
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </span>
-                                ) : null;
-                              })}
-                            </div>
-                          )}
-                        </>
+                            value={engineers
+                              .filter(engineer => field.value?.includes(engineer.id))
+                              .map(engineer => ({
+                                value: engineer.id,
+                                label: engineer.full_name
+                              }))}
+                            className="mt-1"
+                            placeholder="Select engineers..."
+                            noOptionsMessage={() => "No engineers available"}
+                            styles={{
+                              control: (base) => ({
+                                ...base,
+                                minHeight: '40px',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: 'none',
+                                '&:hover': {
+                                  border: '1px solid #cbd5e1'
+                                }
+                              }),
+                              multiValue: (base) => ({
+                                ...base,
+                                backgroundColor: '#f1f5f9'
+                              }),
+                              multiValueLabel: (base) => ({
+                                ...base,
+                                color: '#334155'
+                              }),
+                              multiValueRemove: (base) => ({
+                                ...base,
+                                color: '#64748b',
+                                '&:hover': {
+                                  backgroundColor: '#e2e8f0',
+                                  color: '#475569'
+                                }
+                              })
+                            }}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1288,70 +1283,60 @@ export const CategoryTypeTab: React.FC = () => {
               </div>
 
               <div className="mt-4">
-                <label className="block text-sm font-medium mb-2">
-                  Assign Engineers
-                </label>
-                <div>
-                  <Select
-                    onValueChange={(value) => {
-                      const selected = engineers.find(e => e.id.toString() === value);
-                      if (selected) {
-                        const currentValues = selectedEngineers;
-                        if (!currentValues.includes(selected.id)) {
-                          const newValues = [...currentValues, selected.id];
-                          setSelectedEngineers(newValues);
-                          form.setValue('engineerIds', newValues); // Update form state
-                        }
+                <Label className="text-base font-semibold">Assign Engineers</Label>
+                <div className="mt-2">
+                  <ReactSelect
+                    isMulti
+                    options={engineers.map(engineer => ({
+                      value: engineer.id,
+                      label: engineer.full_name
+                    }))}
+                    onChange={(selected) => {
+                      if (!selected) {
+                        setSelectedEngineers([]);
+                        return;
                       }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select engineers">
-                        {selectedEngineers.length ? `${selectedEngineers.length} engineers selected` : "Select engineers"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {engineers.map((engineer) => (
-                        <SelectItem key={engineer.id} value={engineer.id.toString()}>
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              checked={selectedEngineers.includes(engineer.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedEngineers([...selectedEngineers, engineer.id]);
-                                } else {
-                                  setSelectedEngineers(selectedEngineers.filter(id => id !== engineer.id));
-                                }
-                              }}
-                            />
-                            {engineer.full_name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
 
-                  {selectedEngineers.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {selectedEngineers.map((engineerId) => {
-                        const engineer = engineers.find(e => e.id === engineerId);
-                        return engineer ? (
-                          <span key={engineerId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100">
-                            {engineer.full_name}
-                            <button
-                              type="button"
-                              className="p-0.5 hover:bg-gray-200 rounded-full"
-                              onClick={() => {
-                                setSelectedEngineers(selectedEngineers.filter(id => id !== engineerId));
-                              }}
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </span>
-                        ) : null;
-                      })}
-                    </div>
-                  )}
+                      const newEngineers = selected.map(s => s.value);
+                      setSelectedEngineers(newEngineers);
+                    }}
+                    value={engineers
+                      .filter(engineer => selectedEngineers.includes(engineer.id))
+                      .map(engineer => ({
+                        value: engineer.id,
+                        label: engineer.full_name
+                      }))}
+                    className="mt-1"
+                    placeholder="Select engineers..."
+                    noOptionsMessage={() => "No engineers available"}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        minHeight: '40px',
+                        border: '1px solid #e2e8f0',
+                        boxShadow: 'none',
+                        '&:hover': {
+                          border: '1px solid #cbd5e1'
+                        }
+                      }),
+                      multiValue: (base) => ({
+                        ...base,
+                        backgroundColor: '#f1f5f9'
+                      }),
+                      multiValueLabel: (base) => ({
+                        ...base,
+                        color: '#334155'
+                      }),
+                      multiValueRemove: (base) => ({
+                        ...base,
+                        color: '#64748b',
+                        '&:hover': {
+                          backgroundColor: '#e2e8f0',
+                          color: '#475569'
+                        }
+                      })
+                    }}
+                  />
                 </div>
               </div>
 
