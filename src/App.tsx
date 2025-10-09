@@ -771,6 +771,7 @@ import { LockedUsersDashboard } from "./pages/settings/LockedUsersDashboard";
 import { PRDeletionRequests } from "./pages/PRDeletionRequests";
 import { DirectPDFDownloadPage } from "./pages/DirectPDFDownloadPage";
 import { DeletedPRs } from "./pages/DeletedPRs";
+import MsafeDashboardVI from "./pages/MsafeDashboardVI";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -938,6 +939,7 @@ function App() {
                 <Route path="/thepdf" element={<AllContent />} />
                 <Route path="/dailypdf" element={<DailyReport />} />
                 <Route path="/weeklypdf" element={<WeeklyReport />} />
+                <Route path="/msafedashboard" element={<MsafeDashboardVI />} />
 
                 <Route
                   path="/login"
