@@ -916,17 +916,42 @@ export const TaskDetailsPage = () => {
   const renderActivityCell = (item: any, columnKey: string) => {
     switch (columnKey) {
       case "helpText":
-        return <span className="text-xs">{item.helpText}</span>;
-      case "activities":
-        return <span className="text-xs">{item.activities}</span>;
-      case "input":
         return (
-          <span className="text-xs">
-            {Array.isArray(item.input) ? item.input.join(", ") : item.input}
+          <span 
+            className="text-xs cursor-help truncate max-w-[200px] block" 
+            title={item.helpText}
+          >
+            {item.helpText}
+          </span>
+        );
+      case "activities":
+        return (
+          <span 
+            className="text-xs cursor-help truncate max-w-[200px] block" 
+            title={item.activities}
+          >
+            {item.activities}
+          </span>
+        );
+      case "input":
+        const inputText = Array.isArray(item.input) ? item.input.join(", ") : item.input;
+        return (
+          <span 
+            className="text-xs cursor-help truncate max-w-[200px] block" 
+            title={inputText}
+          >
+            {inputText}
           </span>
         );
       case "comments":
-        return <span className="text-xs">{item.comments}</span>;
+        return (
+          <span 
+            className="text-xs cursor-help truncate max-w-[200px] block" 
+            title={item.comments}
+          >
+            {item.comments}
+          </span>
+        );
       case "weightage":
         return <span className="text-xs">{item.weightage}</span>;
       case "rating":
