@@ -399,6 +399,27 @@ export const AddSurveyMapping = () => {
       return;
     }
 
+    // Check for duplicate locations
+    const locationCombinations = validMappings.map(mapping => mapping.selectedLocation);
+    const uniqueLocations = new Set();
+    const duplicateFound = locationCombinations.some(location => {
+      const locationKey = `${location.site}-${location.building}-${location.wing || ''}-${location.area || ''}-${location.floor || ''}-${location.room || ''}`;
+      if (uniqueLocations.has(locationKey)) {
+        return true;
+      }
+      uniqueLocations.add(locationKey);
+      return false;
+    });
+
+    if (duplicateFound) {
+      toast.error('Please enter different location', {
+        description: 'You have selected the same location multiple times. Please select different locations for each configuration.',
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       // Build survey_mappings array in the new format
       const surveyMappingsPayload = validMappings.map(mapping => {
@@ -410,8 +431,10 @@ export const AddSurveyMapping = () => {
           area_id?: number;
           floor_id?: number;
           room_id?: number;
+          active: boolean;
         } = {
-          survey_id: selectedSurveyId // Use the same survey for all mappings
+          survey_id: selectedSurveyId, // Use the same survey for all mappings
+          active: true
         };
 
         // Add location IDs if they exist
@@ -504,12 +527,12 @@ export const AddSurveyMapping = () => {
           </Button>
           <h1 className="text-xl font-bold tracking-wide uppercase">Survey Mapping</h1>
         </div>
-        <div className="text-sm text-gray-600">
+        {/* <div className="text-sm text-gray-600">
           {surveyMappings.length === 1 
             ? '1 Location Configured' 
             : `${surveyMappings.length} Location Configurations`
           }
-        </div>
+        </div> */}
       </header>
 
       <Section title="Survey Selection" icon={<List className="w-3.5 h-3.5" />}>
@@ -536,7 +559,7 @@ export const AddSurveyMapping = () => {
                   >
                     {selectedSurveyId === null && (
                       <MenuItem disabled value="">
-                        <em style={{ color: '#999', fontStyle: 'italic' }}>Select a survey...</em>
+                        <em style={{ color: '#999', fontStyle: 'italic' }}>Select a survey</em>
                       </MenuItem>
                     )}
                     {loadingSurveys ? (
@@ -617,7 +640,7 @@ export const AddSurveyMapping = () => {
                     notched
                   >
                     <MenuItem value="">
-                      <em>Select a site...</em>
+                      <em>Select a site</em>
                     </MenuItem>
                     {loading.sites ? (
                       <MenuItem disabled>
