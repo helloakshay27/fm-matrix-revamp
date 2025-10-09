@@ -790,12 +790,13 @@ export const ScheduledTaskDashboard = () => {
     setShowSelectionPanel(false);
   };
 
-  // Get selected task objects with id and checklist
+  // Get selected task objects with id, checklist, and status
   const selectedTaskObjects = taskData
     .filter((task) => selectedTasks.includes(task.id))
     .map((task) => ({
       id: task.id,
       checklist: task.checklist,
+      status: task.status, // Include status for conditional button display
     }));
 
   // Task selection panel handlers
