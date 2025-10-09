@@ -3171,6 +3171,7 @@ export const TicketDetailsPage = () => {
                                 value={ticketMgmtFormData.asset_service}
                                 onChange={(e) => handleTicketMgmtInputChange('asset_service', e.target.value)}
                                 label="Source"
+                                disabled={true}
                               >
                                 <MenuItem value="">
                                   <span className="text-gray-500">Select source</span>
@@ -3645,23 +3646,26 @@ export const TicketDetailsPage = () => {
                                   }
                                   rows={6}
                                   placeholder=" "
-                                  className="peer block w-full appearance-none rounded border border-[#DAD7D0] bg-[#F2F2F2] px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
-      focus:outline-none 
-      focus:border-[2px] 
-      focus:border-[#C72030] 
+                                  className="peer block w-full appearance-none rounded border border-[#DAD7D0] bg-[#F2F2F2] px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent
+      focus:outline-none
+      focus:border-[2px]
+      focus:border-[#1976d2]
+      hover:border-[#C72030]
       resize-vertical"
-                                  style={{ fontSize: '14px' }}
+                                  style={{ fontSize: '14px', height: '107px' }}
                                 />
 
                                 <label
                                   htmlFor={`cost-description-${row.id}`}
-                                  className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+                                  className={`absolute left-3 -top-[10px] px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+      peer-focus:bg-white
+      ${row.description ? 'bg-white' : ''}
       peer-placeholder-shown:top-4
       peer-placeholder-shown:text-base
       peer-placeholder-shown:text-gray-400
       peer-focus:-top-[10px]
-      peer-focus:text-sm
-      peer-focus:text-[#C72030]"
+      peer-focus:text-sm`}
+                                  style={{ backgroundColor: row.description ? 'white' : undefined }}
                                 >
                                   Description <span style={{ color: "red" }}>*</span>
                                 </label>
@@ -4589,17 +4593,19 @@ export const TicketDetailsPage = () => {
                                     {loadingTemplates ? 'Loading templates...' : 'Select Template'}
                                   </span>
                                 </MenuItem>
-                                {communicationTemplates.map((template) => (
-                                  <MenuItem key={template.id} value={template.id}>
-                                    {template.identifier_action}
-                                  </MenuItem>
-                                ))}
+                                {communicationTemplates
+                                  .filter(template => template.identifier === "Internal" && template.active === true)
+                                  .map((template) => (
+                                    <MenuItem key={template.id} value={template.id}>
+                                      {template.identifier_action}
+                                    </MenuItem>
+                                  ))}
                               </MuiSelect>
                             </FormControl>
                           </div>
 
                           {/* Comment Input */}
-                          <div className="mb-4">
+                          <div className="mb-4 mt-6">
                             <div className="relative w-full">
                               <textarea
                                 id="internal-comment"
@@ -4712,25 +4718,19 @@ export const TicketDetailsPage = () => {
                                     {loadingTemplates ? 'Loading templates...' : 'Select Template'}
                                   </span>
                                 </MenuItem>
-                                {communicationTemplates.map((template) => (
-                                  <MenuItem key={template.id} value={template.id}>
-                                    {template.identifier_action}
-                                  </MenuItem>
-                                ))}
                                 {communicationTemplates
-                                  .filter(template => template.active === true)
+                                  .filter(template => template.identifier === "Customer" && template.active === true)
                                   .map((template) => (
                                     <MenuItem key={template.id} value={template.id}>
                                       {template.identifier_action}
                                     </MenuItem>
-                                  ))
-                                }
+                                  ))}
                               </MuiSelect>
                             </FormControl>
                           </div>
 
                           {/* Comment Input */}
-                          <div className="mb-4">
+                          <div className="mb-4 mt-6">
                             <div className="relative w-full">
                               <textarea
                                 id="customer-comment"
@@ -5527,6 +5527,7 @@ export const TicketDetailsPage = () => {
                                 value={ticketMgmtFormData.asset_service}
                                 onChange={(e) => handleTicketMgmtInputChange('asset_service', e.target.value)}
                                 label="Source"
+                                disabled={true}
                               >
                                 <MenuItem value="">
                                   <span className="text-gray-500">Select source</span>
@@ -6001,23 +6002,26 @@ export const TicketDetailsPage = () => {
                                   }
                                   rows={6}
                                   placeholder=" "
-                                  className="peer block w-full appearance-none rounded border border-[#DAD7D0] bg-[#F2F2F2] px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
-      focus:outline-none 
-      focus:border-[2px] 
-      focus:border-[#C72030] 
+                                  className="peer block w-full appearance-none rounded border border-[#DAD7D0] bg-[#F2F2F2] px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent
+      focus:outline-none
+      focus:border-[2px]
+      focus:border-[#1976d2]
+      hover:border-[#C72030]
       resize-vertical"
-                                  style={{ fontSize: '14px' }}
+                                  style={{ fontSize: '14px', height: '107px' }}
                                 />
 
                                 <label
                                   htmlFor={`cost-description-${row.id}`}
-                                  className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+                                  className={`absolute left-3 -top-[10px] px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+      peer-focus:bg-white
+      ${row.description ? 'bg-white' : ''}
       peer-placeholder-shown:top-4
       peer-placeholder-shown:text-base
       peer-placeholder-shown:text-gray-400
       peer-focus:-top-[10px]
-      peer-focus:text-sm
-      peer-focus:text-[#C72030]"
+      peer-focus:text-sm`}
+                                  style={{ backgroundColor: row.description ? 'white' : undefined }}
                                 >
                                   Description <span style={{ color: "red" }}>*</span>
                                 </label>
@@ -6945,17 +6949,19 @@ export const TicketDetailsPage = () => {
                                     {loadingTemplates ? 'Loading templates...' : 'Select Template'}
                                   </span>
                                 </MenuItem>
-                                {communicationTemplates.map((template) => (
-                                  <MenuItem key={template.id} value={template.id}>
-                                    {template.identifier_action}
-                                  </MenuItem>
-                                ))}
+                                {communicationTemplates
+                                  .filter(template => template.identifier === "Internal" && template.active === true)
+                                  .map((template) => (
+                                    <MenuItem key={template.id} value={template.id}>
+                                      {template.identifier_action}
+                                    </MenuItem>
+                                  ))}
                               </MuiSelect>
                             </FormControl>
                           </div>
 
                           {/* Comment Input */}
-                          <div className="mb-4">
+                          <div className="mb-4 mt-6">
                             <div className="relative w-full">
                               <textarea
                                 id="internal-comment"
@@ -7068,25 +7074,19 @@ export const TicketDetailsPage = () => {
                                     {loadingTemplates ? 'Loading templates...' : 'Select Template'}
                                   </span>
                                 </MenuItem>
-                                {communicationTemplates.map((template) => (
-                                  <MenuItem key={template.id} value={template.id}>
-                                    {template.identifier_action}
-                                  </MenuItem>
-                                ))}
                                 {communicationTemplates
-                                  .filter(template => template.active === true)
+                                  .filter(template => template.identifier === "Customer" && template.active === true)
                                   .map((template) => (
                                     <MenuItem key={template.id} value={template.id}>
                                       {template.identifier_action}
                                     </MenuItem>
-                                  ))
-                                }
+                                  ))}
                               </MuiSelect>
                             </FormControl>
                           </div>
 
                           {/* Comment Input */}
-                          <div className="mb-4">
+                          <div className="mb-4 mt-6">
                             <div className="relative w-full">
                               <textarea
                                 id="customer-comment"
@@ -7290,7 +7290,7 @@ export const TicketDetailsPage = () => {
                     )}
                   </div>
                 </Card>
-          </TabsContent>
+              </TabsContent>
 
           <TabsContent value="creator-info" className="p-4 sm:p-6">
             <div className="space-y-6">
