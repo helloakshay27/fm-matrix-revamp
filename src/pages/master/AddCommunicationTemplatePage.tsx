@@ -71,6 +71,8 @@ const AddCommunicationTemplatePage = () => {
                       <MenuItem value="Short-term Impact">Short-term Impact</MenuItem>
                       <MenuItem value="Corrective Action">Corrective Action</MenuItem>
                       <MenuItem value="Long-term Impact">Long-term Impact</MenuItem>
+                      <MenuItem value="Internal">Internal</MenuItem>
+                      <MenuItem value="Customer">Customer</MenuItem>
                     </Select>
                   </FormControl>
                 )}
