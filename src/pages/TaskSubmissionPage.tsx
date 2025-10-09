@@ -55,6 +55,7 @@ export const TaskSubmissionPage: React.FC = () => {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [submissionStats, setSubmissionStats] = useState({
     questionsAttended: 0,
     negativeFeedback: 0,
@@ -382,12 +383,19 @@ export const TaskSubmissionPage: React.FC = () => {
       // Single step workflow validation
       switch (step) {
         case 1: // Checkpoint
-          return dynamicChecklist.every((item) => {
-            if (item.required) {
+          // Check if all REQUIRED fields have valid answers
+          const requiredItems = dynamicChecklist.filter(item => item.required);
+          if (requiredItems.length === 0) {
+            // If no required items, check if at least one item is answered
+            return dynamicChecklist.some((item) => {
               const answer = formData.checklist[item.id]?.value;
               return answer && answer !== "" && (!Array.isArray(answer) || answer.length > 0);
-            }
-            return true; // Non-required items are always valid
+            });
+          }
+          // All required items must be answered
+          return requiredItems.every((item) => {
+            const answer = formData.checklist[item.id]?.value;
+            return answer && answer !== "" && (!Array.isArray(answer) || answer.length > 0);
           });
         case 2: // Preview
           return true;
@@ -400,12 +408,19 @@ export const TaskSubmissionPage: React.FC = () => {
         case 1:
           return !!formData.beforePhoto;
         case 2:
-          return dynamicChecklist.every((item) => {
-            if (item.required) {
+          // Check if all REQUIRED fields have valid answers
+          const requiredItems = dynamicChecklist.filter(item => item.required);
+          if (requiredItems.length === 0) {
+            // If no required items, check if at least one item is answered
+            return dynamicChecklist.some((item) => {
               const answer = formData.checklist[item.id]?.value;
               return answer && answer !== "" && (!Array.isArray(answer) || answer.length > 0);
-            }
-            return true; // Non-required items are always valid
+            });
+          }
+          // All required items must be answered
+          return requiredItems.every((item) => {
+            const answer = formData.checklist[item.id]?.value;
+            return answer && answer !== "" && (!Array.isArray(answer) || answer.length > 0);
           });
         case 3:
           return !!formData.afterPhoto;
@@ -477,12 +492,14 @@ export const TaskSubmissionPage: React.FC = () => {
     
     if (stepId <= maxAccessibleStep || (stepId === currentStep + 1 && canProceedToNext)) {
       setCurrentStep(stepId);
+      setIsEditMode(false); // Reset edit mode when manually navigating
     }
   };
 
   // Separate function for explicit edit actions (from edit buttons)
   const handleEditStep = (stepId: number) => {
     setCurrentStep(stepId);
+    setIsEditMode(true);
 
     // Note: We no longer reset data automatically - users can manually re-upload if needed
     // This preserves data when navigating between steps
@@ -588,6 +605,15 @@ export const TaskSubmissionPage: React.FC = () => {
     // Mark current step as completed if not already
     if (!completedSteps.includes(currentStep)) {
       setCompletedSteps((prev) => [...prev, currentStep]);
+    }
+
+    // If in edit mode, return to preview (last step)
+    if (isEditMode) {
+      const totalSteps = steps.length;
+      setCurrentStep(totalSteps);
+      setIsEditMode(false);
+      sonnerToast.success("Changes updated successfully!");
+      return;
     }
 
     const totalSteps = steps.length;
@@ -2906,7 +2932,7 @@ export const TaskSubmissionPage: React.FC = () => {
                   <div
                     className={`
                     px-6 py-3 rounded text-white font-semibold text-xs relative z-5 transition-colors whitespace-nowrap
-                    ${step.active ? "bg-[#C72030]" : "bg-gray-400"}
+                    ${step.active || step.completed || (step.id < currentStep && isStepDataValid(step.id)) ? "bg-[#C72030]" : "bg-gray-400"}
                   `}
                   >
                     {step.id}. {step.title}
@@ -2980,7 +3006,7 @@ export const TaskSubmissionPage: React.FC = () => {
                 onClick={handleNext}
                 className="bg-[#C72030] text-white hover:bg-[#B11E2A] px-6 py-2"
               >
-                Proceed to Next
+                {isEditMode ? "Update" : "Proceed to Next"}
               </Button>
             ) : (
               <Button
