@@ -338,9 +338,36 @@ export const VendorPermitForm = () => {
     const handleFileUpload = (id: string, file: File) => {
         setAttachments(prev => prev.map(item => item.id === id ? { ...item, file } : item));
     };
+    const validatePhoneNumber = (phone: string): boolean => {
+        return /^\d{10}$/.test(phone);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Validate Emergency Contact Number in Detailed Information
+        if (!detailedInfo.emergencyContactNumber || !validatePhoneNumber(detailedInfo.emergencyContactNumber)) {
+            toast.error('Emergency Contact Number must be exactly 10 digits.');
+            return;
+        }
+
+        // Validate Contract Supervisor Number in Persons Information
+        if (!personsInfo.contractSupervisorNumber || !validatePhoneNumber(personsInfo.contractSupervisorNumber)) {
+            toast.error('Contract Supervisor Number must be exactly 10 digits.');
+            return;
+        }
+
+        // Validate Manpower Details
+        const hasEmptyAssignTo = manpowerDetails.some(detail => !detail.assignTo.trim());
+        if (hasEmptyAssignTo) {
+            toast.error('Please fill in all Assign To fields.');
+            return;
+        }
+
+        const invalidEmergencyContact = manpowerDetails.some(detail => !detail.emergencyContact || !validatePhoneNumber(detail.emergencyContact));
+        if (invalidEmergencyContact) {
+            toast.error('All Emergency Contact numbers in Manpower Details must be exactly 10 digits.');
+            return;
+        }
         setLoading(true);
 
         try {
@@ -966,16 +993,31 @@ export const VendorPermitForm = () => {
                                         </div>
 
                                         <div>
-                                            <Label htmlFor="emergencyContactNumber">Emergency Contact Number :</Label>
-                                            <Input
+                                            {/* <Input
                                                 id="emergencyContactNumber"
                                                 value={detailedInfo.emergencyContactNumber}
                                                 onChange={(e) => handleDetailedInfoChange('emergencyContactNumber', e.target.value)}
                                                 placeholder="Enter Emergency Contact Number"
                                                 inputMode="numeric"
-                                                pattern="[0-9]{10}"
+                                                // pattern="[0-9]{10}"
+                                                maxLength={10}
+                                            /> */}
+
+                                            <Label htmlFor="emergencyContactNumber">Emergency Contact Number :</Label>
+                                            <Input
+                                                id="emergencyContactNumber"
+                                                type="text"
+                                                value={detailedInfo.emergencyContactNumber || ''}
+                                                onChange={(e) => {
+                                                    const numericValue = e.target.value.replace(/\D/g, ''); // only digits
+                                                    handleDetailedInfoChange('emergencyContactNumber', numericValue.slice(0, 10)); // ensure max 10 digits
+                                                }}
+                                                placeholder="Enter Emergency Contact Number"
                                                 maxLength={10}
                                             />
+
+
+
                                         </div>
                                     </div>
 
@@ -1241,7 +1283,6 @@ export const VendorPermitForm = () => {
                                                     handleManpowerChange(detail.id, 'emergencyContact', value);
                                                 }}
                                                 inputMode="numeric"
-                                                pattern="[0-9]{10}"
                                                 maxLength={10}
                                                 placeholder="Enter Emergency Contact Number"
                                             />
