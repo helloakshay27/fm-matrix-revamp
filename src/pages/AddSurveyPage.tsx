@@ -338,7 +338,7 @@ export const AddSurveyPage = () => {
     );
   };
 
-  const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
+  const EMOJIS = ["😁", "😊", "😐", "😟", "😞"];
   const RATINGS = ["1", "2", "3", "4", "5"];
   const RATING_STARS = ["1-star", "2-star", "3-star", "4-star", "5-star"];
 
@@ -775,7 +775,7 @@ export const AddSurveyPage = () => {
               </span>
               Question Setup
             </h2>
-          </div>
+          </div>Question Setup
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <TextField

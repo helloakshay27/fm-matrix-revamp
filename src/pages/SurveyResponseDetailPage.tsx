@@ -4456,243 +4456,167 @@ export const SurveyResponseDetailPage = () => {
               {/* Questions Response Details - Now individual cards are created for each question type below */}
 
    {(() => {
-                // Get all multiple choice questions from survey details
-                const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
-                  (q: SurveyQuestion) => {
-                    // Filter for multiple choice questions (exclude rating and emoji)
-                    if (q.qtype) {
-                      return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
-                    }
-                    
-                    // Fallback: exclude questions that would be handled by rating/emoji cards
-                    return !shouldUseBarChart(q.question_id);
-                  }
-                ) || [];
-
-                if (multipleChoiceQuestions.length === 0) {
-                  return null; // Don't show anything if no multiple choice questions
+                // Get all questions from survey details in their original order
+                const surveyDetails = surveyDetailsData?.survey_details?.surveys?.[0];
+                const allQuestions = surveyDetails?.questions || [];
+                
+                // Filter questions that have responses and should be displayed
+                const questionsWithResponses = allQuestions.filter((question: SurveyQuestion) => {
+                  const totalResponses = question.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
+                  return totalResponses > 0;
+                });
+                
+                if (questionsWithResponses.length === 0) {
+                  return null;
                 }
-
-                return multipleChoiceQuestions.map((mcQuestion: SurveyQuestion, questionIndex: number) => {
-                  // Calculate total responses for this multiple choice question
-                  const totalResponses = mcQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
-                  
-                  // Hide card if no responses
-                  if (totalResponses === 0) {
-                    return null;
-                  }
-                  
-                  // Multiple choice questions start from Q1, Q2, etc. since they appear first in UI
+                
+                return questionsWithResponses.map((question: SurveyQuestion, questionIndex: number) => {
+                  const totalResponses = question.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
                   const questionNumber = questionIndex + 1;
                   
-                  // Create display data for multiple choice options
-                  const multipleChoiceColors = ["#D5DBDB", "#C4B99D", "#DAD6CA"]; // Three colors for pie chart segments
-                  const mcData = mcQuestion.options?.map((option, index) => {
-                    const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
-
-                    return {
-                      name: option.option || `Option ${index + 1}`,
-                      value: option.response_count || 0,
-                      color: multipleChoiceColors[index % multipleChoiceColors.length] // Cycle through the three colors
-                    };
-                  }).filter(item => item.value > 0) || []; // Only show options with responses
-
-                  return (
-                    <Card key={mcQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                      <CardHeader className="bg-[#F6F4EE] mb-6">
-                        <CardTitle className="text-lg flex items-center">
-                          <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                            <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                          </div>
-                          <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
-                          {mcQuestion.question}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <SurveyAnalyticsCard
-                          title="Response Distribution"
-                          type="statusDistribution"
-                          data={mcData}
-                          dateRange={{
-                            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-                            endDate: new Date(),
-                          }}
-                          onDownload={() => {
-                            toast.success(`Chart for multiple choice question "${mcQuestion.question}" download initiated`);
-                          }}
-                        />
-                      </CardContent>
-                    </Card>
-                  );
-                }).filter(Boolean);
-              })()}
-              {/* Dynamic Rating Question Cards */}
-              {(() => {
-                // Get all rating questions from survey details
-                const ratingQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
-                  (q: SurveyQuestion) => q.qtype === "rating"
-                ) || [];
-
-                if (ratingQuestions.length === 0) {
-                  return null; // Don't show anything if no rating questions
-                }
-
-                return ratingQuestions.map((ratingQuestion: SurveyQuestion, questionIndex: number) => {
-                  // Calculate total responses for this rating question
-                  const totalResponses = ratingQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
-                  
-                  // Hide card if no responses
-                  if (totalResponses === 0) {
-                    return null;
-                  }
-                  
-                  // Get count of multiple choice questions to continue numbering after them
-                  const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
-                    (q: SurveyQuestion) => {
-                      if (q.qtype) {
-                        return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
-                      }
-                      return !shouldUseBarChart(q.question_id);
-                    }
-                  ) || [];
-                  const questionNumber = multipleChoiceQuestions.length + questionIndex + 1;
-                  
-                  // Create display data for rating options with actual option text
-                  const ratingData = ratingQuestion.options?.map((option, index) => {
-                    const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
-
-                    return {
-                      name: option.option || `Option ${index + 1}`,
-                      count: option.response_count || 0,
-                      percentage: percentage
-                    };
-                  }) || [];
-
-                  return (
-                    <Card key={ratingQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                      <CardHeader className="bg-[#F6F4EE] mb-6">
-                        <CardTitle className="text-lg flex items-center">
-                          <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                            <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                          </div>
-                          <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
-                          {ratingQuestion.question}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <SurveyAnalyticsCard
-                          title="Rating Response"
-                          type="surveyDistributions"
-                          data={ratingData.map(item => ({
-                            name: item.name,
-                            value: item.count,
-                            color: "#C4AE9D"
-                          }))}
-                          dateRange={{
-                            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-                            endDate: new Date(),
-                          }}
-                          xAxisLabel="Rating Options"
-                          yAxisLabel="Response Count"
-                          onDownload={() => {
-                            toast.success(`Chart for rating question "${ratingQuestion.question}" download initiated`);
-                          }}
-                        />
-                      </CardContent>
-                    </Card>
-                  );
-                }).filter(Boolean);
-              })()}
-
-              {/* Dynamic Emoji Question Cards */}
-              {(() => {
-                // Get all emoji questions from survey details
-                const emojiQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
-                  (q: SurveyQuestion) => q.qtype === "emoji"
-                ) || [];
-
-                if (emojiQuestions.length === 0) {
-                  return null; // Hide card if no emoji questions
-                }
-
-                return emojiQuestions.map((emojiQuestion: SurveyQuestion, questionIndex: number) => {
-                  // Calculate total responses for this question
-                  const totalResponses = emojiQuestion.options?.reduce((sum, option) => sum + option.response_count, 0) || 0;
-                  
-                  // Hide card if no responses
-                  if (totalResponses === 0) {
-                    return null;
-                  }
-                  
-                  // Get count of multiple choice and rating questions to continue numbering after them
-                  const multipleChoiceQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
-                    (q: SurveyQuestion) => {
-                      if (q.qtype) {
-                        return q.qtype === "multiple" || (q.qtype !== "rating" && q.qtype !== "emoji");
-                      }
-                      return !shouldUseBarChart(q.question_id);
-                    }
-                  ) || [];
-                  const ratingQuestions = surveyDetailsData?.survey_details?.surveys?.[0]?.questions?.filter(
-                    (q: SurveyQuestion) => q.qtype === "rating"
-                  ) || [];
-                  const questionNumber = multipleChoiceQuestions.length + ratingQuestions.length + questionIndex + 1;
-                  
-                  // Fixed emoji sequence based on position (1st, 2nd, 3rd, 4th, 5th option)
-                  const fixedEmojis = ['😞', '😟', '😐', '😊', '😁'];
-                  
-                  // Create display data with fixed emoji sequence
-                  const displayData = emojiQuestion.options?.map((option, index) => {
-                    const emoji = fixedEmojis[index] || '😐'; // Use fixed emoji by position, fallback to neutral
-                    const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
-
-                    return {
-                      emoji: emoji,
-                      name: option.option || 'Unknown',
-                      count: option.response_count || 0,
-                      percentage: percentage
-                    };
-                  }) || [];
-
-                  return (
-                    <Card key={emojiQuestion.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                      <CardHeader className="bg-[#F6F4EE] mb-6">
-                        <CardTitle className="text-lg flex items-center">
-                          <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
-                            <HelpCircle className="h-4 w-4 text-[#C72030]" />
-                          </div>
-                          <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
-                          {emojiQuestion.question}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                          <div className="text-center py-6">
-                            {displayData.length > 0 ? (
-                              <div className="flex justify-center items-center gap-8 mb-4">
-                                {displayData.map((item, index) => (
-                                  <div key={index} className="flex flex-col items-center">
-                                    <div className="text-3xl mb-2">{item.emoji}</div>
-                                    <div className="text-sm font-medium text-gray-700 mb-1 capitalize">{item.name}</div>
-                                    <div className="text-sm text-gray-600">
-                                      {item.percentage}% ({item.count})
+                  // Handle emoji questions
+                  if (question.qtype === 'emoji') {
+                    const fixedEmojis = ["😁", "😊", "😐", "😟", "😞"];
+                    const displayData = question.options?.map((option, index) => {
+                      const emoji = fixedEmojis[index] || '😐';
+                      const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
+                      
+                      return {
+                        emoji: emoji,
+                        name: option.option || 'Unknown',
+                        count: option.response_count || 0,
+                        percentage: percentage
+                      };
+                    }) || [];
+                    
+                    return (
+                      <Card key={question.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-6">
+                          <CardTitle className="text-lg flex items-center">
+                            <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                              <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                            </div>
+                            <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
+                            {question.question}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
+                            <div className="text-center py-6">
+                              {displayData.length > 0 ? (
+                                <div className="flex justify-center items-center gap-8 mb-4">
+                                  {displayData.map((item, index) => (
+                                    <div key={index} className="flex flex-col items-center">
+                                      <div className="text-3xl mb-2">{item.emoji}</div>
+                                      <div className="text-sm font-medium text-gray-700 mb-1 capitalize">{item.name}</div>
+                                      <div className="text-sm text-gray-600">
+                                        {item.percentage}% ({item.count})
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-gray-500">No responses available for this question</div>
-                            )}
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-gray-500">No responses available for this question</div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+                  
+                  // Handle rating questions
+                  if (question.qtype === 'rating') {
+                    const ratingData = question.options?.map((option, index) => {
+                      const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
+                      
+                      return {
+                        name: option.option || `Option ${index + 1}`,
+                        count: option.response_count || 0,
+                        percentage: percentage
+                      };
+                    }) || [];
+                    
+                    return (
+                      <Card key={question.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-6">
+                          <CardTitle className="text-lg flex items-center">
+                            <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                              <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                            </div>
+                            <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
+                            {question.question}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <SurveyAnalyticsCard
+                            title="Rating Response"
+                            type="surveyDistributions"
+                            data={ratingData.map(item => ({
+                              name: item.name,
+                              value: item.count,
+                              color: "#C4AE9D"
+                            }))}
+                            dateRange={{
+                              startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                              endDate: new Date(),
+                            }}
+                            xAxisLabel="Response Type"
+                            yAxisLabel="No. of Responses"
+                            onDownload={() => {
+                              toast.success(`Chart for rating question "${question.question}" download initiated`);
+                            }}
+                          />
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+                  
+                  // Handle multiple choice questions
+                  if (question.qtype === 'multiple' || (!question.qtype && !shouldUseBarChart(question.question_id))) {
+                    const multipleChoiceColors = ["#D5DBDB", "#C4B99D", "#DAD6CA"];
+                    const mcData = question.options?.map((option, index) => {
+                      const percentage = totalResponses > 0 ? Math.round((option.response_count / totalResponses) * 100) : 0;
+                      
+                      return {
+                        name: option.option || `Option ${index + 1}`,
+                        value: option.response_count || 0,
+                        color: multipleChoiceColors[index % multipleChoiceColors.length]
+                      };
+                    }).filter(item => item.value > 0) || [];
+                    
+                    return (
+                      <Card key={question.question_id} className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                        <CardHeader className="bg-[#F6F4EE] mb-6">
+                          <CardTitle className="text-lg flex items-center">
+                            <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
+                              <HelpCircle className="h-4 w-4 text-[#C72030]" />
+                            </div>
+                            <span className="text-black font-semibold mr-2">Q{questionNumber}.</span>
+                            {question.question}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <SurveyAnalyticsCard
+                            title="Response Distribution"
+                            type="statusDistribution"
+                            data={mcData}
+                            dateRange={{
+                              startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                              endDate: new Date(),
+                            }}
+                            onDownload={() => {
+                              toast.success(`Chart for multiple choice question "${question.question}" download initiated`);
+                            }}
+                          />
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+                  
+                  return null;
                 }).filter(Boolean);
               })()}
-
-              {/* Dynamic Multiple Choice Question Cards */}
-             
 
               {/* Response Category - Hide if no data */}
               {(() => {
@@ -4732,9 +4656,9 @@ export const SurveyResponseDetailPage = () => {
                           {/* <span>
                             <span className="font-medium">Skipped:</span> {skipped}
                           </span> */}
-                          <span>
+                          {/* <span>
                             <span className="font-medium">Total Complaints:</span> {totalComplaints}
-                          </span>
+                          </span> */}
                         </div>
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
@@ -5046,9 +4970,9 @@ export const SurveyResponseDetailPage = () => {
                           <span>
                             <span className="font-medium">Total Response:</span> {totals.responses}
                           </span>
-                          <span>
+                          {/* <span>
                             <span className="font-medium">Skipped:</span> {totals.skipped}
-                          </span>
+                          </span> */}
                         </div>
 
                         {/* Grid + Time labels */}
