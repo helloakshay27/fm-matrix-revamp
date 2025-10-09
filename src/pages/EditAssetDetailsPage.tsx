@@ -269,6 +269,8 @@ const AssetImageUpload = ({
 };
 
 export const EditAssetDetailsPage = () => {
+  const currency = (typeof window !== 'undefined' && window.localStorage.getItem('currency')) || 'INR';
+  const currencySymbol = (typeof window !== 'undefined' && window.localStorage.getItem('currencySymbol')) || '';
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -5638,7 +5640,7 @@ export const EditAssetDetailsPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -5665,7 +5667,7 @@ export const EditAssetDetailsPage = () => {
                       />
                     </div>
                     <TextField
-                      label="Current Market Value (OMR)"
+                      label={`Current Market Value (${currency})`}
                       placeholder="Enter current value"
                       variant="outlined"
                       type="number"
@@ -5673,7 +5675,7 @@ export const EditAssetDetailsPage = () => {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            {localStorage.getItem("currency")}
+                            {currencySymbol || currency}
                           </InputAdornment>
                         ),
                       }}
@@ -7714,7 +7716,7 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          value={extraFormFields.currency?.value || ""}
+                          value={extraFormFields.currency?.value || (currency && currency.toLowerCase()) || ""}
                           onChange={(e) => {
                             handleExtraFieldChange(
                               "currency",
@@ -7725,7 +7727,7 @@ export const EditAssetDetailsPage = () => {
                             );
                           }}
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -7923,7 +7925,7 @@ export const EditAssetDetailsPage = () => {
                       }
                     />
                     <TextField
-                      label="Current Book Value (OMR)"
+                      label={`Current Book Value (${currency})`}
                       placeholder="Calculated or manually entered"
                       variant="outlined"
                       fullWidth
@@ -7932,7 +7934,7 @@ export const EditAssetDetailsPage = () => {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            {localStorage.getItem("currency")}
+                            {currencySymbol || currency}
                           </InputAdornment>
                         ),
                       }}
@@ -9214,7 +9216,7 @@ export const EditAssetDetailsPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -9290,7 +9292,7 @@ export const EditAssetDetailsPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -9339,7 +9341,7 @@ export const EditAssetDetailsPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField

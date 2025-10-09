@@ -2964,7 +2964,7 @@ export const TicketDetailsPage = () => {
                           { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                           { label: 'Source', value: ticketData.asset_service || '-' },
 
-                          { label: 'Expected Visit Date', value: ticketData.visit_date ? formatDate(ticketData.visit_date) : '-' },
+                          { label: 'Expected Visit Date', value: ticketData.visit_date ? ticketData.visit_date || formatDate(ticketData.visit_date) : '-' },
                           { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
                           { label: 'Scope', value: ticketData.issue_related_to || '-' },
                           { label: 'Mode', value: ticketData.complaint_mode || '-' },

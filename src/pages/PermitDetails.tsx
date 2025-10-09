@@ -1432,6 +1432,15 @@ export const PermitDetails = () => {
                                 Extend (Extended)
                             </Button>
                         )}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/safety/permit/vendor-form/${id}`)}
+                            className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+                        >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Fill Form
+                        </Button>
                         {permitData.show_fill_jsa_button && (
                             <Button
                                 variant="outline"

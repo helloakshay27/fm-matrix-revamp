@@ -266,6 +266,8 @@ const AssetImageUpload = ({
 };
 
 const AddAssetPage = () => {
+  const currency = (typeof window !== 'undefined' && window.localStorage.getItem('currency')) || 'INR';
+  const currencySymbol = (typeof window !== 'undefined' && window.localStorage.getItem('currencySymbol')) || '';
   const navigate = useNavigate();
 
   // Location data hook
@@ -4802,7 +4804,7 @@ const AddAssetPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          defaultValue="inr"
+                          defaultValue={(currency && currency.toLowerCase()) || "inr"}
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "currency",
@@ -4813,11 +4815,11 @@ const AddAssetPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">INR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
-                        label="Acquisition Cost"
+                        label={`Acquisition Cost (${currency})`}
                         placeholder="Enter cost"
                         variant="outlined"
                         type="number"
@@ -4839,14 +4841,14 @@ const AddAssetPage = () => {
                       />
                     </div>
                     <TextField
-                      label="Current Market Value (INR)"
+                      label={`Current Market Value (${currency})`}
                       placeholder="Enter current value"
                       variant="outlined"
                       type="number"
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            {localStorage.getItem("currency")}
+                            {currencySymbol || currency}
                           </InputAdornment>
                         ),
                       }}
@@ -5606,7 +5608,7 @@ const AddAssetPage = () => {
                     />
 
                     <TextField
-                      label="Improvement Cost (INR)"
+                      label={`Improvement Cost (${currency})`}
                       placeholder="Enter cost"
                       variant="outlined"
                       fullWidth
@@ -5614,7 +5616,7 @@ const AddAssetPage = () => {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            {localStorage.getItem("currency")}
+                            {currencySymbol || currency}
                           </InputAdornment>
                         ),
                       }}
@@ -5805,7 +5807,7 @@ const AddAssetPage = () => {
                       }}
                     />
                     <TextField
-                      label="Current Book Value (OMR)"
+                      label={`Current Book Value (${currency})`}
                       placeholder="Enter value"
                       variant="outlined"
                       fullWidth
@@ -5813,7 +5815,7 @@ const AddAssetPage = () => {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            {localStorage.getItem("currency")}
+                            {currencySymbol || currency}
                           </InputAdornment>
                         ),
                       }}
@@ -7018,7 +7020,7 @@ const AddAssetPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          defaultValue="inr"
+                          defaultValue={(currency && currency.toLowerCase()) || "inr"}
                           onChange={(e) => {
                             handleExtraFieldChange(
                               "currency",
@@ -7029,7 +7031,7 @@ const AddAssetPage = () => {
                             );
                           }}
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -7224,7 +7226,7 @@ const AddAssetPage = () => {
                       }
                     />
                     <TextField
-                      label="Current Book Value (OMR)"
+                      label={`Current Book Value (${currency})`}
                       placeholder="Calculated or manually entered"
                       variant="outlined"
                       fullWidth
@@ -7232,7 +7234,7 @@ const AddAssetPage = () => {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            {localStorage.getItem("currency")}
+                            {currencySymbol || currency}
                           </InputAdornment>
                         ),
                       }}
@@ -8504,7 +8506,7 @@ const AddAssetPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          defaultValue="inr"
+                          defaultValue={(currency && currency.toLowerCase()) || "inr"}
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "acquisition_currency",
@@ -8515,7 +8517,7 @@ const AddAssetPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -8589,7 +8591,7 @@ const AddAssetPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -8637,11 +8639,11 @@ const AddAssetPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
-                        label="Current Market Value"
+                        label={`Current Market Value (${currency})`}
                         placeholder="Enter market value"
                         variant="outlined"
                         type="number"
