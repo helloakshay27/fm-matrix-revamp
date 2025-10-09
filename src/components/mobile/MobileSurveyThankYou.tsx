@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import baseClient from "@/utils/withoutTokenBase";
 
 interface LocationState {
   rating: number;
@@ -9,29 +10,75 @@ interface LocationState {
   skipForm?: boolean;
 }
 
+interface SurveyData {
+  id: number;
+  survey_id: number;
+  survey_title: string;
+  site_name: string;
+  building_name: string;
+  wing_name: string;
+  floor_name: string;
+  area_name: string;
+  room_name: string | null;
+  snag_checklist: {
+    id: number;
+    name: string;
+    questions_count: number;
+    survey_attachment?: Array<{
+      id: string;
+      url: string;
+    }>;
+  };
+}
+
 export const MobileSurveyThankYou: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { mappingId } = useParams<{ mappingId: string }>();
   const state = location.state as LocationState;
-  
+
   const [countdown, setCountdown] = useState(5);
+  const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-//   useEffect(() => {
-//     const timer = setInterval(() => {
-//       setCountdown((prev) => {
-//         if (prev <= 1) {
-//           clearInterval(timer);
-//           // Redirect back to survey landing page
-//           navigate(`/mobile/survey/${mappingId}`, { replace: true });
-//           return 0;
-//         }
-//         return prev - 1;
-//       });
-//     }, 5000);
+  // Fetch survey data for dynamic background
+  useEffect(() => {
+    const fetchSurveyData = async () => {
+      if (!mappingId) return;
 
-//     return () => clearInterval(timer);
-//   }, [navigate, mappingId]);
+      try {
+        setIsLoading(true);
+        const response = await baseClient.get(
+          `survey_mappings/${mappingId}/survey.json`
+        );
+        const data = response.data;
+        console.log("Survey data fetched for thank you page:", data);
+        setSurveyData(data);
+      } catch (error) {
+        console.error("Failed to fetch survey data for thank you page:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSurveyData();
+  }, [mappingId]);
+
+  //   useEffect(() => {
+  //     const timer = setInterval(() => {
+  //       setCountdown((prev) => {
+  //         if (prev <= 1) {
+  //           clearInterval(timer);
+  //           // Redirect back to survey landing page
+  //           navigate(`/mobile/survey/${mappingId}`, { replace: true });
+  //           return 0;
+  //         }
+  //         return prev - 1;
+  //       });
+  //     }, 5000);
+
+  //     return () => clearInterval(timer);
+  //   }, [navigate, mappingId]);
 
   const getThankYouMessage = () => {
     if (state?.rating >= 3) {
@@ -40,94 +87,94 @@ export const MobileSurveyThankYou: React.FC = () => {
         message: "We're glad you had a positive experience!",
         emoji: "🎉",
         bgColor: "bg-green-50",
-        textColor: "text-green-800"
+        textColor: "text-green-800",
       };
     } else {
       return {
         title: "Thank You for Your Feedback!",
-        // message: state?.submitted 
+        // message: state?.submitted
         //   ? "Your feedback has been submitted successfully. We'll work on improving your experience."
         //   : "We appreciate your honesty and will work to improve.",
         emoji: "🙏",
         bgColor: "bg-blue-50",
-        textColor: "text-blue-800"
+        textColor: "text-blue-800",
       };
     }
   };
 
   const thankYouData = getThankYouMessage();
 
+  // Show loading state while fetching survey data
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600 mt-2">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6">
-      {/* Thank You Card */}
-      <div className={`${thankYouData.bgColor} rounded-2xl p-8 text-center max-w-sm w-full shadow-lg`}>
-         <div className="text-center mb-8">
-            <img
-              src="/8459746 1.png"
-              alt="Survey Illustration"
-              className="w-full max-w-xs md:max-w-md h-auto object-contain mx-auto"
-              style={{ aspectRatio: '1/1.1' }}
-            />
+    <div
+      className="min-h-screen flex flex-col items-center justify-center px-6"
+      style={{
+        backgroundImage: `url(${
+          surveyData?.snag_checklist?.survey_attachment?.url || "/9019830 1.png"
+        })`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        filter: "brightness(0.85)",
+      }}
+    >
+      {/* Logo */}
+      <div className="absolute top-4  mt-10 right-4">
+      <div className="flex justify-between">
+        <div className="flex justify-end item-end">
+          <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
+            {window.location.origin === "https://oig.gophygital.work" ? (
+              <img
+                src="/gophygital-logo-min.jpg"
+                alt="Gophygital Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <img
+                src="/Without bkg.svg"
+                alt="OIG Logo"
+                className="w-full h-full object-contain"
+              />
+            )}
           </div>
-
-        {/* Success Image */}
-        {/* <div className="mb-6">
-          <div className="w-28 h-28 mx-auto bg-white rounded-full flex items-center justify-center shadow-md overflow-hidden">
-            <img
-              src="/8459746 1.png"
-              alt="Thank You"
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </div> */}
-
-        {/* Thank You Message */}
-        <h2 className={`text-2xl font-bold ${thankYouData.textColor} mb-4`}>
-          {thankYouData.title}
-        </h2>
-        
-        {/* <p className={`${thankYouData.textColor} text-sm leading-relaxed mb-6`}>
-          {thankYouData.message}
-        </p> */}
-
-        {/* Rating Display */}
-        {/* {state && (
-          <div className="bg-white rounded-lg p-4 mb-6">
-            <div className="flex items-center justify-center">
-              <span className="text-2xl mr-2">{state.emoji}</span>
-              <span className="font-medium text-gray-700">{state.label || "☺️"}</span>
-            </div>
-            <div className="text-xs text-gray-500 mt-1">Your Rating</div>
-          </div>
-        )} */}
-
-        {/* Countdown */}
-        {/* <div className="bg-white rounded-lg p-3">
-          <div className="text-sm text-gray-600">
-            Redirecting in <span className="font-bold text-teal-600">{countdown}</span> seconds
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
-            <div 
-              className="bg-teal-500 h-1 rounded-full transition-all duration-1000"
-              style={{ width: `${((5 - countdown) / 5) * 100}%` }}
-            ></div>
-          </div>
-        </div> */}
+        </div>
+        </div>
       </div>
 
-      {/* Manual Navigation */}
-      {/* <button
-        onClick={() => navigate(`/mobile/survey/${mappingId}`, { replace: true })}
-        className="mt-6 text-teal-600 hover:text-teal-700 text-sm font-medium underline"
-      >
-        Take Another Survey
-      </button> */}
+      {/* Thank You Card */}
+      <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 text-center max-w-sm w-full shadow-xl border-4 border-blue-500">
+        {/* Stylized Thank You Text */}
+        <div className="mb-6 p-3">
+          <h1
+            className="text-5xl sm:text-6xl font-bold text-black mb-4"
+            style={{ fontFamily: "cursive" }}
+          >
+            thank
+          </h1>
+          <h1
+            className="text-5xl sm:text-6xl font-bold text-black -mt-4"
+            style={{ fontFamily: "cursive" }}
+          >
+            you
+          </h1>
+        </div>
 
-      {/* Survey Info */}
-      {/* <div className="mt-8 text-center"> */}
-        {/* <div className="text-xs text-gray-500">Survey ID: {mappingId}</div> */}
-        {/* <div className="text-xs text-gray-400 mt-1">Powered by Lockated</div> */}
-      {/* </div> */}
+        {/* Subtitle */}
+        <p className="text-xs p-2 text-gray-700 font-medium">
+          For helping us improve!
+        </p>
+      </div>
     </div>
   );
 };
