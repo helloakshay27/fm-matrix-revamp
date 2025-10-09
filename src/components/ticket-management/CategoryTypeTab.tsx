@@ -859,6 +859,9 @@ export const CategoryTypeTab: React.FC = () => {
                   )}
                 />
 
+
+                
+
                 <div className="space-y-2">
                   <label className="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Upload Icon <span className="text-red-500">*</span>
@@ -944,6 +947,7 @@ export const CategoryTypeTab: React.FC = () => {
                                 ...base,
                                 minHeight: '40px',
                                 border: '1px solid #e2e8f0',
+                                borderRadius: '0px',
                                 boxShadow: 'none',
                                 '&:hover': {
                                   border: '1px solid #cbd5e1'
@@ -951,7 +955,8 @@ export const CategoryTypeTab: React.FC = () => {
                               }),
                               multiValue: (base) => ({
                                 ...base,
-                                backgroundColor: '#f1f5f9'
+                                backgroundColor: '#f1f5f9',
+                                borderRadius: '0px'
                               }),
                               multiValueLabel: (base) => ({
                                 ...base,
@@ -960,6 +965,7 @@ export const CategoryTypeTab: React.FC = () => {
                               multiValueRemove: (base) => ({
                                 ...base,
                                 color: '#64748b',
+                                borderRadius: '0px',
                                 '&:hover': {
                                   backgroundColor: '#e2e8f0',
                                   color: '#475569'
@@ -1314,6 +1320,7 @@ export const CategoryTypeTab: React.FC = () => {
                         ...base,
                         minHeight: '40px',
                         border: '1px solid #e2e8f0',
+                        borderRadius: '0px',
                         boxShadow: 'none',
                         '&:hover': {
                           border: '1px solid #cbd5e1'
@@ -1321,7 +1328,8 @@ export const CategoryTypeTab: React.FC = () => {
                       }),
                       multiValue: (base) => ({
                         ...base,
-                        backgroundColor: '#f1f5f9'
+                        backgroundColor: '#f1f5f9',
+                        borderRadius: '0px'
                       }),
                       multiValueLabel: (base) => ({
                         ...base,
@@ -1330,6 +1338,7 @@ export const CategoryTypeTab: React.FC = () => {
                       multiValueRemove: (base) => ({
                         ...base,
                         color: '#64748b',
+                        borderRadius: '0px',
                         '&:hover': {
                           backgroundColor: '#e2e8f0',
                           color: '#475569'
