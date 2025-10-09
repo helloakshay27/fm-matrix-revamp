@@ -143,7 +143,7 @@ export const AddTicketDashboard = () => {
   // Dropdown data states
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [subcategories, setSubcategories] = useState<SubCategoryResponse[]>([]);
-  const [fmUsers, setFmUsers] = useState<{id: number; full_name: string}[]>([]);
+  const [fmUsers, setFmUsers] = useState<{ id: number; full_name: string }[]>([]);
   const [occupantUsers, setOccupantUsers] = useState<OccupantUserResponse[]>([]);
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
   const [complaintModes, setComplaintModes] = useState<ComplaintModeResponse[]>([]);
@@ -157,6 +157,8 @@ export const AddTicketDashboard = () => {
   const [filteredAreas, setFilteredAreas] = useState<AreaResponse[]>([]);
   const [filteredFloors, setFilteredFloors] = useState<FloorResponse[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<RoomResponse[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: number; name: string }[]>([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
   // Loading states
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -185,6 +187,7 @@ export const AddTicketDashboard = () => {
     severity: '',
     referenceNumber: '',
     mode: '',
+    vendor: '',
     complaintMode: '',
     // Add location fields
     area: '',
@@ -223,6 +226,38 @@ export const AddTicketDashboard = () => {
       loadUserAccount();
     }
   }, [onBehalfOf]);
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      setLoadingSuppliers(true);
+      try {
+        const url = getFullUrl('/pms/suppliers.json');
+        const options = getAuthenticatedFetchOptions('GET');
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('Failed to fetch suppliers');
+        const data = await response.json();
+        // Use pms_suppliers and company_name for dropdown
+        setSuppliers(
+          Array.isArray(data.pms_suppliers)
+            ? data.pms_suppliers.map(s => ({
+              id: s.id,
+              name: s.company_name || `Supplier #${s.id}`
+            }))
+            : []
+        );
+      } catch (error) {
+        console.error('Error loading suppliers:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load suppliers",
+          variant: "destructive"
+        });
+      } finally {
+        setLoadingSuppliers(false);
+      }
+    };
+    fetchSuppliers();
+  }, []);
 
   // Load occupant users
   const loadOccupantUsers = async () => {
@@ -366,10 +401,10 @@ export const AddTicketDashboard = () => {
     setLoadingBuildings(true);
     try {
       // Use site_id in API call if provided, otherwise load all buildings
-      const url = siteId 
+      const url = siteId
         ? getFullUrl(`/pms/sites/${siteId}/buildings.json`)
         : getFullUrl('/pms/buildings.json');
-      
+
       const options = getAuthenticatedFetchOptions('GET');
       const response = await fetch(url, options);
       if (!response.ok) throw new Error('Failed to fetch buildings');
@@ -395,7 +430,7 @@ export const AddTicketDashboard = () => {
       const url = buildingId
         ? getFullUrl(`/pms/wings.json?building_id=${buildingId}`)
         : getFullUrl('/pms/wings.json');
-      
+
       const options = getAuthenticatedFetchOptions('GET');
       const response = await fetch(url, options);
       if (!response.ok) throw new Error('Failed to fetch wings');
@@ -421,7 +456,7 @@ export const AddTicketDashboard = () => {
       const url = wingId
         ? getFullUrl(`/pms/floors.json?wing_id=${wingId}`)
         : getFullUrl('/pms/floors.json');
-      
+
       const options = getAuthenticatedFetchOptions('GET');
       const response = await fetch(url, options);
       if (!response.ok) throw new Error('Failed to fetch floors');
@@ -447,7 +482,7 @@ export const AddTicketDashboard = () => {
       const url = floorId
         ? getFullUrl(`/pms/rooms.json?floor_id=${floorId}`)
         : getFullUrl('/pms/rooms.json');
-      
+
       const options = getAuthenticatedFetchOptions('GET');
       const response = await fetch(url, options);
       if (!response.ok) throw new Error('Failed to fetch rooms');
@@ -525,17 +560,17 @@ export const AddTicketDashboard = () => {
 
   // Handle area change with API call to fetch floors (Third level)
   const handleAreaChange = async (areaId: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       area: areaId,
       floor: '',
       room: ''
     }));
-    
+
     // Clear dependent dropdowns
     setFilteredFloors([]);
     setFilteredRooms([]);
-    
+
     if (areaId) {
       // Call floors API with area_id parameter
       try {
@@ -557,21 +592,21 @@ export const AddTicketDashboard = () => {
 
   // Handle building change with API call to fetch wings (First level)
   const handleBuildingChange = async (buildingId: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       building: buildingId,
       wing: '',
       area: '',
       floor: '',
       room: ''
     }));
-    
+
     // Clear all dependent dropdowns
     setFilteredWings([]);
     setFilteredAreas([]);
     setFilteredFloors([]);
     setFilteredRooms([]);
-    
+
     if (buildingId) {
       // Call wings API with building_id parameter
       try {
@@ -593,19 +628,19 @@ export const AddTicketDashboard = () => {
 
   // Handle wing change with API call to fetch areas (Second level)
   const handleWingChange = async (wingId: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       wing: wingId,
       area: '',
       floor: '',
       room: ''
     }));
-    
+
     // Clear dependent dropdowns
     setFilteredAreas([]);
     setFilteredFloors([]);
     setFilteredRooms([]);
-    
+
     if (wingId) {
       // Call areas API with wing_id parameter
       try {
@@ -627,15 +662,15 @@ export const AddTicketDashboard = () => {
 
   // Handle floor change with API call to fetch rooms
   const handleFloorChange = async (floorId: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       floor: floorId,
       room: ''
     }));
-    
+
     // Clear dependent dropdown
     setFilteredRooms([]);
-    
+
     if (floorId) {
       // Call rooms API with floor_id parameter
       try {
@@ -715,6 +750,8 @@ export const AddTicketDashboard = () => {
         priority: formData.adminPriority || '',
         severity: formData.severity || '',
         society_staff_type: 'User',
+        ...(formData.vendor && { complaint: { supplier_id: parseInt(formData.vendor) } }),
+        supplier_id: formData.vendor ? parseInt(formData.vendor) : '', // Remove old supplier_id key
         proactive_reactive: formData.proactiveReactive || '',
         heading: formData.description,
         ...(formData.complaintMode && { complaint_mode_id: parseInt(formData.complaintMode) }),
@@ -736,13 +773,16 @@ export const AddTicketDashboard = () => {
         is_flagged: isFlagged
       };
 
-      console.log('Ticket payload before API call:', ticketData);
-      console.log('Using site ID from user account:', siteId);
-      console.log('User account info:', userAccount);
-      console.log('Form data:', formData);
-      console.log('Severity value:', formData.severity);
-      console.log('Golden Ticket:', isGoldenTicket);
-      console.log('Is Flagged:', isFlagged);
+      // console.log('Ticket payload before API call:', ticketData);
+      // console.log('Using site ID from user account:', siteId);
+      // console.log('User account info:', userAccount);
+      // console.log('Form data:', formData);
+      // console.log('Severity value:', formData.severity);
+      // console.log('Golden Ticket:', isGoldenTicket);
+      // console.log('Is Flagged:', isFlagged);
+
+      console.log('Submitting ticket with data:', ticketData, 'and files:', attachedFiles);
+      
 
       const response = await ticketManagementAPI.createTicket(ticketData, attachedFiles);
       console.log('Create ticket response:', response);
@@ -1172,6 +1212,33 @@ export const AddTicketDashboard = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Vendor</InputLabel>
+                <MuiSelect
+                  value={formData.vendor}
+                  onChange={(e) => { setFormData({
+                    ...formData, vendor: e.target.value
+                  }); console.log(e.target.value); }}
+                  label="Vendor"
+                  notched
+                  displayEmpty
+                  disabled={loadingSuppliers}
+                >
+                  <MenuItem value="">
+                    {loadingSuppliers ? "Loading..." : "Select Vendor"}
+                  </MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                      {supplier.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
               <TextField
                 label="Reference Number"
                 placeholder="Enter Reference Number"
@@ -1191,35 +1258,33 @@ export const AddTicketDashboard = () => {
             </div>
 
             {/* Description - Full width */}
-           <div className="relative w-full">
-  <textarea
-    id="description"
-    value={formData.description}
-    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-    rows={3}
-    placeholder=" "
-    className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+            <div className="relative w-full">
+              <textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                placeholder=" "
+                className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
       focus:outline-none 
       focus:border-[2px] 
       focus:border-[rgb(25,118,210)] 
       resize-vertical"
-  />
+              />
 
-  <label
-    htmlFor="description"
-    className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+              <label
+                htmlFor="description"
+                className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
       peer-placeholder-shown:top-4
       peer-placeholder-shown:text-base
       peer-placeholder-shown:text-gray-400
       peer-focus:-top-[10px]
       peer-focus:text-sm
       peer-focus:text-[rgb(25,118,210)]"
-  >
-    Descriptions
-  </label>
-</div>
-
-
+              >
+                Descriptions
+              </label>
+            </div>
           </div>
         </div>
 
@@ -1277,8 +1342,8 @@ export const AddTicketDashboard = () => {
                   disabled={loadingWings || !formData.building}
                 >
                   <MenuItem value="">
-                    {loadingWings ? "Loading..." : 
-                     !formData.building ? "Select Building First" : "Select Wing"}
+                    {loadingWings ? "Loading..." :
+                      !formData.building ? "Select Building First" : "Select Wing"}
                   </MenuItem>
                   {filteredWings.map((wing) => (
                     <MenuItem key={wing.id} value={wing.id.toString()}>
@@ -1304,8 +1369,8 @@ export const AddTicketDashboard = () => {
                   disabled={loadingAreas || !formData.wing}
                 >
                   <MenuItem value="">
-                    {loadingAreas ? "Loading..." : 
-                     !formData.wing ? "Select Wing First" : "Select Area"}
+                    {loadingAreas ? "Loading..." :
+                      !formData.wing ? "Select Wing First" : "Select Area"}
                   </MenuItem>
                   {filteredAreas.map((area) => (
                     <MenuItem key={area.id} value={area.id.toString()}>
@@ -1331,8 +1396,8 @@ export const AddTicketDashboard = () => {
                   disabled={loadingFloors || !formData.area}
                 >
                   <MenuItem value="">
-                    {loadingFloors ? "Loading..." : 
-                     !formData.area ? "Select Area First" : "Select Floor"}
+                    {loadingFloors ? "Loading..." :
+                      !formData.area ? "Select Area First" : "Select Floor"}
                   </MenuItem>
                   {filteredFloors.map((floor) => (
                     <MenuItem key={floor.id} value={floor.id.toString()}>
@@ -1358,8 +1423,8 @@ export const AddTicketDashboard = () => {
                   disabled={loadingRooms || !formData.floor}
                 >
                   <MenuItem value="">
-                    {loadingRooms ? "Loading..." : 
-                     !formData.floor ? "Select Floor First" : "Select Room"}
+                    {loadingRooms ? "Loading..." :
+                      !formData.floor ? "Select Floor First" : "Select Room"}
                   </MenuItem>
                   {filteredRooms.map((room) => (
                     <MenuItem key={room.id} value={room.id.toString()}>
