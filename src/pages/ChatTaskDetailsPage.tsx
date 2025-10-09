@@ -15,6 +15,7 @@ const ChatTaskDetailsPage = () => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
 
+    const [countdown, setCountdown] = useState("00:00:00:00");
     const [status, setStatus] = useState("Open")
     const [openEditModal, setOpenEditModal] = useState(false)
     const [task, setTask] = useState({
@@ -33,6 +34,37 @@ const ChatTaskDetailsPage = () => {
         status: "",
         focus_mode: false
     })
+
+    useEffect(() => {
+        if (!task?.target_date) return;
+
+        const updateCountdown = () => {
+            const targetTime = new Date(task.target_date as string);
+            targetTime.setHours(23, 59, 59, 999);
+
+            const now = new Date();
+            const diff = targetTime.getTime() - now.getTime();
+
+            if (diff <= 0) {
+                setCountdown("00:00:00:00");
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            setCountdown(
+                `${String(days).padStart(2, "0")}:${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+            );
+        };
+
+        updateCountdown(); // run immediately
+        const interval = setInterval(updateCountdown, 1000);
+
+        return () => clearInterval(interval);
+    }, [task?.target_date]);
 
     const fetchData = async () => {
         try {
@@ -208,7 +240,12 @@ const ChatTaskDetailsPage = () => {
                         </div>
                         <div className="flex items-start">
                             <span className="text-gray-600 min-w-[180px] font-medium">Duration:</span>
-                            <span className="text-green-600 font-medium">0s</span>
+                            <span
+                                className={`font-medium ${countdown === "00:00:00:00" ? "text-red-600" : "text-green-600"
+                                    }`}
+                            >
+                                {countdown}
+                            </span>
                         </div>
                     </div>
                 </div>
