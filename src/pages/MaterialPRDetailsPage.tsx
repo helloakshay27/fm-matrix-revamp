@@ -468,7 +468,7 @@ export const MaterialPRDetailsPage = () => {
       setOpenDeletionModal(false)
     } catch (error) {
       console.log(error)
-      toast.error("Failed to raise deletion request")
+      toast.error(error.response.data.error)
     }
   }
 
