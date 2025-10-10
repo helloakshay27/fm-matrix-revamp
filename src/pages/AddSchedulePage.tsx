@@ -1,3 +1,8 @@
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -213,6 +218,16 @@ interface ChecklistMappingsData {
 }
 
 export const AddSchedulePage = () => {
+  // Modal state for draft restoration
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [draftData, setDraftData] = useState<null | {
+    activeStep: any;
+    formData: any;
+    questionSections: any;
+    timeSetupData: any;
+    completedSteps: any;
+    attachments: any;
+  }>(null);
   // Navigation buttons for each section except Mapping
   const renderNavigationButtons = (stepIndex: number) => {
     // Only show for steps except Mapping (stepIndex !== 4)
@@ -617,14 +632,16 @@ export const AddSchedulePage = () => {
       draftQuestionSections !== null &&
       draftTimeSetupData !== null
     ) {
-      setActiveStep(draftActiveStep);
-      setFormData(draftFormData);
-      setQuestionSections(draftQuestionSections);
-      setTimeSetupData(draftTimeSetupData);
-      setCompletedSteps(draftCompletedSteps || []);
-      setAttachments(draftAttachments || []);
+      setDraftData({
+        activeStep: draftActiveStep,
+        formData: draftFormData,
+        questionSections: draftQuestionSections,
+        timeSetupData: draftTimeSetupData,
+        completedSteps: draftCompletedSteps || [],
+        attachments: draftAttachments || []
+      });
+      setShowDraftModal(true);
     } else {
-      // Only reset if no draft exists
       setActiveStep(0);
       setCompletedSteps([]);
       setFormData({
@@ -713,6 +730,122 @@ export const AddSchedulePage = () => {
       });
       setAttachments([]);
     }
+  // Handler for draft modal actions
+  const handleDraftModalYes = () => {
+    if (draftData) {
+      setActiveStep(draftData.activeStep);
+      setFormData(draftData.formData);
+      setQuestionSections(draftData.questionSections);
+      setTimeSetupData(draftData.timeSetupData);
+      setCompletedSteps(draftData.completedSteps);
+      setAttachments(draftData.attachments);
+    }
+    setShowDraftModal(false);
+    setDraftData(null);
+  };
+
+  const handleDraftModalNo = () => {
+    setActiveStep(0);
+    setCompletedSteps([]);
+    setFormData({
+      type: 'PPM',
+      scheduleFor: 'Asset',
+      activityName: '',
+      description: '',
+      checklistType: 'Individual',
+      checkInPhotograph: 'inactive',
+      asset: [],
+      service: [],
+      assetGroup: '',
+      assetSubGroup: [],
+      assignTo: '',
+      assignToType: 'user',
+      selectedUsers: [],
+      selectedGroups: [],
+      backupAssignee: '',
+      planDuration: '',
+      planDurationValue: '',
+      emailTriggerRule: '',
+      scanType: '',
+      category: '',
+      submissionTime: '',
+      submissionTimeValue: '',
+      supervisors: '',
+      lockOverdueTask: '',
+      frequency: '',
+      graceTime: '',
+      graceTimeValue: '',
+      endAt: '',
+      supplier: '',
+      startFrom: '',
+      mappings: [],
+      selectedTemplate: '',
+      ticketLevel: 'checklist',
+      ticketAssignedTo: '',
+      ticketCategory: '',
+    });
+    setQuestionSections([
+      {
+        id: '1',
+        title: 'Questions',
+        autoTicket: false,
+        ticketLevel: 'checklist',
+        ticketAssignedTo: '',
+        ticketCategory: '',
+        tasks: [
+          {
+            id: '1',
+            group: '',
+            subGroup: '',
+            task: '',
+            inputType: '',
+            mandatory: false,
+            helpText: false,
+            helpTextValue: '',
+            helpTextAttachments: [],
+            autoTicket: false,
+            weightage: '',
+            rating: false,
+            reading: false,
+            dropdownValues: [{ label: '', type: 'positive' }],
+            radioValues: [{ label: '', type: 'positive' }],
+            checkboxValues: [''],
+            checkboxSelectedStates: [false],
+            optionsInputsValues: ['']
+          }
+        ]
+      }
+    ]);
+    setTimeSetupData({
+      hourMode: 'specific',
+      minuteMode: 'specific',
+      dayMode: 'weekdays',
+      monthMode: 'all',
+      selectedHours: ['12'],
+      selectedMinutes: ['00'],
+      selectedWeekdays: [],
+      selectedDays: [],
+      selectedMonths: [],
+      betweenMinuteStart: '00',
+      betweenMinuteEnd: '59',
+      betweenMonthStart: 'January',
+      betweenMonthEnd: 'December'
+    });
+    setAttachments([]);
+    setShowDraftModal(false);
+    setDraftData(null);
+  };
+    {/* Draft restoration modal */}
+    <Dialog open={showDraftModal} onClose={handleDraftModalNo}>
+      <DialogTitle>Continue from saved draft?</DialogTitle>
+      <DialogContent>
+        <Typography variant="body1">A draft was found for this schedule. Would you like to continue from where you left off?</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleDraftModalNo} color="secondary">No, Start New</Button>
+        <Button onClick={handleDraftModalYes} color="primary" autoFocus>Yes, Continue</Button>
+      </DialogActions>
+    </Dialog>
   }, []);
 
   // Save form data to localStorage whenever it changes

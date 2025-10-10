@@ -1074,7 +1074,7 @@ export const SurveyMappingDetailsPage = () => {
          <p className="text-xl font-semibold text-[#C72030]">
           {mapping.mappings?.length || 0}
         </p>
-        <p className="text-sm text-gray-600">Location Association</p>
+        <p className="text-sm text-gray-600">Location Associations</p>
       </div>
     </div>
   </CardContent>

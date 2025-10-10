@@ -226,6 +226,18 @@ export const SurveyDetailsPage = () => {
                     </div>
                   </div>
                   <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Question Type
+  </label>
+  <div className="text-base font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
+    {snagChecklist?.check_type
+      ? snagChecklist.check_type.charAt(0).toUpperCase() + snagChecklist.check_type.slice(1)
+      : "Not Specified"}
+  </div>
+</div>
+
+                  
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Ticket Category
                     </label>

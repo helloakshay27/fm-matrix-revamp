@@ -628,6 +628,12 @@ export const ticketManagementAPI = {
     formData.append('complaint[proactive_reactive]', ticketData.proactive_reactive);
     formData.append('complaint[heading]', ticketData.heading);
     formData.append('complaint[complaint_mode_id]', ticketData.complaint_mode_id.toString());
+    // Add vendor as complaint[supplier_id] if present (support both vendor and supplier_id)
+    if ('vendor' in ticketData && ticketData.vendor) {
+      formData.append('complaint[supplier_id]', String(ticketData.vendor));
+    } else if ('supplier_id' in ticketData && ticketData.supplier_id) {
+      formData.append('complaint[supplier_id]', String(ticketData.supplier_id));
+    }
     
     // Add severity if provided
     if (ticketData.severity) {
