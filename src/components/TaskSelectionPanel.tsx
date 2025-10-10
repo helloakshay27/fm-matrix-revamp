@@ -263,8 +263,8 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     });
 
     try {
-      // Convert date and time to ISO format
-      const dateTimeString = `${rescheduleData.scheduleDate}T${rescheduleData.scheduleTime}:00Z`;
+      // Convert date and time to format: YYYY-MM-DD HH:mm:ss
+      const dateTimeString = `${rescheduleData.scheduleDate} ${rescheduleData.scheduleTime}:00`;
 
       const payload = {
         task_occurrence_ids: selectedTasks.map((task) => parseInt(task.id)),

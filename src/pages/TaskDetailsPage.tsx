@@ -461,8 +461,8 @@ export const TaskDetailsPage = () => {
     });
 
     try {
-      // Convert date and time to ISO format for bulk API
-      const dateTimeString = `${rescheduleData.scheduleDate}T${rescheduleData.scheduleTime}:00Z`;
+      // Convert date and time to format: YYYY-MM-DD HH:mm:ss
+      const dateTimeString = `${rescheduleData.scheduleDate} ${rescheduleData.scheduleTime}:00`;
 
       const payload = {
         task_occurrence_ids: [parseInt(id!)],
