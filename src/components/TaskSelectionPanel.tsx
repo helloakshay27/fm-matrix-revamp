@@ -32,6 +32,7 @@ import { toast as sonnerToast } from "sonner";
 interface Task {
   id: string;
   checklist: string;
+  status?: string; // Add status field to track task status
 }
 
 interface TaskSelectionPanelProps {
@@ -359,6 +360,20 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     setShowReassignDialog(true);
   };
 
+  // Check if any selected task has "Closed" status
+  const hasClosedTasks = selectedTasks.some(
+    (task) => task.status?.toLowerCase() === "closed"
+  );
+
+  // Check if any selected task has "Overdue" status
+  const hasOverdueTasks = selectedTasks.some(
+    (task) => task.status?.toLowerCase() === "overdue"
+  );
+
+  // Determine button visibility
+  const showReassignButton = !hasClosedTasks; // Hide if any task is closed
+  const showRescheduleButton = !hasClosedTasks && !hasOverdueTasks; // Hide if any task is closed or overdue
+
   return (
     <>
       <div
@@ -381,72 +396,76 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
           </div>
 
           <div className="flex items-center ml-5">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReassignClick}
-              className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5"
-            >
-              <svg
-                className="w-6 h-6 mt-4 mb-2"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            {showReassignButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReassignClick}
+                className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5"
               >
-                <path
-                  d="M16 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V8L16 3Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M16 3V8H21"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M12 18V12"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M9 15L12 12L15 15"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="text-xs font-medium">Reassign</span>
-            </Button>
+                <svg
+                  className="w-6 h-6 mt-4 mb-2"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M16 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V8L16 3Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M16 3V8H21"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M12 18V12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M9 15L12 12L15 15"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="text-xs font-medium">Reassign</span>
+              </Button>
+            )}
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRescheduleClick}
-              className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5"
-            >
-              <svg
-                className="w-6 h-6 mt-4 mb-2"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            {showRescheduleButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRescheduleClick}
+                className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5"
               >
-                <path
-                  d="M21 10H3M16 2V6M8 2V6M7.8 22H16.2C17.8802 22 18.7202 22 19.362 21.673C19.9265 21.3854 20.3854 20.9265 20.673 20.362C21 19.7202 21 18.8802 21 17.2V8.8C21 7.11984 21 6.27976 20.673 5.63803C20.3854 5.07354 19.9265 4.6146 19.362 4.32698C18.7202 4 17.8802 4 16.2 4H7.8C6.11984 4 5.27976 4 4.63803 4.32698C4.07354 4.6146 3.6146 5.07354 3.32698 5.63803C3 6.27976 3 7.11984 3 8.8V17.2C3 18.8802 3 19.7202 3.32698 20.362C3.6146 20.9265 4.07354 21.3854 4.63803 21.673C5.27976 22 6.11984 22 7.8 22Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="text-xs font-medium">Reschedule</span>
-            </Button>
+                <svg
+                  className="w-6 h-6 mt-4 mb-2"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M21 10H3M16 2V6M8 2V6M7.8 22H16.2C17.8802 22 18.7202 22 19.362 21.673C19.9265 21.3854 20.3854 20.9265 20.673 20.362C21 19.7202 21 18.8802 21 17.2V8.8C21 7.11984 21 6.27976 20.673 5.63803C20.3854 5.07354 19.9265 4.6146 19.362 4.32698C18.7202 4 17.8802 4 16.2 4H7.8C6.11984 4 5.27976 4 4.63803 4.32698C4.07354 4.6146 3.6146 5.07354 3.32698 5.63803C3 6.27976 3 7.11984 3 8.8V17.2C3 18.8802 3 19.7202 3.32698 20.362C3.6146 20.9265 4.07354 21.3854 4.63803 21.673C5.27976 22 6.11984 22 7.8 22Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="text-xs font-medium">Reschedule</span>
+              </Button>
+            )}
 
             <div className="w-px h-8 bg-gray-300 mr-5"></div>
 

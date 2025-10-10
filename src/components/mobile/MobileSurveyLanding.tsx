@@ -1511,22 +1511,57 @@ export const MobileSurveyLanding: React.FC = () => {
       }}
     >
       {/* Header with Logo */}
-      <div className="bg-transparent py-4 px-4 mt-12">
-        <div className="flex justify-end items-start">
-          <div className="w-16 h-16 sm:w-28 sm:h-24 flex items-center justify-center overflow-hidden">
-            {window.location.origin === "https://oig.gophygital.work" ? (
-              <img
-                src="/Without bkg.svg"
-                alt="OIG Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <img
-                src="/gophygital-logo-min.jpg"
-                alt="Gophygital Logo"
-                className="w-full h-full object-contain"
-              />
+      <div className="bg-transparent py-4 px-4 mt-8">
+        {/* <div className="flex justify-start mt-2 items-start">
+            
+          </div> */}
+        <div className="flex justify-between">
+          <div className="flex justify-start mt-2 items-start">
+            {((currentQuestion &&
+              !isLastStep &&
+              currentQuestionIndex > 0 &&
+              !showGenericTags) ||
+              (isLastStep && isMultiQuestion)) && (
+              <div className="w-full flex justify-start mb-4">
+                <button
+                  type="button"
+                  onClick={moveToPreviousQuestion}
+                  className="flex items-center text-black/100 hover:text-black/100 text-lg font-medium transition-colors"
+                >
+                  <svg
+                    className="w-4 h-4 mr-1 text-black/80"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Back
+                </button>
+              </div>
             )}
+          </div>
+          <div className="flex justify-end item-end">
+            <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
+              {window.location.origin === "https://oig.gophygital.work" ? (
+                <img
+                  src="/gophygital-logo-min.jpg"
+                  alt="Gophygital Logo"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <img
+                  src="/Without bkg.svg"
+                  alt="OIG Logo"
+                  className="w-full h-full object-contain"
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1553,34 +1588,6 @@ export const MobileSurveyLanding: React.FC = () => {
       <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
         <div className="flex flex-col items-center justify-center max-w-md mx-auto w-full min-h-full">
           {/* Back button - positioned above survey title */}
-          {((currentQuestion &&
-            !isLastStep &&
-            currentQuestionIndex > 0 &&
-            !showGenericTags) ||
-            (isLastStep && isMultiQuestion)) && (
-            <div className="w-full flex justify-start mb-4">
-              <button
-                type="button"
-                onClick={moveToPreviousQuestion}
-                className="flex items-center text-white/80 hover:text-white/100 text-sm font-medium transition-colors"
-              >
-                <svg
-                  className="w-4 h-4 mr-1 text-white/80"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-                Back
-              </button>
-            </div>
-          )}
 
           {/* Show image only on first question or single question surveys */}
           {!showGenericTags && (
@@ -1611,10 +1618,10 @@ export const MobileSurveyLanding: React.FC = () => {
           {isLastStep && isMultiQuestion && (
             <div className="w-full space-y-4">
               <div className="text-center">
-                <h3 className="text-lg font-semibold text-black mb-2">
+                <h3 className="text-lg font-semibold text-white/100 mb-2">
                   Any additional comments?
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-white/90">
                   Share any additional feedback or suggestions (optional)
                 </p>
               </div>
@@ -1624,7 +1631,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   value={finalDescription}
                   onChange={(e) => setFinalDescription(e.target.value)}
                   placeholder="Please share your thoughts..."
-                  className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   disabled={isSubmitting}
                 />
               </div>
@@ -1653,8 +1660,14 @@ export const MobileSurveyLanding: React.FC = () => {
           ) && (
             <div className="w-full mt-20">
               {/* Progress indicator */}
+
+              {/* Main title */}
+              <h1 className="text-3xl sm:text-4xl font-bold text-white/100 mb-2">
+                {!showGenericTags && surveyData?.survey_title}
+              </h1>
+
               <div className="flex items-center space-x-3">
-                <span className="text-gray-50">
+                <span className="text-md text-white/90">
                   {!showGenericTags && (
                     <>
                       {Math.min(
@@ -1667,14 +1680,9 @@ export const MobileSurveyLanding: React.FC = () => {
                 </span>
               </div>
 
-              {/* Main title */}
-              <h1 className="text-3xl sm:text-4xl font-bold text-white/100 mb-2">
-                {!showGenericTags && surveyData?.survey_title}
-              </h1>
-
               {/* Subtitle - only show when we have a current question and not showing generic tags */}
               {currentQuestion && !showGenericTags && (
-                <p className="text-3xl  text-white/90 mb-6">
+                <p className="text-xl  text-white/90 mb-6">
                   {currentQuestion.descr}
                 </p>
               )}
@@ -1895,7 +1903,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   currentQuestion.qtype === "smiley") &&
                   !showGenericTags && (
                     <div className="w-full">
-                      <div className="flex justify-center items-start gap-2 sm:gap-3">
+                      <div className="flex justify-center items-start gap-3 sm:gap-3">
                         {getEmojiOptions(currentQuestion).map((option) => (
                           <button
                             type="button"
@@ -1912,7 +1920,7 @@ export const MobileSurveyLanding: React.FC = () => {
                             <span className="text-3xl sm:text-4xl mb-2">
                               {option.emoji}
                             </span>
-                            <span className="text-xs sm:text-sm text-gray-600 text-center leading-tight break-words w-full">
+                            <span className="text-xs sm:text-xs text-white/90 text-center leading-tight break-words ">
                               {option.label}
                             </span>
                           </button>
@@ -1924,61 +1932,99 @@ export const MobileSurveyLanding: React.FC = () => {
                 {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
                 {showGenericTags && (
                   <>
-                    <div className="text-center">
-                      <h4 className="text-lg font-semibold text-white mb-2">
-                        What specifically needs improvement?
-                      </h4>
-                      {selectedTags.length > 0 && (
-                        <p className="text-sm text-blue-300">
-                          {selectedTags.length} item
-                          {selectedTags.length > 1 ? "s" : ""} selected
-                        </p>
-                      )}
-                    </div>
+                    <div className="bg-gray-100 rounded-xl p-4">
+                      <div className="flex justify-end items-start mb-4">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowGenericTags(false);
+                            setSelectedTags([]);
+                            setCurrentNegativeComments(""); // Reset only current question's comments
+                            setPendingNegativeType(null);
+                            setPendingNegativeAnswer(null);
+                          }}
+                          className="text-black/100 underline hover:text-black/90 text-sm rounded transition-colors "
+                        >
+                          Back
+                        </button>
+                      </div>
 
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                      {getCurrentQuestion()?.generic_tags?.map((tag) => {
-                        const isSelected = selectedTags.some(
-                          (selectedTag) => selectedTag.id === tag.id
-                        );
-                        return (
-                          <button
-                            type="button"
-                            key={tag.id}
-                            onClick={() => handleGenericTagClick(tag)}
-                            className={`p-3 sm:p-4 rounded-lg border-2 text-center transition-all ${
-                              isSelected
-                                ? "border-blue-500 bg-blue-50"
-                                : "border-gray-200 bg-white hover:border-gray-300"
-                            }`}
-                          >
-                            <div className="mb-2">
-                              {tag.icons && tag.icons.length > 0 ? (
-                                <img
-                                  src={tag.icons[0].url}
-                                  alt={tag.category_name}
-                                  className="w-10 h-10 sm:w-12 sm:h-12 mx-auto object-contain"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
-                                  <span className="text-lg sm:text-2xl">
-                                    🏷️
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <span className="text-xs sm:text-sm font-medium text-gray-700 leading-tight">
-                              {tag.category_name}
-                            </span>
-                          </button>
-                        );
-                      })}
+                      <div className="text-center">
+                        <h4 className="text-lg font-semibold text-black/80 mb-2">
+                          What specifically needs improvement?
+                        </h4>
+
+                        {selectedTags.length > 0 && (
+                          <p className="text-sm text-black/100">
+                            {selectedTags.length} item
+                            {selectedTags.length > 1 ? "s" : ""} selected
+                          </p>
+                        )}
+                      </div>
+                      <div className="overflow-x-auto mt-4">
+                        <div
+                          className="flex"
+                          style={{ minWidth: "100%", paddingBottom: "8px" }}
+                        >
+                          {(() => {
+                            const tags =
+                              getCurrentQuestion()?.generic_tags || [];
+                            const rows = [];
+                            for (let i = 0; i < tags.length; i += 2) {
+                              rows.push(tags.slice(i, i + 2));
+                            }
+                            return rows.map((row, rowIdx) => (
+                              <div
+                                key={rowIdx}
+                                className="flex flex-col gap-4 min-w-[165px]"
+                              >
+                                {row.map((tag) => {
+                                  const isSelected = selectedTags.some(
+                                    (selectedTag) => selectedTag.id === tag.id
+                                  );
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={tag.id}
+                                      onClick={() => handleGenericTagClick(tag)}
+                                      className={`p-3 sm:p-4 rounded-xl border-2 mr-3 text-center transition-all ${
+                                        isSelected
+                                          ? "border-blue-500 bg-blue-50"
+                                          : "border-gray-200 bg-white hover:border-blue-300"
+                                      }`}
+                                    >
+                                      <div className="mb-2">
+                                        {tag.icons && tag.icons.length > 0 ? (
+                                          <img
+                                            src={tag.icons[0].url}
+                                            alt={tag.category_name}
+                                            className="w-10 h-10 sm:w-12 sm:h-12 mx-auto object-contain"
+                                          />
+                                        ) : (
+                                          <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
+                                            <span className="text-lg sm:text-2xl">
+                                              🏷️
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <span className="text-xs sm:text-sm font-medium text-gray-700 leading-tight">
+                                        {tag.category_name}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Description Field */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Additional Comments (Optional)
+                      <label className="block text-sm font-medium text-white/90 mb-2">
+                        Comments (Optional)
                       </label>
                       <textarea
                         value={getCurrentNegativeComments()}
@@ -1986,7 +2032,7 @@ export const MobileSurveyLanding: React.FC = () => {
                           setCurrentNegativeComments(e.target.value)
                         }
                         placeholder="Please describe any specific issues or suggestions..."
-                        className="w-full h-20 sm:h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full h-20 sm:h-24 p-3 border border-blue-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         disabled={isSubmitting}
                       />
                     </div>
@@ -2088,20 +2134,6 @@ export const MobileSurveyLanding: React.FC = () => {
                       ) : (
                         "Continue"
                       )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowGenericTags(false);
-                        setSelectedTags([]);
-                        setCurrentNegativeComments(""); // Reset only current question's comments
-                        setPendingNegativeType(null);
-                        setPendingNegativeAnswer(null);
-                      }}
-                      className="w-full mt-3 text-gray-600 hover:text-gray-800 py-2 text-sm"
-                    >
-                      ← Back
                     </button>
                   </>
                 )}

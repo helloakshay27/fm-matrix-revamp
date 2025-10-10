@@ -17,6 +17,10 @@ import {
   File,
   Eye,
   Download,
+  ReceiptText,
+  ScrollText,
+  ClipboardList,
+  Images,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -772,195 +776,208 @@ export const PODetailsPage = () => {
 
       <div className="space-y-6">
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium text-center">
-              Billing Details
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ReceiptText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Billing Details</h3>
+          </div>
           <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Phone</span>
-                  <span className="font-medium">
-                    : {poDetails.billing_address?.phone ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Email</span>
-                  <span className="font-medium">
-                    : {poDetails.billing_address?.email ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">PAN</span>
-                  <span className="font-medium">
-                    : {poDetails.billing_address?.pan_number ?? "-"}
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Phone</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.billing_address?.phone ?? "-"}
+                </span>
               </div>
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Fax</span>
-                  <span className="font-medium">
-                    : {poDetails.billing_address?.fax ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">GST</span>
-                  <span className="font-medium">
-                    : {poDetails.billing_address?.gst_number ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Address</span>
-                  <span className="font-medium">
-                    : {poDetails.billing_address?.address ?? "-"}
-                  </span>
-                </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Fax</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.billing_address?.fax ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Email</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.billing_address?.email ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">GST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.billing_address?.gst_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">PAN</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.billing_address?.pan_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Address</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.billing_address?.address ?? "-"}
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium text-center">
-              Purchase Order{" "}
-              {poDetails.all_level_approved ? "(Approved)" : "(Pending)"}
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ScrollText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Purchase Order</h3>
+          </div>
           <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">PO No.</span>
-                  <span className="font-medium">
-                    : {poDetails.external_id ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">PO Date</span>
-                  <span className="font-medium">
-                    :{" "}
-                    {poDetails.po_date
-                      ? format(new Date(poDetails.po_date), "dd-MM-yyyy")
-                      : "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">
-                    Plant Detail
-                  </span>
-                  <span className="font-medium">
-                    : {poDetails.plant_detail?.plant_name ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">Address</span>
-                  <span className="font-medium">
-                    : {poDetails.supplier?.address ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">Email</span>
-                  <span className="font-medium">
-                    : {poDetails.supplier?.email ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">PAN</span>
-                  <span className="font-medium">
-                    : {poDetails.supplier?.pan_number ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">Phone</span>
-                  <span className="font-medium">
-                    : {poDetails.supplier?.mobile1 ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">Related To</span>
-                  <span className="font-medium">
-                    : {poDetails.related_to ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">
-                    Retention(%)
-                  </span>
-                  <span className="font-medium">
-                    : {poDetails.retention ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">QC(%)</span>
-                  <span className="font-medium">
-                    : {poDetails.quality_holding ?? "-"}
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">PO No.</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.external_id ?? "-"}
+                </span>
               </div>
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">
-                    Reference No.
-                  </span>
-                  <span className="font-medium">
-                    : {poDetails.reference_number ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">ID</span>
-                  <span className="font-medium">: {poDetails.id ?? "-"}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">Supplier</span>
-                  <span className="font-medium">
-                    : {poDetails.supplier?.company_name ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">GST</span>
-                  <span className="font-medium">: {poDetails.supplier?.gstin_number ?? "-"}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">
-                    Delivery Address
-                  </span>
-                  <span className="font-medium">
-                    : {poDetails.shipping_address?.title ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">
-                    Payment Tenure(In Days)
-                  </span>
-                  <span className="font-medium">
-                    : {poDetails.payment_tenure ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">TDS(%)</span>
-                  <span className="font-medium">: {poDetails.tds ?? "-"}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-44">
-                    Advance Amount
-                  </span>
-                  <span className="font-medium">
-                    : {poDetails.advance_amount ?? "-"}
-                  </span>
-                </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Reference No.</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.reference_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">PO Date</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.po_date
+                    ? format(new Date(poDetails.po_date), "dd-MM-yyyy")
+                    : "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.id ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Plant Detail</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.plant_detail?.plant_name ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Supplier</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.supplier?.company_name ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Address</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.supplier?.address ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">GST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.supplier?.gstin_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Email</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.supplier?.email ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Delivery Address</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.shipping_address?.title ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">PAN</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.supplier?.pan_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Payment Tenure</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.payment_tenure ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Phone</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.supplier?.mobile1 ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">TDS(%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.tds ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Related To</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.related_to ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Advance Amount</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.advance_amount ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Retention(%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.retention ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">QC(%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {poDetails.quality_holding ?? "-"}
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-medium">PO Items</CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ClipboardList className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">PO Items</h3>
+          </div>
           <CardContent>
             <EnhancedTable
               data={inventoryTableData}
@@ -1027,9 +1044,12 @@ export const PODetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Notes & Terms</CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ScrollText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Notes & Terms</h3>
+          </div>
           <CardContent className="text-wrap break-words">
             <div className="space-y-6">
               <div>
@@ -1073,9 +1093,12 @@ export const PODetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Attachments</CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Images className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+          </div>
           <CardContent>
             {Array.isArray(poDetails.attachments) &&
               poDetails.attachments.length > 0 ? (
@@ -1166,9 +1189,12 @@ export const PODetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-medium">GRN Details</CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ReceiptText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GRN Details</h3>
+          </div>
           <CardContent>
             <EnhancedTable
               data={grnTableData}
@@ -1202,11 +1228,12 @@ export const PODetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-medium">
-              Payment Details
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ReceiptText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Payment Details</h3>
+          </div>
           <CardContent>
             <EnhancedTable
               data={paymentTableData}
@@ -1226,11 +1253,12 @@ export const PODetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-medium">
-              Debit/Credit Note Details
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ReceiptText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
+          </div>
           <CardContent>
             <EnhancedTable
               data={debitCreditTableData}
