@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
@@ -7,6 +17,7 @@ import { CalendarDays, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from '@/hooks/use-toast';
+import ReactSelect from 'react-select';
 import {
   Dialog,
   DialogContent,
@@ -20,12 +31,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { TextField } from '@mui/material';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
+import { Calendar as CalendarIcon, X } from 'lucide-react';
 
 interface Holiday {
   id: string;
@@ -129,9 +137,6 @@ export const HolidayCalendarPage = () => {
   const [selectedSites, setSelectedSites] = useState<number[]>([]);
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
-  const [sitesDropdownOpen, setSitesDropdownOpen] = useState(false);
-  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
-  const [customersDropdownOpen, setCustomersDropdownOpen] = useState(false);
   const [recurringOpen, setRecurringOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingHolidays, setLoadingHolidays] = useState(false);
@@ -308,29 +313,7 @@ export const HolidayCalendarPage = () => {
     setCurrentPage(1);
   };
 
-  const handleSiteChange = (siteId: number, checked: boolean) => {
-    if (checked) {
-      setSelectedSites([...selectedSites, siteId]);
-    } else {
-      setSelectedSites(selectedSites.filter(id => id !== siteId));
-    }
-  };
 
-  const handleCustomerChange = (customer: string, checked: boolean) => {
-    if (checked) {
-      setSelectedCustomers([...selectedCustomers, customer]);
-    } else {
-      setSelectedCustomers(selectedCustomers.filter(c => c !== customer));
-    }
-  };
-
-  const handleSelectAllSites = (checked: boolean) => {
-    if (checked) {
-      setSelectedSites(siteOptions.map(site => site.id));
-    } else {
-      setSelectedSites([]);
-    }
-  };
 
   const handleUpdate = async () => {
     if (!editingHoliday || !holidayName || !date || !recurring || selectedSites.length === 0 || !selectedType || selectedCustomers.length === 0) {
@@ -427,12 +410,6 @@ export const HolidayCalendarPage = () => {
     setSelectedCustomers([]);
     setEditingHoliday(null);
     
-    // Close all dropdowns
-    setSitesDropdownOpen(false);
-    setTypeDropdownOpen(false);
-    setCustomersDropdownOpen(false);
-    setRecurringOpen(false);
-    
     setIsEditDialogOpen(false);
   };
 
@@ -527,12 +504,6 @@ export const HolidayCalendarPage = () => {
     setSelectedSites([]);
     setSelectedType('');
     setSelectedCustomers([]);
-    
-    // Close all dropdowns
-    setSitesDropdownOpen(false);
-    setTypeDropdownOpen(false);
-    setCustomersDropdownOpen(false);
-    setRecurringOpen(false);
     
     setIsAddDialogOpen(false);
   };
@@ -712,10 +683,6 @@ export const HolidayCalendarPage = () => {
               setSelectedSites([]);
               setSelectedType('');
               setSelectedCustomers([]);
-              setSitesDropdownOpen(false);
-              setTypeDropdownOpen(false);
-              setCustomersDropdownOpen(false);
-              setRecurringOpen(false);
             }
             setIsAddDialogOpen(open);
           }}>
@@ -724,245 +691,265 @@ export const HolidayCalendarPage = () => {
                 <Plus className="w-4 h-4 mr-2" /> Add Holiday
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Add Holiday</DialogTitle>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="add-holiday-dialog-description">
+              <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <DialogTitle className="text-lg font-semibold text-gray-900">ADD HOLIDAY</DialogTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCancel}
+                  className="h-6 w-6 p-0 hover:bg-gray-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                <div id="add-holiday-dialog-description" className="sr-only">
+                  Add a new holiday with name, date, recurrence, sites, type, and modules
+                </div>
               </DialogHeader>
               
-              <div className="py-4">
-                <div className="grid grid-cols-3 gap-4 space-y-0">
-                  <div className="space-y-2">
-                    <Label htmlFor="holidayName">Holiday Name</Label>
-                    <TextField
-                      id="holidayName"
-                      placeholder="Holiday Name"
-                      value={holidayName}
-                      onChange={(e) => setHolidayName(e.target.value)}
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '& fieldset': {
-                            borderColor: '#e5e7eb',
-                            borderWidth: '1px',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: '#e5e7eb',
-                            borderWidth: '1px',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#e5e7eb',
-                            borderWidth: '1px',
-                          },
-                          '&.Mui-error fieldset': {
-                            borderColor: '#e5e7eb',
-                            borderWidth: '1px',
-                          },
-                          '& input::placeholder': {
-                            color: '#9CA3AF',
-                            opacity: 1
-                          }
-                        },
-                      }}
-                    />
-                  </div>
-
-                  {/* Date Picker */}
-                  <div className="space-y-2">
-                    <Label>Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300",
-                            !date && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {date ? format(date, "dd - MM - yyyy") : <span className="text-gray-400">DD - MM - YY</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={setDate}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
+              <div className="space-y-6 py-4">
+                {/* Holiday Form */}
+                <Card>
+                  <CardContent className="space-y-6 pt-6">
+                    {/* First Row */}
+                    <div className="grid grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-base font-semibold">Holiday Name</Label>
+                        <Input
+                          type="text"
+                          placeholder="Enter Holiday Name"
+                          value={holidayName}
+                          onChange={(e) => setHolidayName(e.target.value)}
+                          className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
+                          style={{ borderRadius: '4px' }}
                         />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-base font-semibold">Date</Label>
+                        <Input
+                          type="date"
+                          placeholder="Select date"
+                          value={date ? format(date, "yyyy-MM-dd") : ''}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              setDate(new Date(e.target.value));
+                            } else {
+                              setDate(undefined);
+                            }
+                          }}
+                          className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
+                          style={{ borderRadius: '4px' }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-base font-semibold">Recurring</Label>
+                        <ReactSelect
+                          options={[
+                            { value: 'yes', label: 'Yes' },
+                            { value: 'no', label: 'No' }
+                          ]}
+                          value={recurring ? { value: recurring, label: recurring === 'yes' ? 'Yes' : 'No' } : null}
+                          onChange={(selected) => {
+                            setRecurring(selected ? selected.value : '');
+                          }}
+                          placeholder="Select recurring option"
+                          isClearable
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: '40px',
+                              border: '1px solid #e2e8f0',
+                              boxShadow: 'none',
+                              '&:hover': {
+                                border: '1px solid #cbd5e1'
+                              }
+                            }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isSelected 
+                                ? '#dbeafe' 
+                                : state.isFocused 
+                                ? '#f0f9ff' 
+                                : 'white',
+                              color: state.isSelected ? '#1e40af' : '#374151',
+                              '&:hover': {
+                                backgroundColor: '#f0f9ff'
+                              }
+                            })
+                          }}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Second Row */}
+                    <div className="grid grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-base font-semibold">Holiday Type</Label>
+                        <ReactSelect
+                          options={[
+                            { value: 'public', label: 'Public' },
+                            { value: 'festival', label: 'Festival' },
+                            { value: 'maintenance', label: 'Maintenance' }
+                          ]}
+                          value={selectedType ? { value: selectedType, label: selectedType.charAt(0).toUpperCase() + selectedType.slice(1) } : null}
+                          onChange={(selected) => {
+                            setSelectedType(selected ? selected.value : '');
+                          }}
+                          placeholder="Select holiday type"
+                          isClearable
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: '40px',
+                              border: '1px solid #d1d5db',
+                              boxShadow: 'none',
+                              '&:hover': {
+                                border: '1px solid #cbd5e1'
+                              }
+                            }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isSelected 
+                                ? '#dbeafe' 
+                                : state.isFocused 
+                                ? '#f0f9ff' 
+                                : 'white',
+                              color: state.isSelected ? '#1e40af' : '#374151',
+                              '&:hover': {
+                                backgroundColor: '#f0f9ff'
+                              }
+                            })
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-base font-semibold">Select Sites</Label>
+                        <ReactSelect
+                          isMulti
+                          options={siteOptions.map(site => ({ value: site.id, label: site.name }))}
+                          value={siteOptions.filter(site => selectedSites.includes(site.id)).map(site => ({ value: site.id, label: site.name }))}
+                          onChange={(selected) => {
+                            const siteIds = selected ? selected.map(s => s.value) : [];
+                            setSelectedSites(siteIds);
+                          }}
+                          placeholder="Select sites..."
+                          isLoading={loadingSites}
+                          isDisabled={loadingSites}
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: '40px',
+                              border: '1px solid #d1d5db',
+                              boxShadow: 'none',
+                              '&:hover': {
+                                border: '1px solid #cbd5e1'
+                              }
+                            }),
+                            multiValue: (base) => ({
+                              ...base,
+                              backgroundColor: '#f1f5f9'
+                            }),
+                            multiValueLabel: (base) => ({
+                              ...base,
+                              color: '#334155'
+                            }),
+                            multiValueRemove: (base) => ({
+                              ...base,
+                              color: '#64748b',
+                              '&:hover': {
+                                backgroundColor: '#e2e8f0',
+                                color: '#475569'
+                              }
+                            }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isSelected 
+                                ? '#dbeafe' 
+                                : state.isFocused 
+                                ? '#f0f9ff' 
+                                : 'white',
+                              color: state.isSelected ? '#1e40af' : '#374151',
+                              '&:hover': {
+                                backgroundColor: '#f0f9ff'
+                              }
+                            })
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-base font-semibold">Select Module</Label>
+                        <ReactSelect
+                          isMulti
+                          options={customerOptions.map(option => ({ value: option, label: option.charAt(0).toUpperCase() + option.slice(1) }))}
+                          value={customerOptions.filter(option => selectedCustomers.includes(option)).map(option => ({ value: option, label: option.charAt(0).toUpperCase() + option.slice(1) }))}
+                          onChange={(selected) => {
+                            const modules = selected ? selected.map(s => s.value) : [];
+                            setSelectedCustomers(modules);
+                          }}
+                          placeholder="Select modules..."
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: '40px',
+                              border: '1px solid #d1d5db',
+                              boxShadow: 'none',
+                              '&:hover': {
+                                border: '1px solid #cbd5e1'
+                              }
+                            }),
+                            multiValue: (base) => ({
+                              ...base,
+                              backgroundColor: '#f1f5f9'
+                            }),
+                            multiValueLabel: (base) => ({
+                              ...base,
+                              color: '#334155'
+                            }),
+                            multiValueRemove: (base) => ({
+                              ...base,
+                              color: '#64748b',
+                              '&:hover': {
+                                backgroundColor: '#e2e8f0',
+                                color: '#475569'
+                              }
+                            }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isSelected 
+                                ? '#dbeafe' 
+                                : state.isFocused 
+                                ? '#f0f9ff' 
+                                : 'white',
+                              color: state.isSelected ? '#1e40af' : '#374151',
+                              '&:hover': {
+                                backgroundColor: '#f0f9ff'
+                              }
+                            })
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Recurring */}
-                  <div className="space-y-2">
-                    <Label>Recurring</Label>
-                    <Popover open={recurringOpen} onOpenChange={setRecurringOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-between font-normal text-left !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
-                        >
-                          {recurring ? (recurring === "yes" ? "Yes" : "No") : <span className="text-gray-400">Select</span> }
-                          <ChevronDown className="h-4 w-4 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
-                        <div className="p-2 space-y-1">
-                          <div 
-                            className="px-3 py-2 hover:bg-accent cursor-pointer rounded-sm"
-                            onClick={() => {
-                              setRecurring("yes");
-                              setRecurringOpen(false);
-                            }}
-                          >
-                            Yes
-                          </div>
-                          <div 
-                            className="px-3 py-2 hover:bg-accent cursor-pointer rounded-sm"
-                            onClick={() => {
-                              setRecurring("no");
-                              setRecurringOpen(false);
-                            }}
-                          >
-                            No
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Select Sites */}
-                  <div className="space-y-2">
-                    <Label>Select Sites</Label>
-                    <Popover open={sitesDropdownOpen} onOpenChange={setSitesDropdownOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
-                          onClick={() => setSitesDropdownOpen(!sitesDropdownOpen)}
-                        >
-                          {selectedSites.length > 0 ? 
-                            `${selectedSites.length} site${selectedSites.length > 1 ? 's' : ''} selected` : 
-                            <span className="text-gray-400">Select sites</span>
-                          }
-                          <ChevronDown className="ml-auto h-4 w-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 p-0" align="start">
-                        <div className="p-3 max-h-64 overflow-y-auto">
-                          <div className="flex items-center space-x-2 mb-2 pb-2 border-b">
-                            <Checkbox 
-                              id="selectAllSites"
-                              checked={selectedSites.length === siteOptions.length}
-                              onCheckedChange={handleSelectAllSites}
-                            />
-                            <Label htmlFor="selectAllSites" className="font-medium">Select All</Label>
-                          </div>
-                          {loadingSites ? (
-                            <div className="text-center py-4 text-sm text-gray-500">Loading sites...</div>
-                          ) : (
-                            siteOptions.map((site) => (
-                              <div key={site.id} className="flex items-center space-x-2 mb-1">
-                                <Checkbox
-                                  id={String(site.id)}
-                                  checked={selectedSites.includes(site.id)}
-                                  onCheckedChange={(checked) => handleSiteChange(site.id, checked as boolean)}
-                                />
-                                <Label htmlFor={String(site.id)} className="text-sm">{site.name}</Label>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Select Type */}
-                  <div className="space-y-2">
-                    <Label htmlFor="type">Select Type</Label>
-                    <Popover open={typeDropdownOpen} onOpenChange={setTypeDropdownOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
-                          onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-                        >
-                          {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : <span className="text-gray-400">Select type</span>}
-                          <ChevronDown className="ml-auto h-4 w-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
-                        <div className="p-1">
-                          {['public', 'festival', 'maintenance'].map((type) => (
-                            <div
-                              key={type}
-                              className="px-3 py-2 cursor-pointer hover:bg-accent rounded-sm"
-                              onClick={() => {
-                                setSelectedType(type);
-                                setTypeDropdownOpen(false);
-                              }}
-                            >
-                              {type.charAt(0).toUpperCase() + type.slice(1)}
-                            </div>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Select Customers */}
-                  <div className="space-y-2">
-                    <Label>Select Module</Label>
-                    <Popover open={customersDropdownOpen} onOpenChange={setCustomersDropdownOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
-                          onClick={() => setCustomersDropdownOpen(!customersDropdownOpen)}
-                        >
-                          {selectedCustomers.length > 0 ? 
-                            `${selectedCustomers.length} customer${selectedCustomers.length > 1 ? 's' : ''} selected` : 
-                           <span className="text-gray-400">Select module</span>
-                          }
-                          <ChevronDown className="ml-auto h-4 w-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 p-0" align="start">
-                        <div className="p-3 max-h-64 overflow-y-auto bg-gray-50">
-                          {customerOptions.map((customer) => (
-                            <div key={customer} className="flex items-center space-x-2 mb-2">
-                              <Checkbox
-                                id={customer}
-                                checked={selectedCustomers.includes(customer)}
-                                onCheckedChange={(checked) => handleCustomerChange(customer, checked as boolean)}
-                              />
-                              <Label htmlFor={customer} className="text-sm">
-                                {customer.charAt(0).toUpperCase() + customer.slice(1)}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                  <Button 
+                    type="submit" 
+                    className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold flex-1 h-11" 
+                    disabled={isSubmitting}
+                    onClick={handleSubmit}
+                  >
+                    {isSubmitting ? 'Adding Holiday...' : 'Add Holiday'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCancel} 
+                    className="flex-1 h-11"
+                  >
+                    Cancel
+                  </Button>
                 </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" onClick={handleCancel}>
-                  Cancel
-                </Button>
-                <Button 
-                  className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Adding Holiday...' : 'Add Holiday'}
-                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -980,16 +967,23 @@ export const HolidayCalendarPage = () => {
           setSelectedType('');
           setSelectedCustomers([]);
           setEditingHoliday(null);
-          setSitesDropdownOpen(false);
-          setTypeDropdownOpen(false);
-          setCustomersDropdownOpen(false);
-          setRecurringOpen(false);
         }
         setIsEditDialogOpen(open);
       }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Holiday</DialogTitle>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="edit-holiday-dialog-description">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <DialogTitle className="text-lg font-semibold text-gray-900">EDIT HOLIDAY</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleEditCancel}
+              className="h-6 w-6 p-0 hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <div id="edit-holiday-dialog-description" className="sr-only">
+              Edit holiday with name, date, recurrence, sites, type, and modules
+            </div>
           </DialogHeader>
           
           {loadingEditData ? (
@@ -997,240 +991,279 @@ export const HolidayCalendarPage = () => {
               <div className="text-sm text-gray-500">Loading holiday data...</div>
             </div>
           ) : (
-            <div className="py-4">
-              <div className="grid grid-cols-3 gap-4 space-y-0">
-                <div className="space-y-2">
-                  <Label htmlFor="editHolidayName">Holiday Name</Label>
-                  <TextField
-                    id="editHolidayName"
-                    placeholder="Holiday Name"
-                    value={holidayName}
-                    onChange={(e) => setHolidayName(e.target.value)}
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': {
-                          borderColor: '#e5e7eb',
-                          borderWidth: '1px',
-                        },
-                        '&:hover fieldset': {
-                          borderColor: '#e5e7eb',
-                          borderWidth: '1px',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#e5e7eb',
-                          borderWidth: '1px',
-                        },
-                        '&.Mui-error fieldset': {
-                          borderColor: '#e5e7eb',
-                          borderWidth: '1px',
-                        },
-                      },
-                    }}
-                  />
-                </div>
-
-                {/* Date Picker */}
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300",
-                          !date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "dd - MM - yyyy") : <span>DD - MM - YY</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
+            <div className="space-y-6 py-4">
+              {/* Holiday Form */}
+              <Card>
+                <CardContent className="space-y-6 pt-6">
+                  {/* First Row */}
+                  <div className="grid grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-holiday-name">Holiday Name</Label>
+                      <Input
+                        id="edit-holiday-name"
+                        placeholder="Enter Holiday Name"
+                        value={holidayName}
+                        onChange={(e) => setHolidayName(e.target.value)}
+                        className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
+                        style={{ borderRadius: '4px' }}
                       />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-date">Date</Label>
+                      <Input
+                        id="edit-date"
+                        type="date"
+                        placeholder="Select date"
+                        value={date ? format(date, "yyyy-MM-dd") : ''}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            setDate(new Date(e.target.value));
+                          } else {
+                            setDate(undefined);
+                          }
+                        }}
+                        className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
+                        style={{ borderRadius: '4px' }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-recurring">Recurring</Label>
+                      <ReactSelect
+                        id="edit-recurring"
+                        options={[
+                          { value: 'yes', label: 'Yes' },
+                          { value: 'no', label: 'No' }
+                        ]}
+                        value={recurring ? { value: recurring, label: recurring === 'yes' ? 'Yes' : 'No' } : null}
+                        onChange={(selected) => {
+                          setRecurring(selected ? selected.value : '');
+                        }}
+                        placeholder="Select"
+                        isClearable
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            borderColor: '#d1d5db',
+                            '&:hover': {
+                              borderColor: '#cbd5e1'
+                            },
+                            boxShadow: 'none',
+                            fontSize: '14px',
+                            minHeight: '40px'
+                          }),
+                          placeholder: (base) => ({
+                            ...base,
+                            color: '#9CA3AF'
+                          }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isSelected 
+                              ? '#dbeafe' 
+                              : state.isFocused 
+                              ? '#f0f9ff' 
+                              : 'white',
+                            color: state.isSelected ? '#1e40af' : '#374151',
+                            '&:hover': {
+                              backgroundColor: '#f0f9ff'
+                            }
+                          })
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Second Row */}
+                  <div className="grid grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-holiday-type">Holiday Type</Label>
+                      <ReactSelect
+                        id="edit-holiday-type"
+                        options={[
+                          { value: 'public', label: 'Public' },
+                          { value: 'festival', label: 'Festival' },
+                          { value: 'maintenance', label: 'Maintenance' }
+                        ]}
+                        value={selectedType ? { value: selectedType, label: selectedType.charAt(0).toUpperCase() + selectedType.slice(1) } : null}
+                        onChange={(selected) => {
+                          setSelectedType(selected ? selected.value : '');
+                        }}
+                        placeholder="Select type"
+                        isClearable
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            borderColor: '#d1d5db',
+                            '&:hover': {
+                              borderColor: '#cbd5e1'
+                            },
+                            boxShadow: 'none',
+                            fontSize: '14px',
+                            minHeight: '40px'
+                          }),
+                          placeholder: (base) => ({
+                            ...base,
+                            color: '#9CA3AF'
+                          }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isSelected 
+                              ? '#dbeafe' 
+                              : state.isFocused 
+                              ? '#f0f9ff' 
+                              : 'white',
+                            color: state.isSelected ? '#1e40af' : '#374151',
+                            '&:hover': {
+                              backgroundColor: '#f0f9ff'
+                            }
+                          })
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-sites">Select Sites</Label>
+                      <ReactSelect
+                        id="edit-sites"
+                        placeholder="Select sites"
+                        isMulti
+                        isLoading={loadingSites}
+                        value={siteOptions.filter(site => selectedSites.includes(site.id))}
+                        onChange={(selectedOptions) => {
+                          const ids = selectedOptions ? selectedOptions.map(option => option.id) : [];
+                          setSelectedSites(ids);
+                        }}
+                        options={siteOptions}
+                        getOptionLabel={(option) => option.name}
+                        getOptionValue={(option) => option.id.toString()}
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            borderColor: '#d1d5db',
+                            '&:hover': {
+                              borderColor: '#cbd5e1'
+                            },
+                            boxShadow: 'none',
+                            fontSize: '14px',
+                            minHeight: '40px'
+                          }),
+                          placeholder: (base) => ({
+                            ...base,
+                            color: '#9CA3AF'
+                          }),
+                          multiValue: (base) => ({
+                            ...base,
+                            backgroundColor: '#f1f5f9'
+                          }),
+                          multiValueLabel: (base) => ({
+                            ...base,
+                            color: '#334155'
+                          }),
+                          multiValueRemove: (base) => ({
+                            ...base,
+                            color: '#64748b',
+                            '&:hover': {
+                              backgroundColor: '#e2e8f0',
+                              color: '#475569'
+                            }
+                          }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isSelected 
+                              ? '#dbeafe' 
+                              : state.isFocused 
+                              ? '#f0f9ff' 
+                              : 'white',
+                            color: state.isSelected ? '#1e40af' : '#374151',
+                            '&:hover': {
+                              backgroundColor: '#f0f9ff'
+                            }
+                          })
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-modules">Select Module</Label>
+                      <ReactSelect
+                        id="edit-modules"
+                        placeholder="Select module"
+                        isMulti
+                        value={customerOptions.filter(customer => selectedCustomers.includes(customer)).map(customer => ({ value: customer, label: customer.charAt(0).toUpperCase() + customer.slice(1) }))}
+                        onChange={(selectedOptions) => {
+                          const values = selectedOptions ? selectedOptions.map(option => option.value) : [];
+                          setSelectedCustomers(values);
+                        }}
+                        options={customerOptions.map(customer => ({ value: customer, label: customer.charAt(0).toUpperCase() + customer.slice(1) }))}
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            borderColor: '#d1d5db',
+                            '&:hover': {
+                              borderColor: '#cbd5e1'
+                            },
+                            boxShadow: 'none',
+                            fontSize: '14px',
+                            minHeight: '40px'
+                          }),
+                          placeholder: (base) => ({
+                            ...base,
+                            color: '#9CA3AF'
+                          }),
+                          multiValue: (base) => ({
+                            ...base,
+                            backgroundColor: '#f1f5f9'
+                          }),
+                          multiValueLabel: (base) => ({
+                            ...base,
+                            color: '#334155'
+                          }),
+                          multiValueRemove: (base) => ({
+                            ...base,
+                            color: '#64748b',
+                            '&:hover': {
+                              backgroundColor: '#e2e8f0',
+                              color: '#475569'
+                            }
+                          }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isSelected 
+                              ? '#dbeafe' 
+                              : state.isFocused 
+                              ? '#f0f9ff' 
+                              : 'white',
+                            color: state.isSelected ? '#1e40af' : '#374151',
+                            '&:hover': {
+                              backgroundColor: '#f0f9ff'
+                            }
+                          })
+                        }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Recurring */}
-                <div className="space-y-2">
-                  <Label>Recurring</Label>
-                  <Popover open={recurringOpen} onOpenChange={setRecurringOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between font-normal text-left !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
-                      >
-                        {recurring ? (recurring === "yes" ? "Yes" : "No") : "Select"}
-                        <ChevronDown className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <div className="p-2 space-y-1">
-                        <div 
-                          className="px-3 py-2 hover:bg-accent cursor-pointer rounded-sm"
-                          onClick={() => {
-                            setRecurring("yes");
-                            setRecurringOpen(false);
-                          }}
-                        >
-                          Yes
-                        </div>
-                        <div 
-                          className="px-3 py-2 hover:bg-accent cursor-pointer rounded-sm"
-                          onClick={() => {
-                            setRecurring("no");
-                            setRecurringOpen(false);
-                          }}
-                        >
-                          No
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Select Sites */}
-                <div className="space-y-2">
-                  <Label>Select Sites</Label>
-                  <Popover open={sitesDropdownOpen} onOpenChange={setSitesDropdownOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
-                        onClick={() => setSitesDropdownOpen(!sitesDropdownOpen)}
-                      >
-                        {selectedSites.length > 0 ? 
-                          `${selectedSites.length} site${selectedSites.length > 1 ? 's' : ''} selected` : 
-                          "Select sites"
-                        }
-                        <ChevronDown className="ml-auto h-4 w-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="start">
-                      <div className="p-3 max-h-64 overflow-y-auto">
-                        <div className="flex items-center space-x-2 mb-2 pb-2 border-b">
-                          <Checkbox 
-                            id="selectAllEditSites"
-                            checked={selectedSites.length === siteOptions.length}
-                            onCheckedChange={handleSelectAllSites}
-                          />
-                          <Label htmlFor="selectAllEditSites" className="font-medium">Select All</Label>
-                        </div>
-                        {loadingSites ? (
-                          <div className="text-center py-4 text-sm text-gray-500">Loading sites...</div>
-                        ) : (
-                          siteOptions.map((site) => (
-                            <div key={site.id} className="flex items-center space-x-2 mb-1">
-                              <Checkbox
-                                id={`edit-${site.id}`}
-                                checked={selectedSites.includes(site.id)}
-                                onCheckedChange={(checked) => handleSiteChange(site.id, checked as boolean)}
-                              />
-                              <Label htmlFor={`edit-${site.id}`} className="text-sm">{site.name}</Label>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Select Type */}
-                <div className="space-y-2">
-                  <Label htmlFor="editType">Select Type</Label>
-                  <Popover open={typeDropdownOpen} onOpenChange={setTypeDropdownOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
-                        onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
-                      >
-                        {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : "Select type"}
-                        <ChevronDown className="ml-auto h-4 w-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <div className="p-1">
-                        {['public', 'festival', 'maintenance'].map((type) => (
-                          <div
-                            key={type}
-                            className="px-3 py-2 cursor-pointer hover:bg-accent rounded-sm"
-                            onClick={() => {
-                              setSelectedType(type);
-                              setTypeDropdownOpen(false);
-                            }}
-                          >
-                            {type.charAt(0).toUpperCase() + type.slice(1)}
-                          </div>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Select Customers */}
-                <div className="space-y-2">
-                  <Label>Select Module</Label>
-                  <Popover open={customersDropdownOpen} onOpenChange={setCustomersDropdownOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
-                        onClick={() => setCustomersDropdownOpen(!customersDropdownOpen)}
-                      >
-                        {selectedCustomers.length > 0 ? 
-                          `${selectedCustomers.length} customer${selectedCustomers.length > 1 ? 's' : ''} selected` : 
-                          "Select module"
-                        }
-                        <ChevronDown className="ml-auto h-4 w-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-0" align="start">
-                      <div className="p-3 max-h-64 overflow-y-auto bg-gray-50">
-                        {customerOptions.map((customer) => (
-                          <div key={customer} className="flex items-center space-x-2 mb-2">
-                            <Checkbox
-                              id={`edit-${customer}`}
-                              checked={selectedCustomers.includes(customer)}
-                              onCheckedChange={(checked) => handleCustomerChange(customer, checked as boolean)}
-                            />
-                            <Label htmlFor={`edit-${customer}`} className="text-sm">
-                              {customer.charAt(0).toUpperCase() + customer.slice(1)}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                <Button 
+                  variant="secondary" 
+                  onClick={handleUpdate} 
+                  className="flex-1 h-11"
+                  disabled={isSubmitting || loadingEditData}
+                >
+                  {isSubmitting ? 'Updating Holiday...' : 'Update Holiday'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleEditCancel} 
+                  className="flex-1 h-11"
+                >
+                  Cancel
+                </Button>
               </div>
             </div>
           )}
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={handleEditCancel}>
-                Cancel
-              </Button>
-              <Button 
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={handleUpdate}
-                disabled={isSubmitting || loadingEditData}
-              >
-                {isSubmitting ? 'Updating Holiday...' : 'Update Holiday'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        </DialogContent>
+      </Dialog>
 
       <TicketPagination
         currentPage={currentPage}
