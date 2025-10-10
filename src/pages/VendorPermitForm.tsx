@@ -345,8 +345,12 @@ export const VendorPermitForm = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         // Validate Emergency Contact Number in Detailed Information
-        if (!detailedInfo.emergencyContactNumber || !validatePhoneNumber(detailedInfo.emergencyContactNumber)) {
+        if (detailedInfo.emergencyContactNumber && !validatePhoneNumber(detailedInfo.emergencyContactNumber)) {
             toast.error('Emergency Contact Number must be exactly 10 digits.');
+            return;
+        }
+        if (!personsInfo.contractorsSupervisorName.trim()) {
+            toast.error('Contractor\'s Supervisor Name is required.');
             return;
         }
 
@@ -363,11 +367,11 @@ export const VendorPermitForm = () => {
             return;
         }
 
-        const invalidEmergencyContact = manpowerDetails.some(detail => !detail.emergencyContact || !validatePhoneNumber(detail.emergencyContact));
-        if (invalidEmergencyContact) {
-            toast.error('All Emergency Contact numbers in Manpower Details must be exactly 10 digits.');
-            return;
-        }
+        // const invalidEmergencyContact = manpowerDetails.some(detail => !detail.emergencyContact || !validatePhoneNumber(detail.emergencyContact));
+        // if (invalidEmergencyContact) {
+        //     toast.error('All Emergency Contact numbers in Manpower Details must be exactly 10 digits.');
+        //     return;
+        // }
         setLoading(true);
 
         try {
@@ -1182,7 +1186,7 @@ export const VendorPermitForm = () => {
                                         <Input id="contractorsSupervisorName" value={personsInfo.contractorsSupervisorName} onChange={(e) => setPersonsInfo(prev => ({ ...prev, contractorsSupervisorName: e.target.value }))} placeholder="Enter Contract Supervisor Name" />
                                     </div> */}
                                     <div>
-                                        <Label htmlFor="contractorsSupervisorName">Contractor's Supervisor</Label>
+                                        <Label htmlFor="contractorsSupervisorName">Contractor's Supervisor<span className='text-red-500'>*</span></Label>
                                         <Input
                                             id="contractorsSupervisorName"
                                             value={personsInfo.contractorsSupervisorName}
@@ -1205,7 +1209,7 @@ export const VendorPermitForm = () => {
                                         <Input id="contractSupervisorNumber" value={personsInfo.contractSupervisorNumber} onChange={(e) => setPersonsInfo(prev => ({ ...prev, contractSupervisorNumber: e.target.value }))} placeholder="Enter Contract Supervisor Number" />
                                     </div> */}
                                     <div>
-                                        <Label htmlFor="contractSupervisorNumber">Contact Number</Label>
+                                        <Label htmlFor="contractSupervisorNumber">Contact Supervisor Number<span className='text-red-500'>*</span></Label>
                                         <Input
                                             id="contractSupervisorNumber"
                                             value={personsInfo.contractSupervisorNumber}
