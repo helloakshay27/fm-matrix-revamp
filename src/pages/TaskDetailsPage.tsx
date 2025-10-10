@@ -1759,6 +1759,7 @@ export const TaskDetailsPage = () => {
                       className={getStatusColor(
                         taskDetails?.task_details?.status?.value || ""
                       )}
+                      title={taskDetails?.task_details?.status?.display_name || "Unknown"}
                     >
                       {taskDetails?.task_details?.status?.display_name ||
                         "Unknown"}

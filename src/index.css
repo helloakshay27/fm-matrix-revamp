@@ -1157,3 +1157,8 @@ td div , td span, th div, td button, td a {
     font-size: 14.5px !important;
   }
 }
+
+
+.hover\:bg-primary\/80:hover{
+  color: white !important;
+}
