@@ -1684,7 +1684,7 @@ export const AddPermitPage = () => {
 
             {/* Enter Permit Description */}
             <div>
-              <label className="block text-sm font-medium mb-3 text-gray-700">Enter Permit DescriptionEnter Permit Description <span style={{ color: '#C72030', fontWeight: 600 }}>*</span></label>
+              <label className="block text-sm font-medium mb-3 text-gray-700">Enter Permit Description <span style={{ color: '#C72030', fontWeight: 600 }}>*</span></label>
             </div>
 
             {/* Dynamic Activities */}
