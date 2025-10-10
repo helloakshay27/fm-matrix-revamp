@@ -95,7 +95,7 @@ const RedButton = styled(MuiButton)(({ theme }) => ({
 }));
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#f6f4ee',
+  backgroundColor: '#e7e3d9',
   color: '#C72030',
   borderRadius: 0,
   textTransform: 'none',
@@ -103,7 +103,7 @@ const DraftButton = styled(MuiButton)(({ theme }) => ({
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
   '&:hover': {
-    backgroundColor: '#f0ebe0',
+    backgroundColor: '#d9d5c9',
   },
 }));
 
@@ -537,143 +537,76 @@ export const AddSchedulePage = () => {
 
   // Initialize component with localStorage data or clear current step if refreshed on that step
   useEffect(() => {
-    // Always clear local storage and reset to basic configuration if page is refreshed or browser back button is clicked
-    const resetState = () => {
+    // Check if there's a saved draft
+    const savedActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
+    const savedFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+    const savedQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
+    const savedTimeSetupData = loadFromLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA);
+    const savedCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
+    const savedAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
+
+    // If there's a saved draft, restore it
+    if (savedActiveStep !== null || savedFormData !== null) {
+      // Restore active step
+      if (savedActiveStep !== null && typeof savedActiveStep === 'number') {
+        setActiveStep(savedActiveStep);
+      }
+
+      // Restore form data
+      if (savedFormData) {
+        setFormData(savedFormData);
+      }
+
+      // Restore question sections
+      if (savedQuestionSections && Array.isArray(savedQuestionSections)) {
+        setQuestionSections(savedQuestionSections);
+      }
+
+      // Restore time setup data
+      if (savedTimeSetupData) {
+        setTimeSetupData(savedTimeSetupData);
+      }
+
+      // Restore completed steps
+      if (savedCompletedSteps && Array.isArray(savedCompletedSteps)) {
+        setCompletedSteps(savedCompletedSteps);
+      }
+
+      // Restore attachments
+      if (savedAttachments && Array.isArray(savedAttachments)) {
+        setAttachments(savedAttachments);
+      }
+
+      // Show a message that draft was restored
+      toast.info("Draft restored! Continue from where you left off.", {
+        position: 'top-right',
+        duration: 3000,
+        style: {
+          background: '#fff',
+          color: 'black',
+          border: 'none',
+        },
+      });
+    }
+
+    // Only reset if browser back/forward is used
+    const handlePopState = () => {
       clearAllFromLocalStorage();
-      setActiveStep(0);
-      setCompletedSteps([]);
-      setFormData({
-        type: 'PPM',
-        scheduleFor: 'Asset',
-        activityName: '',
-        description: '',
-        checklistType: 'Individual',
-        checkInPhotograph: 'inactive', // <-- Add this line
-        asset: [],
-        service: [],
-        assetGroup: '',
-        assetSubGroup: [],
-        assignTo: '',
-        assignToType: 'user',
-        selectedUsers: [],
-        selectedGroups: [],
-        backupAssignee: '',
-        planDuration: '',
-        planDurationValue: '',
-        emailTriggerRule: '',
-        scanType: '',
-        category: '',
-        submissionTime: '',
-        submissionTimeValue: '',
-        supervisors: '',
-        lockOverdueTask: '',
-        frequency: '',
-        graceTime: '',
-        graceTimeValue: '',
-        endAt: '',
-        supplier: '',
-        startFrom: '',
-        mappings: [],
-        selectedTemplate: '',
-        ticketLevel: 'checklist',
-        ticketAssignedTo: '',
-        ticketCategory: '',
-      });
-      setQuestionSections([
-        {
-          id: '1',
-          title: 'Questions',
-          autoTicket: false,
-          ticketLevel: 'checklist',
-          ticketAssignedTo: '',
-          ticketCategory: '',
-          tasks: [
-            {
-              id: '1',
-              group: '',
-              subGroup: '',
-              task: '',
-              inputType: '',
-              mandatory: false,
-              helpText: false,
-              helpTextValue: '',
-              helpTextAttachments: [],
-              autoTicket: false,
-              weightage: '',
-              rating: false,
-              reading: false,
-              dropdownValues: [{ label: '', type: 'positive' }],
-              radioValues: [{ label: '', type: 'positive' }],
-              checkboxValues: [''],
-              checkboxSelectedStates: [false],
-              optionsInputsValues: ['']
-            }
-          ]
-        }
-      ]);
-      setTimeSetupData({
-        hourMode: 'specific',
-        minuteMode: 'specific',
-        dayMode: 'weekdays',
-        monthMode: 'all',
-        selectedHours: ['12'],
-        selectedMinutes: ['00'],
-        selectedWeekdays: [],
-        selectedDays: [],
-        selectedMonths: [],
-        betweenMinuteStart: '00',
-        betweenMinuteEnd: '59',
-        betweenMonthStart: 'January',
-        betweenMonthEnd: 'December'
-      });
-      setAttachments([]);
+      window.location.reload();
     };
 
-    // Reset state on mount
-    resetState();
-
     // Listen for browser back/forward navigation
-    window.addEventListener('popstate', resetState);
-
-    // Optionally, listen for page reload (F5, Ctrl+R)
-    window.addEventListener('beforeunload', resetState);
+    window.addEventListener('popstate', handlePopState);
 
     // Cleanup listeners on unmount
     return () => {
-      window.removeEventListener('popstate', resetState);
-      window.removeEventListener('beforeunload', resetState);
+      window.removeEventListener('popstate', handlePopState);
     };
   }, []);
 
-  // Save form data to localStorage whenever it changes
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
-  }, [formData]);
-
-  // Save question sections to localStorage whenever they change
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
-  }, [questionSections]);
-
-  // Save time setup data to localStorage whenever it changes
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
-  }, [timeSetupData]);
-
-  // Save active step to localStorage whenever it changes
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep);
-  }, [activeStep]);
-
-  // Save completed steps to localStorage whenever they change
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, completedSteps);
-  }, [completedSteps]);
-
-  // Save attachments to localStorage whenever they change
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
-  }, [attachments]);
+  // NOTE: Removed automatic localStorage saving on state changes
+  // Data is now only saved to localStorage when "Save to Draft" button is clicked
+  // This allows data to stay in state for form submission without persisting prematurely
 
   // Load data on component mount
   useEffect(() => {
@@ -1841,19 +1774,36 @@ export const AddSchedulePage = () => {
 
 
   const handleSave = async () => {
+    // For Time Setup (step 3), validate first
+    if (activeStep === 3) {
+      if (!validateCurrentStep()) {
+        toast.error("Please fill all required fields before proceeding.", {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+          },
+        });
+        return;
+      }
+    }
 
-    // Validate current step first
-    if (!validateCurrentStep()) {
-      toast.error("Please fill all required fields before proceeding.", {
-        position: 'top-right',
-        duration: 4000,
-        style: {
-          background: '#fff',
-          color: 'black',
-          border: 'none',
-        },
-      });
-      return;
+    // For Mapping (step 4), validate current step first
+    if (activeStep === 4) {
+      if (!validateCurrentStep()) {
+        toast.error("Please fill all required fields before proceeding.", {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+          },
+        });
+        return;
+      }
     }
 
     // Show success message for the current step completion
@@ -2593,6 +2543,199 @@ export const AddSchedulePage = () => {
       setCompletedSteps(completedSteps.filter(step => step < newActiveStep));
       setActiveStep(newActiveStep);
     }
+  };
+
+  // Proceed to Save: Validates current section and moves to next section
+  const handleProceedToSave = () => {
+    // Don't use this for Mapping step (last step)
+    if (activeStep >= steps.length - 1) {
+      return;
+    }
+
+    // Validate current step
+    if (activeStep === 2) {
+      // For Question Setup step, show all field errors in toast
+      const errors = validateQuestionSetup();
+      if (errors.length > 0) {
+        toast.error(
+          <div style={{ textAlign: 'left' }}>
+            <b>Validation Errors:</b>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {errors.map((err, idx) => (
+                <li key={idx} style={{ fontSize: 13 }}>{err}</li>
+              ))}
+            </ul>
+          </div>,
+          {
+            position: 'top-right',
+            duration: 5000,
+            style: {
+              background: '#fff',
+              color: 'black',
+              border: 'none',
+              minWidth: 320
+            },
+          }
+        );
+        return;
+      }
+    } else {
+      if (!validateCurrentStep()) {
+        toast.error("Please fill all required fields before proceeding.", {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+          },
+        });
+        return;
+      }
+    }
+
+    // Mark current step as completed
+    if (!completedSteps.includes(activeStep)) {
+      setCompletedSteps([...completedSteps, activeStep]);
+    }
+
+    // Show success message for the completed step
+    const stepMessages = {
+      0: "Basic Configuration completed successfully!",
+      1: "Schedule Setup completed successfully!",
+      2: "Question Setup completed successfully!",
+      3: "Time Setup completed successfully!"
+    };
+
+    const currentStepMessage = stepMessages[activeStep as keyof typeof stepMessages];
+    if (currentStepMessage) {
+      toast.success(currentStepMessage, {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#fff',
+          color: 'black',
+          border: 'none',
+        },
+      });
+    }
+
+    // Move to next step (data will only be submitted when Save is clicked on last step)
+    setActiveStep(activeStep + 1);
+    setEditingStep(null);
+    
+    // Scroll to top for better UX
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
+  // Save to Draft for Mapping section: Saves mappings to localStorage and navigates to schedule list
+  // This is used ONLY in the Mapping section (last step)
+  const handleSaveMappingToDraft = () => {
+    // Save ALL current state to localStorage including mappings
+    saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
+    saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
+    saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
+    saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep);
+    saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, completedSteps);
+    saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
+
+    // Show success message
+    toast.success("Mapping saved to draft successfully!", {
+      position: 'top-right',
+      duration: 4000,
+      style: {
+        background: '#fff',
+        color: 'black',
+        border: 'none',
+      },
+    });
+
+    // Navigate back to schedule list
+    navigate('/maintenance/schedule');
+  };
+
+  // Save to Draft: Saves current progress to localStorage
+  // For steps 0-2: Validates, saves to localStorage, and moves to next section
+  // For step 3 (Time Setup): Saves to localStorage and navigates to schedule list
+  const handleSaveToDraft = () => {
+    // Don't use this for Mapping step (last step) - use handleSaveMappingToDraft instead
+    if (activeStep >= steps.length - 1) {
+      return;
+    }
+
+    // Validate current step first
+    if (activeStep === 2) {
+      const errors = validateQuestionSetup();
+      if (errors.length > 0) {
+        // Show all errors in a single toast
+        const errorMessage = errors.join('\n');
+        toast.error(errorMessage, {
+          position: 'top-right',
+          duration: 6000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+            whiteSpace: 'pre-line'
+          },
+        });
+        return;
+      }
+    } else {
+      if (!validateCurrentStep()) {
+        toast.error("Please fill all required fields before proceeding.", {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+          },
+        });
+        return;
+      }
+    }
+
+    // Save ALL current state to localStorage
+    saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
+    saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
+    saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
+    saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep + 1); // Save next step as active
+    saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, [...completedSteps, activeStep]);
+    saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
+
+    // Mark current step as completed
+    if (!completedSteps.includes(activeStep)) {
+      setCompletedSteps([...completedSteps, activeStep]);
+    }
+
+    // Show success message
+    toast.success("Progress saved to draft successfully!", {
+      position: 'top-right',
+      duration: 4000,
+      style: {
+        background: '#fff',
+        color: 'black',
+        border: 'none',
+      },
+    });
+
+    // For Time Setup (step 3), navigate to schedule list instead of moving to next step
+    if (activeStep === 3) {
+      navigate('/maintenance/schedule');
+      return;
+    }
+
+    // For other steps (0-2), move to next step
+    setActiveStep(activeStep + 1);
+    setEditingStep(null);
+    
+    // Scroll to top for better UX
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleStepClick = (step: number) => {
@@ -5411,33 +5554,54 @@ export const AddSchedulePage = () => {
     <div className="flex gap-4">
       {activeStep < steps.length - 1 ? (
         <>
-          {activeStep === 3 ? ( // Time Setup step
-            <button
-              onClick={handleSave}
-              disabled={isSubmitting}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif' }}
-            >
-              {isSubmitting ? 'Saving...' : 'Save & Continue'}
-            </button>
+          {activeStep === 3 ? ( // Time Setup step - has Save button to submit and move to Mapping
+            <>
+              <DraftButton
+                onClick={handleSaveToDraft}
+                disabled={isSubmitting}
+              >
+                Save to Draft
+              </DraftButton>
+              <RedButton
+                onClick={handleSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Saving...' : 'Save'}
+              </RedButton>
+            </>
           ) : (
-            <button
-              onClick={handleNext}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif' }}
-            >
-              Next
-            </button>
+            <>
+              <DraftButton
+                onClick={handleSaveToDraft}
+                disabled={isSubmitting}
+              >
+                Save to Draft
+              </DraftButton>
+              <RedButton
+                onClick={handleProceedToSave}
+                disabled={isSubmitting}
+              >
+                Proceed to Save
+              </RedButton>
+            </>
           )}
         </>
       ) : (
-        <button
-          onClick={handleFinish}
-          className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-          style={{ fontFamily: 'Work Sans, sans-serif' }}
-        >
-          Finish
-        </button>
+        // Mapping section (last step) - has Submit and Save to Draft buttons
+        <>
+          <DraftButton
+            onClick={handleSaveMappingToDraft}
+            disabled={isSubmitting}
+          >
+            Save to Draft
+          </DraftButton>
+          <RedButton
+            onClick={handleSave}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </RedButton>
+        </>
       )}
     </div>
   </div>
@@ -5548,7 +5712,32 @@ export const AddSchedulePage = () => {
           <span>{'>'}</span>
           <span className="text-gray-900 font-medium">Create New Schedule</span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">ADD SCHEDULE</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">ADD SCHEDULE</h1>
+          {(loadFromLocalStorage(STORAGE_KEYS.FORM_DATA) || loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP)) && (
+            <MuiButton
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                clearAllFromLocalStorage();
+                window.location.reload();
+              }}
+              sx={{
+                color: '#C72030',
+                borderColor: '#C72030',
+                fontSize: '12px',
+                padding: '6px 16px',
+                textTransform: 'none',
+                '&:hover': {
+                  borderColor: '#C72030',
+                  backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                }
+              }}
+            >
+              Start Fresh
+            </MuiButton>
+          )}
+        </div>
       </div>
 
       {/* Custom Stepper - Bordered Box Design */}
@@ -5617,49 +5806,59 @@ export const AddSchedulePage = () => {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
-        <div>
-          {activeStep > 0 && (
-            <button
-              onClick={handleBack}
-              className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-            >
-              Back
-            </button>
-          )}
-        </div>
+      <div className="flex justify-center items-center mt-6 pt-4 sm:pt-6">
 
         <div className="flex gap-4">
           {activeStep < steps.length - 1 ? (
             <>
-              {activeStep === 3 ? ( // Time Setup step
-                <button
-                  onClick={handleSave}
-                  disabled={isSubmitting}
-                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-                >
-                  {isSubmitting ? 'Saving...' : 'Save & Continue'}
-                </button>
+              {activeStep === 3 ? ( // Time Setup step - has Save button to submit and move to Mapping
+                <Box className="flex gap-4">
+                  <DraftButton
+                    onClick={handleSaveToDraft}
+                    disabled={isSubmitting}
+                  >
+                    Save to Draft
+                  </DraftButton>
+                  <DraftButton
+                    onClick={handleSave}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit'}
+                  </DraftButton>
+                </Box>
               ) : (
-                <button
-                  onClick={handleNext}
-                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-                >
-                  Next
-                </button>
+                <Box className="flex gap-4">
+                  <DraftButton                   
+                     onClick={handleProceedToSave}
+                    disabled={isSubmitting}
+                  >
+                    Proceed to Save
+                  </DraftButton>
+                  <DraftButton
+                    onClick={handleSaveToDraft}
+                    disabled={isSubmitting}
+                  >
+                    Save to Draft
+                  </DraftButton>
+                </Box>
               )}
             </>
           ) : (
-            <button
-              onClick={handleFinish}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-            >
-              Finish
-            </button>
+            // Mapping section (last step) - has Submit and Save to Draft buttons
+            <Box className="flex gap-4">
+              <DraftButton
+                onClick={handleSaveMappingToDraft}
+                disabled={isSubmitting}
+              >
+                Save to Draft
+              </DraftButton>
+              <DraftButton
+                onClick={handleSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit'}
+              </DraftButton>
+            </Box>
           )}
         </div>
       </div>
