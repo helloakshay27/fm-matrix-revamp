@@ -1,8 +1,3 @@
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -218,83 +213,6 @@ interface ChecklistMappingsData {
 }
 
 export const AddSchedulePage = () => {
-  // Modal state for draft restoration
-  const [showDraftModal, setShowDraftModal] = useState(false);
-  const [draftData, setDraftData] = useState<null | {
-    activeStep: any;
-    formData: any;
-    questionSections: any;
-    timeSetupData: any;
-    completedSteps: any;
-    attachments: any;
-  }>(null);
-  // Navigation buttons for each section except Mapping
-  const renderNavigationButtons = (stepIndex: number) => {
-    // Only show for steps except Mapping (stepIndex !== 4)
-    if (stepIndex === 4) return null;
-    return (
-      <div className="flex justify-end gap-4 mt-6 pt-4 sm:pt-6">
-        <RedButton
-          variant="contained"
-          onClick={handleProceedToSave}
-          disabled={isSubmitting}
-        >
-          Proceed to Save
-        </RedButton>
-        <DraftButton
-          variant="contained"
-          onClick={handleSaveToDraft}
-          disabled={isSubmitting}
-        >
-          Save to Draft
-        </DraftButton>
-      </div>
-    );
-  };
-
-  // Proceed to Save: same as Next
-  const handleProceedToSave = () => {
-    handleNext();
-  };
-
-  // Save to Draft: save current section data and move to next section
-  const handleSaveToDraft = () => {
-    // Save all relevant data to localStorage
-    saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
-    saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
-    saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
-    saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep);
-    saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, completedSteps);
-    saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
-    // Move to next section
-    if (activeStep < steps.length - 1) {
-      setActiveStep(activeStep + 1);
-      setEditingStep(activeStep + 1);
-    }
-  };
-
-  // On mount, restore draft if present
-  useEffect(() => {
-    const draftActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
-    const draftFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
-    const draftQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
-    const draftTimeSetupData = loadFromLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA);
-    const draftCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
-    const draftAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
-    if (
-      draftActiveStep !== null &&
-      draftFormData !== null &&
-      draftQuestionSections !== null &&
-      draftTimeSetupData !== null
-    ) {
-      setActiveStep(draftActiveStep);
-      setFormData(draftFormData);
-      setQuestionSections(draftQuestionSections);
-      setTimeSetupData(draftTimeSetupData);
-      setCompletedSteps(draftCompletedSteps || []);
-      setAttachments(draftAttachments || []);
-    }
-  }, []);
   const navigate = useNavigate();
 
   // Stepper state
@@ -617,31 +535,11 @@ export const AddSchedulePage = () => {
     });
   };
 
-  // Only reset state if explicitly starting a new schedule, not on every mount/navigation
-  // On mount, restore draft if present
+  // Initialize component with localStorage data or clear current step if refreshed on that step
   useEffect(() => {
-    const draftActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
-    const draftFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
-    const draftQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
-    const draftTimeSetupData = loadFromLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA);
-    const draftCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
-    const draftAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
-    if (
-      draftActiveStep !== null &&
-      draftFormData !== null &&
-      draftQuestionSections !== null &&
-      draftTimeSetupData !== null
-    ) {
-      setDraftData({
-        activeStep: draftActiveStep,
-        formData: draftFormData,
-        questionSections: draftQuestionSections,
-        timeSetupData: draftTimeSetupData,
-        completedSteps: draftCompletedSteps || [],
-        attachments: draftAttachments || []
-      });
-      setShowDraftModal(true);
-    } else {
+    // Always clear local storage and reset to basic configuration if page is refreshed or browser back button is clicked
+    const resetState = () => {
+      clearAllFromLocalStorage();
       setActiveStep(0);
       setCompletedSteps([]);
       setFormData({
@@ -650,7 +548,7 @@ export const AddSchedulePage = () => {
         activityName: '',
         description: '',
         checklistType: 'Individual',
-        checkInPhotograph: 'inactive',
+        checkInPhotograph: 'inactive', // <-- Add this line
         asset: [],
         service: [],
         assetGroup: '',
@@ -729,123 +627,22 @@ export const AddSchedulePage = () => {
         betweenMonthEnd: 'December'
       });
       setAttachments([]);
-    }
-  // Handler for draft modal actions
-  const handleDraftModalYes = () => {
-    if (draftData) {
-      setActiveStep(draftData.activeStep);
-      setFormData(draftData.formData);
-      setQuestionSections(draftData.questionSections);
-      setTimeSetupData(draftData.timeSetupData);
-      setCompletedSteps(draftData.completedSteps);
-      setAttachments(draftData.attachments);
-    }
-    setShowDraftModal(false);
-    setDraftData(null);
-  };
+    };
 
-  const handleDraftModalNo = () => {
-    setActiveStep(0);
-    setCompletedSteps([]);
-    setFormData({
-      type: 'PPM',
-      scheduleFor: 'Asset',
-      activityName: '',
-      description: '',
-      checklistType: 'Individual',
-      checkInPhotograph: 'inactive',
-      asset: [],
-      service: [],
-      assetGroup: '',
-      assetSubGroup: [],
-      assignTo: '',
-      assignToType: 'user',
-      selectedUsers: [],
-      selectedGroups: [],
-      backupAssignee: '',
-      planDuration: '',
-      planDurationValue: '',
-      emailTriggerRule: '',
-      scanType: '',
-      category: '',
-      submissionTime: '',
-      submissionTimeValue: '',
-      supervisors: '',
-      lockOverdueTask: '',
-      frequency: '',
-      graceTime: '',
-      graceTimeValue: '',
-      endAt: '',
-      supplier: '',
-      startFrom: '',
-      mappings: [],
-      selectedTemplate: '',
-      ticketLevel: 'checklist',
-      ticketAssignedTo: '',
-      ticketCategory: '',
-    });
-    setQuestionSections([
-      {
-        id: '1',
-        title: 'Questions',
-        autoTicket: false,
-        ticketLevel: 'checklist',
-        ticketAssignedTo: '',
-        ticketCategory: '',
-        tasks: [
-          {
-            id: '1',
-            group: '',
-            subGroup: '',
-            task: '',
-            inputType: '',
-            mandatory: false,
-            helpText: false,
-            helpTextValue: '',
-            helpTextAttachments: [],
-            autoTicket: false,
-            weightage: '',
-            rating: false,
-            reading: false,
-            dropdownValues: [{ label: '', type: 'positive' }],
-            radioValues: [{ label: '', type: 'positive' }],
-            checkboxValues: [''],
-            checkboxSelectedStates: [false],
-            optionsInputsValues: ['']
-          }
-        ]
-      }
-    ]);
-    setTimeSetupData({
-      hourMode: 'specific',
-      minuteMode: 'specific',
-      dayMode: 'weekdays',
-      monthMode: 'all',
-      selectedHours: ['12'],
-      selectedMinutes: ['00'],
-      selectedWeekdays: [],
-      selectedDays: [],
-      selectedMonths: [],
-      betweenMinuteStart: '00',
-      betweenMinuteEnd: '59',
-      betweenMonthStart: 'January',
-      betweenMonthEnd: 'December'
-    });
-    setAttachments([]);
-    setShowDraftModal(false);
-    setDraftData(null);
-  };
-    {/* Draft restoration modal */}
-    <Dialog open={showDraftModal} onClose={handleDraftModalNo}>
-      <DialogTitle>Continue from saved draft?</DialogTitle>
-      <DialogContent>
-        <Typography variant="body1">A draft was found for this schedule. Would you like to continue from where you left off?</Typography>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleDraftModalNo} color="secondary">No, Start New</Button>
-        <Button onClick={handleDraftModalYes} color="primary" autoFocus>Yes, Continue</Button>
-      </DialogActions>
-    </Dialog>
+    // Reset state on mount
+    resetState();
+
+    // Listen for browser back/forward navigation
+    window.addEventListener('popstate', resetState);
+
+    // Optionally, listen for page reload (F5, Ctrl+R)
+    window.addEventListener('beforeunload', resetState);
+
+    // Cleanup listeners on unmount
+    return () => {
+      window.removeEventListener('popstate', resetState);
+      window.removeEventListener('beforeunload', resetState);
+    };
   }, []);
 
   // Save form data to localStorage whenever it changes
@@ -5597,7 +5394,53 @@ export const AddSchedulePage = () => {
     }
   };
 
-  // ...navigation buttons replaced by renderNavigationButtons in renderSingleStep...
+  {/* Navigation Buttons */ }
+  <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
+    <div>
+      {activeStep > 0 && (
+        <button
+          onClick={handleBack}
+          className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
+          style={{ fontFamily: 'Work Sans, sans-serif' }}
+        >
+          Back
+        </button>
+      )}
+    </div>
+
+    <div className="flex gap-4">
+      {activeStep < steps.length - 1 ? (
+        <>
+          {activeStep === 3 ? ( // Time Setup step
+            <button
+              onClick={handleSave}
+              disabled={isSubmitting}
+              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif' }}
+            >
+              {isSubmitting ? 'Saving...' : 'Save & Continue'}
+            </button>
+          ) : (
+            <button
+              onClick={handleNext}
+              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif' }}
+            >
+              Next
+            </button>
+          )}
+        </>
+      ) : (
+        <button
+          onClick={handleFinish}
+          className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+          style={{ fontFamily: 'Work Sans, sans-serif' }}
+        >
+          Finish
+        </button>
+      )}
+    </div>
+  </div>
 
   const renderStepContent = () => {
     // Show only the current active step content
@@ -5773,28 +5616,53 @@ export const AddSchedulePage = () => {
         {renderStepContent()}
       </div>
 
-      {/* Navigation Buttons - Only show Proceed to Save and Save to Draft except for Mapping section */}
-      {activeStep !== 4 && (
-        <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
-          <div></div>
-          <div className="flex gap-4">
+      {/* Navigation Buttons */}
+      <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
+        <div>
+          {activeStep > 0 && (
             <button
-              onClick={handleProceedToSave}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-            >
-              Proceed to Save
-            </button>
-            <button
-              onClick={handleSaveToDraft}
+              onClick={handleBack}
               className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
               style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
             >
-              Save to Draft
+              Back
             </button>
-          </div>
+          )}
         </div>
-      )}
+
+        <div className="flex gap-4">
+          {activeStep < steps.length - 1 ? (
+            <>
+              {activeStep === 3 ? ( // Time Setup step
+                <button
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+                >
+                  {isSubmitting ? 'Saving...' : 'Save & Continue'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+                >
+                  Next
+                </button>
+              )}
+            </>
+          ) : (
+            <button
+              onClick={handleFinish}
+              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+            >
+              Finish
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Completed Sections */}
       {renderCompletedSections()}

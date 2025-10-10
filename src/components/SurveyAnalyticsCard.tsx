@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -51,6 +51,10 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
   const total = data.reduce((sum, item) => sum + item.value, 0);
   console.log("🎯 Calculated total:", total);
 
+  // State for managing tooltip visibility when hovering over text labels
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [tooltipData, setTooltipData] = useState<{ x: number; y: number; data: { name: string; value: number; color: string } } | null>(null);
+
   // Helper function to get emoji based on data name
   const getEmojiForDataName = (name: string): string => {
     const emojiMap: { [key: string]: string } = {
@@ -100,9 +104,9 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
     const isSmallDonut = outerRadius <= 90;
 
     return (
-      <div className="relative flex items-center justify-center">
+      <div className="relative flex items-center justify-center" style={{ outline: 'none' }}>
         <ResponsiveContainer width="100%" height={chartHeight}>
-          <PieChart className="focus:outline-none">
+          <PieChart className="focus:outline-none [&_*]:focus:outline-none [&_*]:outline-none">
             <Pie
               data={data}
               cx="50%"
@@ -128,6 +132,7 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
                   return n + (s[(v - 20) % 10] || s[v] || s[0]);
                 };
                 const formattedName = `${toOrdinal((index ?? 0) + 1)} Qtr`;
+                const dataItem = data[index ?? 0];
                 
                 return (
                   <text
@@ -138,9 +143,31 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
                     dominantBaseline="central"
                     fontSize="8"
                     fontWeight="600"
+                    style={{ 
+                      pointerEvents: 'auto', 
+                      cursor: 'pointer',
+                      outline: 'none',
+                      border: 'none'
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onMouseEnter={(e) => {
+                      setActiveIndex(index ?? 0);
+                      setTooltipData({
+                        x: e.clientX,
+                        y: e.clientY,
+                        data: dataItem
+                      });
+                    }}
+                    onMouseLeave={() => {
+                      setActiveIndex(null);
+                      setTooltipData(null);
+                    }}
                   >
-                    <tspan x={x} dy="-8">{formattedName}</tspan>
-                    <tspan x={x} dy="14">{percentage}%</tspan>
+                    <tspan x={x} dy="-8" style={{ outline: 'none', border: 'none' }}>{formattedName}</tspan>
+                    <tspan x={x} dy="14" style={{ outline: 'none', border: 'none' }}>{percentage}%</tspan>
                   </text>
                 );
               } : undefined}
@@ -152,7 +179,8 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
                   fill={entry.color}
                   style={{
                     outline: 'none',
-                    stroke: 'none'
+                    stroke: 'none',
+                    border: 'none'
                   }}
                 />
               ))}
@@ -186,6 +214,38 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
             />
           </PieChart>
         </ResponsiveContainer>
+        
+        {/* Custom tooltip for text labels */}
+        {tooltipData && (
+          <div 
+            className="fixed bg-white p-3 border border-gray-200 rounded-lg shadow-lg z-50 pointer-events-none"
+            style={{
+              left: tooltipData.x + 10,
+              top: tooltipData.y - 10,
+            }}
+          >
+            <p className="font-semibold text-gray-800 mb-2">
+              {(() => {
+                const idx = data.findIndex(d => d.name === tooltipData.data.name && d.value === tooltipData.data.value);
+                const toOrdinal = (n: number) => {
+                  const s = ["th", "st", "nd", "rd"]; const v = n % 100;
+                  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                };
+                return idx >= 0 ? `${toOrdinal(idx + 1)} Qtr` : tooltipData.data.name;
+              })()}
+            </p>
+            <div className="flex items-center gap-2">
+              <span 
+                className="inline-block w-3 h-3 rounded-sm" 
+                style={{ backgroundColor: tooltipData.data.color }} 
+              />
+              <span className="text-gray-700">
+                {total ? Math.round((tooltipData.data.value / total) * 100) : 0}% • Count: 
+                <span className="font-semibold"> {tooltipData.data.value}</span>
+              </span>
+            </div>
+          </div>
+        )}
         {/* Only show total in center for smaller pie charts (outerRadius <= 80) */}
         {/* {outerRadius <= 80 && (
           <div className="absolute inset-0 flex items-center justify-center">
