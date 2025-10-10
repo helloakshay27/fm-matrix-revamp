@@ -624,11 +624,11 @@ export const KRCCFormDetail: React.FC = () => {
           </button>
           <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">KRCC FORM DETAILS</h1>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        {/* <div className="flex gap-2 flex-wrap">
           <Button onClick={exportToExcel} className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex items-center gap-2">
             <Download className="w-4 h-4" /> Export
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* PERSONAL DETAILS */}
