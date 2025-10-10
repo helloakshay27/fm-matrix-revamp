@@ -370,9 +370,17 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     (task) => task.status?.toLowerCase() === "overdue"
   );
 
+  // Check if any selected task has "In Progress" or "Work In Progress" status
+  const hasInProgressTasks = selectedTasks.some(
+    (task) => {
+      const status = task.status?.toLowerCase().replace(/\s+/g, '');
+      return status === "inprogress" || status === "workinprogress";
+    }
+  );
+
   // Determine button visibility
-  const showReassignButton = !hasClosedTasks; // Hide if any task is closed
-  const showRescheduleButton = !hasClosedTasks && !hasOverdueTasks; // Hide if any task is closed or overdue
+  const showReassignButton = !hasClosedTasks && !hasInProgressTasks; // Hide if any task is closed or in progress
+  const showRescheduleButton = !hasClosedTasks && !hasOverdueTasks && !hasInProgressTasks; // Hide if any task is closed, overdue or in progress
 
   return (
     <>
