@@ -356,7 +356,7 @@ export const ScheduledTaskDashboard = () => {
       checklist: task.checklist,
       type: task.schedule_type,
       schedule: task.start_date,
-      assignTo: task.backup_assigned_user || task.assigned_to_name,
+      assignTo: task.assigned_to_name,
       status: task.task_status,
       scheduleFor: task.scheduled_for,
       assetsServices: task.asset,
@@ -1028,7 +1028,6 @@ export const ScheduledTaskDashboard = () => {
               );
             })}
           </div>
-
 
           {/* Task Table */}
           <div className="rounded-lg">

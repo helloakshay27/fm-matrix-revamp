@@ -756,7 +756,6 @@ export const TaskDetailsPage = () => {
   // Get assigned user name
   const getAssignedUserName = () => {
     return (
-      taskDetails?.task_details?.backup_assigned_user ||
       taskDetails?.task_details?.assigned_to ||
       taskDetails?.task_details?.created_by ||
       "-"
@@ -1709,8 +1708,7 @@ export const TaskDetailsPage = () => {
                       fontSize: "14px",
                     }}
                   >
-                    {taskDetails?.task_details?.backup_assigned_user ||
-                      taskDetails?.task_details?.assigned_to ||
+                    {taskDetails?.task_details?.assigned_to ||
                       "N/A"}
                   </span>
                 </div>
