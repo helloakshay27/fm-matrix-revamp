@@ -3844,7 +3844,7 @@ const AllContent = () => {
                                         </tfoot>
                                     </table>
                                     <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
-                                        <strong>Note :</strong> This grid shows the Top 10 overstocked items per site. Each cell displays the capital blocked (in k) and the current stock (in %).
+                                        <strong>Note :</strong> This table shows the top 10 overstock items with their capital block (Upper section) and current stock (Lower section), highlighting excess inventory tied up in high-value items.
                                     </div>
                                 </>
                             )}
@@ -3882,7 +3882,7 @@ const AllContent = () => {
                                                 <th
                                                     key={index}
                                                     scope="col"
-                                                    className="border border-black py-1 px-2 text-right print:py-1 print:px-1 whitespace-nowrap print:whitespace-normal print:break-words print:align-top print:text-[9px]"
+                                                    className="border border-black py-1 px-2 text-center print:text-center print:py-1 print:px-1 whitespace-nowrap print:whitespace-normal print:break-words print:align-top print:text-[9px]"
                                                 >
                                                     {header}
                                                 </th>
@@ -3913,6 +3913,7 @@ const AllContent = () => {
 
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[11px] print:mt-0 print:px-3 print:py-2 print:text-black">
                             <strong>Note :</strong> This table highlights the top 10 consumables (highest overall usage) across each centre. Numeric values are right-aligned with tabular spacing for easier comparison. <br />
+                            <span className="not-italic font-medium">Formula:</span> Total consumable × ( Average Sqft (1000) / Site Sqft )
                         </div>
                     </div>
 
