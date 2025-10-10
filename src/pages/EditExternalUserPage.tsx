@@ -40,7 +40,6 @@ export const EditExternalUserPage = () => {
     role_id: '',
     ext_company_name: '',
     org_user_id: '',
-    birth_date: '',
     joining_date: ''
   };
 
@@ -108,12 +107,12 @@ export const EditExternalUserPage = () => {
       }));
       return;
     }
-    if (field === 'birth_date' || field === 'joining_date') {
+  if (field === 'joining_date') {
       const val = String(value || '');
       setFormData((prev: any) => ({ ...prev, [field]: val }));
       setFieldErrors(prev => ({
         ...prev,
-        [field]: val && val > todayISO ? `${field === 'birth_date' ? 'Birth' : 'Joining'} Date cannot be in the future` : ''
+    [field]: val && val > todayISO ? 'Joining Date cannot be in the future' : ''
       }));
       return;
     }
@@ -149,7 +148,6 @@ export const EditExternalUserPage = () => {
       ['company_cluster_id', 'Cluster'],
       ['work_location', 'Work Location'],
       ['role_id', 'Role'],
-      ['birth_date', 'Birth Date'],
       ['joining_date', 'Joining Date'],
     ];
 
@@ -184,12 +182,6 @@ export const EditExternalUserPage = () => {
       errors.mobile = errors.mobile || 'Enter a valid 10-digit mobile number';
     }
     const dateRe = /^\d{4}-\d{2}-\d{2}$/;
-    if (!isEmpty(formData.birth_date) && !dateRe.test(String(formData.birth_date))) {
-      errors.birth_date = 'Birth Date must be YYYY-MM-DD';
-    }
-    if (!errors.birth_date && !isEmpty(formData.birth_date) && String(formData.birth_date) > todayISO) {
-      errors.birth_date = 'Birth Date cannot be in the future';
-    }
     if (!isEmpty(formData.joining_date) && !dateRe.test(String(formData.joining_date))) {
       errors.joining_date = 'Joining Date must be YYYY-MM-DD';
     }
@@ -252,7 +244,6 @@ export const EditExternalUserPage = () => {
           company_cluster_id: formData.company_cluster_id || null,
           ext_company_name: formData.ext_company_name || null,
           org_user_id: formData.org_user_id || null,
-          birth_date: formData.birth_date || null,
           lock_user_permissions_attributes: permission?.id ? [
             {
               id: permission.id,
@@ -336,7 +327,6 @@ export const EditExternalUserPage = () => {
           role_name: data.lock_user_permission?.lock_role_name || data.role_name || data.role?.name || '',
           ext_company_name: data.ext_company_name || '',
           org_user_id: data.org_user_id || data.lock_user_permission?.employee_id || '',
-          birth_date: normalizeDate(data.birth_date),
           joining_date: normalizeDate(data.lock_user_permission?.joining_date || data.joining_date)
         }));
         setOriginalUser(data);
@@ -775,41 +765,7 @@ export const EditExternalUserPage = () => {
               </Select>
               {fieldErrors.role_id && <FormHelperText>{fieldErrors.role_id}</FormHelperText>}
             </FormControl>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                label={<>Birth Date<span style={{ color: '#C72030' }}>*</span></>}
-                value={formData.birth_date ? dayjs(formData.birth_date) : null}
-                onChange={(val) => {
-                  const d = val ? dayjs(val) : null;
-                  if (!d || !d.isValid()) {
-                    handleChange('birth_date', '');
-                    setFieldErrors(prev => ({ ...prev, birth_date: 'Invalid date' }));
-                    return;
-                  }
-                  const today = dayjs();
-                  if (d.isAfter(today, 'day')) {
-                    setFieldErrors(prev => ({ ...prev, birth_date: `Birth Date cannot be after ${today.format('DD/MM/YYYY')}` }));
-                    return;
-                  }
-                  setFieldErrors(prev => ({ ...prev, birth_date: '' }));
-                  // Store in canonical ISO (YYYY-MM-DD) while displaying DD-MM-YYYY
-                  handleChange('birth_date', d.format('YYYY-MM-DD'));
-                }}
-                maxDate={dayjs()}
-                shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
-                slotProps={{
-                  textField: {
-                    size: 'small',
-                    fullWidth: true,
-                    error: !!fieldErrors.birth_date,
-                    helperText: fieldErrors.birth_date || '',
-                    InputLabelProps: { shrink: true },
-                    placeholder: 'DD-MM-YYYY'
-                  }
-                }}
-                format="DD-MM-YYYY"
-              />
-            </LocalizationProvider>
+            {/* Birth Date field removed as per requirement */}
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 label={<>Joining Date<span style={{ color: '#C72030' }}>*</span></>}
