@@ -685,7 +685,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                               type="number"
                               min="0"
                               {...register(`escalationLevels.${level}.priorities.${priority}.days`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              className="w-16 h-8 text-center text-xs border-none focus-visible:ring-0"
                               placeholder="0"
                             />
                           </TableCell>
@@ -695,7 +695,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                               min="0"
                               max="23"
                               {...register(`escalationLevels.${level}.priorities.${priority}.hours`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              className="w-16 h-8 text-center text-xs border-none focus-visible:ring-0"
                               placeholder="0"
                             />
                           </TableCell>
@@ -705,7 +705,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                               min="0"
                               max="59"
                               {...register(`escalationLevels.${level}.priorities.${priority}.minutes`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              className="w-16 h-8 text-center text-xs border-none focus-visible:ring-0"
                               placeholder="0"
                             />
                           </TableCell>
@@ -988,7 +988,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                               type="number"
                               min="0"
                               {...register(`escalationLevels.${level}.priorities.${priority}.days`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              className="w-16 h-8 text-center text-xs border-none focus-visible:ring-0"
                               placeholder="0"
                             />
                           </TableCell>
@@ -998,7 +998,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                               min="0"
                               max="23"
                               {...register(`escalationLevels.${level}.priorities.${priority}.hours`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              className="w-16 h-8 text-center text-xs border-none focus-visible:ring-0"
                               placeholder="0"
                             />
                           </TableCell>
@@ -1008,7 +1008,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                               min="0"
                               max="59"
                               {...register(`escalationLevels.${level}.priorities.${priority}.minutes`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              className="w-16 h-8 text-center text-xs border-none focus-visible:ring-0"
                               placeholder="0"
                             />
                           </TableCell>
