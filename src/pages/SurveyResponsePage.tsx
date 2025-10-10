@@ -365,11 +365,11 @@ export const SurveyResponsePage = () => {
       setIsExporting(true);
       // console.log('📤 Exporting survey response data with current filters:', appliedFilters);
 
-      const url = getFullUrl("/survey_mappings/response_list.json");
+      const url = getFullUrl("/survey_mappings/response_list.json?list_response=true&export=true");
       const urlWithParams = new URL(url);
 
       // Add export parameter
-      urlWithParams.searchParams.append("list_response", "true");
+      // urlWithParams.searchParams.append("export", "true");
 
       // Add access_token parameter if available
       if (API_CONFIG.TOKEN) {

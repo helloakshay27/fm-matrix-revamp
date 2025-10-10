@@ -211,7 +211,6 @@ export const ExternalUserDetail = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 text-[15px] p-4 gap-6">
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Active</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{getYesNoBadge(activeVal)}</span></div>
-                <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Birth Date</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{formatDate(user.birth_date)}</span></div>
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Joining Date</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{formatDate(user.lock_user_permission?.joining_date)}</span></div>
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Status</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.lock_user_permission?.status ? getStatusBadge(user.lock_user_permission?.status) : '—'}</span></div>
                 <div className="flex text-sm"><span className="text-gray-500 min-w-[140px]">Cluster</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{user.cluster_name || '—'}</span></div>

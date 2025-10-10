@@ -562,9 +562,8 @@ export const KRCCFormDetail: React.FC = () => {
         <KeyValue label="Last Name" value={user?.lastname} />
         <KeyValue label="Email ID" value={user?.email} />
         <KeyValue label="Mobile" value={user?.mobile} />
-        <KeyValue label="Gender" value={user?.gender} />
-        <KeyValue label="Blood Group" value={user?.blood_group} />
-        <KeyValue label="DOB" value={user?.birth_date} />
+  <KeyValue label="Gender" value={user?.gender} />
+  {/* Removed Blood Group and DOB per request */}
         <KeyValue label="Circle" value={user?.circle_name} />
         <KeyValue label="Company" value={user?.company_name} />
         <KeyValue label="Department" value={user?.department_name} />

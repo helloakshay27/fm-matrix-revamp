@@ -661,170 +661,158 @@ export const WODetailsPage = () => {
           <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Work Order</h3>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
-          <div className="space-y-4">
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                WO Number
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.number || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                WO Date
-              </span>
-              <span className="text-sm">
-                :{" "}
-                {workOrder.work_order?.wo_date
-                  ? format(workOrder.work_order?.wo_date, "dd/MM/yyyy")
-                  : "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Kind Attention
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.kind_attention || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Subject
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.subject || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Related To
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.related_to || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Payment Tenure(In Days)
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order.payment_terms?.payment_tenure || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Retention(%)
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order.payment_terms?.retention || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                TDS(%)
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order.payment_terms?.tds || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                QC(%)
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order.payment_terms?.qc || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Advance Amount
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.advance_amount || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Description
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.description || "-"}
-              </span>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">WO Number</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.number || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Reference No.</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.reference_number}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]"> WO Date</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.work_order?.wo_date
+                ? format(workOrder.work_order?.wo_date, "dd/MM/yyyy")
+                : "-"}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">ID</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.id}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Kind Attention</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.kind_attention || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Contractor</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.contractor}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Subject</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.subject || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Address</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.supplier_address?.address}</span>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Reference No.
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.reference_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">ID</span>
-              <span className="text-sm">: {workOrder.work_order?.id}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Contractor
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.contractor}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Address
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.supplier_address?.address}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Phone
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.supplier_details?.mobile1}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Email
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.supplier_details?.email}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                GST
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.supplier_details?.gstin_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                PAN
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.supplier_details?.pan_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Work Category
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.category_type}
-              </span>
-            </div>
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-40">
+              Related To
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order?.related_to || "-"}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-32">
+              Phone
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order?.supplier_details?.mobile1}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-40">
+              Payment Tenure(In Days)
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order.payment_terms?.payment_tenure || "-"}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-32">
+              Email
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order?.supplier_details?.email}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-40">
+              Retention(%)
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order.payment_terms?.retention || "-"}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-32">
+              GST
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order?.supplier_details?.gstin_number}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-40">
+              TDS(%)
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order.payment_terms?.tds || "-"}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-32">
+              PAN
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order?.supplier_details?.pan_number}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-40">
+              QC(%)
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order.payment_terms?.qc || "-"}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-32">
+              Work Category
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order?.category_type}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-40">
+              Advance Amount
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order?.advance_amount || "-"}
+            </span>
+          </div>
+
+          <div className="flex">
+            <span className="text-sm font-medium text-gray-700 w-40">
+              Description
+            </span>
+            <span className="text-sm">
+              : {workOrder.work_order?.description || "-"}
+            </span>
           </div>
         </div>
       </div>
