@@ -775,7 +775,7 @@ export const AddSurveyPage = () => {
               </span>
               Question Setup
             </h2>
-          </div>Question Setup
+          </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <TextField

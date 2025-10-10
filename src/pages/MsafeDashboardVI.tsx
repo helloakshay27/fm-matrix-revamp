@@ -721,6 +721,8 @@ const MsafeDashboardVI: React.FC = () => {
                 fetchSMT(true, snap),
                 fetchLMC(true, snap),
                 fetchDriving(true, snap),
+                fetchComplianceForecast(true, snap),
+                fetchFTPR(true, snap),
             ]);
             toast.success('Filters applied', { id });
         } catch (e) {
@@ -968,28 +970,10 @@ const MsafeDashboardVI: React.FC = () => {
     };
 
 
-    // First Time Pass Rate (FTPR) chart data (static values 0–1)
-    const ftprData = useMemo(
-        () => [
-            { site: 'APT', twoW: 1.20, fourW: 0.10, workAtHeight: 0.05, electrical: 0.00, ofc: 0.08 },
-            { site: 'BJO', twoW: 0.00, fourW: 0.15, workAtHeight: 0.00, electrical: 0.10, ofc: 0.00 },
-            { site: 'COR', twoW: 0.30, fourW: 0.25, workAtHeight: 0.10, electrical: 0.05, ofc: 0.00 },
-            { site: 'DEL', twoW: 0.10, fourW: 0.05, workAtHeight: 0.20, electrical: 0.15, ofc: 0.05 },
-            { site: 'GUJ', twoW: 0.00, fourW: 0.12, workAtHeight: 0.08, electrical: 0.00, ofc: 0.02 },
-            { site: 'KAR', twoW: 0.18, fourW: 0.00, workAtHeight: 0.10, electrical: 0.06, ofc: 0.00 },
-            { site: 'KER', twoW: 0.22, fourW: 0.14, workAtHeight: 0.00, electrical: 0.12, ofc: 0.00 },
-            { site: 'MAH', twoW: 0.00, fourW: 0.00, workAtHeight: 0.05, electrical: 0.00, ofc: 0.00 },
-            { site: 'MPC', twoW: 1.05, fourW: 0.04, workAtHeight: 0.00, electrical: 0.00, ofc: 0.00 },
-            { site: 'MUM', twoW: 0.12, fourW: 0.08, workAtHeight: 0.03, electrical: 0.09, ofc: 0.00 },
-            { site: 'PUH', twoW: 0.00, fourW: 0.11, workAtHeight: 0.00, electrical: 0.05, ofc: 0.00 },
-            { site: 'RAJ', twoW: 0.04, fourW: 0.00, workAtHeight: 0.07, electrical: 0.00, ofc: 0.00 },
-            { site: 'TNC', twoW: 1.10, fourW: 0.09, workAtHeight: 0.44, electrical: 0.22, ofc: 0.03 },
-            { site: 'TUP', twoW: 0.00, fourW: 0.00, workAtHeight: 0.02, electrical: 0.00, ofc: 0.00 },
-            { site: 'VISSL', twoW: 1.50, fourW: 0.00, workAtHeight: 0.00, electrical: 0.00, ofc: 0.00 },
-            { site: 'WBKA', twoW: 0.00, fourW: 0.00, workAtHeight: 0.75, electrical: 0.25, ofc: 0.00 },
-        ],
-        []
-    );
+    // First Time Pass Rate (FTPR) chart data (from API, values normalized to 0–100)
+    type FTPRItem = { site: string; twoW: number; fourW: number; workAtHeight: number; electrical: number; ofc: number };
+    const [ftprData, setFtprData] = useState<FTPRItem[]>([]);
+    const [ftprLoading, setFtprLoading] = useState(false);
     const ftprChartWidth = useMemo(() => Math.max(1600, ftprData.length * 130), [ftprData.length]);
 
     const ftprChartRef = useRef<HTMLDivElement | null>(null);
@@ -1000,6 +984,75 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'training-first-time-pass-rate.png';
         link.href = canvas.toDataURL();
         link.click();
+    };
+
+    // Fetch FTPR from API
+    const fetchFTPR = async (useFilters: boolean, filters?: FiltersSnapshot) => {
+        setFtprLoading(true);
+        try {
+            const baseUrl = localStorage.getItem('baseUrl') || '';
+            const token = localStorage.getItem('token') || '';
+            if (!baseUrl || !token) {
+                console.warn('Missing baseUrl or token — cannot fetch FTPR');
+                setFtprLoading(false);
+                return;
+            }
+            const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+            const params = new URLSearchParams();
+            params.set('access_token', token);
+            params.set('company_id', '145');
+            if (useFilters) {
+                const src = filters ?? {
+                    cluster: appliedCluster,
+                    circle: appliedCircle,
+                    func: appliedFunc,
+                    employeeType: appliedEmployeeType,
+                    from: appliedStartDate,
+                    to: appliedEndDate,
+                };
+                const clusterParam = buildIdsParam(src.cluster);
+                const circleParam = buildIdsParam(src.circle);
+                const functionParam = buildIdsParam(src.func);
+                if (clusterParam) params.set('cluster_id', clusterParam);
+                if (circleParam) params.set('circle_id', circleParam);
+                if (functionParam) params.set('function_id', functionParam);
+                if (src.employeeType) params.set('type', src.employeeType);
+                if (src.from) params.set('from_date', formatDate(src.from));
+                if (src.to) params.set('to_date', formatDate(src.to));
+            }
+            const url = `https://${host}/msafe_dashboard/first_time_pass_rate.json?${params.toString()}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            const arr = json?.clusters || [];
+            let rows: FTPRItem[] = (Array.isArray(arr) ? arr : []).map((x: any) => ({
+                site: x?.cluster_name || x?.site || '-',
+                twoW: Number(x?.two_wheeler ?? 0),
+                fourW: Number(x?.four_wheeler ?? 0),
+                workAtHeight: Number(x?.work_at_height ?? 0),
+                electrical: Number(x?.electrical ?? 0),
+                ofc: Number(x?.ofc ?? 0),
+            }));
+            // Normalize values to 0..100 scale for display (if API returns 0..1, scale up)
+            const rawMax = rows.reduce((m, d) => Math.max(m, d.twoW, d.fourW, d.workAtHeight, d.electrical, d.ofc), 0);
+            if (rawMax <= 1.0001) {
+                rows = rows.map((d) => ({
+                    site: d.site,
+                    twoW: d.twoW * 100,
+                    fourW: d.fourW * 100,
+                    workAtHeight: d.workAtHeight * 100,
+                    electrical: d.electrical * 100,
+                    ofc: d.ofc * 100,
+                }));
+            }
+            rows.sort((a, b) => a.site.localeCompare(b.site));
+            setFtprData(rows);
+        } catch (err) {
+            console.error('Failed to fetch FTPR:', err);
+            setFtprData([]);
+        } finally {
+            setFtprLoading(false);
+        }
     };
 
 
@@ -1207,7 +1260,7 @@ const MsafeDashboardVI: React.FC = () => {
         }
     };
 
-    // Compliance Forcasting (static from screenshot)
+    // Compliance Forcasting (API)
     const CF_COLORS = {
         twoW: '#FFC107', // Yellow
         fourW: '#D32F2F', // Red
@@ -1217,27 +1270,49 @@ const MsafeDashboardVI: React.FC = () => {
         firstAid: '#8BC34A', // Green
     } as const;
 
-    const complianceForecastData = useMemo(
-        () => [
-            { site: 'APT', twoW: 0, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'BJO', twoW: 1, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'COR', twoW: 1, fourW: 1, workAtHeight: 16.67, electrical: 33.33, ofc: 0, firstAid: 33.33 },
-            { site: 'DEL', twoW: 0, fourW: 0, workAtHeight: 0, electrical: 100, ofc: 0, firstAid: 0 },
-            { site: 'GUJ', twoW: 4, fourW: 1, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 100 },
-            { site: 'KAR', twoW: 4, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'KER', twoW: 3, fourW: 2, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'MAH', twoW: 0, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'MPC', twoW: 1, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'MUM', twoW: 0, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'PUH', twoW: 0, fourW: 2, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'RAJ', twoW: 0, fourW: 1, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'TNC', twoW: 7, fourW: 2, workAtHeight: 44.44, electrical: 22.22, ofc: 0, firstAid: 33.33 },
-            { site: 'TUP', twoW: 0, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 100 },
-            { site: 'VISSL', twoW: 1, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'WBKA', twoW: 0, fourW: 0, workAtHeight: 75, electrical: 25, ofc: 0, firstAid: 0 },
-        ],
-        []
-    );
+    type CFItem = {
+        site: string;
+        twoW: number;
+        fourW: number;
+        workAtHeight: number;
+        electrical: number;
+        ofc: number;
+        firstAid: number;
+    };
+    const [complianceForecastData, setComplianceForecastData] = useState<CFItem[]>([]);
+    const [complianceForecastLoading, setComplianceForecastLoading] = useState(false);
+
+    // Nice Y-axis for Compliance Forecasting (auto range from 0)
+    const complianceForecastYAxis = useMemo(() => {
+        const max = complianceForecastData.reduce((m, d) => {
+            const a = Number(d?.twoW || 0);
+            const b = Number(d?.fourW || 0);
+            const c = Number(d?.workAtHeight || 0);
+            const e = Number(d?.electrical || 0);
+            const f = Number(d?.ofc || 0);
+            const g = Number(d?.firstAid || 0);
+            return Math.max(m, a, b, c, e, f, g);
+        }, 0);
+        let upper = Math.max(0, Math.ceil(max * 1.1));
+        if (upper <= 10) {
+            const ticks = Array.from({ length: upper + 1 }, (_, i) => i);
+            return { upper, ticks };
+        }
+        const niceStep = (range: number, maxTicks = 10) => {
+            const rough = range / maxTicks;
+            const pow10 = Math.pow(10, Math.floor(Math.log10(Math.max(rough, 1))));
+            const r = rough / pow10;
+            let stepBase = 1;
+            if (r <= 1) stepBase = 1; else if (r <= 2) stepBase = 2; else if (r <= 5) stepBase = 5; else stepBase = 10;
+            return stepBase * pow10;
+        };
+        const step = Math.max(1, Math.round(niceStep(upper, 9)));
+        upper = Math.ceil(upper / step) * step;
+        const count = Math.floor(upper / step) + 1;
+        const ticks = Array.from({ length: count }, (_, i) => i * step);
+        if (ticks[0] !== 0) ticks.unshift(0);
+        return { upper, ticks };
+    }, [complianceForecastData]);
 
     // Derived width for Compliance Forcasting chart to enable comfortable horizontal scrolling
     const complianceForecastWidth = useMemo(
@@ -1253,6 +1328,65 @@ const MsafeDashboardVI: React.FC = () => {
         link.download = 'compliance-forcasting.png';
         link.href = canvas.toDataURL();
         link.click();
+    };
+
+    // Fetch Compliance Forecasting from API
+    const fetchComplianceForecast = async (useFilters: boolean, filters?: FiltersSnapshot) => {
+        setComplianceForecastLoading(true);
+        try {
+            const baseUrl = localStorage.getItem('baseUrl') || '';
+            const token = localStorage.getItem('token') || '';
+            if (!baseUrl || !token) {
+                console.warn('Missing baseUrl or token — cannot fetch Compliance Forecasting');
+                setComplianceForecastLoading(false);
+                return;
+            }
+            const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+            const params = new URLSearchParams();
+            params.set('access_token', token);
+            params.set('company_id', '145');
+            if (useFilters) {
+                const src = filters ?? {
+                    cluster: appliedCluster,
+                    circle: appliedCircle,
+                    func: appliedFunc,
+                    employeeType: appliedEmployeeType,
+                    from: appliedStartDate,
+                    to: appliedEndDate,
+                };
+                const clusterParam = buildIdsParam(src.cluster);
+                const circleParam = buildIdsParam(src.circle);
+                const functionParam = buildIdsParam(src.func);
+                if (clusterParam) params.set('cluster_id', clusterParam);
+                if (circleParam) params.set('circle_id', circleParam);
+                if (functionParam) params.set('function_id', functionParam);
+                if (src.employeeType) params.set('type', src.employeeType);
+                params.set('from_date', formatDate(src.from));
+                params.set('to_date', formatDate(src.to));
+            }
+            const url = `https://${host}/msafe_dashboard/compliance_forecasting.json?${params.toString()}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            const arr = json?.clusters || [];
+            const rows: CFItem[] = (Array.isArray(arr) ? arr : []).map((x: any) => ({
+                site: x?.cluster_name || x?.site || '-',
+                twoW: Number(x?.two_w ?? 0),
+                fourW: Number(x?.four_w ?? 0),
+                workAtHeight: Number(x?.work_at_height ?? 0),
+                electrical: Number(x?.electrical ?? 0),
+                ofc: Number(x?.ofc ?? 0),
+                firstAid: Number(x?.first_aid ?? 0),
+            }));
+            // Stable alpha sort by site
+            rows.sort((a, b) => a.site.localeCompare(b.site));
+            setComplianceForecastData(rows);
+        } catch (err) {
+            console.error('Failed to fetch Compliance Forecasting:', err);
+            setComplianceForecastData([]);
+        } finally {
+            setComplianceForecastLoading(false);
+        }
     };
 
     // Driving (static from screenshot)
@@ -1884,41 +2018,47 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
             </Stack>
             <Box ref={ftprChartRef} sx={{ width: '100%', height: 460, overflowX: 'auto' }}>
-                <Box sx={{ width: ftprChartWidth, height: '100%' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={ftprData} margin={{ top: 24, right: 24, left: 24, bottom: 36 }} barCategoryGap="70%" barGap={16}>
-                            <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="site"
-                                tickLine={false}
-                                axisLine={{ stroke: COLORS.grid }}
-                                interval={0}
-                                minTickGap={28}
-                                tickMargin={10}
-                                dy={12}
-                                padding={{ left: 28, right: 28 }}
-                                tick={{ fontSize: 12 }}
-                            />
-                            <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, 1]} tickCount={11} tickFormatter={(v) => Number(v).toFixed(1)} />
-                            <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${(Number(value) * 100).toFixed(1)}%`, '']} />
-                            <Bar dataKey="twoW" name="2W" fill={TRAINING_COLORS.twoW} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="twoW" content={makeCenteredLabel((n) => (n < 0.04 ? null : `${(n * 100).toFixed(0)}%`), 12)} />
-                            </Bar>
-                            <Bar dataKey="fourW" name="4W" fill={TRAINING_COLORS.fourW} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="fourW" content={makeCenteredLabel((n) => (n < 0.04 ? null : `${(n * 100).toFixed(0)}%`), 10)} />
-                            </Bar>
-                            <Bar dataKey="workAtHeight" name="Work at height" fill={TRAINING_COLORS.workAtHeight} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="workAtHeight" content={makeCenteredLabel((n) => (n < 0.04 ? null : `${(n * 100).toFixed(0)}%`), 8)} />
-                            </Bar>
-                            <Bar dataKey="electrical" name="Electrical" fill={TRAINING_COLORS.electrical} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="electrical" content={makeCenteredLabel((n) => (n < 0.04 ? null : `${(n * 100).toFixed(0)}%`), 10)} />
-                            </Bar>
-                            <Bar dataKey="ofc" name="OFC" fill={TRAINING_COLORS.ofc} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="ofc" content={makeCenteredLabel((n) => (n < 0.04 ? null : `${(n * 100).toFixed(0)}%`), 12)} />
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </Box>
+                {ftprLoading ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                        <LoadingInline />
+                    </Box>
+                ) : (
+                    <Box sx={{ width: ftprChartWidth, height: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={ftprData} margin={{ top: 24, right: 24, left: 24, bottom: 36 }} barCategoryGap="70%" barGap={16}>
+                                <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                                <XAxis
+                                    dataKey="site"
+                                    tickLine={false}
+                                    axisLine={{ stroke: COLORS.grid }}
+                                    interval={0}
+                                    minTickGap={28}
+                                    tickMargin={10}
+                                    dy={12}
+                                    padding={{ left: 28, right: 28 }}
+                                    tick={{ fontSize: 12 }}
+                                />
+                                <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, 100]} allowDecimals={false} />
+                                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${Number(value).toFixed(0)}%`, '']} />
+                                <Bar dataKey="twoW" name="2W" fill={TRAINING_COLORS.twoW} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="twoW" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 12)} />
+                                </Bar>
+                                <Bar dataKey="fourW" name="4W" fill={TRAINING_COLORS.fourW} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="fourW" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 10)} />
+                                </Bar>
+                                <Bar dataKey="workAtHeight" name="Work at height" fill={TRAINING_COLORS.workAtHeight} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="workAtHeight" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 8)} />
+                                </Bar>
+                                <Bar dataKey="electrical" name="Electrical" fill={TRAINING_COLORS.electrical} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="electrical" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 10)} />
+                                </Bar>
+                                <Bar dataKey="ofc" name="OFC" fill={TRAINING_COLORS.ofc} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="ofc" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 12)} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Box>
+                )}
             </Box>
         </Paper>
     );
@@ -2202,34 +2342,40 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
             </Stack>
             <Box sx={{ width: '100%', height: 500, overflowX: 'auto' }} ref={complianceForecastRef}>
-                <Box sx={{ width: complianceForecastWidth, height: '100%' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={complianceForecastData} margin={{ top: 28, right: 24, left: 24, bottom: 36 }} barCategoryGap="70%" barGap={16}>
-                            <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                            <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.grid }} interval={0} minTickGap={28} tickMargin={10} dy={12} padding={{ left: 28, right: 28 }} tick={{ fontSize: 12 }} />
-                            <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, 100]} tickFormatter={(v) => `${v}`} />
-                            <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${value}`, '']} />
-                            <Bar dataKey="twoW" name="2W" fill={CF_COLORS.twoW} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="twoW" position="top" formatter={(v: any) => (v ? v : 0)} />
-                            </Bar>
-                            <Bar dataKey="fourW" name="4W" fill={CF_COLORS.fourW} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="fourW" position="top" formatter={(v: any) => (v ? v : 0)} />
-                            </Bar>
-                            <Bar dataKey="workAtHeight" name="Work at height" fill={CF_COLORS.workAtHeight} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="workAtHeight" position="top" formatter={(v: any) => (v ? (typeof v === 'number' ? (Number.isInteger(v) ? v : v.toFixed(2)) : v) : 0)} />
-                            </Bar>
-                            <Bar dataKey="electrical" name="Electrical" fill={CF_COLORS.electrical} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="electrical" position="top" formatter={(v: any) => (v ? (Number.isInteger(v) ? v : v.toFixed(2)) : 0)} />
-                            </Bar>
-                            <Bar dataKey="ofc" name="OFC" fill={CF_COLORS.ofc} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="ofc" position="top" formatter={(v: any) => (v ? v : 0)} />
-                            </Bar>
-                            <Bar dataKey="firstAid" name="First Aid Training" fill={CF_COLORS.firstAid} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="firstAid" position="top" formatter={(v: any) => (v ? (Number.isInteger(v) ? v : v.toFixed(2)) : 0)} />
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </Box>
+                {complianceForecastLoading ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                        <LoadingInline />
+                    </Box>
+                ) : (
+                    <Box sx={{ width: complianceForecastWidth, height: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={complianceForecastData} margin={{ top: 28, right: 24, left: 24, bottom: 36 }} barCategoryGap="70%" barGap={16}>
+                                <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                                <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.grid }} interval={0} minTickGap={28} tickMargin={10} dy={12} padding={{ left: 28, right: 28 }} tick={{ fontSize: 12 }} />
+                                <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} allowDecimals={false} domain={[0, complianceForecastYAxis.upper]} ticks={complianceForecastYAxis.ticks} />
+                                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${value}`, '']} />
+                                <Bar dataKey="twoW" name="2W" fill={CF_COLORS.twoW} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="twoW" position="top" formatter={(v: any) => (v ? v : 0)} />
+                                </Bar>
+                                <Bar dataKey="fourW" name="4W" fill={CF_COLORS.fourW} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="fourW" position="top" formatter={(v: any) => (v ? v : 0)} />
+                                </Bar>
+                                <Bar dataKey="workAtHeight" name="Work at height" fill={CF_COLORS.workAtHeight} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="workAtHeight" position="top" formatter={(v: any) => (v ? (typeof v === 'number' ? (Number.isInteger(v) ? v : v.toFixed(2)) : v) : 0)} />
+                                </Bar>
+                                <Bar dataKey="electrical" name="Electrical" fill={CF_COLORS.electrical} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="electrical" position="top" formatter={(v: any) => (v ? (Number.isInteger(v) ? v : v.toFixed(2)) : 0)} />
+                                </Bar>
+                                <Bar dataKey="ofc" name="OFC" fill={CF_COLORS.ofc} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="ofc" position="top" formatter={(v: any) => (v ? v : 0)} />
+                                </Bar>
+                                <Bar dataKey="firstAid" name="First Aid Training" fill={CF_COLORS.firstAid} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="firstAid" position="top" formatter={(v: any) => (v ? (Number.isInteger(v) ? v : v.toFixed(2)) : 0)} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Box>
+                )}
             </Box>
         </Paper>
     );
