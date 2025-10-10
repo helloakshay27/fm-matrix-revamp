@@ -81,10 +81,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     };
   }, []);
 
-  // Reschedule form state
+  // Reschedule form state with current date and time
   const [rescheduleData, setRescheduleData] = useState({
     scheduleDate: new Date().toISOString().split("T")[0],
-    scheduleTime: "10:30",
+    scheduleTime: new Date().toTimeString().slice(0, 5), // Get current time in HH:MM format
     email: false,
   });
 
@@ -287,10 +287,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
         onRefreshData();
       }
 
-      // Reset form
+      // Reset form with current date and time
       setRescheduleData({
         scheduleDate: new Date().toISOString().split("T")[0],
-        scheduleTime: "10:30",
+        scheduleTime: new Date().toTimeString().slice(0, 5),
         email: false,
       });
     } catch (error) {
