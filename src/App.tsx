@@ -772,6 +772,7 @@ import { PRDeletionRequests } from "./pages/PRDeletionRequests";
 import { DirectPDFDownloadPage } from "./pages/DirectPDFDownloadPage";
 import { DeletedPRs } from "./pages/DeletedPRs";
 import MsafeDashboardVI from "./pages/MsafeDashboardVI";
+import { DashboardMobile } from "./pages/DashboardMobile";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -784,7 +785,6 @@ function App() {
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
   useRouteLogger();
-
 
   // Initialize global MUI Select search enhancer
   useEffect(() => {
@@ -800,16 +800,17 @@ function App() {
     };
   }, []);
 
-
   // Check authentication and fetch currency when site is available
   const selectedSite = useAppSelector((s) => s.site.selectedSite);
   useEffect(() => {
     if (!baseUrl || !token) return;
-    const urlSiteId = new URLSearchParams(window.location.search).get('site_id') || '';
-    const id = (selectedSite?.id ? String(selectedSite.id) : '')
-      || urlSiteId
-      || localStorage.getItem('selectedSiteId')
-      || '';
+    const urlSiteId =
+      new URLSearchParams(window.location.search).get("site_id") || "";
+    const id =
+      (selectedSite?.id ? String(selectedSite.id) : "") ||
+      urlSiteId ||
+      localStorage.getItem("selectedSiteId") ||
+      "";
     if (!id) return;
 
     const fetchCurrency = async () => {
@@ -817,10 +818,17 @@ function App() {
         const response: any = await dispatch(
           getCurrency({ baseUrl, token, id })
         ).unwrap();
-        const currency = Array.isArray(response) && response[0]?.currency ? response[0].currency : 'INR';
-        const currencySymbol = Array.isArray(response) && response[0]?.symbol ? response[0].symbol : '₹';
-        if (currency) localStorage.setItem('currency', currency);
-        if (currencySymbol) localStorage.setItem('currencySymbol', currencySymbol);
+        const currency =
+          Array.isArray(response) && response[0]?.currency
+            ? response[0].currency
+            : "INR";
+        const currencySymbol =
+          Array.isArray(response) && response[0]?.symbol
+            ? response[0].symbol
+            : "₹";
+        if (currency) localStorage.setItem("currency", currency);
+        if (currencySymbol)
+          localStorage.setItem("currencySymbol", currencySymbol);
       } catch (error) {
         console.log(error);
       }
@@ -850,16 +858,11 @@ function App() {
                     path="master/location/account"
                     element={<OpsAccountPage />}
                   />
-                  <Route
-                    path="admin/users"
-                    element={<AdminUsersDashboard />}
-                  />
+                  <Route path="admin/users" element={<AdminUsersDashboard />} />
                   <Route
                     path="admin/create-admin-user"
                     element={<CreateAdminUserPage />}
                   />
-
-
 
                   <Route
                     path="master/user/fm-users"
@@ -974,6 +977,8 @@ function App() {
                   path="/direct-pdf-download/:taskId"
                   element={<DirectPDFDownloadPage />}
                 />
+                <Route path="/dashboard-mobile" element={<DashboardMobile />} />
+
                 <Route
                   path="/dashboard"
                   element={
@@ -1088,16 +1093,33 @@ function App() {
                 >
                   <Route index element={<Index />} />
                   <Route path="/vas/channels" element={<ChannelsLayout />}>
-                    <Route index element={
-                      <div className={`flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]`}>
-                        Select a Chat/Group to view messages
-                      </div>
-                    } />
-                    <Route path="/vas/channels/messages/:id" element={<DMConversation />} />
-                    <Route path="/vas/channels/groups/:id" element={<GroupConversation />} />
+                    <Route
+                      index
+                      element={
+                        <div
+                          className={`flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]`}
+                        >
+                          Select a Chat/Group to view messages
+                        </div>
+                      }
+                    />
+                    <Route
+                      path="/vas/channels/messages/:id"
+                      element={<DMConversation />}
+                    />
+                    <Route
+                      path="/vas/channels/groups/:id"
+                      element={<GroupConversation />}
+                    />
                   </Route>
-                  <Route path="/vas/channels/tasks" element={<ChannelTasksAll />} />
-                  <Route path="/vas/channels/tasks/:id" element={<ChatTaskDetailsPage />} />
+                  <Route
+                    path="/vas/channels/tasks"
+                    element={<ChannelTasksAll />}
+                  />
+                  <Route
+                    path="/vas/channels/tasks/:id"
+                    element={<ChatTaskDetailsPage />}
+                  />
 
                   {/* Dashboard Routes */}
                   <Route path="/dashboard" element={<Dashboard />} />
@@ -1245,10 +1267,7 @@ function App() {
                     element={<ChecklistGroupsPage />}
                   />
 
-                  <Route
-                    path="/settings/currency"
-                    element={<CurrencyPage />}
-                  />
+                  <Route path="/settings/currency" element={<CurrencyPage />} />
 
                   <Route
                     path="/master/checklist"
@@ -2008,10 +2027,7 @@ function App() {
                     path="/finance/deletion-requests"
                     element={<PRDeletionRequests />}
                   />
-                  <Route
-                    path="/finance/deleted-prs"
-                    element={<DeletedPRs />}
-                  />
+                  <Route path="/finance/deleted-prs" element={<DeletedPRs />} />
                   <Route
                     path="/finance/invoice"
                     element={<InvoiceDashboard />}
@@ -2511,10 +2527,7 @@ function App() {
                     path="/vas/fnb/discounts"
                     element={<FnBDiscountsPage />}
                   />
-                  <Route
-                    path="/vas/parking"
-                    element={<ParkingDashboard />}
-                  />
+                  <Route path="/vas/parking" element={<ParkingDashboard />} />
                   <Route
                     path="/vas/parking/details/:clientId"
                     element={<ParkingDetailsPage />}
@@ -2717,9 +2730,7 @@ function App() {
                   />
                   <Route
                     path="/safety/m-safe"
-                    element={
-                      <Navigate to="/safety/m-safe/internal" replace />
-                    }
+                    element={<Navigate to="/safety/m-safe/internal" replace />}
                   />
 
                   <Route
@@ -2754,10 +2765,7 @@ function App() {
                     path="/safety/m-safe/krcc-list/:id"
                     element={<KRCCFormDetail />}
                   />
-                  <Route
-                    path="/safety/m-safe/lmc"
-                    element={<LMCDashboard />}
-                  />
+                  <Route path="/safety/m-safe/lmc" element={<LMCDashboard />} />
                   <Route
                     path="/safety/m-safe/lmc/:id"
                     element={<LMCUserDetail />}
@@ -2770,10 +2778,7 @@ function App() {
                     path="/safety/m-safe/training-list/:id"
                     element={<TrainingDetailPage />}
                   />
-                  <Route
-                    path="/safety/m-safe/smt"
-                    element={<SMTDashboard />}
-                  />
+                  <Route path="/safety/m-safe/smt" element={<SMTDashboard />} />
                   <Route
                     path="/safety/m-safe/smt/:id"
                     element={<SMTDetailPage />}

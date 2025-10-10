@@ -34,8 +34,16 @@ export const UnifiedDateRangeFilter: React.FC<UnifiedDateRangeFilterProps> = ({
     if (!dateRange?.from) {
       return 'Pick a date range';
     }
+    // Use shorter format for mobile: dd/MM - dd/MM (without year if same year)
     if (dateRange.to) {
-      return `${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`;
+      const fromYear = dateRange.from.getFullYear();
+      const toYear = dateRange.to.getFullYear();
+      const sameYear = fromYear === toYear;
+      
+      if (sameYear) {
+        return `${format(dateRange.from, 'dd/MM')} - ${format(dateRange.to, 'dd/MM/yy')}`;
+      }
+      return `${format(dateRange.from, 'dd/MM/yy')} - ${format(dateRange.to, 'dd/MM/yy')}`;
     }
     return format(dateRange.from, 'dd/MM/yyyy');
   };
@@ -46,22 +54,22 @@ export const UnifiedDateRangeFilter: React.FC<UnifiedDateRangeFilterProps> = ({
         <Button
           variant="outline"
           className={cn(
-            'h-10 w-72 justify-start text-left font-normal border-analytics-border hover:bg-analytics-secondary/50',
+            'h-10 min-w-0 flex-1 justify-start text-left font-normal border-analytics-border hover:bg-analytics-secondary/50',
             !dateRange?.from && 'text-analytics-muted'
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {formatDateRange()}
+          <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+          <span className="truncate">{formatDateRange()}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 bg-background border-analytics-border" align="end">
+      <PopoverContent className="w-auto p-0 bg-background border-analytics-border" align="start" side="bottom">
         <Calendar
           initialFocus
           mode="range"
           defaultMonth={dateRange?.from}
           selected={dateRange}
           onSelect={handleDateRangeSelect}
-          numberOfMonths={2}
+          numberOfMonths={1}
           className="pointer-events-auto"
         />
         <div className="p-3 border-t border-analytics-border bg-analytics-background">

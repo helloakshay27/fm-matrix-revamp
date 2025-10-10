@@ -61,32 +61,32 @@ export const AMCStatusCard: React.FC<AMCStatusCardProps> = ({ data, className, o
 
   return (
     <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 h-full flex flex-col ${className}`}>
-      <div className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-6 pb-0">
-  <h3 className="text-base sm:text-lg font-bold text-black">AMC Status Overview</h3>
+      <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6 p-3 sm:p-4 lg:p-6 pb-0">
+        <h3 className="text-sm sm:text-base lg:text-lg font-bold text-black truncate flex-1">AMC Status Overview</h3>
         {onDownload && (
           <Download
-            className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:opacity-80 text-black"
+            className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:opacity-80 text-black flex-shrink-0 ml-2"
             onClick={handleDownload}
           />
         )}
       </div>
 
-      <div className="flex-1 overflow-auto p-3 sm:p-6 pt-0">
+      <div className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6 pt-0">
         {data ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
             {cards.map(card => (
               <div
                 key={card.key}
-                className="text-center p-4 rounded-lg border shadow-sm"
+                className="text-center p-2 sm:p-3 lg:p-4 rounded-lg border shadow-sm"
                 style={{ background: toBg(card.color), borderColor: card.color + '55' }}
               >
-                <div className="text-2xl font-bold text-black">{card.value}</div>
-                <div className="text-sm font-medium mt-1 text-black">{card.label}</div>
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-black">{card.value}</div>
+                <div className="text-xs sm:text-sm font-medium mt-1 text-black line-clamp-2">{card.label}</div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
             No AMC status data available for the selected date range
           </div>
         )}
