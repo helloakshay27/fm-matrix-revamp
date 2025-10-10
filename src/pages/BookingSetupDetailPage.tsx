@@ -429,11 +429,6 @@ export const BookingSetupDetailPage = () => {
                       ))}
                   </Select>
                 </FormControl>
-
-                <div className="flex flex-col items-start gap-1 -mt-[10px]">
-                  <div className="text-sm">Available Slots:</div>
-                  <div className="text-md font-semibold">{availableSlots}</div>
-                </div>
               </div>
 
               <div className="flex gap-6 py-2">
