@@ -198,6 +198,7 @@ export const SurveyResponsePage = () => {
     []
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [activeTab, setActiveTab] = useState("list");
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({});
@@ -262,6 +263,7 @@ export const SurveyResponsePage = () => {
           data.distributions?.info?.total_survey_count ||
           prev.total_survey_count,
         total_responses: prev.total_responses,
+        inactive_surveys: prev.inactive_surveys,
       }));
     }
   };
@@ -574,9 +576,11 @@ export const SurveyResponsePage = () => {
   // console.log("resp data", responseData);
   const fetchSurveyResponses = useCallback(
     async (filters?: FilterState, searchQuery?: string, page?: number) => {
-      // Only show loading for non-search operations (when searchQuery is empty or this is initial load)
-      const isInitialOrFilterLoad = !searchQuery || searchQuery.trim() === "";
-      if (isInitialOrFilterLoad) {
+      // Use different loading states based on whether it's a search operation
+      const isSearch = searchQuery && searchQuery.trim() !== "";
+      if (isSearch) {
+        setSearchLoading(true);
+      } else {
         setIsLoading(true);
       }
       
@@ -688,7 +692,13 @@ export const SurveyResponsePage = () => {
           total_pages: 1,
         });
       } finally {
-        setIsLoading(false);
+        // Clear loading states based on operation type
+        const isSearch = searchQuery && searchQuery.trim() !== "";
+        if (isSearch) {
+          setSearchLoading(false);
+        } else {
+          setIsLoading(false);
+        }
       }
     },
     [currentPage] // Include currentPage back as dependency
@@ -1337,28 +1347,31 @@ export const SurveyResponsePage = () => {
           </div>
 
           {/* Enhanced Data Table */}
-          <div>
-            {isLoading ? (
-              <div className="flex justify-center items-center p-8">
-                <div className="text-gray-500">Loading survey responses...</div>
+          <div className="overflow-x-auto animate-fade-in">
+            {searchLoading && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
+                <div className="flex items-center gap-2 text-blue-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm">Searching survey responses...</span>
+                </div>
               </div>
-            ) : (
-              <>
-                <EnhancedTable
-                  data={filteredResponses}
-                  columns={enhancedTableColumns}
-                  renderCell={renderCell}
-                  storageKey="survey-response-table"
-                  enableExport={true}
-                  exportFileName="survey-response-data"
-                  handleExport={handleSurveyResponseExport}
-                  searchTerm={searchTerm}
-                  onSearchChange={handleSearchChange}
-                  searchPlaceholder="Search responses..."
-                  pagination={false} // Disable client-side pagination since we're doing server-side
-                  pageSize={pagination.per_page}
-                  hideColumnsButton={true}
-                  leftActions={
+            )}
+            <EnhancedTable
+              data={filteredResponses}
+              columns={enhancedTableColumns}
+              renderCell={renderCell}
+              storageKey="survey-response-table"
+              enableExport={true}
+              exportFileName="survey-response-data"
+              handleExport={handleSurveyResponseExport}
+              searchTerm={searchTerm}
+              onSearchChange={handleSearchChange}
+              searchPlaceholder="Search responses..."
+              pagination={false} // Disable client-side pagination since we're doing server-side
+              pageSize={pagination.per_page}
+              hideColumnsButton={true}
+              loading={isLoading}
+              leftActions={
                     <div className="flex flex-wrap gap-2">
                       {/* Filter button is now positioned next to search input in EnhancedTable */}
                     </div>
@@ -1392,11 +1405,11 @@ export const SurveyResponsePage = () => {
                         <PaginationItem>
                           <PaginationPrevious
                             onClick={() => {
-                              if (currentPage > 1)
+                              if (currentPage > 1 && !isLoading && !searchLoading)
                                 handlePageChange(currentPage - 1);
                             }}
                             className={
-                              currentPage === 1
+                              currentPage === 1 || isLoading || searchLoading
                                 ? "pointer-events-none opacity-50"
                                 : ""
                             }
@@ -1408,8 +1421,17 @@ export const SurveyResponsePage = () => {
                         ).map((page) => (
                           <PaginationItem key={page}>
                             <PaginationLink
-                              onClick={() => handlePageChange(page)}
+                              onClick={() => {
+                                if (!isLoading && !searchLoading) {
+                                  handlePageChange(page);
+                                }
+                              }}
                               isActive={currentPage === page}
+                              className={
+                                isLoading || searchLoading
+                                  ? "pointer-events-none opacity-50"
+                                  : ""
+                              }
                             >
                               {page}
                             </PaginationLink>
@@ -1423,11 +1445,11 @@ export const SurveyResponsePage = () => {
                         <PaginationItem>
                           <PaginationNext
                             onClick={() => {
-                              if (currentPage < pagination.total_pages)
+                              if (currentPage < pagination.total_pages && !isLoading && !searchLoading)
                                 handlePageChange(currentPage + 1);
                             }}
                             className={
-                              currentPage === pagination.total_pages
+                              currentPage === pagination.total_pages || isLoading || searchLoading
                                 ? "pointer-events-none opacity-50"
                                 : ""
                             }
@@ -1441,8 +1463,6 @@ export const SurveyResponsePage = () => {
                     </div>
                   </div>
                 )}
-              </>
-            )}
           </div>
         </TabsContent>
 
