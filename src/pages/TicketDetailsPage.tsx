@@ -1690,10 +1690,10 @@ export const TicketDetailsPage = () => {
       }
 // Add vendor and identification to payload
         if (ticketMgmtFormData.supplier_id) {
-          queryParams.append('complaint[supplier_id]', ticketMgmtFormData.supplier_id);
+          queryParams.append('supplier_id', ticketMgmtFormData.supplier_id);
         }
         if (ticketMgmtFormData.proactive_reactive) {
-          queryParams.append('complaint[proactive_reactive]', ticketMgmtFormData.proactive_reactive);
+          queryParams.append('proactive_reactive', ticketMgmtFormData.proactive_reactive);
         }
       // Build the API URL with query parameters
       const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -3373,34 +3373,37 @@ export const TicketDetailsPage = () => {
                             )}
 
                             {/* Additional Notes */}
-                            <TextField
-                              fullWidth
-                              multiline
-                              minRows={4}
-                              label={
-                                <span style={{ fontSize: '16px' }}>
-                                  Additional Notes
-                                </span>
-                              }
-                              placeholder="Enter Additional Notes"
-                              value={ticketMgmtFormData.additional_notes}
-                              onChange={(e) =>
-                                handleTicketMgmtInputChange('additional_notes', e.target.value)
-                              }
-                              sx={{
-                                mb: 3,
-                                "& textarea": {
-                                  width: "100% !important",   // force full width
-                                  resize: "both",             // allow resizing
-                                  overflow: "auto",
-                                  boxSizing: "border-box",
-                                  display: "block",
-                                },
-                                "& textarea[aria-hidden='true']": {
-                                  display: "none !important", // hide shadow textarea
-                                },
-                              }}
-                            />
+                            <div className="relative w-full">
+                              <textarea
+                                id="ticket-additional-notes"
+                                value={ticketMgmtFormData.additional_notes}
+                                onChange={e => handleTicketMgmtInputChange('additional_notes', e.target.value)}
+                                rows={6}
+                                placeholder=" "
+                                className="peer block w-full appearance-none rounded border border-[#DAD7D0] bg-[#F2F2F2] px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent
+                                  focus:outline-none
+                                  focus:border-[2px]
+                                  focus:border-[#1976d2]
+                                  hover:border-[#C72030]
+                                  resize-vertical"
+                                style={{ fontSize: '14px', height: '107px' }}
+                              />
+
+                              <label
+                                htmlFor="ticket-additional-notes"
+                                className={`absolute left-3 -top-[10px] px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+                                  peer-focus:bg-white
+                                  ${ticketMgmtFormData.additional_notes ? 'bg-white' : ''}
+                                  peer-placeholder-shown:top-4
+                                  peer-placeholder-shown:text-base
+                                  peer-placeholder-shown:text-gray-400
+                                  peer-focus:-top-[10px]
+                                  peer-focus:text-sm`}
+                                style={{ backgroundColor: ticketMgmtFormData.additional_notes ? 'white' : undefined }}
+                              >
+                                Additional Notes
+                              </label>
+                            </div>
                           </div>
                         </div>
 
