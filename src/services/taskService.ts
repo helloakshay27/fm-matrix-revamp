@@ -406,22 +406,29 @@ export const taskService = {
     try {
       const queryParams: any = {};
 
-      // Handle status filtering
-      if (params?.status) {
+      console.log("Params for export:", params);
+      
+      // Set type parameter
+      queryParams["type"] = params?.status?.toLowerCase() || "open";
+      
+      // Only add task_status_eq if status is NOT "Closed"
+      if (params?.status && params.status.toLowerCase() !== "closed") {
         queryParams["task_status_eq"] = params.status;
       }
-      console.log("Params for export:", params);
-      queryParams["type"] = params.status.toLocaleLowerCase() || "Open";
-      console.log("Export query params:", queryParams);
+      
+      // Add other parameters
       if (params) {
         Object.entries(params).forEach(([key, value]) => {
-          if (key === "status" && value) {
-            queryParams["task_status_eq"] = value;
+          if (key === "status") {
+            // Skip status key, already handled above
+            return;
           } else if (value !== undefined && value !== null && value !== "") {
             queryParams[key] = value;
           }
         });
       }
+      
+      console.log("Export query params:", queryParams);
 
       const response = await apiClient.get("/pms/users/scheduled_tasks.xlsx", {
         responseType: "blob",

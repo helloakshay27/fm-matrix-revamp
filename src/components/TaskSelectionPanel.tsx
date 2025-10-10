@@ -81,10 +81,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     };
   }, []);
 
-  // Reschedule form state
+  // Reschedule form state with current date and time
   const [rescheduleData, setRescheduleData] = useState({
     scheduleDate: new Date().toISOString().split("T")[0],
-    scheduleTime: "10:30",
+    scheduleTime: new Date().toTimeString().slice(0, 5), // Get current time in HH:MM format
     email: false,
   });
 
@@ -263,8 +263,8 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     });
 
     try {
-      // Convert date and time to ISO format
-      const dateTimeString = `${rescheduleData.scheduleDate}T${rescheduleData.scheduleTime}:00Z`;
+      // Convert date and time to format: YYYY-MM-DD HH:mm:ss
+      const dateTimeString = `${rescheduleData.scheduleDate} ${rescheduleData.scheduleTime}:00`;
 
       const payload = {
         task_occurrence_ids: selectedTasks.map((task) => parseInt(task.id)),
@@ -287,10 +287,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
         onRefreshData();
       }
 
-      // Reset form
+      // Reset form with current date and time
       setRescheduleData({
         scheduleDate: new Date().toISOString().split("T")[0],
-        scheduleTime: "10:30",
+        scheduleTime: new Date().toTimeString().slice(0, 5),
         email: false,
       });
     } catch (error) {
@@ -370,9 +370,17 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     (task) => task.status?.toLowerCase() === "overdue"
   );
 
+  // Check if any selected task has "In Progress" or "Work In Progress" status
+  const hasInProgressTasks = selectedTasks.some(
+    (task) => {
+      const status = task.status?.toLowerCase().replace(/\s+/g, '');
+      return status === "inprogress" || status === "workinprogress";
+    }
+  );
+
   // Determine button visibility
-  const showReassignButton = !hasClosedTasks; // Hide if any task is closed
-  const showRescheduleButton = !hasClosedTasks && !hasOverdueTasks; // Hide if any task is closed or overdue
+  const showReassignButton = !hasClosedTasks && !hasInProgressTasks; // Hide if any task is closed or in progress
+  const showRescheduleButton = !hasClosedTasks && !hasOverdueTasks && !hasInProgressTasks; // Hide if any task is closed, overdue or in progress
 
   return (
     <>
