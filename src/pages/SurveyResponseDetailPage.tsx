@@ -5032,7 +5032,7 @@ export const SurveyResponseDetailPage = () => {
                               {question.question}
                             </CardTitle>
                           </CardHeader>
-                          <div className="flex flex-row items-center justify-end gap-6 mb-4 mr-10">
+                          {/* <div className="flex flex-row items-center justify-end gap-6 mb-4 mr-10">
                                   <div className="flex items-center gap-2">
                                     <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5] mr-2"></span>
                                     <span className="text-gray-600 font-medium">
@@ -5053,10 +5053,25 @@ export const SurveyResponseDetailPage = () => {
                                       %
                                     </span>
                                   </div>
-                                </div>
+                                </div> */}
                           <CardContent>
                             <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
                               <div className="text-center py-6">
+                               <div className="flex flex-col items-end gap-2 mb-4 mr-10">
+  <div className="flex items-center gap-1 mr-2">
+    <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]"></span>
+    <span className="text-gray-600 font-small">
+      Positive: {positivePercent != null ? positivePercent : 0}%
+    </span>
+  </div>
+  <div className="flex items-center gap-1">
+    <span className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]"></span>
+    <span className="text-gray-600 font-small">
+      Negative: {negativePercent != null ? negativePercent : 0}%
+    </span>
+  </div>
+</div>
+
                                 
                                 {displayData.length > 0 ? (
                                   <div className="flex justify-center items-center gap-8 mb-4">
@@ -5134,7 +5149,7 @@ export const SurveyResponseDetailPage = () => {
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <div className="flex flex-row items-center justify-end gap-6 mb-4 mr-4">
+                            {/* <div className="flex flex-row items-center justify-end gap-6 mb-4 mr-4">
                               <div className="flex items-center gap-2">
                                 <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5] mr-2"></span>
                                 <span className="text-gray-600 font-medium">
@@ -5155,29 +5170,25 @@ export const SurveyResponseDetailPage = () => {
                                   %
                                 </span>
                               </div>
-                            </div>
-                            <SurveyAnalyticsCard
-                              title="Rating Response"
-                              type="surveyDistributions"
-                              data={ratingData.map((item) => ({
-                                name: item.name,
-                                value: item.count,
-                                color: "#C4AE9D",
-                              }))}
-                              dateRange={{
-                                startDate: new Date(
-                                  Date.now() - 30 * 24 * 60 * 60 * 1000
-                                ),
-                                endDate: new Date(),
-                              }}
-                              xAxisLabel="Response Type"
-                              yAxisLabel="No. of Responses"
-                              onDownload={() => {
-                                toast.success(
-                                  `Chart for rating question "${question.question}" download initiated`
-                                );
-                              }}
-                            />
+                            </div> */}
+                           <SurveyAnalyticsCard
+  title="Rating Response"
+  type="surveyDistributions"
+  data={ratingData.map((item) => ({
+    name: item.name,
+    value: item.count,
+    color: "#C4AE9D",
+  }))}
+  positivePercent={positivePercent}
+  negativePercent={negativePercent}
+  dateRange={{
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    endDate: new Date(),
+  }}
+  xAxisLabel="Response Type"
+  yAxisLabel="No. of Responses"
+/>
+
                           </CardContent>
                         </Card>
                       );

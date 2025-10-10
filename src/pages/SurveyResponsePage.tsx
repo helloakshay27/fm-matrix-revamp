@@ -369,7 +369,7 @@ export const SurveyResponsePage = () => {
       const urlWithParams = new URL(url);
 
       // Add export parameter
-      urlWithParams.searchParams.append("export", "true");
+      urlWithParams.searchParams.append("list_response", "true");
 
       // Add access_token parameter if available
       if (API_CONFIG.TOKEN) {

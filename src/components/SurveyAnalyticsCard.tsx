@@ -9,6 +9,8 @@ interface SurveyAnalyticsCardProps {
   title: string;
   data: Array<{ name: string; value: number; color: string }>;
   type: 'statusDistribution' | 'surveyDistributions';
+  positivePercent?: number;
+  negativePercent?: number;
   className?: string;
   dateRange?: {
     startDate: Date;
@@ -26,6 +28,7 @@ interface SurveyAnalyticsCardProps {
   };
 }
 
+
 export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
   title,
   data,
@@ -35,7 +38,9 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
   onDownload,
   xAxisLabel,
   yAxisLabel,
-  customStyle
+  customStyle,
+  positivePercent,
+  negativePercent
 }) => {
   console.log("🎯 SurveyAnalyticsCard - Props received:");
   console.log("🎯 Title:", title);
@@ -250,76 +255,74 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
     </ResponsiveContainer>
   );
 
-  return (
-    <Card className={`hover:shadow-lg transition-all duration-200 ${className}`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-lg font-bold text-[#C72030]">
-          {title}
-        </CardTitle>
-        {/* {onDownload && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDownload}
-            className="h-8 w-8 p-0 hover:bg-gray-100"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        )} */}
-      </CardHeader>
-      <CardContent className="pt-0">
-        {/* Chart Section */}
-        <div className="mb-6">
-          {type === 'statusDistribution' ? renderPieChart() : renderBarChart()}
-        </div>
+return (
+  <Card className={`hover:shadow-lg transition-all duration-200 ${className}`}>
+    <CardHeader className="flex flex-row items-start justify-between pb-6 gap-4">
 
-        {/* Data Summary Grid - Only show for pie charts (statusDistribution) */}
-        {type === 'statusDistribution' && (
-          <div className="flex justify-center gap-6 mt-4 flex-wrap">
-            {data.map((item, index) => {
-              return (
-                <div key={index} className="flex items-center gap-2">
-                  <div 
-                    className="w-4 h-4 rounded-sm"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+      <CardTitle className="text-lg font-bold text-[#C72030]">
+        {title}
+      </CardTitle>
+      {/* 
+      {onDownload && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDownload}
+          className="h-8 w-8 p-0 hover:bg-gray-100"
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+      )} 
+      */}
+    
 
-        {/* Emoji Display Section - Only show for bar charts (surveyDistributions) */}
-        {/* {type === 'surveyDistributions' && (
-          <div className="flex justify-center gap-6 mt-4 flex-wrap">
-            {data.map((item, index) => (
-              <div key={index} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border">
-                <span className="text-xl">{getEmojiForDataName(item.name)}</span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
-                  <span className="text-xs text-gray-500">{item.value} responses</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )} */}
+    {/* ✅ Positive/Negative Section (TOP of Bar Chart) */}
+   {type === 'surveyDistributions' && (
+  <div className="flex flex-col items-end gap-2 mb-2 mr-4">
+    {/* Positive */}
+    <div className="flex items-center gap-1 mr-2">
+      <span className="w-4 h-4 rounded-full bg-[#A9B7C5] flex-shrink-0"></span>
+      <span className="text-gray-600 font-small">
+        Positive: {positivePercent != null ? positivePercent : 0}%
+      </span>
+    </div>
 
-        {/* Total Summary */}
-        {/* <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-blue-800">Total Responses</span>
-            <span className="text-lg font-bold text-blue-900">{total}</span>
-          </div>
-          {dateRange && (
-            <div className="text-xs text-blue-600 mt-1">
-              Period: {dateRange.startDate.toLocaleDateString()} - {dateRange.endDate.toLocaleDateString()}
+    {/* Negative */}
+    <div className="flex items-center gap-1">
+      <span className="w-4 h-4 rounded-full bg-[#C4B99D] flex-shrink-0"></span>
+      <span className="text-gray-600 font-small">
+        Negative: {negativePercent != null ? negativePercent : 0}%
+      </span>
+    </div>
+  </div>
+)}
+</CardHeader>
+
+
+    <CardContent className="pt-3">
+      {/* Chart Section */}
+      <div className="mb-6">
+        {type === 'statusDistribution' ? renderPieChart() : renderBarChart()}
+      </div>
+
+      {/* Data Summary Grid - Only show for pie charts */}
+      {type === 'statusDistribution' && (
+        <div className="flex justify-center gap-6 mt-4 flex-wrap">
+          {data.map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded-sm"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-sm font-medium text-gray-700">{item.name}</span>
             </div>
-          )}
-        </div> */}
-      </CardContent>
-    </Card>
-  );
+          ))}
+        </div>
+      )}
+    </CardContent>
+  </Card>
+);
+
 };
 
 export default SurveyAnalyticsCard;
