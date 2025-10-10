@@ -3899,6 +3899,9 @@ export const SurveyResponseDetailPage = () => {
           padding: 8px 0 0 8px;
         ">${defaultLogo}</div>
       </div>
+      <div style="text-align: center; padding: 0 0 15px 0;">
+        <h1 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0;">${surveyData.survey_name || 'Survey Report'}</h1>
+      </div>
     `;
 
       const fullContent = `
@@ -5033,17 +5036,18 @@ export const SurveyResponseDetailPage = () => {
                       return (
                         <Card
                           key={question.question_id}
-                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]"
+                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card"
                         >
                           <CardHeader className="bg-[#F6F4EE] mb-6">
                             <CardTitle className="text-lg flex items-center">
                               <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                                 <HelpCircle className="h-4 w-4 text-[#C72030]" />
                               </div>
-                              <span className="text-black font-semibold mr-2">
-                                Q{questionNumber}.
+                              <span className="text-black font-semibold mr-2 header-text">
+                                Q{questionNumber}. 
                               </span>
-                              {question.question}
+                              <span className="header-text">{question.question}</span>
+                              
                             </CardTitle>
                           </CardHeader>
                           {/* <div className="flex flex-row items-center justify-end gap-6 mb-4 mr-10">
@@ -5074,7 +5078,7 @@ export const SurveyResponseDetailPage = () => {
                                 <div className="flex flex-col items-end gap-2 mb-4 mr-10">
                                   <div className="flex items-center gap-1 mr-2">
                                     <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]"></span>
-                                    <span className="text-gray-600 font-small">
+                                    <span className="text-gray-600 font-small header">
                                       Positive: {positivePercent != null ? positivePercent : 0}%
                                     </span>
                                   </div>
@@ -5149,17 +5153,19 @@ export const SurveyResponseDetailPage = () => {
                       return (
                         <Card
                           key={question.question_id}
-                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]"
+                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card"
                         >
                           <CardHeader className="bg-[#F6F4EE] mb-6">
                             <CardTitle className="text-lg flex items-center">
                               <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                                 <HelpCircle className="h-4 w-4 text-[#C72030]" />
                               </div>
-                              <span className="text-black font-semibold mr-2">
+                              <span className="text-black font-semibold mr-2 header-text">
                                 Q{questionNumber}.
                               </span>
+                              <span className="header-text">
                               {question.question}
+                              </span>
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
@@ -5244,17 +5250,17 @@ export const SurveyResponseDetailPage = () => {
                       return (
                         <Card
                           key={question.question_id}
-                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]"
+                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card"
                         >
                           <CardHeader className="bg-[#F6F4EE] mb-6">
                             <CardTitle className="text-lg flex items-center">
                               <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                                 <HelpCircle className="h-4 w-4 text-[#C72030]" />
                               </div>
-                              <span className="text-black font-semibold mr-2">
+                              <span className="text-black font-semibold mr-2 header-text">
                                 Q{questionNumber}.
                               </span>
-                              {question.question}
+                              <span className="header-text">{question.question}</span>
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
@@ -5306,13 +5312,15 @@ export const SurveyResponseDetailPage = () => {
                 }
 
                 return (
-                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
                     <CardHeader className="bg-[#F6F4EE] mb-6">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
+                        <span className="header-text">
                         Response by Category
+                        </span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
