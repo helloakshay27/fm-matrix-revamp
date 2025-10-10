@@ -19,6 +19,8 @@ import {
   Download,
   ScrollText,
   ReceiptText,
+  ClipboardList,
+  Images,
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
@@ -827,11 +829,13 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      {/* BOQ Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          BOQ Details
-        </h3>
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ClipboardList className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BOQ Details</h3>
+        </div>
         <div className="overflow-x-auto">
           <EnhancedTable
             data={workOrder.inventories}
@@ -897,9 +901,12 @@ export const WODetailsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Terms & Conditions :
-        </h3>
+        <div className="flex items-center gap-3 pb-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ScrollText className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
+        </div>
         <p className="text-gray-700">{workOrder.work_order?.term_condition}</p>
 
         <div className="mt-6">
@@ -920,10 +927,13 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      <Card className="shadow-sm border border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-medium">Attachments</CardTitle>
-        </CardHeader>
+      <Card className="shadow-sm border border-border mb-6">
+        <div className="flex items-center gap-3 p-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <Images className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+        </div>
         <CardContent>
           {Array.isArray(workOrder.attachments) &&
             workOrder.attachments.length > 0 ? (
@@ -1014,9 +1024,12 @@ export const WODetailsPage = () => {
       </Card>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Invoices/SES Details
-        </h3>
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ReceiptText className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Invoices/SES Details</h3>
+        </div>
         <div className="overflow-x-auto">
           <EnhancedTable
             data={invoices}
@@ -1038,9 +1051,12 @@ export const WODetailsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Payment Details
-        </h3>
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ReceiptText className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Payment Details</h3>
+        </div>
         <div className="overflow-x-auto">
           <EnhancedTable
             data={paymentData}
@@ -1059,9 +1075,12 @@ export const WODetailsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Debit/Credit Note Details
-        </h3>
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ReceiptText className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
+        </div>
         <div className="overflow-x-auto">
           <EnhancedTable
             data={debitCreditNote || []}
