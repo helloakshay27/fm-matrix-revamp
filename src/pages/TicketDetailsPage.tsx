@@ -1186,7 +1186,7 @@ export const TicketDetailsPage = () => {
 
         const formDataToSend = new FormData();
         formDataToSend.append('complaint_log[complaint_id]', id);
-        formDataToSend.append('impact[template_ids][]', '');
+        formDataToSend.append('long_term_impact[template_ids][]', '');
 
         const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
@@ -1231,7 +1231,7 @@ export const TicketDetailsPage = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('complaint_log[complaint_id]', id);
       templateIds.forEach(templateId => {
-        formDataToSend.append('impact[template_ids][]', String(templateId));
+        formDataToSend.append('long_term_impact[template_ids][]', String(templateId));
       });
 
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
@@ -2679,10 +2679,11 @@ export const TicketDetailsPage = () => {
 
                                             {/* Dynamic value */}
                                             <span
-                                              className={`text-[13px] md:text-[14px] font-semibold whitespace-nowrap ${cell.isExceeded && cell.label === 'Balance TAT'
+                                              className={`text-[13px] md:text-[14px] font-semibold break-words ${cell.isExceeded && cell.label === 'Balance TAT'
                                                 ? 'text-red-600'
                                                 : 'text-gray-900'
                                                 }`}
+                                              style={{ wordBreak: 'break-word', maxWidth: '120px', whiteSpace: 'pre-line' }}
                                             >
                                               {cell.isExceeded && cell.label === 'Balance TAT'
                                                 ? 'Exceeded'
@@ -2693,7 +2694,6 @@ export const TicketDetailsPage = () => {
                                       );
                                     })}
                                   </div>
-
                                 </div>
                               </div>
                             </div>
