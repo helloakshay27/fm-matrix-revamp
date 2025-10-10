@@ -17,6 +17,8 @@ import {
   Eye,
   FileSpreadsheet,
   Download,
+  ScrollText,
+  ReceiptText,
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
@@ -596,58 +598,66 @@ export const WODetailsPage = () => {
         </div>
       </TooltipProvider>
 
-      {/* Vendor/Contact Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            {workOrder.company?.site_name}
-          </h2>
-        </div>
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <span className="text-sm font-medium text-gray-700">Phone</span>
-                <span className="ml-8">: {workOrder.company?.phone}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">Fax</span>
-                <span className="ml-12">: {workOrder.company?.fax}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">Email</span>
-                <span className="ml-8">: {workOrder.company?.email}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">GST</span>
-                <span className="ml-11">: {workOrder.company?.gst}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">PAN</span>
-                <span className="ml-9">: {workOrder.company?.pan}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">
-                  Address
-                </span>
-                <span className="ml-5">: {workOrder.company?.address}</span>
-              </div>
-            </div>
+        <div className="flex items-center gap-3 pb-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ReceiptText className="w-4 h-4" />
           </div>
-
-          <div className="flex flex-col items-center justify-center lg:min-w-[200px]">
-            <div className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-              <span className="text-xs text-gray-500">image</span>
-            </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> {workOrder.company?.site_name}</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Phone</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.phone}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Fax</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.fax}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Email</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.email}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">GST</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.gst}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">PAN</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.pan}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Address</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.address}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Work Order Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
-          Work Order ({workOrder.work_order?.wo_status})
-        </h3>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="flex items-center gap-3 pb-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ScrollText className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Work Order</h3>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
           <div className="space-y-4">
