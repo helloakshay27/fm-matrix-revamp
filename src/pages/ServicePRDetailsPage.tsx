@@ -658,26 +658,25 @@ export const ServicePRDetailsPage = () => {
                 Feeds
               </Button>
 
-              {servicePR?.all_level_approved && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 btn-primary"
-                  onClick={() => setOpenDeletionModal(true)}
-                >
-                  Raise Deletion Request
-                </Button>
-              )}
-
-              {buttonCondition.editWbsCode && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 btn-primary"
-                  onClick={() => setShowEditWbsModal(true)}
-                >
-                  Edit WBS Codes
-                </Button>
+              {servicePR?.all_level_approved && !shouldShowButtons && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 btn-primary"
+                    onClick={() => setShowEditWbsModal(true)}
+                  >
+                    Edit WBS Codes
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 btn-primary"
+                    onClick={() => setOpenDeletionModal(true)}
+                  >
+                    Raise Deletion Request
+                  </Button>
+                </>
               )}
             </>
           )}
@@ -1178,6 +1177,25 @@ export const ServicePRDetailsPage = () => {
               value={rejectComment}
               onChange={(e) => setRejectComment(e.target.value)}
               variant="outlined"
+              sx={{
+                mt: 1,
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
+                },
+              }}
             />
           </DialogContent>
           <DialogActions>
