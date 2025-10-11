@@ -298,9 +298,59 @@ export const GatePassInwardsDetailPage = () => {
                         <span className="text-gray-900 font-medium">{gatePassData.remarks || '--'}</span>
                       </div>
                     )}
+                    {gatePassData.invoice_no && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Invoice No.</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{gatePassData.invoice_no}</span>
+                      </div>
+                    )}
+                    {gatePassData.invoice_date && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Invoice Date</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{new Date(gatePassData.invoice_date).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {gatePassData.invoice_amount && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Invoice Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹{gatePassData.invoice_amount}</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Extra Fields Card - Only show if there are extra fields */}
+              {gatePassData.extra_fields_grouped && Object.keys(gatePassData.extra_fields_grouped).length > 0 && (
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                      </div>
+                      <span className="uppercase tracking-wide">Additional Fields</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      {Object.entries(gatePassData.extra_fields_grouped).map(([groupName, fields]: [string, any]) => (
+                        <React.Fragment key={groupName}>
+                          {Array.isArray(fields) && fields.map((field: any) => (
+                            <div key={field.id} className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">{field.field_name}</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{field.field_value || '--'}</span>
+                            </div>
+                          ))}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Vendor Details Card */}
               <Card className="w-full">
