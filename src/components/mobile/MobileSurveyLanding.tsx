@@ -1596,7 +1596,7 @@ export const MobileSurveyLanding: React.FC = () => {
               style={{ minHeight: "240px" }}
             >
               <div
-                className="absolute inset-0 w-full h-full rounded-xl overflow-hidden"
+                className="absolute inset-0 w-full h-full rounded-[0.20rem] overflow-hidden"
                 style={{
                   backgroundImage: `url(${
                     surveyData?.snag_checklist?.survey_attachment?.[0]?.url ||
@@ -1631,7 +1631,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   value={finalDescription}
                   onChange={(e) => setFinalDescription(e.target.value)}
                   placeholder="Please share your thoughts..."
-                  className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   disabled={isSubmitting}
                 />
               </div>
@@ -1640,7 +1640,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 type="button"
                 onClick={handleSubmitSurvey}
                 disabled={isSubmitting}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white py-3 px-4 rounded[0.20rem] font-medium transition-colors disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center">
@@ -1709,7 +1709,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         type="button"
                         key={option.id}
                         onClick={() => handleOptionSelect(option)}
-                        className={`w-full p-3 sm:p-4 rounded-xl border-2 text-left transition-all ${
+                        className={`w-full p-3 sm:p-4 rounded-[0.20rem] border-2 text-left transition-all ${
                           selectedOptions.some((opt) => opt.id === option.id)
                             ? "border-blue-500 bg-blue-50 text-blue-700"
                             : "border-gray-200 bg-white hover:border-black/30"
@@ -1915,7 +1915,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                 option.label
                               )
                             }
-                            className="flex flex-col rounded-xl items-center justify-start p-2 sm:p-3 hover:bg-white/60 transition-colors flex-1 min-w-0"
+                            className="flex flex-col rounded-[0.20rem] items-center justify-start p-2 sm:p-3 hover:bg-white/60 transition-colors flex-1 min-w-0"
                           >
                             <span className="text-3xl sm:text-4xl mb-2">
                               {option.emoji}
@@ -1932,7 +1932,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
                 {showGenericTags && (
                   <>
-                    <div className="bg-gray-100 rounded-xl p-4">
+                    <div className="bg-white/70 rounded-[0.20rem] p-4">
                       <div className="flex justify-end items-start mb-4">
                         <button
                           type="button"
@@ -1950,7 +1950,7 @@ export const MobileSurveyLanding: React.FC = () => {
                       </div>
 
                       <div className="text-center">
-                        <h4 className="text-lg font-semibold text-black/80 mb-2">
+                        <h4 className="text-lg font-semibold text-black/100 mb-2">
                           What specifically needs improvement?
                         </h4>
 
@@ -1987,10 +1987,10 @@ export const MobileSurveyLanding: React.FC = () => {
                                       type="button"
                                       key={tag.id}
                                       onClick={() => handleGenericTagClick(tag)}
-                                      className={`p-3 sm:p-4 rounded-xl border-2 mr-3 text-center transition-all ${
+                                      className={`p-3 sm:p-4 rounded-[0.20rem] mr-3 text-center transition-all ${
                                         isSelected
                                           ? "border-blue-500 bg-blue-50"
-                                          : "border-gray-200 bg-white hover:border-blue-300"
+                                          : ""
                                       }`}
                                     >
                                       <div className="mb-2">
@@ -2032,7 +2032,7 @@ export const MobileSurveyLanding: React.FC = () => {
                           setCurrentNegativeComments(e.target.value)
                         }
                         placeholder="Please describe any specific issues or suggestions..."
-                        className="w-full h-20 sm:h-24 p-3 border border-blue-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full h-20 sm:h-24 p-3 border border-blue-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         disabled={isSubmitting}
                       />
                     </div>
@@ -2119,7 +2119,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         selectedTags.length === 0 &&
                         !getCurrentNegativeComments().trim()
                       }
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                      className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white/100 py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? (
                         <div className="flex items-center justify-center">
