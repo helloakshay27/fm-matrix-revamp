@@ -895,65 +895,34 @@ export const FillForm = () => {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="docNo">Doc No</Label>
-                                            <Input
-                                                id="docNo"
-                                                // value={basicInfo.docNo}
-                                                onChange={(e) => handleBasicInfoChange('docNo', e.target.value)}
-                                                placeholder="Enter document number"
-                                                readOnly
-                                                className="bg-gray-50 cursor-not-allowed"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="permitRequestedDate">Permit Requested Date</Label>
-                                            <Input
-                                                id="permitRequestedDate"
-                                                value={basicInfo.permitRequestedDate}
-                                                onChange={(e) => handleBasicInfoChange('permitRequestedDate', e.target.value)}
-                                                placeholder="DD/MM/YYYY"
-                                                readOnly
-                                                className="bg-gray-50 cursor-not-allowed"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="permitId">Permit Id</Label>
-                                            <Input
-                                                id="permitId"
-                                                value={basicInfo.permitId}
-                                                onChange={(e) => handleBasicInfoChange('permitId', e.target.value)}
-                                                placeholder="Enter permit ID"
-                                                readOnly
-                                                className="bg-gray-50 cursor-not-allowed"
-                                            />
-                                        </div>
+
+                                    <div>
+                                        <Label htmlFor="permitRequestedDate">Permit Requested Date</Label>
+                                        <Input
+                                            id="permitRequestedDate"
+                                            value={basicInfo.permitRequestedDate}
+                                            onChange={(e) => handleBasicInfoChange('permitRequestedDate', e.target.value)}
+                                            placeholder="DD/MM/YYYY"
+                                            readOnly
+                                            className="bg-gray-50 cursor-not-allowed"
+                                        />
+
                                     </div>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="rev">Rev</Label>
-                                            <Input
-                                                id="rev"
-                                                value={basicInfo.rev}
-                                                onChange={(e) => handleBasicInfoChange('rev', e.target.value)}
-                                                placeholder="Enter revision"
-                                                readOnly
-                                                className="bg-gray-50 cursor-not-allowed"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="permitIssueDate">Permit Issue Date</Label>
-                                            <Input
-                                                id="permitIssueDate"
-                                                value={basicInfo.permitIssueDate}
-                                                onChange={(e) => handleBasicInfoChange('permitIssueDate', e.target.value)}
-                                                placeholder="DD/MM/YYYY"
-                                                readOnly
-                                                className="bg-gray-50 cursor-not-allowed"
-                                            />
-                                        </div>
+                                    <div>
+                                        <Label htmlFor="permitId">Permit Id</Label>
+                                        <Input
+                                            id="permitId"
+                                            value={basicInfo.permitId}
+                                            onChange={(e) => handleBasicInfoChange('permitId', e.target.value)}
+                                            placeholder="Enter permit ID"
+                                            readOnly
+                                            className="bg-gray-50 cursor-not-allowed"
+                                        />
                                     </div>
+
+
+
+
                                 </div>
                             )}
                         </CardContent>
@@ -1113,7 +1082,7 @@ export const FillForm = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
+                                        {/* <div>
                                             <Label htmlFor="emergencyContactName">Emergency Contact Name:</Label>
                                             <Input
                                                 id="emergencyContactName"
@@ -1122,17 +1091,51 @@ export const FillForm = () => {
                                                 placeholder="Enter emergency contact name"
                                                 className="mt-2"
                                             />
+                                        </div> */}
+                                        <div>
+                                            <Label htmlFor="emergencyContactName">Emergency Contact Name:</Label>
+                                            <Input
+                                                id="emergencyContactName"
+                                                value={detailedInfo.emergencyContactName}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('emergencyContactName', value);
+                                                    }
+                                                }}
+                                                placeholder="Enter emergency contact name"
+                                                className="mt-2"
+                                            />
                                         </div>
+
                                         <div>
                                             <Label htmlFor="emergencyContactNumber">Emergency Contact Number:</Label>
-                                            <Input
+                                            {/* <Input
                                                 id="emergencyContactNumber"
                                                 value={detailedInfo.emergencyContactNumber}
                                                 onChange={(e) => handleDetailedInfoChange('emergencyContactNumber', e.target.value)}
                                                 placeholder="Enter emergency contact number"
                                                 className="mt-2"
+                                            /> */}
+                                            <Input
+                                                id="emergencyContactNumber"
+                                                value={detailedInfo.emergencyContactNumber}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (/^[0-9]*$/.test(value)) {
+                                                        handleDetailedInfoChange('emergencyContactNumber', value);
+                                                    }
+                                                }}
+                                                placeholder="Enter emergency contact number"
+                                                className="mt-2"
+                                                inputMode="numeric"
+                                                maxLength={10}
                                             />
                                         </div>
+
+
+
                                     </div>
 
                                     <div>
@@ -1156,13 +1159,26 @@ export const FillForm = () => {
                                         </RadioGroup>
                                         <div className="mt-4">
                                             <Label htmlFor="specifyTheName">If Yes, specify the name:</Label>
-                                            <Input
+                                            {/* <Input
                                                 id="specifyTheName"
                                                 value={detailedInfo.specifyTheName}
                                                 onChange={(e) => handleDetailedInfoChange('specifyTheName', e.target.value)}
                                                 placeholder="Specify chemical name"
                                                 className="mt-2"
+                                            /> */}
+                                            <Input
+                                                id="specifyTheName"
+                                                value={detailedInfo.specifyTheName}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('specifyTheName', value);
+                                                    }
+                                                }}
+                                                placeholder="Specify chemical name"
+                                                className="mt-2"
                                             />
+
                                         </div>
                                     </div>
 
@@ -1186,13 +1202,27 @@ export const FillForm = () => {
                                         </RadioGroup>
                                         <div className="mt-4">
                                             <Label htmlFor="areaAllocated">Area Allocated:</Label>
-                                            <Input
+                                            {/* <Input
                                                 id="areaAllocated"
                                                 value={detailedInfo.areaAllocated}
                                                 onChange={(e) => handleDetailedInfoChange('areaAllocated', e.target.value)}
                                                 placeholder="Specify allocated area"
                                                 className="mt-2"
+                                            /> */}
+                                            <Input
+                                                id="areaAllocated"
+                                                value={detailedInfo.areaAllocated}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('areaAllocated', value);
+                                                    }
+                                                }}
+                                                placeholder="Specify allocated area"
+                                                className="mt-2"
                                             />
+
                                         </div>
                                     </div>
 
@@ -1216,13 +1246,27 @@ export const FillForm = () => {
                                         </RadioGroup>
                                         <div className="mt-4">
                                             <Label htmlFor="specifyTheOperation">If Yes, specify the operation:</Label>
-                                            <Input
+                                            {/* <Input
                                                 id="specifyTheOperation"
                                                 value={detailedInfo.specifyTheOperation}
                                                 onChange={(e) => handleDetailedInfoChange('specifyTheOperation', e.target.value)}
                                                 placeholder="Specify operation"
                                                 className="mt-2"
+                                            /> */}
+                                            <Input
+                                                id="specifyTheOperation"
+                                                value={detailedInfo.specifyTheOperation}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('specifyTheOperation', value);
+                                                    }
+                                                }}
+                                                placeholder="Specify operation"
+                                                className="mt-2"
                                             />
+
                                         </div>
                                     </div>
 
@@ -1309,10 +1353,23 @@ export const FillForm = () => {
                                         </RadioGroup>
                                         <div className="mt-4">
                                             <Label htmlFor="tagOutDetails">If Yes, Lock Out Tag Out details:</Label>
-                                            <Input
+                                            {/* <Input
                                                 id="tagOutDetails"
                                                 value={detailedInfo.tagOutDetails}
                                                 onChange={(e) => handleDetailedInfoChange('tagOutDetails', e.target.value)}
+                                                placeholder="Specify lock out tag out details"
+                                                className="mt-2"
+                                            /> */}
+                                            <Input
+                                                id="tagOutDetails"
+                                                value={detailedInfo.tagOutDetails}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('tagOutDetails', value);
+                                                    }
+                                                }}
                                                 placeholder="Specify lock out tag out details"
                                                 className="mt-2"
                                             />
@@ -1323,10 +1380,23 @@ export const FillForm = () => {
                                         <div>
                                             <Label htmlFor="energyIsolationDoneBy">Energy Isolation Done By:</Label>
                                             <div className="text-xs text-gray-500 mb-2">(Name & Sign)</div>
-                                            <Input
+                                            {/* <Input
                                                 id="energyIsolationDoneBy"
                                                 value={detailedInfo.energyIsolationDoneBy}
                                                 onChange={(e) => handleDetailedInfoChange('energyIsolationDoneBy', e.target.value)}
+                                                placeholder="Enter name and signature"
+                                                className="mt-2"
+                                            /> */}
+                                            <Input
+                                                id="energyIsolationDoneBy"
+                                                value={detailedInfo.energyIsolationDoneBy}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('energyIsolationDoneBy', value);
+                                                    }
+                                                }}
                                                 placeholder="Enter name and signature"
                                                 className="mt-2"
                                             />
@@ -1334,13 +1404,27 @@ export const FillForm = () => {
                                         <div>
                                             <Label htmlFor="energyDeisolationDoneBy">Energy De-Isolation Done By:</Label>
                                             <div className="text-xs text-gray-500 mb-2">(Name & Sign)</div>
-                                            <Input
+                                            {/* <Input
                                                 id="energyDeisolationDoneBy"
                                                 value={detailedInfo.energyDeisolationDoneBy}
                                                 onChange={(e) => handleDetailedInfoChange('energyDeisolationDoneBy', e.target.value)}
                                                 placeholder="Enter name and signature"
                                                 className="mt-2"
+                                            /> */}
+                                            <Input
+                                                id="energyDeisolationDoneBy"
+                                                value={detailedInfo.energyDeisolationDoneBy}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('energyDeisolationDoneBy', value);
+                                                    }
+                                                }}
+                                                placeholder="Enter name and signature"
+                                                className="mt-2"
                                             />
+
                                         </div>
                                     </div>
                                 </div>
@@ -1893,14 +1977,18 @@ export const FillForm = () => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                                 <div className="p-3 border border-gray-200 rounded">
                                     <Label className="text-xs text-gray-500">Contractor supervisor</Label>
+                                    <input value={personsInfo.contractorSupervisorName} readOnly disabled className="mt-1 bg-gray-50 cursor-not-allowed w-full" />
                                     <div className="h-8 border-b border-gray-300 mt-2"></div>
                                 </div>
                                 <div className="p-3 border border-gray-200 rounded">
                                     <Label className="text-xs text-gray-500">Permit Initiator</Label>
+                                    <input value={personsInfo.permitInitiatorName} readOnly disabled className="mt-1 bg-gray-50 cursor-not-allowed w-full" />
                                     <div className="h-8 border-b border-gray-300 mt-2"></div>
                                 </div>
                                 <div className="p-3 border border-gray-200 rounded">
                                     <Label className="text-xs text-gray-500">Permit Issuer</Label>
+                                    <input value={personsInfo.permitIssuerName} readOnly disabled className="mt-1 bg-gray-50 cursor-not-allowed w-full" />
+
                                     <div className="h-8 border-b border-gray-300 mt-2"></div>
                                 </div>
                             </div>

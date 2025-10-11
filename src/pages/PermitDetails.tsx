@@ -3085,7 +3085,7 @@ export const PermitDetails = () => {
                             <table className="w-full border-collapse border border-gray-200">
                                 <thead>
                                     <tr className="bg-gray-50">
-                                        <th className="border border-gray-200 p-3 text-left text-sm font-medium">S. No</th>
+                                        <th className="border border-gray-200 p-3 text-left text-sm font-medium">Sr. No</th>
                                         <th className="border border-gray-200 p-3 text-left text-sm font-medium">Response</th>
                                         <th className="border border-gray-200 p-3 text-left text-sm font-medium">Submitted Date/Time</th>
                                         <th className="border border-gray-200 p-3 text-left text-sm font-medium">Submitted By</th>
