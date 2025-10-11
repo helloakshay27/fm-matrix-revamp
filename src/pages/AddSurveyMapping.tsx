@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
-import { useLocationData } from '@/hooks/useLocationData';
 
 interface Question {
   id: string;
@@ -26,6 +25,18 @@ interface Question {
   optionsText: string;
 }
 
+interface QuestionOption {
+  qname: string;
+}
+
+interface SnagQuestion {
+  id: number;
+  descr: string;
+  qtype: string;
+  quest_mandatory: boolean;
+  snag_quest_options?: QuestionOption[];
+}
+
 interface Survey {
   id: number;
   name: string;
@@ -34,7 +45,7 @@ interface Survey {
   questions_count: number;
   active: number;
   check_type: string;
-  snag_questions?: any[];
+  snag_questions?: SnagQuestion[];
 }
 
 interface LocationItem {
@@ -78,26 +89,42 @@ export const AddSurveyMapping = () => {
   const navigate = useNavigate();
   useEffect(() => { document.title = 'Create Survey Mapping'; }, []);
 
-  // Location data hook
-  const {
-    sites,
-    buildings,
-    wings,
-    areas,
-    floors,
-    rooms,
-    loading,
-    fetchBuildings,
-    fetchWings,
-    fetchAreas,
-    fetchFloors,
-    fetchRooms,
-  } = useLocationData();
+  // Location data states - now component specific to prevent conflicts between multiple mappings
+  const [sites, setSites] = useState<LocationItem[]>([]);
+  const [locationData, setLocationData] = useState<{
+    [key: string]: {
+      buildings: LocationItem[];
+      wings: LocationItem[];
+      areas: LocationItem[];
+      floors: LocationItem[];
+      rooms: LocationItem[];
+    };
+  }>({});
+  const [loading, setLoading] = useState({
+    sites: false,
+    buildings: {},
+    wings: {},
+    areas: {},
+    floors: {},
+    rooms: {},
+  });
+
+  // Track which configuration is currently loading data for each parent
+  const [loadingByConfig, setLoadingByConfig] = useState<{
+    [configId: string]: {
+      buildings: string;
+      wings: string;
+      areas: string;
+      floors: string;
+      rooms: string;
+    };
+  }>({});
 
   // Form state
   const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(null);
+  const initialMappingId = `sm-${Date.now()}`;
   const [surveyMappings, setSurveyMappings] = useState<SurveyMapping[]>([{
-    id: `sm-${Date.now()}`,
+    id: initialMappingId,
     selectedLocation: {
       site: "",
       building: "",
@@ -124,6 +151,326 @@ export const AddSurveyMapping = () => {
   // Remove old location data states as they're now handled by useLocationData hook
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Initialize loading state for the first configuration
+  useEffect(() => {
+    setLoadingByConfig(prev => ({
+      ...prev,
+      [initialMappingId]: {
+        buildings: '',
+        wings: '',
+        areas: '',
+        floors: '',
+        rooms: ''
+      }
+    }));
+  }, [initialMappingId]);
+
+  // Fetch sites on component mount
+  useEffect(() => {
+    fetchSites();
+  }, []);
+
+  // Fetch sites
+  const fetchSites = async () => {
+    setLoading(prev => ({ ...prev, sites: true }));
+    try {
+      const response = await fetch(getFullUrl('/pms/sites.json'), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      console.log('Sites response data:', data);
+      setSites(data.sites || []);
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+      setSites([]);
+    } finally {
+      setLoading(prev => ({ ...prev, sites: false }));
+    }
+  };
+
+  // Get location data for a specific location type and parent ID
+  const getLocationData = (type: 'buildings' | 'wings' | 'areas' | 'floors' | 'rooms', parentId: string) => {
+    const key = `${type}_${parentId}`;
+    return locationData[key]?.[type] || [];
+  };
+
+  // Check if location data is loading for a specific type and parent ID for a specific configuration
+  const isLocationLoading = (type: 'buildings' | 'wings' | 'areas' | 'floors' | 'rooms', parentId: string, configId: string) => {
+    if (!parentId) return false;
+    const configLoadingState = loadingByConfig[configId];
+    return configLoadingState && configLoadingState[type] === parentId;
+  };
+
+  // Fetch buildings for a specific site
+  const fetchBuildings = async (siteId: number, configId?: string) => {
+    if (!siteId) return;
+    
+    const key = `buildings_${siteId}`;
+    setLoading(prev => ({ ...prev, buildings: { ...prev.buildings, [key]: true } }));
+    
+    // Set loading state for specific config if provided
+    if (configId) {
+      setLoadingByConfig(prev => ({
+        ...prev,
+        [configId]: {
+          ...prev[configId],
+          buildings: siteId.toString()
+        }
+      }));
+    }
+    
+    try {
+      const url = `/pms/sites/${siteId}/buildings.json`;
+      const response = await fetch(getFullUrl(url), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      setLocationData(prev => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          buildings: data.buildings || []
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching buildings:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, buildings: { ...prev.buildings, [key]: false } }));
+      
+      // Clear loading state for specific config if provided
+      if (configId) {
+        setLoadingByConfig(prev => ({
+          ...prev,
+          [configId]: {
+            ...prev[configId],
+            buildings: ''
+          }
+        }));
+      }
+    }
+  };
+
+  // Fetch wings for a specific building
+  const fetchWings = async (buildingId: number, configId?: string) => {
+    if (!buildingId) return;
+    
+    const key = `wings_${buildingId}`;
+    setLoading(prev => ({ ...prev, wings: { ...prev.wings, [key]: true } }));
+    
+    // Set loading state for specific config if provided
+    if (configId) {
+      setLoadingByConfig(prev => ({
+        ...prev,
+        [configId]: {
+          ...prev[configId],
+          wings: buildingId.toString()
+        }
+      }));
+    }
+    
+    try {
+      const url = `/pms/wings.json?building_id=${buildingId}`;
+      const response = await fetch(getFullUrl(url), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      setLocationData(prev => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          wings: data.wings || []
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching wings:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, wings: { ...prev.wings, [key]: false } }));
+      
+      // Clear loading state for specific config if provided
+      if (configId) {
+        setLoadingByConfig(prev => ({
+          ...prev,
+          [configId]: {
+            ...prev[configId],
+            wings: ''
+          }
+        }));
+      }
+    }
+  };
+
+  // Fetch areas for a specific wing
+  const fetchAreas = async (wingId: number, configId?: string) => {
+    if (!wingId) return;
+    
+    const key = `areas_${wingId}`;
+    setLoading(prev => ({ ...prev, areas: { ...prev.areas, [key]: true } }));
+    
+    // Set loading state for specific config if provided
+    if (configId) {
+      setLoadingByConfig(prev => ({
+        ...prev,
+        [configId]: {
+          ...prev[configId],
+          areas: wingId.toString()
+        }
+      }));
+    }
+    
+    try {
+      const url = `/pms/areas.json?wing_id=${wingId}`;
+      const response = await fetch(getFullUrl(url), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      setLocationData(prev => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          areas: data.areas || []
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, areas: { ...prev.areas, [key]: false } }));
+      
+      // Clear loading state for specific config if provided
+      if (configId) {
+        setLoadingByConfig(prev => ({
+          ...prev,
+          [configId]: {
+            ...prev[configId],
+            areas: ''
+          }
+        }));
+      }
+    }
+  };
+
+  // Fetch floors for a specific area
+  const fetchFloors = async (areaId: number, configId?: string) => {
+    if (!areaId) return;
+    
+    const key = `floors_${areaId}`;
+    setLoading(prev => ({ ...prev, floors: { ...prev.floors, [key]: true } }));
+    
+    // Set loading state for specific config if provided
+    if (configId) {
+      setLoadingByConfig(prev => ({
+        ...prev,
+        [configId]: {
+          ...prev[configId],
+          floors: areaId.toString()
+        }
+      }));
+    }
+    
+    try {
+      const url = `/pms/floors.json?area_id=${areaId}`;
+      const response = await fetch(getFullUrl(url), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      setLocationData(prev => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          floors: data.floors || []
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching floors:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, floors: { ...prev.floors, [key]: false } }));
+      
+      // Clear loading state for specific config if provided
+      if (configId) {
+        setLoadingByConfig(prev => ({
+          ...prev,
+          [configId]: {
+            ...prev[configId],
+            floors: ''
+          }
+        }));
+      }
+    }
+  };
+
+  // Fetch rooms for a specific floor
+  const fetchRooms = async (floorId: number, configId?: string) => {
+    if (!floorId) return;
+    
+    const key = `rooms_${floorId}`;
+    setLoading(prev => ({ ...prev, rooms: { ...prev.rooms, [key]: true } }));
+    
+    // Set loading state for specific config if provided
+    if (configId) {
+      setLoadingByConfig(prev => ({
+        ...prev,
+        [configId]: {
+          ...prev[configId],
+          rooms: floorId.toString()
+        }
+      }));
+    }
+    
+    try {
+      const url = `/pms/rooms.json?floor_id=${floorId}`;
+      const response = await fetch(getFullUrl(url), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      const rooms = Array.isArray(data) ? data : (data.rooms || []);
+      
+      setLocationData(prev => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          rooms: rooms
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, rooms: { ...prev.rooms, [key]: false } }));
+      
+      // Clear loading state for specific config if provided
+      if (configId) {
+        setLoadingByConfig(prev => ({
+          ...prev,
+          [configId]: {
+            ...prev[configId],
+            rooms: ''
+          }
+        }));
+      }
+    }
+  };
+
   // Fetch surveys and locations on component mount
   useEffect(() => {
     fetchSurveys();
@@ -132,9 +479,9 @@ export const AddSurveyMapping = () => {
   // Debug effect to log location data
   useEffect(() => {
     console.log('Sites:', sites);
-    console.log('Buildings:', buildings);
+    console.log('Location data:', locationData);
     console.log('Loading states:', loading);
-  }, [sites, buildings, loading]);
+  }, [sites, locationData, loading]);
 
   // Handle location changes with cascading behavior
   const handleLocationChange = async (
@@ -148,6 +495,7 @@ export const AddSurveyMapping = () => {
       if (i !== index) return mapping;
 
       const newSelectedLocation = { ...mapping.selectedLocation };
+      const configId = mapping.id;
       
       // Reset dependent fields when parent changes
       switch (field) {
@@ -161,7 +509,7 @@ export const AddSurveyMapping = () => {
           // Fetch buildings for selected site
           if (value) {
             console.log('Fetching buildings for site:', value);
-            fetchBuildings(parseInt(value));
+            fetchBuildings(parseInt(value), configId);
           }
           break;
         case 'building':
@@ -173,7 +521,7 @@ export const AddSurveyMapping = () => {
           // Fetch wings for selected building
           if (value) {
             console.log('Fetching wings for building:', value);
-            fetchWings(parseInt(value));
+            fetchWings(parseInt(value), configId);
           }
           break;
         case 'wing':
@@ -184,7 +532,7 @@ export const AddSurveyMapping = () => {
           // Fetch areas for selected wing
           if (value) {
             console.log('Fetching areas for wing:', value);
-            fetchAreas(parseInt(value));
+            fetchAreas(parseInt(value), configId);
           }
           break;
         case 'area':
@@ -194,7 +542,7 @@ export const AddSurveyMapping = () => {
           // Fetch floors for selected area
           if (value) {
             console.log('Fetching floors for area:', value);
-            fetchFloors(parseInt(value));
+            fetchFloors(parseInt(value), configId);
           }
           break;
         case 'floor':
@@ -203,7 +551,7 @@ export const AddSurveyMapping = () => {
           // Fetch rooms for selected floor
           if (value) {
             console.log('Fetching rooms for floor:', value);
-            fetchRooms(parseInt(value));
+            fetchRooms(parseInt(value), configId);
           }
           break;
         case 'room':
@@ -266,8 +614,9 @@ export const AddSurveyMapping = () => {
   };
 
   const addSurveyMapping = () => {
+    const newMappingId = `sm-${Date.now()}`;
     setSurveyMappings(prev => [...prev, {
-      id: `sm-${Date.now()}`,
+      id: newMappingId,
       selectedLocation: {
         site: "",
         building: "",
@@ -283,11 +632,30 @@ export const AddSurveyMapping = () => {
       areaIds: [],
       roomIds: []
     }]);
-    // Questions will be updated when surveys are selected
+    
+    // Initialize loading state for the new configuration
+    setLoadingByConfig(prev => ({
+      ...prev,
+      [newMappingId]: {
+        buildings: '',
+        wings: '',
+        areas: '',
+        floors: '',
+        rooms: ''
+      }
+    }));
   };
 
   const removeSurveyMapping = (idx: number) => {
+    const mappingToRemove = surveyMappings[idx];
     setSurveyMappings(prev => prev.filter((_, i) => i !== idx));
+    
+    // Clean up loading state for the removed configuration
+    setLoadingByConfig(prev => {
+      const newState = { ...prev };
+      delete newState[mappingToRemove.id];
+      return newState;
+    });
   };
 
   const handleSurveyChange = (event: SelectChangeEvent<number>) => {
@@ -309,7 +677,7 @@ export const AddSurveyMapping = () => {
 
     const selectedSurvey = surveys.find(survey => survey.id === targetSurveyId);
     if (selectedSurvey && selectedSurvey.snag_questions) {
-      const mappedQuestions = selectedSurvey.snag_questions.map((q: any) => {
+      const mappedQuestions = selectedSurvey.snag_questions.map((q: SnagQuestion) => {
         // Map API question types to UI input types
         let inputType = '';
         switch (q.qtype) {
@@ -340,8 +708,8 @@ export const AddSurveyMapping = () => {
           task: q.descr,
           inputType,
           mandatory: !!q.quest_mandatory,
-          options: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname) : [],
-          optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname).join(', ') : ''
+          options: q.snag_quest_options ? q.snag_quest_options.map((opt: QuestionOption) => opt.qname) : [],
+          optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: QuestionOption) => opt.qname).join(', ') : ''
         };
       });
       setSelectedSurveyQuestions(mappedQuestions);
@@ -670,7 +1038,7 @@ export const AddSurveyMapping = () => {
                     value={mapping.selectedLocation.building}
                     onChange={(e) => handleLocationChange(mappingIdx, 'building', e.target.value as string)}
                     input={<OutlinedInput label="Building" />}
-                    disabled={!mapping.selectedLocation.site || loading.buildings}
+                    disabled={!mapping.selectedLocation.site || isLocationLoading('buildings', mapping.selectedLocation.site, mapping.id)}
                     displayEmpty
                     notched
                   >
@@ -682,13 +1050,13 @@ export const AddSurveyMapping = () => {
                         }
                       </em>
                     </MenuItem>
-                    {loading.buildings ? (
+                    {isLocationLoading('buildings', mapping.selectedLocation.site, mapping.id) ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />
                         Loading buildings...
                       </MenuItem>
                     ) : (
-                      buildings
+                      getLocationData('buildings', mapping.selectedLocation.site)
                         .filter(building => building?.id && building?.name)
                         .map((building) => (
                           <MenuItem key={building.id} value={building.id}>
@@ -710,7 +1078,7 @@ export const AddSurveyMapping = () => {
                     value={mapping.selectedLocation.wing}
                     onChange={(e) => handleLocationChange(mappingIdx, 'wing', e.target.value as string)}
                     input={<OutlinedInput label="Wing" />}
-                    disabled={!mapping.selectedLocation.building || loading.wings}
+                    disabled={!mapping.selectedLocation.building || isLocationLoading('wings', mapping.selectedLocation.building, mapping.id)}
                     displayEmpty
                     notched
                   >
@@ -722,13 +1090,13 @@ export const AddSurveyMapping = () => {
                         }
                       </em>
                     </MenuItem>
-                    {loading.wings ? (
+                    {isLocationLoading('wings', mapping.selectedLocation.building, mapping.id) ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />
                         Loading wings...
                       </MenuItem>
                     ) : (
-                      wings
+                      getLocationData('wings', mapping.selectedLocation.building)
                         .filter(wing => wing?.id && wing?.name)
                         .map((wing) => (
                           <MenuItem key={wing.id} value={wing.id}>
@@ -750,7 +1118,7 @@ export const AddSurveyMapping = () => {
                     value={mapping.selectedLocation.area}
                     onChange={(e) => handleLocationChange(mappingIdx, 'area', e.target.value as string)}
                     input={<OutlinedInput label="Area" />}
-                    disabled={!mapping.selectedLocation.wing || loading.areas}
+                    disabled={!mapping.selectedLocation.wing || isLocationLoading('areas', mapping.selectedLocation.wing, mapping.id)}
                     displayEmpty
                     notched
                   >
@@ -762,13 +1130,13 @@ export const AddSurveyMapping = () => {
                         }
                       </em>
                     </MenuItem>
-                    {loading.areas ? (
+                    {isLocationLoading('areas', mapping.selectedLocation.wing, mapping.id) ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />
                         Loading areas...
                       </MenuItem>
                     ) : (
-                      areas
+                      getLocationData('areas', mapping.selectedLocation.wing)
                         .filter(area => area?.id && area?.name)
                         .map((area) => (
                           <MenuItem key={area.id} value={area.id}>
@@ -790,7 +1158,7 @@ export const AddSurveyMapping = () => {
                     value={mapping.selectedLocation.floor}
                     onChange={(e) => handleLocationChange(mappingIdx, 'floor', e.target.value as string)}
                     input={<OutlinedInput label="Floor" />}
-                    disabled={!mapping.selectedLocation.area || loading.floors}
+                    disabled={!mapping.selectedLocation.area || isLocationLoading('floors', mapping.selectedLocation.area, mapping.id)}
                     displayEmpty
                     notched
                   >
@@ -802,13 +1170,13 @@ export const AddSurveyMapping = () => {
                         }
                       </em>
                     </MenuItem>
-                    {loading.floors ? (
+                    {isLocationLoading('floors', mapping.selectedLocation.area, mapping.id) ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />
                         Loading floors...
                       </MenuItem>
                     ) : (
-                      floors
+                      getLocationData('floors', mapping.selectedLocation.area)
                         .filter(floor => floor?.id && floor?.name)
                         .map((floor) => (
                           <MenuItem key={floor.id} value={floor.id}>
@@ -830,7 +1198,7 @@ export const AddSurveyMapping = () => {
                     value={mapping.selectedLocation.room}
                     onChange={(e) => handleLocationChange(mappingIdx, 'room', e.target.value as string)}
                     input={<OutlinedInput label="Room" />}
-                    disabled={!mapping.selectedLocation.floor || loading.rooms}
+                    disabled={!mapping.selectedLocation.floor || isLocationLoading('rooms', mapping.selectedLocation.floor, mapping.id)}
                     displayEmpty
                     notched
                   >
@@ -842,13 +1210,13 @@ export const AddSurveyMapping = () => {
                         }
                       </em>
                     </MenuItem>
-                    {loading.rooms ? (
+                    {isLocationLoading('rooms', mapping.selectedLocation.floor, mapping.id) ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />
                         Loading rooms...
                       </MenuItem>
                     ) : (
-                      rooms
+                      getLocationData('rooms', mapping.selectedLocation.floor)
                         .filter(room => room?.id && room?.name)
                         .map((room) => (
                           <MenuItem key={room.id} value={room.id}>

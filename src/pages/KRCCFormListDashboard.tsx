@@ -545,8 +545,6 @@ export const KRCCFormListDashboard = () => {
         label('Email Id', user?.email || '—'),
         label('Mobile Number', user?.mobile || '—'),
         label('Gender', user?.gender || '—'),
-        label('Blood Group', user?.blood_group || '—'),
-        label('DOB', user?.birth_date || '—'),
         label('Circle', user?.circle_name || '—'),
         label('Company', user?.company_name || '—'),
         label('Department', user?.department_name || '—'),

@@ -69,13 +69,6 @@ import {
 } from "@/components/ui/dialog";
 import { AddCustomFieldModal } from "@/components/AddCustomFieldModal";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocationData } from "@/hooks/useLocationData";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
@@ -10422,34 +10415,40 @@ const AddAssetPage = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Parent Meter <span style={{ color: '#C72030' }}>*</span>
                             </label>
-                            <Select
-                              value={selectedParentMeterId}
-                              onValueChange={(value) => {
-                                setSelectedParentMeterId(value);
-                                handleFieldChange("parent_meter_id", value);
-                              }}
-                              disabled={parentMeterLoading}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue
-                                  placeholder={
-                                    parentMeterLoading
+                            <FormControl fullWidth>
+                              <InputLabel>Parent Meter</InputLabel>
+                              <MuiSelect
+                                label="Parent Meter"
+                                value={selectedParentMeterId}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setSelectedParentMeterId(value);
+                                  handleFieldChange("parent_meter_id", value);
+                                }}
+                                disabled={parentMeterLoading}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    height: "45px",
+                                  },
+                                }}
+                              >
+                                <MenuItem value="">
+                                  <em>
+                                    {parentMeterLoading
                                       ? "Loading..."
-                                      : "Select Parent Meter"
-                                  }
-                                />
-                              </SelectTrigger>
-                              <SelectContent>
+                                      : "Select Parent Meter"}
+                                  </em>
+                                </MenuItem>
                                 {parentMeters.map((meter) => (
-                                  <SelectItem
+                                  <MenuItem
                                     key={meter.id}
                                     value={meter.id.toString()}
                                   >
                                     {meter.name}
-                                  </SelectItem>
+                                  </MenuItem>
                                 ))}
-                              </SelectContent>
-                            </Select>
+                              </MuiSelect>
+                            </FormControl>
                           </div>
                         )}
 
@@ -11348,38 +11347,44 @@ const AddAssetPage = () => {
                                   Select Assets{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
-                                <Select
-                                  value=""
-                                  onValueChange={(value) => {
-                                    // Handle multiple selection
-                                    const currentAssets = formData.selected_asset_ids || [];
-                                    if (!currentAssets.includes(value)) {
-                                      const newAssets = [...currentAssets, value];
-                                      handleFieldChange("selected_asset_ids", newAssets);
-                                    }
-                                  }}
-                                  disabled={assetsLoading}
-                                >
-                                  <SelectTrigger className="w-full h-[45px] bg-white">
-                                    <SelectValue
-                                      placeholder={
-                                        assetsLoading
-                                          ? "Loading assets..."
-                                          : "Select assets"
+                                <FormControl fullWidth>
+                                  <InputLabel>Select Assets</InputLabel>
+                                  <MuiSelect
+                                    label="Select Assets"
+                                    value=""
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      // Handle multiple selection
+                                      const currentAssets = formData.selected_asset_ids || [];
+                                      if (!currentAssets.includes(value)) {
+                                        const newAssets = [...currentAssets, value];
+                                        handleFieldChange("selected_asset_ids", newAssets);
                                       }
-                                    />
-                                  </SelectTrigger>
-                                  <SelectContent>
+                                    }}
+                                    disabled={assetsLoading}
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        height: "45px",
+                                      },
+                                    }}
+                                  >
+                                    <MenuItem value="">
+                                      <em>
+                                        {assetsLoading
+                                          ? "Loading assets..."
+                                          : "Select assets"}
+                                      </em>
+                                    </MenuItem>
                                     {assets.map((asset) => (
-                                      <SelectItem
+                                      <MenuItem
                                         key={asset.id}
                                         value={asset.id.toString()}
                                       >
                                         {asset.name}
-                                      </SelectItem>
+                                      </MenuItem>
                                     ))}
-                                  </SelectContent>
-                                </Select>
+                                  </MuiSelect>
+                                </FormControl>
 
                                 {/* Display selected assets */}
                                 {formData.selected_asset_ids && formData.selected_asset_ids.length > 0 && (
@@ -11421,81 +11426,93 @@ const AddAssetPage = () => {
                                       Select Group{" "}
                                       <span className="text-red-500">*</span>
                                     </label>
-                                    <Select
-                                      value={formData.selected_group_id || ""}
-                                      onValueChange={(value) => {
-                                        handleFieldChange(
-                                          "selected_group_id",
-                                          value
-                                        );
-                                        handleFieldChange(
-                                          "selected_sub_group_id",
-                                          ""
-                                        ); // Reset sub group
-                                        fetchSubGroups(value);
-                                      }}
-                                      disabled={groupsLoading}
-                                    >
-                                      <SelectTrigger className="w-full h-[45px] bg-white">
-                                        <SelectValue
-                                          placeholder={
-                                            groupsLoading
+                                    <FormControl fullWidth>
+                                      <InputLabel>Select Group</InputLabel>
+                                      <MuiSelect
+                                        label="Select Group"
+                                        value={formData.selected_group_id || ""}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          handleFieldChange(
+                                            "selected_group_id",
+                                            value
+                                          );
+                                          handleFieldChange(
+                                            "selected_sub_group_id",
+                                            ""
+                                          ); // Reset sub group
+                                          fetchSubGroups(value);
+                                        }}
+                                        disabled={groupsLoading}
+                                        sx={{
+                                          "& .MuiOutlinedInput-root": {
+                                            height: "45px",
+                                          },
+                                        }}
+                                      >
+                                        <MenuItem value="">
+                                          <em>
+                                            {groupsLoading
                                               ? "Loading groups..."
-                                              : "Select a group"
-                                          }
-                                        />
-                                      </SelectTrigger>
-                                      <SelectContent>
+                                              : "Select a group"}
+                                          </em>
+                                        </MenuItem>
                                         {groups.map((group) => (
-                                          <SelectItem
+                                          <MenuItem
                                             key={group.id}
                                             value={group.id.toString()}
                                           >
                                             {group.name}
-                                          </SelectItem>
+                                          </MenuItem>
                                         ))}
-                                      </SelectContent>
-                                    </Select>
+                                      </MuiSelect>
+                                    </FormControl>
                                   </div>
                                   <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                       Select Sub Group
                                     </label>
-                                    <Select
-                                      value={formData.selected_sub_group_id || ""}
-                                      onValueChange={(value) =>
-                                        handleFieldChange(
-                                          "selected_sub_group_id",
-                                          value
-                                        )
-                                      }
-                                      disabled={
-                                        !formData.selected_group_id ||
-                                        subGroupsLoading
-                                      }
-                                    >
-                                      <SelectTrigger className="w-full h-[45px] bg-white">
-                                        <SelectValue
-                                          placeholder={
-                                            !formData.selected_group_id
+                                    <FormControl fullWidth>
+                                      <InputLabel>Select Sub Group</InputLabel>
+                                      <MuiSelect
+                                        label="Select Sub Group"
+                                        value={formData.selected_sub_group_id || ""}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          handleFieldChange(
+                                            "selected_sub_group_id",
+                                            value
+                                          );
+                                        }}
+                                        disabled={
+                                          !formData.selected_group_id ||
+                                          subGroupsLoading
+                                        }
+                                        sx={{
+                                          "& .MuiOutlinedInput-root": {
+                                            height: "45px",
+                                          },
+                                        }}
+                                      >
+                                        <MenuItem value="">
+                                          <em>
+                                            {!formData.selected_group_id
                                               ? "Select group first"
                                               : subGroupsLoading
                                                 ? "Loading sub groups..."
-                                                : "Select a sub group"
-                                          }
-                                        />
-                                      </SelectTrigger>
-                                      <SelectContent>
+                                                : "Select a sub group"}
+                                          </em>
+                                        </MenuItem>
                                         {subGroups.map((subGroup) => (
-                                          <SelectItem
+                                          <MenuItem
                                             key={subGroup.id}
                                             value={subGroup.id.toString()}
                                           >
                                             {subGroup.name}
-                                          </SelectItem>
+                                          </MenuItem>
                                         ))}
-                                      </SelectContent>
-                                    </Select>
+                                      </MuiSelect>
+                                    </FormControl>
                                   </div>
                                 </div>
                               </div>

@@ -1551,7 +1551,7 @@ export const EditSurveyPage = () => {
                                       value={
                                         field.files.length > 0
                                           ? `${field.files.length} file(s) selected`
-                                          : "Choose File: No file chosen"
+                                          : "Choose File"
                                       }
                                       fullWidth
                                       variant="outlined"

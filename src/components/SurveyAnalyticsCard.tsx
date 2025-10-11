@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ interface SurveyAnalyticsCardProps {
   title: string;
   data: Array<{ name: string; value: number; color: string }>;
   type: 'statusDistribution' | 'surveyDistributions';
+  positivePercent?: number;
+  negativePercent?: number;
   className?: string;
   dateRange?: {
     startDate: Date;
@@ -26,6 +28,7 @@ interface SurveyAnalyticsCardProps {
   };
 }
 
+
 export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
   title,
   data,
@@ -35,7 +38,9 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
   onDownload,
   xAxisLabel,
   yAxisLabel,
-  customStyle
+  customStyle,
+  positivePercent,
+  negativePercent
 }) => {
   console.log("🎯 SurveyAnalyticsCard - Props received:");
   console.log("🎯 Title:", title);
@@ -45,6 +50,10 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
   
   const total = data.reduce((sum, item) => sum + item.value, 0);
   console.log("🎯 Calculated total:", total);
+
+  // State for managing tooltip visibility when hovering over text labels
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [tooltipData, setTooltipData] = useState<{ x: number; y: number; data: { name: string; value: number; color: string } } | null>(null);
 
   // Helper function to get emoji based on data name
   const getEmojiForDataName = (name: string): string => {
@@ -95,9 +104,9 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
     const isSmallDonut = outerRadius <= 90;
 
     return (
-      <div className="relative flex items-center justify-center">
+      <div className="relative flex items-center justify-center" style={{ outline: 'none' }}>
         <ResponsiveContainer width="100%" height={chartHeight}>
-          <PieChart className="focus:outline-none">
+          <PieChart className="focus:outline-none [&_*]:focus:outline-none [&_*]:outline-none">
             <Pie
               data={data}
               cx="50%"
@@ -123,6 +132,7 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
                   return n + (s[(v - 20) % 10] || s[v] || s[0]);
                 };
                 const formattedName = `${toOrdinal((index ?? 0) + 1)} Qtr`;
+                const dataItem = data[index ?? 0];
                 
                 return (
                   <text
@@ -133,9 +143,31 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
                     dominantBaseline="central"
                     fontSize="8"
                     fontWeight="600"
+                    style={{ 
+                      pointerEvents: 'auto', 
+                      cursor: 'pointer',
+                      outline: 'none',
+                      border: 'none'
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onMouseEnter={(e) => {
+                      setActiveIndex(index ?? 0);
+                      setTooltipData({
+                        x: e.clientX,
+                        y: e.clientY,
+                        data: dataItem
+                      });
+                    }}
+                    onMouseLeave={() => {
+                      setActiveIndex(null);
+                      setTooltipData(null);
+                    }}
                   >
-                    <tspan x={x} dy="-8">{formattedName}</tspan>
-                    <tspan x={x} dy="14">{percentage}%</tspan>
+                    <tspan x={x} dy="-8" style={{ outline: 'none', border: 'none' }}>{formattedName}</tspan>
+                    <tspan x={x} dy="14" style={{ outline: 'none', border: 'none' }}>{percentage}%</tspan>
                   </text>
                 );
               } : undefined}
@@ -147,7 +179,8 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
                   fill={entry.color}
                   style={{
                     outline: 'none',
-                    stroke: 'none'
+                    stroke: 'none',
+                    border: 'none'
                   }}
                 />
               ))}
@@ -181,6 +214,38 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
             />
           </PieChart>
         </ResponsiveContainer>
+        
+        {/* Custom tooltip for text labels */}
+        {tooltipData && (
+          <div 
+            className="fixed bg-white p-3 border border-gray-200 rounded-lg shadow-lg z-50 pointer-events-none"
+            style={{
+              left: tooltipData.x + 10,
+              top: tooltipData.y - 10,
+            }}
+          >
+            <p className="font-semibold text-gray-800 mb-2">
+              {(() => {
+                const idx = data.findIndex(d => d.name === tooltipData.data.name && d.value === tooltipData.data.value);
+                const toOrdinal = (n: number) => {
+                  const s = ["th", "st", "nd", "rd"]; const v = n % 100;
+                  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                };
+                return idx >= 0 ? `${toOrdinal(idx + 1)} Qtr` : tooltipData.data.name;
+              })()}
+            </p>
+            <div className="flex items-center gap-2">
+              <span 
+                className="inline-block w-3 h-3 rounded-sm" 
+                style={{ backgroundColor: tooltipData.data.color }} 
+              />
+              <span className="text-gray-700">
+                {total ? Math.round((tooltipData.data.value / total) * 100) : 0}% • Count: 
+                <span className="font-semibold"> {tooltipData.data.value}</span>
+              </span>
+            </div>
+          </div>
+        )}
         {/* Only show total in center for smaller pie charts (outerRadius <= 80) */}
         {/* {outerRadius <= 80 && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -250,76 +315,74 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
     </ResponsiveContainer>
   );
 
-  return (
-    <Card className={`hover:shadow-lg transition-all duration-200 ${className}`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-lg font-bold text-[#C72030]">
-          {title}
-        </CardTitle>
-        {/* {onDownload && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDownload}
-            className="h-8 w-8 p-0 hover:bg-gray-100"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        )} */}
-      </CardHeader>
-      <CardContent className="pt-0">
-        {/* Chart Section */}
-        <div className="mb-6">
-          {type === 'statusDistribution' ? renderPieChart() : renderBarChart()}
-        </div>
+return (
+  <Card className={`hover:shadow-lg transition-all duration-200 ${className}`}>
+    <CardHeader className="flex flex-row items-start justify-between pb-6 gap-4">
 
-        {/* Data Summary Grid - Only show for pie charts (statusDistribution) */}
-        {type === 'statusDistribution' && (
-          <div className="flex justify-center gap-6 mt-4 flex-wrap">
-            {data.map((item, index) => {
-              return (
-                <div key={index} className="flex items-center gap-2">
-                  <div 
-                    className="w-4 h-4 rounded-sm"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+      <CardTitle className="text-lg font-bold text-[#C72030]">
+        {title}
+      </CardTitle>
+      {/* 
+      {onDownload && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDownload}
+          className="h-8 w-8 p-0 hover:bg-gray-100"
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+      )} 
+      */}
+    
 
-        {/* Emoji Display Section - Only show for bar charts (surveyDistributions) */}
-        {/* {type === 'surveyDistributions' && (
-          <div className="flex justify-center gap-6 mt-4 flex-wrap">
-            {data.map((item, index) => (
-              <div key={index} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border">
-                <span className="text-xl">{getEmojiForDataName(item.name)}</span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
-                  <span className="text-xs text-gray-500">{item.value} responses</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )} */}
+    {/* ✅ Positive/Negative Section (TOP of Bar Chart) */}
+   {type === 'surveyDistributions' && (
+  <div className="flex flex-col items-end gap-2 mb-2 mr-4">
+    {/* Positive */}
+    <div className="flex items-center gap-1 mr-2">
+      <span className="w-4 h-4 rounded-full bg-[#A9B7C5] flex-shrink-0"></span>
+      <span className="text-gray-600 font-small">
+        Positive: {positivePercent != null ? positivePercent : 0}%
+      </span>
+    </div>
 
-        {/* Total Summary */}
-        {/* <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-blue-800">Total Responses</span>
-            <span className="text-lg font-bold text-blue-900">{total}</span>
-          </div>
-          {dateRange && (
-            <div className="text-xs text-blue-600 mt-1">
-              Period: {dateRange.startDate.toLocaleDateString()} - {dateRange.endDate.toLocaleDateString()}
+    {/* Negative */}
+    <div className="flex items-center gap-1">
+      <span className="w-4 h-4 rounded-full bg-[#C4B99D] flex-shrink-0"></span>
+      <span className="text-gray-600 font-small">
+        Negative: {negativePercent != null ? negativePercent : 0}%
+      </span>
+    </div>
+  </div>
+)}
+</CardHeader>
+
+
+    <CardContent className="pt-3">
+      {/* Chart Section */}
+      <div className="mb-6">
+        {type === 'statusDistribution' ? renderPieChart() : renderBarChart()}
+      </div>
+
+      {/* Data Summary Grid - Only show for pie charts */}
+      {type === 'statusDistribution' && (
+        <div className="flex justify-center gap-6 mt-4 flex-wrap">
+          {data.map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded-sm"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-sm font-medium text-gray-700">{item.name}</span>
             </div>
-          )}
-        </div> */}
-      </CardContent>
-    </Card>
-  );
+          ))}
+        </div>
+      )}
+    </CardContent>
+  </Card>
+);
+
 };
 
 export default SurveyAnalyticsCard;

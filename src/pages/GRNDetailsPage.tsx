@@ -9,12 +9,16 @@ import {
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
+  ClipboardList,
+  Contact,
   Eye,
   File,
   FileSpreadsheet,
   FileText,
+  Images,
   Printer,
   Rss,
+  ScrollText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -32,6 +36,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import axios from "axios";
 import DebitCreditModal from "@/components/DebitCreditModal";
+import { format } from "date-fns";
 
 // Define the interface for Approval
 interface Approval {
@@ -429,209 +434,215 @@ export const GRNDetailsPage = () => {
 
       {/* Vendor/Contact Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            {billingAddress.building_name}
-          </h2>
-        </div>
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <span className="text-sm font-medium text-gray-700">Phone</span>
-                <span className="ml-8">: {billingAddress.phone}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">Fax</span>
-                <span className="ml-12">: {billingAddress.fax}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">Email</span>
-                <span className="ml-8">: {billingAddress.email}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">GST</span>
-                <span className="ml-11">: {billingAddress.gst_number}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">PAN</span>
-                <span className="ml-9">: {billingAddress.pan_number}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">
-                  Address
-                </span>
-                <span className="ml-5">: {billingAddress.address}</span>
-              </div>
-            </div>
+        <div className="flex items-center gap-3 pb-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <Contact className="w-4 h-4" />
           </div>
-          <div className="flex flex-col items-center justify-center lg:min-w-[200px]">
-            <div className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-              <span className="text-xs text-gray-500">image</span>
-            </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">{billingAddress.building_name}</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Phone</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {billingAddress.phone}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Fax</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {billingAddress.fax}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Email</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {billingAddress.email}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">GST</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {billingAddress.gst_number}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">PAN</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {billingAddress.pan_number}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Address</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {billingAddress.address}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Purchase Order Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
-          GRN
-        </h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
-          <div className="space-y-4">
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Invoice Number
-              </span>
-              <span className="text-sm">: {grnDetails.invoice_no}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Invoice Date
-              </span>
-              <span className="text-sm">: {grnDetails.bill_date}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Posting Date
-              </span>
-              <span className="text-sm">: {grnDetails.posting_date}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Retention Amount
-              </span>
-              <span className="text-sm">: {grnDetails.retention_amount}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                TDS Amount
-              </span>
-              <span className="text-sm">: {grnDetails.tds_amount}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                PO Reference Number
-              </span>
-              <span className="text-sm">
-                : {purchaseOrder.reference_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                GRN Amount
-              </span>
-              <span className="text-sm">: {grnDetails.grn_amount}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Payment Mode
-              </span>
-              <span className="text-sm">: {grnDetails.payment_mod}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Payable Amount
-              </span>
-              <span className="text-sm">: {grnDetails.payable_amount}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Related To
-              </span>
-              <span className="text-sm">: {grnDetails.related_to}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Physical Invoice sent to
-              </span>
-              <span className="text-sm">: {grnDetails.invoice_sent_at}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Gross Amount
-              </span>
-              <span className="text-sm">: {grnDetails.amount}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Notes
-              </span>
-              <span className="text-sm">: {grnDetails.notes}</span>
-            </div>
+        <div className="flex items-center gap-3 pb-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ScrollText className="w-4 h-4" />
           </div>
-          <div className="space-y-4">
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Reference No.
-              </span>
-              <span className="text-sm">
-                : {purchaseOrder.reference_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">ID</span>
-              <span className="text-sm">: {grnDetails.id}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Supplier Name
-              </span>
-              <span className="text-sm">: {supplier.company_name}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                PO Number
-              </span>
-              <span className="text-sm">
-                : {purchaseOrder.reference_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                QC Amount
-              </span>
-              <span className="text-sm">: {grnDetails.qh_amount}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Total Taxes
-              </span>
-              <span className="text-sm">: {grnDetails.total_taxes}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                PO Amount
-              </span>
-              <span className="text-sm">: {purchaseOrder.amount}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Invoice Amount
-              </span>
-              <span className="text-sm">: {grnDetails.invoice_amount}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                GRN Amount
-              </span>
-              <span className="text-sm">: {grnDetails.grn_amount}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">
-                Physical Invoice received on
-              </span>
-              <span className="text-sm">
-                : {grnDetails.invoice_received_at}
-              </span>
-            </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GRN</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Invoice Number</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.invoice_no}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Reference No.</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{purchaseOrder.reference_number}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Invoice Date</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails?.bill_date && format(grnDetails.bill_date, "dd/MM/yyyy")}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">ID</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.id}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Posting Date</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails?.posting_date && format(grnDetails.posting_date, "dd/MM/yyyy")}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Supplier Name</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{supplier.company_name}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Retention Amount</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.retention_amount}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">PO Number</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{purchaseOrder.reference_number}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">TDS Amount</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.tds_amount}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">QC Amount</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.qh_amount}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">PO Reference Number</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{purchaseOrder.reference_number}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Total Taxes</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.total_taxes}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">GRN Amount</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.grn_amount}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">PO Amount</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{purchaseOrder.amount}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Payment Mode</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.payment_mod}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.invoice_amount}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Payable Amount</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.payable_amount}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">GRN Amount</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.grn_amount}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Physical Invoice sent to</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.invoice_sent_at}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Physical Invoice received on</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.invoice_received_at}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Gross Amount</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.amount}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Related To</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.related_to}</span>
+          </div>
+
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Notes</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{grnDetails.notes}</span>
           </div>
         </div>
       </div>
 
       {/* Items Table Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ClipboardList className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Items Table</h3>
+        </div>
         <EnhancedTable
           data={itemsData}
           renderCell={(item: any, columnKey: string) => {
@@ -672,9 +683,12 @@ export const GRNDetailsPage = () => {
       </div>
 
       <Card className="shadow-sm border border-border mb-6">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-medium">Attachments</CardTitle>
-        </CardHeader>
+        <div className="flex items-center gap-3 p-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <Images className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+        </div>
         <CardContent>
           {Array.isArray(grnDetails.attachments?.general_attachments) &&
             grnDetails.attachments.general_attachments.length > 0 ? (
@@ -783,9 +797,12 @@ export const GRNDetailsPage = () => {
 
       {/* Debit Note Details Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Debit Note Details
-        </h2>
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ScrollText className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Debit Note Details</h3>
+        </div>
         <EnhancedTable
           data={grnDetails.debit_notes || []}
           columns={debitNoteColumns}

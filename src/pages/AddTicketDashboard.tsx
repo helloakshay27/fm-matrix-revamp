@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Upload, Paperclip, X, User, Ticket, MapPin } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
@@ -127,7 +127,6 @@ const fieldStyles = {
 
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   // Form state
   const [onBehalfOf, setOnBehalfOf] = useState('self');
@@ -218,11 +217,7 @@ export const AddTicketDashboard = () => {
       setUserAccount(response);
     } catch (error) {
       console.error('Error loading user account:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load user account",
-        variant: "destructive"
-      });
+          toast.error("Failed to load user account", { description: "Error" });
     } finally {
       setLoadingAccount(false);
     }
@@ -260,11 +255,7 @@ export const AddTicketDashboard = () => {
         );
       } catch (error) {
         console.error('Error loading suppliers:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load suppliers",
-          variant: "destructive"
-        });
+        toast.error("Failed to load suppliers", { description: "Error" });
       } finally {
         setLoadingSuppliers(false);
       }
@@ -310,11 +301,7 @@ export const AddTicketDashboard = () => {
       setCategories(response.helpdesk_categories || []);
     } catch (error) {
       console.error('Error loading categories:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load categories",
-        variant: "destructive"
-      });
+          toast.error("Failed to load categories", { description: "Error" });
     } finally {
       setLoadingCategories(false);
     }
@@ -328,11 +315,7 @@ export const AddTicketDashboard = () => {
       setSubcategories(subcats);
     } catch (error) {
       console.error('Error loading subcategories:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load subcategories",
-        variant: "destructive"
-      });
+      toast.error("Failed to load subcategories", { description: "Error" });
     } finally {
       setLoadingSubcategories(false);
     }
@@ -367,11 +350,7 @@ export const AddTicketDashboard = () => {
       setComplaintModes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading complaint modes:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load complaint modes",
-        variant: "destructive"
-      });
+          toast.error("Failed to load complaint modes", { description: "Error" });
     } finally {
       setLoadingComplaintModes(false);
     }
@@ -400,11 +379,7 @@ export const AddTicketDashboard = () => {
       setAreas(data.areas || []);
     } catch (error) {
       console.error('Error loading areas:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load areas",
-        variant: "destructive"
-      });
+          toast.error("Failed to load areas", { description: "Error" });
     } finally {
       setLoadingAreas(false);
     }
@@ -426,11 +401,7 @@ export const AddTicketDashboard = () => {
       setBuildings(data.pms_buildings || data || []);
     } catch (error) {
       console.error('Error loading buildings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load buildings",
-        variant: "destructive"
-      });
+          toast.error("Failed to load buildings", { description: "Error" });
     } finally {
       setLoadingBuildings(false);
     }
@@ -452,11 +423,7 @@ export const AddTicketDashboard = () => {
       setWings(data.wings || []);
     } catch (error) {
       console.error('Error loading wings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load wings",
-        variant: "destructive"
-      });
+          toast.error("Failed to load wings", { description: "Error" });
     } finally {
       setLoadingWings(false);
     }
@@ -478,11 +445,7 @@ export const AddTicketDashboard = () => {
       setFloors(data.floors || []);
     } catch (error) {
       console.error('Error loading floors:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load floors",
-        variant: "destructive"
-      });
+          toast.error("Failed to load floors", { description: "Error" });
     } finally {
       setLoadingFloors(false);
     }
@@ -504,11 +467,7 @@ export const AddTicketDashboard = () => {
       setRooms(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading rooms:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load rooms",
-        variant: "destructive"
-      });
+          toast.error("Failed to load rooms", { description: "Error" });
     } finally {
       setLoadingRooms(false);
     }
@@ -707,31 +666,19 @@ export const AddTicketDashboard = () => {
   const handleSubmit = async () => {
     // Validation
     if (!ticketType || !formData.categoryType || !formData.description) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
+      toast.error("Please fill in all required fields", { description: "Validation Error" });
       return;
     }
 
     // Validate complaint mode is selected
     if (!formData.complaintMode) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a complaint mode",
-        variant: "destructive"
-      });
+      toast.error("Please select a complaint mode", { description: "Validation Error" });
       return;
     }
 
     // Validate user selection for behalf of others
     if (onBehalfOf !== 'self' && !selectedUserId) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a user when creating ticket on behalf of others",
-        variant: "destructive"
-      });
+      toast.error("Please select a user when creating ticket on behalf of others", { description: "Validation Error" });
       return;
     }
 
@@ -746,11 +693,7 @@ export const AddTicketDashboard = () => {
       const siteId = userAccount?.site_id?.toString();
 
       if (!siteId) {
-        toast({
-          title: "Error",
-          description: "Unable to determine site ID from user account. Please refresh and try again.",
-          variant: "destructive"
-        });
+        toast.error("Unable to determine site ID from user account. Please refresh and try again.", { description: "Error" });
         return;
       }
 
@@ -803,12 +746,9 @@ export const AddTicketDashboard = () => {
       // Extract ticket number from response - common patterns are ticket_number, complaint_number, or number
       const ticketNumber = response?.ticket_number || response?.complaint_number || response?.number || response?.complaint?.ticket_number;
 
-      toast({
-        title: "Success",
-        description: ticketNumber
-          ? `Ticket created successfully - ${ticketNumber}`
-          : "Ticket created successfully!"
-      });
+      toast.success(ticketNumber
+        ? `Ticket created successfully - ${ticketNumber}`
+        : "Ticket created successfully!");
 
       // navigate('/maintenance/ticket');
       const currentPath = window.location.pathname;
@@ -820,11 +760,7 @@ export const AddTicketDashboard = () => {
       }
     } catch (error) {
       console.error('Error creating ticket:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create ticket. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Failed to create ticket. Please try again.", { description: "Error" });
     } finally {
       setIsSubmitting(false);
     }

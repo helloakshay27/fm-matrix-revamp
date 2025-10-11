@@ -1,15 +1,14 @@
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Box, Button, Paper, Stack, Typography, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import Avatar from '@mui/material/Avatar';
 import DownloadIcon from '@mui/icons-material/Download';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
-import TailwindMultiSelect, { TWOption } from '../components/TailwindMultiSelect';
+import TailwindMultiSelect from '../components/TailwindMultiSelect';
 import TailwindSingleSelect from '../components/TailwindSingleSelect';
 import {
     BarChart,
@@ -21,7 +20,6 @@ import {
     ResponsiveContainer,
     LabelList,
 } from 'recharts';
-import { ArrowDropDownIcon } from '@mui/x-date-pickers';
 
 const COLORS = {
     krcc: '#FFC107', // Yellow
@@ -98,18 +96,34 @@ const MsafeDashboardVI: React.FC = () => {
     const [newJoineeData, setNewJoineeData] = useState<NewJoineeDatum[]>([]);
     const [newJoineeLoading, setNewJoineeLoading] = useState(false);
     const newJoineeChartRef = useRef<HTMLDivElement | null>(null);
+    // New Joinee Y-axis: start at 0 and use "nice" integer ticks (with ~10% headroom)
+    const newJoineeYAxis = useMemo(() => {
+        const max = newJoineeData.reduce((m, d: any) => Math.max(m, Number(d?.count || 0)), 0);
+        let upper = Math.max(0, Math.ceil(max * 1.1));
+        if (upper <= 10) {
+            const ticks = Array.from({ length: upper + 1 }, (_, i) => i);
+            return { upper, ticks };
+        }
+        const niceStep = (range: number, maxTicks = 10) => {
+            const rough = range / maxTicks;
+            const pow10 = Math.pow(10, Math.floor(Math.log10(Math.max(rough, 1))))
+            const r = rough / pow10;
+            let stepBase = 1;
+            if (r <= 1) stepBase = 1; else if (r <= 2) stepBase = 2; else if (r <= 5) stepBase = 5; else stepBase = 10;
+            return stepBase * pow10;
+        };
+        const step = Math.max(1, Math.round(niceStep(upper, 9)));
+        upper = Math.ceil(upper / step) * step;
+        const count = Math.floor(upper / step) + 1;
+        const ticks = Array.from({ length: count }, (_, i) => i * step);
+        if (ticks[0] !== 0) ticks.unshift(0);
+        return { upper, ticks };
+    }, [newJoineeData]);
     // Monthwise summary state (dynamic months × sites matrix)
     const [njSummaryLoading, setNjSummaryLoading] = useState(false);
     const [njSummaryMonths, setNjSummaryMonths] = useState<string[]>([]); // e.g., ['Aug-2025','Sep-2025','Oct-2025']
     const [njSummarySites, setNjSummarySites] = useState<string[]>([]);   // sites derived from response, not from chart
     const [njSummaryMatrix, setNjSummaryMatrix] = useState<Record<string, Record<string, number>>>({}); // site -> month -> value
-    // Default to last 30 days: startDate = 30 days ago, endDate = today
-    const [startDate, setStartDate] = useState<any>(() => {
-        const d = new Date();
-        d.setDate(d.getDate() - 30);
-        return d;
-    });
-    const [endDate, setEndDate] = useState<any>(() => new Date());
 
     // Applied filter state: API calls only use these values (set on Apply)
     const [appliedCluster, setAppliedCluster] = useState<string[]>([]);
@@ -118,10 +132,12 @@ const MsafeDashboardVI: React.FC = () => {
     const [appliedEmployeeType, setAppliedEmployeeType] = useState('');
     const [appliedStartDate, setAppliedStartDate] = useState<any>(() => {
         const d = new Date();
-        d.setDate(d.getDate() - 30);
-        return d;
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
     });
-    const [appliedEndDate, setAppliedEndDate] = useState<any>(() => new Date());
+    const [appliedEndDate, setAppliedEndDate] = useState<any>(() => {
+        const d = new Date();
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    });
 
     // Snapshot shape for passing filters to fetch functions
     type FiltersSnapshot = {
@@ -133,26 +149,18 @@ const MsafeDashboardVI: React.FC = () => {
         to: any;
     };
 
-    // Handle Cluster multi-select; store only real selections
-    const handleClusterChange = (e: any) => {
-        const next = ((e.target.value as string[]) || []).filter((v) => v !== 'all');
-        setCluster(next);
-    };
-
-    // Explicit toggle for Cluster 'Select All' to ensure all item checkboxes reflect
-    const handleToggleSelectAllClusters = (e: any) => {
-        e?.preventDefault?.();
-        e?.stopPropagation?.();
-        const allValues = clusterOptions.filter((o) => o.value !== 'all').map((o) => o.value);
-        const isAllSelected = allValues.length > 0 && cluster.length === allValues.length;
-        setCluster(isAllSelected ? [] : allValues);
-    };
-
-    // (Using onChange with value='all' to handle Select All)
-
     const chartRef = useRef<HTMLDivElement | null>(null);
     const day1ChartRef = useRef<HTMLDivElement | null>(null);
     const trainingChartRef = useRef<HTMLDivElement | null>(null);
+    // For aligning external 'Set Custom Date' heading with the date controls inside FiltersPanel
+    const filtersAreaRef = useRef<HTMLDivElement | null>(null);
+    const [dateLabelOffset, setDateLabelOffset] = useState<number>(0);
+    const handleDateBlockRect = useCallback((rect: DOMRect) => {
+        const containerRect = filtersAreaRef.current?.getBoundingClientRect();
+        if (!containerRect) return;
+        const left = Math.max(0, rect.left - containerRect.left);
+        setDateLabelOffset(left);
+    }, []);
 
     const today = useMemo(() => new Date(), []);
 
@@ -178,7 +186,6 @@ const MsafeDashboardVI: React.FC = () => {
     const [clusterOptions, setClusterOptions] = useState<Option[]>([]);
     const [circleOptions, setCircleOptions] = useState<Option[]>([]);
     const [functionOptions, setFunctionOptions] = useState<Option[]>([]);
-    const didInitSelections = useRef(false);
     const didInitialApply = useRef(false);
     const employeeTypes: Option[] = [
         { label: 'Internal / External', value: 'both' },
@@ -475,62 +482,19 @@ const MsafeDashboardVI: React.FC = () => {
     useEffect(() => {
         if (didInitialApply.current) return;
         didInitialApply.current = true;
-        // fire and forget initial load without filters
+        // Initial load: apply current default date range (last 30 days to today) to all API calls
+        const initialSnap: FiltersSnapshot = {
+            cluster: [],
+            circle: [],
+            func: [],
+            employeeType: '',
+            from: new Date(appliedStartDate.getFullYear(), appliedStartDate.getMonth(), appliedStartDate.getDate()),
+            to: new Date(appliedEndDate.getFullYear(), appliedEndDate.getMonth(), appliedEndDate.getDate()),
+        };
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        fetchOnboarding(false);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        fetchDay1HSW(false);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        fetchTrainingCompliance(false);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        fetchNewJoineeTrend(false);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        fetchNewJoineeSummaryMonthwise(false);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        fetchMedicalFirstAid(false);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        fetchSMT(false);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        fetchLMC(false);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        fetchDriving(false);
-        // We intentionally don't depend on filters/dates here to keep it a single no-filter load
+        applyFilters(initialSnap);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    // Handle Circle multi-select; store only real selections
-    const handleCircleChange = (e: any) => {
-        const next = ((e.target.value as string[]) || []).filter((v) => v !== 'all');
-        setCircle(next);
-    };
-
-    // Explicit toggle for Circle 'Select All'
-    const handleToggleSelectAllCircles = (e: any) => {
-        e?.preventDefault?.();
-        e?.stopPropagation?.();
-        const allValues = circleOptions.filter((o) => o.value !== 'all').map((o) => o.value);
-        const isAllSelected = allValues.length > 0 && circle.length === allValues.length;
-        setCircle(isAllSelected ? [] : allValues);
-    };
-
-    // Handle Function multi-select; store only real selections
-    const handleFunctionChange = (e: any) => {
-        const next = ((e.target.value as string[]) || []).filter((v) => v !== 'all');
-        setFunc(next);
-    };
-
-    // Explicit toggle for Function 'Select All'
-    const handleToggleSelectAllFunctions = (e: any) => {
-        e?.preventDefault?.();
-        e?.stopPropagation?.();
-        const allValues = functionOptions.filter((o) => o.value !== 'all').map((o) => o.value);
-        const isAllSelected = allValues.length > 0 && func.length === allValues.length;
-        setFunc(isAllSelected ? [] : allValues);
-    };
-
-    // (Using onChange with value='all' to handle Select All)
-
-    // (Using onChange with value='all' to handle Select All)
 
 
     // Onboarding Status data (from API on Apply)
@@ -538,23 +502,40 @@ const MsafeDashboardVI: React.FC = () => {
     const [onboardingData, setOnboardingData] = useState<OnboardingDatum[]>([]);
     const [onboardingLoading, setOnboardingLoading] = useState(false);
 
-    // Compute nice Y-axis ticks for Onboarding chart so we don't show only 2-3 labels
+    // Onboarding Y-axis: start at 0 and use "nice" integer ticks up to the data max (with ~10% headroom)
     const onboardingYAxis = useMemo(() => {
-        const max = onboardingData.reduce((m, d) => {
-            const a = Number((d as any).KRCC) || 0;
-            const b = Number((d as any).Approval) || 0;
-            const c = Number((d as any).HSW) || 0;
+        const max = onboardingData.reduce((m, d: any) => {
+            const a = Number(d?.KRCC || 0);
+            const b = Number(d?.Approval || 0);
+            const c = Number(d?.HSW || 0);
             return Math.max(m, a, b, c);
         }, 0);
-        const targetTicks = 8; // aim for ~8 ticks
-        const roughStep = Math.max(1, Math.ceil(max / Math.max(1, targetTicks)));
-        const pow = Math.pow(10, Math.floor(Math.log10(roughStep)));
-        const bases = [1, 2, 5, 10];
-        const base = bases.find((b) => b * pow >= roughStep) || 10;
-        const step = base * pow;
-        const upper = Math.ceil((max + step * 0.2) / step) * step; // small headroom
-        const ticks: number[] = [];
-        for (let v = 0; v <= upper; v += step) ticks.push(v);
+
+        // Add a little headroom above the max value
+        let upper = Math.max(0, Math.ceil(max * 1.1));
+
+        // For very small ranges, show every integer so 0 is included explicitly
+        if (upper <= 10) {
+            const ticks = Array.from({ length: upper + 1 }, (_, i) => i);
+            return { upper, ticks };
+        }
+
+        // Compute a "nice" step (1, 2, 5 × 10^k) to keep ~8–10 ticks
+        const niceStep = (range: number, maxTicks = 10) => {
+            const rough = range / maxTicks;
+            const pow10 = Math.pow(10, Math.floor(Math.log10(Math.max(rough, 1))))
+            const r = rough / pow10;
+            let stepBase = 1;
+            if (r <= 1) stepBase = 1; else if (r <= 2) stepBase = 2; else if (r <= 5) stepBase = 5; else stepBase = 10;
+            return stepBase * pow10;
+        };
+
+        const step = Math.max(1, Math.round(niceStep(upper, 9))); // aim for ~10 ticks
+        upper = Math.ceil(upper / step) * step; // round up to a multiple of step
+        const count = Math.floor(upper / step) + 1;
+        const ticks = Array.from({ length: count }, (_, i) => i * step);
+        // Ensure 0 is always included as the first tick
+        if (ticks[0] !== 0) ticks.unshift(0);
         return { upper, ticks };
     }, [onboardingData]);
 
@@ -562,6 +543,33 @@ const MsafeDashboardVI: React.FC = () => {
     type Day1HSWDatum = { site: string; Complaint: number; NonComplaint: number };
     const [day1HSWData, setDay1HSWData] = useState<Day1HSWDatum[]>([]);
     const [day1HSWLoading, setDay1HSWLoading] = useState(false);
+    // Day 1 HSW Y-axis: start at 0 and use "nice" integer ticks up to max (with ~10% headroom)
+    const day1HSWYAxis = useMemo(() => {
+        const max = day1HSWData.reduce((m, d: any) => {
+            const a = Number(d?.Complaint || 0);
+            const b = Number(d?.NonComplaint || 0);
+            return Math.max(m, a, b);
+        }, 0);
+        let upper = Math.max(0, Math.ceil(max * 1.1));
+        if (upper <= 10) {
+            const ticks = Array.from({ length: upper + 1 }, (_, i) => i);
+            return { upper, ticks };
+        }
+        const niceStep = (range: number, maxTicks = 10) => {
+            const rough = range / maxTicks;
+            const pow10 = Math.pow(10, Math.floor(Math.log10(Math.max(rough, 1))))
+            const r = rough / pow10;
+            let stepBase = 1;
+            if (r <= 1) stepBase = 1; else if (r <= 2) stepBase = 2; else if (r <= 5) stepBase = 5; else stepBase = 10;
+            return stepBase * pow10;
+        };
+        const step = Math.max(1, Math.round(niceStep(upper, 9)));
+        upper = Math.ceil(upper / step) * step;
+        const count = Math.floor(upper / step) + 1;
+        const ticks = Array.from({ length: count }, (_, i) => i * step);
+        if (ticks[0] !== 0) ticks.unshift(0);
+        return { upper, ticks };
+    }, [day1HSWData]);
 
     // Training compliance data (from API)
     type TrainingDatum = {
@@ -574,19 +582,59 @@ const MsafeDashboardVI: React.FC = () => {
     };
     const [trainingData, setTrainingData] = useState<TrainingDatum[]>([]);
     const [trainingLoading, setTrainingLoading] = useState(false);
+    // Training Y-axis: start at 0 and use "nice" integer ticks up to max (with ~10% headroom)
+    const trainingYAxis = useMemo(() => {
+        const max = trainingData.reduce((m, d: any) => {
+            const a = Number(d?.twoW || 0);
+            const b = Number(d?.fourW || 0);
+            const c = Number(d?.workAtHeight || 0);
+            const e = Number(d?.electrical || 0);
+            const f = Number(d?.ofc || 0);
+            return Math.max(m, a, b, c, e, f);
+        }, 0);
+        let upper = Math.max(0, Math.ceil(max * 1.1));
+        if (upper <= 10) {
+            const ticks = Array.from({ length: upper + 1 }, (_, i) => i);
+            return { upper, ticks };
+        }
+        const niceStep = (range: number, maxTicks = 10) => {
+            const rough = range / maxTicks;
+            const pow10 = Math.pow(10, Math.floor(Math.log10(Math.max(rough, 1))))
+            const r = rough / pow10;
+            let stepBase = 1;
+            if (r <= 1) stepBase = 1; else if (r <= 2) stepBase = 2; else if (r <= 5) stepBase = 5; else stepBase = 10;
+            return stepBase * pow10;
+        };
+        const step = Math.max(1, Math.round(niceStep(upper, 9)));
+        upper = Math.ceil(upper / step) * step;
+        const count = Math.floor(upper / step) + 1;
+        const ticks = Array.from({ length: count }, (_, i) => i * step);
+        if (ticks[0] !== 0) ticks.unshift(0);
+        return { upper, ticks };
+    }, [trainingData]);
 
     // Global loading indicator across all sections
     // (moved below to after all loading states exist)
 
+    // Format a Date-like value as YYYY-MM-DD in LOCAL time (avoid UTC off-by-one)
     const formatDate = (d: any): string => {
         if (!d) return '';
         try {
             const date = new Date(d);
             if (Number.isNaN(date.getTime())) return '';
-            return date.toISOString().slice(0, 10);
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
         } catch {
             return '';
         }
+    };
+
+    // Normalize to local midnight to keep day consistent across timezones
+    const atLocalMidnight = (d: any): Date => {
+        const date = new Date(d ?? new Date());
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
     };
 
     const buildIdsParam = (arr: string[]) => {
@@ -673,6 +721,8 @@ const MsafeDashboardVI: React.FC = () => {
                 fetchSMT(true, snap),
                 fetchLMC(true, snap),
                 fetchDriving(true, snap),
+                fetchComplianceForecast(true, snap),
+                fetchFTPR(true, snap),
             ]);
             toast.success('Filters applied', { id });
         } catch (e) {
@@ -869,17 +919,6 @@ const MsafeDashboardVI: React.FC = () => {
         return Number.isInteger(n) ? `${n}` : n.toFixed(2);
     };
 
-    // Custom label renderers to horizontally offset series labels and avoid overlap
-    const renderLabelWithDx = (dx: number) => (props: any) => {
-        const { x = 0, y = 0, value } = props;
-        const text = formatPercentLabel(value);
-        if (!text) return null;
-        return (
-            <text x={x + dx} y={y - 6} fill="#666" fontSize={11} textAnchor="middle">
-                {text}
-            </text>
-        );
-    };
 
     // Generic centered label factory with halo and optional vertical offset
     const makeCenteredLabel = (getText: (n: number) => string | null, yOffset = 6) => (props: any) => {
@@ -930,53 +969,11 @@ const MsafeDashboardVI: React.FC = () => {
         );
     };
 
-    // Label renderer for FTPR: center above each bar, format as percentage, hide very small bars
-    const renderFtprLabel = (props: any) => {
-        const { x = 0, y = 0, width = 0, value } = props;
-        const n = Number(value);
-        if (!Number.isFinite(n)) return null;
-        // Hide labels under 0.04 (~4%) to avoid clutter on tiny bars
-        if (n < 0.04) return null;
-        const cx = x + width / 2;
-        const text = `${(n * 100).toFixed(0)}%`;
-        return (
-            <text
-                x={cx}
-                y={y - 6}
-                fill="#111"
-                fontSize={10}
-                textAnchor="middle"
-                stroke="#fff"
-                strokeWidth={3}
-                paintOrder="stroke"
-            >
-                {text}
-            </text>
-        );
-    };
 
-    // First Time Pass Rate (FTPR) chart data (static values 0–1)
-    const ftprData = useMemo(
-        () => [
-            { site: 'APT', twoW: 1.20, fourW: 0.10, workAtHeight: 0.05, electrical: 0.00, ofc: 0.08 },
-            { site: 'BJO', twoW: 0.00, fourW: 0.15, workAtHeight: 0.00, electrical: 0.10, ofc: 0.00 },
-            { site: 'COR', twoW: 0.30, fourW: 0.25, workAtHeight: 0.10, electrical: 0.05, ofc: 0.00 },
-            { site: 'DEL', twoW: 0.10, fourW: 0.05, workAtHeight: 0.20, electrical: 0.15, ofc: 0.05 },
-            { site: 'GUJ', twoW: 0.00, fourW: 0.12, workAtHeight: 0.08, electrical: 0.00, ofc: 0.02 },
-            { site: 'KAR', twoW: 0.18, fourW: 0.00, workAtHeight: 0.10, electrical: 0.06, ofc: 0.00 },
-            { site: 'KER', twoW: 0.22, fourW: 0.14, workAtHeight: 0.00, electrical: 0.12, ofc: 0.00 },
-            { site: 'MAH', twoW: 0.00, fourW: 0.00, workAtHeight: 0.05, electrical: 0.00, ofc: 0.00 },
-            { site: 'MPC', twoW: 1.05, fourW: 0.04, workAtHeight: 0.00, electrical: 0.00, ofc: 0.00 },
-            { site: 'MUM', twoW: 0.12, fourW: 0.08, workAtHeight: 0.03, electrical: 0.09, ofc: 0.00 },
-            { site: 'PUH', twoW: 0.00, fourW: 0.11, workAtHeight: 0.00, electrical: 0.05, ofc: 0.00 },
-            { site: 'RAJ', twoW: 0.04, fourW: 0.00, workAtHeight: 0.07, electrical: 0.00, ofc: 0.00 },
-            { site: 'TNC', twoW: 1.10, fourW: 0.09, workAtHeight: 0.44, electrical: 0.22, ofc: 0.03 },
-            { site: 'TUP', twoW: 0.00, fourW: 0.00, workAtHeight: 0.02, electrical: 0.00, ofc: 0.00 },
-            { site: 'VISSL', twoW: 1.50, fourW: 0.00, workAtHeight: 0.00, electrical: 0.00, ofc: 0.00 },
-            { site: 'WBKA', twoW: 0.00, fourW: 0.00, workAtHeight: 0.75, electrical: 0.25, ofc: 0.00 },
-        ],
-        []
-    );
+    // First Time Pass Rate (FTPR) chart data (from API, values normalized to 0–100)
+    type FTPRItem = { site: string; twoW: number; fourW: number; workAtHeight: number; electrical: number; ofc: number };
+    const [ftprData, setFtprData] = useState<FTPRItem[]>([]);
+    const [ftprLoading, setFtprLoading] = useState(false);
     const ftprChartWidth = useMemo(() => Math.max(1600, ftprData.length * 130), [ftprData.length]);
 
     const ftprChartRef = useRef<HTMLDivElement | null>(null);
@@ -989,23 +986,75 @@ const MsafeDashboardVI: React.FC = () => {
         link.click();
     };
 
-    // newJoineeChartRef and downloadNewJoineeChart declared earlier — keep single source of truth
+    // Fetch FTPR from API
+    const fetchFTPR = async (useFilters: boolean, filters?: FiltersSnapshot) => {
+        setFtprLoading(true);
+        try {
+            const baseUrl = localStorage.getItem('baseUrl') || '';
+            const token = localStorage.getItem('token') || '';
+            if (!baseUrl || !token) {
+                console.warn('Missing baseUrl or token — cannot fetch FTPR');
+                setFtprLoading(false);
+                return;
+            }
+            const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+            const params = new URLSearchParams();
+            params.set('access_token', token);
+            params.set('company_id', '145');
+            if (useFilters) {
+                const src = filters ?? {
+                    cluster: appliedCluster,
+                    circle: appliedCircle,
+                    func: appliedFunc,
+                    employeeType: appliedEmployeeType,
+                    from: appliedStartDate,
+                    to: appliedEndDate,
+                };
+                const clusterParam = buildIdsParam(src.cluster);
+                const circleParam = buildIdsParam(src.circle);
+                const functionParam = buildIdsParam(src.func);
+                if (clusterParam) params.set('cluster_id', clusterParam);
+                if (circleParam) params.set('circle_id', circleParam);
+                if (functionParam) params.set('function_id', functionParam);
+                if (src.employeeType) params.set('type', src.employeeType);
+                if (src.from) params.set('from_date', formatDate(src.from));
+                if (src.to) params.set('to_date', formatDate(src.to));
+            }
+            const url = `https://${host}/msafe_dashboard/first_time_pass_rate.json?${params.toString()}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            const arr = json?.clusters || [];
+            let rows: FTPRItem[] = (Array.isArray(arr) ? arr : []).map((x: any) => ({
+                site: x?.cluster_name || x?.site || '-',
+                twoW: Number(x?.two_wheeler ?? 0),
+                fourW: Number(x?.four_wheeler ?? 0),
+                workAtHeight: Number(x?.work_at_height ?? 0),
+                electrical: Number(x?.electrical ?? 0),
+                ofc: Number(x?.ofc ?? 0),
+            }));
+            // Normalize values to 0..100 scale for display (if API returns 0..1, scale up)
+            const rawMax = rows.reduce((m, d) => Math.max(m, d.twoW, d.fourW, d.workAtHeight, d.electrical, d.ofc), 0);
+            if (rawMax <= 1.0001) {
+                rows = rows.map((d) => ({
+                    site: d.site,
+                    twoW: d.twoW * 100,
+                    fourW: d.fourW * 100,
+                    workAtHeight: d.workAtHeight * 100,
+                    electrical: d.electrical * 100,
+                    ofc: d.ofc * 100,
+                }));
+            }
+            rows.sort((a, b) => a.site.localeCompare(b.site));
+            setFtprData(rows);
+        } catch (err) {
+            console.error('Failed to fetch FTPR:', err);
+            setFtprData([]);
+        } finally {
+            setFtprLoading(false);
+        }
+    };
 
-    // New Joinee Summary (table) for Sep-2025 and Oct-2025 from screenshot
-    const newJoineeMonthSummary = useMemo(
-        () => [
-            { site: 'APT', sep: 28, oct: 2 },
-            { site: 'BJO', sep: 12, oct: 2 },
-            { site: 'COR', sep: 27, oct: 11 },
-            { site: 'DEL', sep: 10, oct: 1 },
-            { site: 'GUJ', sep: 27, oct: 5 },
-            { site: 'KAR', sep: 26, oct: 1 },
-            { site: 'KER', sep: 19, oct: 2 },
-            { site: 'MAH', sep: 30, oct: 4 },
-            { site: 'MPC', sep: 24, oct: 1 },
-        ],
-        []
-    );
 
     // LMC data (from API)
     type LMCItem = { site: string; completed: number; due: number };
@@ -1016,6 +1065,61 @@ const MsafeDashboardVI: React.FC = () => {
     const [smtLoading, setSmtLoading] = useState(false);
     const lmcChartRef = useRef<HTMLDivElement | null>(null);
     const smtChartRef = useRef<HTMLDivElement | null>(null);
+    // LMC Y-axis: start at 0 and use "nice" integer ticks (with ~10% headroom)
+    const lmcYAxis = useMemo(() => {
+        const max = lmcData.reduce((m, d: any) => {
+            const a = Number(d?.completed || 0);
+            const b = Number(d?.due || 0);
+            return Math.max(m, a, b);
+        }, 0);
+        let upper = Math.max(0, Math.ceil(max * 1.1));
+        if (upper <= 10) {
+            const ticks = Array.from({ length: upper + 1 }, (_, i) => i);
+            return { upper, ticks };
+        }
+        const niceStep = (range: number, maxTicks = 10) => {
+            const rough = range / maxTicks;
+            const pow10 = Math.pow(10, Math.floor(Math.log10(Math.max(rough, 1))))
+            const r = rough / pow10;
+            let stepBase = 1;
+            if (r <= 1) stepBase = 1; else if (r <= 2) stepBase = 2; else if (r <= 5) stepBase = 5; else stepBase = 10;
+            return stepBase * pow10;
+        };
+        const step = Math.max(1, Math.round(niceStep(upper, 9)));
+        upper = Math.ceil(upper / step) * step;
+        const count = Math.floor(upper / step) + 1;
+        const ticks = Array.from({ length: count }, (_, i) => i * step);
+        if (ticks[0] !== 0) ticks.unshift(0);
+        return { upper, ticks };
+    }, [lmcData]);
+
+    // SMT Y-axis: start at 0 and use "nice" integer ticks (with ~10% headroom)
+    const smtYAxis = useMemo(() => {
+        const max = smtData.reduce((m, d: any) => {
+            const a = Number(d?.completed || 0);
+            const b = Number(d?.due || 0);
+            return Math.max(m, a, b);
+        }, 0);
+        let upper = Math.max(0, Math.ceil(max * 1.1));
+        if (upper <= 10) {
+            const ticks = Array.from({ length: upper + 1 }, (_, i) => i);
+            return { upper, ticks };
+        }
+        const niceStep = (range: number, maxTicks = 10) => {
+            const rough = range / maxTicks;
+            const pow10 = Math.pow(10, Math.floor(Math.log10(Math.max(rough, 1))))
+            const r = rough / pow10;
+            let stepBase = 1;
+            if (r <= 1) stepBase = 1; else if (r <= 2) stepBase = 2; else if (r <= 5) stepBase = 5; else stepBase = 10;
+            return stepBase * pow10;
+        };
+        const step = Math.max(1, Math.round(niceStep(upper, 9)));
+        upper = Math.ceil(upper / step) * step;
+        const count = Math.floor(upper / step) + 1;
+        const ticks = Array.from({ length: count }, (_, i) => i * step);
+        if (ticks[0] !== 0) ticks.unshift(0);
+        return { upper, ticks };
+    }, [smtData]);
     const downloadLmc = async () => {
         if (!lmcChartRef.current) return;
         const canvas = await html2canvas(lmcChartRef.current);
@@ -1156,7 +1260,7 @@ const MsafeDashboardVI: React.FC = () => {
         }
     };
 
-    // Compliance Forcasting (static from screenshot)
+    // Compliance Forcasting (API)
     const CF_COLORS = {
         twoW: '#FFC107', // Yellow
         fourW: '#D32F2F', // Red
@@ -1166,27 +1270,49 @@ const MsafeDashboardVI: React.FC = () => {
         firstAid: '#8BC34A', // Green
     } as const;
 
-    const complianceForecastData = useMemo(
-        () => [
-            { site: 'APT', twoW: 0, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'BJO', twoW: 1, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'COR', twoW: 1, fourW: 1, workAtHeight: 16.67, electrical: 33.33, ofc: 0, firstAid: 33.33 },
-            { site: 'DEL', twoW: 0, fourW: 0, workAtHeight: 0, electrical: 100, ofc: 0, firstAid: 0 },
-            { site: 'GUJ', twoW: 4, fourW: 1, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 100 },
-            { site: 'KAR', twoW: 4, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'KER', twoW: 3, fourW: 2, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'MAH', twoW: 0, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'MPC', twoW: 1, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'MUM', twoW: 0, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'PUH', twoW: 0, fourW: 2, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'RAJ', twoW: 0, fourW: 1, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'TNC', twoW: 7, fourW: 2, workAtHeight: 44.44, electrical: 22.22, ofc: 0, firstAid: 33.33 },
-            { site: 'TUP', twoW: 0, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 100 },
-            { site: 'VISSL', twoW: 1, fourW: 0, workAtHeight: 0, electrical: 0, ofc: 0, firstAid: 0 },
-            { site: 'WBKA', twoW: 0, fourW: 0, workAtHeight: 75, electrical: 25, ofc: 0, firstAid: 0 },
-        ],
-        []
-    );
+    type CFItem = {
+        site: string;
+        twoW: number;
+        fourW: number;
+        workAtHeight: number;
+        electrical: number;
+        ofc: number;
+        firstAid: number;
+    };
+    const [complianceForecastData, setComplianceForecastData] = useState<CFItem[]>([]);
+    const [complianceForecastLoading, setComplianceForecastLoading] = useState(false);
+
+    // Nice Y-axis for Compliance Forecasting (auto range from 0)
+    const complianceForecastYAxis = useMemo(() => {
+        const max = complianceForecastData.reduce((m, d) => {
+            const a = Number(d?.twoW || 0);
+            const b = Number(d?.fourW || 0);
+            const c = Number(d?.workAtHeight || 0);
+            const e = Number(d?.electrical || 0);
+            const f = Number(d?.ofc || 0);
+            const g = Number(d?.firstAid || 0);
+            return Math.max(m, a, b, c, e, f, g);
+        }, 0);
+        let upper = Math.max(0, Math.ceil(max * 1.1));
+        if (upper <= 10) {
+            const ticks = Array.from({ length: upper + 1 }, (_, i) => i);
+            return { upper, ticks };
+        }
+        const niceStep = (range: number, maxTicks = 10) => {
+            const rough = range / maxTicks;
+            const pow10 = Math.pow(10, Math.floor(Math.log10(Math.max(rough, 1))));
+            const r = rough / pow10;
+            let stepBase = 1;
+            if (r <= 1) stepBase = 1; else if (r <= 2) stepBase = 2; else if (r <= 5) stepBase = 5; else stepBase = 10;
+            return stepBase * pow10;
+        };
+        const step = Math.max(1, Math.round(niceStep(upper, 9)));
+        upper = Math.ceil(upper / step) * step;
+        const count = Math.floor(upper / step) + 1;
+        const ticks = Array.from({ length: count }, (_, i) => i * step);
+        if (ticks[0] !== 0) ticks.unshift(0);
+        return { upper, ticks };
+    }, [complianceForecastData]);
 
     // Derived width for Compliance Forcasting chart to enable comfortable horizontal scrolling
     const complianceForecastWidth = useMemo(
@@ -1204,6 +1330,65 @@ const MsafeDashboardVI: React.FC = () => {
         link.click();
     };
 
+    // Fetch Compliance Forecasting from API
+    const fetchComplianceForecast = async (useFilters: boolean, filters?: FiltersSnapshot) => {
+        setComplianceForecastLoading(true);
+        try {
+            const baseUrl = localStorage.getItem('baseUrl') || '';
+            const token = localStorage.getItem('token') || '';
+            if (!baseUrl || !token) {
+                console.warn('Missing baseUrl or token — cannot fetch Compliance Forecasting');
+                setComplianceForecastLoading(false);
+                return;
+            }
+            const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+            const params = new URLSearchParams();
+            params.set('access_token', token);
+            params.set('company_id', '145');
+            if (useFilters) {
+                const src = filters ?? {
+                    cluster: appliedCluster,
+                    circle: appliedCircle,
+                    func: appliedFunc,
+                    employeeType: appliedEmployeeType,
+                    from: appliedStartDate,
+                    to: appliedEndDate,
+                };
+                const clusterParam = buildIdsParam(src.cluster);
+                const circleParam = buildIdsParam(src.circle);
+                const functionParam = buildIdsParam(src.func);
+                if (clusterParam) params.set('cluster_id', clusterParam);
+                if (circleParam) params.set('circle_id', circleParam);
+                if (functionParam) params.set('function_id', functionParam);
+                if (src.employeeType) params.set('type', src.employeeType);
+                params.set('from_date', formatDate(src.from));
+                params.set('to_date', formatDate(src.to));
+            }
+            const url = `https://${host}/msafe_dashboard/compliance_forecasting.json?${params.toString()}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            const arr = json?.clusters || [];
+            const rows: CFItem[] = (Array.isArray(arr) ? arr : []).map((x: any) => ({
+                site: x?.cluster_name || x?.site || '-',
+                twoW: Number(x?.two_w ?? 0),
+                fourW: Number(x?.four_w ?? 0),
+                workAtHeight: Number(x?.work_at_height ?? 0),
+                electrical: Number(x?.electrical ?? 0),
+                ofc: Number(x?.ofc ?? 0),
+                firstAid: Number(x?.first_aid ?? 0),
+            }));
+            // Stable alpha sort by site
+            rows.sort((a, b) => a.site.localeCompare(b.site));
+            setComplianceForecastData(rows);
+        } catch (err) {
+            console.error('Failed to fetch Compliance Forecasting:', err);
+            setComplianceForecastData([]);
+        } finally {
+            setComplianceForecastLoading(false);
+        }
+    };
+
     // Driving (static from screenshot)
     const DRIVING_COLORS = {
         license: COLORS.krcc, // Yellow
@@ -1213,6 +1398,34 @@ const MsafeDashboardVI: React.FC = () => {
     type DrivingItem = { site: string; license: number; insurance: number; puc: number };
     const [drivingData, setDrivingData] = useState<DrivingItem[]>([]);
     const [drivingLoading, setDrivingLoading] = useState(false);
+    // Driving Y-axis: start at 0 and use "nice" integer ticks (with ~10% headroom)
+    const drivingYAxis = useMemo(() => {
+        const max = drivingData.reduce((m, d: any) => {
+            const a = Number(d?.license || 0);
+            const b = Number(d?.insurance || 0);
+            const c = Number(d?.puc || 0);
+            return Math.max(m, a, b, c);
+        }, 0);
+        let upper = Math.max(0, Math.ceil(max * 1.1));
+        if (upper <= 10) {
+            const ticks = Array.from({ length: upper + 1 }, (_, i) => i);
+            return { upper, ticks };
+        }
+        const niceStep = (range: number, maxTicks = 10) => {
+            const rough = range / maxTicks;
+            const pow10 = Math.pow(10, Math.floor(Math.log10(Math.max(rough, 1))))
+            const r = rough / pow10;
+            let stepBase = 1;
+            if (r <= 1) stepBase = 1; else if (r <= 2) stepBase = 2; else if (r <= 5) stepBase = 5; else stepBase = 10;
+            return stepBase * pow10;
+        };
+        const step = Math.max(1, Math.round(niceStep(upper, 9)));
+        upper = Math.ceil(upper / step) * step;
+        const count = Math.floor(upper / step) + 1;
+        const ticks = Array.from({ length: count }, (_, i) => i * step);
+        if (ticks[0] !== 0) ticks.unshift(0);
+        return { upper, ticks };
+    }, [drivingData]);
 
     const drivingChartRef = useRef<HTMLDivElement | null>(null);
     const downloadDrivingChart = async () => {
@@ -1396,6 +1609,33 @@ const MsafeDashboardVI: React.FC = () => {
     const [medicalFirstAidData, setMedicalFirstAidData] = useState<MedicalFAItem[]>([]);
     const [medicalFirstAidLoading, setMedicalFirstAidLoading] = useState(false);
     const medicalFirstAidRef = useRef<HTMLDivElement | null>(null);
+    // Medical Y-axis: start at 0 and use "nice" integer ticks (with ~10% headroom)
+    const medicalYAxis = useMemo(() => {
+        const max = medicalFirstAidData.reduce((m, d: any) => {
+            const a = Number(d?.medical || 0);
+            const b = Number(d?.firstAid || 0);
+            return Math.max(m, a, b);
+        }, 0);
+        let upper = Math.max(0, Math.ceil(max * 1.1));
+        if (upper <= 10) {
+            const ticks = Array.from({ length: upper + 1 }, (_, i) => i);
+            return { upper, ticks };
+        }
+        const niceStep = (range: number, maxTicks = 10) => {
+            const rough = range / maxTicks;
+            const pow10 = Math.pow(10, Math.floor(Math.log10(Math.max(rough, 1))))
+            const r = rough / pow10;
+            let stepBase = 1;
+            if (r <= 1) stepBase = 1; else if (r <= 2) stepBase = 2; else if (r <= 5) stepBase = 5; else stepBase = 10;
+            return stepBase * pow10;
+        };
+        const step = Math.max(1, Math.round(niceStep(upper, 9)));
+        upper = Math.ceil(upper / step) * step;
+        const count = Math.floor(upper / step) + 1;
+        const ticks = Array.from({ length: count }, (_, i) => i * step);
+        if (ticks[0] !== 0) ticks.unshift(0);
+        return { upper, ticks };
+    }, [medicalFirstAidData]);
     const downloadMedicalFirstAid = async () => {
         if (!medicalFirstAidRef.current) return;
         const canvas = await html2canvas(medicalFirstAidRef.current);
@@ -1447,7 +1687,7 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.approval }} />
-                    <Typography variant="body2">Approval</Typography>
+                    <Typography variant="body2">Approved</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.hsw }} />
@@ -1463,14 +1703,14 @@ const MsafeDashboardVI: React.FC = () => {
                 ) : (
                     <Box sx={{ width: onboardingChartWidth, height: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={onboardingData} margin={{ top: 28, right: 24, left: 16, bottom: 60 }} barCategoryGap="55%" barGap={12}>
+                            <BarChart data={onboardingData} margin={{ top: 28, right: 24, left: 16, bottom: 80 }} barCategoryGap="55%" barGap={12}>
                                 <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
                                 <XAxis
                                     dataKey="site"
                                     tickLine={false}
                                     axisLine={{ stroke: COLORS.grid }}
                                     interval={0}
-                                    angle={-35}
+                                    angle={0}
                                     tickMargin={12}
                                     dy={12}
                                     padding={{ left: 28, right: 28 }}
@@ -1480,7 +1720,8 @@ const MsafeDashboardVI: React.FC = () => {
                                     tickLine={false}
                                     axisLine={{ stroke: COLORS.grid }}
                                     allowDecimals={false}
-                                    domain={[0, (dataMax: number) => (typeof dataMax === 'number' ? Math.ceil(dataMax * 1.1) : 'auto')]}
+                                    domain={[0, onboardingYAxis.upper]}
+                                    ticks={onboardingYAxis.ticks}
                                 />
                                 <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                                 <Bar dataKey="KRCC" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
@@ -1578,10 +1819,27 @@ const MsafeDashboardVI: React.FC = () => {
                     </Box>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={day1HSWData} margin={{ top: 28, right: 12, left: 10, bottom: 40 }} barCategoryGap="55%" barGap={12}>
+                        <BarChart data={day1HSWData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="55%" barGap={12}>
                             <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                            <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.grid }} interval={0} angle={-25} dy={12} tick={{ fontSize: 10 }} tickMargin={10} />
-                            <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, 'auto']} />
+                            <XAxis
+                                dataKey="site"
+                                tickLine={false}
+                                axisLine={{ stroke: COLORS.grid }}
+                                interval={0}
+                                angle={0}
+                                dy={12}
+                                tick={{ fontSize: 12 }}
+                                tickMargin={12}
+                                minTickGap={28}
+                                padding={{ left: 28, right: 28 }}
+                            />
+                            <YAxis
+                                tickLine={false}
+                                axisLine={{ stroke: COLORS.grid }}
+                                allowDecimals={false}
+                                domain={[0, day1HSWYAxis.upper]}
+                                ticks={day1HSWYAxis.ticks}
+                            />
                             <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                             <Bar dataKey="Complaint" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
                                 <LabelList dataKey="Complaint" content={makeCountLabelGuarded(18, 8)} />
@@ -1650,22 +1908,28 @@ const MsafeDashboardVI: React.FC = () => {
                                     padding={{ left: 28, right: 28 }}
                                     tick={{ fontSize: 12 }}
                                 />
-                                <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-                                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${value}%`, '']} />
+                                <YAxis
+                                    tickLine={false}
+                                    axisLine={{ stroke: COLORS.grid }}
+                                    allowDecimals={false}
+                                    domain={[0, trainingYAxis.upper]}
+                                    ticks={trainingYAxis.ticks}
+                                />
+                                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [String(value), '']} />
                                 <Bar dataKey="twoW" name="2W" fill={TRAINING_COLORS.twoW} barSize={20} radius={[3, 3, 0, 0]}>
-                                    <LabelList dataKey="twoW" content={makeCenteredLabel((n) => formatPercentLabel(n) || null, 12)} />
+                                    <LabelList dataKey="twoW" content={makeCountLabelGuarded(18, 10)} />
                                 </Bar>
                                 <Bar dataKey="fourW" name="4W" fill={TRAINING_COLORS.fourW} barSize={20} radius={[3, 3, 0, 0]}>
-                                    <LabelList dataKey="fourW" content={makeCenteredLabel((n) => formatPercentLabel(n) || null, 10)} />
+                                    <LabelList dataKey="fourW" content={makeCountLabelGuarded(18, 10)} />
                                 </Bar>
                                 <Bar dataKey="workAtHeight" name="Work at height" fill={TRAINING_COLORS.workAtHeight} barSize={20} radius={[3, 3, 0, 0]}>
-                                    <LabelList dataKey="workAtHeight" content={makeCenteredLabel((n) => formatPercentLabel(n) || null, 8)} />
+                                    <LabelList dataKey="workAtHeight" content={makeCountLabelGuarded(18, 10)} />
                                 </Bar>
                                 <Bar dataKey="electrical" name="Electrical" fill={TRAINING_COLORS.electrical} barSize={20} radius={[3, 3, 0, 0]}>
-                                    <LabelList dataKey="electrical" content={makeCenteredLabel((n) => formatPercentLabel(n) || null, 10)} />
+                                    <LabelList dataKey="electrical" content={makeCountLabelGuarded(18, 10)} />
                                 </Bar>
                                 <Bar dataKey="ofc" name="OFC" fill={TRAINING_COLORS.ofc} barSize={20} radius={[3, 3, 0, 0]}>
-                                    <LabelList dataKey="ofc" content={makeCenteredLabel((n) => formatPercentLabel(n) || null, 12)} />
+                                    <LabelList dataKey="ofc" content={makeCountLabelGuarded(18, 10)} />
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
@@ -1754,41 +2018,47 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
             </Stack>
             <Box ref={ftprChartRef} sx={{ width: '100%', height: 460, overflowX: 'auto' }}>
-                <Box sx={{ width: ftprChartWidth, height: '100%' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={ftprData} margin={{ top: 24, right: 24, left: 24, bottom: 36 }} barCategoryGap="70%" barGap={16}>
-                            <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="site"
-                                tickLine={false}
-                                axisLine={{ stroke: COLORS.grid }}
-                                interval={0}
-                                minTickGap={28}
-                                tickMargin={10}
-                                dy={12}
-                                padding={{ left: 28, right: 28 }}
-                                tick={{ fontSize: 12 }}
-                            />
-                            <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, 1]} tickCount={11} tickFormatter={(v) => Number(v).toFixed(1)} />
-                            <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${(Number(value) * 100).toFixed(1)}%`, '']} />
-                            <Bar dataKey="twoW" name="2W" fill={TRAINING_COLORS.twoW} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="twoW" content={makeCenteredLabel((n) => (n < 0.04 ? null : `${(n * 100).toFixed(0)}%`), 12)} />
-                            </Bar>
-                            <Bar dataKey="fourW" name="4W" fill={TRAINING_COLORS.fourW} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="fourW" content={makeCenteredLabel((n) => (n < 0.04 ? null : `${(n * 100).toFixed(0)}%`), 10)} />
-                            </Bar>
-                            <Bar dataKey="workAtHeight" name="Work at height" fill={TRAINING_COLORS.workAtHeight} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="workAtHeight" content={makeCenteredLabel((n) => (n < 0.04 ? null : `${(n * 100).toFixed(0)}%`), 8)} />
-                            </Bar>
-                            <Bar dataKey="electrical" name="Electrical" fill={TRAINING_COLORS.electrical} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="electrical" content={makeCenteredLabel((n) => (n < 0.04 ? null : `${(n * 100).toFixed(0)}%`), 10)} />
-                            </Bar>
-                            <Bar dataKey="ofc" name="OFC" fill={TRAINING_COLORS.ofc} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="ofc" content={makeCenteredLabel((n) => (n < 0.04 ? null : `${(n * 100).toFixed(0)}%`), 12)} />
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </Box>
+                {ftprLoading ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                        <LoadingInline />
+                    </Box>
+                ) : (
+                    <Box sx={{ width: ftprChartWidth, height: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={ftprData} margin={{ top: 24, right: 24, left: 24, bottom: 36 }} barCategoryGap="70%" barGap={16}>
+                                <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                                <XAxis
+                                    dataKey="site"
+                                    tickLine={false}
+                                    axisLine={{ stroke: COLORS.grid }}
+                                    interval={0}
+                                    minTickGap={28}
+                                    tickMargin={10}
+                                    dy={12}
+                                    padding={{ left: 28, right: 28 }}
+                                    tick={{ fontSize: 12 }}
+                                />
+                                <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, 100]} allowDecimals={false} />
+                                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${Number(value).toFixed(0)}%`, '']} />
+                                <Bar dataKey="twoW" name="2W" fill={TRAINING_COLORS.twoW} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="twoW" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 12)} />
+                                </Bar>
+                                <Bar dataKey="fourW" name="4W" fill={TRAINING_COLORS.fourW} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="fourW" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 10)} />
+                                </Bar>
+                                <Bar dataKey="workAtHeight" name="Work at height" fill={TRAINING_COLORS.workAtHeight} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="workAtHeight" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 8)} />
+                                </Bar>
+                                <Bar dataKey="electrical" name="Electrical" fill={TRAINING_COLORS.electrical} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="electrical" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 10)} />
+                                </Bar>
+                                <Bar dataKey="ofc" name="OFC" fill={TRAINING_COLORS.ofc} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="ofc" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 12)} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Box>
+                )}
             </Box>
         </Paper>
     );
@@ -1814,21 +2084,27 @@ const MsafeDashboardVI: React.FC = () => {
                         return (
                             <Box sx={{ width: newJoineeChartWidth, height: '100%' }}>
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={newJoineeData} margin={{ top: 28, right: 24, left: 16, bottom: 48 }} barCategoryGap="55%" barGap={12}>
+                                    <BarChart data={newJoineeData} margin={{ top: 28, right: 24, left: 16, bottom: 80 }} barCategoryGap="55%" barGap={12}>
                                         <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
                                         <XAxis
                                             dataKey="site"
                                             tickLine={false}
                                             axisLine={{ stroke: COLORS.grid }}
                                             interval={0}
-                                            minTickGap={20}
-                                            angle={-35}
+                                            minTickGap={28}
+                                            angle={0}
                                             dy={12}
                                             tickMargin={12}
                                             padding={{ left: 28, right: 28 }}
                                             tick={{ fontSize: 12 }}
                                         />
-                                        <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, (dataMax: number) => (typeof dataMax === 'number' ? Math.ceil(dataMax * 1.1) : 'auto')]} allowDecimals={false} />
+                                        <YAxis
+                                            tickLine={false}
+                                            axisLine={{ stroke: COLORS.grid }}
+                                            allowDecimals={false}
+                                            domain={[0, newJoineeYAxis.upper]}
+                                            ticks={newJoineeYAxis.ticks}
+                                        />
                                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                                         <Bar dataKey="count" name="New Joinees" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
                                             <LabelList dataKey="count" content={makeCountLabelGuarded(18, 8)} />
@@ -1936,10 +2212,27 @@ const MsafeDashboardVI: React.FC = () => {
                     </Box>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={lmcData} margin={{ top: 28, right: 12, left: 10, bottom: 40 }} barCategoryGap="55%" barGap={12}>
+                        <BarChart data={lmcData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="55%" barGap={12}>
                             <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                            <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.grid }} interval={0} angle={-25} dy={12} tick={{ fontSize: 10 }} tickMargin={10} />
-                            <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, (dataMax: number) => (typeof dataMax === 'number' ? Math.ceil(dataMax * 1.1) : 'auto')]} />
+                            <XAxis
+                                dataKey="site"
+                                tickLine={false}
+                                axisLine={{ stroke: COLORS.grid }}
+                                interval={0}
+                                angle={0}
+                                dy={12}
+                                tick={{ fontSize: 10 }}
+                                tickMargin={12}
+                                minTickGap={28}
+                                padding={{ left: 28, right: 28 }}
+                            />
+                            <YAxis
+                                tickLine={false}
+                                axisLine={{ stroke: COLORS.grid }}
+                                allowDecimals={false}
+                                domain={[0, lmcYAxis.upper]}
+                                ticks={lmcYAxis.ticks}
+                            />
                             <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                             <Bar dataKey="completed" name="LMC Completed" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
                                 <LabelList dataKey="completed" content={makeCountLabelGuarded(18, 8)} />
@@ -1977,10 +2270,27 @@ const MsafeDashboardVI: React.FC = () => {
                     </Box>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={smtData} margin={{ top: 28, right: 12, left: 10, bottom: 40 }} barCategoryGap="55%" barGap={12}>
+                        <BarChart data={smtData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="55%" barGap={12}>
                             <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                            <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.grid }} interval={0} angle={-25} dy={12} tick={{ fontSize: 10 }} tickMargin={10} />
-                            <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, (dataMax: number) => (typeof dataMax === 'number' ? Math.ceil(dataMax * 1.1) : 1)]} />
+                            <XAxis
+                                dataKey="site"
+                                tickLine={false}
+                                axisLine={{ stroke: COLORS.grid }}
+                                interval={0}
+                                angle={0}
+                                dy={12}
+                                tick={{ fontSize: 10 }}
+                                tickMargin={12}
+                                minTickGap={28}
+                                padding={{ left: 28, right: 28 }}
+                            />
+                            <YAxis
+                                tickLine={false}
+                                axisLine={{ stroke: COLORS.grid }}
+                                allowDecimals={false}
+                                domain={[0, smtYAxis.upper]}
+                                ticks={smtYAxis.ticks}
+                            />
                             <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                             <Bar dataKey="completed" name="SMT Completed" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
                                 <LabelList dataKey="completed" content={makeCountLabelGuarded(18, 8)} />
@@ -2032,34 +2342,40 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
             </Stack>
             <Box sx={{ width: '100%', height: 500, overflowX: 'auto' }} ref={complianceForecastRef}>
-                <Box sx={{ width: complianceForecastWidth, height: '100%' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={complianceForecastData} margin={{ top: 28, right: 24, left: 24, bottom: 36 }} barCategoryGap="70%" barGap={16}>
-                            <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                            <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.grid }} interval={0} minTickGap={28} tickMargin={10} dy={12} padding={{ left: 28, right: 28 }} tick={{ fontSize: 12 }} />
-                            <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, 100]} tickFormatter={(v) => `${v}`} />
-                            <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${value}`, '']} />
-                            <Bar dataKey="twoW" name="2W" fill={CF_COLORS.twoW} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="twoW" position="top" formatter={(v: any) => (v ? v : 0)} />
-                            </Bar>
-                            <Bar dataKey="fourW" name="4W" fill={CF_COLORS.fourW} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="fourW" position="top" formatter={(v: any) => (v ? v : 0)} />
-                            </Bar>
-                            <Bar dataKey="workAtHeight" name="Work at height" fill={CF_COLORS.workAtHeight} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="workAtHeight" position="top" formatter={(v: any) => (v ? (typeof v === 'number' ? (Number.isInteger(v) ? v : v.toFixed(2)) : v) : 0)} />
-                            </Bar>
-                            <Bar dataKey="electrical" name="Electrical" fill={CF_COLORS.electrical} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="electrical" position="top" formatter={(v: any) => (v ? (Number.isInteger(v) ? v : v.toFixed(2)) : 0)} />
-                            </Bar>
-                            <Bar dataKey="ofc" name="OFC" fill={CF_COLORS.ofc} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="ofc" position="top" formatter={(v: any) => (v ? v : 0)} />
-                            </Bar>
-                            <Bar dataKey="firstAid" name="First Aid Training" fill={CF_COLORS.firstAid} barSize={16} radius={[3, 3, 0, 0]}>
-                                <LabelList dataKey="firstAid" position="top" formatter={(v: any) => (v ? (Number.isInteger(v) ? v : v.toFixed(2)) : 0)} />
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </Box>
+                {complianceForecastLoading ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                        <LoadingInline />
+                    </Box>
+                ) : (
+                    <Box sx={{ width: complianceForecastWidth, height: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={complianceForecastData} margin={{ top: 28, right: 24, left: 24, bottom: 36 }} barCategoryGap="70%" barGap={16}>
+                                <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                                <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.grid }} interval={0} minTickGap={28} tickMargin={10} dy={12} padding={{ left: 28, right: 28 }} tick={{ fontSize: 12 }} />
+                                <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} allowDecimals={false} domain={[0, complianceForecastYAxis.upper]} ticks={complianceForecastYAxis.ticks} />
+                                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${value}`, '']} />
+                                <Bar dataKey="twoW" name="2W" fill={CF_COLORS.twoW} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="twoW" position="top" formatter={(v: any) => (v ? v : 0)} />
+                                </Bar>
+                                <Bar dataKey="fourW" name="4W" fill={CF_COLORS.fourW} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="fourW" position="top" formatter={(v: any) => (v ? v : 0)} />
+                                </Bar>
+                                <Bar dataKey="workAtHeight" name="Work at height" fill={CF_COLORS.workAtHeight} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="workAtHeight" position="top" formatter={(v: any) => (v ? (typeof v === 'number' ? (Number.isInteger(v) ? v : v.toFixed(2)) : v) : 0)} />
+                                </Bar>
+                                <Bar dataKey="electrical" name="Electrical" fill={CF_COLORS.electrical} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="electrical" position="top" formatter={(v: any) => (v ? (Number.isInteger(v) ? v : v.toFixed(2)) : 0)} />
+                                </Bar>
+                                <Bar dataKey="ofc" name="OFC" fill={CF_COLORS.ofc} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="ofc" position="top" formatter={(v: any) => (v ? v : 0)} />
+                                </Bar>
+                                <Bar dataKey="firstAid" name="First Aid Training" fill={CF_COLORS.firstAid} barSize={16} radius={[3, 3, 0, 0]}>
+                                    <LabelList dataKey="firstAid" position="top" formatter={(v: any) => (v ? (Number.isInteger(v) ? v : v.toFixed(2)) : 0)} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Box>
+                )}
             </Box>
         </Paper>
     );
@@ -2140,10 +2456,27 @@ const MsafeDashboardVI: React.FC = () => {
                         return (
                             <Box sx={{ width: drivingChartWidth, height: '100%' }}>
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={drivingData} margin={{ top: 28, right: 16, left: 10, bottom: 40 }} barCategoryGap="55%" barGap={12}>
+                                    <BarChart data={drivingData} margin={{ top: 28, right: 16, left: 10, bottom: 80 }} barCategoryGap="55%" barGap={12}>
                                         <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                                        <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.grid }} interval={0} angle={-25} dy={12} tick={{ fontSize: 10 }} tickMargin={12} padding={{ left: 28, right: 28 }} />
-                                        <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, (dataMax: number) => (typeof dataMax === 'number' ? Math.ceil(dataMax * 1.1) : 5)]} />
+                                        <XAxis
+                                            dataKey="site"
+                                            tickLine={false}
+                                            axisLine={{ stroke: COLORS.grid }}
+                                            interval={0}
+                                            angle={0}
+                                            dy={12}
+                                            tick={{ fontSize: 12 }}
+                                            tickMargin={12}
+                                            minTickGap={28}
+                                            padding={{ left: 28, right: 28 }}
+                                        />
+                                        <YAxis
+                                            tickLine={false}
+                                            axisLine={{ stroke: COLORS.grid }}
+                                            allowDecimals={false}
+                                            domain={[0, drivingYAxis.upper]}
+                                            ticks={drivingYAxis.ticks}
+                                        />
                                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                                         <Bar dataKey="license" name="Driving License" fill={DRIVING_COLORS.license} barSize={20} radius={[3, 3, 0, 0]}>
                                             <LabelList dataKey="license" content={makeCountLabelGuarded(18, 8)} />
@@ -2223,10 +2556,27 @@ const MsafeDashboardVI: React.FC = () => {
             </Stack>
             <Box ref={medicalFirstAidRef} sx={{ width: '100%', height: 520 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={medicalFirstAidData} margin={{ top: 28, right: 12, left: 10, bottom: 40 }} barCategoryGap="55%" barGap={12}>
+                    <BarChart data={medicalFirstAidData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="55%" barGap={12}>
                         <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                        <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.grid }} interval={0} angle={-25} dy={12} tick={{ fontSize: 10 }} tickMargin={10} />
-                        <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, (dataMax: number) => (typeof dataMax === 'number' ? Math.ceil(dataMax * 1.1) : 10)]} />
+                        <XAxis
+                            dataKey="site"
+                            tickLine={false}
+                            axisLine={{ stroke: COLORS.grid }}
+                            interval={0}
+                            angle={0}
+                            dy={12}
+                            tick={{ fontSize: 12 }}
+                            tickMargin={12}
+                            minTickGap={28}
+                            padding={{ left: 28, right: 28 }}
+                        />
+                        <YAxis
+                            tickLine={false}
+                            axisLine={{ stroke: COLORS.grid }}
+                            allowDecimals={false}
+                            domain={[0, medicalYAxis.upper]}
+                            ticks={medicalYAxis.ticks}
+                        />
                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                         <Bar dataKey="medical" name="Medical Checkup" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
                             <LabelList dataKey="medical" content={makeCountLabelGuarded(18, 8)} />
@@ -2455,7 +2805,7 @@ const MsafeDashboardVI: React.FC = () => {
                     <Box sx={{ textAlign: "left" }}>
                         <Typography
                             sx={{
-                               fontSize: "14px",
+                                fontSize: "14px",
                                 fontWeight: 600,
                                 lineHeight: 1.2,
                             }}
@@ -2509,16 +2859,17 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
             </Box>
 
-            {/* Title before filters */}
-            <Typography variant="h6" align="center" sx={{ fontWeight: 700, mt: 2 }}>
+            {/* Show 'Set Custom Date' outside of the white filter Paper, aligned above the date fields */}
+            <Typography variant="h6" sx={{ fontWeight: 700, mt: 2, ml: `${dateLabelOffset}px` }}>
                 Set Custom Date
             </Typography>
 
             <Box
                 sx={{
                     p: { xs: 1.5, md: 3 },
-                    pt: '15px',
+                    pt: { xs: '15px', md: '15px' },
                 }}
+                ref={filtersAreaRef}
             >
                 {/* Filters row - isolated to avoid parent re-renders on dropdown changes */}
                 <FiltersPanel
@@ -2526,7 +2877,10 @@ const MsafeDashboardVI: React.FC = () => {
                     circleOptions={circleOptions}
                     functionOptions={functionOptions}
                     employeeTypes={employeeTypes}
+                    initialFrom={appliedStartDate}
+                    initialTo={appliedEndDate}
                     onApply={applyFilters}
+                    reportDateBlockRect={handleDateBlockRect}
                 />
 
 
@@ -2552,6 +2906,9 @@ const FiltersPanel: React.FC<{
     circleOptions: Option[];
     functionOptions: Option[];
     employeeTypes: Option[];
+    initialFrom?: any;
+    initialTo?: any;
+    reportDateBlockRect?: (rect: DOMRect) => void;
     onApply: (snap: {
         cluster: string[];
         circle: string[];
@@ -2560,17 +2917,46 @@ const FiltersPanel: React.FC<{
         from: any;
         to: any;
     }) => void;
-}> = React.memo(({ clusterOptions, circleOptions, functionOptions, employeeTypes, onApply }) => {
+}> = React.memo(({ clusterOptions, circleOptions, functionOptions, employeeTypes, initialFrom, initialTo, onApply, reportDateBlockRect }) => {
     const [cluster, setCluster] = useState<string[]>([]);
     const [circle, setCircle] = useState<string[]>([]);
     const [func, setFunc] = useState<string[]>([]);
     const [employeeType, setEmployeeType] = useState('');
     const [startDate, setStartDate] = useState<any>(() => {
+        if (initialFrom) return new Date(new Date(initialFrom).getFullYear(), new Date(initialFrom).getMonth(), new Date(initialFrom).getDate());
         const d = new Date();
         d.setDate(d.getDate() - 30);
-        return d;
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
     });
-    const [endDate, setEndDate] = useState<any>(() => new Date());
+    const [endDate, setEndDate] = useState<any>(() => {
+        const base = initialTo ?? new Date();
+        const b = new Date(base);
+        return new Date(b.getFullYear(), b.getMonth(), b.getDate());
+    });
+
+    // Local helper to format date for <input type="date"> as YYYY-MM-DD in local time
+    const toDateInputValue = (d: any) => {
+        const date = new Date(d ?? new Date());
+        if (Number.isNaN(date.getTime())) return '';
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    };
+
+    // Measure date block for aligning external heading
+    const dateBlockRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        if (!reportDateBlockRect) return;
+        const send = () => {
+            const r = dateBlockRef.current?.getBoundingClientRect();
+            if (r) reportDateBlockRect(r);
+        };
+        // Initial measure and on resize
+        send();
+        window.addEventListener('resize', send);
+        return () => window.removeEventListener('resize', send);
+    }, [reportDateBlockRect]);
 
     return (
         <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: '#fff' }}>
@@ -2579,81 +2965,111 @@ const FiltersPanel: React.FC<{
                 spacing={0}
                 alignItems="flex-end"
                 useFlexGap
-                sx={{ flexWrap: 'wrap', overflowX: 'hidden', gap: '15px' }}
+                sx={{
+                    flexWrap: 'nowrap',
+                    gap: '12px',
+                    width: '100%',
+                }}
             >
-                <TailwindMultiSelect
-                    label="Cluster"
-                    options={clusterOptions}
-                    selected={cluster}
-                    onChange={setCluster}
-                    className="mt-[10px]"
-                    placeholder="Select Cluster"
-                    buttonClassName="w-44"
-                />
-
-                <TailwindMultiSelect
-                    label="Circle"
-                    options={circleOptions}
-                    selected={circle}
-                    onChange={setCircle}
-                    className="mt-[10px]"
-                    placeholder="Select Circle"
-                    buttonClassName="w-44"
-                />
-
-                <TailwindMultiSelect
-                    label="Function"
-                    options={functionOptions}
-                    selected={func}
-                    onChange={setFunc}
-                    className="mt-[10px]"
-                    placeholder="Select Function"
-                    buttonClassName="w-44"
-                />
-
-                <TailwindSingleSelect
-                    label="Employee Type"
-                    options={employeeTypes}
-                    value={employeeType}
-                    onChange={(v) => setEmployeeType(v)}
-                    className="mt-[10px]"
-                    placeholder="Internal / External"
-                    buttonClassName="w-36"
-                />
-
-                <div className="mt-[10px]">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                    <input
-                        type="date"
-                        className="w-36 h-10 rounded-[25px] border border-gray-300 bg-white px-3 py-0 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-0 focus:border-gray-400"
-                        value={(startDate ? new Date(startDate) : new Date()).toISOString().slice(0, 10)}
-                        onChange={(e) => {
-                            const next = e.target.value ? new Date(e.target.value) : null;
-                            setStartDate(next);
-                            if (next && endDate && new Date(endDate).getTime() < next.getTime()) {
-                                setEndDate(next);
-                            }
-                        }}
+                <Box sx={{ flex: '1 1 220px', minWidth: 200 }}>
+                    <TailwindMultiSelect
+                        label="Cluster"
+                        options={clusterOptions}
+                        selected={cluster}
+                        onChange={setCluster}
+                        className="mt-[10px]"
+                        placeholder="Select Cluster"
+                        buttonClassName="w-full"
                     />
-                </div>
-                <div className="mt-[10px]">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                    <input
-                        type="date"
-                        className="w-36 h-10 rounded-[25px] border border-gray-300 bg-white px-3 py-0 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-0 focus:border-gray-400"
-                        value={(endDate ? new Date(endDate) : new Date()).toISOString().slice(0, 10)}
-                        min={(startDate ? new Date(startDate) : new Date()).toISOString().slice(0, 10)}
-                        onChange={(e) => {
-                            const next = e.target.value ? new Date(e.target.value) : null;
-                            if (next && startDate && next.getTime() < new Date(startDate).getTime()) {
-                                toast.error('End date cannot be before start date');
-                                setEndDate(startDate);
-                                return;
-                            }
-                            setEndDate(next);
-                        }}
+                </Box>
+
+                <Box sx={{ flex: '1 1 220px', minWidth: 200 }}>
+                    <TailwindMultiSelect
+                        label="Circle"
+                        options={circleOptions}
+                        selected={circle}
+                        onChange={setCircle}
+                        className="mt-[10px]"
+                        placeholder="Select Circle"
+                        buttonClassName="w-full"
                     />
-                </div>
+                </Box>
+
+                <Box sx={{ flex: '1 1 220px', minWidth: 200 }}>
+                    <TailwindMultiSelect
+                        label="Function"
+                        options={functionOptions}
+                        selected={func}
+                        onChange={setFunc}
+                        className="mt-[10px]"
+                        placeholder="Select Function"
+                        buttonClassName="w-full"
+                    />
+                </Box>
+
+                <Box sx={{ flex: '1 1 180px', minWidth: 180, maxWidth: 260 }}>
+                    <TailwindSingleSelect
+                        label="Employee Type"
+                        options={employeeTypes}
+                        value={employeeType}
+                        onChange={(v) => setEmployeeType(v)}
+                        className="mt-[10px]"
+                        placeholder="Internal / External"
+                        buttonClassName="w-full"
+                    />
+                </Box>
+
+                {/* Vertical divider between Employee Type and Date block */}
+                <Box
+                    sx={{
+                        width: '1px',
+                        height: 40,
+                        bgcolor: '#E5E7EB', // gray-200
+                        mx: 1,
+                        alignSelf: 'flex-end',
+                        borderRadius: 0.5,
+                        flexShrink: 0,
+                    }}
+                />
+
+                {/* Date controls */}
+                <Box sx={{ flex: '1 1 360px', minWidth: 280, maxWidth: 520, alignSelf: 'flex-end', mt: '10px' }} ref={dateBlockRef}>
+                    <Stack direction="row" spacing={2} alignItems="flex-end">
+                        <div style={{ flex: '1 1 160px' }}>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Start Date</label>
+                            <input
+                                type="date"
+                                className="w-full h-10 rounded-[25px] border border-gray-300 bg-white px-3 py-0 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-0 focus:border-gray-400"
+                                value={toDateInputValue(startDate ?? new Date())}
+                                onChange={(e) => {
+                                    const next = e.target.value ? new Date(e.target.value + 'T00:00:00') : null;
+                                    setStartDate(next);
+                                    if (next && endDate && new Date(endDate).getTime() < next.getTime()) {
+                                        setEndDate(next);
+                                    }
+                                }}
+                            />
+                        </div>
+                        <div style={{ flex: '1 1 160px' }}>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">End Date</label>
+                            <input
+                                type="date"
+                                className="w-full h-10 rounded-[25px] border border-gray-300 bg-white px-3 py-0 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-0 focus:border-gray-400"
+                                value={toDateInputValue(endDate ?? new Date())}
+                                min={toDateInputValue(startDate ?? new Date())}
+                                onChange={(e) => {
+                                    const next = e.target.value ? new Date(e.target.value + 'T00:00:00') : null;
+                                    if (next && startDate && next.getTime() < new Date(startDate).getTime()) {
+                                        toast.error('End date cannot be before start date');
+                                        setEndDate(startDate);
+                                        return;
+                                    }
+                                    setEndDate(next);
+                                }}
+                            />
+                        </div>
+                    </Stack>
+                </Box>
 
                 <Button
                     variant="contained"
@@ -2668,7 +3084,7 @@ const FiltersPanel: React.FC<{
                             to: endDate,
                         })
                     }
-                    sx={{ whiteSpace: 'nowrap', mt: '10px', mb: '4px', backgroundColor: '#EE0B0B', fontSize: '0.85rem', fontWeight: 600, fontFamily: '"Open Sans", sans-serif', height: 40, px: 2.5, borderRadius: '25px' }}
+                    sx={{ ml: 'auto', flexShrink: 0, whiteSpace: 'nowrap', mt: '10px', mb: '4px', backgroundColor: '#EE0B0B', fontSize: '0.85rem', fontWeight: 600, fontFamily: '"Open Sans", sans-serif', height: 40, px: 2.5, borderRadius: '25px' }}
                 >
                     Apply
                 </Button>

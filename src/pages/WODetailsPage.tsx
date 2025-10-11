@@ -17,6 +17,10 @@ import {
   Eye,
   FileSpreadsheet,
   Download,
+  ScrollText,
+  ReceiptText,
+  ClipboardList,
+  Images,
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
@@ -596,232 +600,182 @@ export const WODetailsPage = () => {
         </div>
       </TooltipProvider>
 
-      {/* Vendor/Contact Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            {workOrder.company?.site_name}
-          </h2>
-        </div>
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <span className="text-sm font-medium text-gray-700">Phone</span>
-                <span className="ml-8">: {workOrder.company?.phone}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">Fax</span>
-                <span className="ml-12">: {workOrder.company?.fax}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">Email</span>
-                <span className="ml-8">: {workOrder.company?.email}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">GST</span>
-                <span className="ml-11">: {workOrder.company?.gst}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">PAN</span>
-                <span className="ml-9">: {workOrder.company?.pan}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">
-                  Address
-                </span>
-                <span className="ml-5">: {workOrder.company?.address}</span>
-              </div>
-            </div>
+        <div className="flex items-center gap-3 pb-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ReceiptText className="w-4 h-4" />
           </div>
-
-          <div className="flex flex-col items-center justify-center lg:min-w-[200px]">
-            <div className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-              <span className="text-xs text-gray-500">image</span>
-            </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> {workOrder.company?.site_name}</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Phone</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.phone}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Fax</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.fax}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Email</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.email}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">GST</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.gst}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">PAN</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.pan}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[140px]">Address</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.company?.address}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Work Order Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
-          Work Order ({workOrder.work_order?.wo_status})
-        </h3>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
-          <div className="space-y-4">
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                WO Number
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.number || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                WO Date
-              </span>
-              <span className="text-sm">
-                :{" "}
-                {workOrder.work_order?.wo_date
-                  ? format(workOrder.work_order?.wo_date, "dd/MM/yyyy")
-                  : "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Kind Attention
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.kind_attention || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Subject
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.subject || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Related To
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.related_to || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Payment Tenure(In Days)
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order.payment_terms?.payment_tenure || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Retention(%)
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order.payment_terms?.retention || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                TDS(%)
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order.payment_terms?.tds || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                QC(%)
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order.payment_terms?.qc || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Advance Amount
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.advance_amount || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Description
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.description || "-"}
-              </span>
-            </div>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="flex items-center gap-3 pb-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ScrollText className="w-4 h-4" />
           </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Work Order</h3>
+        </div>
 
-          <div className="space-y-4">
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Reference No.
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.reference_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">ID</span>
-              <span className="text-sm">: {workOrder.work_order?.id}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Contractor
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.contractor}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Address
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.supplier_address?.address}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Phone
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.supplier_details?.mobile1}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Email
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.supplier_details?.email}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                GST
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.supplier_details?.gstin_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                PAN
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.supplier_details?.pan_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Work Category
-              </span>
-              <span className="text-sm">
-                : {workOrder.work_order?.category_type}
-              </span>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">WO Number</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.number || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Reference No.</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.reference_number}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]"> WO Date</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">
+              {workOrder.work_order?.wo_date
+                ? format(workOrder.work_order?.wo_date, "dd/MM/yyyy")
+                : "-"}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">ID</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.id}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Kind Attention</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.kind_attention || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Contractor</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.contractor}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Subject</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.subject || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Address</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.supplier_address?.address}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Related To</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.related_to || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Phone</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.supplier_details?.mobile1}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Payment Tenure</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order.payment_terms?.payment_tenure || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Email</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.supplier_details?.email}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Retention(%)</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order.payment_terms?.retention || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">GST</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.supplier_details?.gstin_number}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">TDS(%)</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order.payment_terms?.tds || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">PAN</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.supplier_details?.pan_number}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">QC(%)</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order.payment_terms?.qc || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Work Category</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.category_type}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Advance Amount</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.advance_amount || "-"}</span>
+          </div>
+          <div className="flex items-start">
+            <span className="text-gray-500 min-w-[180px]">Description</span>
+            <span className="text-gray-500 mx-2">:</span>
+            <span className="text-gray-900 font-medium">{workOrder.work_order?.description || "-"}</span>
           </div>
         </div>
       </div>
 
-      {/* BOQ Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          BOQ Details
-        </h3>
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ClipboardList className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BOQ Details</h3>
+        </div>
         <div className="overflow-x-auto">
           <EnhancedTable
             data={workOrder.inventories}
@@ -887,9 +841,12 @@ export const WODetailsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Terms & Conditions :
-        </h3>
+        <div className="flex items-center gap-3 pb-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ScrollText className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
+        </div>
         <p className="text-gray-700">{workOrder.work_order?.term_condition}</p>
 
         <div className="mt-6">
@@ -910,10 +867,13 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      <Card className="shadow-sm border border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-medium">Attachments</CardTitle>
-        </CardHeader>
+      <Card className="shadow-sm border border-border mb-6">
+        <div className="flex items-center gap-3 p-6">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <Images className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+        </div>
         <CardContent>
           {Array.isArray(workOrder.attachments) &&
             workOrder.attachments.length > 0 ? (
@@ -1004,9 +964,12 @@ export const WODetailsPage = () => {
       </Card>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Invoices/SES Details
-        </h3>
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ReceiptText className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Invoices/SES Details</h3>
+        </div>
         <div className="overflow-x-auto">
           <EnhancedTable
             data={invoices}
@@ -1028,9 +991,12 @@ export const WODetailsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Payment Details
-        </h3>
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ReceiptText className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Payment Details</h3>
+        </div>
         <div className="overflow-x-auto">
           <EnhancedTable
             data={paymentData}
@@ -1049,9 +1015,12 @@ export const WODetailsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Debit/Credit Note Details
-        </h3>
+        <div className="flex items-center gap-3 pb-3">
+          <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+            <ReceiptText className="w-4 h-4" />
+          </div>
+          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> Debit/Credit Note Details</h3>
+        </div>
         <div className="overflow-x-auto">
           <EnhancedTable
             data={debitCreditNote || []}

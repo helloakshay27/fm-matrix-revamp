@@ -340,23 +340,21 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
 
   return (
     <Card className={`h-full transition-all duration-200 hover:shadow-lg border-gray-200 group ${className}`}>
-      <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+      <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-6 flex flex-row items-center justify-between gap-2">
+        <CardTitle className="text-sm sm:text-base lg:text-lg font-semibold truncate flex-1">{title}</CardTitle>
         {dateRange && (
-         
-
           <Button
             variant="outline"
             size="sm"
             onClick={handleDownload}
             disabled={isDownloading}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 flex-shrink-0"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
         )}
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 px-4 sm:px-6 pb-4 sm:pb-6">
         {renderContent()}
       </CardContent>
     </Card>

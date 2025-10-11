@@ -356,7 +356,7 @@ export const ScheduledTaskDashboard = () => {
       checklist: task.checklist,
       type: task.schedule_type,
       schedule: task.start_date,
-      assignTo: task.backup_assigned_user || task.assigned_to_name,
+      assignTo: task.assigned_to_name,
       status: task.task_status,
       scheduleFor: task.scheduled_for,
       assetsServices: task.asset,
@@ -425,14 +425,13 @@ export const ScheduledTaskDashboard = () => {
       }
 
       // Add general search functionality for checklist and asset
+      // Priority: searchTerm (from table search) > filters.searchChecklist (from advanced filter)
       if (searchTerm && searchTerm.trim()) {
         // URLSearchParams automatically encodes the values, no need for manual encoding
         queryParams.append("q[custom_form_form_name_cont]", searchTerm.trim());
         // queryParams.append('q[asset_asset_name_cont]', searchTerm.trim());
-      }
-
-      // Add specific checklist search from advanced filters
-      if (filters.searchChecklist && filters.searchChecklist.trim()) {
+      } else if (filters.searchChecklist && filters.searchChecklist.trim()) {
+        // Only use advanced filter checklist search if no general search term
         queryParams.append(
           "q[custom_form_form_name_cont]",
           filters.searchChecklist.trim()
@@ -447,8 +446,10 @@ export const ScheduledTaskDashboard = () => {
       const apiUrl = getFullUrl(
         `/pms/users/scheduled_tasks.json?&${queryParams.toString()}`
       );
-      console.log("API URL:", apiUrl); // Debug log
-      console.log("Search term:", searchTerm); // Debug log
+      console.log("=== FETCH TASKS DEBUG ===");
+      console.log("API URL:", apiUrl);
+      console.log("Search term:", searchTerm);
+      console.log("Query params:", Object.fromEntries(queryParams.entries()));
 
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -463,16 +464,14 @@ export const ScheduledTaskDashboard = () => {
       }
 
       const data: ApiTaskResponse = await response.json();
-      console.log("API Response:", data); // Debug log
-      console.log(
-        "Search results count:",
-        data.asset_task_occurrences?.length || 0
-      ); // Debug log
+      console.log("API Response data:", data);
+      console.log("Occurrences count:", data.asset_task_occurrences?.length || 0);
 
       const transformedData = transformApiDataToTaskRecord(
         data.asset_task_occurrences || []
       );
-      console.log("Transformed data:", transformedData.length, "items"); // Debug log
+      console.log("Transformed data count:", transformedData.length);
+      console.log("Setting taskData with:", transformedData);
       setTaskData(transformedData);
 
       // Update status counts
@@ -1028,7 +1027,6 @@ export const ScheduledTaskDashboard = () => {
               );
             })}
           </div>
-
 
           {/* Task Table */}
           <div className="rounded-lg">

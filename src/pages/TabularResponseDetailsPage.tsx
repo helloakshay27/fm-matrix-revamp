@@ -695,6 +695,9 @@ export default function TabularResponseDetailsPage({
           padding: 8px 0 0 8px;
         ">${defaultLogo}</div>
       </div>
+      <div style="text-align: center; padding: 1px 0 1px 0;">
+        <h1 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0; text-transform: uppercase;">${surveyData?.survey_name || 'Survey Report'}</h1>
+      </div>
     `;
     
 
@@ -705,6 +708,7 @@ export default function TabularResponseDetailsPage({
       <style>
         ${JobSheetPDFGenerator}
         .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #D9D9D9; background-color: #F6F4EE; }
+         .header-text { margin: 0 0 18px 0 !important; }
         .logo { margin: 0 10px; }
         .card-header {
           display: flex;
@@ -734,6 +738,18 @@ export default function TabularResponseDetailsPage({
           height: 16px;
           color: #C72030;
         }
+          //  .my-pdf-card {
+          //       display: block !important;
+          //       // page-break-inside: avoid !important;
+          //       // break-inside: avoid !important;
+          //       // margin-bottom: 20px !important;
+          //       background-color: #fff !important;
+          //       box-shadow: none !important;
+          //     }
+
+          //     .my-pdf-card + .my-pdf-card {
+          //       page-break-before: always !important;
+          //       break-before: page !important;
       </style>
     </head>
     <body>
@@ -777,7 +793,7 @@ export default function TabularResponseDetailsPage({
                 <p className="text-xl font-semibold text-[#C72030]">
                   {response?.positive_responses || 0}
                 </p>
-                <p className="text-sm text-gray-600">Positive</p>
+                <p className="text-sm text-gray-600 header-text">Positive</p>
               </div>
             </div>
           </CardContent>
@@ -803,7 +819,7 @@ export default function TabularResponseDetailsPage({
                 <p className="text-xl font-semibold text-[#C72030]">
                   {response?.negative_responses || 0}
                 </p>
-                <p className="text-sm text-gray-600">Negative</p>
+                <p className="text-sm text-gray-600 header-text">Negative</p>
               </div>
             </div>
           </CardContent>
@@ -830,13 +846,14 @@ export default function TabularResponseDetailsPage({
         </div>
       </div>
 
-      <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+      <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
         <CardHeader className="bg-[#F6F4EE] mb-2">
           <CardTitle className="text-lg flex items-center">
             <div className="w-8 h-8 bg-[#E5E0D3] text-white rounded-full flex items-center justify-center mr-3">
               <FileText className="h-4 w-4 text-[#C72030]" />
             </div>
-            Survey Response Detail
+            <span className="header-text">Survey Response Detail</span>
+            {/* Survey Response Detail */}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -879,13 +896,13 @@ export default function TabularResponseDetailsPage({
         </CardContent>
       </Card>
 
-      <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+      <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
         <CardHeader className="bg-[#F6F4EE] mb-2">
           <CardTitle className="text-lg flex items-center">
             <div className="w-10 h-10 bg-[#E5E0D3] text-white rounded-full flex items-center justify-center mr-3">
               <FileText className="h-4 w-4 text-[#C72030]" />
             </div>
-           <span className=""> Survey Responses Detail</span>
+           <span className="header-text"> Survey Responses Detail</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

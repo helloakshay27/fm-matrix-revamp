@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { AddPermitCommentModal } from "@/components/AddPermitCommentModal";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { FormControl, InputLabel, Select, MenuItem, OutlinedInput, Chip, Box, SelectChangeEvent, TextField } from '@mui/material';
+import { format } from "date-fns";
 
 // MUI field styles
 const fieldStyles = {
@@ -367,8 +368,9 @@ export const PermitDetails = () => {
     const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [isPermitSectionVisible, setIsPermitSectionVisible] = useState(false)
+    const [isResumeSectionVisible, setIsResumeSectionVisible] = useState(false)
 
-    console.log(isPermitSectionVisible)
+    console.log(isResumeSectionVisible)
 
     // Check if we came from pending approvals page
     const levelId = searchParams.get('level_id');
@@ -1172,31 +1174,8 @@ export const PermitDetails = () => {
         loadPermitDetails();
     }, [id]);
 
-    // Format date for display
-    const formatDate = (dateString: string) => {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${day}/${month}/${year} ${hours}:${minutes}`;
-    };
 
-    const formatDateWithTimezone = (dateString: string) => {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        return date.toLocaleString('en-IN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            timeZone: 'Asia/Kolkata'
-        }) + ' (IST)';
-    };
+
 
     const formatRawDate = (dateString: string) => {
         if (!dateString) return '-';
@@ -1500,7 +1479,12 @@ export const PermitDetails = () => {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setActiveSection(activeSection === "resume-permit" ? "" : "resume-permit")}
+                            onClick={() => {
+                                setIsResumeSectionVisible(true);
+
+                                setActiveSection(activeSection === "resume-permit" ? "" : "resume-permit");
+                            }}
+
                             className="bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
                         >
                             <RefreshCw className="w-4 h-4 mr-2" />
@@ -1626,20 +1610,42 @@ export const PermitDetails = () => {
                                     </span>
                                 }
                             /> */}
-                            <Field label="Permit Status" value={
+                            {/* <Field label="Permit Status" value={
                                 <Badge className="text-white bg-blue-500">
                                     {permitData.permit.status}
                                 </Badge>
-                            } />
+                            } /> */}
+                            <Field
+                                label="Permit Status"
+                                value={
+                                    <Badge
+                                        className={`text-white ${permitData?.permit?.status === 'Draft'
+                                            ? 'bg-[#0d6efd]'
+                                            : permitData?.permit?.status === 'Extended'
+                                                ? 'bg-[#0dcaf0]'
+                                                : permitData?.permit?.status === 'Expired'
+                                                    ? 'bg-[#01C833]'
+                                                    : permitData?.permit?.status === 'Approved'
+                                                        ? 'bg-[#ffc40b]'
+                                                        : permitData?.permit?.status === 'Hold'
+                                                            ? 'bg-[#808080]'
+                                                            : 'bg-gray-400'
+                                            }`}
+                                    >
+                                        {permitData?.permit?.status || '-'}
+                                    </Badge>
+                                }
+                            />
+
                             <Field label="Extension Status" value={permitData.permit.extension_status} />
                         </div>
                         <div className="space-y-4">
                             <Field label="Current User ID" value={permitData.permit.current_user_id} />
                             <Field label="All Level Approved" value={permitData.permit.all_level_approved ? "Yes" : "No"} />
-                            <Field label="Created On" value={formatDate(permitData.permit.created_at)} />
-                            <Field label="Expiry Date" value={formatDate(permitData.permit.expiry_date)} />
-                            <Field label="Extension Date" value={formatDate(permitData.permit.extension_date)} />
-                            <Field label="Resume Date" value={formatDate(permitData.permit.resume_date)} />
+                            <Field label="Created On" value={permitData?.permit?.created_at && format(permitData.permit.created_at, "dd/MM/yyyy hh:mm a")} />
+                            <Field label="Expiry Date" value={permitData?.permit?.expiry_date && format(permitData.permit.expiry_date, "dd/MM/yyyy hh:mm a")} />
+                            <Field label="Extension Date" value={permitData?.permit?.extension_date && format(permitData.permit.extension_date, "dd/MM/yyyy hh:mm a")} />
+                            <Field label="Resume Date" value={permitData?.permit?.resume_date && format(permitData.permit.resume_date, "dd/MM/yyyy hh:mm a")} />
                         </div>
                     </div>
                     <div className="mt-6 text-wrap break-words">
@@ -2519,7 +2525,7 @@ export const PermitDetails = () => {
                                         </div>
                                         <div>
                                             <span className="font-medium text-gray-700">Extension Date:</span>
-                                            <p className="text-gray-900 mt-1">{formatDate(extension.extension_date)}</p>
+                                            <p className="text-gray-900 mt-1">{extension?.extension_date && format(extension?.extension_date, "dd/MM/yyyy hh:mm a")}</p>
                                         </div>
                                         <div>
                                             <span className="font-medium text-gray-700">Created By:</span>
@@ -2614,255 +2620,256 @@ export const PermitDetails = () => {
                 )}
 
                 {/* Permit Resume Section */}
-                {/* {(permitData.show_resume_permit_button) && ( */}
-                <Section
-                    title="PERMIT RESUME"
-                    icon={<RefreshCw />}
-                    sectionKey="resume-permit"
-                    activeSection={activeSection}
-                    setActiveSection={setActiveSection}
-                >
-                    <div className="space-y-6">
-                        {/* Form Fields */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                                {/* Reason for Resume */}
-                                <div>
-                                    <TextField
-                                        label="Reason for Resume *"
-                                        value={resumeReason}
-                                        onChange={(e) => setResumeReason(e.target.value)}
-                                        fullWidth
-                                        variant="outlined"
-                                        multiline
-                                        rows={3}
-                                        placeholder="Enter Reason Here"
-                                        InputLabelProps={{
-                                            shrink: true
-                                        }}
-                                        sx={{
-                                            "& .MuiOutlinedInput-root": {
-                                                height: "auto !important",
-                                                padding: "2px !important",
-                                                display: "flex",
-                                            },
-                                            "& .MuiInputBase-input[aria-hidden='true']": {
-                                                flex: 0,
-                                                width: 0,
-                                                height: 0,
-                                                padding: "0 !important",
-                                                margin: 0,
-                                                display: "none",
-                                            },
-                                            "& .MuiInputBase-input": {
-                                                resize: "none !important",
-                                            },
-                                        }}
-                                    />
-                                </div>
+                {isResumeSectionVisible && (
 
-                                {/* Resume Date & Time */}
-                                <div>
-                                    <TextField
-                                        label="Resume Date & Time *"
-                                        type="datetime-local"
-                                        value={resumeDate}
-                                        onChange={(e) => setResumeDate(e.target.value)}
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true
-                                        }}
-                                        sx={fieldStyles}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                {/* Assignees */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Assignees<span className="text-red-500">*</span>
-                                    </label>
-                                    <FormControl
-                                        sx={{
-                                            width: '100%',
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '8px',
-                                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#C72030',
-                                                },
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#C72030',
-                                                    borderWidth: '2px',
-                                                },
-                                            },
-                                        }}
-                                    >
-                                        <Select
-                                            multiple
-                                            value={selectedResumeAssignees}
-                                            onChange={handleResumeAssigneeChange}
-                                            input={<OutlinedInput />}
-                                            renderValue={(selected) => {
-                                                if ((selected as string[]).length === 0) {
-                                                    return <span style={{ color: '#9CA3AF' }}>Select assignees</span>;
-                                                }
-                                                return (
-                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                        {(selected as string[]).map((value) => {
-                                                            const assignee = permitData?.permit?.permit_assignees?.find(a => a.id.toString() === value);
-                                                            return (
-                                                                <Chip
-                                                                    key={value}
-                                                                    label={assignee?.name || value}
-                                                                    size="small"
-                                                                    sx={{
-                                                                        backgroundColor: '#C72030',
-                                                                        color: 'white',
-                                                                        '& .MuiChip-deleteIcon': {
-                                                                            color: 'white',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            );
-                                                        })}
-                                                    </Box>
-                                                );
+                    <Section
+                        title="PERMIT RESUME"
+                        icon={<RefreshCw />}
+                        sectionKey="resume-permit"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
+                        <div className="space-y-6">
+                            {/* Form Fields */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    {/* Reason for Resume */}
+                                    <div>
+                                        <TextField
+                                            label="Reason for Resume *"
+                                            value={resumeReason}
+                                            onChange={(e) => setResumeReason(e.target.value)}
+                                            fullWidth
+                                            variant="outlined"
+                                            multiline
+                                            rows={3}
+                                            placeholder="Enter Reason Here"
+                                            InputLabelProps={{
+                                                shrink: true
                                             }}
-                                            displayEmpty
                                             sx={{
-                                                minHeight: '48px',
-                                                '& .MuiSelect-placeholder': {
-                                                    color: '#9CA3AF',
+                                                "& .MuiOutlinedInput-root": {
+                                                    height: "auto !important",
+                                                    padding: "2px !important",
+                                                    display: "flex",
+                                                },
+                                                "& .MuiInputBase-input[aria-hidden='true']": {
+                                                    flex: 0,
+                                                    width: 0,
+                                                    height: 0,
+                                                    padding: "0 !important",
+                                                    margin: 0,
+                                                    display: "none",
+                                                },
+                                                "& .MuiInputBase-input": {
+                                                    resize: "none !important",
+                                                },
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Resume Date & Time */}
+                                    <div>
+                                        <TextField
+                                            label="Resume Date & Time *"
+                                            type="datetime-local"
+                                            value={resumeDate}
+                                            onChange={(e) => setResumeDate(e.target.value)}
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true
+                                            }}
+                                            sx={fieldStyles}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {/* Assignees */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Assignees<span className="text-red-500">*</span>
+                                        </label>
+                                        <FormControl
+                                            sx={{
+                                                width: '100%',
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '8px',
+                                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#C72030',
+                                                    },
+                                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#C72030',
+                                                        borderWidth: '2px',
+                                                    },
                                                 },
                                             }}
                                         >
-                                            <MenuItem disabled value="">
-                                                <em>Select assignees</em>
-                                            </MenuItem>
-                                            {permitData?.permit?.permit_assignees?.map((assignee) => (
-                                                <MenuItem key={assignee.id} value={assignee.id.toString()}>
-                                                    {assignee.name}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </div>
-
-                                {/* Attachment */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Attachment
-                                    </label>
-                                    <div className="flex items-center gap-3">
-                                        <label className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-[#C72030] border border-gray-300 rounded cursor-pointer transition-colors">
-                                            <Upload className="w-4 h-4" />
-                                            Choose files
-                                            <input
-                                                ref={resumeFileInputRef}
-                                                type="file"
-                                                className="hidden"
+                                            <Select
                                                 multiple
-                                                onChange={(e) => setResumeAttachments(e.target.files)}
-                                            />
-                                        </label>
-                                        <span className="text-sm text-gray-500">
-                                            {resumeAttachments && resumeAttachments.length > 0
-                                                ? `${resumeAttachments.length} file(s) selected`
-                                                : "No file chosen"
-                                            }
-                                        </span>
+                                                value={selectedResumeAssignees}
+                                                onChange={handleResumeAssigneeChange}
+                                                input={<OutlinedInput />}
+                                                renderValue={(selected) => {
+                                                    if ((selected as string[]).length === 0) {
+                                                        return <span style={{ color: '#9CA3AF' }}>Select assignees</span>;
+                                                    }
+                                                    return (
+                                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                            {(selected as string[]).map((value) => {
+                                                                const assignee = permitData?.permit?.permit_assignees?.find(a => a.id.toString() === value);
+                                                                return (
+                                                                    <Chip
+                                                                        key={value}
+                                                                        label={assignee?.name || value}
+                                                                        size="small"
+                                                                        sx={{
+                                                                            backgroundColor: '#C72030',
+                                                                            color: 'white',
+                                                                            '& .MuiChip-deleteIcon': {
+                                                                                color: 'white',
+                                                                            },
+                                                                        }}
+                                                                    />
+                                                                );
+                                                            })}
+                                                        </Box>
+                                                    );
+                                                }}
+                                                displayEmpty
+                                                sx={{
+                                                    minHeight: '48px',
+                                                    '& .MuiSelect-placeholder': {
+                                                        color: '#9CA3AF',
+                                                    },
+                                                }}
+                                            >
+                                                <MenuItem disabled value="">
+                                                    <em>Select assignees</em>
+                                                </MenuItem>
+                                                {permitData?.permit?.permit_assignees?.map((assignee) => (
+                                                    <MenuItem key={assignee.id} value={assignee.id.toString()}>
+                                                        {assignee.name}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
                                     </div>
-                                    {/* Show selected files */}
-                                    {resumeAttachments && resumeAttachments.length > 0 && (
-                                        <div className="mt-2 space-y-1">
-                                            {Array.from(resumeAttachments).map((file, index) => (
-                                                <div key={index} className="text-xs text-gray-600">
-                                                    {file.name} ({Math.round(file.size / 1024)} KB)
-                                                </div>
-                                            ))}
+
+                                    {/* Attachment */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Attachment
+                                        </label>
+                                        <div className="flex items-center gap-3">
+                                            <label className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-[#C72030] border border-gray-300 rounded cursor-pointer transition-colors">
+                                                <Upload className="w-4 h-4" />
+                                                Choose files
+                                                <input
+                                                    ref={resumeFileInputRef}
+                                                    type="file"
+                                                    className="hidden"
+                                                    multiple
+                                                    onChange={(e) => setResumeAttachments(e.target.files)}
+                                                />
+                                            </label>
+                                            <span className="text-sm text-gray-500">
+                                                {resumeAttachments && resumeAttachments.length > 0
+                                                    ? `${resumeAttachments.length} file(s) selected`
+                                                    : "No file chosen"
+                                                }
+                                            </span>
                                         </div>
+                                        {/* Show selected files */}
+                                        {resumeAttachments && resumeAttachments.length > 0 && (
+                                            <div className="mt-2 space-y-1">
+                                                {Array.from(resumeAttachments).map((file, index) => (
+                                                    <div key={index} className="text-xs text-gray-600">
+                                                        {file.name} ({Math.round(file.size / 1024)} KB)
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Agreement Checkbox */}
+                            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        type="checkbox"
+                                        id="resumeAgreement"
+                                        className="mt-1 h-4 w-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                                    />
+                                    <label htmlFor="resumeAgreement" className="text-sm text-gray-700 leading-relaxed">
+                                        I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analyses JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally and physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Panchshil & Norms.
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Resume Permit Button */}
+                            <div className="flex justify-center pt-4">
+                                <Button
+                                    className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
+                                    onClick={handleResumePermit}
+                                    disabled={isResuming}
+                                >
+                                    {isResuming ? (
+                                        <>
+                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        'Resume Permit'
+
                                     )}
-                                </div>
+                                </Button>
                             </div>
                         </div>
-
-                        {/* Agreement Checkbox */}
-                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                            <div className="flex items-start gap-3">
-                                <input
-                                    type="checkbox"
-                                    id="resumeAgreement"
-                                    className="mt-1 h-4 w-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
-                                />
-                                <label htmlFor="resumeAgreement" className="text-sm text-gray-700 leading-relaxed">
-                                    I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analyses JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally and physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Panchshil & Norms.
-                                </label>
-                            </div>
-                        </div>
-
-                        {/* Resume Permit Button */}
-                        <div className="flex justify-center pt-4">
-                            <Button
-                                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
-                                onClick={handleResumePermit}
-                                disabled={isResuming}
-                            >
-                                {isResuming ? (
-                                    <>
-                                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                        Submitting...
-                                    </>
-                                ) : (
-                                    'Resume Permit'
-
-                                )}
-                            </Button>
-                        </div>
-                    </div>
-                </Section>
-                {/* )} */}
+                    </Section>
+                )}
                 {/* Permit Resume Section */}
-                {/* {permitData.permit_resume && ( */}
-                <Section
-                    title="PERMIT RESUME"
-                    icon={<RefreshCw />}
-                    sectionKey="resume"
-                    activeSection={activeSection}
-                    setActiveSection={setActiveSection}
-                >
-                    <div className="space-y-3">
-                        {/* {permitData.permit_resume.map((resume: any, index: number) => ( */}
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                            <h4 className="font-medium text-gray-900 mb-2">Resume </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <span className="text-gray-600">Reason for Resume: </span>
-                                    <span className="text-gray-900">{permitData.permit_resume?.reason_for_resume || "-"}</span>
-                                </div>
-                                <div>
-                                    <span className="text-gray-600">Resume Date: </span>
-                                    <span className="text-gray-900">{formatDateWithTimezone(permitData.permit_resume?.resume_date) || "-"}</span>
-                                </div>
-                                <div>
-                                    <span className="text-gray-600">Created By: </span>
-                                    <span className="text-gray-900">{permitData.permit_resume?.created_by?.full_name || "-"}</span>
-                                </div>
-                                <div>
-                                    <span className="text-gray-600">Assignees: </span>
-                                    <span className="text-gray-900">{permitData.permit_resume?.assignees || "-"}</span>
-                                </div>
-                                <div>
-                                    <span className="text-gray-600">Attachments Count: </span>
-                                    <span className="text-gray-900">{permitData.permit_resume?.attachments_count?.toString() || "0"}</span>
+                {permitData.permit_resume &&
+                    <Section
+                        title="PERMIT RESUME"
+                        icon={<RefreshCw />}
+                        sectionKey="resume"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
+                        <div className="space-y-3">
+                            {/* {permitData.permit_resume.map((resume: any, index: number) => ( */}
+                            <div className="p-4 bg-gray-50 rounded-lg">
+                                <h4 className="font-medium text-gray-900 mb-2">Resume </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span className="text-gray-600">Reason for Resume: </span>
+                                        <span className="text-gray-900">{permitData.permit_resume?.reason_for_resume || "-"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Resume Date: </span>
+                                        <span className="text-gray-900">{permitData?.permit_resume?.resume_date && format(permitData.permit_resume?.resume_date, "dd/MM/yyyy hh:mm a")}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Created By: </span>
+                                        <span className="text-gray-900">{permitData.permit_resume?.created_by?.full_name || "-"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Assignees: </span>
+                                        <span className="text-gray-900">{permitData.permit_resume?.assignees || "-"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Attachments Count: </span>
+                                        <span className="text-gray-900">{permitData.permit_resume?.attachments_count?.toString() || "0"}</span>
+                                    </div>
                                 </div>
                             </div>
+                            {/* ))} */}
                         </div>
-                        {/* ))} */}
-                    </div>
-                </Section>
-                {/* )} */}
+                    </Section>
+                }
 
 
                 {/* Permit Closure Details Section */}
@@ -2894,7 +2901,7 @@ export const PermitDetails = () => {
                                             </div>
                                             {level.updated_by && level.status_updated_at && (
                                                 <div className="ms-2 text-sm text-gray-600">
-                                                    by {level.updated_by} on {formatDate(level.status_updated_at)}
+                                                    by {level.updated_by} on {(level.status_updated_at)}
                                                 </div>
                                             )}
                                         </div>
@@ -2976,7 +2983,7 @@ export const PermitDetails = () => {
                                                 <div className="mb-3">
                                                     <span className="font-semibold text-gray-700 block mb-1">Created At:</span>
                                                     <span className="text-gray-900 block">
-                                                        {formatDateWithTimezone(comment.created_at)}
+                                                        {comment.created_at ? format(new Date(comment.created_at), 'dd/MM/yyyy hh:mm a') : '-'}
                                                     </span>
 
                                                 </div>
@@ -3092,7 +3099,7 @@ export const PermitDetails = () => {
                                         <tr key={index}>
                                             <td className="border border-gray-200 p-3 text-sm">{index + 1}</td>
                                             <td className="border border-gray-200 p-3 text-sm">{audit.response || '-'}</td>
-                                            <td className="border border-gray-200 p-3 text-sm">{formatDate(audit.submitted_at)}</td>
+                                            <td className="border border-gray-200 p-3 text-sm">{(audit.submitted_at)}</td>
                                             <td className="border border-gray-200 p-3 text-sm">{audit.submitted_by || '-'}</td>
                                             <td className="border border-gray-200 p-3 text-sm">
                                                 <Badge variant={audit.status === 'Approved' ? 'default' : 'secondary'}>

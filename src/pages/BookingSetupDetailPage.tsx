@@ -35,6 +35,8 @@ import { facilityBookingSetupDetails } from "@/store/slices/facilityBookingsSlic
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import axios from "axios";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -97,6 +99,37 @@ const muiTheme = createTheme({
   },
 });
 
+const columns: ColumnConfig[] = [
+  {
+    key: "start_hour",
+    label: "Start Hour",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "start_min",
+    label: "Start Minute",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "end_hour",
+    label: "End Hour",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "end_min",
+    label: "End Minute",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+]
+
 export const BookingSetupDetailPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -108,7 +141,7 @@ export const BookingSetupDetailPage = () => {
   const [showQr, setShowQr] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [additionalOpen, setAdditionalOpen] = useState(false);
-  const [availableSlots, setAvailableSlots] = useState("")
+  const [slotsConfigured, setSlotsConfigured] = useState([])
   const [formData, setFormData] = useState({
     facilityName: "",
     isBookable: true,
@@ -203,24 +236,6 @@ export const BookingSetupDetailPage = () => {
       console.error('Error downloading PDF:', error);
     }
   };
-
-  useEffect(() => {
-    const fetchAvailableSlots = async () => {
-      try {
-        const response = await axios.get(`https://fm-uat-api.lockated.com/pms/admin/facility_setups/get_schedules_slot_count?id=${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          }
-        })
-
-        setAvailableSlots(response.data.total_slots)
-      } catch (error) {
-        console.log(error)
-      }
-    }
-
-    fetchAvailableSlots()
-  }, [])
 
   const handleAdditionalOpen = () => {
     setAdditionalOpen(!additionalOpen);
@@ -333,6 +348,15 @@ export const BookingSetupDetailPage = () => {
 
       setCancellationRules([...transformedRules]);
 
+      setSlotsConfigured(response.facility_slots.map(slot => (
+        {
+          start_hour: slot.facility_slot.start_hour.toString().padStart(2, "0"),
+          start_min: slot.facility_slot.start_min.toString().padStart(2, "0"),
+          end_hour: slot.facility_slot.end_hour.toString().padStart(2, "0"),
+          end_min: slot.facility_slot.end_min.toString().padStart(2, "0"),
+        }
+      )));
+
       // setCancellationRules(response.cancellation_rules)
       setSelectedFile(response?.cover_image?.document);
       setSelectedBookingFiles(
@@ -350,6 +374,13 @@ export const BookingSetupDetailPage = () => {
     fetchDepartments();
     fetchFacilityBookingDetails();
   }, []);
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      default:
+        return item[columnKey] || "-";
+    }
+  }
 
   return (
     <ThemeProvider theme={muiTheme}>
@@ -429,11 +460,6 @@ export const BookingSetupDetailPage = () => {
                       ))}
                   </Select>
                 </FormControl>
-
-                <div className="flex flex-col items-start gap-1 -mt-[10px]">
-                  <div className="text-sm">Available Slots:</div>
-                  <div className="text-md font-semibold">{availableSlots}</div>
-                </div>
               </div>
 
               <div className="flex gap-6 py-2">
@@ -765,6 +791,25 @@ export const BookingSetupDetailPage = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3 -mb-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CalendarDays className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">SLOTS CONFIGURED</h3>
+            </div>
+
+            <EnhancedTable
+              data={slotsConfigured}
+              columns={columns}
+              renderCell={renderCell}
+              storageKey="slots-configured-table"
+              hideColumnsButton={true}
+              hideTableExport={true}
+              hideTableSearch={true}
+            />
           </div>
 
           {/* Configure Payment */}

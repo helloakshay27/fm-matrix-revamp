@@ -245,7 +245,7 @@ export const ExternalUsersDashboard = () => {
     { key: 'mobile', label: 'Mobile', sortable: true, hideable: true },
     { key: 'gender', label: 'Gender', sortable: true, hideable: true },
     { key: 'active', label: 'Active', sortable: false, hideable: true },
-    { key: 'birth_date', label: 'Birth Date', sortable: true, hideable: true },
+  // Birth Date removed per request
     { key: 'joining_date', label: 'Joining Date', sortable: true, hideable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true },
     { key: 'cluster_name', label: 'Cluster', sortable: true, hideable: true },
@@ -305,8 +305,7 @@ export const ExternalUsersDashboard = () => {
           </div>
         );
       }
-      case 'birth_date':
-  return formatDateDMY((user as any).birth_date);
+  // removed Birth Date from UI
       case 'joining_date':
   return formatDateDMY((user as any).lock_user_permission?.joining_date || (user as any).joining_date);
       case 'status': {
