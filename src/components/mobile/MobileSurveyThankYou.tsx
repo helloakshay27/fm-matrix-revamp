@@ -153,7 +153,7 @@ export const MobileSurveyThankYou: React.FC = () => {
       </div>
 
       {/* Thank You Card */}
-      <div className="bg-white/90 backdrop-blur-sm rounded-[0.20rem] p-8 text-center max-w-sm w-full shadow-xl border-4 border-gray-100">
+      <div className="bg-white/50 backdrop-blur-sm rounded-[0.20rem] p-8 text-center max-w-sm w-full shadow-xl ">
         {/* Stylized Thank You Text */}
         <div className="p-3">
           <h1
