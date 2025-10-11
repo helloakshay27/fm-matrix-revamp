@@ -46,17 +46,15 @@ export const AdminLayout: React.FC = () => {
       {/* Header */}
       <Header />
       
-      {/* Sidebar */}
-      <AdminSidebar />
+      {/* Sidebar removed */}
+      {/* <AdminSidebar /> */}
       
       {/* Dynamic Header */}
      
 
       {/* Main content */}
       <main
-        className={`${
-          isSidebarCollapsed ? "ml-10" : "ml-64"
-        } pt-20 transition-all duration-300 min-h-screen`}
+        className="ml-0 pt-20 transition-all duration-300 min-h-screen"
         style={{ backgroundColor: "#fafafa" }}
       >
         <div className="">

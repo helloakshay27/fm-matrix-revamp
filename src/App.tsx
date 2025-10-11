@@ -307,6 +307,24 @@ import { FMUserDashboard } from "./pages/setup/FMUserDashboard";
 import { AddFMUserDashboard } from "./pages/setup/AddFMUserDashboard";
 import { OccupantUsersDashboard } from "./pages/setup/OccupantUsersDashboard";
 import { AddOccupantUserDashboard } from "./pages/setup/AddOccupantUserDashboard";
+import { AddUserPage } from "./pages/AddUserPage";
+import { ManageUsersPage } from "./pages/ManageUsersPage";
+import { ViewManageUserPage } from "./pages/setup/ViewManageUserPage";
+import { ManageFlatsPage } from "./pages/setup/ManageFlatsPage";
+import EditFlatPage from "./pages/setup/EditFlatPage";
+import { SpecialUsersCategoryDashboard } from "./pages/setup/SpecialUsersCategoryDashboard";
+import { KYCDetailsDashboard } from "./pages/setup/KYCDetailsDashboard";
+import { HelpdeskSetupDashboard } from "./pages/setup/HelpdeskSetupDashboard";
+import { CommunicationSetupDashboard } from "./pages/setup/CommunicationSetupDashboard";
+
+// Import Communication pages
+import NoticePage from "./pages/communication/NoticePage";
+import AddNoticePage from "./pages/communication/AddNoticePage";
+import NoticeDetailPage from "./pages/communication/NoticeDetailPage";
+import EventsPage from "./pages/communication/EventsPage";
+import EventDetailPage from "./pages/communication/EventDetailPage";
+import PollsPage from "./pages/communication/PollsPage";
+import NotificationsPage from "./pages/communication/NotificationsPage";
 
 // Import User Roasters pages
 import { UserRoastersDashboard } from "./pages/setup/UserRoastersDashboard";
@@ -1261,6 +1279,84 @@ function App() {
                     path="/master/user/occupant-users/edit/:id"
                     element={<EditOccupantUserPage />}
                   />
+                  
+                  {/* Setup - Manage Users Route */}
+                  <Route
+                    path="/setup/manage-users"
+                    element={<ManageUsersPage />}
+                  />
+                  <Route
+                    path="/setup/manage-users/add"
+                    element={<AddUserPage />}
+                  />
+                  <Route
+                    path="/setup/manage-users/view/:id"
+                    element={<ViewManageUserPage />}
+                  />
+
+                  {/* Setup - Special Users Category Route */}
+                  <Route
+                    path="/setup/special-users-category"
+                    element={<SpecialUsersCategoryDashboard />}
+                  />
+
+                  {/* Setup - KYC Details Route */}
+                  <Route
+                    path="/setup/kyc-details"
+                    element={<KYCDetailsDashboard />}
+                  />
+
+                  {/* Setup - Helpdesk Setup Route */}
+                  <Route
+                    path="/setup/helpdesk-setup"
+                    element={<HelpdeskSetupDashboard />}
+                  />
+
+                  {/* Setup - Communication Setup Route */}
+                  <Route
+                    path="/setup/communication"
+                    element={<CommunicationSetupDashboard />}
+                  />
+
+                  {/* Communication Routes */}
+                  <Route
+                    path="/communication/notice"
+                    element={<NoticePage />}
+                  />
+                  <Route
+                    path="/communication/notice/add"
+                    element={<AddNoticePage />}
+                  />
+                  <Route
+                    path="/communication/notice/view/:id"
+                    element={<NoticeDetailPage />}
+                  />
+                  <Route
+                    path="/communication/events"
+                    element={<EventsPage />}
+                  />
+                  <Route
+                    path="/communication/events/view/:id"
+                    element={<EventDetailPage />}
+                  />
+                  <Route
+                    path="/communication/polls"
+                    element={<PollsPage />}
+                  />
+                  <Route
+                    path="/communication/notifications"
+                    element={<NotificationsPage />}
+                  />
+
+                  {/* Setup - Manage Flats Route */}
+                  <Route
+                    path="/setup/manage-flats"
+                    element={<ManageFlatsPage />}
+                  />
+                  <Route
+                    path="/setup/manage-flats/edit/:flatId"
+                    element={<EditFlatPage />}
+                  />
 
                   {/* CRM Routes */}
                   <Route path="/crm/campaign" element={<CRMCampaignPage />} />
@@ -1922,7 +2018,7 @@ function App() {
                   {/* Maintenance Routes */}
                   <Route
                     path="/maintenance/asset"
-                    element={<AssetDashboard />}
+                    element={<ManageUsersPage />}
                   />
                   <Route
                     path="/maintenance/asset/details/:id"

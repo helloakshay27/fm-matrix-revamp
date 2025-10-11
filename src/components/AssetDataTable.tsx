@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Clock, Eye, Plus, Trash2 } from "lucide-react";
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
@@ -49,6 +50,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   console.log("Selected assets:", visibleColumns);
   // Status color logic moved to StatusBadge component
 
+  const navigate = useNavigate();
   const [showActionPanel, setShowActionPanel] = useState(false);
   // const handleExcelExport = async (columnVisibility?: Record<string, boolean>) => {
   //   try {
@@ -659,12 +661,16 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     setShowActionPanel(true);
   };
 
+  const handleAddUser = () => {
+    navigate("/setup/manage-users/add");
+  };
+
   return (
     <>
       {showActionPanel && (
         <SelectionPanel
           actions={selectionActions}
-          onAdd={handleAddAsset}
+          onAdd={handleAddUser}
           onClearSelection={() => setShowActionPanel(false)}
           onImport={handleImport}
         // onChecklist={onChecklist}

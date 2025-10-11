@@ -1766,7 +1766,7 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={data} onCardClick={handleStatCardClick} />
+              <AssetStats stats={data} onCardClick={handleStatCardClick} assets={displayAssets} />
 
               <div className="relative">
                 <AssetDataTable

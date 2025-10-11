@@ -3,6 +3,7 @@ import {
   X,
   Plus,
   Upload,
+  Download,
   Filter,
   AlertCircle,
   Trash2,
@@ -21,6 +22,7 @@ interface SelectionPanelProps {
   actions?: SelectionAction[];
   onAdd?: () => void;
   onImport?: () => void;
+  onExport?: () => void;
   onChecklist?: () => void;
   onClearSelection?: () => void;
   loading?: boolean;
@@ -30,6 +32,7 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   actions = [],
   onAdd,
   onImport,
+  onExport,
   onChecklist,
   onClearSelection,
   loading
@@ -37,18 +40,28 @@ export const SelectionPanel: React.FC<SelectionPanelProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Add a small delay before attaching the click outside handler
+    // This prevents the panel from closing immediately when the Action button is clicked
     const handleClickOutside = (event: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
         onClearSelection?.();
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [onClearSelection]);
 
   const defaultActions: SelectionAction[] = [
     ...(onAdd ? [{ label: 'Add', icon: Plus, onClick: onAdd }] : []),
     ...(onImport ? [{ label: 'Import', icon: Upload, onClick: onImport }] : []),
+    ...(onExport ? [{ label: 'Export', icon: Download, onClick: onExport }] : []),
     ...actions,
   ];
 

@@ -1,277 +1,230 @@
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
-  MapPin,
-  Building,
-  Users,
   Settings,
+  Users,
   FileText,
-  CheckSquare,
-  AlertTriangle,
-  ClipboardList,
-  Shield,
-  Eye,
-  Mail,
-  Target,
-  BookOpen,
-  Receipt,
-  Home,
+  Building2,
+  ChevronUp,
   ChevronDown,
-  ChevronRight,
-  Tag
+  Headset,
+  MessageCircle,
+  Bell,
+  Calendar,
+  BarChart3
 } from 'lucide-react';
 
-const locationItems = [
-  { name: 'Account', href: '/setup/location/account' },
-  { name: 'Building', href: '/setup/location/building' },
-  { name: 'Wing', href: '/setup/location/wing' },
-  { name: 'Area', href: '/setup/location/area' },
-  { name: 'Floor', href: '/setup/location/floor' },
-  { name: 'Unit', href: '/setup/location/unit' },
-  { name: 'Room', href: '/setup/location/room' },
-];
-
-const userRoleItems = [
-  { name: 'Department', href: '/setup/user-role/department' },
-  { name: 'Role', href: '/setup/user-role/role' },
-];
-
-const ticketItems = [
-  { name: 'Setup', href: '/setup/ticket/setup' },
-  { name: 'Escalation', href: '/setup/ticket/escalation' },
-  { name: 'Cost Approval', href: '/setup/ticket/cost-approval' },
-];
-
-const permitItems = [
-  { name: 'Permit Setup', href: '/setup/permit' },
-];
-
-const incidentItems = [
-  { name: 'Incident Setup', href: '/setup/incident' },
-];
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  path?: string;
+  subItems?: MenuItem[];
+}
 
 export const SetupSidebar = () => {
-  const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [isUserRoleOpen, setIsUserRoleOpen] = useState(false);
-  const [isTicketOpen, setIsTicketOpen] = useState(false);
-  const [isPermitOpen, setIsPermitOpen] = useState(false);
-  const [isIncidentOpen, setIsIncidentOpen] = useState(false);
+  const location = useLocation();
+  const [isSetupExpanded, setIsSetupExpanded] = useState(true);
+  const [isCommunicationExpanded, setIsCommunicationExpanded] = useState(true);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+
+  const toggleMenu = (menuId: string) => {
+    setExpandedMenus(prev => 
+      prev.includes(menuId) 
+        ? prev.filter(id => id !== menuId)
+        : [...prev, menuId]
+    );
+  };
+
+  const setupMenuItems: MenuItem[] = [
+    {
+      id: "special-users",
+      label: "Special Users Category",
+      icon: <Users className="w-5 h-5" />,
+      path: "/setup/special-users-category",
+    },
+    {
+      id: "manage-users",
+      label: "Manage Users",
+      icon: <Users className="w-5 h-5" />,
+      path: "/setup/manage-users",
+    },
+    {
+      id: "kyc-details",
+      label: "KYC Details",
+      icon: <FileText className="w-5 h-5" />,
+      path: "/setup/kyc-details",
+    },
+    {
+      id: "manage-flats",
+      label: "Manage Flats",
+      icon: <Building2 className="w-5 h-5" />,
+      path: "/setup/manage-flats",
+    },
+    {
+      id: "helpdesk-setup",
+      label: "Helpdesk Setup",
+      icon: <Headset className="w-5 h-5" />,
+      path: "/setup/helpdesk-setup",
+    },
+  ];
+
+  const communicationMenuItems: MenuItem[] = [
+    {
+      id: "notice",
+      label: "Notice",
+      icon: <Bell className="w-5 h-5" />,
+      path: "/communication/notice",
+    },
+    {
+      id: "events",
+      label: "Events",
+      icon: <Calendar className="w-5 h-5" />,
+      path: "/communication/events",
+    },
+    {
+      id: "polls",
+      label: "Polls",
+      icon: <BarChart3 className="w-5 h-5" />,
+      path: "/communication/polls",
+    },
+    {
+      id: "notifications",
+      label: "Notifications",
+      icon: <Bell className="w-5 h-5" />,
+      path: "/communication/notifications",
+    },
+  ];
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const isParentActive = (subItems?: MenuItem[]) => {
+    if (!subItems) return false;
+    return subItems.some(item => item.path && location.pathname === item.path);
+  };
+
+  const renderMenuItem = (item: MenuItem) => {
+    if (item.subItems) {
+      const isMenuExpanded = expandedMenus.includes(item.id);
+      const hasActiveChild = isParentActive(item.subItems);
+
+      return (
+        <div key={item.id}>
+          <button
+            onClick={() => toggleMenu(item.id)}
+            className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-200
+              ${
+                hasActiveChild
+                  ? "bg-[#E8D4BE] text-[#C72031] font-medium"
+                  : "text-[#1A1A1A] hover:bg-[#C4B89D54]"
+              }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={hasActiveChild ? "text-[#C72031]" : "text-[#1A1A1A]"}>
+                {item.icon}
+              </div>
+              <span className="text-sm">{item.label}</span>
+            </div>
+            {isMenuExpanded ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
+
+          {isMenuExpanded && item.subItems && (
+            <div className="bg-[#F6F4EE]">
+              {item.subItems.map((subItem) => (
+                <Link
+                  key={subItem.id}
+                  to={subItem.path!}
+                  className={`w-full flex items-center gap-3 pl-12 pr-4 py-2.5 text-left transition-colors duration-200
+                    ${
+                      isActive(subItem.path!)
+                        ? "bg-[#C4B89D54] text-[#C72031] font-medium border-l-4 border-[#C72031]"
+                        : "text-[#1A1A1A] hover:bg-[#C4B89D54]"
+                    }`}
+                >
+                  <div className={isActive(subItem.path!) ? "text-[#C72031]" : "text-[#1A1A1A]"}>
+                    {subItem.icon}
+                  </div>
+                  <span className="text-sm">{subItem.label}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={item.id}
+        to={item.path!}
+        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-200
+          ${
+            isActive(item.path!)
+              ? "bg-[#C4B89D54] text-[#C72031] font-medium border-l-4 border-[#C72031]"
+              : "text-[#1A1A1A] hover:bg-[#C4B89D54]"
+          }`}
+      >
+        <div className={isActive(item.path!) ? "text-[#C72031]" : "text-[#1A1A1A]"}>
+          {item.icon}
+        </div>
+        <span className="text-sm">{item.label}</span>
+      </Link>
+    );
+  };
 
   return (
-    <div className="w-64 h-screen bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto">
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 bg-[#C72030] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
-          </div>
-          <span className="text-[#1a1a1a] font-semibold text-lg">Setup</span>
+    <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-56 bg-[#f6f4ee] shadow-lg z-40 overflow-y-auto border-r border-[#DBC2A9]">
+      {/* Setup Header */}
+      <div
+        className="flex items-center justify-between px-4 py-4 cursor-pointer border-b border-[#DBC2A9] bg-[#C4B89D54]"
+        onClick={() => setIsSetupExpanded(!isSetupExpanded)}
+      >
+        <div className="flex items-center gap-2">
+          <Settings className="w-5 h-5 text-[#1A1A1A]" />
+          <span className="font-semibold text-[#1A1A1A]">Setup</span>
         </div>
-        
-        <nav className="space-y-2">
-          {/* Location Dropdown */}
-          <div>
-            <button
-              onClick={() => setIsLocationOpen(!isLocationOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-            >
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5" />
-                Location
-              </div>
-              {isLocationOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isLocationOpen && (
-              <div className="ml-8 mt-1 space-y-1">
-                {locationItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* User Role Dropdown */}
-          <div>
-            <button
-              onClick={() => setIsUserRoleOpen(!isUserRoleOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-            >
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5" />
-                User Role
-              </div>
-              {isUserRoleOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isUserRoleOpen && (
-              <div className="ml-8 mt-1 space-y-1">
-                {userRoleItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Individual Items */}
-
-          <Link to="/setup/meter-type" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Settings className="w-5 h-5" />
-            Meter Type
-          </Link>
-
-          <Link to="/setup/asset-groups" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Building className="w-5 h-5" />
-            Asset Groups
-          </Link>
-
-          <Link to="/setup/checklist-group" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <CheckSquare className="w-5 h-5" />
-            Checklist Group
-          </Link>
-
-          {/* Ticket Dropdown */}
-          <div>
-            <button
-              onClick={() => setIsTicketOpen(!isTicketOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-            >
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5" />
-                Ticket
-              </div>
-              {isTicketOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isTicketOpen && (
-              <div className="ml-8 mt-1 space-y-1">
-                {ticketItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Permit Dropdown */}
-          <div>
-            <button
-              onClick={() => setIsPermitOpen(!isPermitOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-            >
-              <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5" />
-                Permit
-              </div>
-              {isPermitOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isPermitOpen && (
-              <div className="ml-8 mt-1 space-y-1">
-                {permitItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Incident Dropdown */}
-          <div>
-            <button
-              onClick={() => setIsIncidentOpen(!isIncidentOpen)}
-              className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-            >
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5" />
-                Incident
-              </div>
-              {isIncidentOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isIncidentOpen && (
-              <div className="ml-8 mt-1 space-y-1">
-                {incidentItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className="block px-3 py-2 rounded-lg text-sm transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <Link to="/setup/task-escalation" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <AlertTriangle className="w-5 h-5" />
-            Task Escalation
-          </Link>
-
-          <Link to="/setup/approval-matrix" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <ClipboardList className="w-5 h-5" />
-            Approval Matrix
-          </Link>
-
-          <Link to="/setup/patrolling-approval" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Shield className="w-5 h-5" />
-            Patrolling Approval
-          </Link>
-
-          <Link to="/setup/email-rule" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Mail className="w-5 h-5" />
-            Email Rule
-          </Link>
-
-          <Link to="/setup/fm-group" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Target className="w-5 h-5" />
-            FM Group
-          </Link>
-
-          <Link to="/setup/master-checklist" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <BookOpen className="w-5 h-5" />
-            Master Checklist
-          </Link>
-
-          <Link to="/setup/sac-hsn-setup" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Receipt className="w-5 h-5" />
-            SAC/HSN Setup
-          </Link>
-
-          <Link to="/setup/address" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Home className="w-5 h-5" />
-            Address
-          </Link>
-
-          <Link to="/setup/tag" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <Tag className="w-5 h-5" />
-            Tag
-          </Link>
-
-          <Link to="/setup/export" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a]">
-            <FileText className="w-5 h-5" />
-            Export
-          </Link>
-        </nav>
+        {isSetupExpanded ? (
+          <ChevronUp className="w-5 h-5 text-[#1A1A1A]" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-[#1A1A1A]" />
+        )}
       </div>
+
+      {/* Setup Menu Items */}
+      {isSetupExpanded && (
+        <nav className="py-2">
+          {setupMenuItems.map((item) => renderMenuItem(item))}
+        </nav>
+      )}
+
+      {/* Communication Header */}
+      <div
+        className="flex items-center justify-between px-4 py-4 cursor-pointer border-b border-[#DBC2A9] bg-[#C4B89D54]"
+        onClick={() => setIsCommunicationExpanded(!isCommunicationExpanded)}
+      >
+        <div className="flex items-center gap-2">
+          <MessageCircle className="w-5 h-5 text-[#1A1A1A]" />
+          <span className="font-semibold text-[#1A1A1A]">Communication</span>
+        </div>
+        {isCommunicationExpanded ? (
+          <ChevronUp className="w-5 h-5 text-[#1A1A1A]" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-[#1A1A1A]" />
+        )}
+      </div>
+
+      {/* Communication Menu Items */}
+      {isCommunicationExpanded && (
+        <nav className="py-2">
+          {communicationMenuItems.map((item) => renderMenuItem(item))}
+        </nav>
+      )}
     </div>
   );
 };

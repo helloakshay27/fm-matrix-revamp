@@ -13,6 +13,7 @@ import ViDynamicHeader from "./ViDynamicHeader";
 import { StaticDynamicHeader } from "./StaticDynamicHeader";
 import { StacticSidebar } from "./StacticSidebar";
 import ViSidebarWithToken from "./ViSidebarWithToken";
+import { SetupSidebar } from "./SetupSidebar";
 import { saveToken, saveUser, saveBaseUrl } from "../utils/auth";
 
 interface LayoutProps {
@@ -161,13 +162,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       style={{ backgroundColor: layoutConfig.theme?.backgroundColor }}
     >
       <Header />
-      {renderSidebar()}
-      {renderDynamicHeader()}
+      {/* Setup Sidebar */}
+      <SetupSidebar />
 
       <main
-        className={`${
-          isSidebarCollapsed ? "ml-16" : "ml-64"
-        } pt-28 transition-all duration-300`}
+        className="ml-56 pt-16 transition-all duration-300"
       >
         <Outlet />
       </main>
