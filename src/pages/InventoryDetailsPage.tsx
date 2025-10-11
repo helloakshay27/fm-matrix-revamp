@@ -681,7 +681,7 @@ export const InventoryDetailsPage = () => {
             ))}
           </TabsList>
 
-          <TabsContent value="inventory-detail" className="p-4 sm:p-6">
+          <TabsContent value="inventory-detail" className="p-4 sm:p-6 space-y-6">
             <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
@@ -867,6 +867,32 @@ export const InventoryDetailsPage = () => {
                     ) : (
                       <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">Valid</span>
                     )}
+                  </span>
+                </div>
+                <div className="flex text-sm">
+                  <span className="text-gray-500 w-24">Total (Including Tax)</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.total_including_tax}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+
+            <div className="bg-white rounded-lg border text-[15px]">
+              <div className="flex p-4 items-center">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                  <Box className="w-6 h-6 text-[#C72030]" />
+                </div>
+                <h2 className="text-lg font-[700]">VENDOR DETAIL</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 p-4 gap-3">
+                <div className="flex text-sm">
+                  <span className="text-gray-500 w-24">Site</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {inventoryData?.site || '—'}
                   </span>
                 </div>
               </div>
