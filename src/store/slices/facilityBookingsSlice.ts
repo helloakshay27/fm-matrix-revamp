@@ -169,7 +169,7 @@ export const filterBookings = createAsyncThunk(
           },
         }
       );
-      return response.data.facility_bookings;
+      return response.data;
     } catch (error) {
       return rejectWithValue(
         error instanceof Error

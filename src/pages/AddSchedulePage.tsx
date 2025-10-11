@@ -38,6 +38,10 @@ import {
   OutlinedInput,
   SelectChangeEvent,
   Autocomplete,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Settings,
@@ -364,14 +368,32 @@ export const AddSchedulePage = () => {
   const [fieldErrors, setFieldErrors] = useState<{ [fieldName: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // LocalStorage keys
+  // Add draft modal state
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [hasSavedDraft, setHasSavedDraft] = useState(false);
+
+  // Determine schedule type from URL
+  const getScheduleTypeFromUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type');
+    const validScheduleTypes = ['Asset', 'Service'];
+    
+    if (validScheduleTypes.includes(typeParam)) {
+      return typeParam;
+    }
+    return 'Asset'; // default
+  };
+
+  const currentScheduleType = getScheduleTypeFromUrl();
+
+  // LocalStorage keys - separate for Asset and Service
   const STORAGE_KEYS = {
-    FORM_DATA: 'addSchedule_formData',
-    QUESTION_SECTIONS: 'addSchedule_questionSections',
-    TIME_SETUP_DATA: 'addSchedule_timeSetupData',
-    ACTIVE_STEP: 'addSchedule_activeStep',
-    COMPLETED_STEPS: 'addSchedule_completedSteps',
-    ATTACHMENTS: 'addSchedule_attachments'
+    FORM_DATA: `addSchedule_${currentScheduleType}_formData`,
+    QUESTION_SECTIONS: `addSchedule_${currentScheduleType}_questionSections`,
+    TIME_SETUP_DATA: `addSchedule_${currentScheduleType}_timeSetupData`,
+    ACTIVE_STEP: `addSchedule_${currentScheduleType}_activeStep`,
+    COMPLETED_STEPS: `addSchedule_${currentScheduleType}_completedSteps`,
+    ATTACHMENTS: `addSchedule_${currentScheduleType}_attachments`
   };
 
   // Save to localStorage
@@ -537,7 +559,7 @@ export const AddSchedulePage = () => {
 
   // Initialize component with localStorage data or clear current step if refreshed on that step
   useEffect(() => {
-    // Check if there's a saved draft
+    // Check if there's a saved draft for the current schedule type
     const savedActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
     const savedFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
     const savedQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
@@ -545,48 +567,10 @@ export const AddSchedulePage = () => {
     const savedCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
     const savedAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
 
-    // If there's a saved draft, restore it
+    // If there's a saved draft for this schedule type, show modal
     if (savedActiveStep !== null || savedFormData !== null) {
-      // Restore active step
-      if (savedActiveStep !== null && typeof savedActiveStep === 'number') {
-        setActiveStep(savedActiveStep);
-      }
-
-      // Restore form data
-      if (savedFormData) {
-        setFormData(savedFormData);
-      }
-
-      // Restore question sections
-      if (savedQuestionSections && Array.isArray(savedQuestionSections)) {
-        setQuestionSections(savedQuestionSections);
-      }
-
-      // Restore time setup data
-      if (savedTimeSetupData) {
-        setTimeSetupData(savedTimeSetupData);
-      }
-
-      // Restore completed steps
-      if (savedCompletedSteps && Array.isArray(savedCompletedSteps)) {
-        setCompletedSteps(savedCompletedSteps);
-      }
-
-      // Restore attachments
-      if (savedAttachments && Array.isArray(savedAttachments)) {
-        setAttachments(savedAttachments);
-      }
-
-      // Show a message that draft was restored
-      toast.info("Draft restored! Continue from where you left off.", {
-        position: 'top-right',
-        duration: 3000,
-        style: {
-          background: '#fff',
-          color: 'black',
-          border: 'none',
-        },
-      });
+      setHasSavedDraft(true);
+      setShowDraftModal(true);
     }
 
     // Only reset if browser back/forward is used
@@ -607,6 +591,76 @@ export const AddSchedulePage = () => {
   // NOTE: Removed automatic localStorage saving on state changes
   // Data is now only saved to localStorage when "Save to Draft" button is clicked
   // This allows data to stay in state for form submission without persisting prematurely
+
+  // Handler for continuing with draft
+  const handleContinueWithDraft = () => {
+    const savedActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
+    const savedFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+    const savedQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
+    const savedTimeSetupData = loadFromLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA);
+    const savedCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
+    const savedAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
+
+    // Restore active step
+    if (savedActiveStep !== null && typeof savedActiveStep === 'number') {
+      setActiveStep(savedActiveStep);
+    }
+
+    // Restore form data
+    if (savedFormData) {
+      setFormData(savedFormData);
+    }
+
+    // Restore question sections
+    if (savedQuestionSections && Array.isArray(savedQuestionSections)) {
+      setQuestionSections(savedQuestionSections);
+    }
+
+    // Restore time setup data
+    if (savedTimeSetupData) {
+      setTimeSetupData(savedTimeSetupData);
+    }
+
+    // Restore completed steps
+    if (savedCompletedSteps && Array.isArray(savedCompletedSteps)) {
+      setCompletedSteps(savedCompletedSteps);
+    }
+
+    // Restore attachments
+    if (savedAttachments && Array.isArray(savedAttachments)) {
+      setAttachments(savedAttachments);
+    }
+
+    setShowDraftModal(false);
+
+    // Show a message that draft was restored
+    toast.info("Draft restored! Continue from where you left off.", {
+      position: 'top-right',
+      duration: 3000,
+      style: {
+        background: '#fff',
+        color: 'black',
+        border: 'none',
+      },
+    });
+  };
+
+  // Handler for starting fresh
+  const handleStartFresh = () => {
+    clearAllFromLocalStorage();
+    setShowDraftModal(false);
+    setHasSavedDraft(false);
+
+    toast.info("Starting fresh! Previous draft has been cleared.", {
+      position: 'top-right',
+      duration: 3000,
+      style: {
+        background: '#fff',
+        color: 'black',
+        border: 'none',
+      },
+    });
+  };
 
   // Load data on component mount
   useEffect(() => {
@@ -2702,7 +2756,15 @@ export const AddSchedulePage = () => {
     saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
     saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
     saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
-    saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep + 1); // Save next step as active
+    
+    // For Time Setup (step 3), save current step so user returns to Time Setup
+    // For other steps (0-2), save next step to move forward
+    if (activeStep === 3) {
+      saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep); // Save current step (Time Setup)
+    } else {
+      saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep + 1); // Save next step
+    }
+    
     saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, [...completedSteps, activeStep]);
     saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
 
@@ -5714,29 +5776,18 @@ export const AddSchedulePage = () => {
         </div>
         <div className="flex items-center justify-between">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">ADD SCHEDULE</h1>
-          {(loadFromLocalStorage(STORAGE_KEYS.FORM_DATA) || loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP)) && (
-            <MuiButton
-              variant="outlined"
-              size="small"
-              onClick={() => {
-                clearAllFromLocalStorage();
-                window.location.reload();
-              }}
-              sx={{
-                color: '#C72030',
-                borderColor: '#C72030',
-                fontSize: '12px',
-                padding: '6px 16px',
-                textTransform: 'none',
-                '&:hover': {
-                  borderColor: '#C72030',
-                  backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                }
-              }}
-            >
-              Start Fresh
-            </MuiButton>
-          )}
+          {/* {(loadFromLocalStorage(STORAGE_KEYS.FORM_DATA) || loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP)) && (
+  <DraftButton
+    variant="outlined"
+    size="small"
+    onClick={() => {
+      clearAllFromLocalStorage();
+      window.location.reload();
+    }}
+  >
+    Start Fresh
+  </DraftButton>
+)} */}
         </div>
       </div>
 
@@ -5865,6 +5916,61 @@ export const AddSchedulePage = () => {
 
       {/* Completed Sections */}
       {renderCompletedSections()}
+
+      {/* Draft Modal */}
+      <Dialog
+        open={showDraftModal}
+        onClose={() => {}} // Prevent closing by clicking outside
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          style: {
+            borderRadius: 0,
+            fontFamily: 'Work Sans, sans-serif',
+          }
+        }}
+      >
+        <DialogTitle
+          style={{
+            backgroundColor: '#C72030',
+            color: 'white',
+            fontFamily: 'Work Sans, sans-serif',
+            fontWeight: 600,
+            fontSize: '18px',
+            padding: '16px 24px',
+          }}
+        >
+          {currentScheduleType} Schedule Draft Found
+        </DialogTitle>
+        <DialogContent style={{ padding: '24px' }}>
+          <Typography
+            style={{
+              fontFamily: 'Work Sans, sans-serif',
+              fontSize: '14px',
+              color: '#333',
+              marginTop: '8px',
+            }}
+          >
+            We found a saved draft for <strong>{currentScheduleType} schedule</strong> from your previous session. Would you like to continue with the saved draft or start fresh?
+          </Typography>
+        </DialogContent>
+        <DialogActions style={{ padding: '16px 24px', gap: '12px' }}>
+          <DraftButton
+            onClick={handleStartFresh}
+            style={{
+              backgroundColor: '#f5f5f5',
+              color: '#666',
+            }}
+          >
+            Start Fresh
+          </DraftButton>
+          <RedButton
+            onClick={handleContinueWithDraft}
+          >
+            Continue with Draft
+          </RedButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 
