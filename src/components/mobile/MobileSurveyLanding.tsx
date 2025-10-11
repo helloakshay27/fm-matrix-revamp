@@ -1954,69 +1954,54 @@ export const MobileSurveyLanding: React.FC = () => {
                           What specifically needs improvement?
                         </h4>
 
-                        {selectedTags.length > 0 && (
+                        {/* {selectedTags.length > 0 && (
                           <p className="text-sm text-black/100">
                             {selectedTags.length} item
                             {selectedTags.length > 1 ? "s" : ""} selected
                           </p>
-                        )}
+                        )} */}
                       </div>
                       <div className="overflow-x-auto mt-4">
                         <div
-                          className="flex"
+                          className="grid grid-cols-2 gap-4"
                           style={{ minWidth: "100%", paddingBottom: "8px" }}
                         >
-                          {(() => {
-                            const tags =
-                              getCurrentQuestion()?.generic_tags || [];
-                            const rows = [];
-                            for (let i = 0; i < tags.length; i += 2) {
-                              rows.push(tags.slice(i, i + 2));
-                            }
-                            return rows.map((row, rowIdx) => (
-                              <div
-                                key={rowIdx}
-                                className="flex flex-col gap-4 min-w-[165px]"
+                          {getCurrentQuestion()?.generic_tags?.map((tag) => {
+                            const isSelected = selectedTags.some(
+                              (selectedTag) => selectedTag.id === tag.id
+                            );
+                            return (
+                              <button
+                                type="button"
+                                key={tag.id}
+                                onClick={() => handleGenericTagClick(tag)}
+                                className={`p-3 sm:p-4 rounded-[0.20rem] text-center transition-all ${
+                                  isSelected
+                                    ? "border-blue-500 bg-blue-50"
+                                    : ""
+                                }`}
                               >
-                                {row.map((tag) => {
-                                  const isSelected = selectedTags.some(
-                                    (selectedTag) => selectedTag.id === tag.id
-                                  );
-                                  return (
-                                    <button
-                                      type="button"
-                                      key={tag.id}
-                                      onClick={() => handleGenericTagClick(tag)}
-                                      className={`p-3 sm:p-4 rounded-[0.20rem] mr-3 text-center transition-all ${
-                                        isSelected
-                                          ? "border-blue-500 bg-blue-50"
-                                          : ""
-                                      }`}
-                                    >
-                                      <div className="mb-2">
-                                        {tag.icons && tag.icons.length > 0 ? (
-                                          <img
-                                            src={tag.icons[0].url}
-                                            alt={tag.category_name}
-                                            className="w-10 h-10 sm:w-12 sm:h-12 mx-auto object-contain"
-                                          />
-                                        ) : (
-                                          <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
-                                            <span className="text-lg sm:text-2xl">
-                                              🏷️
-                                            </span>
-                                          </div>
-                                        )}
-                                      </div>
-                                      <span className="text-xs sm:text-sm font-medium text-gray-700 leading-tight">
-                                        {tag.category_name}
+                                <div className="mb-2">
+                                  {tag.icons && tag.icons.length > 0 ? (
+                                    <img
+                                      src={tag.icons[0].url}
+                                      alt={tag.category_name}
+                                      className="w-[9rem] h-[5rem] sm:w-[9rem] sm:h-[5rem] mx-auto object-contain"
+                                    />
+                                  ) : (
+                                    <div className="w-[9rem] h-[5rem] sm:w-[9rem] sm:h-[5rem] mx-auto bg-gray-200 rounded-full flex items-center justify-center">
+                                      <span className="text-lg sm:text-2xl">
+                                        🏷️
                                       </span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            ));
-                          })()}
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="text-xs sm:text-sm font-medium text-gray-700 leading-tight">
+                                  {tag.category_name}
+                                </span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
