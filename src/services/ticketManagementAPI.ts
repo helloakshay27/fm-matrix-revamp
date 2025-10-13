@@ -1130,8 +1130,11 @@ export const ticketManagementAPI = {
     passValidTo?: string;
     daysPermitted?: { [key: string]: boolean };
     capturedPhoto?: string;
-    visitor_document?: File | null;
-    additionalVisitors?: Array<{ name: string; mobile: string }>;
+    visitor_documents?: File | null;
+    hostName?: string;
+    hostMobile?: string;
+    hostEmail?: string;
+    additionalVisitors?: Array<{ name: string; mobile: string; passNo: string }>;
     goodsData?: {
       selectType: string;
       category: string;
@@ -1186,6 +1189,17 @@ export const ticketManagementAPI = {
       }
       if (visitorData.tower) {
         formData.append('gatekeeper[building_id]', visitorData.tower);
+      }
+      
+      // Host details (when host is "others")
+      if (visitorData.hostName) {
+        formData.append('gatekeeper[visitor_host_name]', visitorData.hostName);
+      }
+      if (visitorData.hostMobile) {
+        formData.append('gatekeeper[visitor_host_mobile]', visitorData.hostMobile);
+      }
+      if (visitorData.hostEmail) {
+        formData.append('gatekeeper[visitor_host_email]', visitorData.hostEmail);
       }
       
       // Basic visitor details
@@ -1246,10 +1260,11 @@ export const ticketManagementAPI = {
       // Additional visitors
       if (visitorData.additionalVisitors && visitorData.additionalVisitors.length > 0) {
         visitorData.additionalVisitors.forEach((visitor, index) => {
-          if (visitor.name && visitor.mobile) {
+          if (visitor.name && visitor.mobile && visitor.passNo) {
             const timestamp = Date.now() + index;
             formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][name]`, visitor.name);
             formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][mobile]`, visitor.mobile);
+            formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][pass_number]`, visitor.passNo);
             formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][_destroy]`, 'false');
           }
         });
@@ -1316,10 +1331,10 @@ export const ticketManagementAPI = {
       }
 
       // Add visitor document if uploaded
-      if (visitorData.visitor_document) {
+      if (visitorData.visitor_documents) {
         try {
           console.log('📄 Processing visitor document for upload...');
-          formData.append('gatekeeper[visitor_document]', visitorData.visitor_document, visitorData.visitor_document.name);
+          formData.append('gatekeeper[visitor_documents]', visitorData.visitor_documents, visitorData.visitor_documents.name);
           console.log('✅ Visitor document successfully added to form data');
         } catch (documentError) {
           console.error('❌ Error processing visitor document:', documentError);
@@ -1394,6 +1409,45 @@ export const ticketManagementAPI = {
     } catch (error) {
       console.error('Error fetching tickets by task occurrence ID:', error);
       throw error;
+    }
+  },
+
+  // Get visitor info by mobile number and site ID
+  async getVisitorInfo(resourceId: string, mobile: string): Promise<{
+    gatekeeper: {
+      id: number;
+      guest_name: string;
+      guest_number: string;
+      guest_vehicle_number: string;
+      visit_purpose: string;
+      otp_verified: number;
+      support_staff_id: number | null;
+      guest_type: string;
+      guest_from: string;
+      delivery_service_provider_id: number | null;
+      support_staff_category_name: string | null;
+      image: string;
+      delivery_service_provider_name: string | null;
+      delivery_service_provider_icon_url: string | null;
+    }
+  } | null> {
+    try {
+      const url = `/pms/visitors/visitor_info.json?resource_id=${resourceId}&mobile=${mobile}`;
+      console.log('🌐 Making API call to:', url);
+      const response = await apiClient.get(url);
+      console.log('📊 API Response status:', response.status);
+      console.log('📋 API Response data:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error fetching visitor info:', error);
+      if (error.response) {
+        console.error('📄 Error response:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      }
+      return null;
     }
   },
 };
