@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, startTransiti
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star, Calendar } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { TicketAnalyticsFilterDialog } from '@/components/TicketAnalyticsFilterDialog';
 import { EditStatusDialog } from '@/components/EditStatusDialog';
@@ -1280,20 +1280,15 @@ export const TicketDashboard = () => {
           <div className="flex justify-end items-center gap-2">
 
             <Button
-              onClick={() => setIsAnalyticsFilterOpen(true)}
               variant="outline"
-              className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
-              disabled={analyticsLoading}
+              onClick={() => setIsAnalyticsFilterOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
             >
-              <Filter className="w-4 h-4" />
-              {/* {analyticsDateRange.startDate && analyticsDateRange.endDate && (
-                <span className="text-sm text-gray-600">
-                  {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
-                </span>
-              )} */}
-              {analyticsLoading && (
-                <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
-              )}
+              <Calendar className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
+                {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
+              </span>
+              <Filter className="w-4 h-4 text-gray-600" />
             </Button>
 
             <TicketSelector onSelectionChange={handleSelectionChange} />
@@ -1684,6 +1679,8 @@ export const TicketDashboard = () => {
         isOpen={isAnalyticsFilterOpen}
         onClose={() => setIsAnalyticsFilterOpen(false)}
         onApplyFilters={handleAnalyticsFilterApply}
+        currentStartDate={analyticsDateRange.startDate}
+        currentEndDate={analyticsDateRange.endDate}
       />
 
       {/* Ticket Selection Panel */}

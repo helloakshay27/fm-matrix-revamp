@@ -730,11 +730,13 @@ export const TicketDashboard = () => {
     key: 'response_tat',
     label: 'Response TAT (Min)',
     sortable: true
-  }, {
+  }, 
+  {
     key: 'response_time',
     label: 'Response Time (D:H:M)',
     sortable: true
-  }, {
+  }, 
+  {
     key: 'escalation_response_name',
     label: 'Response Escalation Level',
     sortable: true

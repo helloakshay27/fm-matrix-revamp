@@ -86,22 +86,26 @@ export const UnitCategoryWiseCard: React.FC<UnitCategoryWiseCardProps> = ({
                 <Tooltip 
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
+                      const openValue = payload.find(p => p.dataKey === 'open')?.value || 0;
+                      const closedValue = payload.find(p => p.dataKey === 'closed')?.value || 0;
+                      const totalValue = Number(openValue) + Number(closedValue);
+                      
                       return (
                         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                           <p className="font-semibold text-gray-800 mb-2">{label}</p>
                           <div className="space-y-1">
                             <div className="flex justify-between items-center">
                               <span className="text-yellow-600 font-medium">Open:</span>
-                              <span className="text-gray-700">{payload.find(p => p.dataKey === 'open')?.value || 0}</span>
+                              <span className="text-gray-700">{openValue}</span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-green-600 font-medium">Closed:</span>
-                              <span className="text-gray-700">{payload.find(p => p.dataKey === 'closed')?.value || 0}</span>
+                              <span className="text-gray-700">{closedValue}</span>
                             </div>
                             <div className="pt-1 border-t border-gray-200">
                               <div className="flex justify-between items-center font-semibold">
                                 <span>Total:</span>
-                                <span>{payload.find(p => p.dataKey === 'total')?.value || 0}</span>
+                                <span>{totalValue}</span>
                               </div>
                             </div>
                           </div>
@@ -111,8 +115,8 @@ export const UnitCategoryWiseCard: React.FC<UnitCategoryWiseCardProps> = ({
                     return null;
                   }}
                 />
-                <Bar dataKey="open" fill="#f59e0b" name="Open" />
-                <Bar dataKey="closed" fill="#10b981" name="Closed" />
+                <Bar dataKey="open" fill="#C4AE9D" name="Open" />
+                <Bar dataKey="closed" fill="#C4AE9D" name="Closed" />
               </BarChart>
             ) : (
               <div className="flex items-center justify-center h-full">
