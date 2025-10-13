@@ -274,15 +274,15 @@ export const UnifiedAnalyticsSelector: React.FC<UnifiedAnalyticsSelectorProps> =
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="h-10 min-w-0 flex-1 border-analytics-border hover:bg-analytics-secondary/50"
+          className="h-10 border-analytics-border hover:bg-analytics-secondary/50"
           data-analytics-selector
         >
-          <BarChart3 className="w-4 h-4 mr-2 flex-shrink-0" />
-          <span className="truncate">Analytics ({getTotalSelectedCount()})</span>
-          <ChevronDown className="w-4 h-4 ml-2 flex-shrink-0" />
+          <BarChart3 className="w-4 h-4 mr-2" />
+          Analytics ({getTotalSelectedCount()})
+          <ChevronDown className="w-4 h-4 ml-2" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[calc(100vw-2rem)] max-w-md p-0 bg-background border-analytics-border" align="start" side="bottom">
+      <PopoverContent className="w-96 p-0 bg-background border-analytics-border" align="end">
         <div className="p-4 border-b border-analytics-border">
           <h4 className="font-medium text-analytics-text">Select Analytics</h4>
           <p className="text-sm text-analytics-muted">Choose analytics from different modules</p>

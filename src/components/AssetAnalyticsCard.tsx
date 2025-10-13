@@ -23,7 +23,7 @@ interface AssetAnalyticsCardProps {
   onDownload?: () => void;
 }
 
-const COLORS = ['#C72030', '#c6b692', '#d8dcdd', '#8B5A3C', '#A0A0A0', '#FFB366', '#FF8C42', '#6B8E23'];
+const COLORS = ['#C4AE9D', '#C4B99D', '#DAD6CA', '#D5DBDB', '#8B5A3C', '#A0A0A0', '#FFB366', '#FF8C42', '#6B8E23'];
 
 export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
   title,
@@ -63,13 +63,11 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}
               />
-              <Bar
-                dataKey="value"
-                fill="#C72030"
-                radius={[4, 4, 0, 0]}
-                stroke="#C72030"
-                strokeWidth={1}
-              />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                {data.map((entry: any, index: number) => (
+                  <Cell key={`cell-${index}`} fill="#C4AE9D" />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         );
@@ -84,15 +82,15 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 cy="50%"
                 labelLine={false}
                 label={({ name, value }) => `${name} (${value})`}
-                outerRadius={85}
-                innerRadius={40}
+                outerRadius={90}
+                innerRadius={45}
                 fill="#8884d8"
                 dataKey="value"
                 stroke="#FFFFFF"
                 strokeWidth={2}
               >
                 {data.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip
@@ -119,15 +117,26 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 cy="50%"
                 labelLine={false}
                 label={({ name, value }) => `${name} (${value})`}
-                outerRadius={80}
+                outerRadius={90}
+                innerRadius={45}
                 fill="#8884d8"
                 dataKey="value"
+                stroke="#FFFFFF"
+                strokeWidth={2}
               >
                 {data.map((entry: any, index: number) => (
                   <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => [value, 'Count']} />
+              <Tooltip 
+                formatter={(value) => [value, 'Count']}
+                contentStyle={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -142,15 +151,26 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 cy="50%"
                 labelLine={false}
                 label={({ name, value }) => `${name} (${value})`}
-                outerRadius={80}
+                outerRadius={90}
+                innerRadius={45}
                 fill="#8884d8"
                 dataKey="value"
+                stroke="#FFFFFF"
+                strokeWidth={2}
               >
                 {data.map((entry: any, index: number) => (
                   <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => [value, 'Count']} />
+              <Tooltip 
+                formatter={(value) => [value, 'Count']}
+                contentStyle={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         );

@@ -11151,13 +11151,13 @@ export const EditAssetDetailsPage = () => {
                               <InputLabel>Parent Meter</InputLabel>
                               <MuiSelect
                                 label="Parent Meter"
-                                value={selectedParentMeterId}
+                              value={selectedParentMeterId}
                                 onChange={(e) => {
                                   const value = e.target.value;
-                                  setSelectedParentMeterId(value);
-                                  handleFieldChange("parent_meter_id", value);
-                                }}
-                                disabled={parentMeterLoading || !meterDetailsToggle}
+                                setSelectedParentMeterId(value);
+                                handleFieldChange("parent_meter_id", value);
+                              }}
+                              disabled={parentMeterLoading || !meterDetailsToggle}
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     height: "45px",
@@ -12194,16 +12194,16 @@ export const EditAssetDetailsPage = () => {
                                   <InputLabel>Select Assets</InputLabel>
                                   <MuiSelect
                                     label="Select Assets"
-                                    value=""
+                                  value=""
                                     onChange={(e) => {
                                       const value = e.target.value;
-                                      // Handle multiple selection
-                                      const currentAssets = formData.selected_asset_ids || [];
-                                      if (!currentAssets.includes(value)) {
-                                        const newAssets = [...currentAssets, value];
-                                        handleFieldChange("selected_asset_ids", newAssets);
-                                      }
-                                    }}
+                                    // Handle multiple selection
+                                    const currentAssets = formData.selected_asset_ids || [];
+                                    if (!currentAssets.includes(value)) {
+                                      const newAssets = [...currentAssets, value];
+                                      handleFieldChange("selected_asset_ids", newAssets);
+                                    }
+                                  }}
                                     disabled={assetsLoading}
                                     sx={{
                                       "& .MuiOutlinedInput-root": {
@@ -12273,19 +12273,19 @@ export const EditAssetDetailsPage = () => {
                                       <InputLabel>Select Group</InputLabel>
                                       <MuiSelect
                                         label="Select Group"
-                                        value={formData.selected_group_id || ""}
+                                      value={formData.selected_group_id || ""}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                          handleFieldChange(
-                                            "selected_group_id",
-                                            value
-                                          );
-                                          handleFieldChange(
-                                            "selected_sub_group_id",
-                                            ""
-                                          ); // Reset sub group
-                                          fetchSubGroups(value);
-                                        }}
+                                        handleFieldChange(
+                                          "selected_group_id",
+                                          value
+                                        );
+                                        handleFieldChange(
+                                          "selected_sub_group_id",
+                                          ""
+                                        ); // Reset sub group
+                                        fetchSubGroups(value);
+                                      }}
                                         disabled={groupsLoading}
                                         sx={{
                                           "& .MuiOutlinedInput-root": {
@@ -12319,18 +12319,18 @@ export const EditAssetDetailsPage = () => {
                                       <InputLabel>Select Sub Group</InputLabel>
                                       <MuiSelect
                                         label="Select Sub Group"
-                                        value={formData.selected_sub_group_id || ""}
+                                      value={formData.selected_sub_group_id || ""}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                          handleFieldChange(
-                                            "selected_sub_group_id",
-                                            value
+                                        handleFieldChange(
+                                          "selected_sub_group_id",
+                                          value
                                           );
                                         }}
-                                        disabled={
-                                          !formData.selected_group_id ||
-                                          subGroupsLoading
-                                        }
+                                      disabled={
+                                        !formData.selected_group_id ||
+                                        subGroupsLoading
+                                      }
                                         sx={{
                                           "& .MuiOutlinedInput-root": {
                                             height: "45px",

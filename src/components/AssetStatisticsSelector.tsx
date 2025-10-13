@@ -65,45 +65,50 @@ const METRICS_CONFIG = [
     id: 'total_assets_count',
     label: 'Total Assets',
     icon: Package,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
+    color: 'text-[#C72030]',
+    bgColor: 'bg-[#F6F4EE]',
+    borderColor: 'border-gray-200',
+    iconBgColor: 'bg-[#C4B89D54]',
     downloadType: 'card_total_assets',
   },
   {
     id: 'assets_in_use',
     label: 'Assets in Use',
     icon: Activity,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
+    color: 'text-[#C72030]',
+    bgColor: 'bg-[#F6F4EE]',
+    borderColor: 'border-gray-200',
+    iconBgColor: 'bg-[#C4B89D54]',
     downloadType: 'card_assets_in_use',
   },
   {
     id: 'assets_in_breakdown',
     label: 'Assets in Breakdown',
     icon: AlertTriangle,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50',
-    borderColor: 'border-red-200',
+    color: 'text-[#C72030]',
+    bgColor: 'bg-[#F6F4EE]',
+    borderColor: 'border-gray-200',
+    iconBgColor: 'bg-[#C4B89D54]',
     downloadType: 'card_assets_in_breakdown',
   },
   {
     id: 'critical_assets_in_breakdown',
     label: 'Critical Assets in Breakdown',
     icon: TrendingUp,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50',
-    borderColor: 'border-orange-200',
+    color: 'text-[#C72030]',
+    bgColor: 'bg-[#F6F4EE]',
+    borderColor: 'border-gray-200',
+    iconBgColor: 'bg-[#C4B89D54]',
     downloadType: 'card_critical_assets_in_breakdown',
   },
   {
     id: 'ppm_conduct_assets_count',
     label: 'PPM Conduct Assets',
     icon: Wrench,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200',
+    color: 'text-[#C72030]',
+    bgColor: 'bg-[#F6F4EE]',
+    borderColor: 'border-gray-200',
+    iconBgColor: 'bg-[#C4B89D54]',
     downloadType: 'card_ppm_conduct_assets',
   },
 ];
@@ -286,55 +291,54 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
     const isDataAvailable = displayValue !== 'N/A' && displayValue !== '0';
 
     return (
-      <Card
+      <div
         key={metric.id}
-        className={`group transition-all duration-200 hover:shadow-lg cursor-pointer ${
+        className={`group ${metric.bgColor} p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
           isSelected
-            ? `${metric.bgColor} ${metric.borderColor} border-2`
-            : 'border-gray-200 hover:border-gray-300'
+            ? "shadow-lg"
+            : ""
         } ${!isDataAvailable ? 'opacity-60' : ''}`}
+        onClick={() => handleMetricToggle(metric.id)}
       >
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1" onClick={() => handleMetricToggle(metric.id)}>
-              <div className="flex items-center gap-2 mb-2">
-                <Icon className={`w-5 h-5 ${metric.color}`} />
-                <span className="text-sm font-medium text-gray-700">
-                  {metric.label}
-                </span>
-                {isSelected && (
-                  <Badge variant="secondary" className="text-xs">
-                    Selected
-                  </Badge>
-                )}
-              </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                {displayValue}
-              </div>
-              {!isDataAvailable && (
-                <div className="text-xs text-gray-500">
-                  No data available for the selected period
-                </div>
-              )}
-            </div>
-            {hasDownload && showDownload && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload(metric.downloadType);
-                }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 hover:bg-gray-100"
-                title={`Download ${metric.label} data`}
-                disabled={!isDataAvailable}
-              >
-                <Download className="w-4 h-4" />
-              </Button>
+        <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+          <Icon className="w-6 h-6 text-[#C72030]" />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-medium text-[#1A1A1A]">
+              {metric.label}
+            </span>
+            {isSelected && (
+              <Badge variant="secondary" className="text-xs">
+                Selected
+              </Badge>
             )}
           </div>
-        </CardContent>
-      </Card>
+          <div className="text-2xl font-semibold text-[#1A1A1A]">
+            {displayValue}
+          </div>
+          {!isDataAvailable && (
+            <div className="text-xs text-gray-500">
+              No data available for the selected period
+            </div>
+          )}
+        </div>
+        {hasDownload && showDownload && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownload(metric.downloadType);
+            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 hover:bg-gray-100"
+            title={`Download ${metric.label} data`}
+            disabled={!isDataAvailable}
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
     );
   };
 
