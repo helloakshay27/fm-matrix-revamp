@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
+import { Filter, Calendar as CalendarIcon } from 'lucide-react';
 import { AssetAnalyticsSelector } from '@/components/AssetAnalyticsSelector';
 import { AssetStatisticsSelector } from '@/components/AssetStatisticsSelector';
 import { AssetAnalyticsFilterDialog } from '@/components/AssetAnalyticsFilterDialog';
@@ -153,6 +153,19 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
         const lastYear = new Date();
         lastYear.setFullYear(today.getFullYear() - 1);
         return { fromDate: lastYear, toDate: today };
+    };
+
+    // Format date for display (DD/MM/YYYY)
+    const formatDateForDisplay = (date: Date) => {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+
+    // Get formatted date range for display
+    const getFormattedDateRange = () => {
+        return `${formatDateForDisplay(analyticsDateRange.fromDate)} - ${formatDateForDisplay(analyticsDateRange.toDate)}`;
     };
 
     // State management
@@ -366,17 +379,17 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
             {
                 name: 'In Use',
                 value: assetStatus?.info?.total_assets_in_use || assetStatistics.assets_in_use || 0,
-                color: '#c6b692',
+                color: '#C4B99D',
             },
             {
                 name: 'Breakdown',
                 value: assetStatus?.info?.total_assets_in_breakdown || assetStatistics.assets_in_breakdown || 0,
-                color: '#d8dcdd',
+                color: '#DAD6CA',
             },
             {
                 name: 'In Store',
-                value: assetStatus?.info?.total_assets_in_store || 0,
-                color: '#C72030',
+                value: (assetStatus?.info as any)?.total_assets_in_store || 0,
+                color: '#D5DBDB',
             },
         ];
 
@@ -386,22 +399,22 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 {
                     name: 'IT Equipment',
                     value: assetDistributions.info.total_it_assets || 0,
-                    color: '#d8dcdd',
+                    color: '#C4B99D',
                 },
                 {
                     name: 'Non-IT Equipment',
                     value: assetDistributions.info.total_non_it_assets || 0,
-                    color: '#c6b692',
+                    color: '#DAD6CA',
                 },
             ]
             : [
-                { name: 'No Data Available', value: 1, color: '#e5e7eb' },
+                { name: 'No Data Available', value: 1, color: '#D5DBDB' },
             ];
 
         // If both values are 0, show a placeholder
         const totalDistributionValue = (assetDistributions?.info?.total_it_assets || 0) + (assetDistributions?.info?.total_non_it_assets || 0);
         const finalChartTypeData = totalDistributionValue === 0
-            ? [{ name: 'No Data Available', value: 1, color: '#e5e7eb' }]
+            ? [{ name: 'No Data Available', value: 1, color: '#D5DBDB' }]
             : chartTypeData;
 
         // Category data
@@ -612,9 +625,13 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                             <Button
                                 onClick={() => setIsAnalyticsFilterOpen(true)}
                                 variant="outline"
-                                className="flex items-center gap-2"
+                                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
                             >
-                                <Filter className="w-4 h-4" />
+                                <CalendarIcon className="w-4 h-4 text-gray-600" />
+                                <span className="text-sm font-medium text-gray-700">
+                                    {getFormattedDateRange()}
+                                </span>
+                                <Filter className="w-4 h-4 text-gray-600" />
                             </Button>
                         )}
 
