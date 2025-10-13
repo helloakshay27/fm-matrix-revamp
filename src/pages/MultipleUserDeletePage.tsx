@@ -228,8 +228,10 @@ export const MultipleUserDeletePage = () => {
             const tokenHeader = getAuthHeader();
             const isEmail = raw.includes('@');
             const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+            // Ensure baseUrl has https:// protocol
+            const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
             const paramKey = 'email'; // API expects 'email' for both email and mobile inputs
-            const url = `https://${baseUrl}/pms/users/vi_user_hierarchy.json?${paramKey}=${encodeURIComponent(raw)}&employee_type=external`;
+            const url = `${cleanBaseUrl}/pms/users/vi_user_hierarchy.json?${paramKey}=${encodeURIComponent(raw)}&employee_type=external`;
             const resp = await fetch(url, {
                 headers: {
                     'Content-Type': 'application/json',
