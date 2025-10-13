@@ -378,7 +378,8 @@ export const TicketDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
-  const [activeTab, setActiveTab] = useState("details");
+  const [activeTab, setActiveTab] = useState("analytics");
+  const [activeSubTab, setActiveSubTab] = useState("analytics"); // Track sub-tab inside Analytics tab
   const [costInvolveEnabled, setCostInvolveEnabled] = useState<boolean>(false);
   const [currentAgeing, setCurrentAgeing] = useState<number>(0); // Ageing in seconds for real-time countdown
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
@@ -521,6 +522,16 @@ export const TicketDetailsPage = () => {
     if (typeof value !== 'string') return value;
     if (value.length <= max) return value;
     return value.slice(0, max) + '...';
+  };
+
+  // Helper to capitalize first letter of each word
+  const capitalizeWords = (text: string | null | undefined): string => {
+    if (!text || typeof text !== 'string') return '-';
+    return text
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   // State for expandable sections - will be set dynamically based on data
@@ -820,6 +831,12 @@ export const TicketDetailsPage = () => {
     //     returnTo: `/maintenance/ticket/${id}`
     //   }
     // });
+  };
+
+  const handleJobSheet = () => {
+    console.log("📋 Job Sheet button clicked for ticket ID:", id);
+    // TODO: Add job sheet functionality here
+    toast.info("Job Sheet functionality coming soon!");
   };
 
   // Handle file selection for customer comments
@@ -2151,40 +2168,55 @@ export const TicketDetailsPage = () => {
             </div>
           </div>
 
-          {/* {activeTab === "details" && ( */}
           <div className="flex items-center gap-3">
-            <Button
-              onClick={handleFeeds}
-              className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-            >
-              Logs
-            </Button>
+            {activeTab === "analytics" && activeSubTab === "details" ? (
+              // Show only Job Sheet button when on Ticket Details sub-tab inside Analytics
+              <Button
+                onClick={handleJobSheet}
+                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+              >
+                Job Sheet
+              </Button>
+            ) : (
+              // Show Logs, Create Task, and Edit buttons for all other tabs
+              <>
+                <Button
+                  onClick={handleFeeds}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  Logs
+                </Button>
 
-            <Button
-              onClick={handleCreateTask}
-              className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-            >
-              Create Task
-            </Button>
+                <Button
+                  onClick={handleCreateTask}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  Create Task
+                </Button>
 
-            <Button
-              onClick={handleUpdate}
-              variant="outline"
-              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+                <Button
+                  onClick={handleUpdate}
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              </>
+            )}
           </div>
-          {/* )} */}
         </div>
       </div>
 
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs
+          value={activeTab}
           defaultValue="analytics"
           className="w-full"
-          onValueChange={setActiveTab}
+          onValueChange={(value) => {
+            console.log('Tab changed to:', value);
+            setActiveTab(value);
+          }}
         >
           <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             <TabsTrigger
@@ -2251,7 +2283,14 @@ export const TicketDetailsPage = () => {
           </TabsList>
 
           <TabsContent value="analytics" className="p-4 sm:p-6">
-            <Tabs defaultValue="analytics" style={{ width: "100%" }}>
+            <Tabs 
+              defaultValue="analytics" 
+              style={{ width: "100%" }}
+              onValueChange={(value) => {
+                console.log('Sub-tab changed to:', value);
+                setActiveSubTab(value);
+              }}
+            >
               <TabsList className="w-full mb-6">
                 <TabsTrigger
                   value="analytics"
@@ -2872,7 +2911,7 @@ export const TicketDetailsPage = () => {
                       <CardContent className="pt-6">
                         {[
                           [
-                            { label: 'Issue Type', value: ticketData.issue_type || '-' },
+                            { label: 'Issue Type', value: capitalizeWords(ticketData.issue_type) },
                             { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                             { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
                             { label: 'Association', value: ticketData.asset_service || '-' },
@@ -2940,12 +2979,12 @@ export const TicketDetailsPage = () => {
                         { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
                         { label: 'Group', value: ticketData.asset_group || '-' },
                         { label: 'Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Criticality', value: ticketData.asset_criticality ? 'Critical' : 'Non Critical' },
+                        { label: 'Criticality', value: ticketData.asset_criticality ? '-' : '-' },
 
                         { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
                         { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
                         { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Under Warranty', value: ticketData.warranty ? 'Yes' : 'No' },
+                        { label: 'Under Warranty', value: ticketData.warranty ? '-' : '-' },
 
                         { label: 'Category', value: ticketData.asset_type_category || '-' },
                         { label: 'Allocated', value: ticketData.assigned_to || '-' },
@@ -5275,7 +5314,7 @@ export const TicketDetailsPage = () => {
                       <CardContent className="pt-6">
                         {[
                           [
-                            { label: 'Issue Type', value: ticketData.issue_type || '-' },
+                            { label: 'Issue Type', value: capitalizeWords(ticketData.issue_type) },
                             { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                             { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
                             { label: 'Association', value: ticketData.service_or_asset || '-' },

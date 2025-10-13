@@ -138,6 +138,16 @@ export interface ComplaintModeFormData {
   society_id: string;
 }
 
+// Escalation interfaces
+export interface EscalationInfo {
+  minutes: number;
+  is_overdue: boolean;
+  users: string[];
+  copy_to: string[];
+  escalation_name: string;
+  escalation_time: string;
+}
+
 // Ticket Types
 export interface TicketResponse {
   id: number;
@@ -172,6 +182,8 @@ export interface TicketResponse {
   color_code?: string;
   priority_status?: string;
   effective_priority?: string;
+  next_response_escalation?: EscalationInfo | null;
+  next_resolution_escalation?: EscalationInfo | null;
 }
 
 export interface TicketListResponse {
