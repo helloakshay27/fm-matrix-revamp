@@ -1131,6 +1131,7 @@ export const ticketManagementAPI = {
     passValidTo?: string;
     daysPermitted?: { [key: string]: boolean };
     capturedPhoto?: string;
+    visitor_document?: File | null;
     additionalVisitors?: Array<{ name: string; mobile: string }>;
     goodsData?: {
       selectType: string;
@@ -1313,6 +1314,20 @@ export const ticketManagementAPI = {
         }
       } else {
         console.log('⚠️ No photo captured - skipping image upload');
+      }
+
+      // Add visitor document if uploaded
+      if (visitorData.visitor_document) {
+        try {
+          console.log('📄 Processing visitor document for upload...');
+          formData.append('gatekeeper[visitor_document]', visitorData.visitor_document, visitorData.visitor_document.name);
+          console.log('✅ Visitor document successfully added to form data');
+        } catch (documentError) {
+          console.error('❌ Error processing visitor document:', documentError);
+          // Continue without document if there's an error
+        }
+      } else {
+        console.log('⚠️ No visitor document uploaded - skipping document upload');
       }
       
       console.log('🚀 Sending visitor creation request to:', ENDPOINTS.CREATE_VISITOR);

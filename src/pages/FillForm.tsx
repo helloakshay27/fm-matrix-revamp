@@ -241,6 +241,8 @@ export const FillForm = () => {
         { id: '3', name: 'Medical Reports', workVoucher: false, file: null, sr_no: 3 },
         { id: '4', name: 'Other', workVoucher: false, file: null, sr_no: 4 }
     ]);
+    const [declarationChecked] = useState(true);
+
 
     useEffect(() => {
         if (id) {
@@ -858,6 +860,7 @@ export const FillForm = () => {
     };
 
     console.log(checkPoints);
+
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
@@ -1974,24 +1977,50 @@ export const FillForm = () => {
                                     {declaration}
                                 </p>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                                <div className="p-3 border border-gray-200 rounded">
-                                    <Label className="text-xs text-gray-500">Contractor supervisor</Label>
-                                    <input value={personsInfo.contractorSupervisorName} readOnly disabled className="mt-1 bg-gray-50 cursor-not-allowed w-full" />
-                                    <div className="h-8 border-b border-gray-300 mt-2"></div>
-                                </div>
-                                <div className="p-3 border border-gray-200 rounded">
-                                    <Label className="text-xs text-gray-500">Permit Initiator</Label>
-                                    <input value={personsInfo.permitInitiatorName} readOnly disabled className="mt-1 bg-gray-50 cursor-not-allowed w-full" />
-                                    <div className="h-8 border-b border-gray-300 mt-2"></div>
-                                </div>
-                                <div className="p-3 border border-gray-200 rounded">
-                                    <Label className="text-xs text-gray-500">Permit Issuer</Label>
-                                    <input value={personsInfo.permitIssuerName} readOnly disabled className="mt-1 bg-gray-50 cursor-not-allowed w-full" />
+                            <div className="flex items-center space-x-2 mt-6">
+                                <Checkbox
+                                    id="declaration-accept"
+                                    checked={declarationChecked}
+                                    disabled
+                                />
+                                <Label
+                                    htmlFor="declaration-accept"
+                                    className="text-sm font-medium text-gray-700"
+                                >
+                                    I accept and declare the above statement to be true
+                                </Label>
+                            </div>
 
-                                    <div className="h-8 border-b border-gray-300 mt-2"></div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                                <div>
+                                    <Label>Contractor Supervisor</Label>
+                                    <Input
+                                        value={personsInfo.contractorSupervisorName || ''}
+                                        placeholder="Contractor Supervisor"
+                                        disabled
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Permit Initiator</Label>
+                                    <Input
+                                        value={personsInfo.permitInitiatorName || ''}
+                                        placeholder="Permit Initiator"
+                                        disabled
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>Permit Issuer</Label>
+                                    <Input
+                                        value={personsInfo.permitIssuerName || ''}
+                                        placeholder="Permit Issuer"
+                                        disabled
+                                    />
                                 </div>
                             </div>
+
                         </CardContent>
                     </Card>
 
