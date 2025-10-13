@@ -782,7 +782,7 @@ export const VendorPermitForm = () => {
                                                         <Label htmlFor="simultaneous-yes">Yes</Label>
                                                     </div>
                                                     <div className="flex items-center space-x-2">
-                                                        <RadioGroupItem value="No" id="simultaneous-no" />4
+                                                        <RadioGroupItem value="No" id="simultaneous-no" />
                                                         <Label htmlFor="simultaneous-no">No</Label>
                                                     </div>
                                                 </RadioGroup>
