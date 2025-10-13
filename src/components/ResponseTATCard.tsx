@@ -9,13 +9,25 @@ interface ResponseTATData {
   success: number;
   message: string;
   response: {
-    resolution: {
-      breached: number;
-      achieved: number;
+    response_tat: {
+      open: {
+        breached: number;
+        achieved: number;
+      };
+      close: {
+        breached: number;
+        achieved: number;
+      };
     };
-    response: {
-      breached: number;
-      achieved: number;
+    resolution_tat: {
+      open: {
+        breached: number;
+        achieved: number;
+      };
+      close: {
+        breached: number;
+        achieved: number;
+      };
     };
   };
   info: string;
@@ -60,7 +72,7 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
       <Card className={`bg-white ${className}`}>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-bold text-[#C72030]">Response TAT</CardTitle>
+            <CardTitle className="text-lg font-bold text-[#C72030]">Response & Resolution TAT</CardTitle>
             <Download 
               className="w-5 h-5 text-[#C72030] cursor-pointer" 
               onClick={handleDownload}
@@ -76,26 +88,50 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
     );
   }
 
-  const responseData = [
+  // Prepare data for Response TAT chart
+  const responseTATData = [
     {
       name: 'Achieved',
-      value: data.response.response.achieved,
-      color: '#10b981'
+      value: data.response.response_tat.open.achieved + data.response.response_tat.close.achieved,
+      color: '#C4B99D',
+      open: data.response.response_tat.open.achieved,
+      close: data.response.response_tat.close.achieved
     },
     {
       name: 'Breached',
-      value: data.response.response.breached,
-      color: '#ef4444'
+      value: data.response.response_tat.open.breached + data.response.response_tat.close.breached,
+      color: '#DAD6CA',
+      open: data.response.response_tat.open.breached,
+      close: data.response.response_tat.close.breached
     }
   ];
 
-  const total = data.response.response.achieved + data.response.response.breached;
+  // Prepare data for Resolution TAT chart
+  const resolutionTATData = [
+    {
+      name: 'Achieved',
+      value: data.response.resolution_tat.open.achieved + data.response.resolution_tat.close.achieved,
+      color: '#C4B99D',
+      open: data.response.resolution_tat.open.achieved,
+      close: data.response.resolution_tat.close.achieved
+    },
+    {
+      name: 'Breached',
+      value: data.response.resolution_tat.open.breached + data.response.resolution_tat.close.breached,
+      color: '#DAD6CA',
+      open: data.response.resolution_tat.open.breached,
+      close: data.response.resolution_tat.close.breached
+    }
+  ];
+
+  const responseTotalValue = responseTATData.reduce((sum, item) => sum + item.value, 0);
+  const resolutionTotalValue = resolutionTATData.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <Card className={`bg-white ${className}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-bold text-[#C72030]">Response TAT</CardTitle>
+          <CardTitle className="text-lg font-bold text-[#C72030]">Response & Resolution TAT</CardTitle>
           <Download 
             className={`w-5 h-5 text-[#C72030] cursor-pointer ${isDownloading ? 'opacity-50' : ''}`}
             onClick={handleDownload}
@@ -103,61 +139,186 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
         </div>
       </CardHeader>
       <CardContent>
-        <div className="relative flex items-center justify-center">
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={responseData}
-                cx="50%"
-                cy="50%"
-                innerRadius={40}
-                outerRadius={80}
-                paddingAngle={2}
-                dataKey="value"
-                label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                  const RADIAN = Math.PI / 180;
-                  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                  return (
-                    <text
-                      x={x}
-                      y={y}
-                      fill="white"
-                      textAnchor={x > cx ? 'start' : 'end'}
-                      dominantBaseline="central"
-                      fontSize="14"
-                      fontWeight="bold"
-                    >
-                      {value}
-                    </text>
-                  );
-                }}
-                labelLine={false}
-              >
-                {responseData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-lg font-semibold text-gray-700">Total: {total}</div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Response TAT Chart */}
+          <div className="text-center">
+            <h3 className="text-md font-semibold text-gray-700 mb-4">Response TAT</h3>
+            <div className="relative flex items-center justify-center">
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={responseTATData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={30}
+                    outerRadius={70}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          fill="white"
+                          textAnchor={x > cx ? 'start' : 'end'}
+                          dominantBaseline="central"
+                          fontSize="12"
+                          fontWeight="bold"
+                        >
+                          {value}
+                        </text>
+                      );
+                    }}
+                    labelLine={false}
+                  >
+                    {responseTATData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg z-50">
+                            <p className="font-semibold text-gray-800 mb-2">{data.name}</p>
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span className="text-blue-600 font-medium">Open:</span>
+                                <span className="text-gray-700">{data.open}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-600 font-medium">Close:</span>
+                                <span className="text-gray-700">{data.close}</span>
+                              </div>
+                              <div className="pt-1 border-t border-gray-200">
+                                <div className="flex justify-between items-center font-semibold">
+                                  <span>Total:</span>
+                                  <span>{data.value}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                    wrapperStyle={{ zIndex: 1000 }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                <div className="text-center">
+                  <div className="text-sm font-semibold text-gray-700">Total: {responseTotalValue}</div>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-center gap-4 mt-2">
+              {responseTATData.map((item, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-sm"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-xs font-medium text-gray-700">{item.name}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-        <div className="flex justify-center gap-6 mt-4">
-          {responseData.map((item, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <div 
-                className="w-4 h-4 rounded-sm"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className="text-sm font-medium text-gray-700">{item.name}</span>
+
+          {/* Resolution TAT Chart */}
+          <div className="text-center">
+            <h3 className="text-md font-semibold text-gray-700 mb-4">Resolution TAT</h3>
+            <div className="relative flex items-center justify-center">
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={resolutionTATData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={30}
+                    outerRadius={70}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          fill="white"
+                          textAnchor={x > cx ? 'start' : 'end'}
+                          dominantBaseline="central"
+                          fontSize="12"
+                          fontWeight="bold"
+                        >
+                          {value}
+                        </text>
+                      );
+                    }}
+                    labelLine={false}
+                  >
+                    {resolutionTATData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg z-50">
+                            <p className="font-semibold text-gray-800 mb-2">{data.name}</p>
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span className="text-blue-600 font-medium">Open:</span>
+                                <span className="text-gray-700">{data.open}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-600 font-medium">Close:</span>
+                                <span className="text-gray-700">{data.close}</span>
+                              </div>
+                              <div className="pt-1 border-t border-gray-200">
+                                <div className="flex justify-between items-center font-semibold">
+                                  <span>Total:</span>
+                                  <span>{data.value}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                    wrapperStyle={{ zIndex: 1000 }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                <div className="text-center">
+                  <div className="text-sm font-semibold text-gray-700">Total: {resolutionTotalValue}</div>
+                </div>
+              </div>
             </div>
-          ))}
+            <div className="flex justify-center gap-4 mt-2">
+              {resolutionTATData.map((item, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-sm"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-xs font-medium text-gray-700">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

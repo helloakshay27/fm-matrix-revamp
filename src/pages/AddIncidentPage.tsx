@@ -1153,7 +1153,7 @@
 
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -1285,7 +1285,7 @@ export const AddIncidentPage = () => {
   const [secondarySubSubSubCategories, setSecondarySubSubSubCategories] = useState<any[]>([]);
   // Incident levels
   const [incidentLevels, setIncidentLevels] = useState<{ id: number; name: string }[]>([]);
-
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   // Fetch all tags and buildings on mount
   useEffect(() => {
     const fetchAll = async () => {
@@ -2058,7 +2058,7 @@ export const AddIncidentPage = () => {
         </CardHeader>
         <CardContent className="p-6 bg-white">
           <div className="space-y-4">
-            <div>
+            {/* <div>
               <input
                 type="file"
                 onChange={handleFileUpload}
@@ -2075,9 +2075,32 @@ export const AddIncidentPage = () => {
               <span className="ml-4 text-sm text-gray-500">
                 {incidentData.attachments ? incidentData.attachments.name : 'No file chosen'}
               </span>
+            </div> */}
+            <div className="flex items-center gap-4">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                id="file-upload"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              />
+              <label htmlFor="file-upload" className="cursor-pointer">
+                <Button className="flex items-center gap-2"
+                  onClick={() => fileInputRef.current?.click()}>
+
+                  Choose Files
+                </Button>
+              </label>
+              <span className="text-sm text-gray-500">
+                {incidentData.attachments
+                  ? incidentData.attachments.name
+                  : 'No file chosen'}
+              </span>
             </div>
 
-            <div>
+
+            {/* <div>
               <Button
                 style={{
                   backgroundColor: '#C72030'
@@ -2086,7 +2109,7 @@ export const AddIncidentPage = () => {
               >
                 Choose a file...
               </Button>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>

@@ -113,8 +113,8 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
                     formatter={(value, name) => [value, name === 'breached' ? 'Breached' : 'Achieved']}
                     labelFormatter={(label) => `Category: ${label}`}
                   />
-                  <Bar dataKey="breached" fill="#ef4444" name="Breached" />
-                  <Bar dataKey="achieved" fill="#10b981" name="Achieved" />
+                  <Bar dataKey="breached" fill="#C4AE9D" name="Breached" />
+                  <Bar dataKey="achieved" fill="#C4AE9D" name="Achieved" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

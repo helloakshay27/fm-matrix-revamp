@@ -118,8 +118,8 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
                         return null;
                       }}
                     />
-                    <Bar dataKey="proactiveTotal" fill="#3b82f6" name="Proactive" />
-                    <Bar dataKey="reactiveTotal" fill="#ef4444" name="Reactive" />
+                    <Bar dataKey="proactiveTotal" fill="#C4AE9D" name="Proactive" />
+                    <Bar dataKey="reactiveTotal" fill="#C4AE9D" name="Reactive" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

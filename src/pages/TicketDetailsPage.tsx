@@ -381,9 +381,14 @@ export const TicketDetailsPage = () => {
   const [activeTab, setActiveTab] = useState("details");
   const [costInvolveEnabled, setCostInvolveEnabled] = useState<boolean>(false);
   const [currentAgeing, setCurrentAgeing] = useState<number>(0); // Ageing in seconds for real-time countdown
-  const [balanceTATTrigger, setBalanceTATTrigger] = useState<number>(0); // State to trigger TAT re-calculation
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Real-time timer states
+  const [responseEscalationSeconds, setResponseEscalationSeconds] = useState<number>(0);
+  const [resolutionEscalationSeconds, setResolutionEscalationSeconds] = useState<number>(0);
+  const [goldenTicketEscalationSeconds, setGoldenTicketEscalationSeconds] = useState<number>(0);
+  
   const [communicationTemplates, setCommunicationTemplates] = useState<Array<{
     id: number;
     identifier: string;
@@ -400,7 +405,6 @@ export const TicketDetailsPage = () => {
   const [internalCommentText, setInternalCommentText] = useState("");
   const [customerAttachments, setCustomerAttachments] = useState<File[]>([]);
   const [internalAttachments, setInternalAttachments] = useState<File[]>([]);
-  const [balanceTATTick, setBalanceTATTick] = useState(0);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [responsiblePersons, setResponsiblePersons] = useState<Array<{
     id: number;
@@ -1789,23 +1793,67 @@ export const TicketDetailsPage = () => {
       const initialAgeingSeconds = Math.max(0, Math.floor((now - createdTime) / 1000));
       setCurrentAgeing(initialAgeingSeconds);
 
+      // Initialize escalation timers
+      const updateEscalationTimers = () => {
+        const now = Date.now();
+
+        // Response Escalation
+        if (ticketData.next_response_escalation?.escalation_time) {
+          try {
+            const escalationDate = new Date(ticketData.next_response_escalation.escalation_time).getTime();
+            const diffMs = escalationDate - now;
+            setResponseEscalationSeconds(Math.max(0, Math.floor(diffMs / 1000)));
+          } catch {
+            setResponseEscalationSeconds(0);
+          }
+        } else {
+          setResponseEscalationSeconds(0);
+        }
+
+        // Resolution Escalation
+        if (ticketData.next_resolution_escalation?.escalation_time) {
+          try {
+            const escalationDate = new Date(ticketData.next_resolution_escalation.escalation_time).getTime();
+            const diffMs = escalationDate - now;
+            setResolutionEscalationSeconds(Math.max(0, Math.floor(diffMs / 1000)));
+          } catch {
+            setResolutionEscalationSeconds(0);
+          }
+        } else {
+          setResolutionEscalationSeconds(0);
+        }
+
+        // Golden Ticket Escalation
+        if (ticketData.next_executive_escalation?.escalation_time) {
+          try {
+            const escalationDate = new Date(ticketData.next_executive_escalation.escalation_time).getTime();
+            const diffMs = escalationDate - now;
+            setGoldenTicketEscalationSeconds(Math.max(0, Math.floor(diffMs / 1000)));
+          } catch {
+            setGoldenTicketEscalationSeconds(0);
+          }
+        } else {
+          setGoldenTicketEscalationSeconds(0);
+        }
+      };
+
+      // Initial calculation
+      updateEscalationTimers();
+
       const interval = setInterval(() => {
         setCurrentAgeing(prev => prev + 1);
+        
+        // Update escalation timers (countdown)
+        setResponseEscalationSeconds(prev => Math.max(0, prev - 1));
+        setResolutionEscalationSeconds(prev => Math.max(0, prev - 1));
+        setGoldenTicketEscalationSeconds(prev => Math.max(0, prev - 1));
       }, 1000);
 
       return () => clearInterval(interval);
     }
-  }, [ticketData?.created_at]);
+  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time]);
 
-  // Add useEffect to trigger balance TAT recalculation every second for real-time countdown
-  useEffect(() => {
-    // Update balance TAT every second to show real-time countdown
-    const interval = setInterval(() => {
-      setBalanceTATTrigger(prev => prev + 1);
-    }, 1000); // 1000ms = 1 second
-
-    return () => clearInterval(interval);
-  }, []);
+  // Add useEffect to trigger balance TAT recalculation every second for real-time countdown (removed - now handled in main timer)
 
   if (loading) {
     return (
@@ -2365,8 +2413,8 @@ export const TicketDetailsPage = () => {
                           style={{ fontSize: 24 }}
                         >
                           {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
-                            ? '00:00:00' :
-                            formatMinutesToDDHHMM(ticketData.ticket_ageing_minutes) || formatTicketAgeingToDDHHMM(ticketData.ticket_ageing)
+                            ? '00:00:00:00' :
+                            formatTicketAgeing(currentAgeing)
                           }
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
@@ -2494,9 +2542,7 @@ export const TicketDetailsPage = () => {
                               ticketData.issue_status.toLowerCase() === "closed" ||
                               ticketData.issue_status.toLowerCase() === "on hold"
                               ? '00:00:00:00'
-                              : ticketData.next_response_escalation?.escalation_time
-                                ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_response_escalation.escalation_time))
-                                : '00:00:00:00'
+                              : formatSecondsToDDHHMMSS(responseEscalationSeconds)
                             }
                           </span>
 
@@ -2555,9 +2601,7 @@ export const TicketDetailsPage = () => {
                               ticketData.issue_status.toLowerCase() === "closed" ||
                               ticketData.issue_status.toLowerCase() === "on hold"
                               ? '00:00:00:00'
-                              : ticketData.next_resolution_escalation?.escalation_time
-                                ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_resolution_escalation.escalation_time))
-                                : '00:00:00:00'
+                              : formatSecondsToDDHHMMSS(resolutionEscalationSeconds)
                             }
                           </span>
                           <span className="text-[12px] text-[#9CA3AF] mt-1">
@@ -2615,9 +2659,7 @@ export const TicketDetailsPage = () => {
          ticketData.issue_status.toLowerCase() === "closed" || 
          ticketData.issue_status.toLowerCase() === "on hold"
           ? '00:00:00:00'
-          : ticketData.next_executive_escalation?.escalation_time
-            ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_executive_escalation.escalation_time))
-            : '00:00:00:00'
+          : formatSecondsToDDHHMMSS(goldenTicketEscalationSeconds)
         }
       </p>
       <p className="text-[12px] text-[#9CA3AF] mt-1">
@@ -2833,7 +2875,7 @@ export const TicketDetailsPage = () => {
                             { label: 'Issue Type', value: ticketData.issue_type || '-' },
                             { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                             { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
-                            { label: 'Association', value: ticketData.service_or_asset || '-' },
+                            { label: 'Association', value: ticketData.asset_service || '-' },
                           ],
                           [
                             { label: 'Created By', value: ticketData.created_by_name || '-' },
@@ -2907,7 +2949,7 @@ export const TicketDetailsPage = () => {
 
                         { label: 'Category', value: ticketData.asset_type_category || '-' },
                         { label: 'Allocated', value: ticketData.assigned_to || '-' },
-                        { label: 'AMC Type', value: 'Comprehensive' },
+                        { label: 'AMC Type', value: '-' },
                         { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
                       ].map(field => (
                         <div key={field.label} className="flex items-start">
