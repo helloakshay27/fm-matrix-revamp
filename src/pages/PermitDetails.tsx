@@ -2903,7 +2903,7 @@ export const PermitDetails = () => {
                                             </div>
                                             {level.updated_by && level.status_updated_at && (
                                                 <div className="ms-2 text-sm text-gray-600">
-                                                    by {level.updated_by} on {(level.status_updated_at)}
+                                                    by {level?.updated_by} on {(level?.status_updated_at && format(level.status_updated_at, 'dd/MM/yyyy hh:mm a'))}
                                                 </div>
                                             )}
                                         </div>
@@ -3093,7 +3093,7 @@ export const PermitDetails = () => {
                                         <th className="border border-gray-200 p-3 text-left text-sm font-medium">Submitted By</th>
                                         <th className="border border-gray-200 p-3 text-left text-sm font-medium">Status</th>
                                         <th className="border border-gray-200 p-3 text-left text-sm font-medium">View</th>
-                                        <th className="border border-gray-200 p-3 text-left text-sm font-medium">Print</th>
+                                        <th className="border border-gray-200 p-3 text-left text-sm font-medium">Attachment</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -3101,7 +3101,7 @@ export const PermitDetails = () => {
                                         <tr key={index}>
                                             <td className="border border-gray-200 p-3 text-sm">{index + 1}</td>
                                             <td className="border border-gray-200 p-3 text-sm">{audit.response || '-'}</td>
-                                            <td className="border border-gray-200 p-3 text-sm">{(audit.submitted_at)}</td>
+                                            <td className="border border-gray-200 p-3 text-sm">{(audit?.created_at && format(audit.created_at, 'dd/MM/yyyy hh:mm a')) || '-'}</td>
                                             <td className="border border-gray-200 p-3 text-sm">{audit.submitted_by || '-'}</td>
                                             <td className="border border-gray-200 p-3 text-sm">
                                                 <Badge variant={audit.status === 'Approved' ? 'default' : 'secondary'}>
@@ -3109,10 +3109,39 @@ export const PermitDetails = () => {
                                                 </Badge>
                                             </td>
                                             <td className="border border-gray-200 p-3 text-sm">
-                                                <Button variant="ghost" size="sm">View</Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        // Navigate to SafetyCheckAudit page with id as query param
+                                                        window.location.href = `/safety-check-audit?quest_id=${audit.id}`;
+                                                    }}
+                                                >
+                                                    View
+                                                </Button>
                                             </td>
-                                            <td className="border border-gray-200 p-3 text-sm">
+                                            {/* <td className="border border-gray-200 p-3 text-sm">
                                                 <Button variant="ghost" size="sm">Print</Button>
+                                            </td> */}
+                                            <td className="px-6 py-4 text-sm text-gray-700">
+                                                {audit.attachment ? (
+                                                    <div
+                                                        className="w-10 h-10 border border-gray-300 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-100"
+                                                        onClick={() => {
+                                                            setSelectedDoc({ url: audit.attachment, type: 'image' });
+                                                            setIsModalOpen(true);
+                                                        }}
+                                                        title="Click to view full image"
+                                                    >
+                                                        <img
+                                                            src={audit.attachment}
+                                                            alt="attachment"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 text-xs">No Attachment</span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

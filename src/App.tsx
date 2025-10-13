@@ -773,6 +773,7 @@ import { DirectPDFDownloadPage } from "./pages/DirectPDFDownloadPage";
 import { DeletedPRs } from "./pages/DeletedPRs";
 import MsafeDashboardVI from "./pages/MsafeDashboardVI";
 import { DashboardMobile } from "./pages/DashboardMobile";
+import SafetyCheckAudit from './pages/SafetyCheckAudit';
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1612,6 +1613,8 @@ function App() {
                     path="/safety/permit/details/:id"
                     element={<PermitDetails />}
                   />
+                  <Route path="/safety-check-audit" element={<SafetyCheckAudit />} />
+
                   <Route
                     path="/safety/permit/edit/:id"
                     element={

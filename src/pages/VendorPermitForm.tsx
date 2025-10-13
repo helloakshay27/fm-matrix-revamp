@@ -698,7 +698,7 @@ export const VendorPermitForm = () => {
                                                 <div className="flex items-center space-x-2">
                                                     <Checkbox id="h2o" checked={detailedInfo.gasTestingConductedFor.h2o}
                                                         onCheckedChange={(checked) => handleGasTestingChange('h2o', checked as boolean)} />
-                                                    <Label htmlFor="h2o">H2O</Label>
+                                                    <Label htmlFor="h2o">H2S</Label>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <Checkbox id="oxygen" checked={detailedInfo.gasTestingConductedFor.oxygen}
@@ -957,7 +957,7 @@ export const VendorPermitForm = () => {
 
 
                                     <div className="mt-6">
-                                        <h6 className="text-orange-600 font-semibold mb-4">Vehicle Access to restricted area</h6>
+                                        <h6 className="text-[#C72030] font-semibold mb-4">Vehicle Access to restricted area</h6>
                                         <div>
                                             <Label htmlFor="permissionIsGivenToContractor">
                                                 Permission is given to contractor supervisor to take vehicle(s) of following types
@@ -1452,7 +1452,7 @@ export const VendorPermitForm = () => {
                         </CardContent> */}
                         <CardContent className="p-6 bg-white">
                             <p className="text-sm text-gray-700 mb-4">
-                                Declaration - I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analysis JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally & physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Haven Infinite & Norms.
+                                Declaration - I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analysis JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally & physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Defined Norms.
                             </p>
                             <div className="flex items-center space-x-2 mb-6">
                                 <Checkbox
