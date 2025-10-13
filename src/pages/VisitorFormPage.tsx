@@ -25,6 +25,7 @@ import {
   ticketManagementAPI,
   UserOption,
 } from "@/services/ticketManagementAPI";
+import { useSelector } from 'react-redux';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 
@@ -46,7 +47,9 @@ export const VisitorFormPage = () => {
   );
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
 
-  const initialMobileNumber = location.state?.mobileNumber || "9555625186";
+  const initialMobileNumber = location.state?.mobileNumber || "";
+
+    const selectedSite = useSelector((state: any) => state.site.selectedSite);
 
   const fieldStyles = {
     height: "45px",
@@ -91,7 +94,7 @@ export const VisitorFormPage = () => {
     hostName: "",
     hostMobile: "",
     hostEmail: "",
-    visitor_documents: null as File | null,
+    visitor_documents: [] as File[],
     daysPermitted: {
       Sunday: false,
       Monday: false,
@@ -254,14 +257,22 @@ export const VisitorFormPage = () => {
     console.log('🔍 fetchVisitorInfo called with mobile:', mobile);
     setLoadingVisitorInfo(true);
     try {
-      // Get current user account to fetch site_id
-      let currentUserSiteId = '2404'; // Use the specific site_id from your example
-      try {
-        const userAccount = await ticketManagementAPI.getUserAccount();
-        currentUserSiteId = userAccount.site_id.toString();
-        console.log('✅ Got user site_id:', currentUserSiteId);
-      } catch (accountError) {
-        console.warn('⚠️ Failed to fetch user account, using fallback site_id:', currentUserSiteId);
+      // Use selected site from Redux instead of user account
+      let currentUserSiteId = selectedSite?.id?.toString();
+      
+      if (!currentUserSiteId) {
+        console.warn('⚠️ No selected site found, trying to fetch from user account as fallback');
+        try {
+          const userAccount = await ticketManagementAPI.getUserAccount();
+          currentUserSiteId = userAccount.site_id.toString();
+          console.log('✅ Got user site_id from account:', currentUserSiteId);
+        } catch (accountError) {
+          console.warn('⚠️ Failed to fetch user account, cannot proceed without site_id');
+          toast.error("Unable to determine site. Please select a site and try again.");
+          return;
+        }
+      } else {
+        console.log('✅ Using selected site_id from Redux:', currentUserSiteId);
       }
 
       console.log('📡 Calling getVisitorInfo API with:', { resourceId: currentUserSiteId, mobile });
@@ -298,6 +309,10 @@ export const VisitorFormPage = () => {
       setLoadingVisitorInfo(false);
     }
   };
+
+  useEffect(() => {
+    fetchVisitorInfo(initialMobileNumber);
+  }, [selectedSite?.id]);
 
   const initializeCamera = async () => {
     try {
@@ -431,33 +446,59 @@ export const VisitorFormPage = () => {
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size should be less than 5MB");
-        return;
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const validFiles: File[] = [];
+      const invalidFiles: string[] = [];
+      
+      // Validate each file
+      Array.from(files).forEach((file) => {
+        // Check file size (max 5MB per file)
+        if (file.size > 5 * 1024 * 1024) {
+          invalidFiles.push(`${file.name} - File too large (max 5MB)`);
+          return;
+        }
+        
+        // Check file type (only images and PDFs)
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
+        if (!allowedTypes.includes(file.type)) {
+          invalidFiles.push(`${file.name} - Invalid file type (only images and PDFs allowed)`);
+          return;
+        }
+        
+        validFiles.push(file);
+      });
+      
+      // Show error messages for invalid files
+      if (invalidFiles.length > 0) {
+        invalidFiles.forEach(error => toast.error(error));
       }
       
-      // Check file type (only images and PDFs)
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error("Only images (JPEG, PNG, GIF) and PDF files are allowed");
-        return;
+      // Add valid files to existing documents
+      if (validFiles.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          visitor_documents: [...prev.visitor_documents, ...validFiles],
+        }));
+        
+        if (validFiles.length === 1) {
+          toast.success(`File "${validFiles[0].name}" added successfully`);
+        } else {
+          toast.success(`${validFiles.length} files added successfully`);
+        }
       }
-      
-      setFormData((prev) => ({
-        ...prev,
-        visitor_documents: file,
-      }));
-      toast.success(`File "${file.name}" selected successfully`);
     }
+    
+    // Reset input value to allow selecting the same files again if needed
+    event.target.value = '';
   };
 
-  const removeUploadedFile = () => {
+  const removeUploadedFile = (indexToRemove?: number) => {
     setFormData((prev) => ({
       ...prev,
-      visitor_documents: null,
+      visitor_documents: indexToRemove !== undefined 
+        ? prev.visitor_documents.filter((_, index) => index !== indexToRemove)
+        : [], // Remove all files if no index specified
     }));
   };
 
@@ -474,10 +515,6 @@ export const VisitorFormPage = () => {
     if (formData.host === "others") {
       if (!formData.hostName.trim()) {
         toast.error("Please enter host name");
-        return;
-      }
-      if (!formData.hostMobile.trim()) {
-        toast.error("Please enter host mobile number");
         return;
       }
       if (formData.hostMobile.length !== 10) {
@@ -512,10 +549,10 @@ export const VisitorFormPage = () => {
     //   return;
     // }
 
-    if (!formData.vehicleNumber.trim()) {
-      toast.error("Please enter Vehicle number");
-      return;
-    }
+    // if (!formData.vehicleNumber.trim()) {
+    //   toast.error("Please enter Vehicle number");
+    //   return;
+    // }
 
     if (formData.visitorType === "support" && !formData.supportCategory) {
       toast.error("Please select support category");
@@ -586,6 +623,7 @@ export const VisitorFormPage = () => {
       const baseVisitorData = {
         ...formData,
         capturedPhoto,
+        parentGkId: visitorInfo?.id || null,
         additionalVisitors: additionalVisitors.filter(
           (v) => v.name && v.mobile && v.passNo
         ),
@@ -608,7 +646,11 @@ export const VisitorFormPage = () => {
       console.log("📋 Visitor visit type:", formData.visitorVisit);
       console.log("� Expected_at field present:", 'expected_at' in visitorApiData);
 
-      await ticketManagementAPI.createVisitor(visitorApiData);
+      // Get site ID from Redux state with fallback
+      const siteId = selectedSite?.id?.toString() || '';
+      console.log("🏢 Using site ID for visitor creation:", siteId);
+
+      await ticketManagementAPI.createVisitor(visitorApiData, siteId);
       toast.success("Visitor created successfully!");
       navigate("/security/visitor");
     } catch (error) {
@@ -860,200 +902,122 @@ export const VisitorFormPage = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-        <div className="text-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Capture Image</h3>
-          {visitorInfo && visitorInfo.image && !capturedPhoto && (
-            <p className="text-sm text-blue-600 mt-1">
-              Previous visitor photo available - you can use it or capture a new one
-            </p>
-          )}
-        </div>
-        <div className="flex justify-center mb-6">
-          {!capturedPhoto ? (
-            <div className="flex flex-col items-center gap-4">
-              <button
-                type="button"
-                onClick={handleCameraClick}
-                className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
-              >
-                <Camera className="h-8 w-8 text-gray-600" />
-              </button>
-              
-              {/* Option to use previous visitor image */}
-              {visitorInfo && visitorInfo.image && (
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-2">Or use previous photo:</p>
-                  <div className="w-32 h-24 bg-black rounded-lg mb-2 overflow-hidden relative">
-                    <img
-                      src={visitorInfo.image}
-                      alt="Previous visitor"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setCapturedPhoto(visitorInfo.image);
-                      setIsPhotoSaved(true);
-                      toast.success("Previous photo selected!");
-                    }}
-                    className="h-8 px-3 text-xs"
-                  >
-                    Use This Photo
-                  </Button>
-                </div>
-              )}
+        {/* Visitor Info Display Section - Shows when visitor info is found */}
+        {showVisitorInfo && visitorInfo ? (
+          // <div className="bg-blue-50 rounded-lg border border-blue-200 overflow-hidden">
+          //   <div className="px-6 py-3 border-b border-blue-200">
+          //     <h2 className="text-lg font-medium text-blue-900 flex items-center">
+          //       <span
+          //         className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
+          //         style={{ backgroundColor: "#DBEAFE" }}
+          //       >
+          //         <User size={16} color="#1E40AF" />
+          //       </span>
+          //       Previous Visitor Information Found
+          //     </h2>
+          //   </div>
+          //   <div className="p-6">
+          //     <div className="flex flex-col md:flex-row gap-6">
+          //       {/* Visitor Image Section */}
+                <div className="flex-shrink-0">
+  <div className="text-center mb-4">
+    <h3 className="text-lg font-semibold text-gray-800 mb-2">Visitor Photo</h3>
+  </div>
+  
+  {/* Show previous visitor photo directly or captured photo */}
+  {(visitorInfo?.image || capturedPhoto) ? (
+    <div className="text-center">
+      <div className="w-32 h-32 bg-black rounded-lg mb-2 overflow-hidden relative group mx-auto">
+        <img
+          src={capturedPhoto || visitorInfo.image}
+          alt={capturedPhoto ? "Selected photo" : visitorInfo.guest_name}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+      </div>
+      
+      <Button
+        type="button"
+        variant="link"
+        onClick={handleCameraClick}
+        className="text-xs text-gray-600"
+      >
+        Change Photo
+      </Button>
+    </div>
+  ) : (
+    /* Fallback camera button when no photo is available */
+    <button
+      type="button"
+      onClick={handleCameraClick}
+      className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
+    >
+      <Camera className="h-8 w-8 text-gray-600" />
+    </button>
+  )}
+</div>
+        ) : (
+          /* Default capture photo section - Shows when no visitor info */
+          <div>
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Capture Image</h3>
             </div>
-          ) : (
-            <div className="text-center">
-              <div className="w-32 h-24 bg-black rounded-lg mb-2 overflow-hidden relative group cursor-pointer">
-                <img
-                  src={capturedPhoto}
-                  alt="Captured"
-                  className="w-full h-full object-cover"
-                  onClick={!isPhotoSaved ? handleRetakePhoto : undefined}
-                />
-                {!isPhotoSaved && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Camera className="h-6 w-6 text-white" />
-                  </div>
-                )}
-              </div>
-              {!isPhotoSaved ? (
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleRetakePhoto}
-                    className="h-8 px-3 text-xs"
-                  >
-                    Retake
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleSavePhoto}
-                    className="h-8 px-3 text-xs bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    Save
-                  </Button>
-                </div>
-              ) : (
-                <Button
+            <div className="flex justify-center mb-6">
+              {!capturedPhoto ? (
+                <button
                   type="button"
-                  variant="link"
-                  onClick={handleRetakePhoto}
-                  className="text-xs text-gray-600"
+                  onClick={handleCameraClick}
+                  className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
                 >
-                  Change Photo
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Visitor Info Display Section */}
-        {showVisitorInfo && visitorInfo && (
-          <div className="bg-blue-50 rounded-lg border border-blue-200 overflow-hidden">
-            <div className="px-6 py-3 border-b border-blue-200">
-              <h2 className="text-lg font-medium text-blue-900 flex items-center">
-                <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
-                  style={{ backgroundColor: "#DBEAFE" }}
-                >
-                  <User size={16} color="#1E40AF" />
-                </span>
-                Previous Visitor Information Found
-              </h2>
-            </div>
-            <div className="p-6">
-              <div className="flex flex-col md:flex-row gap-6">
-                {/* Visitor Image */}
-                {visitorInfo.image && (
-                  <div className="flex-shrink-0">
-                    <div className="w-32 h-32 rounded-lg overflow-hidden border-2 border-blue-200">
-                      <img
-                        src={visitorInfo.image}
-                        alt={visitorInfo.guest_name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
+                  <Camera className="h-8 w-8 text-gray-600" />
+                </button>
+              ) : (
+                <div className="text-center">
+                  <div className="w-32 h-24 bg-black rounded-lg mb-2 overflow-hidden relative group cursor-pointer">
+                    <img
+                      src={capturedPhoto}
+                      alt="Captured"
+                      className="w-full h-full object-cover"
+                      onClick={!isPhotoSaved ? handleRetakePhoto : undefined}
+                    />
+                    {!isPhotoSaved && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Camera className="h-6 w-6 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  {!isPhotoSaved ? (
+                    <div className="flex gap-2 justify-center">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleRetakePhoto}
+                        className="h-8 px-3 text-xs"
+                      >
+                        Retake
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleSavePhoto}
+                        className="h-8 px-3 text-xs bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Save
+                      </Button>
                     </div>
-                  </div>
-                )}
-                
-                {/* Visitor Details */}
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Guest Name
-                    </label>
-                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
-                      {visitorInfo.guest_name}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mobile Number
-                    </label>
-                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
-                      {visitorInfo.guest_number}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Coming From
-                    </label>
-                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
-                      {visitorInfo.guest_from || 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Vehicle Number
-                    </label>
-                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
-                      {visitorInfo.guest_vehicle_number || 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Visit Purpose
-                    </label>
-                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
-                      {visitorInfo.visit_purpose || 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Guest Type
-                    </label>
-                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
-                      {visitorInfo.guest_type}
-                    </p>
-                  </div>
-                  {visitorInfo.otp_verified === 1 && (
-                    <div className="md:col-span-2">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        ✓ OTP Verified
-                      </span>
-                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="link"
+                      onClick={handleRetakePhoto}
+                      className="text-xs text-gray-600"
+                    >
+                      Change Photo
+                    </Button>
                   )}
                 </div>
-              </div>
-              
-              <div className="mt-4 flex justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowVisitorInfo(false)}
-                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                >
-                  Hide Previous Info
-                </Button>
-              </div>
+              )}
             </div>
           </div>
         )}
@@ -1186,7 +1150,6 @@ export const VisitorFormPage = () => {
                       }
                     }}
                     fullWidth
-                    required
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
@@ -1203,7 +1166,6 @@ export const VisitorFormPage = () => {
                       handleInputChange("hostEmail", e.target.value)
                     }
                     fullWidth
-                    required
                     type="email"
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -1216,7 +1178,6 @@ export const VisitorFormPage = () => {
                 <FormControl
                   fullWidth
                   variant="outlined"
-                  required
                   sx={fieldStyles}
                 >
                   <InputLabel shrink>Tower</InputLabel>
@@ -1324,15 +1285,15 @@ export const VisitorFormPage = () => {
                   pattern: "[0-9]{10}", // regex for 10 digits
                   maxLength: 10,
                 }}
-                helperText={
-                  loadingVisitorInfo 
-                    ? "🔍 Searching for visitor information..." 
-                    : visitorInfo 
-                      ? "✅ Previous visitor information found!" 
-                      : formData.mobileNumber.length === 10 
-                        ? "No previous visitor information found" 
-                        : "Enter 10-digit mobile number"
-                }
+                // helperText={
+                //   loadingVisitorInfo 
+                //     ? "🔍 Searching for visitor information..." 
+                //     : visitorInfo 
+                //       ? "✅ Previous visitor information found!" 
+                //       : formData.mobileNumber.length === 10 
+                //         ? "No previous visitor information found" 
+                //         : "Enter 10-digit mobile number"
+                // }
                 FormHelperTextProps={{
                   style: {
                     color: loadingVisitorInfo 
@@ -1350,7 +1311,6 @@ export const VisitorFormPage = () => {
                   handleInputChange("passNumber", e.target.value)
                 }
                 fullWidth
-                required
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
@@ -1373,7 +1333,6 @@ export const VisitorFormPage = () => {
                   handleInputChange("vehicleNumber", e.target.value)
                 }
                 fullWidth
-                required
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
@@ -1406,56 +1365,82 @@ export const VisitorFormPage = () => {
                 sx={fieldStyles}
               />
               
-              {/* Government ID Upload */}
-              <div className="flex flex-col">
-                {/* <label className="text-sm font-medium text-gray-700 mb-2">
-                  Government ID
-                </label> */}
-                <div className="relative">
+              {/* Government ID Upload - Multiple Files */}
+              <div className="flex flex-col md:col-span-2">
+                <label className="text-sm font-medium text-gray-700 mb-2">
+                  Government ID 
+                </label>
+                
+                {/* Upload Button */}
+                <div className="relative mb-3">
                   <input
                     type="file"
                     accept="image/*,.pdf"
                     onChange={handleFileUpload}
                     className="hidden"
                     id="government-id-upload"
+                    multiple
                   />
                   <label
                     htmlFor="government-id-upload"
                     className="flex items-center justify-center w-full h-[45px] px-3 py-2 border border-gray-300 rounded-md cursor-pointer hover:border-gray-400 transition-colors bg-white"
                   >
-                    {formData.visitor_documents ? (
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center">
-                          <FileText className="h-4 w-4 mr-2 text-blue-600" />
-                          <span className="text-sm text-gray-700 truncate max-w-[150px]">
-                            {formData.visitor_documents.name}
+                    <div className="flex items-center">
+                      <Upload className="h-4 w-4 mr-2 text-gray-500" />
+                      <span className="text-sm text-gray-500">
+                        Upload Government ID Documents
+                      </span>
+                    </div>
+                  </label>
+                </div>
+                
+                {/* Display uploaded files */}
+                {formData.visitor_documents.length > 0 && (
+                  <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2 bg-gray-50">
+                    {formData.visitor_documents.map((file, index) => (
+                      <div
+                        key={`${file.name}-${index}`}
+                        className="flex items-center justify-between bg-white p-2 rounded border"
+                      >
+                        <div className="flex items-center flex-1 min-w-0">
+                          <FileText className="h-4 w-4 mr-2 text-blue-600 flex-shrink-0" />
+                          <span className="text-sm text-gray-700 truncate" title={file.name}>
+                            {file.name}
+                          </span>
+                          <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={(e) => {
                             e.preventDefault();
-                            removeUploadedFile();
+                            removeUploadedFile(index);
                           }}
-                          className="ml-2 p-1 hover:bg-gray-100 rounded"
+                          className="ml-2 p-1 hover:bg-gray-100 rounded flex-shrink-0"
                           title="Remove file"
                         >
                           <X className="h-3 w-3 text-gray-500" />
                         </button>
                       </div>
-                    ) : (
-                      <div className="flex items-center">
-                        <Upload className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm text-gray-500">
-                          Upload Government ID
-                        </span>
-                      </div>
+                    ))}
+                    
+                    {/* Clear all button */}
+                    {formData.visitor_documents.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeUploadedFile()}
+                        className="text-xs text-red-600 hover:text-red-800 mt-1"
+                      >
+                        Clear all files
+                      </button>
                     )}
-                  </label>
-                </div>
-                {/* <p className="text-xs text-gray-500 mt-1">
-                  Supports: JPEG, PNG, GIF, PDF (Max 5MB)
-                </p> */}
+                  </div>
+                )}
+                
+                <p className="text-xs text-gray-500 mt-1">
+                  Supports: JPEG, PNG, GIF, PDF (Max 5MB per file, Multiple files allowed)
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-8 pt-4">

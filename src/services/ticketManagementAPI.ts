@@ -1,5 +1,6 @@
 import { apiClient } from '@/utils/apiClient';
-import { ENDPOINTS } from '@/config/apiConfig';
+import { API_CONFIG, ENDPOINTS } from '@/config/apiConfig';
+
 
 // Category Types
 export interface CategoryFormData {
@@ -1110,58 +1111,52 @@ export const ticketManagementAPI = {
   },
 
   // Create visitor
-  async createVisitor(visitorData: {
-    visitorType: string;
-    frequency: string;
-    visitorVisit?: string;
-    host?: string;
-    tower?: string;
-    visitPurpose?: string;
-    supportCategory?: string;
-    passNumber: string;
-    vehicleNumber: string;
-    visitorName: string;
-    mobileNumber: string;
-    visitorComingFrom: string;
-    remarks: string;
-    expected_at?: string;
-    skipHostApproval: boolean;
-    goodsInwards: boolean;
-    passValidFrom?: string;
-    passValidTo?: string;
-    daysPermitted?: { [key: string]: boolean };
-    capturedPhoto?: string;
-    visitor_documents?: File | null;
-    hostName?: string;
-    hostMobile?: string;
-    hostEmail?: string;
-    additionalVisitors?: Array<{ name: string; mobile: string; passNo: string }>;
-    goodsData?: {
-      selectType: string;
-      category: string;
-      modeOfTransport: string;
-      lrNumber: string;
-      tripId: string;
-    };
-    items?: Array<{
-      selectItem: string;
-      uicInvoiceNo: string;
-      quantity: string;
-    }>;
-  }) {
+  async createVisitor(
+    visitorData: {
+      visitorType: string;
+      frequency: string;
+      visitorVisit?: string;
+      host?: string;
+      tower?: string;
+      visitPurpose?: string;
+      supportCategory?: string;
+      passNumber: string;
+      vehicleNumber: string;
+      visitorName: string;
+      mobileNumber: string;
+      visitorComingFrom: string;
+      remarks: string;
+      expected_at?: string;
+      skipHostApproval: boolean;
+      goodsInwards: boolean;
+      passValidFrom?: string;
+      passValidTo?: string;
+      daysPermitted?: { [key: string]: boolean };
+      capturedPhoto?: string;
+      visitor_documents?: File[];
+      hostName?: string;
+      hostMobile?: string;
+      hostEmail?: string;
+      additionalVisitors?: Array<{ name: string; mobile: string; passNo: string }>;
+      goodsData?: {
+        selectType: string;
+        category: string;
+        modeOfTransport: string;
+        lrNumber: string;
+        tripId: string;
+      };
+      items?: Array<{
+        selectItem: string;
+        uicInvoiceNo: string;
+        quantity: string;
+      }>;
+      parentGkId?: string;
+    },
+    currentUserSiteId: string
+  ) {
     try {
       console.log('🔍 Creating visitor with data:', visitorData);
-      
-      // Get current user account to fetch site_id
-      let currentUserSiteId = '7'; // Default fallback value
-      try {
-        console.log('📡 Fetching current user account details for site_id...');
-        const userAccount = await this.getUserAccount();
-        currentUserSiteId = userAccount.site_id.toString();
-        console.log('✅ Got user site_id:', currentUserSiteId);
-      } catch (accountError) {
-        console.warn('⚠️ Failed to fetch user account, using default site_id:', accountError);
-      }
+      console.log('🏢 Using site_id:', currentUserSiteId);
       
       const formData = new FormData();
       
@@ -1169,7 +1164,19 @@ export const ticketManagementAPI = {
       formData.append('gatekeeper[created_by]', 'Gatekeeper');
       formData.append('gatekeeper[IsDelete]', '0');
       formData.append('gatekeeper[approve]', '0');
+      
+      // Add parent_gk_id if provided from visitor info
+    if (visitorData.parentGkId) {
+      formData.append('gatekeeper[parent_gk_id]', visitorData.parentGkId);
+      console.log('✅ Added parent_gk_id to FormData:', visitorData.parentGkId);
+    } else {
       formData.append('gatekeeper[parent_gk_id]', '');
+      console.log('⚠️ No parent_gk_id provided - using empty string');
+    }
+      
+      // Add resource_id (site_id) to the payload
+      formData.append('gatekeeper[resource_id]', currentUserSiteId);
+      console.log('✅ Added resource_id to FormData:', currentUserSiteId);
       
       // Dynamic fields based on visitor type
       if (visitorData.visitorType === 'support') {
@@ -1331,24 +1338,60 @@ export const ticketManagementAPI = {
         console.log('⚠️ No photo captured - skipping image upload');
       }
 
-      // Add visitor document if uploaded
-      if (visitorData.visitor_documents) {
+      // Add visitor documents if uploaded (multiple files support)
+      if (visitorData.visitor_documents && visitorData.visitor_documents.length > 0) {
         try {
-          console.log('📄 Processing visitor document for upload...');
-          formData.append('gatekeeper[visitor_documents]', visitorData.visitor_documents, visitorData.visitor_documents.name);
-          console.log('✅ Visitor document successfully added to form data');
+          console.log('📄 Processing visitor documents for upload...');
+          console.log('📋 Documents count:', visitorData.visitor_documents.length);
+          
+          // Process each file
+          visitorData.visitor_documents.forEach((file, index) => {
+            console.log(`📄 Processing file ${index + 1}:`, {
+              name: file.name,
+              size: file.size,
+              type: file.type
+            });
+            
+            // Ensure it's a valid file
+            if (file instanceof File) {
+              // Use the format: gate_pass[attachments][] with proper filename and content-type
+              formData.append('gatekeeper[document][]', file, file.name);
+              console.log(`✅ Document ${index + 1} successfully added to FormData for multipart upload`);
+              console.log(`📤 Document will be sent as: gatekeeper[document][] with filename="${file.name}" and Content-Type: ${file.type}`);
+            } else {
+              console.error(`❌ Invalid file type at index ${index} - not a File instance`);
+              throw new Error(`Invalid file type at index ${index}`);
+            }
+          });
+          
+          console.log(`✅ All ${visitorData.visitor_documents.length} visitor documents processed successfully`);
         } catch (documentError) {
-          console.error('❌ Error processing visitor document:', documentError);
-          // Continue without document if there's an error
+          console.error('❌ Error processing visitor documents:', documentError);
+          // Continue without documents if there's an error
         }
       } else {
-        console.log('⚠️ No visitor document uploaded - skipping document upload');
+        console.log('⚠️ No visitor documents uploaded - skipping document upload');
+      }
+      
+      // Log FormData contents for debugging
+      console.log('📋 FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`  ${key}: [File] ${value.name} (${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`  ${key}: ${value}`);
+        }
       }
       
       console.log('🚀 Sending visitor creation request to:', ENDPOINTS.CREATE_VISITOR);
+      console.log('📤 Request will include multipart form data with file attachments');
       
       const response = await apiClient.post(ENDPOINTS.CREATE_VISITOR, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 
+          'Content-Type': 'multipart/form-data'
+        },
+        // Ensure the request timeout is sufficient for file uploads
+        timeout: 60000 // 60 seconds for large files
       });
       
       console.log('✅ Visitor created successfully:', response.data);
@@ -1433,12 +1476,16 @@ export const ticketManagementAPI = {
     }
   } | null> {
     try {
-      const url = `/pms/visitors/visitor_info.json?resource_id=${resourceId}&mobile=${mobile}`;
-      console.log('🌐 Making API call to:', url);
+      const url = `/pms/visitors/visitor_info.json?resource_id=${resourceId}&mobile=${mobile}&token=${API_CONFIG.TOKEN}`;
       const response = await apiClient.get(url);
+      console.log('🌐 Making API call to:', url);
       console.log('📊 API Response status:', response.status);
-      console.log('📋 API Response data:', response.data);
-      return response.data;
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = response.data;
+      console.log('📋 API Response data:', data);
+      return data;
     } catch (error) {
       console.error('❌ Error fetching visitor info:', error);
       if (error.response) {
