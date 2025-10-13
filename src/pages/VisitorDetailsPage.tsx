@@ -74,6 +74,9 @@ interface VisitorData {
   }>;
   pass_days?: string[];
   pass_valid?: boolean;
+  visitor_host_name?: string;
+  visitor_host_mobile?: string;
+  visitor_host_email?: string;
 }
 
 export const VisitorDetailsPage = () => {
@@ -463,8 +466,8 @@ export const VisitorDetailsPage = () => {
                 {(visitorData.vstatus === 'Pending' || visitorData.approve === 0) && (
                   <Button
                     className={`px-3 py-2 text-sm rounded ${disabledOTPButtons[visitorData.id]
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-orange-500 hover:bg-orange-600'
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-orange-500 hover:bg-orange-600'
                       } text-white`}
                     onClick={handleResendOTP}
                     disabled={disabledOTPButtons[visitorData.id]}
@@ -486,7 +489,7 @@ export const VisitorDetailsPage = () => {
                 {/* Check In Button - Show for approved visitors who haven't checked in */}
                 {(visitorData.vstatus === 'Approved' && !visitorData.check_in) && (
                   <Button
-                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 text-sm rounded"
+                    className="bg-green-500 hover:bg-green-600 !text-white px-3 py-2 text-sm rounded"
                     onClick={handleCheckIn}
                   >
                     Check In
@@ -496,7 +499,7 @@ export const VisitorDetailsPage = () => {
                 {/* Check Out Button - Show for checked-in visitors who haven't checked out */}
                 {(visitorData.vstatus === 'Approved' && visitorData.check_in && !visitorData.check_out) && (
                   <Button
-                    className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-2 text-sm rounded"
+                    className="bg-[#F97316] hover:bg-[#F97316]/90 !text-white px-3 py-2 text-sm rounded"
                     onClick={handleCheckOut}
                   >
                     Check Out
@@ -549,6 +552,27 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_name}</span>
               </div>
             )}
+            {hasData(visitorData.visitor_host_name) && (
+              <div className="flex items-start">
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Host Name</span>
+                <span className="text-gray-500 mx-3">:</span>
+                <span className="text-gray-900 font-semibold flex-1">{visitorData.visitor_host_name}</span>
+              </div>
+            )}
+            {hasData(visitorData.visitor_host_mobile) && (
+              <div className="flex items-start">
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Host Mobile</span>
+                <span className="text-gray-500 mx-3">:</span>
+                <span className="text-gray-900 font-semibold flex-1">{visitorData.visitor_host_mobile}</span>
+              </div>
+            )}
+            {hasData(visitorData.visitor_host_email) && (
+              <div className="flex items-start">
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Host Email</span>
+                <span className="text-gray-500 mx-3">:</span>
+                <span className="text-gray-900 font-semibold flex-1">{visitorData.visitor_host_email}</span>
+              </div>
+            )}
 
             {hasData(visitorData.vstatus) && (
               <div className="flex items-start">
@@ -556,8 +580,8 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
                   <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${visitorData.vstatus === 'Approved' ? 'bg-green-100 text-green-700' :
-                      visitorData.vstatus === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
+                    visitorData.vstatus === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-red-100 text-red-700'
                     }`}>
                     {visitorData.vstatus}
                   </Badge>
@@ -603,8 +627,8 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
                   <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${visitorData.visitor_type === 'unexpected' ? 'bg-red-100 text-red-700' :
-                      visitorData.visitor_type === 'expected' ? 'bg-green-100 text-green-700' :
-                        'bg-gray-100 text-gray-700'
+                    visitorData.visitor_type === 'expected' ? 'bg-green-100 text-green-700' :
+                      'bg-gray-100 text-gray-700'
                     }`}>
                     {visitorData.visitor_type ? visitorData.visitor_type.charAt(0).toUpperCase() + visitorData.visitor_type.slice(1) : '--'}
                   </Badge>
@@ -716,6 +740,13 @@ export const VisitorDetailsPage = () => {
                     <span className="text-gray-900 font-semibold flex-1">{visitor.additional_visitor.mobile}</span>
                   </div>
                 )}
+                {hasData(visitor.additional_visitor.pass_number) && (
+                  <div className="flex items-start">
+                    <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Pass Number</span>
+                    <span className="text-gray-500 mx-3">:</span>
+                    <span className="text-gray-900 font-semibold flex-1">{visitor.additional_visitor.pass_number}</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -753,7 +784,7 @@ export const VisitorDetailsPage = () => {
                     )}
                   </div>
                 </div>
-                
+
                 {movement.item_movement.item_details && movement.item_movement.item_details.length > 0 && (
                   <div>
                     <h5 className="font-medium text-gray-600 mb-3">Item Details:</h5>
