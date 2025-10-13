@@ -1501,9 +1501,7 @@ export const MobileSurveyLanding: React.FC = () => {
     <div
       className="min-h-screen flex flex-col"
       style={{
-        backgroundImage: `url(${
-          surveyData?.snag_checklist?.survey_attachment?.url || "/9019830 1.png"
-        })`,
+       backgroundImage: surveyData.snag_checklist?.survey_attachment?.length > 0 ? `url(${surveyData?.snag_checklist?.survey_attachment?.url})` : 'url("/9019830 1.png")',
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -1512,9 +1510,6 @@ export const MobileSurveyLanding: React.FC = () => {
     >
       {/* Header with Logo */}
       <div className="bg-transparent py-4 px-4 mt-8">
-        {/* <div className="flex justify-start mt-2 items-start">
-            
-          </div> */}
         <div className="flex justify-between">
           <div className="flex justify-start mt-2 items-start">
             {((currentQuestion &&
@@ -1567,28 +1562,11 @@ export const MobileSurveyLanding: React.FC = () => {
       </div>
 
       {/* Progress Bar for Multi-Question Surveys */}
-      {isMultiQuestion && (
-        <div></div>
-        // <div className="bg-white px-4 sm:px-6 pb-3 shadow-sm">
-        //   <div className="flex justify-between items-center mb-2">
-        //     {/* <span className="text-xs sm:text-sm text-gray-600">
-        //       {getProgressPercentage()}%
-        //     </span> */}
-        //   </div>
-        //   {/* <div className="w-full bg-gray-200 rounded-full h-2">
-        //     <div
-        //       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-        //       style={{ width: `${getProgressPercentage()}%` }}
-        //     ></div>
-        //   </div> */}
-        // </div>
-      )}
+      {isMultiQuestion && <div></div>}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
         <div className="flex flex-col items-center justify-center max-w-md mx-auto w-full min-h-full">
-          {/* Back button - positioned above survey title */}
-
           {/* Show image only on first question or single question surveys */}
           {!showGenericTags && (
             <div
@@ -1596,11 +1574,11 @@ export const MobileSurveyLanding: React.FC = () => {
               style={{ minHeight: "240px" }}
             >
               <div
-                className="absolute inset-0 w-full h-full rounded-xl overflow-hidden"
+                className="absolute inset-0 w-full h-full rounded-[0.20rem] overflow-hidden"
                 style={{
                   backgroundImage: `url(${
                     surveyData?.snag_checklist?.survey_attachment?.[0]?.url ||
-                    ""
+                    "/9019830 1.png"
                   })`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
@@ -1631,7 +1609,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   value={finalDescription}
                   onChange={(e) => setFinalDescription(e.target.value)}
                   placeholder="Please share your thoughts..."
-                  className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   disabled={isSubmitting}
                 />
               </div>
@@ -1640,7 +1618,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 type="button"
                 onClick={handleSubmitSurvey}
                 disabled={isSubmitting}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white py-3 px-4 rounded[0.20rem] font-medium transition-colors disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center">
@@ -1692,14 +1670,6 @@ export const MobileSurveyLanding: React.FC = () => {
           {/* Show Current Question */}
           {currentQuestion && !isLastStep && (
             <div className="w-full space-y-4 ">
-              {/* {!showGenericTags && (
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-black leading-tight">
-                    {currentQuestion.descr}
-                  </h3>
-                </div>
-              )}
-           */}
               <div className="space-y-4">
                 {/* Multiple Choice Question */}
                 {currentQuestion.qtype === "multiple" && !showGenericTags && (
@@ -1709,7 +1679,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         type="button"
                         key={option.id}
                         onClick={() => handleOptionSelect(option)}
-                        className={`w-full p-3 sm:p-4 rounded-xl border-2 text-left transition-all ${
+                        className={`w-full p-3 sm:p-4 rounded-[0.20rem] border-2 text-left transition-all ${
                           selectedOptions.some((opt) => opt.id === option.id)
                             ? "border-blue-500 bg-blue-50 text-blue-700"
                             : "border-gray-200 bg-white hover:border-black/30"
@@ -1915,7 +1885,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                 option.label
                               )
                             }
-                            className="flex flex-col rounded-xl items-center justify-start p-2 sm:p-3 hover:bg-white/60 transition-colors flex-1 min-w-0"
+                            className="flex flex-col rounded-[0.20rem] items-center justify-start p-2 sm:p-3 hover:bg-white/60 transition-colors flex-1 min-w-0"
                           >
                             <span className="text-3xl sm:text-4xl mb-2">
                               {option.emoji}
@@ -1932,7 +1902,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
                 {showGenericTags && (
                   <>
-                    <div className="bg-gray-100 rounded-xl p-4">
+                    <div className="bg-white/70 rounded-[0.20rem] p-4">
                       <div className="flex justify-end items-start mb-4">
                         <button
                           type="button"
@@ -1950,72 +1920,103 @@ export const MobileSurveyLanding: React.FC = () => {
                       </div>
 
                       <div className="text-center">
-                        <h4 className="text-lg font-semibold text-black/80 mb-2">
+                        <h4 className="text-lg font-semibold text-black/100 mb-2">
                           What specifically needs improvement?
                         </h4>
-
-                        {selectedTags.length > 0 && (
-                          <p className="text-sm text-black/100">
-                            {selectedTags.length} item
-                            {selectedTags.length > 1 ? "s" : ""} selected
-                          </p>
-                        )}
                       </div>
-                      <div className="overflow-x-auto mt-4">
+                      <div className="overflow-y mt-4">
                         <div
-                          className="flex"
+                          className="overflow-x-auto"
                           style={{ minWidth: "100%", paddingBottom: "8px" }}
                         >
                           {(() => {
-                            const tags =
-                              getCurrentQuestion()?.generic_tags || [];
-                            const rows = [];
-                            for (let i = 0; i < tags.length; i += 2) {
-                              rows.push(tags.slice(i, i + 2));
-                            }
-                            return rows.map((row, rowIdx) => (
-                              <div
-                                key={rowIdx}
-                                className="flex flex-col gap-4 min-w-[165px]"
-                              >
-                                {row.map((tag) => {
-                                  const isSelected = selectedTags.some(
-                                    (selectedTag) => selectedTag.id === tag.id
-                                  );
-                                  return (
-                                    <button
-                                      type="button"
-                                      key={tag.id}
-                                      onClick={() => handleGenericTagClick(tag)}
-                                      className={`p-3 sm:p-4 rounded-xl border-2 mr-3 text-center transition-all ${
-                                        isSelected
-                                          ? "border-blue-500 bg-blue-50"
-                                          : "border-gray-200 bg-white hover:border-blue-300"
-                                      }`}
-                                    >
-                                      <div className="mb-2">
-                                        {tag.icons && tag.icons.length > 0 ? (
-                                          <img
-                                            src={tag.icons[0].url}
-                                            alt={tag.category_name}
-                                            className="w-10 h-10 sm:w-12 sm:h-12 mx-auto object-contain"
-                                          />
-                                        ) : (
-                                          <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
-                                            <span className="text-lg sm:text-2xl">
-                                              🏷️
+                            const tags = getCurrentQuestion()?.generic_tags || [];
+                            const itemsPerPage = 4;
+                            // Split tags into pages of 4 items each
+                            const pages = Array.from(
+                              { length: Math.ceil(tags.length / itemsPerPage) },
+                              (_, pageIdx) => tags.slice(pageIdx * itemsPerPage, (pageIdx + 1) * itemsPerPage)
+                            );
+                            return (
+                              <div className="flex flex-row gap-6" style={{ minWidth: `${itemsPerPage * 180}px` }}>
+                                {pages.map((pageTags, pageIdx) => (
+                                  <div key={pageIdx} className="flex flex-col gap-4 min-w-[360px]">
+                                    {/* First row: items 0,1 */}
+                                    <div className="flex flex-row gap-4">
+                                      {pageTags.slice(0, 2).map((tag, idx) =>
+                                        tag ? (
+                                          <button
+                                            type="button"
+                                            key={tag.id}
+                                            onClick={() => handleGenericTagClick(tag)}
+                                            className={`p-3 sm:p-4 rounded-[0.20rem] text-center transition-all ${
+                                              selectedTags.some((selectedTag) => selectedTag.id === tag.id)
+                                                ? "border-blue-500 bg-blue-50"
+                                                : ""
+                                            }`}
+                                          >
+                                            <div className="mb-2">
+                                              {tag.icons && tag.icons.length > 0 ? (
+                                                <img
+                                                  src={tag.icons[0].url}
+                                                  alt={tag.category_name}
+                                                  className="w-[9rem] h-[5rem] sm:w-[9rem] sm:h-[5rem] mx-auto object-contain"
+                                                />
+                                              ) : (
+                                                <div className="w-[9rem] h-[5rem] sm:w-[9rem] sm:h-[5rem] mx-auto bg-gray-200 rounded-full flex items-center justify-center">
+                                                  <span className="text-lg sm:text-2xl">🏷️</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            <span className="text-xs sm:text-sm font-medium text-gray-700 leading-tight">
+                                              {tag.category_name}
                                             </span>
-                                          </div>
-                                        )}
-                                      </div>
-                                      <span className="text-xs sm:text-sm font-medium text-gray-700 leading-tight">
-                                        {tag.category_name}
-                                      </span>
-                                    </button>
-                                  );
-                                })}
+                                          </button>
+                                        ) : (
+                                          <div key={`empty-row1-${pageIdx}-${idx}`} className="p-3 sm:p-4" />
+                                        )
+                                      )}
+                                    </div>
+                                    {/* Second row: items 2,3 */}
+                                    <div className="flex flex-row gap-4">
+                                      {pageTags.slice(2, 4).map((tag, idx) =>
+                                        tag ? (
+                                          <button
+                                            type="button"
+                                            key={tag.id}
+                                            onClick={() => handleGenericTagClick(tag)}
+                                            className={`p-3 sm:p-4 rounded-[0.20rem] text-center transition-all ${
+                                              selectedTags.some((selectedTag) => selectedTag.id === tag.id)
+                                                ? "border-blue-500 bg-blue-50"
+                                                : ""
+                                            }`}
+                                          >
+                                            <div className="mb-2">
+                                              {tag.icons && tag.icons.length > 0 ? (
+                                                <img
+                                                  src={tag.icons[0].url}
+                                                  alt={tag.category_name}
+                                                  className="w-[9rem] h-[5rem] sm:w-[9rem] sm:h-[5rem] mx-auto object-contain"
+                                                />
+                                              ) : (
+                                                <div className="w-[9rem] h-[5rem] sm:w-[9rem] sm:h-[5rem] mx-auto bg-gray-200 rounded-full flex items-center justify-center">
+                                                  <span className="text-lg sm:text-2xl">🏷️</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            <span className="text-xs sm:text-sm font-medium text-gray-700 leading-tight">
+                                              {tag.category_name}
+                                            </span>
+                                          </button>
+                                        ) : (
+                                          <div key={`empty-row2-${pageIdx}-${idx}`} className="p-3 sm:p-4" />
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ));
+                            );
                           })()}
                         </div>
                       </div>
@@ -2032,7 +2033,7 @@ export const MobileSurveyLanding: React.FC = () => {
                           setCurrentNegativeComments(e.target.value)
                         }
                         placeholder="Please describe any specific issues or suggestions..."
-                        className="w-full h-20 sm:h-24 p-3 border border-blue-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full h-20 sm:h-24 p-3 border border-blue-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         disabled={isSubmitting}
                       />
                     </div>
@@ -2119,7 +2120,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         selectedTags.length === 0 &&
                         !getCurrentNegativeComments().trim()
                       }
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                      className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white/100 py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? (
                         <div className="flex items-center justify-center">
@@ -2142,13 +2143,6 @@ export const MobileSurveyLanding: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Footer */}
-      {/* <div className="bg-white border-t border-gray-200 py-3 px-4 text-center">
-        <div className="text-xs sm:text-sm text-gray-500">
-          {surveyData.site_name} - {surveyData.area_name}
-        </div>
-      </div> */}
     </div>
   );
 };

@@ -348,6 +348,29 @@ const calculateBalanceTAT = (tatTime: string | null | undefined, tatMinutes: num
   }
 };
 
+const formatSecondsToDDHHMMSS = (seconds: number): string => {
+  if (!seconds || seconds <= 0) return '00:00:00:00';
+  const totalSeconds = Math.abs(seconds);
+  const days = Math.floor(totalSeconds / (24 * 60 * 60));
+  const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+  const mins = Math.floor((totalSeconds % (60 * 60)) / 60);
+  const secs = totalSeconds % 60;
+  return `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
+
+// Helper to calculate balance TAT in seconds from escalation time
+const getBalanceTATSeconds = (escalationTime: string | null | undefined): number => {
+  if (!escalationTime) return 0;
+  try {
+    const escalationDate = new Date(escalationTime);
+    const now = new Date();
+    const diffMs = escalationDate.getTime() - now.getTime();
+    return Math.max(0, Math.floor(diffMs / 1000));
+  } catch {
+    return 0;
+  }
+};
+
 export const TicketDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -377,6 +400,7 @@ export const TicketDetailsPage = () => {
   const [internalCommentText, setInternalCommentText] = useState("");
   const [customerAttachments, setCustomerAttachments] = useState<File[]>([]);
   const [internalAttachments, setInternalAttachments] = useState<File[]>([]);
+  const [balanceTATTick, setBalanceTATTick] = useState(0);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [responsiblePersons, setResponsiblePersons] = useState<Array<{
     id: number;
@@ -430,6 +454,7 @@ export const TicketDetailsPage = () => {
     complaint_mode_id: '',
     rca_template_ids: [] as number[],
     additional_notes: '',
+    proactive_reactive: '', // <-- Add this property
   });
   const [submittingTicketMgmt, setSubmittingTicketMgmt] = useState(false);
 
@@ -470,8 +495,22 @@ export const TicketDetailsPage = () => {
       : "Not Provided";
   };
 
-  const formatDate = (d?: string) =>
-    d && d.trim() !== '' ? new Date(d).toLocaleDateString() : 'DD/MM/YYYY';
+  const formatDate = (d?: string) => {
+    if (!d || d.trim() === '') return 'DD/MM/YYYY';
+
+    try {
+      const date = new Date(d);
+      // Use 'en-GB' locale for DD/MM/YYYY format
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'DD/MM/YYYY';
+    }
+  };
 
   // Helper to truncate text to 5 characters and append ellipsis; shows full text on hover via title
   const truncateWithEllipsis = (value: string, max: number = 5) => {
@@ -1688,13 +1727,13 @@ export const TicketDetailsPage = () => {
       if (ticketMgmtFormData.additional_notes) {
         queryParams.append('additional_notes', ticketMgmtFormData.additional_notes);
       }
-// Add vendor and identification to payload
-        if (ticketMgmtFormData.supplier_id) {
-          queryParams.append('supplier_id', ticketMgmtFormData.supplier_id);
-        }
-        if (ticketMgmtFormData.proactive_reactive) {
-          queryParams.append('proactive_reactive', ticketMgmtFormData.proactive_reactive);
-        }
+      // Add vendor and identification to payload
+      if (ticketMgmtFormData.supplier_id) {
+        queryParams.append('supplier_id', ticketMgmtFormData.supplier_id);
+      }
+      if (ticketMgmtFormData.proactive_reactive) {
+        queryParams.append('proactive_reactive', ticketMgmtFormData.proactive_reactive);
+      }
       // Build the API URL with query parameters
       const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
       const apiUrl = `https://${baseUrl}/complaint_logs.json?${queryParams.toString()}`;
@@ -1733,21 +1772,30 @@ export const TicketDetailsPage = () => {
       setSubmittingTicketMgmt(false);
     }
   };
+
   useEffect(() => {
-  if (ticketData?.created_at) {
-    // Calculate ageing in seconds from created_at to now
-    const createdTime = new Date(ticketData.created_at).getTime();
-    const now = Date.now();
-    const initialAgeingSeconds = Math.max(0, Math.floor((now - createdTime) / 1000));
-    setCurrentAgeing(initialAgeingSeconds);
-
     const interval = setInterval(() => {
-      setCurrentAgeing(prev => prev + 1);
+      setBalanceTATTick(tick => tick + 1);
     }, 1000);
-
     return () => clearInterval(interval);
-  }
-}, [ticketData?.created_at]);
+  }, []);
+
+
+  useEffect(() => {
+    if (ticketData?.created_at) {
+      // Calculate ageing in seconds from created_at to now
+      const createdTime = new Date(ticketData.created_at).getTime();
+      const now = Date.now();
+      const initialAgeingSeconds = Math.max(0, Math.floor((now - createdTime) / 1000));
+      setCurrentAgeing(initialAgeingSeconds);
+
+      const interval = setInterval(() => {
+        setCurrentAgeing(prev => prev + 1);
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [ticketData?.created_at]);
 
   // Add useEffect to trigger balance TAT recalculation every second for real-time countdown
   useEffect(() => {
@@ -1794,91 +1842,80 @@ export const TicketDetailsPage = () => {
     [
       {
         label: 'Response TAT',
-        value: hasData(ticketData.response_tat) && ticketData.issue_status === "Pending"
-          ? ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
+        value:
+          ticketData.issue_status.toLowerCase() === "complete" ||
+            ticketData.issue_status.toLowerCase() === "close" ||
+            ticketData.issue_status.toLowerCase() === "closed" ||
+            ticketData.issue_status.toLowerCase() === "on hold"
             ? '00:00:00'
-            : formatMinutesToDDHHMM(ticketData.response_tat)
-          : '00:00:00'
+            : ticketData.next_response_escalation?.minutes
+              ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes)
+              : '00:00:00'
       },
       {
         label: 'Balance TAT',
-        value:  ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold" ? '00:00:00' : responseBalanceTAT.value,
-        isExceeded: responseBalanceTAT.isExceeded,
-        exceededBy: responseBalanceTAT.exceededBy
+        value:
+          ticketData.issue_status.toLowerCase() === "complete" ||
+            ticketData.issue_status.toLowerCase() === "close" ||
+            ticketData.issue_status.toLowerCase() === "closed" ||
+            ticketData.issue_status.toLowerCase() === "on hold"
+            ? '00:00:00:00'
+            : ticketData.next_response_escalation?.escalation_time
+              ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_response_escalation.escalation_time))
+              : '00:00:00:00',
+        isExceeded: ticketData.next_response_escalation?.is_overdue || false,
+        exceededBy: ticketData.next_response_escalation?.is_overdue
+          ? formatSecondsToDDHHMMSS(Math.abs(ticketData.next_response_escalation.minutes * 60))
+          : ''
       },
       {
         label: 'Escalation',
         value: (() => {
-          console.log('Response Escalation Debug:', {
-            response_escalate_to_user: ticketData.response_escalate_to_user,
-            response_esc_name: ticketData.response_esc_name,
-            response_escalation: ticketData.response_escalation
-          });
-
-          // Build the escalation display string
-          const parts: string[] = [];
-
-          // Add escalation name (E2, E3, etc.) if available
-          if (ticketData.response_esc_name) {
-            parts.push(ticketData.response_esc_name);
-          }
-
-          // Add user names if available
-          if (Array.isArray(ticketData.response_escalate_to_user) && ticketData.response_escalate_to_user.length > 0) {
-            const users = ticketData.response_escalate_to_user.filter(user => user !== null && user !== undefined && user !== '');
-            if (users.length > 0) {
-              parts.push(users.join(', '));
-            }
-          }
-
-          // Return combined string or fallback
-          return parts.length > 0 ? parts.join(' - ') : ('-');
+          const escName = ticketData.next_response_escalation?.escalation_name || '';
+          const users = Array.isArray(ticketData.next_response_escalation?.users)
+            ? ticketData.next_response_escalation.users.filter(u => !!u).join(', ')
+            : '';
+          return escName && users ? `${escName} - ${users}` : (escName || '-');
         })()
       },
     ],
     [
       {
         label: 'Resolution TAT',
-        value: hasData(ticketData.resolution_tat)
-          ? ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
+        value:
+          ticketData.issue_status.toLowerCase() === "complete" ||
+            ticketData.issue_status.toLowerCase() === "close" ||
+            ticketData.issue_status.toLowerCase() === "closed" ||
+            ticketData.issue_status.toLowerCase() === "on hold"
             ? '00:00:00'
-            : formatMinutesToDDHHMM(ticketData.resolution_tat)
-          : '00:00:00'
+            : ticketData.next_resolution_escalation?.minutes
+              ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes)
+              : '00:00:00'
       },
       {
         label: 'Balance TAT',
-        value: ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold" ? '00:00:00' :
-         resolutionBalanceTAT.value,
-        isExceeded: resolutionBalanceTAT.isExceeded,
-        exceededBy: resolutionBalanceTAT.exceededBy
+        value:
+          ticketData.issue_status.toLowerCase() === "complete" ||
+            ticketData.issue_status.toLowerCase() === "close" ||
+            ticketData.issue_status.toLowerCase() === "closed" ||
+            ticketData.issue_status.toLowerCase() === "on hold"
+            ? '00:00:00:00'
+            : ticketData.next_resolution_escalation?.escalation_time
+              ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_resolution_escalation.escalation_time))
+              : '00:00:00:00',
+        isExceeded: ticketData.next_resolution_escalation?.is_overdue || false,
+        exceededBy: ticketData.next_resolution_escalation?.is_overdue
+          ? formatSecondsToDDHHMMSS(Math.abs(ticketData.next_resolution_escalation.minutes * 60))
+          : ''
       },
       {
         label: 'Escalation',
         value: (() => {
-          console.log('Resolution Escalation Debug:', {
-            resolution_escalate_to_user: ticketData.resolution_escalate_to_user,
-            resolution_esc_name: ticketData.resolution_esc_name,
-            resolution_escalation: ticketData.resolution_escalation
-          });
-
-          // Build the escalation display string
-          const parts: string[] = [];
-
-          // Add escalation name (E2, E3, etc.) if available
-          if (ticketData.resolution_esc_name) {
-            parts.push(ticketData.resolution_esc_name);
-          }
-
-          // Add user names if available
-          if (Array.isArray(ticketData.resolution_escalate_to_user) && ticketData.resolution_escalate_to_user.length > 0) {
-            const users = ticketData.resolution_escalate_to_user.filter(user => user !== null && user !== undefined && user !== '');
-            if (users.length > 0) {
-              parts.push(users.join(', '));
-            }
-          }
-
-          // Return combined string or fallback
-          return parts.length > 0 ? parts.join(' - ') : ('-');
+          const escName = ticketData.next_resolution_escalation?.escalation_name || '';
+          const users = Array.isArray(ticketData.next_resolution_escalation?.users)
+            ? ticketData.next_resolution_escalation.users.filter(u => !!u).join(', ')
+            : '';
+          return escName && users ? `${escName} - ${users}` : (escName || '-');
         })()
       },
     ],
@@ -2338,7 +2375,6 @@ export const TicketDetailsPage = () => {
                       </div>
                     </div>
 
-                    {/* Response TAT */}
                     <div
                       className="border bg-[#F6F4EE] flex items-center p-4"
                       style={{ height: "132px", width: "auto" }}
@@ -2371,9 +2407,14 @@ export const TicketDetailsPage = () => {
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
+                          {ticketData.issue_status.toLowerCase() === "complete" ||
+                            ticketData.issue_status.toLowerCase() === "close" ||
+                            ticketData.issue_status.toLowerCase() === "closed" ||
+                            ticketData.issue_status.toLowerCase() === "on hold"
                             ? '00:00:00'
-                            : formatMinutesToDDHHMM(ticketData.response_tat)
+                            : ticketData.next_response_escalation?.minutes
+                              ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes)
+                              : '00:00:00'
                           }
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
@@ -2415,10 +2456,14 @@ export const TicketDetailsPage = () => {
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {/* {formatTimeToDDHHMM(ticketData.resolution_time)} */}
-                          {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
+                          {ticketData.issue_status.toLowerCase() === "complete" ||
+                            ticketData.issue_status.toLowerCase() === "close" ||
+                            ticketData.issue_status.toLowerCase() === "closed" ||
+                            ticketData.issue_status.toLowerCase() === "on hold"
                             ? '00:00:00'
-                            : formatMinutesToDDHHMM(ticketData.resolution_tat)
+                            : ticketData.next_resolution_escalation?.minutes
+                              ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes)
+                              : '00:00:00'
                           }
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
@@ -2444,25 +2489,24 @@ export const TicketDetailsPage = () => {
                             className="font-semibold text-[#1A1A1A]"
                             style={{ fontSize: 24 }}
                           >
-                            {/* {formatMinutesToDDHHMM(ticketData.balance_reponse_tat)} */}
-                            {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
-                              ? '00:00:00'
-                              : formatMinutesToDDHHMM(ticketData.balance_response_tat)
+                            {ticketData.issue_status.toLowerCase() === "complete" ||
+                              ticketData.issue_status.toLowerCase() === "close" ||
+                              ticketData.issue_status.toLowerCase() === "closed" ||
+                              ticketData.issue_status.toLowerCase() === "on hold"
+                              ? '00:00:00:00'
+                              : ticketData.next_response_escalation?.escalation_time
+                                ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_response_escalation.escalation_time))
+                                : '00:00:00:00'
                             }
                           </span>
 
                           <span className="text-[12px] text-[#9CA3AF] mt-1">
                             {(() => {
-                              const escalationName = ticketData.response_esc_name || '';
-                              const escalationUsers = Array.isArray(ticketData.response_escalate_to_user) && ticketData.response_escalate_to_user.length > 0
-                                ? ticketData.response_escalate_to_user.filter(user => user !== null && user !== undefined && user !== '').join(', ')
+                              const escName = ticketData.next_response_escalation?.escalation_name || '';
+                              const users = Array.isArray(ticketData.next_response_escalation?.users)
+                                ? ticketData.next_response_escalation.users.filter(u => !!u).join(', ')
                                 : '';
-
-                              if (escalationName && escalationUsers) {
-                                return `${escalationName} - ${escalationUsers}`;
-                              } else {
-                                return ''
-                              }
+                              return escName && users ? `${escName} - ${users}` : (escName || '');
                             })()}
                           </span>
                         </div>
@@ -2506,24 +2550,23 @@ export const TicketDetailsPage = () => {
                             className="font-semibold text-[#1A1A1A]"
                             style={{ fontSize: 24 }}
                           >
-                            {/* {formatMinutesToDDHHMM(ticketData.balance_resolution_tat)} */}
-                            {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold" ?
-                              '00:00:00'
-                              : formatMinutesToDDHHMM(ticketData.balance_resolution_tat)
+                            {ticketData.issue_status.toLowerCase() === "complete" ||
+                              ticketData.issue_status.toLowerCase() === "close" ||
+                              ticketData.issue_status.toLowerCase() === "closed" ||
+                              ticketData.issue_status.toLowerCase() === "on hold"
+                              ? '00:00:00:00'
+                              : ticketData.next_resolution_escalation?.escalation_time
+                                ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_resolution_escalation.escalation_time))
+                                : '00:00:00:00'
                             }
                           </span>
                           <span className="text-[12px] text-[#9CA3AF] mt-1">
                             {(() => {
-                              const escalationName = ticketData.resolution_esc_name || '';
-                              const escalationUsers = Array.isArray(ticketData.resolution_escalate_to_user) && ticketData.resolution_escalate_to_user.length > 0
-                                ? ticketData.resolution_escalate_to_user.filter(user => user !== null && user !== undefined && user !== '').join(', ')
+                              const escName = ticketData.next_resolution_escalation?.escalation_name || '';
+                              const users = Array.isArray(ticketData.next_resolution_escalation?.users)
+                                ? ticketData.next_resolution_escalation.users.filter(u => !!u).join(', ')
                                 : '';
-
-                              if (escalationName && escalationUsers) {
-                                return `${escalationName} - ${escalationUsers}`;
-                              } else {
-                                return ''
-                              }
+                              return escName && users ? `${escName} - ${users}` : (escName || '');
                             })()}
                           </span>
                         </div>
@@ -2534,65 +2577,64 @@ export const TicketDetailsPage = () => {
                     </div>
 
                     {/* Golden Ticket Escalation */}
-                    <div
-                      className="border bg-[#F6F4EE] flex items-center p-4"
-                      style={{ height: "132px", width: "auto" }}
-                    >
-                      <div
-                        className="flex items-center justify-center rounded-lg mr-4"
-                        style={{ background: "#EDEAE3", width: 62, height: 62 }}
-                      >
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                            stroke="#C72030"
-                            strokeWidth="2"
-                          />
-                          <path
-                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                            stroke="#C72030"
-                            strokeWidth="2"
-                          />
-                        </svg>
-                      </div>
-                      <div className="flex flex-col justify-center w-full">
-                        <div className="flex justify-between w-full">
-                          <p
-                            className="font-semibold text-[#1A1A1A]"
-                            style={{ fontSize: 24 }}
-                          >
-                            {/* {formatMinutesToDDHHMM(ticketData.golden_resp_time_minutes)} */}
-                            {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold" ?
-                              '00:00:00'
-                              : formatMinutesToDDHHMM(ticketData.golden_resp_time_minutes)
-                            }
-                          </p>
-                          <p className="text-[12px] text-[#9CA3AF] mt-1">
-                            {(() => {
-                              const escalationName = ticketData.golden_esc_name || '';
-                              const escalationUsers = Array.isArray(ticketData.golden_escalate_to_user) && ticketData.golden_escalate_to_user.length > 0
-                                ? ticketData.golden_escalate_to_user.filter(user => user !== null && user !== undefined && user !== '').join(', ')
-                                : '';
-
-                              if (escalationName && escalationUsers) {
-                                return `${escalationName} - ${escalationUsers}`;
-                              } else {
-                                return ''
-                              }
-                            })()}
-                          </p>
-                        </div>
-                        <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-                          Golden Ticket Escalation
-                        </span>
-                      </div>
-                    </div>
+<div
+  className="border bg-[#F6F4EE] flex items-center p-4"
+  style={{ height: "132px", width: "auto" }}
+>
+  <div
+    className="flex items-center justify-center rounded-lg mr-4"
+    style={{ background: "#EDEAE3", width: 62, height: 62 }}
+  >
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+        stroke="#C72030"
+        strokeWidth="2"
+      />
+      <path
+        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+        stroke="#C72030"
+        strokeWidth="2"
+      />
+    </svg>
+  </div>
+  <div className="flex flex-col justify-center w-full">
+    <div className="flex justify-between w-full">
+      <p
+        className="font-semibold text-[#1A1A1A]"
+        style={{ fontSize: 24 }}
+      >
+        {ticketData.issue_status.toLowerCase() === "complete" || 
+         ticketData.issue_status.toLowerCase() === "close" || 
+         ticketData.issue_status.toLowerCase() === "closed" || 
+         ticketData.issue_status.toLowerCase() === "on hold"
+          ? '00:00:00:00'
+          : ticketData.next_executive_escalation?.escalation_time
+            ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_executive_escalation.escalation_time))
+            : '00:00:00:00'
+        }
+      </p>
+      <p className="text-[12px] text-[#9CA3AF] mt-1">
+        {(() => {
+          const escName = ticketData.next_executive_escalation?.escalation_name || '';
+          const users = Array.isArray(ticketData.next_executive_escalation?.users)
+            ? ticketData.next_executive_escalation.users.filter(u => !!u).join(', ')
+            : '';
+          return escName && users ? `${escName} - ${users}` : (escName || '');
+        })()}
+      </p>
+    </div>
+    <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
+      Golden Ticket Escalation
+    </span>
+  </div>
+</div>
                   </div>
                 </div>
               </TabsContent>
@@ -2679,10 +2721,7 @@ export const TicketDetailsPage = () => {
 
                                             {/* Dynamic value */}
                                             <span
-                                              className={`text-[13px] md:text-[14px] font-semibold break-words ${cell.isExceeded && cell.label === 'Balance TAT'
-                                                ? 'text-red-600'
-                                                : 'text-gray-900'
-                                                }`}
+                                              className={`text-[13px] md:text-[14px] font-semibold break-words text-gray-900`}
                                               style={{ wordBreak: 'break-word', maxWidth: '120px', whiteSpace: 'pre-line' }}
                                             >
                                               {cell.isExceeded && cell.label === 'Balance TAT'
@@ -2720,13 +2759,13 @@ export const TicketDetailsPage = () => {
                               </svg>
                               <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">
                                 {
-  ticketData.issue_status.toLowerCase() === "complete" ||
-  ticketData.issue_status.toLowerCase() === "close" ||
-  ticketData.issue_status.toLowerCase() === "closed" ||
-  ticketData.issue_status.toLowerCase() === "on hold"
-    ? '00:00:00:00'
-    : formatTicketAgeing(currentAgeing)
-}
+                                  ticketData.issue_status.toLowerCase() === "complete" ||
+                                    ticketData.issue_status.toLowerCase() === "close" ||
+                                    ticketData.issue_status.toLowerCase() === "closed" ||
+                                    ticketData.issue_status.toLowerCase() === "on hold"
+                                    ? '00:00:00:00'
+                                    : formatTicketAgeing(currentAgeing)
+                                }
                               </span>
                             </div>
                             <div className="flex justify-center items-center gap-2 mb-2">
@@ -2994,7 +3033,7 @@ export const TicketDetailsPage = () => {
                           }, { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                           { label: 'Source', value: ticketData.asset_service || 'Asset' },
 
-                          { label: 'Expected Visit Date', value: ticketData.visit_date ? ticketData.visit_date || formatDate(ticketData.visit_date) : '-' },
+                          { label: 'Expected Visit Date', value: ticketData.visit_date ? ticketData.visit_date : '-' },
                           { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
                           { label: 'Scope', value: ticketData.issue_related_to || '-' },
                           { label: 'Mode', value: ticketData.complaint_mode || '-' },
@@ -3175,25 +3214,25 @@ export const TicketDetailsPage = () => {
                                 <MenuItem value="Minor">Minor</MenuItem>
                               </MuiSelect>
                             </FormControl>
-                              {/* Vendor Dropdown */}
-                              <FormControl fullWidth size="small">
-                                <InputLabel>Vendor</InputLabel>
-                                <MuiSelect
-                                  value={ticketMgmtFormData.supplier_id || ''}
-                                  onChange={(e) => handleTicketMgmtInputChange('supplier_id', e.target.value)}
-                                  label="Vendor"
-                                  disabled={loadingSuppliers}
-                                >
-                                  <MenuItem value="">
-                                    <span className="text-gray-500">{loadingSuppliers ? 'Loading vendors...' : 'Select vendor'}</span>
+                            {/* Vendor Dropdown */}
+                            <FormControl fullWidth size="small">
+                              <InputLabel>Vendor</InputLabel>
+                              <MuiSelect
+                                value={ticketMgmtFormData.supplier_id || ''}
+                                onChange={(e) => handleTicketMgmtInputChange('supplier_id', e.target.value)}
+                                label="Vendor"
+                                disabled={loadingSuppliers}
+                              >
+                                <MenuItem value="">
+                                  <span className="text-gray-500">{loadingSuppliers ? 'Loading vendors...' : 'Select vendor'}</span>
+                                </MenuItem>
+                                {suppliers && suppliers.map((vendor) => (
+                                  <MenuItem key={vendor.id} value={vendor.id.toString()}>
+                                    {vendor.company_name}
                                   </MenuItem>
-                                  {suppliers && suppliers.map((vendor) => (
-                                    <MenuItem key={vendor.id} value={vendor.id.toString()}>
-                                      {vendor.company_name}
-                                    </MenuItem>
-                                  ))}
-                                </MuiSelect>
-                              </FormControl>
+                                ))}
+                              </MuiSelect>
+                            </FormControl>
 
                             <FormControl fullWidth size="small">
                               <InputLabel>Assigned To</InputLabel>
@@ -3288,21 +3327,21 @@ export const TicketDetailsPage = () => {
                                 ))}
                               </MuiSelect>
                             </FormControl>
-                              {/* Identification Dropdown */}
-                              <FormControl fullWidth size="small">
-                                <InputLabel>Identification</InputLabel>
-                                <MuiSelect
-                                  value={ticketMgmtFormData.proactive_reactive || ''}
-                                  onChange={(e) => handleTicketMgmtInputChange('proactive_reactive', e.target.value)}
-                                  label="Identification"
-                                >
-                                  <MenuItem value="">
-                                    <span className="text-gray-500">Select identification</span>
-                                  </MenuItem>
-                                  <MenuItem value="Proactive">Proactive</MenuItem>
-                                  <MenuItem value="Reactive">Reactive</MenuItem>
-                                </MuiSelect>
-                              </FormControl>
+                            {/* Identification Dropdown */}
+                            <FormControl fullWidth size="small">
+                              <InputLabel>Identification</InputLabel>
+                              <MuiSelect
+                                value={ticketMgmtFormData.proactive_reactive || ''}
+                                onChange={(e) => handleTicketMgmtInputChange('proactive_reactive', e.target.value)}
+                                label="Identification"
+                              >
+                                <MenuItem value="">
+                                  <span className="text-gray-500">Select identification</span>
+                                </MenuItem>
+                                <MenuItem value="Proactive">Proactive</MenuItem>
+                                <MenuItem value="Reactive">Reactive</MenuItem>
+                              </MuiSelect>
+                            </FormControl>
 
                           </div>
 
@@ -5004,7 +5043,7 @@ export const TicketDetailsPage = () => {
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="details" className="space-y-8">
+          <TabsContent value="details" className="space-y-8 p-6">
 
                 <div className="space-y-6">
                   {/* Check if there's any ticket data to display */}
@@ -5085,10 +5124,7 @@ export const TicketDetailsPage = () => {
 
                                             {/* Dynamic value */}
                                             <span
-                                              className={`text-[13px] md:text-[14px] font-semibold break-words ${cell.isExceeded && cell.label === 'Balance TAT'
-                                                ? 'text-red-600'
-                                                : 'text-gray-900'
-                                                }`}
+                                              className={`text-[13px] md:text-[14px] font-semibold break-words text-gray-900`}
                                               style={{ wordBreak: 'break-word', maxWidth: '120px', whiteSpace: 'pre-line' }}
                                             >
                                               {cell.isExceeded && cell.label === 'Balance TAT'
@@ -5126,13 +5162,13 @@ export const TicketDetailsPage = () => {
                               </svg>
                               <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">
                                 {
-  ticketData.issue_status.toLowerCase() === "complete" ||
-  ticketData.issue_status.toLowerCase() === "close" ||
-  ticketData.issue_status.toLowerCase() === "closed" ||
-  ticketData.issue_status.toLowerCase() === "on hold"
-    ? '00:00:00:00'
-    : formatTicketAgeing(currentAgeing)
-}
+                                  ticketData.issue_status.toLowerCase() === "complete" ||
+                                    ticketData.issue_status.toLowerCase() === "close" ||
+                                    ticketData.issue_status.toLowerCase() === "closed" ||
+                                    ticketData.issue_status.toLowerCase() === "on hold"
+                                    ? '00:00:00:00'
+                                    : formatTicketAgeing(currentAgeing)
+                                }
                               </span>
                             </div>
                             <div className="flex justify-center items-center gap-2 mb-2">
@@ -5400,7 +5436,7 @@ export const TicketDetailsPage = () => {
                           }, { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                           { label: 'Source', value: ticketData.asset_service || 'Asset' },
 
-                          { label: 'Expected Visit Date', value: ticketData.visit_date ? ticketData.visit_date || formatDate(ticketData.visit_date) : '-' },
+                          { label: 'Expected Visit Date', value: ticketData.visit_date ? ticketData.visit_date : '-' },
                           { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
                           { label: 'Scope', value: ticketData.issue_related_to || '-' },
                           { label: 'Mode', value: ticketData.complaint_mode || '-' },
@@ -5581,25 +5617,25 @@ export const TicketDetailsPage = () => {
                                 <MenuItem value="Minor">Minor</MenuItem>
                               </MuiSelect>
                             </FormControl>
-                              {/* Vendor Dropdown */}
-                              <FormControl fullWidth size="small">
-                                <InputLabel>Vendor</InputLabel>
-                                <MuiSelect
-                                  value={ticketMgmtFormData.supplier_id || ''}
-                                  onChange={(e) => handleTicketMgmtInputChange('supplier_id', e.target.value)}
-                                  label="Vendor"
-                                  disabled={loadingSuppliers}
-                                >
-                                  <MenuItem value="">
-                                    <span className="text-gray-500">{loadingSuppliers ? 'Loading vendors...' : 'Select vendor'}</span>
+                            {/* Vendor Dropdown */}
+                            <FormControl fullWidth size="small">
+                              <InputLabel>Vendor</InputLabel>
+                              <MuiSelect
+                                value={ticketMgmtFormData.supplier_id || ''}
+                                onChange={(e) => handleTicketMgmtInputChange('supplier_id', e.target.value)}
+                                label="Vendor"
+                                disabled={loadingSuppliers}
+                              >
+                                <MenuItem value="">
+                                  <span className="text-gray-500">{loadingSuppliers ? 'Loading vendors...' : 'Select vendor'}</span>
+                                </MenuItem>
+                                {suppliers && suppliers.map((vendor) => (
+                                  <MenuItem key={vendor.id} value={vendor.id.toString()}>
+                                    {vendor.company_name}
                                   </MenuItem>
-                                  {suppliers && suppliers.map((vendor) => (
-                                    <MenuItem key={vendor.id} value={vendor.id.toString()}>
-                                      {vendor.company_name}
-                                    </MenuItem>
-                                  ))}
-                                </MuiSelect>
-                              </FormControl>
+                                ))}
+                              </MuiSelect>
+                            </FormControl>
 
                             <FormControl fullWidth size="small">
                               <InputLabel>Assigned To</InputLabel>
@@ -5694,21 +5730,21 @@ export const TicketDetailsPage = () => {
                                 ))}
                               </MuiSelect>
                             </FormControl>
-                              {/* Identification Dropdown */}
-                              <FormControl fullWidth size="small">
-                                <InputLabel>Identification</InputLabel>
-                                <MuiSelect
-                                  value={ticketMgmtFormData.proactive_reactive || ''}
-                                  onChange={(e) => handleTicketMgmtInputChange('proactive_reactive', e.target.value)}
-                                  label="Identification"
-                                >
-                                  <MenuItem value="">
-                                    <span className="text-gray-500">Select identification</span>
-                                  </MenuItem>
-                                  <MenuItem value="Proactive">Proactive</MenuItem>
-                                  <MenuItem value="Reactive">Reactive</MenuItem>
-                                </MuiSelect>
-                              </FormControl>
+                            {/* Identification Dropdown */}
+                            <FormControl fullWidth size="small">
+                              <InputLabel>Identification</InputLabel>
+                              <MuiSelect
+                                value={ticketMgmtFormData.proactive_reactive || ''}
+                                onChange={(e) => handleTicketMgmtInputChange('proactive_reactive', e.target.value)}
+                                label="Identification"
+                              >
+                                <MenuItem value="">
+                                  <span className="text-gray-500">Select identification</span>
+                                </MenuItem>
+                                <MenuItem value="Proactive">Proactive</MenuItem>
+                                <MenuItem value="Reactive">Reactive</MenuItem>
+                              </MuiSelect>
+                            </FormControl>
 
                           </div>
 

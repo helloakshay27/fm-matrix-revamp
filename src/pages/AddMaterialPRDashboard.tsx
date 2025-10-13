@@ -529,7 +529,6 @@ export const AddMaterialPRDashboard = () => {
         payment_tenure: supplierDetails.paymentTenure,
         related_to: supplierDetails.relatedTo,
         advance_amount: supplierDetails.advanceAmount,
-        ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_po_inventories_attributes: items.map((item) => ({
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
@@ -541,6 +540,8 @@ export const AddMaterialPRDashboard = () => {
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
+      ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
+      apply_wbs: wbsSelection === "overall" ? "overall" : "individual",
       attachments: files,
       ...(savedPrId && { slid }),
     };

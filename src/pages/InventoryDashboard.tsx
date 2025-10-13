@@ -1298,6 +1298,12 @@ export const InventoryDashboard = () => {
                 onAddConsumable={() => {
                   const firstId = selectedItems[0];
                   if (!firstId) return;
+                  console.log(paginatedData)
+                  if (paginatedData.find(item => item.id === firstId)?.active === "Inactive") {
+                    toast.dismiss()
+                    toast.error("Inactive inventory cannot be consumed or add")
+                    return;
+                  }
                   const now = new Date();
                   const year = now.getFullYear();
                   const month = String(now.getMonth() + 1).padStart(2, '0');

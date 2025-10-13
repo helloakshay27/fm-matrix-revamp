@@ -629,7 +629,7 @@ export const MaterialPRDetailsPage = () => {
                   <Rss className="w-4 h-4 mr-2" />
                   Feeds
                 </Button>
-                {pr.all_level_approved && (
+                {pr.all_level_approved && !shouldShowButtons && (
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -1009,6 +1009,25 @@ export const MaterialPRDetailsPage = () => {
               value={rejectComment}
               onChange={(e) => setRejectComment(e.target.value)}
               variant="outlined"
+              sx={{
+                mt: 1,
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
+                },
+              }}
             />
           </DialogContent>
           <DialogActions>

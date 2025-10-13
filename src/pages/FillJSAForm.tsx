@@ -675,17 +675,17 @@ export const FillJSAForm = () => {
                                         {/* Left Column */}
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-center">
-                                                <Label className="text-sm font-medium text-gray-600">Permit ID</Label>
+                                                <Label className="text-sm font-medium text-gray-600">Permit ID :</Label>
                                                 <span className="text-sm font-medium text-gray-900">{jsaInfo.permitId}</span>
                                             </div>
 
                                             <div className="flex justify-between items-center">
-                                                <Label className="text-sm font-medium text-gray-600">Name Of Department</Label>
+                                                <Label className="text-sm font-medium text-gray-600">Name Of Department :</Label>
                                                 <span className="text-sm font-medium text-gray-900">{jsaInfo.nameOfDepartment || '-'}</span>
                                             </div>
 
                                             <div className="flex justify-between items-center">
-                                                <Label className="text-sm font-medium text-gray-600">Date</Label>
+                                                <Label className="text-sm font-medium text-gray-600">Date :</Label>
                                                 <span className="text-sm font-medium text-gray-900">{jsaInfo.date}</span>
                                             </div>
 
@@ -711,28 +711,28 @@ export const FillJSAForm = () => {
                                         {/* Right Column */}
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-start">
-                                                <Label className="text-sm font-medium text-gray-600">Location</Label>
-                                                <span className="text-sm font-medium text-gray-900 text-right ml-4">
+                                                <Label className="text-sm font-medium text-gray-600">Location:</Label>
+                                                <span className="text-sm font-medium text-gray-900 text-right ml-4 max-w-[30rem] truncate cursor-pointer" title={jsaInfo.location}>
                                                     {jsaInfo.location}
                                                 </span>
                                             </div>
 
                                             <div className="flex justify-between items-center">
-                                                <Label className="text-sm font-medium text-gray-600">Permit For</Label>
+                                                <Label className="text-sm font-medium text-gray-600">Permit For :</Label>
                                                 <span className="text-sm font-medium text-gray-900 text-right ml-4">
                                                     {jsaInfo.permitFor}
                                                 </span>
                                             </div>
 
                                             <div className="flex justify-between items-center">
-                                                <Label className="text-sm font-medium text-gray-600">Work Permit Type/No</Label>
+                                                <Label className="text-sm font-medium text-gray-600">Work Permit Type/No :</Label>
                                                 <span className="text-sm font-medium text-gray-900 text-right ml-4">
                                                     {jsaInfo.workPermitType}
                                                 </span>
                                             </div>
 
                                             <div className="flex justify-between items-center">
-                                                <Label className="text-sm font-medium text-gray-600">Checked By Sign</Label>
+                                                <Label className="text-sm font-medium text-gray-600">Checked By Sign :</Label>
                                                 <span className="text-sm font-medium text-gray-900 text-right ml-4">
                                                     {jsaInfo.checkedBySign || '-'}
                                                 </span>
@@ -777,7 +777,7 @@ export const FillJSAForm = () => {
                                                         <td className="border border-gray-300 p-3 text-sm">
                                                             {activity.risks?.length ? activity.risks.join(', ') : '-'}
                                                         </td>
-                                                        <td className="border border-gray-300 p-3">
+                                                        <td className="border border-gray-300">
                                                             <div className="space-y-3">
                                                                 {Object.keys(activity.controlMeasures || {}).map((measure) => (
                                                                     <div key={measure} className="flex items-center justify-between">
@@ -792,6 +792,7 @@ export const FillJSAForm = () => {
                                                                             >
                                                                                 <div className="flex items-center space-x-2">
                                                                                     <RadioGroupItem
+                                                                                        className="!pl-0"
                                                                                         value="yes"
                                                                                         id={`${measure}-yes-${activity.id}`}
                                                                                     />
@@ -799,6 +800,7 @@ export const FillJSAForm = () => {
                                                                                 </div>
                                                                                 <div className="flex items-center space-x-2">
                                                                                     <RadioGroupItem
+                                                                                        className="!pl-0"
                                                                                         value="no"
                                                                                         id={`${measure}-no-${activity.id}`}
                                                                                     />

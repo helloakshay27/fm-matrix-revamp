@@ -153,21 +153,20 @@ export const MobileSurveyThankYou: React.FC = () => {
       </div>
 
       {/* Thank You Card */}
-      <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 text-center max-w-sm w-full shadow-xl border-4 border-blue-500">
+      <div className="bg-white/50 backdrop-blur-sm rounded-[0.20rem] p-8 text-center max-w-sm w-full shadow-xl ">
         {/* Stylized Thank You Text */}
-        <div className="mb-6 p-3">
+        <div className="p-3">
           <h1
-            className="text-5xl sm:text-6xl font-bold text-black mb-4"
-            style={{ fontFamily: "cursive" }}
+            className="text-lg sm:text-lg font-work-sans font-semibold text-black"
+            // style={{ fontFamily: "cursive" }}
           >
-            thank
+          Thank you 
           </h1>
-          <h1
+          {/* <h1
             className="text-5xl sm:text-6xl font-bold text-black -mt-4"
             style={{ fontFamily: "cursive" }}
           >
-            you
-          </h1>
+          </h1> */}
         </div>
 
         {/* Subtitle */}

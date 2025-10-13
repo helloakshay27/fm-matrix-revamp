@@ -116,8 +116,8 @@ export const SurveyMappingDashboard = () => {
   const [mappings, setMappings] = useState<SurveyMapping[]>([]);
   const [allMappings, setAllMappings] = useState<SurveyMapping[]>([]); // Store all mappings for client-side filtering
   const [allMappingsData, setAllMappingsData] = useState<SurveyGroup[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isSearching, setIsSearching] = useState(false); // Separate loading state for search
+  const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false); // Separate loading state for search
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -148,10 +148,12 @@ export const SurveyMappingDashboard = () => {
   // Fetch function that accepts both page and search parameters
   const fetchSurveyMappingsData = useCallback(async (page: number, search?: string, showLoading = true) => {
     try {
-      if (showLoading) {
-        setLoading(true);
+      // Use different loading states based on whether it's a search operation
+      const isSearch = search && search.trim() !== "";
+      if (isSearch) {
+        setSearchLoading(true);
       } else {
-        setIsSearching(true);
+        setLoading(true);
       }
       
       // Build query parameters
@@ -220,10 +222,12 @@ export const SurveyMappingDashboard = () => {
         variant: "destructive"
       });
     } finally {
-      if (showLoading) {
-        setLoading(false);
+      // Clear loading states based on operation type
+      const isSearch = search && search.trim() !== "";
+      if (isSearch) {
+        setSearchLoading(false);
       } else {
-        setIsSearching(false);
+        setLoading(false);
       }
     }
   }, [perPage, toast]);
@@ -525,7 +529,7 @@ export const SurveyMappingDashboard = () => {
           </div>
         );
       case 'survey_title':
-        return <span className="text-sm font-medium text-black">{item.survey_title || item.survey_name}</span>;
+        return <span className="text-sm text-black">{item.survey_title || item.survey_name}</span>;
       case 'site_name':
         return <span className="text-sm text-black">{item.site_name}</span>;
       case 'building_name': {
@@ -652,22 +656,17 @@ export const SurveyMappingDashboard = () => {
         </div>
       </div>
       
-      {loading ? (
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading survey mappings...</span>
-        </div>
-      ) : (
-            <div>
-              {/* Optional: Show subtle search indicator */}
-              {isSearching && (
-                <div className="mb-2 text-sm text-gray-500 flex items-center">
-                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  Searching server...
-                </div>
-              )}
-          
-              {/* Survey Mapping Table using EnhancedTable */}
+      <div className="overflow-x-auto animate-fade-in">
+        {searchLoading && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-blue-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <span className="text-sm">Searching survey mappings...</span>
+            </div>
+          </div>
+        )}
+        
+        {/* Survey Mapping Table using EnhancedTable */}
               <EnhancedTable
                 data={mappings}
                 columns={enhancedTableColumns}
@@ -683,6 +682,7 @@ export const SurveyMappingDashboard = () => {
                 pagination={false}
                 pageSize={perPage}
                 hideColumnsButton={true}
+                loading={loading}
                 leftActions={
                   <div className="flex flex-wrap items-center gap-2 md:gap-4">
                     <Button 
@@ -713,12 +713,12 @@ export const SurveyMappingDashboard = () => {
                       <PaginationItem>
                         <PaginationPrevious
                           onClick={() => {
-                            if (currentPage > 1) {
+                            if (currentPage > 1 && !loading && !searchLoading) {
                               handlePageChange(currentPage - 1);
                             }
                           }}
                           className={
-                            currentPage === 1
+                            currentPage === 1 || loading || searchLoading
                               ? "pointer-events-none opacity-50"
                               : ""
                           }
@@ -728,8 +728,17 @@ export const SurveyMappingDashboard = () => {
                       {/* First Page */}
                       <PaginationItem>
                         <PaginationLink
-                          onClick={() => handlePageChange(1)}
+                          onClick={() => {
+                            if (!loading && !searchLoading) {
+                              handlePageChange(1);
+                            }
+                          }}
                           isActive={currentPage === 1}
+                          className={
+                            loading || searchLoading
+                              ? "pointer-events-none opacity-50"
+                              : ""
+                          }
                         >
                           1
                         </PaginationLink>
@@ -753,8 +762,17 @@ export const SurveyMappingDashboard = () => {
                         .map((page) => (
                           <PaginationItem key={page}>
                             <PaginationLink
-                              onClick={() => handlePageChange(page)}
+                              onClick={() => {
+                                if (!loading && !searchLoading) {
+                                  handlePageChange(page);
+                                }
+                              }}
                               isActive={currentPage === page}
+                              className={
+                                loading || searchLoading
+                                  ? "pointer-events-none opacity-50"
+                                  : ""
+                              }
                             >
                               {page}
                             </PaginationLink>
@@ -772,11 +790,18 @@ export const SurveyMappingDashboard = () => {
                       {totalPages > 1 && (
                         <PaginationItem>
                           <PaginationLink
-                            onClick={() =>
-                              handlePageChange(totalPages)
-                            }
+                            onClick={() => {
+                              if (!loading && !searchLoading) {
+                                handlePageChange(totalPages);
+                              }
+                            }}
                             isActive={
                               currentPage === totalPages
+                            }
+                            className={
+                              loading || searchLoading
+                                ? "pointer-events-none opacity-50"
+                                : ""
                             }
                           >
                             {totalPages}
@@ -788,12 +813,12 @@ export const SurveyMappingDashboard = () => {
                       <PaginationItem>
                         <PaginationNext
                           onClick={() => {
-                            if (currentPage < totalPages) {
+                            if (currentPage < totalPages && !loading && !searchLoading) {
                               handlePageChange(currentPage + 1);
                             }
                           }}
                           className={
-                            currentPage === totalPages
+                            currentPage === totalPages || loading || searchLoading
                               ? "pointer-events-none opacity-50"
                               : ""
                           }
@@ -805,11 +830,10 @@ export const SurveyMappingDashboard = () => {
                   <div className="text-center mt-2 text-sm text-gray-600">
                     Showing page {currentPage} of{" "}
                     {totalPages} ({totalCount} total survey mappings)
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+                  </div>
+                </div>
+              )}
+          </div>
     </div>
   );
 };

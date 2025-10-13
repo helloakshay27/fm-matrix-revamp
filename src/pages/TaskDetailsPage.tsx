@@ -88,10 +88,10 @@ export const TaskDetailsPage = () => {
     attachments: null as File | null,
   });
 
-  // Reschedule form state
+  // Reschedule form state with current date and time
   const [rescheduleData, setRescheduleData] = useState({
     scheduleDate: new Date().toISOString().split("T")[0], // "YYYY-MM-DD"
-    scheduleTime: "10:30",
+    scheduleTime: new Date().toTimeString().slice(0, 5), // Get current time in HH:MM format
     email: false,
   });
 
@@ -461,8 +461,8 @@ export const TaskDetailsPage = () => {
     });
 
     try {
-      // Convert date and time to ISO format for bulk API
-      const dateTimeString = `${rescheduleData.scheduleDate}T${rescheduleData.scheduleTime}:00Z`;
+      // Convert date and time to format: YYYY-MM-DD HH:mm:ss
+      const dateTimeString = `${rescheduleData.scheduleDate} ${rescheduleData.scheduleTime}:00`;
 
       const payload = {
         task_occurrence_ids: [parseInt(id!)],
@@ -482,10 +482,10 @@ export const TaskDetailsPage = () => {
 
       setShowRescheduleDialog(false);
 
-      // Reset form
+      // Reset form with current date and time
       setRescheduleData({
         scheduleDate: new Date().toISOString().split("T")[0],
-        scheduleTime: "10:30",
+        scheduleTime: new Date().toTimeString().slice(0, 5),
         email: false,
       });
     } catch (error) {
@@ -756,7 +756,6 @@ export const TaskDetailsPage = () => {
   // Get assigned user name
   const getAssignedUserName = () => {
     return (
-      taskDetails?.task_details?.backup_assigned_user ||
       taskDetails?.task_details?.assigned_to ||
       taskDetails?.task_details?.created_by ||
       "-"
@@ -1709,8 +1708,7 @@ export const TaskDetailsPage = () => {
                       fontSize: "14px",
                     }}
                   >
-                    {taskDetails?.task_details?.backup_assigned_user ||
-                      taskDetails?.task_details?.assigned_to ||
+                    {taskDetails?.task_details?.assigned_to ||
                       "N/A"}
                   </span>
                 </div>
@@ -1761,6 +1759,7 @@ export const TaskDetailsPage = () => {
                       className={getStatusColor(
                         taskDetails?.task_details?.status?.value || ""
                       )}
+                      title={taskDetails?.task_details?.status?.display_name || "Unknown"}
                     >
                       {taskDetails?.task_details?.status?.display_name ||
                         "Unknown"}

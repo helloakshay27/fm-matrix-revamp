@@ -547,8 +547,8 @@ export const SurveyResponseDetailPage = () => {
       const buildingsData = Array.isArray(data?.buildings)
         ? data.buildings
         : Array.isArray(data)
-        ? data
-        : [];
+          ? data
+          : [];
       setBuildings(buildingsData);
     } catch (error) {
       console.error("Error fetching buildings:", error);
@@ -909,10 +909,10 @@ export const SurveyResponseDetailPage = () => {
               hour === 0
                 ? "12 AM"
                 : hour < 12
-                ? `${hour} AM`
-                : hour === 12
-                ? "12 PM"
-                : `${hour - 12} PM`,
+                  ? `${hour} AM`
+                  : hour === 12
+                    ? "12 PM"
+                    : `${hour - 12} PM`,
           })),
           matrix: [
             [0, 0, 0, 0, 0],
@@ -1702,9 +1702,9 @@ export const SurveyResponseDetailPage = () => {
             totalResponses =
               question.options && question.options.length > 0
                 ? question.options.reduce(
-                    (sum, opt) => sum + (opt.response_count || 0),
-                    0
-                  )
+                  (sum, opt) => sum + (opt.response_count || 0),
+                  0
+                )
                 : 0;
           }
 
@@ -1779,9 +1779,9 @@ export const SurveyResponseDetailPage = () => {
           const totalResponses =
             question.options && question.options.length > 0
               ? question.options.reduce(
-                  (sum, opt) => sum + (opt.response_count || 0),
-                  0
-                )
+                (sum, opt) => sum + (opt.response_count || 0),
+                0
+              )
               : 0;
 
           const questionName = question.question;
@@ -2761,13 +2761,13 @@ export const SurveyResponseDetailPage = () => {
         response_id: responseId.toString(),
         date_time: response.responded_time
           ? new Date(response.responded_time).toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
           : "",
         building: response.location?.building_name || "",
         wing: response.location?.wing_name || "",
@@ -2814,7 +2814,7 @@ export const SurveyResponseDetailPage = () => {
                 questionType === "-"
                   ? "-"
                   : questionType.charAt(0).toUpperCase() +
-                    questionType.slice(1);
+                  questionType.slice(1);
 
               // Question Dynamic - use ans_descr for emoji/smiley/rating, option_name for multiple
               let answerValue = "-";
@@ -2953,9 +2953,8 @@ export const SurveyResponseDetailPage = () => {
                       hour12: false,
                     }
                   ),
-                  location: `${response.location?.building_name || ""}, ${
-                    response.location?.wing_name || ""
-                  }`,
+                  location: `${response.location?.building_name || ""}, ${response.location?.wing_name || ""
+                    }`,
                   sub_category_type: complaint.sub_category_type || "-",
                   created_by: complaint.created_by || "-",
                   assigned_to: complaint.assigned_to || "-",
@@ -3369,8 +3368,8 @@ export const SurveyResponseDetailPage = () => {
       setLocalFromDate(
         activeFormFilters.dateRange?.from
           ? new Date(activeFormFilters.dateRange.from)
-              .toISOString()
-              .split("T")[0]
+            .toISOString()
+            .split("T")[0]
           : ""
       );
       setLocalToDate(
@@ -3545,15 +3544,15 @@ export const SurveyResponseDetailPage = () => {
     setExportFromDate(
       tabularCurrentFilters.dateRange?.from
         ? new Date(tabularCurrentFilters.dateRange.from)
-            .toISOString()
-            .split("T")[0]
+          .toISOString()
+          .split("T")[0]
         : ""
     );
     setExportToDate(
       tabularCurrentFilters.dateRange?.to
         ? new Date(tabularCurrentFilters.dateRange.to)
-            .toISOString()
-            .split("T")[0]
+          .toISOString()
+          .split("T")[0]
         : ""
     );
 
@@ -3620,15 +3619,15 @@ export const SurveyResponseDetailPage = () => {
         exportFromDate ||
         (tabularCurrentFilters.dateRange?.from
           ? new Date(tabularCurrentFilters.dateRange.from)
-              .toISOString()
-              .split("T")[0]
+            .toISOString()
+            .split("T")[0]
           : null);
       const toDate =
         exportToDate ||
         (tabularCurrentFilters.dateRange?.to
           ? new Date(tabularCurrentFilters.dateRange.to)
-              .toISOString()
-              .split("T")[0]
+            .toISOString()
+            .split("T")[0]
           : null);
 
       if (fromDate) {
@@ -3650,13 +3649,13 @@ export const SurveyResponseDetailPage = () => {
       if (exportFromDate || exportToDate) {
         const fromStr = exportFromDate
           ? new Date(exportFromDate)
-              .toLocaleDateString("en-GB")
-              .replace(/\//g, "-")
+            .toLocaleDateString("en-GB")
+            .replace(/\//g, "-")
           : "start";
         const toStr = exportToDate
           ? new Date(exportToDate)
-              .toLocaleDateString("en-GB")
-              .replace(/\//g, "-")
+            .toLocaleDateString("en-GB")
+            .replace(/\//g, "-")
           : "end";
         filename += `_${fromStr}_to_${toStr}`;
       } else {
@@ -3900,6 +3899,9 @@ export const SurveyResponseDetailPage = () => {
           padding: 8px 0 0 8px;
         ">${defaultLogo}</div>
       </div>
+      <div style="text-align: center; padding: 0 0 15px 0;">
+        <h1 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0;">${surveyData.survey_name || 'Survey Report'}</h1>
+      </div>
     `;
 
       const fullContent = `
@@ -3910,14 +3912,29 @@ export const SurveyResponseDetailPage = () => {
               ${JobSheetPDFGenerator}
               .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #D9D9D9; background-color: #F6F4EE; }
               .logo { margin: 0 10px; }
+              .header-text { margin: 0 0 18px 0 !important; }
               /* Force card header alignment */
               [class*="MuiCardHeader-root"] { display: flex !important; align-items: center !important; min-height: 60px !important; padding: 16px !important; }
-              [class*="MuiCardHeader-content"] { flex: 1 !important; }
+              [class*="MuiCardHeader-content"] { flex: 1 !important; display: flex !important; align-items: center !important; gap: 12px !important; }
               [class*="MuiCardHeader-title"] { font-size: 18px !important; font-weight: 600 !important; color: #000 !important; margin: 0 !important; display: flex !important; align-items: center !important; gap: 12px !important; }
               [class*="MuiCardHeader-title"] div[class*="rounded-full"] { margin-right: 0 !important; }
               /* Additional fallback selectors */
               .text-lg { font-size: 18px !important; }
               div[class*="flex items-center"] { align-items: center !important; }
+
+              .my-pdf-card {
+                display: block !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                margin-bottom: 20px !important;
+                background-color: #fff !important;
+                box-shadow: none !important;
+              }
+
+              .my-pdf-card + .my-pdf-card {
+                page-break-before: always !important;
+                break-before: page !important;
+              }
             </style>
           </head>
           <body>
@@ -4890,13 +4907,13 @@ export const SurveyResponseDetailPage = () => {
                 }
 
                 return (
-                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
                     <CardHeader className="bg-[#F6F4EE] mb-6">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
-                        <span>Overall Question Response Distribution</span>
+                        <span className="header-text">Overall Question Response Distribution</span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -4997,8 +5014,8 @@ export const SurveyResponseDetailPage = () => {
                           const percentage =
                             totalResponses > 0
                               ? Math.round(
-                                  (option.response_count / totalResponses) * 100
-                                )
+                                (option.response_count / totalResponses) * 100
+                              )
                               : 0;
                           return {
                             emoji: emoji,
@@ -5019,17 +5036,18 @@ export const SurveyResponseDetailPage = () => {
                       return (
                         <Card
                           key={question.question_id}
-                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]"
+                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card"
                         >
                           <CardHeader className="bg-[#F6F4EE] mb-6">
                             <CardTitle className="text-lg flex items-center">
                               <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                                 <HelpCircle className="h-4 w-4 text-[#C72030]" />
                               </div>
-                              <span className="text-black font-semibold mr-2">
-                                Q{questionNumber}.
+                              <span className="text-black font-semibold mr-2 header-text">
+                                Q{questionNumber}. 
                               </span>
-                              {question.question}
+                              <span className="header-text">{question.question}</span>
+                              
                             </CardTitle>
                           </CardHeader>
                           {/* <div className="flex flex-row items-center justify-end gap-6 mb-4 mr-10">
@@ -5057,22 +5075,22 @@ export const SurveyResponseDetailPage = () => {
                           <CardContent>
                             <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
                               <div className="text-center py-6">
-                               <div className="flex flex-col items-end gap-2 mb-4 mr-10">
-  <div className="flex items-center gap-1 mr-2">
-    <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]"></span>
-    <span className="text-gray-600 font-small">
-      Positive: {positivePercent != null ? positivePercent : 0}%
-    </span>
-  </div>
-  <div className="flex items-center gap-1">
-    <span className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]"></span>
-    <span className="text-gray-600 font-small">
-      Negative: {negativePercent != null ? negativePercent : 0}%
-    </span>
-  </div>
-</div>
+                                <div className="flex flex-col items-end gap-2 mb-4 mr-10">
+                                  <div className="flex items-center gap-1 mr-2">
+                                    <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]"></span>
+                                    <span className="text-gray-600 font-small header">
+                                      Positive: {positivePercent != null ? positivePercent : 0}%
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]"></span>
+                                    <span className="text-gray-600 font-small">
+                                      Negative: {negativePercent != null ? negativePercent : 0}%
+                                    </span>
+                                  </div>
+                                </div>
 
-                                
+
                                 {displayData.length > 0 ? (
                                   <div className="flex justify-center items-center gap-8 mb-4">
                                     {displayData.map((item, index) => (
@@ -5111,8 +5129,8 @@ export const SurveyResponseDetailPage = () => {
                           const percentage =
                             totalResponses > 0
                               ? Math.round(
-                                  (option.response_count / totalResponses) * 100
-                                )
+                                (option.response_count / totalResponses) * 100
+                              )
                               : 0;
 
                           return {
@@ -5135,17 +5153,19 @@ export const SurveyResponseDetailPage = () => {
                       return (
                         <Card
                           key={question.question_id}
-                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]"
+                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card"
                         >
                           <CardHeader className="bg-[#F6F4EE] mb-6">
                             <CardTitle className="text-lg flex items-center">
                               <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                                 <HelpCircle className="h-4 w-4 text-[#C72030]" />
                               </div>
-                              <span className="text-black font-semibold mr-2">
+                              <span className="text-black font-semibold mr-2 header-text">
                                 Q{questionNumber}.
                               </span>
+                              <span className="header-text">
                               {question.question}
+                              </span>
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
@@ -5171,23 +5191,23 @@ export const SurveyResponseDetailPage = () => {
                                 </span>
                               </div>
                             </div> */}
-                           <SurveyAnalyticsCard
-  title="Rating Response"
-  type="surveyDistributions"
-  data={ratingData.map((item) => ({
-    name: item.name,
-    value: item.count,
-    color: "#C4AE9D",
-  }))}
-  positivePercent={positivePercent}
-  negativePercent={negativePercent}
-  dateRange={{
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    endDate: new Date(),
-  }}
-  xAxisLabel="Response Type"
-  yAxisLabel="No. of Responses"
-/>
+                            <SurveyAnalyticsCard
+                              title="Rating Response"
+                              type="surveyDistributions"
+                              data={ratingData.map((item) => ({
+                                name: item.name,
+                                value: item.count,
+                                color: "#C4AE9D",
+                              }))}
+                              positivePercent={positivePercent}
+                              negativePercent={negativePercent}
+                              dateRange={{
+                                startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                                endDate: new Date(),
+                              }}
+                              xAxisLabel="Response Type"
+                              yAxisLabel="No. of Responses"
+                            />
 
                           </CardContent>
                         </Card>
@@ -5211,9 +5231,9 @@ export const SurveyResponseDetailPage = () => {
                             const percentage =
                               totalResponses > 0
                                 ? Math.round(
-                                    (option.response_count / totalResponses) *
-                                      100
-                                  )
+                                  (option.response_count / totalResponses) *
+                                  100
+                                )
                                 : 0;
 
                             return {
@@ -5221,7 +5241,7 @@ export const SurveyResponseDetailPage = () => {
                               value: option.response_count || 0,
                               color:
                                 multipleChoiceColors[
-                                  index % multipleChoiceColors.length
+                                index % multipleChoiceColors.length
                                 ],
                             };
                           })
@@ -5230,17 +5250,17 @@ export const SurveyResponseDetailPage = () => {
                       return (
                         <Card
                           key={question.question_id}
-                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]"
+                          className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card"
                         >
                           <CardHeader className="bg-[#F6F4EE] mb-6">
                             <CardTitle className="text-lg flex items-center">
                               <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                                 <HelpCircle className="h-4 w-4 text-[#C72030]" />
                               </div>
-                              <span className="text-black font-semibold mr-2">
+                              <span className="text-black font-semibold mr-2 header-text">
                                 Q{questionNumber}.
                               </span>
-                              {question.question}
+                              <span className="header-text">{question.question}</span>
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
@@ -5292,13 +5312,15 @@ export const SurveyResponseDetailPage = () => {
                 }
 
                 return (
-                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
                     <CardHeader className="bg-[#F6F4EE] mb-6">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
+                        <span className="header-text">
                         Response by Category
+                        </span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -5398,13 +5420,13 @@ export const SurveyResponseDetailPage = () => {
                 }
 
                 return (
-                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
                     <CardHeader className="bg-[#F6F4EE] mb-6">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
-                        Customer Satisfaction Score.
+                        <span className="header-text">Customer Satisfaction Score.</span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -5440,11 +5462,11 @@ export const SurveyResponseDetailPage = () => {
                             index > 0 ? buckets[index - 1] : null;
                           const changePct =
                             prevBucket &&
-                            prevBucket.csat !== null &&
-                            bucket.csat !== null
+                              prevBucket.csat !== null &&
+                              bucket.csat !== null
                               ? ((bucket.csat - prevBucket.csat) /
-                                  prevBucket.csat) *
-                                100
+                                prevBucket.csat) *
+                              100
                               : bucket.change_pct || 0;
 
                           // Use the percentage values directly from API
@@ -5504,7 +5526,7 @@ export const SurveyResponseDetailPage = () => {
                         const maxTotal = Math.max(
                           1,
                           summary.suggested_y_max ||
-                            Math.max(...rows.map((r) => r.total), 1)
+                          Math.max(...rows.map((r) => r.total), 1)
                         );
                         const BAR_AREA_HEIGHT = 240;
                         const colorPositive = "#C4AE9D";
@@ -5700,13 +5722,13 @@ export const SurveyResponseDetailPage = () => {
                 }
 
                 return (
-                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                  <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7] my-pdf-card">
                     <CardHeader className="bg-[#F6F4EE] mb-6">
                       <CardTitle className="text-lg flex items-center">
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
-                        Heat Map
+                        <span className="header-text">Heat Map</span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -5907,9 +5929,8 @@ export const SurveyResponseDetailPage = () => {
                     emptyMessage={
                       !responseListData
                         ? "Loading response data..."
-                        : `No response data available (${
-                            getTabularData().length
-                          } items processed)`
+                        : `No response data available (${getTabularData().length
+                        } items processed)`
                     }
                     pagination={true}
                     pageSize={10}

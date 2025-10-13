@@ -36,20 +36,6 @@ const columns: ColumnConfig[] = [
         draggable: true,
         defaultVisible: true,
     },
-    {
-        key: "siteName",
-        label: "Site Name",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-    },
-    {
-        key: "level",
-        label: "Level",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-    },
 ];
 
 export const DeletedPRs = () => {

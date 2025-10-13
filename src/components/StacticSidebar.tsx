@@ -780,8 +780,8 @@ const modulesByPackage = {
       icon: Users,
       subItems: [
         { name: "Customers", href: "/crm/customers" },
-        { name: "FM Users", href: "/crm/fm-users" },
-        { name: "Occupant Users", href: "/crm/occupant-users" },
+        // { name: "FM Users", href: "/crm/fm-users" },
+        // { name: "Occupant Users", href: "/crm/occupant-users" },
       ],
     },
     { name: "Events", icon: Calendar, href: "/crm/events" },

@@ -17,6 +17,8 @@ import {
   CalendarDays,
   Truck,
   Users,
+  Upload,
+  FileText,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -86,6 +88,10 @@ export const VisitorFormPage = () => {
     goodsInwards: false,
     passValidFrom: "",
     passValidTo: "",
+    hostName: "",
+    hostMobile: "",
+    hostEmail: "",
+    visitor_documents: null as File | null,
     daysPermitted: {
       Sunday: false,
       Monday: false,
@@ -95,9 +101,7 @@ export const VisitorFormPage = () => {
       Friday: false,
       Saturday: false,
     },
-  });
-
-  const [goodsData, setGoodsData] = useState({
+  });  const [goodsData, setGoodsData] = useState({
     selectType: "",
     category: "",
     modeOfTransport: "",
@@ -111,7 +115,7 @@ export const VisitorFormPage = () => {
   ]);
 
   const [additionalVisitors, setAdditionalVisitors] = useState<
-    Array<{ id: number; name: string; mobile: string }>
+    Array<{ id: number; name: string; mobile: string; passNo: string }>
   >([]);
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
@@ -136,6 +140,26 @@ export const VisitorFormPage = () => {
   const [loadingItemTypes, setLoadingItemTypes] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdditionalVisitors, setShowAdditionalVisitors] = useState(false);
+  
+  // Visitor info state
+  const [visitorInfo, setVisitorInfo] = useState<{
+    id: number;
+    guest_name: string;
+    guest_number: string;
+    guest_vehicle_number: string;
+    visit_purpose: string;
+    otp_verified: number;
+    support_staff_id: number | null;
+    guest_type: string;
+    guest_from: string;
+    delivery_service_provider_id: number | null;
+    support_staff_category_name: string | null;
+    image: string;
+    delivery_service_provider_name: string | null;
+    delivery_service_provider_icon_url: string | null;
+  } | null>(null);
+  const [loadingVisitorInfo, setLoadingVisitorInfo] = useState(false);
+  const [showVisitorInfo, setShowVisitorInfo] = useState(false);
 
   useEffect(() => {
     getCameraDevices();
@@ -178,8 +202,8 @@ export const VisitorFormPage = () => {
       const buildingsData = Array.isArray(buildingsResponse)
         ? buildingsResponse
         : buildingsResponse
-        ? [buildingsResponse]
-        : [];
+          ? [buildingsResponse]
+          : [];
       setBuildings(buildingsData);
     } catch (error) {
       console.error("Error fetching buildings:", error);
@@ -221,6 +245,57 @@ export const VisitorFormPage = () => {
       console.error("Error fetching item types:", error);
     } finally {
       setLoadingItemTypes(false);
+    }
+  };
+
+  const fetchVisitorInfo = async (mobile: string) => {
+    if (!mobile || mobile.length !== 10) return;
+    
+    console.log('🔍 fetchVisitorInfo called with mobile:', mobile);
+    setLoadingVisitorInfo(true);
+    try {
+      // Get current user account to fetch site_id
+      let currentUserSiteId = '2404'; // Use the specific site_id from your example
+      try {
+        const userAccount = await ticketManagementAPI.getUserAccount();
+        currentUserSiteId = userAccount.site_id.toString();
+        console.log('✅ Got user site_id:', currentUserSiteId);
+      } catch (accountError) {
+        console.warn('⚠️ Failed to fetch user account, using fallback site_id:', currentUserSiteId);
+      }
+
+      console.log('📡 Calling getVisitorInfo API with:', { resourceId: currentUserSiteId, mobile });
+      const response = await ticketManagementAPI.getVisitorInfo(currentUserSiteId, mobile);
+      console.log('📥 API Response:', response);
+      
+      if (response && response.gatekeeper) {
+        console.log('✅ Visitor info found:', response.gatekeeper);
+        setVisitorInfo(response.gatekeeper);
+        setShowVisitorInfo(true);
+        
+        // Pre-fill form data with visitor info
+        setFormData(prev => ({
+          ...prev,
+          visitorName: response.gatekeeper.guest_name || prev.visitorName,
+          visitorComingFrom: response.gatekeeper.guest_from || prev.visitorComingFrom,
+          vehicleNumber: response.gatekeeper.guest_vehicle_number || prev.vehicleNumber,
+          visitPurpose: response.gatekeeper.visit_purpose || prev.visitPurpose,
+        }));
+        
+        toast.success("Visitor information found and loaded!");
+      } else {
+        console.log('❌ No visitor info found in response');
+        setVisitorInfo(null);
+        setShowVisitorInfo(false);
+        toast.info("No previous visitor information found for this mobile number.");
+      }
+    } catch (error) {
+      console.error("❌ Error fetching visitor info:", error);
+      setVisitorInfo(null);
+      setShowVisitorInfo(false);
+      toast.error("Failed to fetch visitor information.");
+    } finally {
+      setLoadingVisitorInfo(false);
     }
   };
 
@@ -296,7 +371,7 @@ export const VisitorFormPage = () => {
       }
       if (field === "visitorVisit") {
         if (value === "unexpected") {
-          newData.expected_at = ""; 
+          newData.expected_at = "";
         } else if (value === "expected") {
           if (!newData.expected_at) {
             newData.expected_at = new Date().toISOString().slice(0, 16);
@@ -317,8 +392,32 @@ export const VisitorFormPage = () => {
         };
       }
       if (field === "host") {
-        if (value) fetchBuildings();
-        else newData.tower = undefined;
+        if (value) {
+          fetchBuildings();
+          // Clear host details if switching away from "others"
+          if (value !== "others") {
+            newData.hostName = "";
+            newData.hostMobile = "";
+            newData.hostEmail = "";
+          }
+        } else {
+          newData.tower = undefined;
+          newData.hostName = "";
+          newData.hostMobile = "";
+          newData.hostEmail = "";
+        }
+      }
+      if (field === "mobileNumber") {
+        console.log('📱 Mobile number changed to:', value, 'Length:', value?.length);
+        // Trigger visitor info fetch when mobile number is complete
+        if (value && value.length === 10) {
+          console.log('✅ Mobile number is 10 digits, triggering fetchVisitorInfo');
+          fetchVisitorInfo(value);
+        } else {
+          console.log('⚠️ Mobile number is not 10 digits, clearing visitor info');
+          setVisitorInfo(null);
+          setShowVisitorInfo(false);
+        }
       }
       return newData;
     });
@@ -331,6 +430,37 @@ export const VisitorFormPage = () => {
     }));
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size should be less than 5MB");
+        return;
+      }
+      
+      // Check file type (only images and PDFs)
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Only images (JPEG, PNG, GIF) and PDF files are allowed");
+        return;
+      }
+      
+      setFormData((prev) => ({
+        ...prev,
+        visitor_documents: file,
+      }));
+      toast.success(`File "${file.name}" selected successfully`);
+    }
+  };
+
+  const removeUploadedFile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      visitor_documents: null,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -339,18 +469,31 @@ export const VisitorFormPage = () => {
       return;
     }
 
-    if (formData.host && !formData.tower) {
-      toast.error("Please select a tower");
-      return;
+
+    // Validate host details if "others" is selected
+    if (formData.host === "others") {
+      if (!formData.hostName.trim()) {
+        toast.error("Please enter host name");
+        return;
+      }
+      if (!formData.hostMobile.trim()) {
+        toast.error("Please enter host mobile number");
+        return;
+      }
+      if (formData.hostMobile.length !== 10) {
+        toast.error("Host mobile number must be 10 digits");
+        return;
+      }
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.hostEmail)) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
     }
 
     if (!formData.visitorName.trim()) {
       toast.error("Please enter visitor name");
-      return;
-    }
-
-    if (!formData.mobileNumber.trim()) {
-      toast.error("Please enter mobile number");
       return;
     }
 
@@ -423,11 +566,16 @@ export const VisitorFormPage = () => {
     // Check additional visitors validation
     const invalidAdditionalVisitor = additionalVisitors.find(
       (visitor) =>
-        (visitor.name && !visitor.mobile) || (!visitor.name && visitor.mobile)
+        (visitor.name && (!visitor.mobile || !visitor.passNo)) ||
+        (visitor.mobile && (!visitor.name || !visitor.passNo)) ||
+        (visitor.passNo && (!visitor.name || !visitor.mobile)) ||
+        (!visitor.name && visitor.mobile) ||
+        (!visitor.name && visitor.passNo) ||
+        (!visitor.mobile && visitor.passNo)
     );
     if (invalidAdditionalVisitor) {
       toast.error(
-        "Please complete all additional visitor details or remove incomplete entries"
+        "Please complete all additional visitor details (name, mobile, and pass number) or remove incomplete entries"
       );
       return;
     }
@@ -439,7 +587,7 @@ export const VisitorFormPage = () => {
         ...formData,
         capturedPhoto,
         additionalVisitors: additionalVisitors.filter(
-          (v) => v.name && v.mobile
+          (v) => v.name && v.mobile && v.passNo
         ),
         goodsData: formData.goodsInwards ? goodsData : undefined,
         items: formData.goodsInwards
@@ -459,7 +607,7 @@ export const VisitorFormPage = () => {
       console.log("📤 Sending visitor data:", visitorApiData);
       console.log("📋 Visitor visit type:", formData.visitorVisit);
       console.log("� Expected_at field present:", 'expected_at' in visitorApiData);
-      
+
       await ticketManagementAPI.createVisitor(visitorApiData);
       toast.success("Visitor created successfully!");
       navigate("/security/visitor");
@@ -479,7 +627,7 @@ export const VisitorFormPage = () => {
   const addAdditionalVisitor = () => {
     setAdditionalVisitors([
       ...additionalVisitors,
-      { id: Date.now(), name: "", mobile: "" },
+      { id: Date.now(), name: "", mobile: "", passNo: "" },
     ]);
     setShowAdditionalVisitors(true);
   };
@@ -714,16 +862,49 @@ export const VisitorFormPage = () => {
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         <div className="text-center mb-4">
           <h3 className="text-lg font-semibold text-gray-800">Capture Image</h3>
+          {visitorInfo && visitorInfo.image && !capturedPhoto && (
+            <p className="text-sm text-blue-600 mt-1">
+              Previous visitor photo available - you can use it or capture a new one
+            </p>
+          )}
         </div>
         <div className="flex justify-center mb-6">
           {!capturedPhoto ? (
-            <button
-              type="button"
-              onClick={handleCameraClick}
-              className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
-            >
-              <Camera className="h-8 w-8 text-gray-600" />
-            </button>
+            <div className="flex flex-col items-center gap-4">
+              <button
+                type="button"
+                onClick={handleCameraClick}
+                className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
+              >
+                <Camera className="h-8 w-8 text-gray-600" />
+              </button>
+              
+              {/* Option to use previous visitor image */}
+              {visitorInfo && visitorInfo.image && (
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-2">Or use previous photo:</p>
+                  <div className="w-32 h-24 bg-black rounded-lg mb-2 overflow-hidden relative">
+                    <img
+                      src={visitorInfo.image}
+                      alt="Previous visitor"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setCapturedPhoto(visitorInfo.image);
+                      setIsPhotoSaved(true);
+                      toast.success("Previous photo selected!");
+                    }}
+                    className="h-8 px-3 text-xs"
+                  >
+                    Use This Photo
+                  </Button>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="text-center">
               <div className="w-32 h-24 bg-black rounded-lg mb-2 overflow-hidden relative group cursor-pointer">
@@ -770,6 +951,112 @@ export const VisitorFormPage = () => {
             </div>
           )}
         </div>
+
+        {/* Visitor Info Display Section */}
+        {showVisitorInfo && visitorInfo && (
+          <div className="bg-blue-50 rounded-lg border border-blue-200 overflow-hidden">
+            <div className="px-6 py-3 border-b border-blue-200">
+              <h2 className="text-lg font-medium text-blue-900 flex items-center">
+                <span
+                  className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
+                  style={{ backgroundColor: "#DBEAFE" }}
+                >
+                  <User size={16} color="#1E40AF" />
+                </span>
+                Previous Visitor Information Found
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Visitor Image */}
+                {visitorInfo.image && (
+                  <div className="flex-shrink-0">
+                    <div className="w-32 h-32 rounded-lg overflow-hidden border-2 border-blue-200">
+                      <img
+                        src={visitorInfo.image}
+                        alt={visitorInfo.guest_name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {/* Visitor Details */}
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Guest Name
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
+                      {visitorInfo.guest_name}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Mobile Number
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
+                      {visitorInfo.guest_number}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Coming From
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
+                      {visitorInfo.guest_from || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Vehicle Number
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
+                      {visitorInfo.guest_vehicle_number || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Visit Purpose
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
+                      {visitorInfo.visit_purpose || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Guest Type
+                    </label>
+                    <p className="text-gray-900 bg-gray-50 p-2 rounded border">
+                      {visitorInfo.guest_type}
+                    </p>
+                  </div>
+                  {visitorInfo.otp_verified === 1 && (
+                    <div className="md:col-span-2">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        ✓ OTP Verified
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-4 flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowVisitorInfo(false)}
+                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                >
+                  Hide Previous Info
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Visitor Details Section */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -867,8 +1154,63 @@ export const VisitorFormPage = () => {
                       {user.name}
                     </MenuItem>
                   ))}
+
+                  <MenuItem key="others" value="others">
+                    Others
+                  </MenuItem>
                 </MuiSelect>
               </FormControl>
+
+              {/* Host Details Fields - Show when "others" is selected */}
+              {formData.host === "others" && (
+                <>
+                  <TextField
+                    label="Host Name"
+                    value={formData.hostName}
+                    onChange={(e) =>
+                      handleInputChange("hostName", e.target.value)
+                    }
+                    fullWidth
+                    required
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
+                  <TextField
+                    label="Host Mobile No."
+                    value={formData.hostMobile}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+                      if (value.length <= 10) {
+                        handleInputChange("hostMobile", value);
+                      }
+                    }}
+                    fullWidth
+                    required
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                    inputProps={{
+                      inputMode: "numeric", // shows numeric keyboard on mobile
+                      pattern: "[0-9]{10}", // regex for 10 digits
+                      maxLength: 10,
+                    }}
+                  />
+                  <TextField
+                    label="Host Email ID"
+                    value={formData.hostEmail}
+                    onChange={(e) =>
+                      handleInputChange("hostEmail", e.target.value)
+                    }
+                    fullWidth
+                    required
+                    type="email"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
+                </>
+              )}
 
               {formData.host && (
                 <FormControl
@@ -974,7 +1316,6 @@ export const VisitorFormPage = () => {
                   }
                 }}
                 fullWidth
-                required
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
@@ -982,6 +1323,24 @@ export const VisitorFormPage = () => {
                   inputMode: "numeric", // shows numeric keyboard on mobile
                   pattern: "[0-9]{10}", // regex for 10 digits
                   maxLength: 10,
+                }}
+                helperText={
+                  loadingVisitorInfo 
+                    ? "🔍 Searching for visitor information..." 
+                    : visitorInfo 
+                      ? "✅ Previous visitor information found!" 
+                      : formData.mobileNumber.length === 10 
+                        ? "No previous visitor information found" 
+                        : "Enter 10-digit mobile number"
+                }
+                FormHelperTextProps={{
+                  style: {
+                    color: loadingVisitorInfo 
+                      ? "#1976d2" 
+                      : visitorInfo 
+                        ? "#2e7d32" 
+                        : "#666666"
+                  }
                 }}
               />
               <TextField
@@ -1019,15 +1378,7 @@ export const VisitorFormPage = () => {
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
               />
-              <TextField
-                label="Remarks"
-                value={formData.remarks}
-                onChange={(e) => handleInputChange("remarks", e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
-              />
+
               {/* Expected At field - only show for expected visitors */}
               {formData.visitorVisit === "expected" && (
                 <TextField
@@ -1041,9 +1392,71 @@ export const VisitorFormPage = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   sx={fieldStyles}
-                  // helperText="Expected arrival date and time"
+                // helperText="Expected arrival date and time"
                 />
-              )}
+              )}          
+
+              <TextField
+                label="Remarks"
+                value={formData.remarks}
+                onChange={(e) => handleInputChange("remarks", e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={fieldStyles}
+              />
+              
+              {/* Government ID Upload */}
+              <div className="flex flex-col">
+                {/* <label className="text-sm font-medium text-gray-700 mb-2">
+                  Government ID
+                </label> */}
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="government-id-upload"
+                  />
+                  <label
+                    htmlFor="government-id-upload"
+                    className="flex items-center justify-center w-full h-[45px] px-3 py-2 border border-gray-300 rounded-md cursor-pointer hover:border-gray-400 transition-colors bg-white"
+                  >
+                    {formData.visitor_documents ? (
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                          <span className="text-sm text-gray-700 truncate max-w-[150px]">
+                            {formData.visitor_documents.name}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            removeUploadedFile();
+                          }}
+                          className="ml-2 p-1 hover:bg-gray-100 rounded"
+                          title="Remove file"
+                        >
+                          <X className="h-3 w-3 text-gray-500" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <Upload className="h-4 w-4 mr-2 text-gray-500" />
+                        <span className="text-sm text-gray-500">
+                          Upload Government ID
+                        </span>
+                      </div>
+                    )}
+                  </label>
+                </div>
+                {/* <p className="text-xs text-gray-500 mt-1">
+                  Supports: JPEG, PNG, GIF, PDF (Max 5MB)
+                </p> */}
+              </div>
             </div>
             <div className="flex items-center space-x-8 pt-4">
               <div className="flex items-center space-x-2">
@@ -1354,7 +1767,7 @@ export const VisitorFormPage = () => {
               {additionalVisitors.map((visitor) => (
                 <div
                   key={visitor.id}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border-t pt-4 first:border-t-0 first:pt-0"
+                  className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center border-t pt-4 first:border-t-0 first:pt-0"
                 >
                   <TextField
                     label="Visitor Name"
@@ -1370,30 +1783,45 @@ export const VisitorFormPage = () => {
                     // required
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    // sx={fieldStyles}
+                  // sx={fieldStyles}
                   />
-                  <div className="flex items-center space-x-2 md:col-span-2">
-                    <TextField
-                      label="Mobile"
-                      value={visitor.mobile}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, ""); // remove non-numeric characters
-                        if (value.length <= 10) {
-                          updateAdditionalVisitor(visitor.id, "mobile", value);
-                        }
-                      }}
-                      fullWidth
-                      // required
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      // sx={fieldStyles}
-                      inputProps={{
-                        inputMode: "numeric", // shows numeric keyboard on mobile
-                        pattern: "[0-9]{10}", // regex for 10 digits
-                        maxLength: 10,
-                      }}
-                    />
-
+                  <TextField
+                    label="Mobile"
+                    value={visitor.mobile}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, ""); // remove non-numeric characters
+                      if (value.length <= 10) {
+                        updateAdditionalVisitor(visitor.id, "mobile", value);
+                      }
+                    }}
+                    fullWidth
+                    // required
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    // sx={fieldStyles}
+                    inputProps={{
+                      inputMode: "numeric", // shows numeric keyboard on mobile
+                      pattern: "[0-9]{10}", // regex for 10 digits
+                      maxLength: 10,
+                    }}
+                  />
+                  <TextField
+                    label="Pass No."
+                    value={visitor.passNo}
+                    onChange={(e) =>
+                      updateAdditionalVisitor(
+                        visitor.id,
+                        "passNo",
+                        e.target.value
+                      )
+                    }
+                    fullWidth
+                    // required
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  // sx={fieldStyles}
+                  />
+                  <div className="flex justify-end">
                     <Button
                       type="button"
                       variant="ghost"

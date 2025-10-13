@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, User, QrCode, ClipboardList, Edit, ChevronUp, ChevronDown, LucideIcon } from 'lucide-react';
+import { ArrowLeft, User, QrCode, ClipboardList, Edit, ChevronUp, ChevronDown, LucideIcon, FileText, File, FileSpreadsheet, Eye, Download, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
 // Types
 interface AdditionalVisitor {
@@ -67,7 +68,10 @@ interface VisitorData {
   otp_string?: string;
   additional_visitors?: AdditionalVisitor[];
   item_movements?: ItemMovement[];
-  visitor_documents?: unknown[];
+  visitor_documents?: Array<{
+    id: number;
+    document_url: string;
+  }>;
   pass_days?: string[];
   pass_valid?: boolean;
 }
@@ -80,6 +84,10 @@ export const VisitorDetailsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [disabledOTPButtons, setDisabledOTPButtons] = useState<Record<number, boolean>>({});
 
+  // State for document modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+
   // Helper function to check if value has data
   const hasData = (value: string | undefined | null): boolean => {
     return value !== null && value !== undefined && value !== '';
@@ -91,6 +99,7 @@ export const VisitorDetailsPage = () => {
     additionalVisitors: true,
     goodsInwardInfo: true,
     passInformation: true,
+    governmentId: true,
     qrCode: true,
   });
 
@@ -864,7 +873,107 @@ export const VisitorDetailsPage = () => {
         </div>
       </ExpandableSection>
 
-      {/* Section 5: QR Code */}
+      {/* Section 5: Government ID */}
+      <ExpandableSection
+        title="GOVERNMENT ID"
+        icon={CreditCard}
+        isExpanded={expandedSections.governmentId}
+        onToggle={() => toggleSection('governmentId')}
+        hasData={Array.isArray(visitorData.visitor_documents) && visitorData.visitor_documents.length > 0}
+      >
+        {Array.isArray(visitorData.visitor_documents) && visitorData.visitor_documents.length > 0 ? (
+          <div className="flex items-center flex-wrap gap-4">
+            {visitorData.visitor_documents.map((document: any) => {
+              const url = document.document_url;
+              const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+              const isPdf = /\.pdf$/i.test(url);
+              const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+              const isWord = /\.(doc|docx)$/i.test(url);
+              const isDownloadable = isPdf || isExcel || isWord;
+
+              return (
+                <div
+                  key={document.id}
+                  className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                >
+                  {isImage ? (
+                    <>
+                      <button
+                        className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                        title="View"
+                        onClick={() => {
+                          setSelectedDoc({
+                            ...document,
+                            url,
+                            type: 'image'
+                          });
+                          setIsModalOpen(true);
+                        }}
+                        type="button"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <img
+                        src={url}
+                        alt={`Document_${document.id}`}
+                        className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                        onClick={() => {
+                          setSelectedDoc({
+                            ...document,
+                            url,
+                            type: 'image'
+                          });
+                          setIsModalOpen(true);
+                        }}
+                      />
+                    </>
+                  ) : isPdf ? (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                  ) : isExcel ? (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                      <FileSpreadsheet className="w-6 h-6" />
+                    </div>
+                  ) : isWord ? (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                  ) : (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                      <File className="w-6 h-6" />
+                    </div>
+                  )}
+                  <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                    {url.split('/').pop() || `Document_${document.id}`}
+                  </span>
+                  {isDownloadable && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                      onClick={() => {
+                        setSelectedDoc({
+                          ...document,
+                          url,
+                          type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
+                        });
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">No government ID documents found</p>
+        )}
+      </ExpandableSection>
+
+      {/* Section 6: QR Code */}
       <ExpandableSection
         title="QR CODE"
         icon={QrCode}
@@ -880,6 +989,14 @@ export const VisitorDetailsPage = () => {
           <p className="text-gray-500 text-center py-8">No QR code available</p>
         )}
       </ExpandableSection>
+
+      {/* Attachment Preview Modal */}
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

@@ -379,6 +379,8 @@ export const PermitDetails = () => {
     const resourceId = searchParams.get('resource_id');
     const isApprovalPage = searchParams.get('type') === 'approval';
 
+    const completeFileInputRef = useRef(null)
+
     const showApprovalButtons = levelId && userId && isApprovalPage;
     const permitClosure = searchParams.get('resource_type') === 'permit_closure';
     const permitExtension = searchParams.get('resource_type') === 'permit_extend';
@@ -3085,7 +3087,7 @@ export const PermitDetails = () => {
                             <table className="w-full border-collapse border border-gray-200">
                                 <thead>
                                     <tr className="bg-gray-50">
-                                        <th className="border border-gray-200 p-3 text-left text-sm font-medium">S. No</th>
+                                        <th className="border border-gray-200 p-3 text-left text-sm font-medium">Sr. No</th>
                                         <th className="border border-gray-200 p-3 text-left text-sm font-medium">Response</th>
                                         <th className="border border-gray-200 p-3 text-left text-sm font-medium">Submitted Date/Time</th>
                                         <th className="border border-gray-200 p-3 text-left text-sm font-medium">Submitted By</th>
@@ -3311,10 +3313,10 @@ export const PermitDetails = () => {
                                 </div>
 
                                 <div className="mt-2">
-                                    <Button
+                                    {/* <Button
                                         type="button"
                                         variant="outline"
-                                        className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                                    // className="text-orange-600 border-orange-600 hover:bg-orange-50"
                                     >
                                         <label className="cursor-pointer flex items-center">
                                             <span className="text-orange-600">Choose files</span>
@@ -3326,7 +3328,16 @@ export const PermitDetails = () => {
                                                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
                                             />
                                         </label>
-                                    </Button>
+                                    </Button> */}
+                                    <Button type="button" onClick={() => completeFileInputRef.current?.click()}>Choose Files</Button>
+                                    <input
+                                        ref={completeFileInputRef}
+                                        type="file"
+                                        multiple
+                                        className="hidden"
+                                        onChange={handleCompleteFileChange}
+                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                                    />
                                     <div className="mt-1 text-xs text-gray-500">
                                         {completeAttachments.length > 0
                                             ? `${completeAttachments.length} file(s) selected`
