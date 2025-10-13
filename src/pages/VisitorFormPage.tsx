@@ -17,6 +17,8 @@ import {
   CalendarDays,
   Truck,
   Users,
+  Upload,
+  FileText,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -86,6 +88,10 @@ export const VisitorFormPage = () => {
     goodsInwards: false,
     passValidFrom: "",
     passValidTo: "",
+    hostName: "",
+    hostMobile: "",
+    hostEmail: "",
+    visitor_document: null as File | null,
     daysPermitted: {
       Sunday: false,
       Monday: false,
@@ -95,9 +101,7 @@ export const VisitorFormPage = () => {
       Friday: false,
       Saturday: false,
     },
-  });
-
-  const [goodsData, setGoodsData] = useState({
+  });  const [goodsData, setGoodsData] = useState({
     selectType: "",
     category: "",
     modeOfTransport: "",
@@ -111,7 +115,7 @@ export const VisitorFormPage = () => {
   ]);
 
   const [additionalVisitors, setAdditionalVisitors] = useState<
-    Array<{ id: number; name: string; mobile: string }>
+    Array<{ id: number; name: string; mobile: string; passNo: string }>
   >([]);
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
@@ -178,8 +182,8 @@ export const VisitorFormPage = () => {
       const buildingsData = Array.isArray(buildingsResponse)
         ? buildingsResponse
         : buildingsResponse
-        ? [buildingsResponse]
-        : [];
+          ? [buildingsResponse]
+          : [];
       setBuildings(buildingsData);
     } catch (error) {
       console.error("Error fetching buildings:", error);
@@ -296,7 +300,7 @@ export const VisitorFormPage = () => {
       }
       if (field === "visitorVisit") {
         if (value === "unexpected") {
-          newData.expected_at = ""; 
+          newData.expected_at = "";
         } else if (value === "expected") {
           if (!newData.expected_at) {
             newData.expected_at = new Date().toISOString().slice(0, 16);
@@ -317,8 +321,20 @@ export const VisitorFormPage = () => {
         };
       }
       if (field === "host") {
-        if (value) fetchBuildings();
-        else newData.tower = undefined;
+        if (value) {
+          fetchBuildings();
+          // Clear host details if switching away from "others"
+          if (value !== "others") {
+            newData.hostName = "";
+            newData.hostMobile = "";
+            newData.hostEmail = "";
+          }
+        } else {
+          newData.tower = undefined;
+          newData.hostName = "";
+          newData.hostMobile = "";
+          newData.hostEmail = "";
+        }
       }
       return newData;
     });
@@ -328,6 +344,37 @@ export const VisitorFormPage = () => {
     setFormData((prev) => ({
       ...prev,
       daysPermitted: { ...prev.daysPermitted, [day]: checked },
+    }));
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size should be less than 5MB");
+        return;
+      }
+      
+      // Check file type (only images and PDFs)
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Only images (JPEG, PNG, GIF) and PDF files are allowed");
+        return;
+      }
+      
+      setFormData((prev) => ({
+        ...prev,
+        visitor_document: file,
+      }));
+      toast.success(`File "${file.name}" selected successfully`);
+    }
+  };
+
+  const removeUploadedFile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      visitor_document: null,
     }));
   };
 
@@ -342,6 +389,32 @@ export const VisitorFormPage = () => {
     if (formData.host && !formData.tower) {
       toast.error("Please select a tower");
       return;
+    }
+
+    // Validate host details if "others" is selected
+    if (formData.host === "others") {
+      if (!formData.hostName.trim()) {
+        toast.error("Please enter host name");
+        return;
+      }
+      if (!formData.hostMobile.trim()) {
+        toast.error("Please enter host mobile number");
+        return;
+      }
+      if (formData.hostMobile.length !== 10) {
+        toast.error("Host mobile number must be 10 digits");
+        return;
+      }
+      if (!formData.hostEmail.trim()) {
+        toast.error("Please enter host email");
+        return;
+      }
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.hostEmail)) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
     }
 
     if (!formData.visitorName.trim()) {
@@ -423,11 +496,16 @@ export const VisitorFormPage = () => {
     // Check additional visitors validation
     const invalidAdditionalVisitor = additionalVisitors.find(
       (visitor) =>
-        (visitor.name && !visitor.mobile) || (!visitor.name && visitor.mobile)
+        (visitor.name && (!visitor.mobile || !visitor.passNo)) ||
+        (visitor.mobile && (!visitor.name || !visitor.passNo)) ||
+        (visitor.passNo && (!visitor.name || !visitor.mobile)) ||
+        (!visitor.name && visitor.mobile) ||
+        (!visitor.name && visitor.passNo) ||
+        (!visitor.mobile && visitor.passNo)
     );
     if (invalidAdditionalVisitor) {
       toast.error(
-        "Please complete all additional visitor details or remove incomplete entries"
+        "Please complete all additional visitor details (name, mobile, and pass number) or remove incomplete entries"
       );
       return;
     }
@@ -439,7 +517,7 @@ export const VisitorFormPage = () => {
         ...formData,
         capturedPhoto,
         additionalVisitors: additionalVisitors.filter(
-          (v) => v.name && v.mobile
+          (v) => v.name && v.mobile && v.passNo
         ),
         goodsData: formData.goodsInwards ? goodsData : undefined,
         items: formData.goodsInwards
@@ -459,7 +537,7 @@ export const VisitorFormPage = () => {
       console.log("📤 Sending visitor data:", visitorApiData);
       console.log("📋 Visitor visit type:", formData.visitorVisit);
       console.log("� Expected_at field present:", 'expected_at' in visitorApiData);
-      
+
       await ticketManagementAPI.createVisitor(visitorApiData);
       toast.success("Visitor created successfully!");
       navigate("/security/visitor");
@@ -479,7 +557,7 @@ export const VisitorFormPage = () => {
   const addAdditionalVisitor = () => {
     setAdditionalVisitors([
       ...additionalVisitors,
-      { id: Date.now(), name: "", mobile: "" },
+      { id: Date.now(), name: "", mobile: "", passNo: "" },
     ]);
     setShowAdditionalVisitors(true);
   };
@@ -867,8 +945,63 @@ export const VisitorFormPage = () => {
                       {user.name}
                     </MenuItem>
                   ))}
+
+                  <MenuItem key="others" value="others">
+                    Others
+                  </MenuItem>
                 </MuiSelect>
               </FormControl>
+
+              {/* Host Details Fields - Show when "others" is selected */}
+              {formData.host === "others" && (
+                <>
+                  <TextField
+                    label="Host Name"
+                    value={formData.hostName}
+                    onChange={(e) =>
+                      handleInputChange("hostName", e.target.value)
+                    }
+                    fullWidth
+                    required
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
+                  <TextField
+                    label="Host Mobile No."
+                    value={formData.hostMobile}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+                      if (value.length <= 10) {
+                        handleInputChange("hostMobile", value);
+                      }
+                    }}
+                    fullWidth
+                    required
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                    inputProps={{
+                      inputMode: "numeric", // shows numeric keyboard on mobile
+                      pattern: "[0-9]{10}", // regex for 10 digits
+                      maxLength: 10,
+                    }}
+                  />
+                  <TextField
+                    label="Host Email ID"
+                    value={formData.hostEmail}
+                    onChange={(e) =>
+                      handleInputChange("hostEmail", e.target.value)
+                    }
+                    fullWidth
+                    required
+                    type="email"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
+                </>
+              )}
 
               {formData.host && (
                 <FormControl
@@ -1019,6 +1152,59 @@ export const VisitorFormPage = () => {
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
               />
+              
+              {/* Government ID Upload */}
+              <div className="flex flex-col">
+                {/* <label className="text-sm font-medium text-gray-700 mb-2">
+                  Government ID
+                </label> */}
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="government-id-upload"
+                  />
+                  <label
+                    htmlFor="government-id-upload"
+                    className="flex items-center justify-center w-full h-[45px] px-3 py-2 border border-gray-300 rounded-md cursor-pointer hover:border-gray-400 transition-colors bg-white"
+                  >
+                    {formData.visitor_document ? (
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                          <span className="text-sm text-gray-700 truncate max-w-[150px]">
+                            {formData.visitor_document.name}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            removeUploadedFile();
+                          }}
+                          className="ml-2 p-1 hover:bg-gray-100 rounded"
+                          title="Remove file"
+                        >
+                          <X className="h-3 w-3 text-gray-500" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <Upload className="h-4 w-4 mr-2 text-gray-500" />
+                        <span className="text-sm text-gray-500">
+                          Upload Government ID
+                        </span>
+                      </div>
+                    )}
+                  </label>
+                </div>
+                {/* <p className="text-xs text-gray-500 mt-1">
+                  Supports: JPEG, PNG, GIF, PDF (Max 5MB)
+                </p> */}
+              </div>
+
               <TextField
                 label="Remarks"
                 value={formData.remarks}
@@ -1041,7 +1227,7 @@ export const VisitorFormPage = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   sx={fieldStyles}
-                  // helperText="Expected arrival date and time"
+                // helperText="Expected arrival date and time"
                 />
               )}
             </div>
@@ -1354,7 +1540,7 @@ export const VisitorFormPage = () => {
               {additionalVisitors.map((visitor) => (
                 <div
                   key={visitor.id}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border-t pt-4 first:border-t-0 first:pt-0"
+                  className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center border-t pt-4 first:border-t-0 first:pt-0"
                 >
                   <TextField
                     label="Visitor Name"
@@ -1370,30 +1556,45 @@ export const VisitorFormPage = () => {
                     // required
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    // sx={fieldStyles}
+                  // sx={fieldStyles}
                   />
-                  <div className="flex items-center space-x-2 md:col-span-2">
-                    <TextField
-                      label="Mobile"
-                      value={visitor.mobile}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, ""); // remove non-numeric characters
-                        if (value.length <= 10) {
-                          updateAdditionalVisitor(visitor.id, "mobile", value);
-                        }
-                      }}
-                      fullWidth
-                      // required
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      // sx={fieldStyles}
-                      inputProps={{
-                        inputMode: "numeric", // shows numeric keyboard on mobile
-                        pattern: "[0-9]{10}", // regex for 10 digits
-                        maxLength: 10,
-                      }}
-                    />
-
+                  <TextField
+                    label="Mobile"
+                    value={visitor.mobile}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, ""); // remove non-numeric characters
+                      if (value.length <= 10) {
+                        updateAdditionalVisitor(visitor.id, "mobile", value);
+                      }
+                    }}
+                    fullWidth
+                    // required
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    // sx={fieldStyles}
+                    inputProps={{
+                      inputMode: "numeric", // shows numeric keyboard on mobile
+                      pattern: "[0-9]{10}", // regex for 10 digits
+                      maxLength: 10,
+                    }}
+                  />
+                  <TextField
+                    label="Pass No."
+                    value={visitor.passNo}
+                    onChange={(e) =>
+                      updateAdditionalVisitor(
+                        visitor.id,
+                        "passNo",
+                        e.target.value
+                      )
+                    }
+                    fullWidth
+                    // required
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  // sx={fieldStyles}
+                  />
+                  <div className="flex justify-end">
                     <Button
                       type="button"
                       variant="ghost"

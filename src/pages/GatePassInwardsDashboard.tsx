@@ -160,6 +160,16 @@ export const GatePassInwardsDashboard = () => {
 
   // Column configuration for the enhanced table
   const columns = useMemo(() => {
+    // Get all unique custom fields from the current data
+    const customFieldKeys = new Set<string>();
+    inwardData.forEach(item => {
+      if (item.custom_fields) {
+        Object.keys(item.custom_fields).forEach(key => {
+          customFieldKeys.add(key);
+        });
+      }
+    });
+
     const cols = [
       { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false, defaultVisible: true },
       { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true, defaultVisible: true },
@@ -178,14 +188,37 @@ export const GatePassInwardsDashboard = () => {
       // { key: 'flaggedAt', label: 'Flagged At', sortable: true, hideable: true, draggable: true, defaultVisible: true },
       { key: 'vendorCompanyName', label: 'Company Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
       { key: 'buildingName', label: 'Building', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+      // Invoice fields
+      { key: 'invoiceNo', label: 'Invoice No.', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+      { key: 'invoiceAmount', label: 'Invoice Amount', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+      { key: 'invoiceDate', label: 'Invoice Date', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+      // Add dynamic custom field columns
+      ...Array.from(customFieldKeys).map(fieldKey => ({
+        key: `customField_${fieldKey.replace(/\s+/g, '_')}`,
+        label: fieldKey,
+        sortable: true,
+        hideable: true,
+        draggable: true,
+        defaultVisible: true
+      }))
     ];
     console.log('Columns configuration:', cols);
     return cols;
-  }, []);
+  }, [inwardData]);
 
   // Prepare data with index for the enhanced table
   const dataWithIndex = inwardData.map((item, index) => {
     const materials = Array.isArray(item.gate_pass_materials) ? item.gate_pass_materials : [];
+    
+    // Build custom fields data
+    const customFieldsData: { [key: string]: string } = {};
+    if (item.custom_fields) {
+      Object.keys(item.custom_fields).forEach(fieldKey => {
+        const customFieldKey = `customField_${fieldKey.replace(/\s+/g, '_')}`;
+        customFieldsData[customFieldKey] = item.custom_fields[fieldKey]?.field_value || '--';
+      });
+    }
+
     const mappedData = {
       actions: '', // Placeholder, will be filled by renderRow
       id: item.id,
@@ -203,6 +236,12 @@ export const GatePassInwardsDashboard = () => {
       supplierName: item.supplier_name || '--',
       isFlagged: item.is_flagged === true,
       flaggedAt: item.flagged_at ? new Date(item.flagged_at).toLocaleString() : '--',
+      // Invoice fields
+      invoiceNo: item.invoice_no || '--',
+      invoiceAmount: item.invoice_amount ? `$${item.invoice_amount}` : '--',
+      invoiceDate: item.invoice_date ? new Date(item.invoice_date).toLocaleDateString() : '--',
+      // Add custom fields data
+      ...customFieldsData,
       _raw: item, // keep original for flag toggling
       // updates: item.id, // Removed - updates column moved to detail page
     };
@@ -363,7 +402,8 @@ export const GatePassInwardsDashboard = () => {
     console.log('Entry data:', entry);
     console.log('Entry ID:', entry.id);
 
-    return {
+    // Build the base row data
+    const rowData: any = {
       actions: (
         <div className="flex gap-2 justify-center" style={{ maxWidth: '80px' }}>
           <div title="View details">
@@ -398,15 +438,28 @@ export const GatePassInwardsDashboard = () => {
       numberOfMaterials: entry.numberOfMaterials,
       supplierName: entry.supplierName,
       isFlagged: (
-        <Flag
-          className={`w-4 h-4 cursor-pointer ${entry.isFlagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} ${togglingIds.has(entry.id) ? 'opacity-50 pointer-events-none' : ''}`}
-          onClick={() => !togglingIds.has(entry.id) && handleFlagToggle(entry)}
-          title={entry.isFlagged ? 'Remove Flag' : 'Flag'}
-        />
+        <div title={entry.isFlagged ? 'Remove Flag' : 'Flag'}>
+          <Flag
+            className={`w-4 h-4 cursor-pointer ${entry.isFlagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} ${togglingIds.has(entry.id) ? 'opacity-50 pointer-events-none' : ''}`}
+            onClick={() => !togglingIds.has(entry.id) && handleFlagToggle(entry)}
+          />
+        </div>
       ),
       flaggedAt: entry.flaggedAt,
-      // updates: Removed - updates column moved to detail page
+      // Invoice fields
+      invoiceNo: entry.invoiceNo,
+      invoiceAmount: entry.invoiceAmount,
+      invoiceDate: entry.invoiceDate,
     };
+
+    // Add all custom field values dynamically
+    Object.keys(entry).forEach(key => {
+      if (key.startsWith('customField_')) {
+        rowData[key] = entry[key];
+      }
+    });
+
+    return rowData;
   };
 
   // SelectionPanel actions (customize as needed)
