@@ -260,6 +260,22 @@ export const VisitorDetailsPage = () => {
     }
   };
 
+  function getLocalISOString() {
+    const now = new Date();
+    const offsetMs = now.getTimezoneOffset() * 60 * 1000; // offset in ms
+    const localTime = new Date(now - offsetMs);
+    const iso = localTime.toISOString().slice(0, 19);
+
+    const offset = -now.getTimezoneOffset();
+    const sign = offset >= 0 ? '+' : '-';
+    const pad = n => String(Math.floor(Math.abs(n))).padStart(2, '0');
+    const hours = pad(offset / 60);
+    const minutes = pad(offset % 60);
+
+    return `${iso}${sign}${hours}:${minutes}`;
+  }
+
+
   const handleCheckIn = async () => {
     if (!visitorData || !id) return;
 
@@ -276,7 +292,7 @@ export const VisitorDetailsPage = () => {
       // Create request body for check-in with current timestamp
       const requestBody = {
         gatekeeper: {
-          guest_entry_time: new Date().toISOString().slice(0, 19) + "+05:30", // Format: 2025-08-22T19:07:37+05:30
+          guest_entry_time: getLocalISOString(), // Format: 2025-08-22T19:07:37+05:30
           entry_gate_id: "",
           status: "checked_in"
         }
@@ -311,7 +327,7 @@ export const VisitorDetailsPage = () => {
       toast.success('Visitor checked in successfully!');
 
       // Refresh visitor data
-      window.location.reload();
+      // window.location.reload();
 
     } catch (err) {
       console.error('❌ Error checking in visitor:', err);
