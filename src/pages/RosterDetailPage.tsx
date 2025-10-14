@@ -9,16 +9,18 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { departmentService, Department } from '@/services/departmentService';
 import { RootState } from '@/store/store';
 
-// Section component for consistent layout
-const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-  <section className="bg-card rounded-lg border border-border shadow-sm">
-    <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-        {icon}
+// Section component for consistent layout matching TaskDetailsPage
+const Section: React.FC<{ title: string; icon: React.ElementType; children: React.ReactNode }> = ({ title, icon: Icon, children }) => (
+  <section className="bg-transparent border-none shadow-none rounded-lg">
+    <div className="figma-card-header">
+      <div className="flex items-center gap-3">
+        <div className="figma-card-icon-wrapper">
+          <Icon className="figma-card-icon" />
+        </div>
+        <h3 className="figma-card-title">{title}</h3>
       </div>
-      <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
     </div>
-    <div className="p-6">{children}</div>
+    <div className="figma-card-content">{children}</div>
   </section>
 );
 
@@ -468,7 +470,7 @@ export const RosterDetailPage: React.FC = () => {
       {/* Content */}
       <div className="space-y-6">
         {/* Basic Information */}
-        <Section title="Basic Information" icon={<Calendar className="w-4 h-4" />}>
+        <Section title="Basic Information" icon={Calendar}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Template Name</label>
@@ -488,7 +490,7 @@ export const RosterDetailPage: React.FC = () => {
         </Section>
 
         {/* Working Days */}
-        <Section title="Working Days Configuration" icon={<Calendar className="w-4 h-4" />}>
+        <Section title="Working Days Configuration" icon={Calendar}>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -533,7 +535,7 @@ export const RosterDetailPage: React.FC = () => {
         </Section>
 
         {/* Location & Department */}
-        <Section title="Location & Department" icon={<MapPin className="w-4 h-4" />}>
+        <Section title="Location & Department" icon={MapPin}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Location</label>
@@ -559,7 +561,7 @@ export const RosterDetailPage: React.FC = () => {
         </Section>
 
         {/* Shift & Employees */}
-        <Section title="Shift & Employees" icon={<Clock className="w-4 h-4" />}>
+        <Section title="Shift & Employees" icon={Clock}>
           <div className="space-y-6">
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Assigned Shift</label>
@@ -610,7 +612,7 @@ export const RosterDetailPage: React.FC = () => {
         </Section>
 
         {/* Date Range */}
-        <Section title="Date Range" icon={<Calendar className="w-4 h-4" />}>
+        <Section title="Date Range" icon={Calendar}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Start Date</label>
