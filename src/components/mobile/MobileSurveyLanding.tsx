@@ -1501,7 +1501,7 @@ export const MobileSurveyLanding: React.FC = () => {
     <div
       className="min-h-screen flex flex-col"
       style={{
-       backgroundImage: surveyData.snag_checklist?.survey_attachment?.length > 0 ? `url(${surveyData?.snag_checklist?.survey_attachment?.url})` : 'url("/9019830 1.png")',
+       backgroundImage: `url(${surveyData?.snag_checklist?.survey_attachment?.url})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -1953,7 +1953,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                               selectedTags.some((selectedTag) => selectedTag.id === tag.id)
                                                 ? "border-blue-500 bg-blue-50"
                                                 : ""
-                                            }`}
+                                             }`}
                                           >
                                             <div className="mb-2">
                                               {tag.icons && tag.icons.length > 0 ? (
