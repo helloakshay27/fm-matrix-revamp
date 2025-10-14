@@ -16,6 +16,7 @@ interface AdditionalVisitor {
     name: string;
     mobile: string;
     gatekeeper_id: number;
+    pass_number?: string;
   };
 }
 
@@ -413,17 +414,16 @@ export const VisitorDetailsPage = () => {
     children: React.ReactNode;
     hasData?: boolean;
   }) => (
-    <div className="border-2 rounded-lg mb-6">
+    <div className="bg-transparent border-none shadow-none rounded-lg mb-6">
       <div
         onClick={onToggle}
-        className="flex items-center justify-between cursor-pointer p-6"
-        style={{ backgroundColor: 'rgb(246 244 238)' }}
+        className="figma-card-header flex items-center justify-between cursor-pointer"
       >
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-            <Icon className="w-4 h-4" style={{ color: "#C72030" }} />
+          <div className="figma-card-icon-wrapper">
+            <Icon className="figma-card-icon" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+          <h3 className="figma-card-title uppercase">
             {title}
           </h3>
         </div>
@@ -435,10 +435,7 @@ export const VisitorDetailsPage = () => {
         </div>
       </div>
       {isExpanded && (
-        <div
-          className="p-6"
-          style={{ backgroundColor: 'rgb(246 247 247)' }}
-        >
+        <div className="figma-card-content">
           {children}
         </div>
       )}
