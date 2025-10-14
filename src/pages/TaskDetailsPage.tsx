@@ -1245,10 +1245,7 @@ export const TaskDetailsPage = () => {
                 if (
                   [
                     "open",
-                    "in progress",
-                    "work in progress",
-                    "inprogress",
-                    "workinprogress",
+                   
                   ].includes(status)
                 ) {
                   return (
@@ -1348,14 +1345,7 @@ export const TaskDetailsPage = () => {
                         Submit Task
                       </Button>
                     )}
-                    {taskDetails?.actions?.can_reschedule && (
-                      <Button
-                        onClick={handleTaskReschedule}
-                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-                      >
-                        Task Reschedule
-                      </Button>
-                    )}
+               
                   </>
                 );
               })()}

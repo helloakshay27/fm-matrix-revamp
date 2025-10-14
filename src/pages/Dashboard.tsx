@@ -1954,7 +1954,7 @@ export const Dashboard = () => {
 
         {/* Summary Stats */}
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatsCard
               title="Total Tickets"
               value={summaryStats.totalTickets}
@@ -1975,7 +1975,7 @@ export const Dashboard = () => {
               value={summaryStats.lowStockItems}
               icon={<Package className="w-6 h-6" />}
             />
-          </div>
+          </div> */}
 
           {/* Asset Summary Stats Row */}
           {summaryStats.totalAssets > 0 && (

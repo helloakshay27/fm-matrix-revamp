@@ -270,13 +270,13 @@ export const PatrollingDashboard = () => {
   // Render row function for enhanced table
   const renderRow = (patrol: PatrollingItem) => ({
     actions: <div className="flex items-center gap-2">
-      <button onClick={() => handleView(patrol.id)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="View">
+      <button onClick={() => handleView(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="View">
         <Eye className="w-4 h-4" />
       </button>
-      <button onClick={() => handleEdit(patrol.id)} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Edit">
+      <button onClick={() => handleEdit(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Edit">
         <Edit className="w-4 h-4" />
       </button>
-      <button onClick={() => handleDelete(patrol.id)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Delete">
+      <button onClick={() => handleDelete(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Delete">
         <Trash2 className="w-4 h-4" />
       </button>
     </div>,

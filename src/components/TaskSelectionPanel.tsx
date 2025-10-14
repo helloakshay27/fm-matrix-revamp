@@ -475,6 +475,15 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
               </Button>
             )}
 
+            {/* Show message when buttons are hidden */}
+            {(!showReassignButton || !showRescheduleButton) && (
+              <div className="text-xs text-gray-500 italic mr-5 max-w-[200px]">
+                {hasClosedTasks && "Actions unavailable for closed tasks"}
+                {!hasClosedTasks && hasInProgressTasks && "Actions unavailable for in-progress tasks"}
+                {!hasClosedTasks && !hasInProgressTasks && hasOverdueTasks && "Reschedule unavailable for overdue tasks"}
+              </div>
+            )}
+
             <div className="w-px h-8 bg-gray-300 mr-5"></div>
 
             <Button

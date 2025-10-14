@@ -15,7 +15,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
+import { ticketManagementAPI, TicketResponse, TicketFilters, EscalationInfo } from '@/services/ticketManagementAPI';
 import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix, UnitCategorywiseData, ResponseTATData, ResolutionTATReportData, RecentTicketsResponse } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { TicketAnalyticsCard } from '@/components/TicketAnalyticsCard';
@@ -1109,6 +1109,55 @@ export const TicketDashboard = () => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-GB');
   };
+
+  // Helper function to format escalation data
+  const formatEscalationData = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation) return null;
+    
+    const { minutes, is_overdue, users, escalation_name, escalation_time } = escalation;
+    
+    return {
+      minutes: minutes || 0,
+      isOverdue: is_overdue || false,
+      users: users || [],
+      escalationName: escalation_name || '--',
+      escalationTime: escalation_time || '--'
+    };
+  };
+
+  // Helper function to format escalation display
+  const formatEscalationDisplay = (escalation: EscalationInfo | null | undefined, type: 'response' | 'resolution') => {
+    if (!escalation) return '--';
+    
+    const formatted = formatEscalationData(escalation);
+    return formatted?.escalationName || '--';
+  };
+
+  // Helper function to format escalation minutes
+  const formatEscalationMinutes = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation) return '--';
+    const formatted = formatEscalationData(escalation);
+    return formatted?.minutes.toString() || '--';
+  };
+
+  // Helper function to format escalation time in D:H:M format
+  const formatEscalationTime = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation || !escalation.minutes) return '--';
+    
+    const totalMinutes = escalation.minutes;
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    
+    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  // Helper function to format escalation level
+  const formatEscalationLevel = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation) return '--';
+    const formatted = formatEscalationData(escalation);
+    return formatted?.escalationName || '--';
+  };
   const TruncatedDescription = ({
     text,
     maxCharacters = 15
@@ -1206,6 +1255,24 @@ export const TicketDashboard = () => {
     }
     if (columnKey === 'review_tracking_date') {
       return formatDate(item.review_tracking_date);
+    }
+    if (columnKey === 'response_tat') {
+      return formatEscalationMinutes(item.next_response_escalation);
+    }
+    if (columnKey === 'response_time') {
+      return formatEscalationTime(item.next_response_escalation);
+    }
+    if (columnKey === 'escalation_response_name') {
+      return formatEscalationLevel(item.next_response_escalation);
+    }
+    if (columnKey === 'resolution_tat') {
+      return formatEscalationMinutes(item.next_resolution_escalation);
+    }
+    if (columnKey === 'resolution_time') {
+      return formatEscalationTime(item.next_resolution_escalation);
+    }
+    if (columnKey === 'escalation_resolution_name') {
+      return formatEscalationLevel(item.next_resolution_escalation);
     }
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
       return '--';

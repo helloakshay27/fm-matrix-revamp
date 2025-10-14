@@ -72,6 +72,8 @@ export const EditMaterialPRDashboard = () => {
       sacHsnCode: "",
       sacHsnCodeId: "",
       productDescription: "",
+      glAccount: "",
+      taxCode: "",
       each: "",
       quantity: "",
       expectedDate: "",
@@ -327,6 +329,8 @@ export const EditMaterialPRDashboard = () => {
         sacHsnCode: "",
         sacHsnCodeId: "",
         productDescription: "",
+        glAccount: "",
+        taxCode: "",
         each: "",
         quantity: "",
         expectedDate: "",
@@ -432,6 +436,8 @@ export const EditMaterialPRDashboard = () => {
           id: item.item_id,
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
+          gl_account: item.glAccount,
+          tax_code: item.taxCode,
           rate: item.each,
           total_value: item.amount,
           expected_date: item.expectedDate,
@@ -858,6 +864,30 @@ export const EditMaterialPRDashboard = () => {
                         handleItemChange(item.id, "productDescription", e.target.value)
                       }
                       placeholder="Product Description"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="GL Account"
+                      value={item.glAccount}
+                      onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
+                      placeholder="GL Account"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Tax Code"
+                      value={item.taxCode}
+                      onChange={(e) => handleItemChange(item.id, "taxCode", e.target.value)}
+                      placeholder="Tax Code"
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}

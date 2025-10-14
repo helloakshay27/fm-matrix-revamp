@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -210,18 +210,30 @@ export const AddTicketDashboard = () => {
   }, [onBehalfOf]);
 
   // Load user account
-  const loadUserAccount = async () => {
+  const loadUserAccount = useCallback(async () => {
     setLoadingAccount(true);
     try {
       const response = await ticketManagementAPI.getUserAccount();
       setUserAccount(response);
+      
+      // Populate form data when account is loaded for self
+      if (onBehalfOf === 'self' && response) {
+        setFormData(prev => ({
+          ...prev,
+          name: `${response.firstname} ${response.lastname}`,
+          department: response.department_name || '',
+          contactNumber: response.mobile || '',
+          unit: '',
+          site: 'Lockated'
+        }));
+      }
     } catch (error) {
       console.error('Error loading user account:', error);
           toast.error("Failed to load user account", { description: "Error" });
     } finally {
       setLoadingAccount(false);
     }
-  };
+  }, [onBehalfOf]);
 
   // Load initial data
   useEffect(() => {
@@ -234,6 +246,20 @@ export const AddTicketDashboard = () => {
       loadUserAccount();
     }
   }, [onBehalfOf]);
+
+  // Populate form data when userAccount is loaded for self
+  useEffect(() => {
+    if (onBehalfOf === 'self' && userAccount) {
+      setFormData(prev => ({
+        ...prev,
+        name: `${userAccount.firstname} ${userAccount.lastname}`,
+        department: userAccount.department_name || '',
+        contactNumber: userAccount.mobile || '',
+        unit: '',
+        site: 'Lockated'
+      }));
+    }
+  }, [userAccount, onBehalfOf]);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -280,6 +306,7 @@ export const AddTicketDashboard = () => {
     setIsFieldsReadOnly(false);
 
     if (onBehalfOf === 'self') {
+      // Load user account for self, form will be populated in separate useEffect
       loadUserAccount();
     } else {
       // Clear form data when switching to behalf of others
@@ -291,7 +318,7 @@ export const AddTicketDashboard = () => {
         unit: ''
       }));
     }
-  }, [onBehalfOf]);
+  }, [onBehalfOf, loadUserAccount]);
 
   // Load categories
   const loadCategories = async () => {
@@ -848,10 +875,10 @@ export const AddTicketDashboard = () => {
               </FormControl>
               <TextField
                 label="Name"
-                placeholder="Anamika Singh"
+                placeholder="Abhishek Sharma"
                 value={formData.name}
                 onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
-                disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
+                disabled={isFieldsReadOnly || onBehalfOf === 'self' || (onBehalfOf === 'self' && loadingAccount)}
                 fullWidth
                 variant="outlined"
                 slotProps={{
@@ -862,7 +889,7 @@ export const AddTicketDashboard = () => {
                 InputProps={{
                   sx: {
                     ...fieldStyles,
-                    backgroundColor: isFieldsReadOnly ? '#f9fafb' : '#fff',
+                    backgroundColor: (isFieldsReadOnly || onBehalfOf === 'self') ? '#f9fafb' : '#fff',
                   },
                 }}
               />
@@ -871,7 +898,7 @@ export const AddTicketDashboard = () => {
                 placeholder="Technical"
                 value={formData.department}
                 onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
-                disabled={isFieldsReadOnly}
+                disabled={isFieldsReadOnly || onBehalfOf === 'self'}
                 fullWidth
                 variant="outlined"
                 slotProps={{
@@ -882,7 +909,7 @@ export const AddTicketDashboard = () => {
                 InputProps={{
                   sx: {
                     ...fieldStyles,
-                    backgroundColor: isFieldsReadOnly ? '#f9fafb' : '#fff',
+                    backgroundColor: (isFieldsReadOnly || onBehalfOf === 'self') ? '#f9fafb' : '#fff',
                   },
                 }}
               />
