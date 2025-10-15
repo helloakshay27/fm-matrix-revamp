@@ -231,7 +231,7 @@ const formatMinutesToDDHHMM = (minutes: number | null | undefined): string => {
 };
 
 const formatTicketAgeingToDDHHMM = (ageingString: string | null | undefined): string => {
-  if (!ageingString) return '00:00:00';
+  if (!ageingString) return '00:00:00:00';
 
   // If it's already in the format "52 hour 20 min", parse it
   const hourMatch = ageingString.match(/(\d+)\s*hour/i);
@@ -245,17 +245,22 @@ const formatTicketAgeingToDDHHMM = (ageingString: string | null | undefined): st
     const days = Math.floor(totalMinutes / (24 * 60));
     const remainingHours = Math.floor((totalMinutes % (24 * 60)) / 60);
     const remainingMins = Math.floor(totalMinutes % 60);
+    const seconds = 0; // No seconds in the original format
 
-    return `${String(days).padStart(2, '0')}:${String(remainingHours).padStart(2, '0')}:${String(remainingMins).padStart(2, '0')}`;
+    return `${String(days).padStart(2, '0')}:${String(remainingHours).padStart(2, '0')}:${String(remainingMins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
   // If it's in minutes format, convert it
   const minutesValue = parseInt(ageingString);
   if (!isNaN(minutesValue)) {
-    return formatMinutesToDDHHMM(minutesValue);
+    const days = Math.floor(minutesValue / (24 * 60));
+    const hours = Math.floor((minutesValue % (24 * 60)) / 60);
+    const mins = Math.floor(minutesValue % 60);
+    const seconds = 0;
+    return `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
-  return '00:00:00';
+  return '00:00:00:00';
 };
 
 // Add function to format response/resolution time if needed
@@ -1794,16 +1799,11 @@ export const TicketDetailsPage = () => {
     }
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBalanceTATTick(tick => tick + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
+  // Check if ticket is closed/completed/on hold (needed for useEffect dependencies)
+  const isTicketClosed = ticketData?.issue_status ? ['complete', 'completed', 'close', 'closed', 'on hold'].includes(ticketData.issue_status.toLowerCase()) : false;
 
   useEffect(() => {
-    if (ticketData?.created_at) {
+    if (ticketData?.created_at && !isTicketClosed) {
       // Calculate ageing in seconds from created_at to now
       const createdTime = new Date(ticketData.created_at).getTime();
       const now = Date.now();
@@ -1867,8 +1867,37 @@ export const TicketDetailsPage = () => {
       }, 1000);
 
       return () => clearInterval(interval);
+    } else if (isTicketClosed && ticketData) {
+      // For closed tickets, set static values from API data
+      if (ticketData.ticket_ageing_minutes) {
+        const staticAgeingSeconds = ticketData.ticket_ageing_minutes * 60;
+        setCurrentAgeing(staticAgeingSeconds);
+      } else if (ticketData.ticket_ageing) {
+        // Parse "43 hour 7 min" format
+        const ageingString = ticketData.ticket_ageing;
+        const hourMatch = ageingString.match(/(\d+)\s*hour/i);
+        const minMatch = ageingString.match(/(\d+)\s*min/i);
+        
+        if (hourMatch || minMatch) {
+          const hours = hourMatch ? parseInt(hourMatch[1]) : 0;
+          const mins = minMatch ? parseInt(minMatch[1]) : 0;
+          const totalSeconds = (hours * 60 + mins) * 60;
+          setCurrentAgeing(totalSeconds);
+        }
+      }
+      
+      // Set static escalation values for closed tickets
+      if (ticketData.next_response_escalation?.minutes) {
+        setResponseEscalationSeconds(ticketData.next_response_escalation.minutes * 60);
+      }
+      if (ticketData.next_resolution_escalation?.minutes) {
+        setResolutionEscalationSeconds(ticketData.next_resolution_escalation.minutes * 60);
+      }
+      if (ticketData.next_executive_escalation?.minutes) {
+        setGoldenTicketEscalationSeconds(ticketData.next_executive_escalation.minutes * 60);
+      }
     }
-  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time]);
+  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed]);
 
   // Add useEffect to trigger balance TAT recalculation every second for real-time countdown (removed - now handled in main timer)
 
@@ -1907,29 +1936,19 @@ export const TicketDetailsPage = () => {
     [
       {
         label: 'Response TAT',
-        value:
-          ticketData.issue_status.toLowerCase() === "complete" ||
-            ticketData.issue_status.toLowerCase() === "close" ||
-            ticketData.issue_status.toLowerCase() === "closed" ||
-            ticketData.issue_status.toLowerCase() === "on hold"
-            ? '00:00:00'
-            : ticketData.next_response_escalation?.minutes
-              ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes)
-              : '00:00:00'
+        value: isTicketClosed
+          ? (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
+          : (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
       },
       {
         label: 'Balance TAT',
-        value:
-          ticketData.issue_status.toLowerCase() === "complete" ||
-            ticketData.issue_status.toLowerCase() === "close" ||
-            ticketData.issue_status.toLowerCase() === "closed" ||
-            ticketData.issue_status.toLowerCase() === "on hold"
-            ? '00:00:00:00'
-            : ticketData.next_response_escalation?.escalation_time
-              ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_response_escalation.escalation_time))
-              : '00:00:00:00',
-        isExceeded: ticketData.next_response_escalation?.is_overdue || false,
-        exceededBy: ticketData.next_response_escalation?.is_overdue
+        value: isTicketClosed
+          ? '00:00:00:00'
+          : (ticketData.next_response_escalation?.escalation_time
+            ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_response_escalation.escalation_time))
+            : '00:00:00:00'),
+        isExceeded: !isTicketClosed && (ticketData.next_response_escalation?.is_overdue || false),
+        exceededBy: !isTicketClosed && ticketData.next_response_escalation?.is_overdue
           ? formatSecondsToDDHHMMSS(Math.abs(ticketData.next_response_escalation.minutes * 60))
           : ''
       },
@@ -1947,29 +1966,19 @@ export const TicketDetailsPage = () => {
     [
       {
         label: 'Resolution TAT',
-        value:
-          ticketData.issue_status.toLowerCase() === "complete" ||
-            ticketData.issue_status.toLowerCase() === "close" ||
-            ticketData.issue_status.toLowerCase() === "closed" ||
-            ticketData.issue_status.toLowerCase() === "on hold"
-            ? '00:00:00'
-            : ticketData.next_resolution_escalation?.minutes
-              ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes)
-              : '00:00:00'
+        value: isTicketClosed
+          ? (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
+          : (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
       },
       {
         label: 'Balance TAT',
-        value:
-          ticketData.issue_status.toLowerCase() === "complete" ||
-            ticketData.issue_status.toLowerCase() === "close" ||
-            ticketData.issue_status.toLowerCase() === "closed" ||
-            ticketData.issue_status.toLowerCase() === "on hold"
-            ? '00:00:00:00'
-            : ticketData.next_resolution_escalation?.escalation_time
-              ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_resolution_escalation.escalation_time))
-              : '00:00:00:00',
-        isExceeded: ticketData.next_resolution_escalation?.is_overdue || false,
-        exceededBy: ticketData.next_resolution_escalation?.is_overdue
+        value: isTicketClosed
+          ? '00:00:00:00'
+          : (ticketData.next_resolution_escalation?.escalation_time
+            ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_resolution_escalation.escalation_time))
+            : '00:00:00:00'),
+        isExceeded: !isTicketClosed && (ticketData.next_resolution_escalation?.is_overdue || false),
+        exceededBy: !isTicketClosed && ticketData.next_resolution_escalation?.is_overdue
           ? formatSecondsToDDHHMMSS(Math.abs(ticketData.next_resolution_escalation.minutes * 60))
           : ''
       },
@@ -2451,9 +2460,9 @@ export const TicketDetailsPage = () => {
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {ticketData.issue_status.toLowerCase() === "complete" || ticketData.issue_status.toLowerCase() === "close" || ticketData.issue_status.toLowerCase() === "closed" || ticketData.issue_status.toLowerCase() === "on hold"
-                            ? '00:00:00:00' :
-                            formatTicketAgeing(currentAgeing)
+                          {isTicketClosed
+                            ? (ticketData.ticket_ageing ? formatTicketAgeingToDDHHMM(ticketData.ticket_ageing) : formatTicketAgeing(currentAgeing))
+                            : formatTicketAgeing(currentAgeing)
                           }
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
@@ -2494,14 +2503,9 @@ export const TicketDetailsPage = () => {
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {ticketData.issue_status.toLowerCase() === "complete" ||
-                            ticketData.issue_status.toLowerCase() === "close" ||
-                            ticketData.issue_status.toLowerCase() === "closed" ||
-                            ticketData.issue_status.toLowerCase() === "on hold"
-                            ? '00:00:00'
-                            : ticketData.next_response_escalation?.minutes
-                              ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes)
-                              : '00:00:00'
+                          {isTicketClosed
+                            ? (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
+                            : (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
                           }
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
@@ -2543,14 +2547,9 @@ export const TicketDetailsPage = () => {
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {ticketData.issue_status.toLowerCase() === "complete" ||
-                            ticketData.issue_status.toLowerCase() === "close" ||
-                            ticketData.issue_status.toLowerCase() === "closed" ||
-                            ticketData.issue_status.toLowerCase() === "on hold"
-                            ? '00:00:00'
-                            : ticketData.next_resolution_escalation?.minutes
-                              ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes)
-                              : '00:00:00'
+                          {isTicketClosed
+                            ? (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
+                            : (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
                           }
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
@@ -2576,10 +2575,7 @@ export const TicketDetailsPage = () => {
                             className="font-semibold text-[#1A1A1A]"
                             style={{ fontSize: 24 }}
                           >
-                            {ticketData.issue_status.toLowerCase() === "complete" ||
-                              ticketData.issue_status.toLowerCase() === "close" ||
-                              ticketData.issue_status.toLowerCase() === "closed" ||
-                              ticketData.issue_status.toLowerCase() === "on hold"
+                            {isTicketClosed
                               ? '00:00:00:00'
                               : formatSecondsToDDHHMMSS(responseEscalationSeconds)
                             }
@@ -2635,10 +2631,7 @@ export const TicketDetailsPage = () => {
                             className="font-semibold text-[#1A1A1A]"
                             style={{ fontSize: 24 }}
                           >
-                            {ticketData.issue_status.toLowerCase() === "complete" ||
-                              ticketData.issue_status.toLowerCase() === "close" ||
-                              ticketData.issue_status.toLowerCase() === "closed" ||
-                              ticketData.issue_status.toLowerCase() === "on hold"
+                            {isTicketClosed
                               ? '00:00:00:00'
                               : formatSecondsToDDHHMMSS(resolutionEscalationSeconds)
                             }
@@ -2693,11 +2686,8 @@ export const TicketDetailsPage = () => {
         className="font-semibold text-[#1A1A1A]"
         style={{ fontSize: 24 }}
       >
-        {ticketData.issue_status.toLowerCase() === "complete" || 
-         ticketData.issue_status.toLowerCase() === "close" || 
-         ticketData.issue_status.toLowerCase() === "closed" || 
-         ticketData.issue_status.toLowerCase() === "on hold"
-          ? '00:00:00:00'
+        {isTicketClosed
+          ? (ticketData.next_executive_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_executive_escalation.minutes) : '00:00:00')
           : formatSecondsToDDHHMMSS(goldenTicketEscalationSeconds)
         }
       </p>
@@ -2844,7 +2834,7 @@ export const TicketDetailsPage = () => {
                                     ticketData.issue_status.toLowerCase() === "close" ||
                                     ticketData.issue_status.toLowerCase() === "closed" ||
                                     ticketData.issue_status.toLowerCase() === "on hold"
-                                    ? '00:00:00:00'
+                                    ? (ticketData.ticket_ageing_minutes ? formatMinutesToDDHHMM(ticketData.ticket_ageing_minutes) + ':00' : '00:00:00:00')
                                     : formatTicketAgeing(currentAgeing)
                                 }
                               </span>
@@ -3212,12 +3202,14 @@ export const TicketDetailsPage = () => {
                                       if (!matchedTemplate) return null;
 
                                       return (
-                                        <div
-                                          key={`rca-display-${templateId}`}
-                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                        >
-                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        <div key={`rca-display-${templateId}`}>
+                                          {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                          <div
+                                            className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                            style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                          >
+                                            {matchedTemplate.body || matchedTemplate.identifier_action}
+                                          </div>
                                         </div>
                                       );
                                     });
@@ -4025,14 +4017,14 @@ export const TicketDetailsPage = () => {
                       </h3>
 
                     </div>
-                    <Button
+                    {/* <Button
                       variant="outline"
                       size="sm"
                       className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
                     // onClick={handleUpdate}
                     >
                       <Edit className="w-4 h-4 mr-1" /> Edit
-                    </Button>
+                    </Button> */}
                   </div>
 
                   {/* Body */}
@@ -5247,7 +5239,7 @@ export const TicketDetailsPage = () => {
                                     ticketData.issue_status.toLowerCase() === "close" ||
                                     ticketData.issue_status.toLowerCase() === "closed" ||
                                     ticketData.issue_status.toLowerCase() === "on hold"
-                                    ? '00:00:00:00'
+                                    ? (ticketData.ticket_ageing_minutes ? formatMinutesToDDHHMM(ticketData.ticket_ageing_minutes) + ':00' : '00:00:00:00')
                                     : formatTicketAgeing(currentAgeing)
                                 }
                               </span>
@@ -5615,12 +5607,14 @@ export const TicketDetailsPage = () => {
                                       if (!matchedTemplate) return null;
 
                                       return (
-                                        <div
-                                          key={`rca-display-${templateId}`}
-                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
-                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-                                        >
-                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        <div key={`rca-display-${templateId}`}>
+                                          {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                          <div
+                                            className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                            style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                          >
+                                            {matchedTemplate.body || matchedTemplate.identifier_action}
+                                          </div>
                                         </div>
                                       );
                                     });

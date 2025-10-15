@@ -1016,7 +1016,7 @@ export const TicketDashboard = () => {
     label: 'Complaint Mode',
     sortable: true
   }, {
-    key: 'service_or_asset',
+    key: 'asset_or_service_name',
     label: 'Asset / Service Name',
     sortable: true
   }, {

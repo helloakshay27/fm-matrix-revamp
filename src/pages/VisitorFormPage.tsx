@@ -377,6 +377,8 @@ export const VisitorFormPage = () => {
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
+
+
       if (field === "visitorType") {
         newData.visitPurpose =
           value === "support" ? undefined : prev.visitPurpose;
@@ -423,13 +425,9 @@ export const VisitorFormPage = () => {
         }
       }
       if (field === "mobileNumber") {
-        console.log('📱 Mobile number changed to:', value, 'Length:', value?.length);
-        // Trigger visitor info fetch when mobile number is complete
         if (value && value.length === 10) {
-          console.log('✅ Mobile number is 10 digits, triggering fetchVisitorInfo');
           fetchVisitorInfo(value);
         } else {
-          console.log('⚠️ Mobile number is not 10 digits, clearing visitor info');
           setVisitorInfo(null);
           setShowVisitorInfo(false);
         }
@@ -564,6 +562,11 @@ export const VisitorFormPage = () => {
       return;
     }
 
+    if (formData.hostMobile === formData.mobileNumber) {
+      toast.error("Host mobile number and visitor mobile number cannot be same");
+      return;
+    }
+
     if (formData.frequency === "frequently") {
       if (!formData.passValidFrom) {
         toast.error("Please select pass valid from date");
@@ -601,14 +604,13 @@ export const VisitorFormPage = () => {
     }
 
     // Check additional visitors validation
-    const invalidAdditionalVisitor = additionalVisitors.find(
-      (visitor) =>
-        (visitor.name && (!visitor.mobile || !visitor.passNo)) ||
-        (visitor.mobile && (!visitor.name || !visitor.passNo)) ||
-        (visitor.passNo && (!visitor.name || !visitor.mobile)) ||
-        (!visitor.name && visitor.mobile) ||
-        (!visitor.name && visitor.passNo) ||
-        (!visitor.mobile && visitor.passNo)
+    const invalidAdditionalVisitor = additionalVisitors.find((visitor) =>
+      (visitor.name && (!visitor.mobile || !visitor.passNo)) ||
+      (visitor.mobile && (!visitor.name || !visitor.passNo)) ||
+      (visitor.passNo && (!visitor.name || !visitor.mobile)) ||
+      (!visitor.name && visitor.mobile) ||
+      (!visitor.name && visitor.passNo) ||
+      (!visitor.mobile && visitor.passNo)
     );
     if (invalidAdditionalVisitor) {
       toast.error(
