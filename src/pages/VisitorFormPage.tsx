@@ -1374,9 +1374,9 @@ export const VisitorFormPage = () => {
 
               {/* Government ID Upload - Multiple Files */}
               <div className="flex flex-col md:col-span-2">
-                <label className="text-sm font-medium text-gray-700 mb-2">
+                {/* <label className="text-sm font-medium text-gray-700 mb-2">
                   Government ID
-                </label>
+                </label> */}
 
                 {/* Upload Button */}
                 <div className="relative mb-3">
@@ -1390,7 +1390,7 @@ export const VisitorFormPage = () => {
                   />
                   <label
                     htmlFor="government-id-upload"
-                    className="flex items-center justify-center w-full h-[45px] px-3 py-2 border border-gray-300 rounded-md cursor-pointer hover:border-gray-400 transition-colors bg-white"
+                    className="flex items-center justify-center w-full h-[45px] px-3 py-2 border border-gray-300 rounded-[5px] cursor-pointer hover:border-gray-400 transition-colors bg-white"
                   >
                     <div className="flex items-center">
                       <Upload className="h-4 w-4 mr-2 text-gray-500" />
