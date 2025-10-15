@@ -73,7 +73,7 @@ export const PRDeletionRequests = () => {
                         : item.resource_type === "Pms::WorkOrder" && item.letter_of_indent === true
                             ? "Service PR"
                             : "",
-                prNo: item.reference_number,
+                prNo: item.external_id,
                 siteName: item.site_name,
                 level: item.approval_level_name,
                 level_id: item.level_id,
