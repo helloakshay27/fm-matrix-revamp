@@ -131,24 +131,24 @@ export const MobileSurveyThankYou: React.FC = () => {
     >
       {/* Logo */}
       <div className="absolute top-4  mt-10 right-4">
-      <div className="flex justify-between">
-        <div className="flex justify-end item-end">
-          <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
-            {window.location.origin === "https://oig.gophygital.work" ? (
-              <img
-                src="/gophygital-logo-min.jpg"
-                alt="Gophygital Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <img
-                src="/Without bkg.svg"
-                alt="OIG Logo"
-                className="w-full h-full object-contain"
-              />
-            )}
+        <div className="flex justify-between">
+          <div className="flex justify-end item-end">
+            <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
+              {window.location.origin === "https://oig.gophygital.work" ? (
+                <img
+                  src="/Without bkg.svg"
+                  alt="OIG Logo"
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <img
+                  src="/gophygital-logo-min.jpg"
+                  alt="Gophygital Logo"
+                  className="w-full h-full object-contain"
+                />
+              )}
+            </div>
           </div>
-        </div>
         </div>
       </div>
 
@@ -160,7 +160,7 @@ export const MobileSurveyThankYou: React.FC = () => {
             className="text-lg sm:text-lg font-work-sans font-semibold text-black"
             // style={{ fontFamily: "cursive" }}
           >
-          Thank you 
+            Thank you
           </h1>
           {/* <h1
             className="text-5xl sm:text-6xl font-bold text-black -mt-4"
