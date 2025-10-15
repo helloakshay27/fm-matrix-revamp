@@ -157,6 +157,8 @@ export const EditMaterialPRDashboard = () => {
             sacHsnCodeId: item.hsn_id,
             sacHsnCode: item.sac_hsn_code,
             productDescription: item.prod_desc,
+            glAccount: item.gl_account,
+            taxCode: item.tax_code,
             each: item.rate,
             quantity: item.quantity,
             expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
