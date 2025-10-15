@@ -140,6 +140,7 @@ interface VendorAttachments {
 interface QRCode {
     image_url: string;
     download_link: string;
+    id: number;
 }
 
 interface ApprovalLevel {
@@ -1195,16 +1196,70 @@ export const PermitDetails = () => {
     };
 
     // Handle download QR code
-    const handleDownloadQR = () => {
-        if (permitData?.qr_code?.image_url) {
-            const link = document.createElement('a');
-            link.href = permitData.qr_code.image_url;
-            link.download = `permit-${permitData.permit.id}-qr-code.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+    // const handleDownloadQR = () => {
+    //     if (permitData?.qr_code?.image_url) {
+    //         const link = document.createElement('a');
+    //         link.href = permitData.qr_code.image_url;
+    //         link.download = `permit-${permitData.permit.id}-qr-code.png`;
+    //         document.body.appendChild(link);
+    //         link.click();
+    //         document.body.removeChild(link);
+    //     }
+    // };
+
+    const handleDownloadQR = async () => {
+        if (permitData?.qr_code?.id) {
+            try {
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
+
+                if (!baseUrl || !token) {
+                    toast.error('Authentication information missing');
+                    return;
+                }
+
+                // Ensure protocol is present
+                let fullBaseUrl = baseUrl;
+                if (!/^https?:\/\//i.test(baseUrl)) {
+                    fullBaseUrl = `https://${baseUrl}`;
+                }
+
+                // Download QR code using the provided format
+                const fileUrl = `https://${baseUrl}/attachfiles/${permitData.qr_code.id}?show_file=true`;
+                const response = await fetch(fileUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to download QR code');
+                }
+
+                // Get the blob from the response
+                const blob = await response.blob();
+
+                // Create object URL and trigger download
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `permit-${permitData.permit.id}-qr-code.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                toast.success('QR code downloaded successfully');
+            } catch (error) {
+                console.error('Error downloading QR code:', error);
+                toast.error('Failed to download QR code. Please try again.');
+            }
+        } else {
+            toast.error('QR code not available');
         }
     };
+
 
     // Handle print form
     const handlePrintForm = async () => {
@@ -3060,7 +3115,7 @@ export const PermitDetails = () => {
                                     <Download className="w-4 h-4 mr-2" />
                                     Download QR Code
                                 </Button>
-                                {permitData.qr_code.download_link && (
+                                {/* {permitData.qr_code.download_link && (
                                     <Button
                                         variant="outline"
                                         onClick={() => window.open(permitData.qr_code.download_link, '_blank')}
@@ -3068,7 +3123,7 @@ export const PermitDetails = () => {
                                         <Download className="w-4 h-4 mr-2" />
                                         Download via Link
                                     </Button>
-                                )}
+                                )} */}
                             </div>
                         </div>
                     </Section>
