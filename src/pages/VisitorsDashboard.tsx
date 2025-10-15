@@ -647,8 +647,17 @@ export const VisitorsDashboard = () => {
         return visitor.guest_name || '--';
       case 'guest_from':
         return visitor.guest_from || '--';
-      case 'primary_host':
-        return visitor.primary_host || '--';
+      case 'primary_host': {
+        let host = '--';
+        console.log(visitor)
+        if (visitor.visitor_host_name && visitor.visitor_host_name.trim() !== "" && visitor.visitor_host_name !== 'null') {
+          host = visitor.visitor_host_name;
+        } else if (visitor.primary_host && visitor.primary_host.trim() !== "" && visitor.primary_host !== 'null') {
+          host = visitor.primary_host;
+        }
+
+        return host;
+      }
       case 'visit_purpose':
         return visitor.visit_purpose || '--';
       case 'created_at_formatted':
@@ -713,8 +722,17 @@ export const VisitorsDashboard = () => {
         return <span className="font-medium">{visitor.guest_name || '--'}</span>;
       case 'guest_from':
         return visitor.guest_from || '--';
-      case 'primary_host':
-        return visitor.primary_host || '--';
+      case 'primary_host': {
+        let host = '--';
+        console.log(visitor)
+        if (visitor.visitor_host_name && visitor.visitor_host_name.trim() !== "" && visitor.visitor_host_name !== 'null') {
+          host = visitor.visitor_host_name;
+        } else if (visitor.primary_host && visitor.primary_host.trim() !== "" && visitor.primary_host !== 'null') {
+          host = visitor.primary_host;
+        }
+
+        return host;
+      }
       case 'visit_purpose':
         return visitor.visit_purpose || '--';
       case 'status':
@@ -851,8 +869,16 @@ export const VisitorsDashboard = () => {
         );
       case 'guest_name':
         return visitor.guest_name || '--';
-      case 'primary_host':
-        return visitor.primary_host || '--';
+      case 'primary_host': {
+        let host = '--';
+        if (visitor.visitor_host_name && visitor.visitor_host_name.trim() !== "" && visitor.visitor_host_name !== 'null') {
+          host = visitor.visitor_host_name;
+        } else if (visitor.primary_host && visitor.primary_host.trim() !== "" && visitor.primary_host !== 'null') {
+          host = visitor.primary_host;
+        }
+
+        return host;
+      }
       case 'guest_from':
         return visitor.guest_from || '--';
       case 'visit_purpose':
