@@ -1501,7 +1501,10 @@ export const MobileSurveyLanding: React.FC = () => {
     <div
       className="min-h-screen flex flex-col"
       style={{
-       backgroundImage: `url(${surveyData?.snag_checklist?.survey_attachment?.url})`,
+        backgroundImage:
+          surveyData.snag_checklist?.survey_attachment
+            ? `url(${surveyData?.snag_checklist?.survey_attachment?.url})`
+            : 'url("/9019830 1.png")',
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -1545,14 +1548,14 @@ export const MobileSurveyLanding: React.FC = () => {
             <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
               {window.location.origin === "https://oig.gophygital.work" ? (
                 <img
-                  src="/gophygital-logo-min.jpg"
-                  alt="Gophygital Logo"
+                  src="/Without bkg.svg"
+                  alt="OIG Logo"
                   className="w-full h-full object-contain"
                 />
               ) : (
                 <img
-                  src="/Without bkg.svg"
-                  alt="OIG Logo"
+                  src="/gophygital-logo-min.jpg"
+                  alt="Gophygital Logo"
                   className="w-full h-full object-contain"
                 />
               )}
@@ -1930,17 +1933,28 @@ export const MobileSurveyLanding: React.FC = () => {
                           style={{ minWidth: "100%", paddingBottom: "8px" }}
                         >
                           {(() => {
-                            const tags = getCurrentQuestion()?.generic_tags || [];
+                            const tags =
+                              getCurrentQuestion()?.generic_tags || [];
                             const itemsPerPage = 4;
                             // Split tags into pages of 4 items each
                             const pages = Array.from(
                               { length: Math.ceil(tags.length / itemsPerPage) },
-                              (_, pageIdx) => tags.slice(pageIdx * itemsPerPage, (pageIdx + 1) * itemsPerPage)
+                              (_, pageIdx) =>
+                                tags.slice(
+                                  pageIdx * itemsPerPage,
+                                  (pageIdx + 1) * itemsPerPage
+                                )
                             );
                             return (
-                              <div className="flex flex-row gap-6" style={{ minWidth: `${itemsPerPage * 180}px` }}>
+                              <div
+                                className="flex flex-row gap-6"
+                                style={{ minWidth: `${itemsPerPage * 180}px` }}
+                              >
                                 {pages.map((pageTags, pageIdx) => (
-                                  <div key={pageIdx} className="flex flex-col gap-4 min-w-[360px]">
+                                  <div
+                                    key={pageIdx}
+                                    className="flex flex-col gap-4 min-w-[360px]"
+                                  >
                                     {/* First row: items 0,1 */}
                                     <div className="flex flex-row gap-4">
                                       {pageTags.slice(0, 2).map((tag, idx) =>
@@ -1948,15 +1962,21 @@ export const MobileSurveyLanding: React.FC = () => {
                                           <button
                                             type="button"
                                             key={tag.id}
-                                            onClick={() => handleGenericTagClick(tag)}
+                                            onClick={() =>
+                                              handleGenericTagClick(tag)
+                                            }
                                             className={`p-3 sm:p-4 rounded-[0.20rem] text-center transition-all ${
-                                              selectedTags.some((selectedTag) => selectedTag.id === tag.id)
+                                              selectedTags.some(
+                                                (selectedTag) =>
+                                                  selectedTag.id === tag.id
+                                              )
                                                 ? "border-blue-500 bg-blue-50"
                                                 : ""
-                                             }`}
+                                            }`}
                                           >
                                             <div className="mb-2">
-                                              {tag.icons && tag.icons.length > 0 ? (
+                                              {tag.icons &&
+                                              tag.icons.length > 0 ? (
                                                 <img
                                                   src={tag.icons[0].url}
                                                   alt={tag.category_name}
@@ -1964,7 +1984,9 @@ export const MobileSurveyLanding: React.FC = () => {
                                                 />
                                               ) : (
                                                 <div className="w-[9rem] h-[5rem] sm:w-[9rem] sm:h-[5rem] mx-auto bg-gray-200 rounded-full flex items-center justify-center">
-                                                  <span className="text-lg sm:text-2xl">🏷️</span>
+                                                  <span className="text-lg sm:text-2xl">
+                                                    🏷️
+                                                  </span>
                                                 </div>
                                               )}
                                             </div>
@@ -1973,7 +1995,10 @@ export const MobileSurveyLanding: React.FC = () => {
                                             </span>
                                           </button>
                                         ) : (
-                                          <div key={`empty-row1-${pageIdx}-${idx}`} className="p-3 sm:p-4" />
+                                          <div
+                                            key={`empty-row1-${pageIdx}-${idx}`}
+                                            className="p-3 sm:p-4"
+                                          />
                                         )
                                       )}
                                     </div>
@@ -1984,15 +2009,21 @@ export const MobileSurveyLanding: React.FC = () => {
                                           <button
                                             type="button"
                                             key={tag.id}
-                                            onClick={() => handleGenericTagClick(tag)}
+                                            onClick={() =>
+                                              handleGenericTagClick(tag)
+                                            }
                                             className={`p-3 sm:p-4 rounded-[0.20rem] text-center transition-all ${
-                                              selectedTags.some((selectedTag) => selectedTag.id === tag.id)
+                                              selectedTags.some(
+                                                (selectedTag) =>
+                                                  selectedTag.id === tag.id
+                                              )
                                                 ? "border-blue-500 bg-blue-50"
                                                 : ""
                                             }`}
                                           >
                                             <div className="mb-2">
-                                              {tag.icons && tag.icons.length > 0 ? (
+                                              {tag.icons &&
+                                              tag.icons.length > 0 ? (
                                                 <img
                                                   src={tag.icons[0].url}
                                                   alt={tag.category_name}
@@ -2000,7 +2031,9 @@ export const MobileSurveyLanding: React.FC = () => {
                                                 />
                                               ) : (
                                                 <div className="w-[9rem] h-[5rem] sm:w-[9rem] sm:h-[5rem] mx-auto bg-gray-200 rounded-full flex items-center justify-center">
-                                                  <span className="text-lg sm:text-2xl">🏷️</span>
+                                                  <span className="text-lg sm:text-2xl">
+                                                    🏷️
+                                                  </span>
                                                 </div>
                                               )}
                                             </div>
@@ -2009,7 +2042,10 @@ export const MobileSurveyLanding: React.FC = () => {
                                             </span>
                                           </button>
                                         ) : (
-                                          <div key={`empty-row2-${pageIdx}-${idx}`} className="p-3 sm:p-4" />
+                                          <div
+                                            key={`empty-row2-${pageIdx}-${idx}`}
+                                            className="p-3 sm:p-4"
+                                          />
                                         )
                                       )}
                                     </div>
