@@ -1133,6 +1133,7 @@ export const VisitorFormPage = () => {
                 <>
                   <TextField
                     label="Host Name"
+                    placeholder="Enter Host Name"
                     value={formData.hostName}
                     onChange={(e) =>
                       handleInputChange("hostName", e.target.value)
@@ -1145,6 +1146,7 @@ export const VisitorFormPage = () => {
                   />
                   <TextField
                     label="Host Mobile No."
+                    placeholder="Enter Host Mobile No."
                     value={formData.hostMobile}
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
@@ -1164,6 +1166,7 @@ export const VisitorFormPage = () => {
                   />
                   <TextField
                     label="Host Email ID"
+                    placeholder="Enter Host Email ID"
                     value={formData.hostEmail}
                     onChange={(e) =>
                       handleInputChange("hostEmail", e.target.value)
@@ -1190,6 +1193,7 @@ export const VisitorFormPage = () => {
                     label="Tower"
                     notched
                     disabled={loadingBuildings}
+                    displayEmpty
                   >
                     <MenuItem value="">
                       {loadingBuildings ? "Loading..." : "Select Tower"}
@@ -1232,6 +1236,7 @@ export const VisitorFormPage = () => {
                     }
                     label="Support Category"
                     notched
+                    displayEmpty
                     disabled={loadingSupportCategories}
                   >
                     <MenuItem value="">
@@ -1513,6 +1518,7 @@ export const VisitorFormPage = () => {
                         }
                         label="Movement Type"
                         notched
+                        displayEmpty
                         disabled={loadingItemMovementTypes}
                       >
                         <MenuItem value="">
@@ -1541,6 +1547,7 @@ export const VisitorFormPage = () => {
                         }
                         label="Category"
                         notched
+                        displayEmpty
                       >
                         <MenuItem value="">Select Category</MenuItem>
                         <MenuItem value="Spree::User">Permanent Staff</MenuItem>
@@ -1563,6 +1570,7 @@ export const VisitorFormPage = () => {
                         }
                         label="Mode of Transport"
                         notched
+                        displayEmpty
                       >
                         <MenuItem value="">Select Mode</MenuItem>
                         <MenuItem value="By Hand">By Hand</MenuItem>
@@ -1577,6 +1585,7 @@ export const VisitorFormPage = () => {
                         handleGoodsInputChange("lrNumber", e.target.value)
                       }
                       fullWidth
+                      placeholder="Enter LR Number"
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
                       sx={fieldStyles}
@@ -1584,6 +1593,7 @@ export const VisitorFormPage = () => {
                     <TextField
                       label="Trip ID"
                       value={goodsData.tripId}
+                      placeholder="Enter Trip ID"
                       onChange={(e) =>
                         handleGoodsInputChange("tripId", e.target.value)
                       }
@@ -1614,6 +1624,7 @@ export const VisitorFormPage = () => {
                             }
                             label="Item"
                             notched
+                            displayEmpty
                             disabled={loadingItemTypes}
                           >
                             <MenuItem value="">
@@ -1629,6 +1640,7 @@ export const VisitorFormPage = () => {
                         <TextField
                           label="UIC/Invoice No"
                           value={item.uicInvoiceNo}
+                          placeholder="Enter UIC/Invoice No"
                           onChange={(e) =>
                             updateItem(item.id, "uicInvoiceNo", e.target.value)
                           }
@@ -1641,6 +1653,7 @@ export const VisitorFormPage = () => {
                           <TextField
                             label="Quantity"
                             value={item.quantity}
+                            placeholder="Enter Quantity"
                             onChange={(e) =>
                               updateItem(item.id, "quantity", e.target.value)
                             }
@@ -1765,6 +1778,7 @@ export const VisitorFormPage = () => {
                 >
                   <TextField
                     label="Visitor Name"
+                    placeholder="Visitor Name"
                     value={visitor.name}
                     onChange={(e) =>
                       updateAdditionalVisitor(
@@ -1781,6 +1795,7 @@ export const VisitorFormPage = () => {
                   />
                   <TextField
                     label="Mobile"
+                    placeholder="Mobile"
                     value={visitor.mobile}
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, ""); // remove non-numeric characters
@@ -1801,6 +1816,7 @@ export const VisitorFormPage = () => {
                   />
                   <TextField
                     label="Pass No."
+                    placeholder="Pass No."
                     value={visitor.passNo}
                     onChange={(e) =>
                       updateAdditionalVisitor(
