@@ -46,6 +46,8 @@ interface VisitorData {
   checkin_time?: string;
   checkout_time?: string;
   expected_at?: string;
+  guest_entry_time?: string;
+  master_exit_time?: string;
   image?: string;
   pass_number?: string;
   guest_type?: string;
@@ -345,7 +347,7 @@ export const VisitorDetailsPage = () => {
       toast.info('Processing checkout...');
 
       // Construct the API URL using the visitor ID
-      const url = getFullUrl(`/pms/visitors/${id}.json`);
+      const url = getFullUrl(`/pms/admin/visitors/marked_out_visitors.json`);
       const options = getAuthenticatedFetchOptions();
 
       // Create request body for checkout with current timestamp
@@ -353,7 +355,8 @@ export const VisitorDetailsPage = () => {
         gatekeeper: {
           guest_exit_time: new Date().toISOString().slice(0, 19) + "+05:30", // Format: 2025-08-22T19:07:37+05:30
           exit_gate_id: "",
-          status: "checked_out"
+          status: "checked_out",
+          gatekeeper_ids: id
         }
       };
 
@@ -500,14 +503,21 @@ export const VisitorDetailsPage = () => {
                 )}
 
                 {/* Check In Button - Show for approved visitors who haven't checked in */}
-                {(visitorData.vstatus === 'Approved' && !visitorData.check_in) && (
+                {(visitorData.vstatus === 'Approved' && !visitorData.guest_entry_time) ? (
                   <Button
                     className="bg-green-500 hover:bg-green-600 !text-white px-3 py-2 text-sm rounded"
                     onClick={handleCheckIn}
                   >
                     Check In
                   </Button>
-                )}
+                ) : visitorData.vstatus === 'Approved' && visitorData.guest_entry_time && !visitorData.master_exit_time ? (
+                  <Button
+                    className="bg-green-500 hover:bg-green-600 !text-white px-3 py-2 text-sm rounded"
+                    onClick={handleCheckOut}
+                  >
+                    Check Out
+                  </Button>
+                ) : <></>}
 
                 {/* Check Out Button - Show for checked-in visitors who haven't checked out */}
                 {(visitorData.vstatus === 'Approved' && visitorData.check_in && !visitorData.check_out) && (

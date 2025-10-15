@@ -31,9 +31,11 @@ interface VisitorSelectionPanelProps {
   onFlag?: () => Promise<void>;
   onExport: () => void;
   onClearSelection: () => void;
+  fetchVisitorHistory: () => void;
 }
 
 export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
+  fetchVisitorHistory,
   selectedVisitors,
   selectedVisitorObjects,
   onCheckIn,
@@ -67,6 +69,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
       if (onCheckIn) {
         await onCheckIn();
         toast.success(`Successfully checked in ${selectedVisitors.length} visitor(s).`);
+        fetchVisitorHistory();
       }
     } catch (error) {
       console.error('Failed to check in visitors:', error);
@@ -81,7 +84,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
     setIsCheckOutLoading(true);
     try {
       await onCheckOut();
-      toast.success(`Successfully checked out ${selectedVisitors.length} visitor(s).`);
+      fetchVisitorHistory();
     } catch (error) {
       console.error('Failed to check out visitors:', error);
       toast.error("Failed to check out visitors. Please try again.");
@@ -153,11 +156,9 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
           // Parse the response data first
           const data = await response.json();
-          console.log('📋 OTP Verification API Response for visitor', visitorId, ':', data);
 
           if (!response.ok) {
             const errorText = JSON.stringify(data);
-            console.error('OTP Verification API Error Response for visitor', visitorId, ':', errorText);
 
             if (response.status === 401) {
               throw new Error('Authentication failed. Please check your access token and try again.');
@@ -208,6 +209,8 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
         if (onVerifyOtp) {
           await onVerifyOtp();
         }
+
+        fetchVisitorHistory();
       }
 
       if (errorCount > 0 && successCount === 0) {
