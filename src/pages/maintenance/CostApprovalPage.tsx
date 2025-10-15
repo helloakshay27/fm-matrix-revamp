@@ -64,7 +64,7 @@ const createCostApprovalSchema = (existingRules: CostApprovalGetResponse[], acti
   z.object({
     costUnit: z.enum(['between', 'greater_than', 'greater_than_equal']),
     costFrom: z.number().positive().optional(),
-    costTo: z.number().positive(),
+    costTo: z.number().positive('Cost value must be greater than 0'),
     approvalLevels: z.array(z.object({
       level: z.enum(['L1', 'L2', 'L3', 'L4', 'L5']),
       escalateToUsers: z.array(z.number()).max(15, 'Maximum 15 users allowed per level'),
@@ -77,38 +77,6 @@ const createCostApprovalSchema = (existingRules: CostApprovalGetResponse[], acti
   }, {
     message: 'Cost from must be less than cost to when using between option',
     path: ['costFrom'],
-  }).refine((data) => {
-    // Filter existing rules by related_to (activeTab)
-    const relatedRules = existingRules.filter(rule => rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project'))
-    
-    if (relatedRules.length === 0) return true
-    
-    // Check for overlapping ranges
-    const hasOverlap = relatedRules.some(rule => {
-      if (data.costUnit === 'between' && data.costFrom !== undefined) {
-        // Check if new range overlaps with existing range
-        if (rule.cost_unit === 'between' && rule.cost_from !== null) {
-          return !(data.costTo <= rule.cost_from || data.costFrom >= rule.cost_to)
-        }
-        if (rule.cost_unit === 'greater_than' || rule.cost_unit === 'greater_than_equal') {
-          return data.costTo > rule.cost_to
-        }
-      } else if (data.costUnit === 'greater_than' || data.costUnit === 'greater_than_equal') {
-        // Check if new greater_than value conflicts with existing ranges
-        if (rule.cost_unit === 'between' && rule.cost_from !== null) {
-          return data.costTo <= rule.cost_to
-        }
-        if (rule.cost_unit === 'greater_than' || rule.cost_unit === 'greater_than_equal') {
-          return data.costTo <= rule.cost_to
-        }
-      }
-      return false
-    })
-    
-    return !hasOverlap
-  }, {
-    message: 'Cost range conflicts with existing rules. Please ensure your range is greater than the last added cost.',
-    path: ['costTo'],
   })
 
 export const CostApprovalPage: React.FC = () => {
@@ -168,9 +136,12 @@ export const CostApprovalPage: React.FC = () => {
     dispatch(fetchCostApprovals());
   }, [dispatch]);
 
-  // Filter rules based on active tab
+  // Filter rules based on active tab and only show active rules
   const filteredRules = useMemo(() => 
-    rules.filter(rule => rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project')),
+    rules.filter(rule => 
+      rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project') && 
+      rule.active === true
+    ),
     [rules, activeTab]
   )
 
@@ -183,8 +154,10 @@ export const CostApprovalPage: React.FC = () => {
       // Update form data
       const levelIndex = APPROVAL_LEVELS.indexOf(level as typeof APPROVAL_LEVELS[number]);
       const currentLevels = form.getValues('approvalLevels');
-      currentLevels[levelIndex].escalateToUsers = newUsers;
-      form.setValue('approvalLevels', currentLevels);
+      if (currentLevels[levelIndex]) {
+        currentLevels[levelIndex].escalateToUsers = newUsers;
+        form.setValue('approvalLevels', currentLevels, { shouldValidate: false });
+      }
     }
   };
 
@@ -196,8 +169,10 @@ export const CostApprovalPage: React.FC = () => {
     // Update form data
     const levelIndex = APPROVAL_LEVELS.indexOf(level as typeof APPROVAL_LEVELS[number]);
     const currentLevels = form.getValues('approvalLevels');
-    currentLevels[levelIndex].escalateToUsers = newUsers;
-    form.setValue('approvalLevels', currentLevels);
+    if (currentLevels[levelIndex]) {
+      currentLevels[levelIndex].escalateToUsers = newUsers;
+      form.setValue('approvalLevels', currentLevels, { shouldValidate: false });
+    }
   };
 
   const getUserDisplayName = (userId: number): string => {
@@ -228,16 +203,58 @@ export const CostApprovalPage: React.FC = () => {
 
   const handleSubmit = async (data: CostApprovalFormData) => {
     try {
+      // Basic validation
+      if (!data.costTo || data.costTo <= 0) {
+        toast({
+          title: 'Validation Error',
+          description: 'Cost value must be greater than 0',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (data.costUnit === 'between') {
+        if (!data.costFrom || data.costFrom <= 0) {
+          toast({
+            title: 'Validation Error',
+            description: 'Cost From must be greater than 0 when using between option',
+            variant: 'destructive',
+          });
+          return;
+        }
+        if (data.costFrom >= data.costTo) {
+          toast({
+            title: 'Validation Error',
+            description: 'Cost From must be less than Cost To',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
+      // Check if at least one user is selected
+      const hasUsers = data.approvalLevels.some(level => level.escalateToUsers.length > 0);
+      if (!hasUsers) {
+        toast({
+          title: 'Validation Error',
+          description: 'Please select at least one user for approval levels',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const payload: CostApprovalPayload = {
         cost_approval: {
           related_to: activeTab === 'fm' ? 'FM' : 'Project',
           level: '',
           cost_unit: data.costUnit,
           cost_to: data.costTo,
-          cost_approval_levels_attributes: data.approvalLevels.map(level => ({
-            name: level.level,
-            escalate_to_users: level.escalateToUsers.length > 0 ? level.escalateToUsers : [''],
-          })),
+          cost_approval_levels_attributes: data.approvalLevels
+            .filter(level => level.escalateToUsers.length > 0)
+            .map(level => ({
+              name: level.level,
+              escalate_to_users: level.escalateToUsers,
+            })),
         },
       };
 
@@ -245,6 +262,8 @@ export const CostApprovalPage: React.FC = () => {
       if (data.costUnit === 'between' && data.costFrom !== undefined) {
         payload.cost_approval.cost_from = data.costFrom;
       }
+
+      console.log('Submitting payload:', payload);
 
       await dispatch(createCostApproval(payload)).unwrap();
       
@@ -265,6 +284,7 @@ export const CostApprovalPage: React.FC = () => {
       });
       setSelectedUsers({});
     } catch (error: unknown) {
+      console.error('Error creating cost approval:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to create cost approval rule';
       toast({
         title: 'Error',
@@ -281,134 +301,139 @@ export const CostApprovalPage: React.FC = () => {
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             {/* Cost Unit Selection */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <MuiFormControl
-                fullWidth
-                variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
-              >
-                <InputLabel shrink>Cost Unit</InputLabel>
-                <MuiSelect
-                  value={form.watch('costUnit')}
-                  onChange={(e) => form.setValue('costUnit', e.target.value as CostUnit)}
-                  label="Cost Unit"
-                  notched
-                  displayEmpty
-                >
-                  {COST_UNITS.map(unit => (
-                    <MenuItem key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </MuiFormControl>
+              <FormField
+                control={form.control}
+                name="costUnit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cost Unit</FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Cost Unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COST_UNITS.map(unit => (
+                            <SelectItem key={unit.value} value={unit.value}>
+                              {unit.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               {/* Conditional Cost Fields */}
               {costUnit === 'between' && (
-                <TextField
-                  label="Cost From"
-                  placeholder="0"
-                  type="number"
-                  value={form.watch('costFrom') || ''}
-                  onChange={(e) => form.setValue('costFrom', parseInt(e.target.value) || undefined)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
+                <FormField
+                  control={form.control}
+                  name="costFrom"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cost From</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               )}
               
-              <TextField
-                label={
-                  costUnit === 'between' ? 'Cost To' : 
-                  costUnit === 'greater_than' ? 'Greater Than' : 'Greater Than Equal'
-                }
-                placeholder="10000"
-                type="number"
-                value={form.watch('costTo') || ''}
-                onChange={(e) => form.setValue('costTo', parseInt(e.target.value) || 0)}
-                fullWidth
-                variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+              <FormField
+                control={form.control}
+                name="costTo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {costUnit === 'between' ? 'Cost To' : 
+                       costUnit === 'greater_than' ? 'Greater Than' : 'Greater Than Equal'}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="10000"
+                        {...field}
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
             {/* Approval Levels */}
-            <div className="border rounded-lg">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-gray-50">
-                    <th className="p-3 text-left text-sm font-medium">Levels</th>
-                    <th className="p-3 text-left text-sm font-medium">Approvers</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {APPROVAL_LEVELS.map((level) => (
-                    <tr key={level} className="border-b last:border-b-0">
-                      <td className="p-3 text-sm font-medium">{level}</td>
-                      <td className="p-3">
-                        <div className="space-y-2">
-                          <MuiFormControl
-                            fullWidth
-                            variant="outlined"
-                            sx={{ '& .MuiInputBase-root': fieldStyles }}
-                          >
-                            <MuiSelect
-                              value=""
-                              onChange={(e) => handleUserSelect(level, parseInt(e.target.value))}
-                              displayEmpty
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Approval Levels</h3>
+              <div className="border rounded-lg">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-gray-50">
+                      <th className="p-3 text-left text-sm font-medium">Levels</th>
+                      <th className="p-3 text-left text-sm font-medium">Approvers</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {APPROVAL_LEVELS.map((level) => (
+                      <tr key={level} className="border-b last:border-b-0">
+                        <td className="p-3 text-sm font-medium">{level}</td>
+                        <td className="p-3">
+                          <div className="space-y-2">
+                            <Select
+                              onValueChange={(value) => handleUserSelect(level, parseInt(value))}
                               disabled={usersLoading}
                             >
-                              <MenuItem value="">
-                                {usersLoading ? "Loading..." : "Select up to 15 users..."}
-                              </MenuItem>
-                              {escalateToUsers
-                                .filter(user => !(selectedUsers[level] || []).includes(user.id))
-                                .map(user => (
-                                  <MenuItem key={user.id} value={user.id.toString()}>
-                                    {user.full_name}
-                                  </MenuItem>
+                              <SelectTrigger>
+                                <SelectValue placeholder={usersLoading ? "Loading..." : "Select up to 15 users..."} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {escalateToUsers
+                                  .filter(user => !(selectedUsers[level] || []).includes(user.id))
+                                  .map(user => (
+                                    <SelectItem key={user.id} value={user.id.toString()}>
+                                      {user.full_name}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                            
+                            {selectedUsers[level] && selectedUsers[level].length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {selectedUsers[level].map(userId => (
+                                  <Badge key={userId} variant="secondary" className="text-xs">
+                                    {getUserDisplayName(userId)}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeUser(level, userId)}
+                                      className="ml-1 text-xs hover:text-red-500"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </Badge>
                                 ))}
-                            </MuiSelect>
-                          </MuiFormControl>
-                          
-                          {selectedUsers[level] && selectedUsers[level].length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {selectedUsers[level].map(userId => (
-                                <Badge key={userId} variant="secondary" className="text-xs">
-                                  {getUserDisplayName(userId)}
-                                  <button
-                                    type="button"
-                                    onClick={() => removeUser(level, userId)}
-                                    className="ml-1 text-xs hover:text-red-500"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-4">
               <Button 
                 type="submit" 
                 className="px-8 bg-[#C72030] hover:bg-[#C72030]/90"
@@ -416,6 +441,19 @@ export const CostApprovalPage: React.FC = () => {
               >
                 {createLoading ? 'Creating...' : 'Submit'}
               </Button>
+              {/* <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => {
+                  console.log('Form Data:', form.getValues());
+                  console.log('Selected Users:', selectedUsers);
+                  console.log('Form Errors:', form.formState.errors);
+                  console.log('Form Valid:', form.formState.isValid);
+                }}
+                className="px-4"
+              >
+                Debug
+              </Button> */}
             </div>
           </form>
         </Form>
