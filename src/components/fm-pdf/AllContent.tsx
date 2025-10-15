@@ -3821,7 +3821,7 @@ const AllContent = () => {
                                                     <th
                                                         key={idx}
                                                         className="p-2 text-[10px] font-medium text-center bg-white w-28 mx-0 my-0 whitespace-normal break-words leading-tight 
-                                    print:text-[8px] print:font-medium print:text-center print:bg-white print:w-24 print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
+                                    print:text-[8px] print:font-semibold print:text-center print:bg-white print:w-24 print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
                                                     >
                                                         {site}
                                                     </th>
@@ -3942,7 +3942,7 @@ const AllContent = () => {
                                             textAnchor="end"
                                             interval={0}
                                             height={100}
-                                            tick={{ fontSize: 12 }}
+                                            tick={{ fontSize: 18, fontWeight: '600' }}
                                         />
                                         <YAxis
                                             width={80}
@@ -3963,7 +3963,7 @@ const AllContent = () => {
                                         />
                                         <Legend
                                             iconType="circle"
-                                            wrapperStyle={{ fontSize: "12px" }}
+                                            wrapperStyle={{ fontSize: "14px" }}
                                             verticalAlign="top"
                                             align="right"
                                         />
@@ -3986,7 +3986,7 @@ const AllContent = () => {
                             )}
                         </div>
                         <p className="text-sm text-gray-700 mt-6 border-t pt-4 print:text-[11px] print:mt-1 print:pt-1 print:border-gray-300">
-                            <strong>Note:</strong> This graph illustrates total consumable inventory usage with a comparison to the previous period, highlighting trends in consumption.
+                            <strong>Note:</strong> This graph illustrates total consumable inventory usage with a comparison to the previous quarter, highlighting trends in consumption.
                         </p>
                     </div>
 
