@@ -49,7 +49,7 @@ export const VisitorFormPage = () => {
 
   const initialMobileNumber = location.state?.mobileNumber || "";
 
-    const selectedSite = useSelector((state: any) => state.site.selectedSite);
+  const selectedSite = useSelector((state: any) => state.site.selectedSite);
 
   const fieldStyles = {
     height: "45px",
@@ -86,7 +86,7 @@ export const VisitorFormPage = () => {
     mobileNumber: initialMobileNumber,
     visitorComingFrom: "",
     remarks: "",
-    expected_at: new Date().toISOString().slice(0, 16), 
+    expected_at: new Date().toISOString().slice(0, 16),
     skipHostApproval: false,
     goodsInwards: false,
     passValidFrom: "",
@@ -104,7 +104,7 @@ export const VisitorFormPage = () => {
       Friday: false,
       Saturday: false,
     },
-  });  const [goodsData, setGoodsData] = useState({
+  }); const [goodsData, setGoodsData] = useState({
     selectType: "",
     category: "",
     modeOfTransport: "",
@@ -143,7 +143,7 @@ export const VisitorFormPage = () => {
   const [loadingItemTypes, setLoadingItemTypes] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdditionalVisitors, setShowAdditionalVisitors] = useState(false);
-  
+
   // Visitor info state
   const [visitorInfo, setVisitorInfo] = useState<{
     id: number;
@@ -253,13 +253,13 @@ export const VisitorFormPage = () => {
 
   const fetchVisitorInfo = async (mobile: string) => {
     if (!mobile || mobile.length !== 10) return;
-    
+
     console.log('🔍 fetchVisitorInfo called with mobile:', mobile);
     setLoadingVisitorInfo(true);
     try {
       // Use selected site from Redux instead of user account
       let currentUserSiteId = selectedSite?.id?.toString();
-      
+
       if (!currentUserSiteId) {
         console.warn('⚠️ No selected site found, trying to fetch from user account as fallback');
         try {
@@ -278,12 +278,12 @@ export const VisitorFormPage = () => {
       console.log('📡 Calling getVisitorInfo API with:', { resourceId: currentUserSiteId, mobile });
       const response = await ticketManagementAPI.getVisitorInfo(currentUserSiteId, mobile);
       console.log('📥 API Response:', response);
-      
+
       if (response && response.gatekeeper) {
         console.log('✅ Visitor info found:', response.gatekeeper);
         setVisitorInfo(response.gatekeeper);
         setShowVisitorInfo(true);
-        
+
         // Pre-fill form data with visitor info
         setFormData(prev => ({
           ...prev,
@@ -292,7 +292,7 @@ export const VisitorFormPage = () => {
           vehicleNumber: response.gatekeeper.guest_vehicle_number || prev.vehicleNumber,
           visitPurpose: response.gatekeeper.visit_purpose || prev.visitPurpose,
         }));
-        
+
         toast.success("Visitor information found and loaded!");
       } else {
         console.log('❌ No visitor info found in response');
@@ -450,7 +450,7 @@ export const VisitorFormPage = () => {
     if (files && files.length > 0) {
       const validFiles: File[] = [];
       const invalidFiles: string[] = [];
-      
+
       // Validate each file
       Array.from(files).forEach((file) => {
         // Check file size (max 5MB per file)
@@ -458,29 +458,29 @@ export const VisitorFormPage = () => {
           invalidFiles.push(`${file.name} - File too large (max 5MB)`);
           return;
         }
-        
+
         // Check file type (only images and PDFs)
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
         if (!allowedTypes.includes(file.type)) {
           invalidFiles.push(`${file.name} - Invalid file type (only images and PDFs allowed)`);
           return;
         }
-        
+
         validFiles.push(file);
       });
-      
+
       // Show error messages for invalid files
       if (invalidFiles.length > 0) {
         invalidFiles.forEach(error => toast.error(error));
       }
-      
+
       // Add valid files to existing documents
       if (validFiles.length > 0) {
         setFormData((prev) => ({
           ...prev,
           visitor_documents: [...prev.visitor_documents, ...validFiles],
         }));
-        
+
         if (validFiles.length === 1) {
           toast.success(`File "${validFiles[0].name}" added successfully`);
         } else {
@@ -488,7 +488,7 @@ export const VisitorFormPage = () => {
         }
       }
     }
-    
+
     // Reset input value to allow selecting the same files again if needed
     event.target.value = '';
   };
@@ -496,7 +496,7 @@ export const VisitorFormPage = () => {
   const removeUploadedFile = (indexToRemove?: number) => {
     setFormData((prev) => ({
       ...prev,
-      visitor_documents: indexToRemove !== undefined 
+      visitor_documents: indexToRemove !== undefined
         ? prev.visitor_documents.filter((_, index) => index !== indexToRemove)
         : [], // Remove all files if no index specified
     }));
@@ -919,45 +919,45 @@ export const VisitorFormPage = () => {
           //   <div className="p-6">
           //     <div className="flex flex-col md:flex-row gap-6">
           //       {/* Visitor Image Section */}
-                <div className="flex-shrink-0">
-  <div className="text-center mb-4">
-    <h3 className="text-lg font-semibold text-gray-800 mb-2">Visitor Photo</h3>
-  </div>
-  
-  {/* Show previous visitor photo directly or captured photo */}
-  {(visitorInfo?.image || capturedPhoto) ? (
-    <div className="text-center">
-      <div className="w-32 h-32 bg-black rounded-lg mb-2 overflow-hidden relative group mx-auto">
-        <img
-          src={capturedPhoto || visitorInfo.image}
-          alt={capturedPhoto ? "Selected photo" : visitorInfo.guest_name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-      </div>
-      
-      <Button
-        type="button"
-        variant="link"
-        onClick={handleCameraClick}
-        className="text-xs text-gray-600"
-      >
-        Change Photo
-      </Button>
-    </div>
-  ) : (
-    /* Fallback camera button when no photo is available */
-    <button
-      type="button"
-      onClick={handleCameraClick}
-      className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
-    >
-      <Camera className="h-8 w-8 text-gray-600" />
-    </button>
-  )}
-</div>
+          <div className="flex-shrink-0">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Visitor Photo</h3>
+            </div>
+
+            {/* Show previous visitor photo directly or captured photo */}
+            {(visitorInfo?.image || capturedPhoto) ? (
+              <div className="text-center">
+                <div className="w-32 h-32 bg-black rounded-lg mb-2 overflow-hidden relative group mx-auto">
+                  <img
+                    src={capturedPhoto || visitorInfo.image}
+                    alt={capturedPhoto ? "Selected photo" : visitorInfo.guest_name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={handleCameraClick}
+                  className="text-xs text-gray-600"
+                >
+                  Change Photo
+                </Button>
+              </div>
+            ) : (
+              /* Fallback camera button when no photo is available */
+              <button
+                type="button"
+                onClick={handleCameraClick}
+                className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center hover:bg-gray-300 transition-colors"
+              >
+                <Camera className="h-8 w-8 text-gray-600" />
+              </button>
+            )}
+          </div>
         ) : (
           /* Default capture photo section - Shows when no visitor info */
           <div>
@@ -1109,6 +1109,7 @@ export const VisitorFormPage = () => {
                   label="Host"
                   notched
                   disabled={loadingUsers}
+                  displayEmpty
                 >
                   <MenuItem value="">
                     {loadingUsers ? "Loading..." : "Select Person To Meet"}
@@ -1202,6 +1203,7 @@ export const VisitorFormPage = () => {
 
               <TextField
                 label="Visitor Name"
+                placeholder="Enter Name"
                 value={formData.visitorName}
                 onChange={(e) =>
                   handleInputChange("visitorName", e.target.value)
@@ -1257,6 +1259,7 @@ export const VisitorFormPage = () => {
                     }
                     label="Visit Purpose"
                     notched
+                    displayEmpty
                   >
                     <MenuItem value="">Select Purpose</MenuItem>
                     <MenuItem value="Courier">Courier</MenuItem>
@@ -1296,17 +1299,18 @@ export const VisitorFormPage = () => {
                 // }
                 FormHelperTextProps={{
                   style: {
-                    color: loadingVisitorInfo 
-                      ? "#1976d2" 
-                      : visitorInfo 
-                        ? "#2e7d32" 
+                    color: loadingVisitorInfo
+                      ? "#1976d2"
+                      : visitorInfo
+                        ? "#2e7d32"
                         : "#666666"
                   }
                 }}
               />
               <TextField
-                label="Pass Number"
+                label={<>Pass Number<span className="text-red-500">*</span></>}
                 value={formData.passNumber}
+                placeholder="Enter Pass No."
                 onChange={(e) =>
                   handleInputChange("passNumber", e.target.value)
                 }
@@ -1317,6 +1321,7 @@ export const VisitorFormPage = () => {
               />
               <TextField
                 label="Coming From"
+                placeholder="Enter City Name"
                 value={formData.visitorComingFrom}
                 onChange={(e) =>
                   handleInputChange("visitorComingFrom", e.target.value)
@@ -1328,6 +1333,7 @@ export const VisitorFormPage = () => {
               />
               <TextField
                 label="Vehicle Number"
+                placeholder="Enter Vehicle Number"
                 value={formData.vehicleNumber}
                 onChange={(e) =>
                   handleInputChange("vehicleNumber", e.target.value)
@@ -1353,10 +1359,11 @@ export const VisitorFormPage = () => {
                   sx={fieldStyles}
                 // helperText="Expected arrival date and time"
                 />
-              )}          
+              )}
 
               <TextField
                 label="Remarks"
+                placeholder="Enter Remarks"
                 value={formData.remarks}
                 onChange={(e) => handleInputChange("remarks", e.target.value)}
                 fullWidth
@@ -1364,13 +1371,13 @@ export const VisitorFormPage = () => {
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
               />
-              
+
               {/* Government ID Upload - Multiple Files */}
               <div className="flex flex-col md:col-span-2">
                 <label className="text-sm font-medium text-gray-700 mb-2">
-                  Government ID 
+                  Government ID
                 </label>
-                
+
                 {/* Upload Button */}
                 <div className="relative mb-3">
                   <input
@@ -1393,7 +1400,7 @@ export const VisitorFormPage = () => {
                     </div>
                   </label>
                 </div>
-                
+
                 {/* Display uploaded files */}
                 {formData.visitor_documents.length > 0 && (
                   <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2 bg-gray-50">
@@ -1424,7 +1431,7 @@ export const VisitorFormPage = () => {
                         </button>
                       </div>
                     ))}
-                    
+
                     {/* Clear all button */}
                     {formData.visitor_documents.length > 1 && (
                       <button
@@ -1437,7 +1444,7 @@ export const VisitorFormPage = () => {
                     )}
                   </div>
                 )}
-                
+
                 <p className="text-xs text-gray-500 mt-1">
                   Supports: JPEG, PNG, GIF, PDF (Max 5MB per file, Multiple files allowed)
                 </p>
