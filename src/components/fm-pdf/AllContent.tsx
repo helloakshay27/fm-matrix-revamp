@@ -3206,10 +3206,10 @@ const AllContent = () => {
                             <div className="py-4 border-r border-white px-2 leading-snug print:py-2.5 print:px-1">Asset In Breakdown</div>
                             <div className="py-4 px-2 leading-snug print:py-2.5 print:px-1">Average Downtime</div>
                         </div>
-                        <div className="grid grid-cols-3 bg-[#f2f0eb] font-extrabold text-center  text-4xl md:text-xl py-6 border-t border-black print:text-[11px] print:py-2.5">
-                            <div className="border-r text-3xl print:text-xl border-black px-2 break-words">{companyAssetOverview?.total_available_asset ?? '-'}</div>
-                            <div className="border-r text-3xl print:text-xl border-black px-2 break-words">{companyAssetOverview?.asset_in_breakdown ?? '-'}</div>
-                            <div className="px-2 text-3xl print:text-xl break-words">{companyAssetOverview?.average_downtime_days !== undefined ? `${companyAssetOverview?.average_downtime_days} Days` : '-'}</div>
+                        <div className="grid grid-cols-3 bg-[#f2f0eb] font-extrabold text-center  text-4xl md:text-xl border-t border-black print:text-[11px] print:py-2.5">
+                            <div className="border-r text-3xl print:text-xl border-black px-2 break-words h-[60px] flex items-center justify-center">{companyAssetOverview?.total_available_asset ?? '-'}</div>
+                            <div className="border-r text-3xl print:text-xl border-black px-2 break-words h-[60px] flex items-center justify-center">{companyAssetOverview?.asset_in_breakdown ?? '-'}</div>
+                            <div className="px-2 text-3xl print:text-xl break-words h-[60px] flex items-center justify-center">{companyAssetOverview?.average_downtime_days !== undefined ? `${companyAssetOverview?.average_downtime_days} Days` : '-'}</div>
                         </div>
                     </div>
 
@@ -3461,7 +3461,7 @@ const AllContent = () => {
                             </table>
                         </div>
                         <p className="p-3 text-xs text-gray-600 italic border-t border-gray-300 print:p-1 print:text-[8px] print:leading-relaxed print:mt-2">
-                            <strong>Note:</strong> Expired contracts – review for renewal decisions and vendor follow‑ups.
+                            <strong>Note:</strong> This table provides a site-wise summary of AMC contracts set to expire within the next 90 days, supporting proactive renewal planning and vendor coordination
                         </p>
                     </div>
                 </div>
