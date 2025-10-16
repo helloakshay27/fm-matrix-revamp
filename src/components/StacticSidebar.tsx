@@ -75,6 +75,7 @@ import {
   Trash,
   ChartColumnIncreasing,
   IndianRupee,
+  Circle,
 } from "lucide-react";
 import { template } from "lodash";
 
@@ -670,10 +671,6 @@ const modulesByPackage = {
         {
           name: "Reportees Reassign",
           href: "/safety/m-safe/reportees-reassign",
-        },
-        {
-          name: "Circle",
-          href: "/safety/m-safe/circle",
         },
       ],
     },
@@ -1273,6 +1270,11 @@ const modulesByPackage = {
       subItems: [
         { name: "Currency", href: "/settings/currency" },
       ]
+    },
+    {
+      icon: Circle,
+      name: "Circle",
+      href: "/safety/m-safe/circle",
     },
   ],
 };
