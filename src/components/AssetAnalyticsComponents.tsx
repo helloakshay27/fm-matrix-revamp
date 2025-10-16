@@ -564,6 +564,10 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
 
     // Process chart data
     const processChartData = () => {
+        // Debug logging
+        console.log('AssetAnalyticsComponents - assetStatus:', assetStatus);
+        console.log('AssetAnalyticsComponents - assetStatistics:', assetStatistics);
+        
         // Status distribution data - use assetStatus API data if available, fallback to statistics
         const chartStatusData = [
             {
@@ -581,7 +585,14 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 value: assetStatus?.in_store || 0,
                 color: '#D5DBDB',
             },
-        ];
+            {
+                name: 'In Disposed',
+                value: assetStatus?.in_disposed || 0,
+                color: '#A3A8AA',
+            }
+        ].filter(item => item.value > 0);
+        
+        console.log('AssetAnalyticsComponents - chartStatusData:', chartStatusData);
 
         // Asset type distribution data - support both new and legacy structures
         let itAssets = 0;
