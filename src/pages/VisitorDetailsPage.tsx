@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, User, QrCode, ClipboardList, Edit, ChevronUp, ChevronDown, LucideIcon, FileText, File, FileSpreadsheet, Eye, Download, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
-import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, ENDPOINTS } from '@/config/apiConfig';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
 // Types
@@ -163,34 +163,27 @@ export const VisitorDetailsPage = () => {
     if (!visitorData || !id) return;
 
     try {
-      console.log('Resending OTP for visitor:', id);
-
-      // Show loading toast
-      toast.info('Sending OTP...');
-
-      // Disable the button
       setDisabledOTPButtons(prev => ({ ...prev, [visitorData.id]: true }));
 
       // Construct the API URL using the resend OTP endpoint
-      const url = getFullUrl('/pms/admin/visitors/resend_otp.json');
+      const url = getFullUrl(ENDPOINTS.RESEND_OTP);
       const options = getAuthenticatedFetchOptions();
 
       // Add query parameter for visitor ID
       const urlWithParams = new URL(url);
       urlWithParams.searchParams.append('id', id.toString());
-
-      console.log('🚀 Calling resend OTP API:', urlWithParams.toString());
+      if (API_CONFIG.TOKEN) {
+        urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+      }
 
       const response = await fetch(urlWithParams.toString(), options);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
         throw new Error(`Failed to resend OTP: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('✅ OTP sent successfully:', data);
 
       // Show success toast
       toast.success('OTP sent successfully!');
@@ -282,25 +275,17 @@ export const VisitorDetailsPage = () => {
     if (!visitorData || !id) return;
 
     try {
-      console.log('Checking in visitor:', id);
-
-      // Show loading toast
-      toast.info('Processing check-in...');
-
-      // Construct the API URL using the visitor ID
       const url = getFullUrl(`/pms/visitors/${id}.json`);
       const options = getAuthenticatedFetchOptions();
 
-      // Create request body for check-in with current timestamp
       const requestBody = {
         gatekeeper: {
-          guest_entry_time: getLocalISOString(), // Format: 2025-08-22T19:07:37+05:30
+          guest_entry_time: getLocalISOString(),
           entry_gate_id: "",
           status: "checked_in"
         }
       };
 
-      // Set the request method to PUT and add the request body
       const requestOptions = {
         ...options,
         method: 'PUT',
@@ -311,25 +296,20 @@ export const VisitorDetailsPage = () => {
         body: JSON.stringify(requestBody)
       };
 
-      console.log('🚀 Calling check-in API:', url);
-      console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
-
       const response = await fetch(url, requestOptions);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
         throw new Error(`Failed to check-in visitor: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('✅ Visitor checked in successfully:', data);
 
       // Show success toast
       toast.success('Visitor checked in successfully!');
 
       // Refresh visitor data
-      // window.location.reload();
+      window.location.reload();
 
     } catch (err) {
       console.error('❌ Error checking in visitor:', err);
