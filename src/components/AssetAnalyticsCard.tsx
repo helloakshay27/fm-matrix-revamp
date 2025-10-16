@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, Info } from 'lucide-react';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   PieChart,
   Pie,
@@ -21,6 +22,7 @@ interface AssetAnalyticsCardProps {
   type: 'groupWise' | 'categoryWise' | 'statusDistribution' | 'assetDistributions';
   dateRange: { startDate: Date; endDate: Date };
   onDownload?: () => void;
+  info?: string;
 }
 
 const COLORS = ['#C4AE9D', '#C4B99D', '#DAD6CA', '#D5DBDB', '#8B5A3C', '#A0A0A0', '#FFB366', '#FF8C42', '#6B8E23'];
@@ -31,6 +33,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
   type,
   dateRange,
   onDownload,
+  info,
 }) => {
   const renderChart = () => {
     switch (type) {
@@ -189,17 +192,39 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
       <CardHeader className="pb-4 px-6 pt-6">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold text-[#C72030]">{title}</CardTitle>
-          {onDownload && title !== "Asset Status" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onDownload}
-              className="flex items-center gap-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors"
-              data-download="true"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {info && (title === "Asset Status" || title === "Asset Type Distribution" || title === "Group-wise Assets" || title === "Category-wise Assets") && (
+              <TooltipProvider>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {info}
+                    </p>
+                  </TooltipContent>
+                </UITooltip>
+              </TooltipProvider>
+            )}
+            {onDownload && title !== "Asset Status" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDownload}
+                className="w-8 h-8 p-0"
+                data-download="true"
+              >
+                <Download className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+              </Button>
+            )}
+          </div>
         </div>
 
       </CardHeader>

@@ -10,15 +10,25 @@ interface AssetGroupWiseCardProps {
 }
 
 export const AssetGroupWiseCard: React.FC<AssetGroupWiseCardProps> = ({ data, onDownload }) => {
-  // Process data for chart
+  // Process data for chart - support both new and legacy structures
   const processData = () => {
-    if (!data || !data.group_wise_assets) {
+    if (!data) {
       return [];
     }
 
-    return data.group_wise_assets.slice(0, 10).map((item: any) => ({
+    let groupAssets: Array<{ group_name: string; asset_count?: number; count?: number }> = [];
+
+    if (data.assets_statistics?.assets_group_count_by_name) {
+      // New structure
+      groupAssets = data.assets_statistics.assets_group_count_by_name;
+    } else if (data.group_wise_assets) {
+      // Legacy structure
+      groupAssets = data.group_wise_assets;
+    }
+
+    return groupAssets.slice(0, 10).map((item: any) => ({
       name: item.group_name,
-      value: item.asset_count
+      value: item.asset_count || item.count || 0
     }));
   };
 

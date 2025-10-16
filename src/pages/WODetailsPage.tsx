@@ -21,6 +21,7 @@ import {
   ReceiptText,
   ClipboardList,
   Images,
+  Loader2,
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
@@ -219,6 +220,7 @@ export const WODetailsPage = () => {
   const [invoices, setInvoices] = useState([]);
   const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [printing, setPrinting] = useState(false)
   const [debitCreditForm, setDebitCreditForm] = useState({
     type: "",
     amount: "",
@@ -443,6 +445,7 @@ export const WODetailsPage = () => {
   };
 
   const handlePrint = async () => {
+    setPrinting(true);
     try {
       const response = await axios.get(
         `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
@@ -466,6 +469,8 @@ export const WODetailsPage = () => {
     } catch (error) {
       console.log(error);
       toast.error(error.message);
+    } finally {
+      setPrinting(false);
     }
   };
 
@@ -512,14 +517,20 @@ export const WODetailsPage = () => {
                   <Copy className="w-4 h-4 mr-1" />
                   Clone
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={handlePrint}
-                >
-                  <Printer className="w-4 h-4 mr-1" />
-                  Print
+                <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                  {
+                    printing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Print
+                      </>
+                    ) : (
+                      <>
+                        <Printer className="w-4 h-4 mr-2" />
+                        Print
+                      </>
+                    )
+                  }
                 </Button>
               </>
             )
