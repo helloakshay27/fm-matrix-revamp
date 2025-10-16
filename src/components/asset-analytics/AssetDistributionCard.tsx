@@ -12,20 +12,33 @@ interface AssetDistributionCardProps {
 export const AssetDistributionCard: React.FC<AssetDistributionCardProps> = ({ data, onDownload }) => {
   // Process data for chart
   const processData = () => {
-    if (!data || !data.info) {
+    if (!data) {
       return [{ name: 'No Data', value: 1, color: '#e5e7eb' }];
     }
 
-    const info = data.info;
+    // Support both new and legacy data structures
+    let itAssets = 0;
+    let nonItAssets = 0;
+
+    if (data.assets_statistics?.assets_distribution) {
+      // New structure
+      itAssets = data.assets_statistics.assets_distribution.it_assets_count || 0;
+      nonItAssets = data.assets_statistics.assets_distribution.non_it_assets_count || 0;
+    } else if (data.info) {
+      // Legacy structure
+      itAssets = data.info.total_it_assets || 0;
+      nonItAssets = data.info.total_non_it_assets || 0;
+    }
+
     const chartData = [
       {
         name: 'IT Equipment',
-        value: info.total_it_assets || 0,
+        value: itAssets,
         color: '#d8dcdd'
       },
       {
         name: 'Non-IT Equipment',
-        value: info.total_non_it_assets || 0,
+        value: nonItAssets,
         color: '#c6b692'
       }
     ].filter(item => item.value > 0);
@@ -34,7 +47,22 @@ export const AssetDistributionCard: React.FC<AssetDistributionCardProps> = ({ da
   };
 
   const chartData = processData();
-  const hasData = data && data.info && ((data.info.total_it_assets || 0) + (data.info.total_non_it_assets || 0)) > 0;
+  
+  // Support both new and legacy data structures for hasData check
+  let itAssets = 0;
+  let nonItAssets = 0;
+
+  if (data?.assets_statistics?.assets_distribution) {
+    // New structure
+    itAssets = data.assets_statistics.assets_distribution.it_assets_count || 0;
+    nonItAssets = data.assets_statistics.assets_distribution.non_it_assets_count || 0;
+  } else if (data?.info) {
+    // Legacy structure
+    itAssets = data.info.total_it_assets || 0;
+    nonItAssets = data.info.total_non_it_assets || 0;
+  }
+
+  const hasData = data && (itAssets + nonItAssets) > 0;
 
   return (
     <Card className="h-96">
@@ -83,13 +111,13 @@ export const AssetDistributionCard: React.FC<AssetDistributionCardProps> = ({ da
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">
-                  {data.info?.total_it_assets || 0}
+                  {itAssets}
                 </div>
                 <div className="text-muted-foreground">IT Equipment</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-secondary">
-                  {data.info?.total_non_it_assets || 0}
+                  {nonItAssets}
                 </div>
                 <div className="text-muted-foreground">Non-IT Equipment</div>
               </div>

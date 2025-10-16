@@ -23,7 +23,8 @@ import {
   Contact,
   ScrollText,
   ClipboardList,
-  Images
+  Images,
+  Loader2
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPRById, fetchWBS } from "@/store/slices/materialPRSlice";
@@ -204,6 +205,7 @@ export const MaterialPRDetailsPage = () => {
   const [showEditWbsModal, setShowEditWbsModal] = useState(false);
   const [wbsCodes, setWbsCodes] = useState([]);
   const [openDeletionModal, setOpenDeletionModal] = useState(false)
+  const [printing, setPrinting] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
   }>({});
@@ -478,7 +480,7 @@ export const MaterialPRDetailsPage = () => {
       toast.error("Missing required configuration");
       return;
     }
-
+    setPrinting(true);
     try {
       const response = await axios.get(
         `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
@@ -499,6 +501,8 @@ export const MaterialPRDetailsPage = () => {
       URL.revokeObjectURL(downloadUrl);
     } catch (error: any) {
       toast.error(error.message || "Failed to download PDF");
+    } finally {
+      setPrinting(false);
     }
   }, [id]);
 
@@ -562,7 +566,7 @@ export const MaterialPRDetailsPage = () => {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <h1 className="text-2xl font-semibold">Material PR Details</h1>
         <div className="flex items-center gap-3">
           {
@@ -575,9 +579,20 @@ export const MaterialPRDetailsPage = () => {
                 >
                   Deleted
                 </Button>
-                <Button variant="outline" size="sm" onClick={handlePrint}>
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print
+                <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                  {
+                    printing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Print
+                      </>
+                    ) : (
+                      <>
+                        <Printer className="w-4 h-4 mr-2" />
+                        Print
+                      </>
+                    )
+                  }
                 </Button>
               </>
             ) : (
@@ -614,9 +629,20 @@ export const MaterialPRDetailsPage = () => {
                         <Copy className="w-4 h-4 mr-2" />
                         Clone
                       </Button>
-                      <Button variant="outline" size="sm" onClick={handlePrint}>
-                        <Printer className="w-4 h-4 mr-2" />
-                        Print
+                      <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                        {
+                          printing ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Print
+                            </>
+                          ) : (
+                            <>
+                              <Printer className="w-4 h-4 mr-2" />
+                              Print
+                            </>
+                          )
+                        }
                       </Button>
                     </>
                   )

@@ -562,7 +562,7 @@ export const AddGatePassInwardPage = () => {
               </MuiSelect>
               {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
             </FormControl>
-           </div>
+          </div>
         </div>
 
         {/* Gate Pass Details Section */}
@@ -659,7 +659,7 @@ export const AddGatePassInwardPage = () => {
                 min: new Date().toISOString().split('T')[0]
               }}
             />
-            
+
             <TextField
               label="Invoice ID"
               placeholder="Enter Invoice ID"
@@ -670,7 +670,7 @@ export const AddGatePassInwardPage = () => {
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
             />
-            
+
             <TextField
               label="Invoice Date"
               type="date"
@@ -681,20 +681,36 @@ export const AddGatePassInwardPage = () => {
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
             />
-            
+
             <TextField
               label="Invoice Amount"
               placeholder="Enter Amount"
               fullWidth
               variant="outlined"
-              type="number"
+              type="text"
               value={gatePassDetails.invoiceAmount}
-              onChange={(e) => handleGatePassChange('invoiceAmount', e.target.value)}
+              onChange={(e) => {
+                // allow digits and a single dot, limit to two decimals
+                const raw = e.target.value.replace(/[^\d.]/g, '');
+                const match = raw.match(/^(\d+(\.\d{0,2})?|\.\d{0,2})/);
+                const next = match ? match[0] : '';
+                handleGatePassChange('invoiceAmount', next);
+              }}
+              onBlur={(e) => {
+                let v = e.target.value;
+                if (!v) return;
+                if (v.startsWith('.')) v = '0' + v;   // ".5" -> "0.5"
+                if (v.endsWith('.')) v = v + '00';    // "10." -> "10.00"
+                const num = Number(v);
+                if (!isNaN(num)) {
+                  handleGatePassChange('invoiceAmount', num.toFixed(2)); // normalize to 2 decimals
+                }
+              }}
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
-              inputProps={{ min: 0, step: "0.01" }}
+              inputProps={{ inputMode: 'decimal', pattern: '^\\d*(\\.\\d{0,2})?$' }}
             />
-            
+
             <div className="lg:col-span-3">
               <TextField
                 label="Remarks"
@@ -708,7 +724,7 @@ export const AddGatePassInwardPage = () => {
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               />
             </div>
-            
+
             {/* Render custom fields for gate pass details */}
             {customFields.gatePassDetails?.map((field, index) => (
               <div key={index} style={{ position: "relative" }}>
@@ -858,7 +874,7 @@ export const AddGatePassInwardPage = () => {
                           value={row.otherMaterialName || ''}
                           onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
                           required
-                        
+
                         />
                       ) : (
                         <FormControl fullWidth variant="outlined" size="small">
@@ -902,7 +918,7 @@ export const AddGatePassInwardPage = () => {
                         size="small"
                         type="number"
                         value={row.quantity}
-                      
+
                         placeholder='Quantity'
                         onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
                       />
@@ -912,7 +928,7 @@ export const AddGatePassInwardPage = () => {
                         variant="outlined"
                         size="small"
                         placeholder="Unit"
-                      
+
                         value={row.unit}
                         onChange={e => {
                           const value = e.target.value;

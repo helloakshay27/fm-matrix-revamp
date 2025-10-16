@@ -900,6 +900,9 @@ export const AddPODashboard = () => {
                         InputLabelProps={{ shrink: true }}
                         InputProps={{ sx: fieldStyles }}
                         sx={{ mt: 1 }}
+                        inputProps={{
+                          min: new Date().toISOString().split("T")[0],
+                        }}
                       />
 
                       <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>

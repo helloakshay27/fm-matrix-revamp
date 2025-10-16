@@ -23,13 +23,16 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({ data, 
       };
     }
 
+    // Handle new API structure with assets_statistics wrapper
+    const assetsStats = data.assets_statistics || data;
+    
     return {
-      total_assets: data.total_assets_count?.total_assets_count || 0,
+      total_assets: assetsStats.total_assets?.assets_total_count || 0,
       total_value: data.total_value || '$0.00',
-      assets_in_use: data.assets_in_use?.total_assets_in_use || 0,
-      assets_in_breakdown: data.assets_in_breakdown?.total_assets_in_breakdown || 0,
-      critical_assets: data.critical_assets_in_breakdown?.total_assets_in_breakdown || 0,
-      ppm_assets: data.ppm_conduct_assets_count?.total || 0,
+      assets_in_use: assetsStats.assets_in_use?.assets_in_use_total || 0,
+      assets_in_breakdown: assetsStats.assets_in_breakdown?.assets_in_breakdown_total || 0,
+      critical_assets: assetsStats.critical_assets_breakdown?.critical_assets_breakdown_total || 0,
+      ppm_assets: assetsStats.ppm_overdue_assets?.ppm_conduct_assets_count || 0,
       average_rating: data.average_customer_rating?.avg_rating || 0
     };
   };
@@ -52,7 +55,7 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({ data, 
             className="h-8 w-8 p-0"
             data-download-button
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
           </Button>
         )}
       </CardHeader>

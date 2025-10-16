@@ -394,7 +394,7 @@ export const ScheduledTaskDashboard = () => {
       if (filters.checklist)
         queryParams.append("q[custom_form_form_name_cont]", filters.checklist);
       if (filters.scheduleType)
-        queryParams.append("sch_type", filters.scheduleType);
+        queryParams.append("q[custom_form_sch_type_eq", filters.scheduleType);
       if (filters.type)
         queryParams.append("s[custom_form_schedule_type_eq]", filters.type);
       if (filters.assetGroupId)

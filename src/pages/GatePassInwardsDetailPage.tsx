@@ -128,7 +128,7 @@ export const GatePassInwardsDetailPage = () => {
 
       if (res.ok) {
         const responseData = await res.json();
-        
+
         // Fetch latest details and update state
         const updatedRes = await fetch(`${API_CONFIG.BASE_URL}/gate_passes/${gatePassData.id}.json`, {
           headers: {
@@ -245,7 +245,7 @@ export const GatePassInwardsDetailPage = () => {
   });
 
   console.log(gatePassData.attachments.map);
-  
+
 
   // Prepare table data and columns for EnhancedTable
   const tableData =
@@ -430,7 +430,17 @@ export const GatePassInwardsDetailPage = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Invoice Date</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{new Date(gatePassData.invoice_date).toLocaleDateString()}</span>
+                        <span className="text-gray-900 font-medium">
+                          {gatePassData.invoice_date
+                            ? (() => {
+                              const d = new Date(gatePassData.invoice_date);
+                              const day = String(d.getDate()).padStart(2, '0');
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const year = d.getFullYear();
+                              return `${day}/${month}/${year}`;
+                            })()
+                            : '--'}
+                        </span>
                       </div>
                     )}
                     {gatePassData.invoice_amount && (

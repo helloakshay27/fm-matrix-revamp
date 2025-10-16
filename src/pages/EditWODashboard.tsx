@@ -987,6 +987,9 @@ export const EditWODashboard: React.FC = () => {
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}
+                                            inputProps={{
+                                                min: new Date().toISOString().split("T")[0],
+                                            }}
                                             sx={{
                                                 mt: 1,
                                                 "& .MuiInputBase-input": {

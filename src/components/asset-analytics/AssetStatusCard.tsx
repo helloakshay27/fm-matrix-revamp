@@ -14,23 +14,35 @@ const COLORS = ['#c6b692', '#d8dcdd', '#8b7355', '#a3a8aa'];
 export const AssetStatusCard: React.FC<AssetStatusCardProps> = ({ data, onDownload }) => {
   // Process data for chart
   const processData = () => {
-    if (!data || !data.info) {
+    if (!data) {
       return [
         { name: 'No Data', value: 1, color: '#e5e7eb' }
       ];
     }
 
-    const info = data.info;
+    // Handle both direct status data (from API service) and wrapped data
+    const statusData = data.assets_statistics?.status || data;
+    
     const chartData = [
       {
         name: 'In Use',
-        value: info.total_assets_in_use || 0,
+        value: statusData.assets_in_use_total || statusData.total_assets_in_use || 0,
         color: '#c6b692'
       },
       {
         name: 'Breakdown',
-        value: info.total_assets_in_breakdown || 0,
+        value: statusData.assets_in_breakdown_total || statusData.total_assets_in_breakdown || 0,
         color: '#d8dcdd'
+      },
+      {
+        name: 'In Store',
+        value: statusData.in_store || 0,
+        color: '#8b7355'
+      },
+      {
+        name: 'In Disposed',
+        value: statusData.in_disposed || 0,
+        color: '#a3a8aa'
       }
     ].filter(item => item.value > 0);
 
@@ -38,7 +50,21 @@ export const AssetStatusCard: React.FC<AssetStatusCardProps> = ({ data, onDownlo
   };
 
   const chartData = processData();
-  const hasData = data && data.info && (data.info.total_assets_in_use > 0 || data.info.total_assets_in_breakdown > 0);
+  const statusData = data?.assets_statistics?.status || data;
+  
+  // Debug logging
+  console.log('AssetStatusCard - Raw data:', data);
+  console.log('AssetStatusCard - Status data:', statusData);
+  console.log('AssetStatusCard - Chart data:', chartData);
+  
+  const hasData = statusData && (
+    statusData.assets_in_use_total !== undefined ||
+    statusData.assets_in_breakdown_total !== undefined ||
+    statusData.total_assets_in_use !== undefined ||
+    statusData.total_assets_in_breakdown !== undefined
+  );
+  
+  console.log('AssetStatusCard - Has data:', hasData);
 
   return (
     <Card className="h-96">
@@ -55,7 +81,7 @@ export const AssetStatusCard: React.FC<AssetStatusCardProps> = ({ data, onDownlo
             className="h-8 w-8 p-0"
             data-download-button
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
           </Button>
         )}
       </CardHeader>
@@ -87,13 +113,13 @@ export const AssetStatusCard: React.FC<AssetStatusCardProps> = ({ data, onDownlo
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">
-                  {data.info?.total_assets_in_use || 0}
+                  {statusData?.assets_in_use_total || statusData?.total_assets_in_use || 0}
                 </div>
                 <div className="text-muted-foreground">In Use</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-destructive">
-                  {data.info?.total_assets_in_breakdown || 0}
+                  {statusData?.assets_in_breakdown_total || statusData?.total_assets_in_breakdown || 0}
                 </div>
                 <div className="text-muted-foreground">Breakdown</div>
               </div>

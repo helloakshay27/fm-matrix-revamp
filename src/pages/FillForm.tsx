@@ -193,7 +193,7 @@ export const FillForm = () => {
     // Selected values for dropdowns
     const [selectedPermitIssuerId, setSelectedPermitIssuerId] = useState<string>('');
     const [selectedSafetyOfficerId, setSelectedSafetyOfficerId] = useState<string>('');
-    const [permitTypeName, setPermitTypeName] = useState<string>('COLD WORK PERMIT');
+    const [permitTypeName, setPermitTypeName] = useState<string>('');
 
     // Declaration
     const [declaration] = useState(

@@ -160,10 +160,48 @@ const AssignTicketsPage: React.FC = () => {
       console.log('🔐 Using auth token from API config:', authToken ? 'Token present' : 'Token missing');
       console.log('🌐 Using base URL from API config:', baseUrl);
       
-      const apiCalls = [];
+      // Sequential API calls - first status update, then assignment
+      let statusResult = null;
+      let assignResult = null;
 
-      // If user is selected, call assign API
+      // Step 1: Update status if selected
+      if (selectedStatus) {
+        console.log('🔄 Step 1: Updating status...');
+        const formData = new FormData();
+        complaint_ids.forEach(id => {
+          formData.append('complaint_ids[]', id.toString());
+        });
+        formData.append('issue_status', selectedStatus);
+        
+        console.log('📤 Status API FormData:');
+        for (const [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
+        
+        const statusUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_UPDATE_STATUS}`;
+        console.log('🎯 Status API URL:', statusUrl);
+        
+        const statusResponse = await fetch(statusUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: formData
+        });
+
+        if (!statusResponse.ok) {
+          const errorText = await statusResponse.text();
+          console.error('❌ Status API error response:', errorText);
+          throw new Error(`Status Update Failed - HTTP ${statusResponse.status}: ${errorText}`);
+        }
+        
+        statusResult = await statusResponse.json();
+        console.log('✅ Status API response:', statusResult);
+      }
+
+      // Step 2: Assign user if selected
       if (selectedUser) {
+        console.log('🔄 Step 2: Assigning user...');
         const formData = new FormData();
         complaint_ids.forEach(id => {
           formData.append('complaint_ids[]', id.toString());
@@ -172,82 +210,32 @@ const AssignTicketsPage: React.FC = () => {
         formData.append('comment', 'Assigned from bulk assignment');
         
         console.log('📤 Assign API FormData:');
-        for (let [key, value] of formData.entries()) {
+        for (const [key, value] of formData.entries()) {
           console.log(key, value);
         }
         
         const assignUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_ASSIGN_TICKETS}`;
         console.log('🎯 Assign API URL:', assignUrl);
         
-        apiCalls.push(
-          fetch(assignUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${authToken}`,
-            },
-            body: formData
-          })
-            .then(async response => {
-              if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Assign API error response:', errorText);
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
-              }
-              const data = await response.json();
-              console.log('✅ Assign API response:', data);
-              return data;
-            })
-            .catch(error => {
-              console.error('❌ Assign API error:', error);
-              throw error;
-            })
-        );
-      }
-
-      // If status is selected, call status update API
-      if (selectedStatus) {
-        const formData = new FormData();
-        complaint_ids.forEach(id => {
-          formData.append('complaint_ids[]', id.toString());
+        const assignResponse = await fetch(assignUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: formData
         });
-        formData.append('issue_status', selectedStatus);
-        
-        console.log('📤 Status API FormData:');
-        for (let [key, value] of formData.entries()) {
-          console.log(key, value);
+
+        if (!assignResponse.ok) {
+          const errorText = await assignResponse.text();
+          console.error('❌ Assign API error response:', errorText);
+          throw new Error(`Assignment Failed - HTTP ${assignResponse.status}: ${errorText}`);
         }
         
-        const statusUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_UPDATE_STATUS}`;
-        console.log('🎯 Status API URL:', statusUrl);
-        
-        apiCalls.push(
-          fetch(statusUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${authToken}`,
-            },
-            body: formData
-          })
-            .then(async response => {
-              if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Status API error response:', errorText);
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
-              }
-              const data = await response.json();
-              console.log('✅ Status API response:', data);
-              return data;
-            })
-            .catch(error => {
-              console.error('❌ Status API error:', error);
-              throw error;
-            })
-        );
+        assignResult = await assignResponse.json();
+        console.log('✅ Assign API response:', assignResult);
       }
-
-      // Execute all API calls
-      const results = await Promise.all(apiCalls);
-      console.log('🎉 All API calls completed:', results);
+      
+      console.log('🎉 All API calls completed successfully:', { statusResult, assignResult });
       
       toast({
         title: "Success",
