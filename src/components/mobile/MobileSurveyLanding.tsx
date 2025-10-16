@@ -1546,19 +1546,27 @@ export const MobileSurveyLanding: React.FC = () => {
           </div>
           <div className="flex justify-end item-end">
             <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
-              {window.location.origin === "https://oig.gophygital.work" ? (
-                <img
-                  src="/Without bkg.svg"
-                  alt="OIG Logo"
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <img
-                  src="/gophygital-logo-min.jpg"
-                  alt="Gophygital Logo"
-                  className="w-full h-full object-contain"
-                />
-              )}
+              <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
+                {window.location.origin === "https://oig.gophygital.work" ? (
+                  <img
+                    src="/Without bkg.svg"
+                    alt="OIG Logo"
+                    className="w-full h-full object-contain"
+                  />
+                ) : window.location.origin === "https://web.gophygital.work" ? (
+                  <img
+                    src="/PSIPL-logo (1).png"
+                    alt="PSIPL Logo"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <img
+                    src="/fallback-logo.svg"
+                    alt="Fallback Logo"
+                    className="w-full h-full object-contain"
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
