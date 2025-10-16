@@ -1003,6 +1003,9 @@ export const AddMaterialPRDashboard = () => {
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
+                    inputProps={{
+                      min: new Date().toISOString().split("T")[0],
+                    }}
                     sx={{ mt: 1 }}
                   />
 

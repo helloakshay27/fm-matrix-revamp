@@ -1018,6 +1018,9 @@ export const AddServicePRDashboard = () => {
                     type="date"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
+                    inputProps={{
+                      min: new Date().toISOString().split("T")[0],
+                    }}
                   />
 
                   <TextField
