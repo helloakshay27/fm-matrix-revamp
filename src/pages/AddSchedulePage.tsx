@@ -377,7 +377,7 @@ export const AddSchedulePage = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const typeParam = urlParams.get('type');
     const validScheduleTypes = ['Asset', 'Service'];
-    
+
     if (validScheduleTypes.includes(typeParam)) {
       return typeParam;
     }
@@ -556,6 +556,20 @@ export const AddSchedulePage = () => {
       localStorage.removeItem(key);
     });
   };
+
+ useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const serviceIdsParam = urlParams.get('serviceIds');
+  // Only run if scheduleFor is Service and serviceIdsParam exists
+  if (formData.scheduleFor === 'Service' && serviceIdsParam) {
+    const ids = serviceIdsParam.split(',').map(id => id.trim()).filter(Boolean);
+    setFormData(prev => ({
+      ...prev,
+      service: ids
+    }));
+    console.log('prev selected Id', ids);
+  }
+}, [formData.scheduleFor]);
 
   // Initialize component with localStorage data or clear current step if refreshed on that step
   useEffect(() => {
@@ -2677,7 +2691,7 @@ export const AddSchedulePage = () => {
     // Move to next step (data will only be submitted when Save is clicked on last step)
     setActiveStep(activeStep + 1);
     setEditingStep(null);
-    
+
     // Scroll to top for better UX
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2756,7 +2770,7 @@ export const AddSchedulePage = () => {
     saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
     saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
     saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
-    
+
     // For Time Setup (step 3), save current step so user returns to Time Setup
     // For other steps (0-2), save next step to move forward
     if (activeStep === 3) {
@@ -2764,7 +2778,7 @@ export const AddSchedulePage = () => {
     } else {
       saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep + 1); // Save next step
     }
-    
+
     saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, [...completedSteps, activeStep]);
     saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
 
@@ -2793,7 +2807,7 @@ export const AddSchedulePage = () => {
     // For other steps (0-2), move to next step
     setActiveStep(activeStep + 1);
     setEditingStep(null);
-    
+
     // Scroll to top for better UX
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -5879,8 +5893,8 @@ export const AddSchedulePage = () => {
                 </Box>
               ) : (
                 <Box className="flex gap-4">
-                  <DraftButton                   
-                     onClick={handleProceedToSave}
+                  <DraftButton
+                    onClick={handleProceedToSave}
                     disabled={isSubmitting}
                   >
                     Proceed to Save
@@ -5920,7 +5934,7 @@ export const AddSchedulePage = () => {
       {/* Draft Modal */}
       <Dialog
         open={showDraftModal}
-        onClose={() => {}} // Prevent closing by clicking outside
+        onClose={() => { }} // Prevent closing by clicking outside
         maxWidth="sm"
         fullWidth
         PaperProps={{
