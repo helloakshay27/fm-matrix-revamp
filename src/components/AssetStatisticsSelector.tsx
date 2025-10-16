@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Activity,
   TrendingUp,
@@ -10,35 +11,48 @@ import {
   Package,
   BarChart3,
   Download,
+  Info,
 } from 'lucide-react';
 import { assetAnalyticsAPI } from '@/services/assetAnalyticsAPI';
 import { assetAnalyticsDownloadAPI } from '@/services/assetAnalyticsDownloadAPI';
 import { toast } from 'sonner';
 
 interface AssetStatistics {
+  total_assets?: {
+    assets_total_count: number;
+    assets_total_count_info: string;
+  };
   total_assets_count?: {
     info: string;
     total_assets_count: number;
   };
   assets_in_use?: {
-    info: string;
-    total_assets_in_use: number;
+    assets_in_use_total: number;
+    assets_in_use_info: string;
   };
   assets_in_breakdown?: {
-    info: string;
-    total_assets_in_breakdown: number;
+    assets_in_breakdown_total: number;
+    assets_in_breakdown_info: string;
   };
-  critical_assets_in_breakdown?: {
-    info: string;
-    total_assets_in_breakdown: number;
+  critical_assets_breakdown?: {
+    critical_assets_breakdown_total: number;
+    critical_assets_breakdown_info: string;
   };
   ppm_conduct_assets_count?: {
-    info: string;
-    overdue_assets: string;
-    total: number;
+    // info: string;
+    // overdue_assets: string;
+    // total: number;
+    ppm_conduct_assets_count:number;
+    ppm_conduct_assets_info: string;
+  };
+  ppm_overdue_assets?: {
+    ppm_conduct_assets_count: number;
+    ppm_conduct_assets_info: {
+      info: string;
+      total: number;
+    };
   };
   // Legacy support for transformed data
-  total_assets?: number;
   total_value?: string;
   it_assets?: number;
   non_it_assets?: number;
@@ -145,7 +159,27 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
       );
       
       // Transform the API response to our interface if needed
-      setStatistics(data as AssetStatistics);
+      // Handle new API structure where each field contains both count and info
+      const transformedData: AssetStatistics = {
+        ...data,
+        // Keep the original structures for new API
+        total_assets: data.total_assets,
+        assets_in_use: data.assets_in_use,
+        assets_in_breakdown: data.assets_in_breakdown,
+        critical_assets_breakdown: data.critical_assets_breakdown,
+        ppm_overdue_assets: data.ppm_overdue_assets,
+        // Transform ppm_conduct_assets_count to match our interface
+        ppm_conduct_assets_count: data.ppm_conduct_assets_count ? {
+          ppm_conduct_assets_count: (data.ppm_conduct_assets_count as any)?.total || 0,
+          ppm_conduct_assets_info: (data.ppm_conduct_assets_count as any)?.info || ''
+        } : undefined,
+        // Also map to old structure for compatibility
+        total_assets_count: data.total_assets ? {
+          info: data.total_assets.assets_total_count_info || '',
+          total_assets_count: data.total_assets.assets_total_count || 0
+        } : data.total_assets_count
+      };
+      setStatistics(transformedData);
     } catch (err) {
       console.error('Error fetching asset statistics:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch statistics');
@@ -209,15 +243,19 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
     if (typeof value === 'object' && value !== null) {
       switch (key) {
         case 'total_assets_count':
-          return (value as any).total_assets_count?.toLocaleString() || 'N/A';
+          // Check for new structure first, then fallback to old structure
+          return (value as any).assets_total_count?.toLocaleString() || 
+                 (value as any).total_assets_count?.toLocaleString() || 'N/A';
         case 'assets_in_use':
-          return (value as any).total_assets_in_use?.toLocaleString() || 'N/A';
+          return (value as any).assets_in_use_total?.toLocaleString() || 'N/A';
         case 'assets_in_breakdown':
-          return (value as any).total_assets_in_breakdown?.toLocaleString() || 'N/A';
+          return (value as any).assets_in_breakdown_total?.toLocaleString() || 'N/A';
         case 'critical_assets_in_breakdown':
-          return (value as any).total_assets_in_breakdown?.toLocaleString() || 'N/A';
+          return (value as any).critical_assets_breakdown_total?.toLocaleString() || 'N/A';
         case 'ppm_conduct_assets_count':
-          return (value as any).total?.toLocaleString() || 'N/A';
+          // Check for new structure first, then fallback to old structure
+          return (value as any).ppm_conduct_assets_count?.toLocaleString() || 
+                 (value as any).total?.toLocaleString() || 'N/A';
         default:
           return 'N/A';
       }
@@ -237,7 +275,20 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
 
   // Extract metric value from statistics
   const getMetricValue = (metricId: string) => {
-    return statistics[metricId as keyof AssetStatistics];
+    switch (metricId) {
+      case 'total_assets_count':
+        return statistics.total_assets || statistics.total_assets_count;
+      case 'assets_in_use':
+        return statistics.assets_in_use;
+      case 'assets_in_breakdown':
+        return statistics.assets_in_breakdown;
+      case 'critical_assets_in_breakdown':
+        return statistics.critical_assets_breakdown;
+      case 'ppm_conduct_assets_count':
+        return statistics.ppm_overdue_assets || statistics.ppm_conduct_assets_count;
+      default:
+        return statistics[metricId as keyof AssetStatistics];
+    }
   };
 
   // Effects
@@ -308,11 +359,12 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
             <span className="text-sm font-medium text-[#1A1A1A]">
               {metric.label}
             </span>
-            {isSelected && (
+           
+            {/* {isSelected && (
               <Badge variant="secondary" className="text-xs">
                 Selected
               </Badge>
-            )}
+            )} */}
           </div>
           <div className="text-2xl font-semibold text-[#1A1A1A]">
             {displayValue}
@@ -323,6 +375,107 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
             </div>
           )}
         </div>
+            {/* Info tooltip for each metric */}
+            {metric.id === 'total_assets_count' && statistics.total_assets?.assets_total_count_info && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {statistics.total_assets.assets_total_count_info}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {metric.id === 'assets_in_use' && statistics.assets_in_use?.assets_in_use_info && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {statistics.assets_in_use.assets_in_use_info}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {metric.id === 'assets_in_breakdown' && statistics.assets_in_breakdown?.assets_in_breakdown_info && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {statistics.assets_in_breakdown.assets_in_breakdown_info}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {metric.id === 'critical_assets_in_breakdown' && statistics.critical_assets_breakdown?.critical_assets_breakdown_info && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {statistics.critical_assets_breakdown.critical_assets_breakdown_info}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {metric.id === 'ppm_conduct_assets_count' && (statistics.ppm_overdue_assets?.ppm_conduct_assets_info?.info || statistics.ppm_conduct_assets_count?.ppm_conduct_assets_info) && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {statistics.ppm_overdue_assets?.ppm_conduct_assets_info?.info || statistics.ppm_conduct_assets_count?.ppm_conduct_assets_info}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
         {hasDownload && showDownload && (
           <Button
             variant="ghost"
@@ -331,11 +484,11 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
               e.stopPropagation();
               handleDownload(metric.downloadType);
             }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 hover:bg-gray-100"
+            className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
             title={`Download ${metric.label} data`}
             disabled={!isDataAvailable}
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
           </Button>
         )}
       </div>
@@ -387,7 +540,7 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
             onClick={() => onDownload('all')}
             className="flex items-center gap-2"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
             Download All
           </Button>
         )}

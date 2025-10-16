@@ -2,8 +2,21 @@ import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
 // Asset Analytics Interfaces
 export interface AssetGroupWiseData {
-  info: string;
-  group_wise_assets: Array<{
+  assets_statistics?: {
+    assets_group_count_by_name?: Array<{
+      group_name: string;
+      count: number;
+    }>;
+    filters?: {
+      site_ids: number[];
+      site_names: string[];
+      from_date: string | null;
+      to_date: string | null;
+    };
+  };
+  // Legacy support for old structure
+  info?: string;
+  group_wise_assets?: Array<{
     group_name: string;
     asset_count: number;
   }>;
@@ -12,16 +25,29 @@ export interface AssetGroupWiseData {
 export interface AssetStatusData {
   success?: number;
   message?: string;
-  info?: {
-    info: string;
-    total_assets_in_breakdown: number;
-    total_assets_in_use: number;
-  };
+  assets_in_use_total?: number;
+  assets_in_breakdown_total?: number;
+  in_store?: number;
+  in_disposed?: number;
+  info?: string;
 }
 
 export interface AssetDistributionData {
   success?: number;
   message?: string;
+  assets_statistics?: {
+    assets_distribution?: {
+      it_assets_count: number;
+      non_it_assets_count: number;
+    };
+    filters?: {
+      site_ids: number[];
+      site_names: string[];
+      from_date: string | null;
+      to_date: string | null;
+    };
+  };
+  // Legacy support for old structure
   info?: {
     info: string;
     total_it_assets: number;
@@ -34,33 +60,43 @@ export interface AssetDistributionData {
 }
 
 export interface AssetStatisticsData {
+  total_assets?: {
+    assets_total_count: number;
+    assets_total_count_info: string;
+  };
   total_assets_count?: {
     info: string;
     total_assets_count: number;
   };
   assets_in_use?: {
-    info: string;
-    total_assets_in_use: number;
+    assets_in_use_total: number;
+    assets_in_use_info: string;
   };
   assets_in_breakdown?: {
-    info: string;
-    total_assets_in_breakdown: number;
+    assets_in_breakdown_total: number;
+    assets_in_breakdown_info: string;
   };
-  critical_assets_in_breakdown?: {
-    info: string;
-    total_assets_in_breakdown: number;
+  critical_assets_breakdown?: {
+    critical_assets_breakdown_total: number;
+    critical_assets_breakdown_info: string;
   };
   ppm_conduct_assets_count?: {
     info: string;
     overdue_assets: string;
     total: number;
   };
+  ppm_overdue_assets?: {
+    ppm_conduct_assets_count: number;
+    ppm_conduct_assets_info: {
+      info: string;
+      total: number;
+    };
+  };
   average_customer_rating?: {
     info: string;
     avg_rating: number;
   };
   // Legacy support for transformed data
-  total_assets?: number;
   total_value?: string;
   it_assets?: number;
   non_it_assets?: number;
@@ -84,11 +120,28 @@ export interface AssetBreakdownData {
 }
 
 export interface CategoryWiseAssetsData {
-  categories: Array<{
+  assets_statistics?: {
+    asset_categorywise?: Array<{
+      category: string;
+      count: number;
+    }>;
+    filters?: {
+      site_ids: number[];
+      site_names: string[];
+      from_date: string | null;
+      to_date: string | null;
+    };
+  };
+  // Legacy support for old structure
+  categories?: Array<{
     category_name: string;
     asset_count: number;
     percentage: number;
   }>;
+  // Legacy support for old API structure
+  asset_type_category_counts?: {
+    [key: string]: number;
+  };
 }
 
 // Utility Functions
@@ -112,7 +165,7 @@ export const assetAnalyticsAPI = {
   async getGroupWiseAssets(fromDate: Date, toDate: Date): Promise<AssetGroupWiseData> {
     const siteId = getCurrentSiteId();
     const accessToken = getAccessToken();
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/group_wise_assets.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&assets_group_count_by_name=true`;
 
     const response = await fetch(url, {
       headers: {
@@ -125,7 +178,24 @@ export const assetAnalyticsAPI = {
       throw new Error(`Failed to fetch group wise assets: ${response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('Group wise assets API response:', data);
+    
+    // Transform the new response structure to maintain backward compatibility
+    if (data.assets_statistics?.assets_group_count_by_name) {
+      return {
+        ...data,
+        // Add legacy group_wise_assets structure for backward compatibility
+        group_wise_assets: data.assets_statistics.assets_group_count_by_name.map(item => ({
+          group_name: item.group_name,
+          asset_count: item.count
+        })),
+        // Add legacy info field
+        info: `Total groups: ${data.assets_statistics.assets_group_count_by_name.length}`
+      };
+    }
+    
+    return data;
   },
 
   async getAssetStatus(fromDate: Date, toDate: Date): Promise<AssetStatusData> {
@@ -133,7 +203,7 @@ export const assetAnalyticsAPI = {
     const accessToken = getAccessToken();
     
     // Use the new assets_status endpoint
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_status.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?assets_status=true&site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}`;
 
     const response = await fetch(url, {
       headers: {
@@ -149,15 +219,15 @@ export const assetAnalyticsAPI = {
     const data = await response.json();
     console.log('Asset status API response:', data);
     
-    // Return the data as received from the API
-    return data;
+    // Extract the status data from the response
+    return data.assets_statistics?.status || data;
   },
 
   async getAssetDistribution(fromDate: Date, toDate: Date): Promise<AssetDistributionData> {
     const siteId = getCurrentSiteId();
     const accessToken = getAccessToken();
     
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_distributions.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&assets_distribution=true`;
     
     const response = await fetch(url, {
       headers: {
@@ -172,6 +242,20 @@ export const assetAnalyticsAPI = {
 
     const data = await response.json();
     console.log('Asset distributions API response:', data);
+    
+    // Transform the new response structure to maintain backward compatibility
+    if (data.assets_statistics?.assets_distribution) {
+      return {
+        ...data,
+        // Add legacy info structure for backward compatibility
+        info: {
+          info: `IT Assets: ${data.assets_statistics.assets_distribution.it_assets_count}, Non-IT Assets: ${data.assets_statistics.assets_distribution.non_it_assets_count}`,
+          total_it_assets: data.assets_statistics.assets_distribution.it_assets_count,
+          total_non_it_assets: data.assets_statistics.assets_distribution.non_it_assets_count,
+        }
+      };
+    }
+    
     return data;
   },
 
@@ -180,7 +264,7 @@ export const assetAnalyticsAPI = {
     const accessToken = getAccessToken();
     
     // Note: The API endpoint has "statictics" (not "statistics") - this appears to be the correct endpoint
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statictics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&total_assets=true&assets_in_use=true&assets_in_breakdown=true&critical_assets_breakdown=true&ppm_overdue_assets=true`;
     
     const response = await fetch(url, {
       headers: {
@@ -196,7 +280,8 @@ export const assetAnalyticsAPI = {
     const data = await response.json();
     console.log('Asset statistics API response:', data);
     
-    return data;
+    // Extract the assets_statistics from the response
+    return data.assets_statistics || data;
   },
 
   async getAssetBreakdown(fromDate: Date, toDate: Date): Promise<AssetBreakdownData> {
@@ -226,7 +311,7 @@ export const assetAnalyticsAPI = {
     const accessToken = getAccessToken();
     
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/assets/category_wise_assets_count.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}`;
+      const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&asset_categorywise=true`;
       
       const response = await fetch(url, {
         headers: {
@@ -242,20 +327,44 @@ export const assetAnalyticsAPI = {
       const data = await response.json();
       console.log('Category wise assets API response:', data);
       
-      // Transform the API response to match our interface
-      const assetCounts = Object.values(data.asset_type_category_counts) as number[];
-      const totalAssets = assetCounts.reduce((sum, count) => sum + Number(count), 0);
-      
-      const categories = Object.entries(data.asset_type_category_counts).map(([categoryName, assetCount]) => {
-        const count = Number(assetCount);
+      // Transform the new API response structure to maintain backward compatibility
+      if (data.assets_statistics?.asset_categorywise) {
+        const assetCounts = data.assets_statistics.asset_categorywise.map(item => item.count);
+        const totalAssets = assetCounts.reduce((sum, count) => sum + Number(count), 0);
+        
+        const categories = data.assets_statistics.asset_categorywise.map(item => {
+          const count = Number(item.count);
+          return {
+            category_name: item.category,
+            asset_count: count,
+            percentage: totalAssets > 0 ? Math.round((count / totalAssets) * 100) : 0
+          };
+        });
+        
         return {
-          category_name: categoryName,
-          asset_count: count,
-          percentage: totalAssets > 0 ? Math.round((count / totalAssets) * 100) : 0
+          ...data,
+          categories
         };
-      });
+      }
       
-      return { categories };
+      // Legacy support for old structure
+      if (data.asset_type_category_counts) {
+        const assetCounts = Object.values(data.asset_type_category_counts) as number[];
+        const totalAssets = assetCounts.reduce((sum, count) => sum + Number(count), 0);
+        
+        const categories = Object.entries(data.asset_type_category_counts).map(([categoryName, assetCount]) => {
+          const count = Number(assetCount);
+          return {
+            category_name: categoryName,
+            asset_count: count,
+            percentage: totalAssets > 0 ? Math.round((count / totalAssets) * 100) : 0
+          };
+        });
+        
+        return { categories };
+      }
+      
+      return data;
     } catch (error) {
       console.error('Error fetching category wise assets:', error);
       throw error;

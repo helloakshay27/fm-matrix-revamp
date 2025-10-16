@@ -33,7 +33,7 @@ export const assetAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/assets/export_group_wise_assets_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}&assets_group_count_by_name=true&export=group_wise`;
     try {
       console.log("Fetching group-wise assets from:", url);
       
@@ -95,7 +95,7 @@ export const assetAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/assets/category_wise_assets_count_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}&asset_categorywise=true&export=category_wise`;
     console.log("Fetching category-wise assets from:", url);
     console.log("Fetching category-wise assets from:", url);
     try {
@@ -132,7 +132,8 @@ export const assetAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/assets/assets_distributions_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}&assets_distribution=true&export=distribution
+`;
     console.log("Fetching asset distributions from:", url);
     try {
       const response = await fetch(url, {
@@ -204,7 +205,7 @@ export const assetAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/assets/card_assets_in_breakdown_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}&assets_in_breakdown=true&export=assets_in_breakdown`;
     
     try {
       const response = await fetch(url, {
@@ -239,7 +240,7 @@ export const assetAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/assets/card_critical_assets_in_breakdown_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}&critical_assets_breakdown=true&export=critical_breakdown`;
     
     try {
       const response = await fetch(url, {
@@ -274,7 +275,7 @@ export const assetAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/assets/card_assets_in_use_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}&assets_in_use=true&export=assets_in_use`;
     
     try {
       const response = await fetch(url, {
@@ -309,7 +310,7 @@ export const assetAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/assets/card_total_assets_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}&total_assets=true&export=total_assets`;
     
     try {
       const response = await fetch(url, {
@@ -344,7 +345,7 @@ export const assetAnalyticsDownloadAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `${getBaseUrl()}/pms/assets/card_ppm_conduct_assets_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}&ppm_overdue_assets=true&export=ppm_overdue`;
     
     try {
       const response = await fetch(url, {
