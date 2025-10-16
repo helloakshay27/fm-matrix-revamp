@@ -1561,8 +1561,8 @@ export const MobileSurveyLanding: React.FC = () => {
                   />
                 ) : (
                   <img
-                    src="/fallback-logo.svg"
-                    alt="Fallback Logo"
+                    src="/gophygital-logo-min.jpg"
+                    alt="gophygital Logo"
                     className="w-full h-full object-contain"
                   />
                 )}
