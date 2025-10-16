@@ -55,6 +55,7 @@ export const DeletedPRs = () => {
     });
 
     const getDeletedPRs = async (page = 1) => {
+        setLoading(true)
         try {
             const response = await dispatch(fetchDeletedPRs({ baseUrl, token, page })).unwrap()
             const formattedResponse = response.deletion_requests.map((item: any) => ({
@@ -75,6 +76,8 @@ export const DeletedPRs = () => {
             })
         } catch (error) {
             console.log(error)
+        } finally {
+            setLoading(false)
         }
     }
 
