@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText } from "lucide-react";
+import { ArrowLeft, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import { approveInvoice, getInvoiceById } from "@/store/slices/invoicesSlice";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import axios from "axios";
 import DebitCreditModal from "@/components/DebitCreditModal";
@@ -159,6 +159,7 @@ export const InvoiceDetails = () => {
     const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [openDebitModal, setOpenDebitModal] = useState(false)
+    const [printing, setPrinting] = useState(false)
     const [debitCreditForm, setDebitCreditForm] = useState({
         type: "",
         amount: "",
@@ -184,6 +185,7 @@ export const InvoiceDetails = () => {
     }, [dispatch, baseUrl, token, id]);
 
     const handlePrint = async () => {
+        setPrinting(true)
         try {
             const response = await axios.get(`https://${baseUrl}/pms/work_order_invoices/${id}/print_pdf.pdf`, {
                 responseType: 'blob',
@@ -203,6 +205,8 @@ export const InvoiceDetails = () => {
             URL.revokeObjectURL(downloadUrl);
         } catch (error) {
             console.log(error)
+        } finally {
+            setPrinting(false)
         }
     };
 
@@ -344,14 +348,20 @@ export const InvoiceDetails = () => {
                     </Button>
                     {
                         !shouldShowButtons && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                                onClick={handlePrint}
-                            >
-                                <Printer className="w-4 h-4 mr-1" />
-                                Print
+                            <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                                {
+                                    printing ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Print
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Printer className="w-4 h-4 mr-2" />
+                                            Print
+                                        </>
+                                    )
+                                }
                             </Button>
                         )
                     }
