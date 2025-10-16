@@ -562,7 +562,7 @@ export const MaterialPRDetailsPage = () => {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <h1 className="text-2xl font-semibold">Material PR Details</h1>
         <div className="flex items-center gap-3">
           {

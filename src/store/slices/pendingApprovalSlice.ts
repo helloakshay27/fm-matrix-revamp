@@ -57,9 +57,9 @@ export const approveDeletionRequest = createAsyncThunk(
 
 export const fetchDeletedPRs = createAsyncThunk(
     "fetchDeletedPRs",
-    async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+    async ({ baseUrl, token, page }: { baseUrl: string, token: string, page?: number }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/deletion_requests.json`, {
+            const response = await axios.get(`https://${baseUrl}/deletion_requests.json?page=${page}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }

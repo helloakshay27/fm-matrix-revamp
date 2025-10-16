@@ -671,11 +671,11 @@ export const PODetailsPage = () => {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4">
         <h1 className="text-2xl font-semibold">
           Purchase Order Details
         </h1>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           {poDetails.show_send_sap_yes && (
             <Button
               size="sm"
@@ -734,7 +734,7 @@ export const PODetailsPage = () => {
         </div>
       </div>
       <TooltipProvider>
-        <div className="flex items-start gap-3 my-4">
+        <div className="flex items-start gap-3 my-4 flex-wrap">
           {poDetails?.approval_levels?.map((level: ApprovalLevel) => (
             <div className="space-y-2" key={level.id}>
               {level.status_label.toLowerCase() === "rejected" ? (
