@@ -1408,42 +1408,70 @@ export const VisitorFormPage = () => {
                   </label>
                 </div>
 
-                {/* Display uploaded files */}
                 {formData.visitor_documents.length > 0 && (
                   <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2 bg-gray-50">
-                    {formData.visitor_documents.map((file, index) => (
-                      <div
-                        key={`${file.name}-${index}`}
-                        className="flex items-center justify-between bg-white p-2 rounded border"
-                      >
-                        <div className="flex items-center flex-1 min-w-0">
-                          <FileText className="h-4 w-4 mr-2 text-blue-600 flex-shrink-0" />
-                          <span className="text-sm text-gray-700 truncate" title={file.name}>
-                            {file.name}
-                          </span>
-                          <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            removeUploadedFile(index);
-                          }}
-                          className="ml-2 p-1 hover:bg-gray-100 rounded flex-shrink-0"
-                          title="Remove file"
-                        >
-                          <X className="h-3 w-3 text-gray-500" />
-                        </button>
-                      </div>
-                    ))}
+                    {formData.visitor_documents.map((file, index) => {
+                      const isImage = file.type.startsWith('image/');
+                      const isPDF = file.type === 'application/pdf';
+                      const fileURL = URL.createObjectURL(file);
 
-                    {/* Clear all button */}
+                      return (
+                        <div
+                          key={`${file.name}-${index}`}
+                          className="flex items-center justify-between bg-white p-2 rounded border"
+                        >
+                          <div className="flex items-center flex-1 min-w-0">
+                            <div className="mr-2 flex-shrink-0">
+                              {isImage ? (
+                                <img
+                                  src={fileURL}
+                                  alt={file.name}
+                                  className="h-10 w-10 object-cover rounded border border-gray-300"
+                                />
+                              ) : isPDF ? (
+                                <div className="h-10 w-10 bg-red-50 rounded border border-red-200 flex items-center justify-center">
+                                  <FileText className="h-5 w-5 text-red-600" />
+                                </div>
+                              ) : (
+                                <FileText className="h-10 w-10 p-2 text-blue-600" />
+                              )}
+                            </div>
+
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <span className="text-sm text-gray-700 truncate" title={file.name}>
+                                {file.name}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              URL.revokeObjectURL(fileURL);
+                              removeUploadedFile(index);
+                            }}
+                            className="ml-2 p-1 hover:bg-gray-100 rounded flex-shrink-0"
+                            title="Remove file"
+                          >
+                            <X className="h-3 w-3 text-gray-500" />
+                          </button>
+                        </div>
+                      );
+                    })}
+
                     {formData.visitor_documents.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => removeUploadedFile()}
+                        onClick={() => {
+                          formData.visitor_documents.forEach(file => {
+                            URL.revokeObjectURL(URL.createObjectURL(file));
+                          });
+                          removeUploadedFile();
+                        }}
                         className="text-xs text-red-600 hover:text-red-800 mt-1"
                       >
                         Clear all files
