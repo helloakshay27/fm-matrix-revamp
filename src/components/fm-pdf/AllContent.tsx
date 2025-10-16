@@ -3198,15 +3198,15 @@ const AllContent = () => {
 
                     {/* Company Wise Overview */}
                     <div className="bg-white border border-gray-300 p-4 mb-10 print:p-2 print:mb-2 no-break">
-                        <h2 className="text-lg font-bold md:text-lg mb-4 border-b border-black py-4 print:text-[14px] print:mb-1 print:py-2.5">
+                        <h2 className="text-lg font-bold md:text-lg mb-4 py-4 print:text-[14px] print:mb-1 print:py-2.5">
                             Company Wise Asset Overview
                         </h2>
-                        <div className="grid grid-cols-3 bg-[#DAD6C9] text-[#C72030] text-center font-bold text-[15px] md:text-[15px] tracking-wide overflow-hidden print-bg-red print:text-[13px]">
-                            <div className="py-4 border-r border-white px-2 leading-snug print:py-2.5 print:px-1">Total Available Asset</div>
-                            <div className="py-4 border-r border-white px-2 leading-snug print:py-2.5 print:px-1">Asset In Breakdown</div>
+                        <div className="grid grid-cols-3 bg-[#DAD6C9] text-[#C72030] border-t border-black text-center font-bold text-[15px] md:text-[15px] tracking-wide overflow-hidden print-bg-red print:text-[13px]">
+                            <div className="py-4 border-r border-black px-2 leading-snug print:py-2.5 print:px-1">Total Available Asset</div>
+                            <div className="py-4 border-r border-black px-2 leading-snug print:py-2.5 print:px-1">Asset In Breakdown</div>
                             <div className="py-4 px-2 leading-snug print:py-2.5 print:px-1">Average Downtime</div>
                         </div>
-                        <div className="grid grid-cols-3 bg-[#f2f0eb] font-extrabold text-center  text-4xl md:text-xl border-t border-black print:text-[11px] print:py-2.5">
+                        <div className="grid grid-cols-3 bg-[#f2f0eb] font-extrabold text-center  text-4xl md:text-xl border-t border-black print:text-[11px]">
                             <div className="border-r text-3xl print:text-xl border-black px-2 break-words h-[60px] flex items-center justify-center">{companyAssetOverview?.total_available_asset ?? '-'}</div>
                             <div className="border-r text-3xl print:text-xl border-black px-2 break-words h-[60px] flex items-center justify-center">{companyAssetOverview?.asset_in_breakdown ?? '-'}</div>
                             <div className="px-2 text-3xl print:text-xl break-words h-[60px] flex items-center justify-center">{companyAssetOverview?.average_downtime_days !== undefined ? `${companyAssetOverview?.average_downtime_days} Days` : '-'}</div>
@@ -3428,7 +3428,7 @@ const AllContent = () => {
                             <table className="min-w-full border border-black text-sm text-center align-middle print:table-fixed print:w-full print:text-[9px] print:leading-relaxed">
                                 <thead className="bg-[#DAD6C9] text-[#c72030]">
                                     <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[10px]">
-                                        {['Site Name', 'AMC Name', 'Contract Start Date', 'Contract End Date', 'Status', 'Projected Renewal Cost (₹)', 'Vendor Contact'].map(h => (
+                                        {['Site Name', 'AMC Name', 'Contract Start Date', 'Contract End Date', 'Status', 'Contract Cost (₹)', 'Vendor Contact'].map(h => (
                                             <th
                                                 key={h}
                                                 scope="col"
@@ -3943,19 +3943,40 @@ const AllContent = () => {
                                             interval={0}
                                             height={100}
                                             tick={{ fontSize: 18, fontWeight: '600' }}
+                                            label={{
+                                                value: "Sites",
+                                                position: "bottom",
+                                                offset: 30,
+                                                fontSize: 16,
+                                                fontStyle: "italic",
+                                                fontWeight: "500",
+                                                fill: "#1A1A1A",
+                                            }}
                                         />
                                         <YAxis
                                             width={80}
                                             domain={[0, consumableMaxRaw || 0]}
                                             ticks={consumableTicks}
                                             tickFormatter={(v) => formatToK(v)}
+                                            label={{
+                                                value: "Total Value of Consumption",
+                                                angle: -90,
+                                                position: "insideLeft",
+                                                dy: 90,
+                                                dx: -50,
+                                                fontSize: 16,
+                                                fontStyle: "italic",
+                                                fontWeight: "500",
+                                                offset: 20,
+                                                fill: "#1A1A1A"
+                                            }}
                                         >
-                                            <Label
-                                                // value="Total Value of Consumption"
+                                            {/* <Label
+                                                value="Total Value of Consumption"
                                                 angle={-90}
                                                 position="insideLeft"
                                                 className="text-sm"
-                                            />
+                                            /> */}
                                         </YAxis>
                                         <Tooltip
                                             formatter={(val: any) => formatToK(val)}
