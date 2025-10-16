@@ -65,6 +65,7 @@ import { createTestimonialReucers, editTestimonialReucers, fetchTestimonialsById
 import { createAmenityReducer, editAmenityReducer, fetchAmenityByIdReducer, fetchAmenityReducer } from './slices/amenitySlice'
 import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPartnersReducer } from './slices/companyPartnerSlice'
 import { createChatTaskReducer, createConversationReducer, createGroupReducer, deleteChatTaskReducer, fetchChannelTaskDetailsReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, removeUserFromGroupReducer, sendMessageReducer, updateChatTaskReducer, updateMessageReducer } from './slices/channelSlice'
+import { createCircleReducer, fetchCircleListReducer, updateCircleReducer } from './slices/msafeCircleSlice'
 
 export const store = configureStore({
   reducer: {
@@ -141,6 +142,9 @@ export const store = configureStore({
     filterBookings: filterBookingsReducer,
     getLogs: getLogsReducer,
     fetchActiveFacilities: fetchActiveFacilitiesReducer,
+    fetchCircleList: fetchCircleListReducer,
+    updateCircle: updateCircleReducer,
+    createCircle: createCircleReducer,
 
     // Unit Master
     fetchMasterUnits: fetchMasterUnitsReducer,

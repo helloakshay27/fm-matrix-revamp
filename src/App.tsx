@@ -774,6 +774,7 @@ import { DeletedPRs } from "./pages/DeletedPRs";
 import MsafeDashboardVI from "./pages/MsafeDashboardVI";
 import { DashboardMobile } from "./pages/DashboardMobile";
 import SafetyCheckAudit from './pages/SafetyCheckAudit';
+import MsafeCirlce from "./pages/MsafeCirlce";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1684,6 +1685,10 @@ function App() {
                   <Route
                     path="/safety/training-list"
                     element={<TrainingListDashboard />}
+                  />
+                  <Route
+                    path="/safety/m-safe/circle"
+                    element={<MsafeCirlce />}
                   />
 
                   {/* CRM Routes */}
