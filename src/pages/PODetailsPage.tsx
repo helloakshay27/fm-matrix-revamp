@@ -21,6 +21,7 @@ import {
   ScrollText,
   ClipboardList,
   Images,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -353,6 +354,7 @@ export const PODetailsPage = () => {
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [openDebitCreditModal, setOpenDebitCreditModal] = useState(false);
+  const [printing, setPrinting] = useState(false)
   const [selectedAttachment, setSelectedAttachment] =
     useState<Attachment | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -400,7 +402,7 @@ export const PODetailsPage = () => {
       toast.error("Missing required configuration");
       return;
     }
-
+    setPrinting(true)
     try {
       const response = await axios.get(
         `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
@@ -421,6 +423,8 @@ export const PODetailsPage = () => {
       URL.revokeObjectURL(downloadUrl);
     } catch (error: any) {
       toast.error(error.message || "Failed to download PDF");
+    } finally {
+      setPrinting(false)
     }
   }, [id]);
 
@@ -710,14 +714,20 @@ export const PODetailsPage = () => {
                   <Copy className="w-4 h-4 mr-1" />
                   Clone
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={handlePrint}
-                >
-                  <Printer className="w-4 h-4 mr-1" />
-                  Print
+                <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                  {
+                    printing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Print
+                      </>
+                    ) : (
+                      <>
+                        <Printer className="w-4 h-4 mr-2" />
+                        Print
+                      </>
+                    )
+                  }
                 </Button>
               </>
             )
