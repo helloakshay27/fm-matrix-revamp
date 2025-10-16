@@ -1165,7 +1165,7 @@ export const VisitorFormPage = () => {
                     }}
                   />
                   <TextField
-                    label="Host Email ID"
+                    label={<>Host Email ID<span className="text-red-500">*</span></>}
                     placeholder="Enter Host Email ID"
                     value={formData.hostEmail}
                     onChange={(e) =>
