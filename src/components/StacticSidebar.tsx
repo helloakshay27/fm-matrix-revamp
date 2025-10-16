@@ -671,6 +671,10 @@ const modulesByPackage = {
           name: "Reportees Reassign",
           href: "/safety/m-safe/reportees-reassign",
         },
+        {
+          name: "Circle",
+          href: "/safety/m-safe/circle",
+        },
       ],
     },
     {
