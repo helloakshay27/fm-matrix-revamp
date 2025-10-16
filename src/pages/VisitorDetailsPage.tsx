@@ -321,12 +321,6 @@ export const VisitorDetailsPage = () => {
     if (!visitorData || !id) return;
 
     try {
-      console.log('Checking out visitor:', id);
-
-      // Show loading toast
-      toast.info('Processing checkout...');
-
-      // Construct the API URL using the visitor ID
       const url = getFullUrl(`/pms/admin/visitors/marked_out_visitors.json`);
       const options = getAuthenticatedFetchOptions();
 
@@ -351,9 +345,6 @@ export const VisitorDetailsPage = () => {
         body: JSON.stringify(requestBody)
       };
 
-      console.log('🚀 Calling checkout API:', url);
-      console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
-
       const response = await fetch(url, requestOptions);
 
       if (!response.ok) {
@@ -363,7 +354,6 @@ export const VisitorDetailsPage = () => {
       }
 
       const data = await response.json();
-      console.log('✅ Visitor checked out successfully:', data);
 
       // Show success toast
       toast.success('Visitor checked out successfully!');
