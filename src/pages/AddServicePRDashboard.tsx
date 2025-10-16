@@ -641,7 +641,7 @@ export const AddServicePRDashboard = () => {
       navigate("/finance/service-pr");
     } catch (error) {
       console.log(error);
-      toast.error(error.message);
+      toast.error(error);
     } finally {
       setSubmitting(false);
     }
