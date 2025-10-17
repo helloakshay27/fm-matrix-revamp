@@ -849,6 +849,82 @@ const MsafeDashboardVI: React.FC = () => {
         link.click();
     };
 
+    // Generic function to download data from API as JSON
+    const downloadDataFromAPI = async (endpoint: string, filename: string) => {
+        try {
+            const baseUrl = localStorage.getItem('baseUrl') || '';
+            const token = localStorage.getItem('token') || '';
+            if (!baseUrl || !token) {
+                toast.error('Missing baseUrl or token — cannot download data');
+                return;
+            }
+
+            const host = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+            const params = new URLSearchParams();
+            params.set('access_token', token);
+            params.set('company_id', '145');
+            
+            // Use applied filters for the download
+            const clusterParam = buildIdsParam(appliedCluster);
+            const circleParam = buildIdsParam(appliedCircle);
+            const functionParam = buildIdsParam(appliedFunc);
+            if (clusterParam) params.set('cluster_id', clusterParam);
+            if (circleParam) params.set('circle_id', circleParam);
+            if (functionParam) params.set('function_id', functionParam);
+            if (appliedEmployeeType) params.set('type', appliedEmployeeType);
+            params.set('from_date', formatDate(appliedStartDate));
+            params.set('to_date', formatDate(appliedEndDate));
+            params.set('export', 'true');
+
+            const url = `https://${host}/msafe_dashboard/${endpoint}?${params.toString()}`;
+            
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            // Get the response as blob first to check content
+            const blob = await res.blob();
+            
+            // Try to parse as JSON first
+            const text = await blob.text();
+            try {
+                const json = JSON.parse(text);
+                const dataStr = JSON.stringify(json, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url_blob = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url_blob;
+                link.download = `${filename}-${formatDate(appliedStartDate)}-to-${formatDate(appliedEndDate)}.json`;
+                link.click();
+                URL.revokeObjectURL(url_blob);
+            } catch (parseError) {
+                console.error('Failed to parse JSON response:', parseError);
+                // If JSON parsing fails, download as Excel file
+                const url_blob = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url_blob;
+                link.download = `${filename}-${formatDate(appliedStartDate)}-to-${formatDate(appliedEndDate)}.xlsx`;
+                link.click();
+                URL.revokeObjectURL(url_blob);
+            }
+            
+            toast.success(`${filename} data downloaded successfully`);
+        } catch (err) {
+            console.error(`Failed to download ${filename} data:`, err);
+            toast.error('Failed to download data');
+        }
+    };
+
+    // Download functions for different sections
+    const downloadOnboardingData = () => downloadDataFromAPI('onboarding_status.json', 'onboarding-status');
+    const downloadDay1HSWData = () => downloadDataFromAPI('day_1_hsw_induction.json', 'day1-hsw-induction');
+    const downloadTrainingData = () => downloadDataFromAPI('training_compliance.json', 'training-compliance');
+    const downloadNewJoineeData = () => downloadDataFromAPI('new_joinee_trend.json', 'new-joinee-trend');
+    const downloadLMCData = () => downloadDataFromAPI('lmc_section.json', 'lmc-section');
+    const downloadSMTData = () => downloadDataFromAPI('smt_section.json', 'smt-section');
+    const downloadComplianceForecastData = () => downloadDataFromAPI('compliance_forecasting.json', 'compliance-forecasting');
+    const downloadDrivingData = () => downloadDataFromAPI('driving_section.json', 'driving-section');
+    const downloadMedicalData = () => downloadDataFromAPI('medical_checkup_and_first_aid.json', 'medical-first-aid');
+
     const downloadDay1Chart = async () => {
         if (!day1ChartRef.current) return;
         const canvas = await html2canvas(day1ChartRef.current);
@@ -1675,9 +1751,14 @@ const MsafeDashboardVI: React.FC = () => {
                 <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
                     Onboarding Status
                 </Typography>
-                <IconButton aria-label="download" onClick={downloadChart}>
-                    <DownloadIcon />
-                </IconButton>
+                <Stack direction="row" spacing={1}>
+                    {/* <IconButton aria-label="download chart" onClick={downloadChart}>
+                        <DownloadIcon />
+                    </IconButton> */}
+                    <IconButton aria-label="download data" onClick={downloadOnboardingData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Stack>
             </Stack>
 
             <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
@@ -1798,9 +1879,14 @@ const MsafeDashboardVI: React.FC = () => {
                 <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
                     Day 1 HSW Induction
                 </Typography>
-                <IconButton aria-label="download" onClick={downloadDay1Chart}>
-                    <DownloadIcon />
-                </IconButton>
+                <Stack direction="row" spacing={1}>
+                    {/* <IconButton aria-label="download chart" onClick={downloadDay1Chart}>
+                        <DownloadIcon />
+                    </IconButton> */}
+                    <IconButton aria-label="download data" onClick={downloadDay1HSWData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Stack>
             </Stack>
             <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -1860,9 +1946,14 @@ const MsafeDashboardVI: React.FC = () => {
                 <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
                     Training compliance
                 </Typography>
-                <IconButton aria-label="download" onClick={downloadTrainingChart}>
-                    <DownloadIcon />
-                </IconButton>
+                <Stack direction="row" spacing={1}>
+                    {/* <IconButton aria-label="download chart" onClick={downloadTrainingChart}>
+                        <DownloadIcon />
+                    </IconButton> */}
+                    <IconButton aria-label="download data" onClick={downloadTrainingData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Stack>
             </Stack>
             <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -2069,9 +2160,14 @@ const MsafeDashboardVI: React.FC = () => {
                 <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
                     New Joinee Trend
                 </Typography>
-                <IconButton aria-label="download" onClick={downloadNewJoineeChart}>
-                    <DownloadIcon />
-                </IconButton>
+                <Stack direction="row" spacing={1}>
+                    {/* <IconButton aria-label="download chart" onClick={downloadNewJoineeChart}>
+                        <DownloadIcon />
+                    </IconButton> */}
+                    <IconButton aria-label="download data" onClick={downloadNewJoineeData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Stack>
             </Stack>
             <Box ref={newJoineeChartRef} sx={{ width: '100%', height: 420, overflowX: 'auto' }}>
                 {newJoineeLoading ? (
@@ -2193,7 +2289,14 @@ const MsafeDashboardVI: React.FC = () => {
         <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
                 <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>LMC</Typography>
-                <IconButton aria-label="download" onClick={downloadLmc}><DownloadIcon /></IconButton>
+                <Stack direction="row" spacing={1}>
+                    {/* <IconButton aria-label="download chart" onClick={downloadLmc}>
+                        <DownloadIcon />
+                    </IconButton> */}
+                    <IconButton aria-label="download data" onClick={downloadLMCData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Stack>
             </Stack>
             <Stack direction="row" spacing={3} alignItems="center" justifyContent="center" sx={{ mb: 1 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -2251,7 +2354,14 @@ const MsafeDashboardVI: React.FC = () => {
         <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
                 <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>SMT</Typography>
-                <IconButton aria-label="download" onClick={downloadSmt}><DownloadIcon /></IconButton>
+                <Stack direction="row" spacing={1}>
+                    {/* <IconButton aria-label="download chart" onClick={downloadSmt}>
+                        <DownloadIcon />
+                    </IconButton> */}
+                    <IconButton aria-label="download data" onClick={downloadSMTData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Stack>
             </Stack>
             <Stack direction="row" spacing={3} alignItems="center" justifyContent="center" sx={{ mb: 1 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -2311,9 +2421,14 @@ const MsafeDashboardVI: React.FC = () => {
                 <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
                     Compliance Forcasting
                 </Typography>
-                <IconButton aria-label="download" onClick={downloadComplianceForecast}>
-                    <DownloadIcon />
-                </IconButton>
+                <Stack direction="row" spacing={1}>
+                    {/* <IconButton aria-label="download chart" onClick={downloadComplianceForecast}>
+                        <DownloadIcon />
+                    </IconButton> */}
+                    <IconButton aria-label="download data" onClick={downloadComplianceForecastData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Stack>
             </Stack>
             <Stack direction="row" spacing={3} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -2427,9 +2542,14 @@ const MsafeDashboardVI: React.FC = () => {
                 <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
                     Driving
                 </Typography>
-                <IconButton aria-label="download" onClick={downloadDrivingChart}>
-                    <DownloadIcon />
-                </IconButton>
+                <Stack direction="row" spacing={1}>
+                    {/* <IconButton aria-label="download chart" onClick={downloadDrivingChart}>
+                        <DownloadIcon />
+                    </IconButton> */}
+                    <IconButton aria-label="download data" onClick={downloadDrivingData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Stack>
             </Stack>
             <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -2540,9 +2660,14 @@ const MsafeDashboardVI: React.FC = () => {
                 <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
                     Medical Checkup & First Aid Training
                 </Typography>
-                <IconButton aria-label="download" onClick={downloadMedicalFirstAid}>
-                    <DownloadIcon />
-                </IconButton>
+                <Stack direction="row" spacing={1}>
+                    {/* <IconButton aria-label="download chart" onClick={downloadMedicalFirstAid}>
+                        <DownloadIcon />
+                    </IconButton> */}
+                    <IconButton aria-label="download data" onClick={downloadMedicalData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Stack>
             </Stack>
             <Stack direction="row" spacing={3} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
