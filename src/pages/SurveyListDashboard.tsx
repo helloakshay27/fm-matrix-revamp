@@ -297,13 +297,13 @@ export const SurveyListDashboard = () => {
         draggable: true,
         defaultVisible: true,
       },
-      {
-        key: "associations_count",
-        label: "No. of Associations",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-      },
+      // {
+      //   key: "associations_count",
+      //   label: "No. of Associations",
+      //   sortable: true,
+      //   draggable: true,
+      //   defaultVisible: true,
+      // },
       {
         key: "ticket_category",
         label: "Ticket Category",
