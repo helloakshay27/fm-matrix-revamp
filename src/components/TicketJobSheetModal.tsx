@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, Download, Loader2, FileText, User, MapPin, Clock, CheckCircle, MessageSquare } from 'lucide-react';
@@ -12,12 +12,26 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
 import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
 import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
+import { API_CONFIG } from '@/config/apiConfig';
 
 interface TicketComment {
   id?: number;
   comment: string;
   commented_by?: string;
   created_at?: string;
+}
+
+interface CommunicationTemplate {
+  id: number;
+  identifier: string;
+  resource_id: number;
+  resource_type: string;
+  body: string;
+  identifier_action: string;
+  active: boolean;
+  created_by_id: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface TicketData {
@@ -52,7 +66,7 @@ interface TicketData {
   asset_code?: string;
   comments?: TicketComment[];
   created_by_name?: string;
-  survey_name?: string;
+  asset_service?: string;
   response_tat?: number;
   resolution_tat?: number;
   preventive_action?: string;
@@ -61,6 +75,7 @@ interface TicketData {
   severity?: string;
   root_cause?: string;
   feedback?: string;
+  rca_template_ids?: number[];
 }
 
 interface TicketJobSheetModalProps {
@@ -82,7 +97,171 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
 }) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [communicationTemplates, setCommunicationTemplates] = useState<CommunicationTemplate[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Priority labels mapping
+  const priorityLabels: { [key: string]: string } = {
+    "P1": "P1 - Critical",
+    "P2": "P2 - Very High", 
+    "P3": "P3 - High",
+    "P4": "P4 - Medium",
+    "P5": "P5 - Low"
+  };
+
+  const getPriorityDisplay = (priority: string | undefined) => {
+    if (!priority) return '-';
+    return priorityLabels[priority] || '-';
+  };
+
+  // Fetch communication templates from API
+  const fetchCommunicationTemplates = useCallback(async () => {
+    console.log('Fetching communication templates...');
+    console.log('API Config:', {
+      BASE_URL: API_CONFIG.BASE_URL,
+      TOKEN_present: !!API_CONFIG.TOKEN,
+      ENDPOINT: API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES
+    });
+
+    if (!API_CONFIG.BASE_URL || !API_CONFIG.TOKEN) {
+      console.warn('Missing API configuration', {
+        BASE_URL: API_CONFIG.BASE_URL,
+        TOKEN: !!API_CONFIG.TOKEN
+      });
+      return;
+    }
+
+    setLoadingTemplates(true);
+    try {
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES}`;
+      console.log('Fetching from URL:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+        throw new Error(`Failed to fetch communication templates: ${response.status} - ${errorText}`);
+      }
+
+      const templates = await response.json();
+      console.log('Received templates:', {
+        count: templates?.length || 0,
+        sample: templates?.slice(0, 3),
+        rcaTemplates: templates?.filter((t: CommunicationTemplate) => t.identifier === "Root Cause Analysis")
+      });
+
+      setCommunicationTemplates(templates || []);
+      
+      // Log success
+      toast({
+        title: 'Success',
+        description: `Loaded ${templates?.length || 0} communication templates`,
+      });
+    } catch (error) {
+      console.error('Error fetching communication templates:', error);
+      toast({
+        title: 'Error',
+        description: `Could not load communication templates: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'destructive'
+      });
+    } finally {
+      setLoadingTemplates(false);
+    }
+  }, [toast]);
+
+  // Fetch templates when modal opens
+  useEffect(() => {
+    if (isOpen && communicationTemplates.length === 0) {
+      console.log('Modal opened, fetching communication templates...');
+      fetchCommunicationTemplates();
+    }
+  }, [isOpen, communicationTemplates.length, fetchCommunicationTemplates]);
+
+  // Debug ticket data
+  useEffect(() => {
+    if (ticketData) {
+      console.log('Ticket data received:', {
+        id: ticketData.id,
+        rca_template_ids: ticketData.rca_template_ids,
+        hasRcaIds: !!ticketData.rca_template_ids?.length,
+        allTicketKeys: Object.keys(ticketData)
+      });
+    }
+  }, [ticketData]);
+
+  const getRootCauseDisplay = () => {
+    // Debug logging
+    console.log('getRootCauseDisplay called:', {
+      ticketData_rca_template_ids: ticketData?.rca_template_ids,
+      communicationTemplates_length: communicationTemplates.length,
+      loadingTemplates,
+      communicationTemplates_sample: communicationTemplates.slice(0, 3)
+    });
+
+    if (!ticketData?.rca_template_ids || ticketData.rca_template_ids.length === 0) {
+      console.log('No rca_template_ids found');
+      return '-';
+    }
+
+    if (loadingTemplates) {
+      return 'Loading...';
+    }
+
+    if (communicationTemplates.length === 0) {
+      console.log('No communication templates loaded');
+      return 'No templates loaded';
+    }
+
+    // Find templates that match the IDs in rca_template_ids
+    const rcaTemplates = communicationTemplates.filter(
+      template => {
+        const matchesId = ticketData.rca_template_ids!.includes(template.id);
+        const matchesIdentifier = template.identifier === "Root Cause Analysis";
+        
+        console.log(`Template ${template.id}:`, {
+          id: template.id,
+          identifier: template.identifier,
+          matchesId,
+          matchesIdentifier,
+          body: template.body?.substring(0, 50) + '...'
+        });
+        
+        return matchesId && matchesIdentifier;
+      }
+    );
+
+    console.log('Filtered RCA templates:', rcaTemplates.length, rcaTemplates);
+
+    if (rcaTemplates.length === 0) {
+      // Try to find any templates with matching IDs regardless of identifier
+      const anyMatchingTemplates = communicationTemplates.filter(
+        template => ticketData.rca_template_ids!.includes(template.id)
+      );
+      console.log('Any matching templates by ID:', anyMatchingTemplates);
+      
+      if (anyMatchingTemplates.length > 0) {
+        return anyMatchingTemplates.map(template => template.body).join('\n');
+      }
+      
+      return 'No matching templates found';
+    }
+
+    // Return the body content of matching templates
+    const result = rcaTemplates.map(template => template.body).join('\n');
+    console.log('Final result:', result);
+    return result;
+  };
 
   const handleDownloadPDF = async () => {
     if (!ticketData || !contentRef.current) {
@@ -127,7 +306,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               .logo { margin: 0 10px; }
               .header-text { margin: 0 0 18px 0 !important; }
               table { border-collapse: collapse; width: 100%; }
-              th, td { border: 0.5px solid #000; padding: 8px; text-align: left; vertical-align: middle; }
+              th, td { border: 0.5px solid #000; padding: 6px 8px 6px 8px; text-align: left; vertical-align: middle; }
               .bg-gray-100 { background-color: #f3f4f6; }
               .bg-tan { background-color: #D2B48C; }
               .bg-gray-200 { background-color: #e5e7eb; }
@@ -139,7 +318,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               .py-2 { padding-top: 8px; padding-bottom: 8px; }
               .px-3 { padding-left: 12px; padding-right: 12px; }
               .mb-4 { margin-bottom: 16px; }
-              .space-y-4 > * + * { margin-top: 16px; }
+              .space-y-4 > * + * { margin-top: 8px; }
               .space-y-2 > * + * { margin-top: 8px; }
               .min-h-20 { min-height: 80px; }
               .min-h-24 { min-height: 100px; }
@@ -149,6 +328,16 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               .gap-8 { gap: 32px; }
               .text-sm { font-size: 14px; }
               .text-xs { font-size: 12px; }
+
+              /* Job Card header center alignment for PDF */
+              .bg-\\[\\#C4B89D\\] { 
+                background-color: #C4B89D !important; 
+                text-align: center !important; 
+                padding: 6px 8px 6px 8px !important; 
+                font-weight: bold !important; 
+                font-size: 18px !important; 
+                border: 1px solid #999 !important; 
+              }
 
               input[type="checkbox"] { margin: 0 4px; }
             </style>
@@ -229,7 +418,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
         </span>
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-xl font-semibold text-[#C72030]">
-            Job Sheet - Ticket #{ticketData?.ticket_number || ticketData?.ticket_id || ticketData?.id}
+            {/* Job Sheet - Ticket #{ticketData?.ticket_number || ticketData?.ticket_id || ticketData?.id} */}
           </DialogTitle>
           <div className="flex items-center gap-3">
             <Button
@@ -266,7 +455,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               <span className="ml-3 text-lg">Loading job sheet...</span>
             </div>
           ) : (
-            <div ref={contentRef} className="space-y-6">
+            <div ref={contentRef} className="">
               {/* Job Card Header */}
               <div className="bg-[#C4B89D] text-center py-3 font-bold text-lg border border-gray-400">
                 Job Card
@@ -292,7 +481,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                       <td className="border border-gray-300 px-3 py-2 font-bold w-1/6" style={{backgroundColor: '#C4B89D59'}}>Ticket Id</td>
                       <td className="border border-gray-300 px-3 py-2 w-1/6" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.ticket_number || ticketData?.ticket_id || ticketData?.id || '-'}</td>
                       <td className="border border-gray-300 px-3 py-2 font-bold w-1/6" style={{backgroundColor: '#C4B89D59'}}>Status</td>
-                      <td className="border border-gray-300 px-3 py-2 w-1/6" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.status || 'Open'}</td>
+                      <td className="border border-gray-300 px-3 py-2 w-1/6" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.issue_status || '-'}</td>
                     </tr>
                     
                     {/* Row 2 */}
@@ -316,9 +505,9 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     {/* Row 4 */}
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Priority</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.priority || 'P1'}</td>
+                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{getPriorityDisplay(ticketData?.priority)}</td>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Assigned to</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.assigned_to_name || '-'}</td>
+                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.assigned_to || '-'}</td>
                     </tr>
                     
                     {/* Row 5 */}
@@ -326,13 +515,13 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Issue Type</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>Complaint</td>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Related to</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>Maintenance</td>
+                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.issue_related_to || '-'}</td>
                     </tr>
                     
                     {/* Row 6 */}
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Associated To</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.survey_name || 'Survey'}</td>
+                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.asset_service || '-'}</td>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Location</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
                         {[
@@ -361,11 +550,11 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Preventive Action</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
-                        {ticketData?.preventive_action || 'Test'}
+                        {ticketData?.preventive_action || '-'}
                       </td>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Corrective Action</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
-                        {ticketData?.corrective_action || 'Test'}
+                        {ticketData?.corrective_action || '-'}
                       </td>
                     </tr>
                     
@@ -373,27 +562,27 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Expected Visit Date</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
-                        {ticketData?.visit_date ? new Date(ticketData.visit_date).toLocaleDateString('en-GB') : 'DD/MM/YYYY'}
+                        {ticketData?.visit_date || '-'}
                       </td>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Expected Closer Date</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
-                        {ticketData?.expected_completion_date ? new Date(ticketData.expected_completion_date).toLocaleDateString('en-GB') : 'DD/MM/YYYY'}
+                        {ticketData?.expected_completion_date ? new Date(ticketData.expected_completion_date).toLocaleDateString('en-GB') : '-'}
                       </td>
                     </tr>
                     
                     {/* Row 10 */}
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Severity</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.severity || 'High'}</td>
+                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.severity || '-'}</td>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Root Cause</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.root_cause || 'Test'}</td>
+                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{getRootCauseDisplay()}</td>
                     </tr>
                     
                     {/* Comments Row */}
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Comments</td>
                       <td colSpan={3} className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
-                        {ticketData?.description || 'Test'}
+                        {ticketData?.description || '-'}
                       </td>
                     </tr>
                     

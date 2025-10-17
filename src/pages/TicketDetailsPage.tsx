@@ -2976,16 +2976,16 @@ export const TicketDetailsPage = () => {
                         { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
                         { label: 'Group', value: ticketData.asset_group || '-' },
                         { label: 'Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Criticality', value: ticketData.asset_criticality ? '-' : '-' },
+                        { label: 'Criticality', value: ticketData.asset_criticality ? 'Critical' : 'Non Critical' },
 
                         { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
                         { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
                         { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Under Warranty', value: ticketData.warranty ? '-' : '-' },
+                        { label: 'Under Warranty', value: ticketData.warranty === null || ticketData.warranty === undefined ? '-' : (ticketData.warranty ? 'Yes' : 'No') },
 
                         { label: 'Category', value: ticketData.asset_type_category || '-' },
                         { label: 'Allocated', value: ticketData.asset_service || '-' },
-                        { label: 'AMC Type', value: '-' },
+                        { label: 'AMC Type', value: ticketData.amc?.amc_type || '-' },
                         { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
                       ].map(field => (
                         <div key={field.label} className="flex items-start">
@@ -5380,17 +5380,17 @@ export const TicketDetailsPage = () => {
                       {[
                         { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
                         { label: 'Group', value: ticketData.asset_group || '-' },
-                        { label: 'Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Criticality', value: ticketData.asset_criticality ? '-' : '-' },
+                        { label: 'Status', value: ticketData.asset_status || '-' },
+                        { label: 'Criticality', value: ticketData.asset_criticality === null ? '-' : (ticketData.asset_criticality ? 'Critical' : 'Non Critical') },
 
                         { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
                         { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
                         { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Under Warranty', value: ticketData.warranty ? '-' : '-' },
+                        { label: 'Under Warranty', value: ticketData.warranty === null || ticketData.warranty === undefined ? '-' : (ticketData.warranty ? 'Yes' : 'No') },
 
                         { label: 'Category', value: ticketData.asset_type_category || '-' },
                         { label: 'Allocated', value: ticketData.assigned_to || '-' },
-                        { label: 'AMC Type', value: '-' },
+                        { label: 'AMC Type', value: ticketData.amc?.amc_type || '-' },
                         { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
                       ].map(field => (
                         <div key={field.label} className="flex items-start">

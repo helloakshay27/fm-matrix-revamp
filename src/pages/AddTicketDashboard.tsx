@@ -875,10 +875,10 @@ export const AddTicketDashboard = () => {
               </FormControl>
               <TextField
                 label="Name"
-                placeholder="Abhishek Sharma"
-                value={formData.name}
+                placeholder={loadingAccount && onBehalfOf === 'self' ? "Loading..." : "Name"}
+                value={loadingAccount && onBehalfOf === 'self' ? "Loading..." : formData.name}
                 onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
-                disabled={isFieldsReadOnly || onBehalfOf === 'self' || (onBehalfOf === 'self' && loadingAccount)}
+                disabled={isFieldsReadOnly || onBehalfOf === 'self'}
                 fullWidth
                 variant="outlined"
                 slotProps={{
@@ -895,8 +895,8 @@ export const AddTicketDashboard = () => {
               />
               <TextField
                 label="Department"
-                placeholder="Technical"
-                value={formData.department}
+                placeholder={loadingAccount && onBehalfOf === 'self' ? "Loading..." : "Department"}
+                value={loadingAccount && onBehalfOf === 'self' ? "Loading..." : formData.department}
                 onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
                 disabled={isFieldsReadOnly || onBehalfOf === 'self'}
                 fullWidth
