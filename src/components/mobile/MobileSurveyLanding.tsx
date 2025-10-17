@@ -57,13 +57,17 @@ interface SurveyMapping {
     name: string;
     questions_count: number;
     snag_attach?: string;
-    survey_attachment?: SurveyAttach[];
+    survey_attachment?: SurveyAttach;
     snag_questions: SurveyQuestion[];
   };
 }
 
 interface SurveyAttach {
-  id: string;
+  id: number;
+  file_name: string;
+  content_type: string;
+  file_size: number;
+  updated_at: string;
   url: string;
 }
 
@@ -1399,18 +1403,24 @@ export const MobileSurveyLanding: React.FC = () => {
         {/* Header with Logo */}
         <div className="bg-gray-50 py-4 px-4 text-center">
           <div className="flex justify-center items-center">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center overflow-hidden">
+            <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
               {window.location.origin === "https://oig.gophygital.work" ? (
                 <img
                   src="/Without bkg.svg"
                   alt="OIG Logo"
                   className="w-full h-full object-contain"
                 />
+              ) : window.location.origin === "https://web.gophygital.work" ? (
+                <img
+                  src="/PSIPL-logo (1).png"
+                  alt="PSIPL Logo"
+                  className="w-full h-full object-contain"
+                />
               ) : (
                 <img
                   src="/gophygital-logo-min.jpg"
-                  alt="Gophygital Logo"
-                  className="w-full h-full object-contain bg-white rounded"
+                  alt="gophygital Logo"
+                  className="w-full h-full object-contain"
                 />
               )}
             </div>
@@ -1420,11 +1430,11 @@ export const MobileSurveyLanding: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
           <div className="flex flex-col items-center justify-center max-w-md mx-auto w-full min-h-full">
-            <div className="text-center mb-6">
+            <div className="text-center mb-2">
               <img
                 src="/9019830 1.png"
                 alt="Survey Illustration"
-                className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto mb-6"
+                className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto mb-2"
               />
             </div>
 
@@ -1497,14 +1507,13 @@ export const MobileSurveyLanding: React.FC = () => {
     );
   }
 
+  // console.log("Survey Mapping", surveyData?.snag_checklist?.survey_attachment?.url);
+
   return (
     <div
       className="min-h-screen flex flex-col"
       style={{
-        backgroundImage:
-          surveyData.snag_checklist?.survey_attachment
-            ? `url(${surveyData?.snag_checklist?.survey_attachment?.url})`
-            : 'url("/9019830 1.png")',
+        backgroundImage: `url(${surveyData?.snag_checklist?.survey_attachment?.url})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -1584,24 +1593,15 @@ export const MobileSurveyLanding: React.FC = () => {
               className="relative w-full mb-6"
               style={{ minHeight: "240px" }}
             >
-              <div
-                className="absolute inset-0 w-full h-full rounded-[0.20rem] overflow-hidden"
-                style={{
-                  backgroundImage: `url(${
-                    surveyData?.snag_checklist?.survey_attachment?.[0]?.url ||
-                    "/9019830 1.png"
-                  })`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  backgroundRepeat: "no-repeat",
-                  filter: "brightness(0.85)",
-                }}
-              ></div>
+              <div className="absolute inset-0 w-full h-full rounded-[0.20rem] overflow-hidden"></div>
               <div className="relative z-10 flex items-center justify-center w-full h-full">
                 {/* Optionally overlay content here */}
               </div>
             </div>
           )}
+
+          {/* Spacer to push the question section to bottom */}
+          {!isLastStep && <div className="flex-1" />}
 
           {/* Show Final Description Step */}
           {isLastStep && isMultiQuestion && (
@@ -1614,7 +1614,6 @@ export const MobileSurveyLanding: React.FC = () => {
                   Share any additional feedback or suggestions (optional)
                 </p>
               </div>
-
               <div>
                 <textarea
                   value={finalDescription}
@@ -1647,7 +1646,7 @@ export const MobileSurveyLanding: React.FC = () => {
             isLastStep &&
             currentQuestionIndex === surveyData.snag_checklist.questions_count
           ) && (
-            <div className="w-full mt-20">
+            <div className="w-full">
               {/* Progress indicator */}
 
               {/* Main title */}
@@ -1680,7 +1679,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
           {/* Show Current Question */}
           {currentQuestion && !isLastStep && (
-            <div className="w-full space-y-4 ">
+            <div className="w-full space-y-4 mb-4">
               <div className="space-y-4">
                 {/* Multiple Choice Question */}
                 {currentQuestion.qtype === "multiple" && !showGenericTags && (

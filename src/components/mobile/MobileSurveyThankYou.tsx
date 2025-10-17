@@ -140,10 +140,16 @@ export const MobileSurveyThankYou: React.FC = () => {
                   alt="OIG Logo"
                   className="w-full h-full object-contain"
                 />
+              ) : window.location.origin === "https://web.gophygital.work" ? (
+                <img
+                  src="/PSIPL-logo (1).png"
+                  alt="PSIPL Logo"
+                  className="w-full h-full object-contain"
+                />
               ) : (
                 <img
                   src="/gophygital-logo-min.jpg"
-                  alt="Gophygital Logo"
+                  alt="gophygital Logo"
                   className="w-full h-full object-contain"
                 />
               )}
