@@ -1511,7 +1511,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen flex flex-col"
+      className="h-[100dvh] min-h-[100dvh] min-h-0 flex flex-col"
       style={{
         backgroundImage: `url(${surveyData?.snag_checklist?.survey_attachment?.url})`,
         backgroundSize: "cover",
@@ -1585,13 +1585,13 @@ export const MobileSurveyLanding: React.FC = () => {
       {isMultiQuestion && <div></div>}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
-        <div className="flex flex-col items-center justify-center max-w-md mx-auto w-full min-h-full">
+      <div className="flex-1 min-h-0 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
+        <div className="flex flex-col items-center justify-end max-w-md mx-auto w-full h-full pb-[calc(env(safe-area-inset-bottom)+16px)] sm:pb-6">
           {/* Show image only on first question or single question surveys */}
           {!showGenericTags && (
             <div
               className="relative w-full mb-6"
-              style={{ minHeight: "240px" }}
+              style={{ minHeight: "180px" }}
             >
               <div className="absolute inset-0 w-full h-full rounded-[0.20rem] overflow-hidden"></div>
               <div className="relative z-10 flex items-center justify-center w-full h-full">
@@ -1600,8 +1600,6 @@ export const MobileSurveyLanding: React.FC = () => {
             </div>
           )}
 
-          {/* Spacer to push the question section to bottom */}
-          {!isLastStep && <div className="flex-1" />}
 
           {/* Show Final Description Step */}
           {isLastStep && isMultiQuestion && (
@@ -1679,7 +1677,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
           {/* Show Current Question */}
           {currentQuestion && !isLastStep && (
-            <div className="w-full space-y-4 mb-4">
+            <div className="w-full space-y-3 mb-0">
               <div className="space-y-4">
                 {/* Multiple Choice Question */}
                 {currentQuestion.qtype === "multiple" && !showGenericTags && (
