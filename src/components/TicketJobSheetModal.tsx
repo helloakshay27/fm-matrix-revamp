@@ -52,7 +52,7 @@ interface TicketData {
   asset_code?: string;
   comments?: TicketComment[];
   created_by_name?: string;
-  survey_name?: string;
+  asset_service?: string;
   response_tat?: number;
   resolution_tat?: number;
   preventive_action?: string;
@@ -127,7 +127,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               .logo { margin: 0 10px; }
               .header-text { margin: 0 0 18px 0 !important; }
               table { border-collapse: collapse; width: 100%; }
-              th, td { border: 0.5px solid #000; padding: 8px; text-align: left; vertical-align: middle; }
+              th, td { border: 0.5px solid #000; padding: 6px 8px 6px 8px; text-align: left; vertical-align: middle; }
               .bg-gray-100 { background-color: #f3f4f6; }
               .bg-tan { background-color: #D2B48C; }
               .bg-gray-200 { background-color: #e5e7eb; }
@@ -139,7 +139,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               .py-2 { padding-top: 8px; padding-bottom: 8px; }
               .px-3 { padding-left: 12px; padding-right: 12px; }
               .mb-4 { margin-bottom: 16px; }
-              .space-y-4 > * + * { margin-top: 16px; }
+              .space-y-4 > * + * { margin-top: 8px; }
               .space-y-2 > * + * { margin-top: 8px; }
               .min-h-20 { min-height: 80px; }
               .min-h-24 { min-height: 100px; }
@@ -149,6 +149,16 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               .gap-8 { gap: 32px; }
               .text-sm { font-size: 14px; }
               .text-xs { font-size: 12px; }
+
+              /* Job Card header center alignment for PDF */
+              .bg-\\[\\#C4B89D\\] { 
+                background-color: #C4B89D !important; 
+                text-align: center !important; 
+                padding: 6px 8px 6px 8px !important; 
+                font-weight: bold !important; 
+                font-size: 18px !important; 
+                border: 1px solid #999 !important; 
+              }
 
               input[type="checkbox"] { margin: 0 4px; }
             </style>
@@ -318,7 +328,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Priority</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.priority || 'P1'}</td>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Assigned to</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.assigned_to_name || '-'}</td>
+                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.assigned_to || '-'}</td>
                     </tr>
                     
                     {/* Row 5 */}
@@ -332,7 +342,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     {/* Row 6 */}
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Associated To</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.survey_name || 'Survey'}</td>
+                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.asset_service || '-'}</td>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Location</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
                         {[
@@ -373,7 +383,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Expected Visit Date</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
-                        {ticketData?.visit_date ? new Date(ticketData.visit_date).toLocaleDateString('en-GB') : 'DD/MM/YYYY'}
+                        {ticketData?.visit_date || 'DD/MM/YYYY'}
                       </td>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Expected Closer Date</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
