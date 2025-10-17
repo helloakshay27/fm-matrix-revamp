@@ -5050,12 +5050,12 @@ export const TicketDetailsPage = () => {
 
                               {/* Container for dots and line */}
                               <div className="relative">
-                                {/* Vertical line - stops before the last dot */}
+                                {/* Vertical line - extends to connect all dots */}
                                 {sorted.length > 1 && (
                                   <div
                                     className="absolute left-[13px] top-0 w-[2px] bg-[#C72030]"
                                     style={{
-                                      height: `calc(100% - ${sorted.length > 0 ? '48px' : '0px'})`
+                                      height: `calc(100% - 24px)`
                                     }}
                                   />
                                 )}
@@ -7455,12 +7455,12 @@ export const TicketDetailsPage = () => {
 
                               {/* Container for dots and line */}
                               <div className="relative">
-                                {/* Vertical line - stops before the last dot */}
+                                {/* Vertical line - extends to connect all dots */}
                                 {sorted.length > 1 && (
                                   <div
                                     className="absolute left-[13px] top-0 w-[2px] bg-[#C72030]"
                                     style={{
-                                      height: `calc(100% - ${sorted.length > 0 ? '48px' : '0px'})`
+                                      height: `calc(100% - 24px)`
                                     }}
                                   />
                                 )}
