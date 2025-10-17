@@ -84,6 +84,8 @@ export const Header = () => {
   // Treat vi-web prod and localhost as VI for dev account fetch
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
+  const isWebSite = hostname.includes("web.gophygital.work");
+
   const navigate = useNavigate();
   const [notificationCount, setNotificationCount] = useState(3);
 
@@ -363,6 +365,22 @@ export const Header = () => {
                 onClick={() =>
                   window.open(
                     "https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d",
+                    "_blank"
+                  )
+                }
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+              >
+                <Home className="w-4 h-4" />
+                MSafe Dashboard
+              </button>
+            )}
+
+
+             {isWebSite && (
+              <button
+                onClick={() =>
+                  window.open(
+                    "https://web.gophygital.work/msafedashboard",
                     "_blank"
                   )
                 }

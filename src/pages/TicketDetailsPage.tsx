@@ -16,6 +16,7 @@ import { TextField } from '@mui/material';
 import { Button as MuiButton } from '@mui/material';
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
+import { TicketJobSheetModal } from '@/components/TicketJobSheetModal';
 import Select, { components } from "react-select";
 import { min } from 'lodash';
 
@@ -389,6 +390,10 @@ export const TicketDetailsPage = () => {
   const [currentAgeing, setCurrentAgeing] = useState<number>(0); // Ageing in seconds for real-time countdown
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Job Sheet Modal state
+  const [isJobSheetModalOpen, setIsJobSheetModalOpen] = useState(false);
+  const [jobSheetLoading, setJobSheetLoading] = useState(false);
   
   // Real-time timer states
   const [responseEscalationSeconds, setResponseEscalationSeconds] = useState<number>(0);
@@ -838,10 +843,12 @@ export const TicketDetailsPage = () => {
     // });
   };
 
-  const handleJobSheet = () => {
+  const handleJobSheet = async () => {
     console.log("📋 Job Sheet button clicked for ticket ID:", id);
-    // TODO: Add job sheet functionality here
-    toast.info("Job Sheet functionality coming soon!");
+    if (!id) return;
+    
+    // Open the job sheet modal
+    setIsJobSheetModalOpen(true);
   };
 
   // Handle file selection for customer comments
@@ -2977,7 +2984,7 @@ export const TicketDetailsPage = () => {
                         { label: 'Under Warranty', value: ticketData.warranty ? '-' : '-' },
 
                         { label: 'Category', value: ticketData.asset_type_category || '-' },
-                        { label: 'Allocated', value: ticketData.assigned_to || '-' },
+                        { label: 'Allocated', value: ticketData.asset_service || '-' },
                         { label: 'AMC Type', value: '-' },
                         { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
                       ].map(field => (
@@ -3896,7 +3903,7 @@ export const TicketDetailsPage = () => {
                           <table className="min-w-full text-[11px]">
                             <thead>
                               <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
-                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5', 'Status'].map(h => (
+                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5'].map(h => (
                                   <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
                                     {h}
                                   </th>
@@ -3972,7 +3979,7 @@ export const TicketDetailsPage = () => {
                                         {request.approvals?.L5 || '-'}
                                       </span>
                                     </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC]">
+                                    {/* <td className="px-4 py-3 border border-[#E5E2DC]">
                                       <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
                                         ? 'bg-yellow-100 text-yellow-700'
                                         : request.master_status === 'Approved'
@@ -3983,7 +3990,7 @@ export const TicketDetailsPage = () => {
                                         }`}>
                                         {request.master_status}
                                       </span>
-                                    </td>
+                                    </td> */}
                                   </tr>
                                 ))
                               ) : (
@@ -5374,16 +5381,16 @@ export const TicketDetailsPage = () => {
                         { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
                         { label: 'Group', value: ticketData.asset_group || '-' },
                         { label: 'Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Criticality', value: ticketData.asset_criticality ? 'Critical' : 'Non Critical' },
+                        { label: 'Criticality', value: ticketData.asset_criticality ? '-' : '-' },
 
                         { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
                         { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
                         { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Under Warranty', value: ticketData.warranty ? 'Yes' : 'No' },
+                        { label: 'Under Warranty', value: ticketData.warranty ? '-' : '-' },
 
                         { label: 'Category', value: ticketData.asset_type_category || '-' },
                         { label: 'Allocated', value: ticketData.assigned_to || '-' },
-                        { label: 'AMC Type', value: 'Comprehensive' },
+                        { label: 'AMC Type', value: '-' },
                         { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
                       ].map(field => (
                         <div key={field.label} className="flex items-start">
@@ -6301,7 +6308,7 @@ export const TicketDetailsPage = () => {
                           <table className="min-w-full text-[11px]">
                             <thead>
                               <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
-                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5', 'Status'].map(h => (
+                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5'].map(h => (
                                   <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
                                     {h}
                                   </th>
@@ -6377,7 +6384,7 @@ export const TicketDetailsPage = () => {
                                         {request.approvals?.L5 || '-'}
                                       </span>
                                     </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC]">
+                                    {/* <td className="px-4 py-3 border border-[#E5E2DC]">
                                       <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
                                         ? 'bg-yellow-100 text-yellow-700'
                                         : request.master_status === 'Approved'
@@ -6388,7 +6395,7 @@ export const TicketDetailsPage = () => {
                                         }`}>
                                         {request.master_status}
                                       </span>
-                                    </td>
+                                    </td> */}
                                   </tr>
                                 ))
                               ) : (
@@ -8315,6 +8322,17 @@ export const TicketDetailsPage = () => {
         selectedDoc={selectedDoc}
         setSelectedDoc={setSelectedDoc}
       />
+
+      {/* Ticket Job Sheet Modal */}
+      <TicketJobSheetModal
+        isOpen={isJobSheetModalOpen}
+        onClose={() => setIsJobSheetModalOpen(false)}
+        ticketId={id || ''}
+        ticketData={ticketData}
+        jobSheetData={ticketData}
+        jobSheetLoading={jobSheetLoading}
+      />
+
     </div>
   );
 }

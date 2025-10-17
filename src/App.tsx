@@ -775,6 +775,7 @@ import MsafeDashboardVI from "./pages/MsafeDashboardVI";
 import { DashboardMobile } from "./pages/DashboardMobile";
 import SafetyCheckAudit from './pages/SafetyCheckAudit';
 import MsafeCirlce from "./pages/MsafeCirlce";
+import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1522,6 +1523,10 @@ function App() {
                   <Route
                     path="/maintenance/ticket/:id/tag-vendor"
                     element={<TicketTagVendorPage />}
+                  />
+                   <Route
+                    path="/maintenance/ticket/:id/job-sheet"
+                    element={<TicketJobSheetPage />}
                   />
                   <Route
                     path="/maintenance/ticket"
