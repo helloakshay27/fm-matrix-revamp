@@ -360,7 +360,7 @@ export const Header = () => {
               </button>
             )}
 
-            {isViSite && (
+            {isViSite && !isWebSite && (
               <button
                 onClick={() =>
                   window.open(
@@ -376,7 +376,7 @@ export const Header = () => {
             )}
 
 
-             {isWebSite && (
+            {isWebSite && !isViSite && (
               <button
                 onClick={() =>
                   window.open(
