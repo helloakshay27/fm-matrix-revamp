@@ -127,7 +127,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               .logo { margin: 0 10px; }
               .header-text { margin: 0 0 18px 0 !important; }
               table { border-collapse: collapse; width: 100%; }
-              th, td { border: 0.5px solid #000; padding: 8px; text-align: left; vertical-align: top; }
+              th, td { border: 0.5px solid #000; padding: 8px; text-align: left; vertical-align: middle; }
               .bg-gray-100 { background-color: #f3f4f6; }
               .bg-tan { background-color: #D2B48C; }
               .bg-gray-200 { background-color: #e5e7eb; }
@@ -149,21 +149,13 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               .gap-8 { gap: 32px; }
               .text-sm { font-size: 14px; }
               .text-xs { font-size: 12px; }
-              .align-top { vertical-align: top; }
+
               input[type="checkbox"] { margin: 0 4px; }
-              .bottom-logo { 
-                position: fixed; 
-                bottom: 20px; 
-                right: 20px; 
-                opacity: 0.7; 
-                z-index: 100; 
-              }
             </style>
           </head>
           <body>
             ${headerHTML}
             <div style="padding: 5px 30px 30px 30px;">${element.innerHTML}</div>
-            <div class="bottom-logo">${defaultLogo}</div>
           </body>
         </html>
       `;
@@ -290,7 +282,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     {/* Description Row */}
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold w-1/6" style={{backgroundColor: '#C4B89D59'}}>Description</td>
-                      <td colSpan={3} className="border border-gray-300 px-3 py-2 min-h-[60px] align-top" style={{backgroundColor: '#EFF1F1'}}>
+                      <td colSpan={3} className="border border-gray-300 px-3 py-2 min-h-[60px]" style={{backgroundColor: '#EFF1F1'}}>
                         {ticketData?.heading || ticketData?.description || 'No description provided'}
                       </td>
                     </tr>
@@ -436,7 +428,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     {/* Your Valuable Feedback Row */}
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Your Valuable Feedback</td>
-                      <td colSpan={3} className="border border-gray-300 px-3 py-2 min-h-[80px] align-top" style={{backgroundColor: '#EFF1F1'}}>
+                      <td colSpan={3} className="border border-gray-300 px-3 py-2 min-h-[80px]" style={{backgroundColor: '#EFF1F1'}}>
                         {ticketData?.feedback || ''}
                       </td>
                     </tr>
@@ -444,7 +436,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     {/* Customer Signature Row */}
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Customer Signature</td>
-                      <td colSpan={3} className="border border-gray-300 px-3 py-2 min-h-[100px] align-top" style={{backgroundColor: '#EFF1F1'}}>
+                      <td colSpan={3} className="border border-gray-300 px-3 py-2 min-h-[100px]" style={{backgroundColor: '#EFF1F1'}}>
                         {/* Signature area - could be an image or empty for manual signature */}
                       </td>
                     </tr>

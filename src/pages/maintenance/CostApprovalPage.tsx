@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
 import { API_CONFIG } from '@/config/apiConfig';
 import { TextField, FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import ReactSelect from 'react-select';
 import { 
   APPROVAL_LEVELS, 
   COST_UNITS, 
@@ -88,6 +89,9 @@ export const CostApprovalPage: React.FC = () => {
 
   const { rules, createLoading, fetchLoading, deleteLoading } = useSelector((state: RootState) => state.costApproval);
 
+  // Options for react-select
+  const userOptions = escalateToUsers?.map(user => ({ value: user.id, label: user.full_name })) || [];
+
   const costApprovalSchema = useMemo(() => 
     createCostApprovalSchema(rules, activeTab), 
     [rules, activeTab]
@@ -145,25 +149,8 @@ export const CostApprovalPage: React.FC = () => {
     [rules, activeTab]
   )
 
-  const handleUserSelect = (level: string, userId: number) => {
-    const currentUsers = selectedUsers[level] || [];
-    if (!currentUsers.includes(userId) && currentUsers.length < 15) {
-      const newUsers = [...currentUsers, userId];
-      setSelectedUsers(prev => ({ ...prev, [level]: newUsers }));
-      
-      // Update form data
-      const levelIndex = APPROVAL_LEVELS.indexOf(level as typeof APPROVAL_LEVELS[number]);
-      const currentLevels = form.getValues('approvalLevels');
-      if (currentLevels[levelIndex]) {
-        currentLevels[levelIndex].escalateToUsers = newUsers;
-        form.setValue('approvalLevels', currentLevels, { shouldValidate: false });
-      }
-    }
-  };
-
-  const removeUser = (level: string, userIdToRemove: number) => {
-    const currentUsers = selectedUsers[level] || [];
-    const newUsers = currentUsers.filter(userId => userId !== userIdToRemove);
+  const handleUserSelect = (level: string, selectedOptions: { value: number; label: string }[]) => {
+    const newUsers = selectedOptions ? selectedOptions.map(option => option.value) : [];
     setSelectedUsers(prev => ({ ...prev, [level]: newUsers }));
     
     // Update form data
@@ -389,42 +376,46 @@ export const CostApprovalPage: React.FC = () => {
                       <tr key={level} className="border-b last:border-b-0">
                         <td className="p-3 text-sm font-medium">{level}</td>
                         <td className="p-3">
-                          <div className="space-y-2">
-                            <Select
-                              onValueChange={(value) => handleUserSelect(level, parseInt(value))}
-                              disabled={usersLoading}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder={usersLoading ? "Loading..." : "Select up to 15 users..."} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {escalateToUsers
-                                  .filter(user => !(selectedUsers[level] || []).includes(user.id))
-                                  .map(user => (
-                                    <SelectItem key={user.id} value={user.id.toString()}>
-                                      {user.full_name}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                            
-                            {selectedUsers[level] && selectedUsers[level].length > 0 && (
-                              <div className="flex flex-wrap gap-1">
-                                {selectedUsers[level].map(userId => (
-                                  <Badge key={userId} variant="secondary" className="text-xs">
-                                    {getUserDisplayName(userId)}
-                                    <button
-                                      type="button"
-                                      onClick={() => removeUser(level, userId)}
-                                      className="ml-1 text-xs hover:text-red-500"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                          <ReactSelect
+                            isMulti
+                            options={userOptions}
+                            onChange={(selected) => handleUserSelect(level, selected as { value: number; label: string }[])}
+                            value={userOptions.filter(option => (selectedUsers[level] || []).includes(option.value))}
+                            placeholder="Select up to 15 users..."
+                            isLoading={usersLoading}
+                            isDisabled={usersLoading}
+                            className="min-w-[250px]"
+                            styles={{
+                              control: (base) => ({
+                                ...base,
+                                minHeight: '40px',
+                                fontSize: '14px',
+                                border: '1px solid #d1d5db',
+                                borderRadius: '6px',
+                                boxShadow: 'none',
+                                '&:hover': {
+                                  borderColor: '#9ca3af'
+                                }
+                              }),
+                              multiValue: (base) => ({
+                                ...base,
+                                fontSize: '12px',
+                                backgroundColor: '#f3f4f6'
+                              }),
+                              multiValueLabel: (base) => ({
+                                ...base,
+                                color: '#374151'
+                              }),
+                              multiValueRemove: (base) => ({
+                                ...base,
+                                color: '#6b7280',
+                                '&:hover': {
+                                  backgroundColor: '#ef4444',
+                                  color: 'white'
+                                }
+                              })
+                            }}
+                          />
                         </td>
                       </tr>
                     ))}
