@@ -54,7 +54,7 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
-            Category Wise ProActive / Reactives
+            Category Wise Proactive / Reactives
           </CardTitle>
           <Download
             className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors"
