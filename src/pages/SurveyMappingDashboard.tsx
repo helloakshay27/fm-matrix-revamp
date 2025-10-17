@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
+import { SurveyMappingFilterDialog, SurveyMappingFilters } from '@/components/SurveyMappingFilterDialog';
 import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown, Loader2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
@@ -125,6 +126,10 @@ export const SurveyMappingDashboard = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [perPage] = useState(10);
 
+  // Filter state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<SurveyMappingFilters>({});
+
   // Column visibility state - using the same structure as parking page
   const [columns, setColumns] = useState([
     { key: 'actions', label: 'Actions', visible: true },
@@ -146,7 +151,7 @@ export const SurveyMappingDashboard = () => {
   ]);
 
   // Fetch function that accepts both page and search parameters
-  const fetchSurveyMappingsData = useCallback(async (page: number, search?: string, showLoading = true) => {
+  const fetchSurveyMappingsData = useCallback(async (page: number, search?: string, filters?: SurveyMappingFilters, showLoading = true) => {
     try {
       // Use different loading states based on whether it's a search operation
       const isSearch = search && search.trim() !== "";
@@ -162,6 +167,43 @@ export const SurveyMappingDashboard = () => {
       // Add search parameter if provided
       if (search && search.trim()) {
         queryParams += `&q[name_cont]=${encodeURIComponent(search.trim())}`;
+      }
+
+      // Add filter parameters
+      if (filters) {
+        if (filters.siteIds && filters.siteIds.length > 0) {
+          filters.siteIds.forEach(id => {
+            queryParams += `&q[survey_mappings_site_id_in][]=${id}`;
+          });
+        }
+        if (filters.buildingIds && filters.buildingIds.length > 0) {
+          filters.buildingIds.forEach(id => {
+            queryParams += `&q[survey_mappings_building_id_in][]=${id}`;
+          });
+        }
+        if (filters.wingIds && filters.wingIds.length > 0) {
+          filters.wingIds.forEach(id => {
+            queryParams += `&q[survey_mappings_wing_id_in][]=${id}`;
+          });
+        }
+        if (filters.floorIds && filters.floorIds.length > 0) {
+          filters.floorIds.forEach(id => {
+            queryParams += `&q[survey_mappings_floor_id_in][]=${id}`;
+          });
+        }
+        if (filters.areaIds && filters.areaIds.length > 0) {
+          filters.areaIds.forEach(id => {
+            queryParams += `&q[survey_mappings_area_id_in][]=${id}`;
+          });
+        }
+        if (filters.roomIds && filters.roomIds.length > 0) {
+          filters.roomIds.forEach(id => {
+            queryParams += `&q[survey_mappings_room_id_in][]=${id}`;
+          });
+        }
+        if (filters.surveyTitle && filters.surveyTitle.trim()) {
+          queryParams += `&q[name_cont]=${encodeURIComponent(filters.surveyTitle.trim())}`;
+        }
       }
       
       // Use the new mappings_list endpoint with pagination and search
@@ -234,7 +276,7 @@ export const SurveyMappingDashboard = () => {
 
   // Initial load
   useEffect(() => {
-    fetchSurveyMappingsData(1);
+    fetchSurveyMappingsData(1, undefined, appliedFilters);
   }, [fetchSurveyMappingsData]);
 
   // Client-side filtering function for immediate results
@@ -284,9 +326,9 @@ export const SurveyMappingDashboard = () => {
       // Reset to page 1 when searching
       setCurrentPage(1);
       // Fetch data with new search term, but don't show main loading spinner
-      fetchSurveyMappingsData(1, newSearchTerm, false);
+      fetchSurveyMappingsData(1, newSearchTerm, appliedFilters, false);
     }, 1000); // Increased debounce delay for server search since client-side provides instant results
-  }, [filterMappingsClientSide, allMappings, fetchSurveyMappingsData]);
+  }, [filterMappingsClientSide, allMappings, appliedFilters, fetchSurveyMappingsData]);
 
   // Clear search and reset to all mappings
   const handleClearSearch = useCallback(() => {
@@ -425,12 +467,19 @@ export const SurveyMappingDashboard = () => {
     }
   };
 
+  // Handle filter application
+  const handleApplyFilters = (filters: SurveyMappingFilters) => {
+    setAppliedFilters(filters);
+    setCurrentPage(1);
+    fetchSurveyMappingsData(1, searchTerm.trim() || undefined, filters, true);
+  };
+
   // Handle page change for server-side pagination
   const handlePageChange = async (page: number) => {
     try {
       // If there's an active search, use server-side search with pagination
       // Otherwise, use regular pagination
-      await fetchSurveyMappingsData(page, searchTerm.trim() || undefined, true);
+      await fetchSurveyMappingsData(page, searchTerm.trim() || undefined, appliedFilters, true);
       
     } catch (error: unknown) {
       console.error('Error fetching survey mappings:', error);
@@ -702,6 +751,7 @@ export const SurveyMappingDashboard = () => {
                     />
                   </div>
                 }
+                onFilterClick={() => setIsFilterOpen(true)}
               />
 
               {/* Server-side Pagination */}
@@ -834,6 +884,13 @@ export const SurveyMappingDashboard = () => {
                 </div>
               )}
           </div>
+
+      {/* Filter Dialog */}
+      <SurveyMappingFilterDialog
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={handleApplyFilters}
+      />
     </div>
   );
 };

@@ -203,6 +203,7 @@ export const SurveyResponsePage = () => {
   const [activeTab, setActiveTab] = useState("list");
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null); // null = all, 'active', 'inactive'
   const [pagination, setPagination] = useState({
     current_page: 1,
     per_page: 10,
@@ -272,7 +273,8 @@ export const SurveyResponsePage = () => {
   const fetchSurveyResponseList = async (
     page: number = 1,
     filters?: FilterState,
-    searchQuery?: string
+    searchQuery?: string,
+    status?: string | null
   ) => {
     try {
       const url = getFullUrl("/survey_mappings/response_list.json?list_response=true");
@@ -290,6 +292,12 @@ export const SurveyResponsePage = () => {
       if (API_CONFIG.TOKEN) {
         urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
         // console.log('🔑 Adding access_token to request');
+      }
+
+      // Add status filter if provided
+      if (status === 'active' || status === 'inactive') {
+        urlWithParams.searchParams.append("status", status);
+        // console.log('🔍 Adding status filter:', status);
       }
 
       // Add search query if provided - composite search across name and location fields
@@ -575,7 +583,7 @@ export const SurveyResponsePage = () => {
 
   // console.log("resp data", responseData);
   const fetchSurveyResponses = useCallback(
-    async (filters?: FilterState, searchQuery?: string, page?: number) => {
+    async (filters?: FilterState, searchQuery?: string, page?: number, status?: string | null) => {
       // Use different loading states based on whether it's a search operation
       const isSearch = searchQuery && searchQuery.trim() !== "";
       if (isSearch) {
@@ -589,11 +597,13 @@ export const SurveyResponsePage = () => {
         // console.log('📡 Fetching survey responses for page:', pageToUse);
         // console.log('🔍 Applied filters:', filters);
         // console.log('🔍 Search query:', searchQuery);
+        // console.log('🔍 Status filter:', status);
 
         const data = await fetchSurveyResponseList(
           pageToUse,
           filters,
-          searchQuery
+          searchQuery,
+          status
         );
 
         // Check if data and data.responses exist before transforming
@@ -701,7 +711,7 @@ export const SurveyResponsePage = () => {
         }
       }
     },
-    [currentPage] // Include currentPage back as dependency
+    [currentPage, selectedStatus] // Include selectedStatus as dependency
   );
 
   const fetchFilteredSurveyResponses = async (filters: FilterState) => {
@@ -1183,15 +1193,21 @@ export const SurveyResponsePage = () => {
     );
   };
 
+  // Handle status card click
+  const handleStatusCardClick = (status: string | null) => {
+    setSelectedStatus(status);
+    setCurrentPage(1); // Reset to first page when filtering by status
+  };
+
   // Fetch survey responses when component mounts, page changes, or filters change
   useEffect(() => {
     // Determine if this is a search operation by checking if only search term changed
 
 
     
-    // console.log('� Data fetch triggered - page:', currentPage, 'filters:', appliedFilters, 'search:', debouncedSearchTerm, 'isSearchOperation:', isSearchOperation);
-    fetchSurveyResponses(appliedFilters, debouncedSearchTerm, currentPage);
-  }, [currentPage, appliedFilters, debouncedSearchTerm, fetchSurveyResponses]); // Include all dependencies
+    // console.log('📊 Data fetch triggered - page:', currentPage, 'filters:', appliedFilters, 'search:', debouncedSearchTerm, 'status:', selectedStatus);
+    fetchSurveyResponses(appliedFilters, debouncedSearchTerm, currentPage, selectedStatus);
+  }, [currentPage, appliedFilters, debouncedSearchTerm, selectedStatus, fetchSurveyResponses]); // Include all dependencies
 
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
@@ -1290,7 +1306,15 @@ export const SurveyResponsePage = () => {
         <TabsContent value="list" className="mt-0">
           {/* Survey Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-             <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+            {/* Total Surveys Card - Click to show all */}
+            <div 
+              onClick={() => handleStatusCardClick(null)}
+              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
+                selectedStatus === null
+                  ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
+                  : ""
+              }`}
+            >
               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
                 <ClipboardList className="w-6 h-6 text-[#C72030]" />
               </div>
@@ -1306,8 +1330,16 @@ export const SurveyResponsePage = () => {
                 </div>
               </div>
             </div>
-            {/* Active Surveys */}
-            <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+
+            {/* Active Surveys Card */}
+            <div 
+              onClick={() => handleStatusCardClick('active')}
+              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
+                selectedStatus === 'active'
+                  ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
+                  : ""
+              }`}
+            >
               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
                 <Activity className="w-6 h-6 text-[#C72030]" />
               </div>
@@ -1324,11 +1356,15 @@ export const SurveyResponsePage = () => {
               </div>
             </div>
 
-            {/* Total Surveys */}
-           
-
-            {/* Inactive Surveys */}
-            <div className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+            {/* Inactive Surveys Card */}
+            <div 
+              onClick={() => handleStatusCardClick('inactive')}
+              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
+                selectedStatus === 'inactive'
+                  ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
+                  : ""
+              }`}
+            >
               <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
                 <HelpCircle className="w-6 h-6 text-[#C72030]" />
               </div>
