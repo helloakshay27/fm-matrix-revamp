@@ -1519,7 +1519,7 @@ export const MobileSurveyLanding: React.FC = () => {
       }}
     >
       {/* Header with Logo */}
-      <div className="bg-transparent py-4 px-4 mt-4">
+      <div className="bg-transparent py-4 px-4 mt-2">
         <div className="flex justify-between">
           <div className="flex justify-start mt-2 items-start">
             {((currentQuestion &&
@@ -1877,7 +1877,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   currentQuestion.qtype === "smiley") &&
                   !showGenericTags && (
                     <div className="w-full">
-                      <div className="flex justify-center items-start gap-3 sm:gap-3 bg-black/60 rounded">
+                      <div className="flex justify-center items-start sm:gap-3 bg-black/60 rounded px-2">
                         {getEmojiOptions(currentQuestion).map((option) => (
                           <button
                             type="button"
