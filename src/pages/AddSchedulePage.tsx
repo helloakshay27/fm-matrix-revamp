@@ -557,19 +557,19 @@ export const AddSchedulePage = () => {
     });
   };
 
- useEffect(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const serviceIdsParam = urlParams.get('serviceIds');
-  // Only run if scheduleFor is Service and serviceIdsParam exists
-  if (formData.scheduleFor === 'Service' && serviceIdsParam) {
-    const ids = serviceIdsParam.split(',').map(id => id.trim()).filter(Boolean);
-    setFormData(prev => ({
-      ...prev,
-      service: ids
-    }));
-    console.log('prev selected Id', ids);
-  }
-}, [formData.scheduleFor]);
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceIdsParam = urlParams.get('serviceIds');
+    // Only run if scheduleFor is Service and serviceIdsParam exists
+    if (formData.scheduleFor === 'Service' && serviceIdsParam) {
+      const ids = serviceIdsParam.split(',').map(id => id.trim()).filter(Boolean);
+      setFormData(prev => ({
+        ...prev,
+        service: ids
+      }));
+      console.log('prev selected Id', ids);
+    }
+  }, [formData.scheduleFor]);
 
   // Initialize component with localStorage data or clear current step if refreshed on that step
   useEffect(() => {
@@ -2235,9 +2235,6 @@ export const AddSchedulePage = () => {
     if (!formData.activityName.trim()) {
       errors['activityName'] = 'Activity Name is required';
     }
-    if (!formData.description.trim()) {
-      errors['description'] = 'Description is required';
-    }
 
     // Update field errors
     setFieldErrors(prev => ({
@@ -3295,7 +3292,7 @@ export const AddSchedulePage = () => {
               disabled={stepIndex < activeStep && editingStep !== stepIndex}
               label={
                 <span style={{ fontSize: '16px' }}>
-                  Description <span style={{ color: "red" }}>*</span>
+                  Description
                 </span>
               }
               placeholder="Enter Description/SOP"
@@ -3590,9 +3587,21 @@ export const AddSchedulePage = () => {
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
                 {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
                 {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
-                  <Box>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <Box sx={{ minWidth: 0 }}>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          ...fieldStyles,
+                          minWidth: 0, // allow the control to shrink inside the grid column
+                        },
+                      }}
+                    >
+                      <InputLabel shrink>
+                        Select Assets <span style={{ color: 'red' }}>*</span>
+                      </InputLabel>
+
                       <Select
                         multiple
                         label="Select Assets"
@@ -3604,12 +3613,47 @@ export const AddSchedulePage = () => {
                           if (!selected || selected.length === 0) {
                             return <span style={{ color: '#aaa' }}>Select Assets</span>;
                           }
-                          return assets
+                          const names = assets
                             .filter(asset => selected.includes(asset.id.toString()))
                             .map(asset => asset.name)
                             .join(', ');
+                          return (
+                            <span
+                              title={names}
+                              style={{
+                                display: 'inline-block',
+                                maxWidth: '100%',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                            >
+                              {names}
+                            </span>
+                          );
                         }}
                         disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.assets}
+                        sx={{
+                          minWidth: 0,
+                          width: '100%',
+                          maxWidth: '100%',
+                          '& .MuiSelect-select': {
+                            display: 'block',
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            style: {
+                              minWidth: 200,
+                              maxWidth: 520,
+                              width: 'auto'
+                            }
+                          }
+                        }}
                       >
                         <MenuItem value="">Select Assets</MenuItem>
                         {assets && assets.map((option) => (
@@ -3617,6 +3661,7 @@ export const AddSchedulePage = () => {
                         ))}
                       </Select>
                     </FormControl>
+
                     {loading.assets && (
                       <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
                         Loading assets...
@@ -3627,8 +3672,19 @@ export const AddSchedulePage = () => {
 
                 {/* Service Dropdown - Show when scheduleFor is Service */}
                 {formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' && (
-                  <Box>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  // Example for Service Dropdown
+                  <Box >
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          ...fieldStyles,
+                          width: '100%',
+                          maxWidth: 340, // <-- Set a fixed max width for the input
+                        },
+                      }}
+                    >
                       <InputLabel shrink>Select Services <span style={{ color: 'red' }}>*</span></InputLabel>
                       <Select
                         multiple
@@ -3637,15 +3693,37 @@ export const AddSchedulePage = () => {
                         displayEmpty
                         value={formData.service}
                         onChange={e => handleAutocompleteChange('service', services.filter(service => e.target.value.includes(service.id.toString())))}
-                        renderValue={(selected) =>
-                          !selected || selected.length === 0
-                            ? <span style={{ color: '#aaa' }}>Select Services</span>
-                            : services
-                              .filter(service => selected.includes(service.id.toString()))
-                              .map(service => service.service_name)
-                              .join(', ')
-                        }
-                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.services}
+                        renderValue={(selected) => {
+                          const names = services
+                            .filter(service => selected.includes(service.id.toString()))
+                            .map(service => service.service_name)
+                            .join(', ');
+                          return (
+                            <span
+                              style={{
+                                display: 'block',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: 320, // <-- Match the input width for ellipsis
+                              }}
+                              title={names}
+                            >
+                              {selected.length === 0 ? 'Select Services' : names}
+                            </span>
+                          );
+                        }}
+                        sx={{
+                          width: '100%',
+                          maxWidth: 340, // <-- Match the FormControl
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            style: {
+                              width: 340, // <-- Match the input width for dropdown menu
+                            },
+                          },
+                        }}
                       >
                         <MenuItem value="" disabled>Select Services</MenuItem>
                         {services && services.map((option) => (
@@ -3653,11 +3731,6 @@ export const AddSchedulePage = () => {
                         ))}
                       </Select>
                     </FormControl>
-                    {loading.services && (
-                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                        Loading services...
-                      </Typography>
-                    )}
                   </Box>
                 )}
 
@@ -3665,18 +3738,59 @@ export const AddSchedulePage = () => {
                 {formData.scheduleFor === 'Asset' && formData.checklistType === 'Asset Group' && (
                   <>
                     <Box>
-                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Asset Group <span style={{ color: 'red' }}>*</span></InputLabel>
+                      <FormControl
+                        fullWidth
+                        variant="outlined"
+                        sx={{
+                          '& .MuiInputBase-root': {
+                            ...fieldStyles,
+                            width: '100%',
+                            maxWidth: 340, // <-- Set a fixed max width for the input
+                          },
+                        }}
+                      >
+                        <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
                         <Select
-                          label="Asset Group"
+                          multiple
+                          label="Select Assets"
                           notched
                           displayEmpty
-                          value={formData.assetGroup}
-                          onChange={e => handleAssetGroupChange(e.target.value)}
-                          disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.groups}
+                          value={formData.asset}
+                          onChange={e => handleAutocompleteChange('asset', assets.filter(asset => e.target.value.includes(asset.id.toString())))}
+                          renderValue={(selected) => {
+                            const names = assets
+                              .filter(asset => selected.includes(asset.id.toString()))
+                              .map(asset => asset.name)
+                              .join(', ');
+                            return (
+                              <span
+                                style={{
+                                  display: 'block',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  maxWidth: 320, // <-- Match the input width for ellipsis
+                                }}
+                                title={names}
+                              >
+                                {selected.length === 0 ? 'Select Assets' : names}
+                              </span>
+                            );
+                          }}
+                          sx={{
+                            width: '100%',
+                            maxWidth: 340, // <-- Match the FormControl
+                          }}
+                          MenuProps={{
+                            PaperProps: {
+                              style: {
+                                width: 340, // <-- Match the input width for dropdown menu
+                              },
+                            },
+                          }}
                         >
-                          <MenuItem value="">Select Asset Group</MenuItem>
-                          {assetGroups && assetGroups.map((option) => (
+                          <MenuItem value="" disabled>Select Assets</MenuItem>
+                          {assets && assets.map((option) => (
                             <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
                           ))}
                         </Select>
@@ -3748,9 +3862,19 @@ export const AddSchedulePage = () => {
 
                 {/* Multi-select Users - Show when assignToType is 'user' */}
                 {formData.assignToType === 'user' && (
-                  <Box>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Select Users <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <Box sx={{ minWidth: 0 }}>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{
+                        '& .MuiInputBase-root': fieldStyles,
+                        minWidth: 0,        // allow shrink inside grid column
+                        maxWidth: '100%',
+                      }}
+                    >
+                      <InputLabel shrink>
+                        Select Users <span style={{ color: 'red' }}>*</span>
+                      </InputLabel>
                       <Select
                         multiple
                         label="Select Users"
@@ -3762,12 +3886,42 @@ export const AddSchedulePage = () => {
                           if (!selected || selected.length === 0) {
                             return <span style={{ color: '#aaa' }}>Select Users</span>;
                           }
-                          return users
+                          const names = users
                             .filter(user => selected.includes(user.id.toString()))
                             .map(user => user.full_name)
                             .join(', ');
+                          return (
+                            <span
+                              title={names}
+                              style={{
+                                display: 'inline-block',
+                                maxWidth: '100%',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                            >
+                              {names}
+                            </span>
+                          );
                         }}
                         disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
+                        sx={{
+                          minWidth: 0,
+                          maxWidth: '100%',
+                          width: '100%',
+                          // ensure the internal select element truncates instead of forcing width
+                          '& .MuiSelect-select': {
+                            display: 'block',
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }
+                        }}
+                        MenuProps={{
+                          PaperProps: { style: { minWidth: 200, maxWidth: 520, width: 'auto' } }
+                        }}
                       >
                         <MenuItem value="">Select Users</MenuItem>
                         {users && users.map((option) => (
