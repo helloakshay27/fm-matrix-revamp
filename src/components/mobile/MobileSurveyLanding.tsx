@@ -1519,7 +1519,7 @@ export const MobileSurveyLanding: React.FC = () => {
       }}
     >
       {/* Header with Logo */}
-      <div className="bg-transparent py-4 px-4 mt-8">
+      <div className="bg-transparent py-4 px-4 mt-4">
         <div className="flex justify-between">
           <div className="flex justify-start mt-2 items-start">
             {((currentQuestion &&
