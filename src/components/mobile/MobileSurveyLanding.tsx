@@ -670,8 +670,7 @@ export const MobileSurveyLanding: React.FC = () => {
             getRatingLabel(currentQuestion, currentAnswer.rating);
           surveyResponseItem.ans_descr =
             ratingLabel ||
-            `${currentAnswer.rating} star${
-              (currentAnswer.rating || 0) > 1 ? "s" : ""
+            `${currentAnswer.rating} star${(currentAnswer.rating || 0) > 1 ? "s" : ""
             }`;
 
           // Add option_id mapping for rating questions from API response
@@ -871,8 +870,7 @@ export const MobileSurveyLanding: React.FC = () => {
             getRatingLabel(currentQuestion, answerData.rating);
           surveyResponseItem.ans_descr =
             ratingLabelNeg ||
-            `${answerData.rating} star${
-              (answerData.rating || 0) > 1 ? "s" : ""
+            `${answerData.rating} star${(answerData.rating || 0) > 1 ? "s" : ""
             }`;
 
           // Add option_id for rating questions
@@ -1529,29 +1527,29 @@ export const MobileSurveyLanding: React.FC = () => {
               currentQuestionIndex > 0 &&
               !showGenericTags) ||
               (isLastStep && isMultiQuestion)) && (
-              <div className="w-full flex justify-start mb-4">
-                <button
-                  type="button"
-                  onClick={moveToPreviousQuestion}
-                  className="flex items-center text-black/100 hover:text-black/100 text-lg font-medium transition-colors"
-                >
-                  <svg
-                    className="w-4 h-4 mr-1 text-black/80"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                <div className="w-full flex justify-start mb-4">
+                  <button
+                    type="button"
+                    onClick={moveToPreviousQuestion}
+                    className="flex items-center text-black/100 hover:text-black/100 text-lg font-medium transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  Back
-                </button>
-              </div>
-            )}
+                    <svg
+                      className="w-4 h-4 mr-1 text-black/80"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                    Back
+                  </button>
+                </div>
+              )}
           </div>
           <div className="flex justify-end item-end">
             <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
@@ -1585,7 +1583,7 @@ export const MobileSurveyLanding: React.FC = () => {
       {isMultiQuestion && <div></div>}
 
       {/* Main Content */}
-      <div className="flex-1 min-h-0 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
+      <div className="flex-1 min-h-0 flex flex-col py-4 sm:py-6 overflow-y-auto">
         <div className="flex flex-col items-center justify-end max-w-md mx-auto w-full h-full pb-[calc(env(safe-area-inset-bottom)+16px)] sm:pb-6">
           {/* Show image only on first question or single question surveys */}
           {!showGenericTags && (
@@ -1644,36 +1642,36 @@ export const MobileSurveyLanding: React.FC = () => {
             isLastStep &&
             currentQuestionIndex === surveyData.snag_checklist.questions_count
           ) && (
-            <div className="w-full">
-              {/* Progress indicator */}
+              <div className="w-full">
+                {/* Progress indicator */}
 
-              {/* Main title */}
-              <h1 className="text-3xl sm:text-4xl font-bold text-white/100 mb-2">
-                {!showGenericTags && surveyData?.survey_title}
-              </h1>
+                {/* Main title */}
+                <h1 className="text-3xl sm:text-4xl font-bold text-white/100 mb-2">
+                  {!showGenericTags && surveyData?.survey_title}
+                </h1>
 
-              <div className="flex items-center space-x-3">
-                <span className="text-md text-white/90">
-                  {!showGenericTags && (
-                    <>
-                      {Math.min(
-                        currentQuestionIndex + 1,
-                        surveyData.snag_checklist.questions_count
-                      )}
-                      /{surveyData.snag_checklist.questions_count}
-                    </>
-                  )}
-                </span>
+                <div className="flex items-center space-x-3">
+                  <span className="text-md text-white/90">
+                    {!showGenericTags && (
+                      <>
+                        {Math.min(
+                          currentQuestionIndex + 1,
+                          surveyData.snag_checklist.questions_count
+                        )}
+                        /{surveyData.snag_checklist.questions_count}
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                {/* Subtitle - only show when we have a current question and not showing generic tags */}
+                {currentQuestion && !showGenericTags && (
+                  <p className="text-xl  text-white/90 mb-6">
+                    {currentQuestion.descr}
+                  </p>
+                )}
               </div>
-
-              {/* Subtitle - only show when we have a current question and not showing generic tags */}
-              {currentQuestion && !showGenericTags && (
-                <p className="text-xl  text-white/90 mb-6">
-                  {currentQuestion.descr}
-                </p>
-              )}
-            </div>
-          )}
+            )}
 
           {/* Show Current Question */}
           {currentQuestion && !isLastStep && (
@@ -1681,17 +1679,16 @@ export const MobileSurveyLanding: React.FC = () => {
               <div className="space-y-4">
                 {/* Multiple Choice Question */}
                 {currentQuestion.qtype === "multiple" && !showGenericTags && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 ">
                     {currentQuestion.snag_quest_options.map((option) => (
                       <button
                         type="button"
                         key={option.id}
                         onClick={() => handleOptionSelect(option)}
-                        className={`w-full p-3 sm:p-4 rounded-[0.20rem] border-2 text-left transition-all ${
-                          selectedOptions.some((opt) => opt.id === option.id)
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-200 bg-white hover:border-black/30"
-                        }`}
+                        className={`w-full p-3 sm:p-4 rounded-[0.20rem] border-2 text-left transition-all ${selectedOptions.some((opt) => opt.id === option.id)
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-gray-200 bg-white hover:border-black/30"
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-sm sm:text-base">
@@ -1700,20 +1697,20 @@ export const MobileSurveyLanding: React.FC = () => {
                           {selectedOptions.some(
                             (opt) => opt.id === option.id
                           ) && (
-                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </div>
-                          )}
+                              <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                <svg
+                                  className="w-3 h-3 text-white"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </div>
+                            )}
                         </div>
                       </button>
                     ))}
@@ -1850,11 +1847,10 @@ export const MobileSurveyLanding: React.FC = () => {
                           type="button"
                           key={rating}
                           onClick={() => handleRatingSelect(rating)}
-                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all ${
-                            selectedRating !== null && rating <= selectedRating
-                              ? "text-yellow-500"
-                              : "text-gray-300 hover:text-yellow-300"
-                          }`}
+                          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all ${selectedRating !== null && rating <= selectedRating
+                            ? "text-yellow-500"
+                            : "text-gray-300 hover:text-yellow-300"
+                            }`}
                         >
                           <svg
                             className="w-full h-full"
@@ -1881,7 +1877,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   currentQuestion.qtype === "smiley") &&
                   !showGenericTags && (
                     <div className="w-full">
-                      <div className="flex justify-center items-start gap-3 sm:gap-3">
+                      <div className="flex justify-center items-start gap-3 sm:gap-3 bg-black/60 rounded">
                         {getEmojiOptions(currentQuestion).map((option) => (
                           <button
                             type="button"
@@ -1893,7 +1889,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                 option.label
                               )
                             }
-                            className="flex flex-col rounded-[0.20rem] items-center justify-start p-2 sm:p-3 hover:bg-white/60 transition-colors flex-1 min-w-0"
+                            className="flex flex-col rounded-[0.20rem] items-center justify-start p-2 sm:p-3 transition-colors flex-1 min-w-0 mx-4"
                           >
                             <span className="text-3xl sm:text-4xl mb-2">
                               {option.emoji}
@@ -1910,8 +1906,8 @@ export const MobileSurveyLanding: React.FC = () => {
                 {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
                 {showGenericTags && (
                   <>
-                    <div className="bg-white/70 rounded-[0.20rem] p-4">
-                      <div className="flex justify-end items-start mb-4">
+                    <div className="bg-white rounded-[0.20rem] p-4">
+                      <div className="flex justify-end items-start mb-1">
                         <button
                           type="button"
                           onClick={() => {
@@ -1970,18 +1966,17 @@ export const MobileSurveyLanding: React.FC = () => {
                                             onClick={() =>
                                               handleGenericTagClick(tag)
                                             }
-                                            className={`p-3 sm:p-4 rounded-[0.20rem] text-center transition-all ${
-                                              selectedTags.some(
-                                                (selectedTag) =>
-                                                  selectedTag.id === tag.id
-                                              )
-                                                ? "border-blue-500 bg-blue-50"
-                                                : ""
-                                            }`}
+                                            className={`p-3 sm:p-4 rounded-[0.20rem] text-center transition-all ${selectedTags.some(
+                                              (selectedTag) =>
+                                                selectedTag.id === tag.id
+                                            )
+                                              ? "border-blue-500 bg-gray-300"
+                                              : ""
+                                              }`}
                                           >
                                             <div className="mb-2">
                                               {tag.icons &&
-                                              tag.icons.length > 0 ? (
+                                                tag.icons.length > 0 ? (
                                                 <img
                                                   src={tag.icons[0].url}
                                                   alt={tag.category_name}
@@ -2017,18 +2012,17 @@ export const MobileSurveyLanding: React.FC = () => {
                                             onClick={() =>
                                               handleGenericTagClick(tag)
                                             }
-                                            className={`p-3 sm:p-4 rounded-[0.20rem] text-center transition-all ${
-                                              selectedTags.some(
-                                                (selectedTag) =>
-                                                  selectedTag.id === tag.id
-                                              )
-                                                ? "border-blue-500 bg-blue-50"
-                                                : ""
-                                            }`}
+                                            className={`p-3 sm:p-4 rounded-[0.20rem] text-center transition-all ${selectedTags.some(
+                                              (selectedTag) =>
+                                                selectedTag.id === tag.id
+                                            )
+                                              ? "border-blue-500 bg-gray-300"
+                                              : ""
+                                              }`}
                                           >
                                             <div className="mb-2">
                                               {tag.icons &&
-                                              tag.icons.length > 0 ? (
+                                                tag.icons.length > 0 ? (
                                                 <img
                                                   src={tag.icons[0].url}
                                                   alt={tag.category_name}

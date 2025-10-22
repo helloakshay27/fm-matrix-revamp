@@ -120,9 +120,8 @@ export const MobileSurveyThankYou: React.FC = () => {
     <div
       className="min-h-screen flex flex-col items-center justify-center px-6"
       style={{
-        backgroundImage: `url(${
-          surveyData?.snag_checklist?.survey_attachment?.url || "/9019830 1.png"
-        })`,
+        backgroundImage: `url(${surveyData?.snag_checklist?.survey_attachment?.url || "/9019830 1.png"
+          })`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -159,12 +158,12 @@ export const MobileSurveyThankYou: React.FC = () => {
       </div>
 
       {/* Thank You Card */}
-      <div className="bg-white/50 backdrop-blur-sm rounded-[0.20rem] p-8 text-center max-w-sm w-full shadow-xl ">
+      <div className="bg-white backdrop-blur-sm rounded-[0.20rem] p-8 text-center max-w-sm w-full shadow-xl ">
         {/* Stylized Thank You Text */}
         <div className="p-3">
           <h1
             className="text-lg sm:text-lg font-work-sans font-semibold text-black"
-            // style={{ fontFamily: "cursive" }}
+          // style={{ fontFamily: "cursive" }}
           >
             Thank you
           </h1>
