@@ -5074,25 +5074,27 @@ export const SurveyResponseDetailPage = () => {
                                 </div> */}
                           <CardContent>
                             <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-                              <div className="text-center py-6">
-                                <div className="flex flex-col items-end gap-2 mb-4 mr-10">
-                                  <div className="flex items-center gap-1 mr-2">
-                                    <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]"></span>
-                                    <span className="text-gray-600 font-small header">
-                                      Positive: {positivePercent != null ? positivePercent : 0}%
-                                    </span>
+                              <div className="relative text-center py-6">
+                                <div className="absolute top-2 right-4 flex flex-col gap-2 mr-4 mt-4">
+                                  <div className="flex items-center gap-2 justify-between w-32">
+                                    <div className="flex items-center gap-2">
+                                      <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]"></span>
+                                      <span className="text-gray-600 font-small">Positive:</span>
+                                    </div>
+                                    <span className="text-gray-600 font-small">{positivePercent != null ? positivePercent : 0}%</span>
                                   </div>
-                                  <div className="flex items-center gap-1">
-                                    <span className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]"></span>
-                                    <span className="text-gray-600 font-small">
-                                      Negative: {negativePercent != null ? negativePercent : 0}%
-                                    </span>
+                                  <div className="flex items-center gap-2 justify-between w-32">
+                                    <div className="flex items-center gap-2">
+                                      <span className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]"></span>
+                                      <span className="text-gray-600 font-small">Negative:</span>
+                                    </div>
+                                    <span className="text-gray-600 font-small">{negativePercent != null ? negativePercent : 0}%</span>
                                   </div>
                                 </div>
 
 
                                 {displayData.length > 0 ? (
-                                  <div className="flex justify-center items-center gap-8 mb-4">
+                                  <div className="flex justify-center items-center gap-8 mb-4 mt-12">
                                     {displayData.map((item, index) => (
                                       <div
                                         key={index}

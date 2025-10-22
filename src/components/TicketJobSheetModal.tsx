@@ -164,10 +164,10 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
       setCommunicationTemplates(templates || []);
       
       // Log success
-      toast({
-        title: 'Success',
-        description: `Loaded ${templates?.length || 0} communication templates`,
-      });
+    //   toast({
+    //     title: 'Success',
+    //     description: `Loaded ${templates?.length || 0} communication templates`,
+    //   });
     } catch (error) {
       console.error('Error fetching communication templates:', error);
       toast({

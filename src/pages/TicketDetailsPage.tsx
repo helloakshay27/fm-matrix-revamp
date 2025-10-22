@@ -300,6 +300,104 @@ const formatTicketAgeing = (ageingSeconds: number): string => {
   return `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
+// Helper function to render association-specific data
+const renderAssociationSpecificData = (ticketData: any) => {
+  const associationType = ticketData?.asset_service || ticketData?.service_or_asset || 'Asset';
+  
+  switch (associationType) {
+    case 'Checklist':
+      return [
+        { label: 'Task ID', value: ticketData.task_id || '-' },
+        { label: 'Task Name', value: ticketData.task_name || '-' },
+        { label: 'Schedule Time', value: ticketData.checklist_schedule_time ? new Date(ticketData.checklist_schedule_time).toLocaleString('en-GB') : '-' },
+        { label: 'Completion Time', value: ticketData.checklist_completion_time ? new Date(ticketData.checklist_completion_time).toLocaleString('en-GB') : '-' },
+        { label: 'Checklist Type', value: ticketData.checklist_type || '-' },
+        { label: 'Assigned To ID', value: Array.isArray(ticketData.checklist_assigned_to_id) ? ticketData.checklist_assigned_to_id.join(', ') : (ticketData.checklist_assigned_to_id || '-') },
+        { label: 'Assigned To Name', value: ticketData.checklist_assigned_to_name || '-' },
+        { label: 'Response Attachments', value: ticketData.response_attachments && ticketData.response_attachments.length > 0 ? `${ticketData.response_attachments.length} attachment(s)` : 'No attachments' },
+      ];
+
+    case 'Patrolling':
+      return [
+        { label: 'Patrolling ID', value: ticketData.patrolling_id || '-' },
+        { label: 'Patrolling Name', value: ticketData.patrolling_name || '-' },
+        { label: 'Conducted By', value: ticketData.patrol_conducted_by || '-' },
+        { label: 'Patrol Time', value: ticketData.patrol_time ? new Date(ticketData.patrol_time).toLocaleString('en-GB') : '-' },
+        { label: 'Patrol Attachment', value: ticketData.patrol_attachment ? 'Available' : 'Not Available' },
+        { label: '', value: '' }, // Empty cells for grid alignment
+        { label: '', value: '' },
+        { label: '', value: '' },
+      ];
+
+    case 'Incident':
+      return [
+        { label: 'Incident ID', value: ticketData.incident_id || '-' },
+        { label: 'Incident Name', value: ticketData.incident_name || '-' },
+        { label: 'Primary Category', value: ticketData.incident_primary_category || '-' },
+        { label: 'Secondary Category', value: ticketData.incident_secondary_category || '-' },
+        { label: 'Third Level Category', value: ticketData.incident_third_level_category || '-' },
+        { label: 'Level of Incident', value: ticketData.level_of_incident || '-' },
+        { label: 'Support Required', value: ticketData.incident_support_required ? 'Yes' : 'No' },
+        { label: 'Attachments', value: ticketData.incident_attachments && ticketData.incident_attachments.length > 0 ? `${ticketData.incident_attachments.length} attachment(s)` : 'No attachments' },
+      ];
+
+    case 'Audit':
+      return [
+        { label: 'Audit ID', value: ticketData.audit_id || '-' },
+        { label: 'Conducted By', value: ticketData.audit_conducted_by || '-' },
+        { label: 'Audit Type', value: ticketData.audit_type || '-' },
+        { label: 'Attachments', value: ticketData.audit_attachments && ticketData.audit_attachments.length > 0 ? `${ticketData.audit_attachments.length} attachment(s)` : 'No attachments' },
+        { label: '', value: '' }, // Empty cells for grid alignment
+        { label: '', value: '' },
+        { label: '', value: '' },
+        { label: '', value: '' },
+      ];
+
+    case 'Asset':
+    default:
+      return [
+        { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
+        { label: 'Group', value: ticketData.asset_group || '-' },
+        { label: 'Status', value: ticketData.asset_status || ticketData.amc?.amc_status || '-' },
+        { label: 'Criticality', value: ticketData.asset_criticality === null || ticketData.asset_criticality === "" ? '-' : (ticketData.asset_criticality ? 'Critical' : 'Non Critical') },
+        { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
+        { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
+        { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
+        { label: 'Under Warranty', value: ticketData.warranty === null || ticketData.warranty === undefined ? '-' : (ticketData.warranty ? 'Yes' : 'No') },
+        { label: 'Category', value: ticketData.asset_type_category || '-' },
+        { label: 'Allocated', value: ticketData.asset_service || ticketData.asset_service || '-' },
+        { label: 'AMC Type', value: ticketData.amc?.amc_type || '-' },
+        { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
+      ];
+  }
+};
+
+// Helper function to check if association data is available
+const hasAssociationData = (ticketData: any) => {
+  const associationType = ticketData?.asset_service || ticketData?.service_or_asset || 'Asset';
+  
+  switch (associationType) {
+    case 'Checklist':
+      return !!(ticketData.task_id || ticketData.task_name || ticketData.checklist_schedule_time || 
+               ticketData.checklist_completion_time || ticketData.checklist_type || 
+               ticketData.checklist_assigned_to_name || ticketData.response_attachments);
+    case 'Patrolling':
+      return !!(ticketData.patrolling_id || ticketData.patrolling_name || ticketData.patrol_conducted_by || 
+               ticketData.patrol_time || ticketData.patrol_attachment);
+    case 'Incident':
+      return !!(ticketData.incident_id || ticketData.incident_name || ticketData.incident_primary_category || 
+               ticketData.incident_secondary_category || ticketData.incident_third_level_category || 
+               ticketData.level_of_incident || ticketData.incident_attachments);
+    case 'Audit':
+      return !!(ticketData.audit_id || ticketData.audit_conducted_by || ticketData.audit_type || 
+               ticketData.audit_attachments);
+    case 'Asset':
+    default:
+      return !!(ticketData.asset_or_service_name || ticketData.asset_group || ticketData.asset_status || 
+               ticketData.pms_asset_id || ticketData.asset_or_service_id || ticketData.asset_type_category);
+  }
+};
+
 // Helper function to calculate balance TAT
 const calculateBalanceTAT = (tatTime: string | null | undefined, tatMinutes: number | null | undefined): { value: string; isExceeded: boolean; exceededBy: string } => {
   if (!tatTime) {
@@ -2185,8 +2283,8 @@ export const TicketDetailsPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {activeTab === "analytics" && activeSubTab === "details" ? (
-              // Show only Job Sheet button when on Ticket Details sub-tab inside Analytics
+            {(activeTab === "details") || (activeTab === "analytics" && activeSubTab === "details") ? (
+              // Show Job Sheet button when on Details tab OR when on Analytics > Ticket Details sub-tab
               <Button
                 onClick={handleJobSheet}
                 className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
@@ -2232,6 +2330,10 @@ export const TicketDetailsPage = () => {
           onValueChange={(value) => {
             console.log('Tab changed to:', value);
             setActiveTab(value);
+            // Reset sub-tab to default when switching to analytics tab
+            if (value === "analytics") {
+              setActiveSubTab("analytics");
+            }
           }}
         >
           <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
@@ -2971,24 +3073,20 @@ export const TicketDetailsPage = () => {
 
                   {/* Body */}
                   <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
+                    {/* Association Type Indicator */}
+                    {/* <div className="mb-4 pb-3 border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-600">Association Type:</span>
+                        <span className="px-3 py-1 text-sm font-semibold text-white bg-[#C72030] rounded-full">
+                          {ticketData.asset_service || ticketData.service_or_asset || 'Asset'}
+                        </span>
+                      </div>
+                    </div> */}
+                    
+                    {/* Dynamic Association Data */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
-                      {[
-                        { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
-                        { label: 'Group', value: ticketData.asset_group || '-' },
-                        { label: 'Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Criticality', value: ticketData.asset_criticality ? 'Critical' : 'Non Critical' },
-
-                        { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
-                        { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
-                        { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Under Warranty', value: ticketData.warranty === null || ticketData.warranty === undefined ? '-' : (ticketData.warranty ? 'Yes' : 'No') },
-
-                        { label: 'Category', value: ticketData.asset_type_category || '-' },
-                        { label: 'Allocated', value: ticketData.asset_service || '-' },
-                        { label: 'AMC Type', value: ticketData.amc?.amc_type || '-' },
-                        { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
-                      ].map(field => (
-                        <div key={field.label} className="flex items-start">
+                      {renderAssociationSpecificData(ticketData).map((field, index) => (
+                        <div key={`${field.label}-${index}`} className="flex items-start">
                           <div className="w-[140px] text-[14px] leading-tight text-gray-500 tracking-wide flex-shrink-0">
                             {field.label}
                           </div>
@@ -5376,24 +5474,20 @@ export const TicketDetailsPage = () => {
 
                   {/* Body */}
                   <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
+                    {/* Association Type Indicator */}
+                    <div className="mb-4 pb-3 border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-600">Association Type:</span>
+                        <span className="px-3 py-1 text-sm font-semibold text-white bg-[#C72030] rounded-full">
+                          {ticketData.asset_service || ticketData.service_or_asset || 'Asset'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Dynamic Association Data */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
-                      {[
-                        { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
-                        { label: 'Group', value: ticketData.asset_group || '-' },
-                        { label: 'Status', value: ticketData.asset_status || '-' },
-                        { label: 'Criticality', value: ticketData.asset_criticality === null ? '-' : (ticketData.asset_criticality ? 'Critical' : 'Non Critical') },
-
-                        { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
-                        { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
-                        { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
-                        { label: 'Under Warranty', value: ticketData.warranty === null || ticketData.warranty === undefined ? '-' : (ticketData.warranty ? 'Yes' : 'No') },
-
-                        { label: 'Category', value: ticketData.asset_type_category || '-' },
-                        { label: 'Allocated', value: ticketData.assigned_to || '-' },
-                        { label: 'AMC Type', value: ticketData.amc?.amc_type || '-' },
-                        { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
-                      ].map(field => (
-                        <div key={field.label} className="flex items-start">
+                      {renderAssociationSpecificData(ticketData).map((field, index) => (
+                        <div key={`${field.label}-${index}`} className="flex items-start">
                           <div className="w-[140px] text-[14px] leading-tight text-gray-500 tracking-wide flex-shrink-0">
                             {field.label}
                           </div>
