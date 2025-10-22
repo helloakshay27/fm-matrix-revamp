@@ -1907,7 +1907,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 {showGenericTags && (
                   <>
                     <div className="bg-white rounded-[0.20rem] p-4">
-                      <div className="flex justify-end items-start mb-1">
+                      <div className="flex justify-end items-start mb-4">
                         <button
                           type="button"
                           onClick={() => {
