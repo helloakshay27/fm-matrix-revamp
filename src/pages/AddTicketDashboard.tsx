@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Upload, Paperclip, X, User, Ticket, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
+import { FMUser } from '@/store/slices/fmUserSlice';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 
@@ -125,6 +126,165 @@ const fieldStyles = {
   },
 };
 
+// Helper functions to get user data from localStorage
+const getUserDataFromLocalStorage = () => {
+  try {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      console.log('🔍 Raw user data from localStorage:', user); // Debug log
+      
+      // Try multiple possible department field names with extensive logging
+      const possibleDepartmentFields = [
+        'department_name',
+        'designation', 
+        'department',
+        'role_name',
+        'lock_user_permission?.designation',
+        'user_permission?.designation',
+        'profile?.designation',
+        'profile?.department_name'
+      ];
+      
+      console.log('🔍 Checking department fields:', possibleDepartmentFields);
+      
+      let department = '';
+      // Check each possible field
+      if (user.department_name) {
+        department = user.department_name;
+        console.log('✅ Found department_name:', department);
+      } else if (user.designation) {
+        department = user.designation;
+        console.log('✅ Found designation:', department);
+      } else if (user.department) {
+        department = user.department;
+        console.log('✅ Found department:', department);
+      } else if (user.role_name) {
+        department = user.role_name;
+        console.log('✅ Found role_name:', department);
+      } else if (user.lock_user_permission?.designation) {
+        department = user.lock_user_permission.designation;
+        console.log('✅ Found lock_user_permission.designation:', department);
+      } else if (user.user_permission?.designation) {
+        department = user.user_permission.designation;
+        console.log('✅ Found user_permission.designation:', department);
+      } else if (user.profile?.designation) {
+        department = user.profile.designation;
+        console.log('✅ Found profile.designation:', department);
+      } else if (user.profile?.department_name) {
+        department = user.profile.department_name;
+        console.log('✅ Found profile.department_name:', department);
+      } else {
+        console.log('❌ No department field found in user data');
+        console.log('Available fields:', Object.keys(user));
+      }
+      
+      console.log('🎯 Final extracted department:', department);
+      
+      return {
+        name: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
+        department: department,
+        contactNumber: user.mobile || user.contactNumber || '',
+        site_id: user.site_id,
+        id: user.id,
+        email: user.email || '',
+        company_id: user.company_id || '',
+        // Add more fallback fields for department
+        designation: user.designation || '',
+        role_name: user.role_name || ''
+      };
+    }
+  } catch (error) {
+    console.error('Error parsing user data from localStorage:', error);
+  }
+  return null;
+};
+
+const getFMUsersFromLocalStorage = () => {
+  try {
+    const fmUsersData = localStorage.getItem('fmUsers');
+    if (fmUsersData) {
+      return JSON.parse(fmUsersData);
+    }
+  } catch (error) {
+    console.error('Error parsing FM users from localStorage:', error);
+  }
+  return [];
+};
+
+const getOccupantUsersFromLocalStorage = () => {
+  try {
+    const occupantUsersData = localStorage.getItem('occupantUsers');
+    if (occupantUsersData) {
+      return JSON.parse(occupantUsersData);
+    }
+  } catch (error) {
+    console.error('Error parsing occupant users from localStorage:', error);
+  }
+  return [];
+};
+
+// Debug function to clear localStorage and force fresh API calls
+const clearUserDataCache = () => {
+  localStorage.removeItem('user');
+  localStorage.removeItem('fmUsers');
+  localStorage.removeItem('occupantUsers');
+  console.log('User data cache cleared');
+};
+
+// Helper function to try getting user profile from additional endpoints
+const getUserProfileFromAlternativeAPI = async () => {
+  try {
+    // Try to get user profile from occupant users API (since the current user might be listed there)
+    console.log('🔄 Trying alternative API for user profile...');
+    const occupantResponse = await ticketManagementAPI.getOccupantUsers();
+    console.log('🔄 Occupant users response:', occupantResponse);
+    
+    // Try to get current user from localStorage to find their ID
+    const currentUserData = localStorage.getItem('user');
+    if (currentUserData) {
+      const user = JSON.parse(currentUserData);
+      console.log('🔄 Looking for current user ID:', user.id);
+      
+      // Find current user in occupant users list
+      const currentUserProfile = occupantResponse.find(u => u.id === user.id);
+      if (currentUserProfile && currentUserProfile.lock_user_permission?.designation) {
+        console.log('✅ Found user profile in occupant users with department:', currentUserProfile.lock_user_permission.designation);
+        return {
+          ...user,
+          department_name: currentUserProfile.lock_user_permission.designation,
+          designation: currentUserProfile.lock_user_permission.designation
+        };
+      }
+    }
+    
+    // Try FM users API as well
+    const fmResponse = await ticketManagementAPI.getEngineers();
+    const fmUsers = fmResponse.users || [];
+    console.log('🔄 FM users response:', fmUsers);
+    
+    if (currentUserData) {
+      const user = JSON.parse(currentUserData);
+      const currentUserFMProfile = fmUsers.find(u => u.id === user.id);
+      if (currentUserFMProfile && (currentUserFMProfile.designation || currentUserFMProfile.role_name)) {
+        console.log('✅ Found user profile in FM users with department:', currentUserFMProfile.designation || currentUserFMProfile.role_name);
+        return {
+          ...user,
+          department_name: currentUserFMProfile.designation || currentUserFMProfile.role_name,
+          designation: currentUserFMProfile.designation,
+          role_name: currentUserFMProfile.role_name
+        };
+      }
+    }
+    
+    console.log('❌ No alternative profile found');
+    return null;
+  } catch (error) {
+    console.error('Error getting user profile from alternative API:', error);
+    return null;
+  }
+};
+
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
 
@@ -142,7 +302,7 @@ export const AddTicketDashboard = () => {
   // Dropdown data states
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [subcategories, setSubcategories] = useState<SubCategoryResponse[]>([]);
-  const [fmUsers, setFmUsers] = useState<{ id: number; full_name: string }[]>([]);
+  const [fmUsers, setFmUsers] = useState<FMUser[]>([]);
   const [occupantUsers, setOccupantUsers] = useState<OccupantUserResponse[]>([]);
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
   const [complaintModes, setComplaintModes] = useState<ComplaintModeResponse[]>([]);
@@ -209,19 +369,42 @@ export const AddTicketDashboard = () => {
     }));
   }, [onBehalfOf]);
 
-  // Load user account
-  const loadUserAccount = useCallback(async () => {
+  // Fallback API method for user account
+  const loadUserAccountFromAPI = useCallback(async () => {
     setLoadingAccount(true);
     try {
       const response = await ticketManagementAPI.getUserAccount();
+      console.log('🚀 API response for user account:', response); // Debug log
+      console.log('🚀 API response keys:', Object.keys(response)); // Debug log
+      console.log('🚀 Department field in API response:', response.department_name); // Debug log
       setUserAccount(response);
+      
+      // Store in localStorage for future use
+      localStorage.setItem('user', JSON.stringify(response));
+      console.log('💾 Stored user data in localStorage:', JSON.stringify(response, null, 2));
       
       // Populate form data when account is loaded for self
       if (onBehalfOf === 'self' && response) {
+        let department = response.department_name || '';
+        console.log('🎯 Department from API response:', department); // Debug log
+        
+        // If no department found, try alternative APIs
+        if (!department) {
+          console.log('🔄 No department in main API, trying alternative sources...');
+          const alternativeProfile = await getUserProfileFromAlternativeAPI();
+          if (alternativeProfile) {
+            department = alternativeProfile.department_name || alternativeProfile.designation || alternativeProfile.role_name || '';
+            console.log('🎯 Department from alternative API:', department);
+            
+            // Update stored user data with enhanced profile
+            localStorage.setItem('user', JSON.stringify(alternativeProfile));
+          }
+        }
+        
         setFormData(prev => ({
           ...prev,
           name: `${response.firstname} ${response.lastname}`,
-          department: response.department_name || '',
+          department: department,
           contactNumber: response.mobile || '',
           unit: '',
           site: 'Lockated'
@@ -229,25 +412,78 @@ export const AddTicketDashboard = () => {
       }
     } catch (error) {
       console.error('Error loading user account:', error);
-          toast.error("Failed to load user account", { description: "Error" });
+      toast.error("Failed to load user account", { description: "Error" });
     } finally {
       setLoadingAccount(false);
     }
   }, [onBehalfOf]);
 
+  // Load user account from localStorage (faster than API call)
+  const loadUserAccountFromStorage = useCallback(() => {
+    setLoadingAccount(true);
+    try {
+      const userData = getUserDataFromLocalStorage();
+      
+      if (userData) {
+        setUserAccount({
+          firstname: userData.name.split(' ')[0] || '',
+          lastname: userData.name.split(' ').slice(1).join(' ') || '',
+          department_name: userData.department,
+          mobile: userData.contactNumber,
+          site_id: userData.site_id,
+          id: userData.id,
+          email: userData.email || '',
+          company_id: userData.company_id || ''
+        });
+        
+        // Populate form data when account is loaded for self
+        if (onBehalfOf === 'self') {
+          console.log('🎯 Setting form data with userData:', userData); // Debug log
+          
+          // If no department in localStorage, try to fetch it fresh
+          if (!userData.department) {
+            console.log('🔄 No department in localStorage, will fetch from API');
+            loadUserAccountFromAPI();
+            return;
+          }
+          
+          setFormData(prev => ({
+            ...prev,
+            name: userData.name,
+            department: userData.department,
+            contactNumber: userData.contactNumber,
+            unit: '',
+            site: 'Lockated'
+          }));
+        }
+      } else {
+        // Fallback to API if localStorage doesn't have user data
+        loadUserAccountFromAPI();
+      }
+    } catch (error) {
+      console.error('Error loading user account from localStorage:', error);
+      // Fallback to API on error
+      loadUserAccountFromAPI();
+    } finally {
+      setLoadingAccount(false);
+    }
+  }, [onBehalfOf, loadUserAccountFromAPI]);
+
   // Load initial data
   useEffect(() => {
     loadCategories();
-    loadFMUsers();
-    loadOccupantUsers();
+    loadFMUsersFromStorage();
+    loadOccupantUsersFromStorage();
     loadComplaintModes();
     loadLocationData();
     if (onBehalfOf === 'self') {
-      loadUserAccount();
+      loadUserAccountFromStorage();
     }
-  }, [onBehalfOf]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onBehalfOf, loadUserAccountFromStorage]);
 
-  // Populate form data when userAccount is loaded for self
+  // This useEffect is no longer needed since we populate form data directly in loadUserAccountFromStorage
+  // Keeping it as fallback for userAccount state changes
   useEffect(() => {
     if (onBehalfOf === 'self' && userAccount) {
       setFormData(prev => ({
@@ -289,15 +525,64 @@ export const AddTicketDashboard = () => {
     fetchSuppliers();
   }, []);
 
-  // Load occupant users
-  const loadOccupantUsers = async () => {
+  // Fallback API method for occupant users
+  const loadOccupantUsersFromAPI = useCallback(async () => {
     try {
       const response = await ticketManagementAPI.getOccupantUsers();
       setOccupantUsers(response);
+      // Store in localStorage for future use
+      localStorage.setItem('occupantUsers', JSON.stringify(response));
     } catch (error) {
       console.error('Error loading occupant users:', error);
     }
-  };
+  }, []);
+
+  // Load occupant users from localStorage (faster than API)
+  const loadOccupantUsersFromStorage = useCallback(() => {
+    try {
+      const occupantUsersData = getOccupantUsersFromLocalStorage();
+      if (occupantUsersData && occupantUsersData.length > 0) {
+        setOccupantUsers(occupantUsersData);
+      } else {
+        // Fallback to API if localStorage doesn't have data
+        loadOccupantUsersFromAPI();
+      }
+    } catch (error) {
+      console.error('Error loading occupant users from localStorage:', error);
+      // Fallback to API on error
+      loadOccupantUsersFromAPI();
+    }
+  }, [loadOccupantUsersFromAPI]);
+
+  // Fallback API method for FM users
+  const loadFMUsersFromAPI = useCallback(async () => {
+    try {
+      const response = await ticketManagementAPI.getEngineers();
+      const users = response.users || [];
+      setFmUsers(users);
+      // Store in localStorage for future use
+      localStorage.setItem('fmUsers', JSON.stringify(users));
+    } catch (error) {
+      console.error('Error loading FM users:', error);
+    }
+  }, []);
+
+  // Load FM users from localStorage (faster than API)
+  const loadFMUsersFromStorage = useCallback(() => {
+    try {
+      const fmUsersData = getFMUsersFromLocalStorage();
+      if (fmUsersData && fmUsersData.length > 0) {
+        setFmUsers(fmUsersData);
+      } else {
+        // Fallback to API if localStorage doesn't have data
+        loadFMUsersFromAPI();
+      }
+    } catch (error) {
+      console.error('Error loading FM users from localStorage:', error);
+      // Fallback to API on error
+      loadFMUsersFromAPI();
+    }
+  }, [loadFMUsersFromAPI]);
 
   // Reset form when behalf selection changes
   useEffect(() => {
@@ -306,8 +591,8 @@ export const AddTicketDashboard = () => {
     setIsFieldsReadOnly(false);
 
     if (onBehalfOf === 'self') {
-      // Load user account for self, form will be populated in separate useEffect
-      loadUserAccount();
+      // Load user account for self, form will be populated in loadUserAccountFromStorage
+      loadUserAccountFromStorage();
     } else {
       // Clear form data when switching to behalf of others
       setFormData(prev => ({
@@ -318,7 +603,7 @@ export const AddTicketDashboard = () => {
         unit: ''
       }));
     }
-  }, [onBehalfOf, loadUserAccount]);
+  }, [onBehalfOf, loadUserAccountFromStorage]);
 
   // Load categories
   const loadCategories = async () => {
@@ -348,11 +633,14 @@ export const AddTicketDashboard = () => {
     }
   };
 
-  // Load FM users
+  // Legacy load FM users function (keeping for backward compatibility)
   const loadFMUsers = async () => {
     try {
       const response = await ticketManagementAPI.getEngineers();
-      setFmUsers(response.users || []);
+      const users = response.users || [];
+      setFmUsers(users);
+      // Store in localStorage for future use
+      localStorage.setItem('fmUsers', JSON.stringify(users));
     } catch (error) {
       console.error('Error loading FM users:', error);
     }
@@ -384,7 +672,7 @@ export const AddTicketDashboard = () => {
   };
 
   // Load areas, buildings, wings, floors, and rooms
-  const loadLocationData = async () => {
+  const loadLocationData = useCallback(async () => {
     await Promise.all([
       loadAreas(),
       loadBuildings(),
@@ -392,7 +680,7 @@ export const AddTicketDashboard = () => {
       loadFloors(),
       loadRooms()
     ]);
-  };
+  }, []);
 
   const loadAreas = async () => {
     setLoadingAreas(true);
@@ -513,7 +801,7 @@ export const AddTicketDashboard = () => {
           ...prev,
           name: selectedFmUser.full_name,
           contactNumber: selectedFmUser.mobile || '',
-          department: selectedFmUser.lock_user_permission?.designation || selectedFmUser.designation || '',
+          department: selectedFmUser.designation || selectedFmUser.role_name || '',
           unit: `Unit ${selectedFmUser.unit_id || ''}`,
           site: selectedFmUser.company_name || 'Lockated'
         }));
@@ -713,7 +1001,7 @@ export const AddTicketDashboard = () => {
     try {
       // Ensure user account is loaded to get site_id
       if (!userAccount) {
-        await loadUserAccount();
+        await loadUserAccountFromAPI();
       }
 
       // Get site_id from user account API response
@@ -839,6 +1127,38 @@ export const AddTicketDashboard = () => {
         </div>
         <h1 className="text-2xl font-bold text-gray-900">NEW TICKET</h1>
       </div>
+
+      {/* Debug section - remove in production */}
+      {/* <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+        <h3 className="text-sm font-medium text-yellow-800">Debug Tools</h3>
+        <div className="mt-2 space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              clearUserDataCache();
+              window.location.reload();
+            }}
+            className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
+          >
+            Clear Cache & Reload
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              console.log('Current localStorage user data:', localStorage.getItem('user'));
+              console.log('Current formData:', formData);
+              console.log('Current userAccount:', userAccount);
+            }}
+            className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300"
+          >
+            Log Debug Info
+          </Button>
+        </div>
+      </div> */}
 
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
         {/* Section 1: Requestor Details */}
