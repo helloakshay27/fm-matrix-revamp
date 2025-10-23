@@ -1,6 +1,15 @@
 import axios from "axios";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 
+// Organization type for API response
+interface Organization {
+  id: number;
+  name: string;
+  backend_domain: string;
+  frontend_domain: string;
+  active: boolean;
+}
+
 // Create configured axios instance
 export const baseClient = axios.create({
   headers: {
@@ -13,25 +22,44 @@ baseClient.interceptors.request.use(
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
-      sessionStorage.setItem("token", token);
-      if (!token) {
-        throw new Error('No token found in URL');
+      const email = urlParams.get('email');
+      const organizationId = urlParams.get('organization_id');
+
+      // Store token in session storage if available
+      if (token) {
+        sessionStorage.setItem("token", token);
       }
 
-      // Call allowed companies API with the token from URL
-      const response = await axios.get(`https://fm-matrix.lockated.com/allowed_companies.json?token=${token}`);
-      const { selected_company } = response.data;
+      if (!email || !organizationId) {
+        throw new Error('Email or organization_id not found in URL');
+      }
 
-      if (selected_company && selected_company.org_backend_url) {
-        config.baseURL = `https://${selected_company.org_backend_url}/`;
+      // Call organizations API with the email from URL
+      const response = await axios.get(`https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`);
+      const { organizations } = response.data;
+
+      if (organizations && organizations.length > 0) {
+        // Find the organization matching the organization_id from URL
+        const selectedOrg = organizations.find((org: Organization) => org.id === parseInt(organizationId));
+
+        if (selectedOrg && selectedOrg.backend_domain) {
+          // Set baseURL from the organization's backend_domain
+          config.baseURL = selectedOrg.backend_domain;
+          console.log('Base URL set to:', selectedOrg.backend_domain);
+        } else {
+          // Fallback URL if organization not found or no backend_domain
+          config.baseURL = 'https://fm-uat-api.lockated.com/';
+          console.warn('Organization not found or no backend_domain, using fallback URL');
+        }
       } else {
-        // Fallback URL if no selected company is found
-        config.baseURL = 'https://fm-matrix.lockated.com/';
+        // Fallback URL if no organizations found
+        config.baseURL = 'https://fm-uat-api.lockated.com/';
+        console.warn('No organizations found, using fallback URL');
       }
     } catch (error) {
-      console.error('Error fetching allowed companies:', error);
+      console.error('Error fetching organizations:', error);
       // Fallback URL in case of error
-      config.baseURL = 'https://fm-matrix.lockated.com/';
+      config.baseURL = 'https://fm-uat-api.lockated.com/';
     }
 
     return config;
