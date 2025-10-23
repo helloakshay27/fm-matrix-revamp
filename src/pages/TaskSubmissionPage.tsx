@@ -607,19 +607,22 @@ export const TaskSubmissionPage: React.FC = () => {
       setCompletedSteps((prev) => [...prev, currentStep]);
     }
 
-    // If in edit mode, return to preview (last step)
-    if (isEditMode) {
-      const totalSteps = steps.length;
-      setCurrentStep(totalSteps);
-      setIsEditMode(false);
-      sonnerToast.success("Changes updated successfully!");
-      return;
-    }
-
     const totalSteps = steps.length;
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     }
+  };
+
+  const handleUpdate = () => {
+    // Mark current step as completed
+    if (!completedSteps.includes(currentStep)) {
+      setCompletedSteps((prev) => [...prev, currentStep]);
+    }
+
+    // Navigate to next step (Checkpoint for Before Photo in edit mode)
+    setCurrentStep(currentStep + 1);
+    setIsEditMode(false);
+    sonnerToast.success("Changes updated successfully!");
   };
 
   const handlePrevious = () => {
@@ -3003,7 +3006,7 @@ export const TaskSubmissionPage: React.FC = () => {
           <div className="flex items-center gap-4">
             {currentStep < steps.length ? (
               <Button
-                onClick={handleNext}
+                onClick={isEditMode ? handleUpdate : handleNext}
                 className="bg-[#C72030] text-white hover:bg-[#B11E2A] px-6 py-2"
               >
                 {isEditMode ? "Update" : "Proceed to Next"}
