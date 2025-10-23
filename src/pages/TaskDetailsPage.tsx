@@ -434,6 +434,20 @@ export const TaskDetailsPage = () => {
     }
   };
 
+  // Refresh job sheet data
+  const handleRefreshJobSheet = async () => {
+    if (!id) return;
+    try {
+      setJobSheetLoading(true);
+      const jobSheet = await taskService.getJobSheet(id);
+      setJobSheetData(jobSheet);
+    } catch (error) {
+      sonnerToast.error("Failed to refresh job sheet data");
+    } finally {
+      setJobSheetLoading(false);
+    }
+  };
+
   // File upload handler for form
   const handleFileUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -2139,6 +2153,7 @@ export const TaskDetailsPage = () => {
         taskDetails={taskDetails}
         jobSheetData={jobSheetData}
         jobSheetLoading={jobSheetLoading}
+        onRefresh={handleRefreshJobSheet}
       />
     </>
   );

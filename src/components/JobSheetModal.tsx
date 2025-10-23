@@ -7,6 +7,7 @@ import { TextField } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 import { taskService } from '@/services/taskService';
 import { JobSheetPDFGenerator } from './JobSheetPDFGenerator';
+import { toast as sonnerToast } from 'sonner';
 
 interface JobSheetModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface JobSheetModalProps {
   taskDetails: any;
   jobSheetData: any;
   jobSheetLoading: boolean;
+  onRefresh?: () => Promise<void>;
 }
 
 export const JobSheetModal: React.FC<JobSheetModalProps> = ({
@@ -23,11 +25,13 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
   taskId,
   taskDetails,
   jobSheetData,
-  jobSheetLoading
+  jobSheetLoading,
+  onRefresh
 }) => {
   const { toast } = useToast();
   const [jobSheetComments, setJobSheetComments] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const pdfGenerator = new JobSheetPDFGenerator();
 
   // React.useEffect(() => {
@@ -41,19 +45,37 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
 
   const handleJobSheetUpdate = async () => {
     if (!taskId) return;
+    
+    if (!jobSheetComments.trim()) {
+      sonnerToast.error('Please enter a comment before updating');
+      return;
+    }
+
+    const loadingToastId = sonnerToast.loading('Updating task comments...', {
+      duration: Infinity,
+    });
+
+    setIsUpdating(true);
+    
     try {
       await taskService.updateTaskComments(taskId, jobSheetComments);
-      onClose();
-      toast({
-        title: 'Success',
-        description: 'Comments updated successfully!'
-      });
+      
+      sonnerToast.dismiss(loadingToastId);
+      sonnerToast.success('Comments updated successfully!');
+      
+      // Clear the comment field
+      setJobSheetComments('');
+      
+      // Reload the job sheet data if onRefresh is provided
+      if (onRefresh) {
+        await onRefresh();
+      }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update comments. Please try again.',
-        variant: 'destructive'
-      });
+      console.error('Failed to update comments:', error);
+      sonnerToast.dismiss(loadingToastId);
+      sonnerToast.error('Failed to update comments. Please try again.');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -461,8 +483,16 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                   onClick={handleJobSheetUpdate}
                   style={{ backgroundColor: '#22c55e' }}
                   className="text-white hover:bg-green-600"
+                  disabled={isUpdating}
                 >
-                  Update
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update'
+                  )}
                 </Button>
               </div>
 
