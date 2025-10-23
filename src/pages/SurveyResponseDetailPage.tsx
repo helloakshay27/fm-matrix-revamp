@@ -54,6 +54,7 @@ import { surveyApi, SurveyResponseData } from "@/services/surveyApi";
 import { SurveyAnalyticsCard } from "@/components/SurveyAnalyticsCard";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { toast } from "sonner";
+import { EscalationInfo } from "@/services/ticketManagementAPI";
 import {
   TextField,
   FormControl,
@@ -144,6 +145,8 @@ interface ResponseComplaint {
   resolution_tat?: number | null;
   resolution_time?: string | null;
   escalation_resolution_name?: string;
+  next_response_escalation?: EscalationInfo | null;
+  next_resolution_escalation?: EscalationInfo | null;
   status_detail?: {
     name: string;
     color_code: string;
@@ -362,6 +365,9 @@ interface TicketData {
   resolution_tat?: number | null;
   resolution_time?: string | null;
   escalation_resolution_name?: string;
+  next_response_escalation?: EscalationInfo | null;
+  next_resolution_escalation?: EscalationInfo | null;
+  icon_category?: string;
   status_detail?: {
     name: string;
     color_code: string;
@@ -1149,6 +1155,47 @@ export const SurveyResponseDetailPage = () => {
       );
     }
     return <span className={className}>{text}</span>;
+  };
+
+  // Helper functions for escalation data formatting
+  const formatEscalationData = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation) return null;
+    
+    const { minutes, is_overdue, users, escalation_name, escalation_time } = escalation;
+    
+    return {
+      minutes: minutes || 0,
+      isOverdue: is_overdue || false,
+      users: users || [],
+      escalationName: escalation_name || '--',
+      escalationTime: escalation_time || '--'
+    };
+  };
+
+  // Helper function to format escalation minutes
+  const formatEscalationMinutes = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation) return '--';
+    const formatted = formatEscalationData(escalation);
+    return formatted?.minutes.toString() || '--';
+  };
+
+  // Helper function to format escalation time in D:H:M format
+  const formatEscalationTime = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation || !escalation.minutes) return '--';
+    
+    const totalMinutes = escalation.minutes;
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    
+    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  // Helper function to format escalation level
+  const formatEscalationLevel = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation) return '--';
+    const formatted = formatEscalationData(escalation);
+    return formatted?.escalationName || '--';
   };
 
   // Fetch response list data from new API with optional filters
@@ -2940,7 +2987,7 @@ export const SurveyResponseDetailPage = () => {
                   category: complaint.category || "-",
                   assignee: complaint.assignee || "-",
                   status: complaint.status || "Pending",
-                  assigned_to: complaint.assigned_to || "-",
+                  updated_by: "-",
                   created_by: "-",
                   created_at: new Date(complaint.created_at).toLocaleString(
                     "en-GB",
@@ -2956,8 +3003,6 @@ export const SurveyResponseDetailPage = () => {
                   location: `${response.location?.building_name || ""}, ${response.location?.wing_name || ""
                     }`,
                   sub_category_type: complaint.sub_category_type || "-",
-                  created_by: complaint.created_by || "-",
-                  assigned_to: complaint.assigned_to || "-",
                   icon_category: complaint.icon_category || "-",
                   priority: complaint.priority || "-",
                   site_name: complaint.site_name || "-",
@@ -2977,6 +3022,8 @@ export const SurveyResponseDetailPage = () => {
                   resolution_time: complaint.resolution_time || "-",
                   escalation_resolution_name:
                     complaint.escalation_resolution_name || "-",
+                  next_response_escalation: complaint.next_response_escalation || null,
+                  next_resolution_escalation: complaint.next_resolution_escalation || null,
                   status_detail: complaint.status_detail || {
                     name: complaint.status || "-",
                     color_code: "#60A8C0",
@@ -6200,6 +6247,25 @@ export const SurveyResponseDetailPage = () => {
                           <TruncatedText text={assignee} maxLength={15} />
                         </span>
                       );
+                    }
+                    // Handle escalation columns using the helper functions
+                    if (columnKey === 'response_tat') {
+                      return formatEscalationMinutes(item.next_response_escalation);
+                    }
+                    if (columnKey === 'response_time') {
+                      return formatEscalationTime(item.next_response_escalation);
+                    }
+                    if (columnKey === 'escalation_response_name') {
+                      return formatEscalationLevel(item.next_response_escalation);
+                    }
+                    if (columnKey === 'resolution_tat') {
+                      return formatEscalationMinutes(item.next_resolution_escalation);
+                    }
+                    if (columnKey === 'resolution_time') {
+                      return formatEscalationTime(item.next_resolution_escalation);
+                    }
+                    if (columnKey === 'escalation_resolution_name') {
+                      return formatEscalationLevel(item.next_resolution_escalation);
                     }
                     // Handle null/undefined values for new columns
                     const value = item[columnKey as keyof TicketData];
