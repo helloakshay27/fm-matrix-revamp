@@ -37,7 +37,7 @@ interface TaskSubmissionStep {
 interface ChecklistItem {
   id: string;
   question: string;
-  type: "radio" | "checkbox" | "text";
+  type: "radio" | "checkbox" | "text" | "date";
   required: boolean;
   options?: string[];
   value?: any;
@@ -107,6 +107,8 @@ export const TaskSubmissionPage: React.FC = () => {
             ? ("radio" as const) // Treat select as radio for UI consistency
             : item.type === "number"
             ? ("text" as const) // Treat number as text input
+            : item.type === "date"
+            ? ("date" as const) // Support date input
             : ("text" as const);
         return {
           id: item.name || `question_${index}`,
@@ -148,6 +150,8 @@ export const TaskSubmissionPage: React.FC = () => {
                     ? ("radio" as const) // Treat select as radio for UI consistency
                     : item.type === "number"
                     ? ("text" as const) // Treat number as text input
+                    : item.type === "date"
+                    ? ("date" as const) // Support date input
                     : ("text" as const);
                 allQuestions.push({
                   id:
@@ -236,6 +240,8 @@ export const TaskSubmissionPage: React.FC = () => {
           ? ("radio" as const)
           : item.type === "number"
           ? ("text" as const)
+          : item.type === "date"
+          ? ("date" as const)
           : ("text" as const);
 
       grouped[key].push({
@@ -607,19 +613,22 @@ export const TaskSubmissionPage: React.FC = () => {
       setCompletedSteps((prev) => [...prev, currentStep]);
     }
 
-    // If in edit mode, return to preview (last step)
-    if (isEditMode) {
-      const totalSteps = steps.length;
-      setCurrentStep(totalSteps);
-      setIsEditMode(false);
-      sonnerToast.success("Changes updated successfully!");
-      return;
-    }
-
     const totalSteps = steps.length;
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     }
+  };
+
+  const handleUpdate = () => {
+    // Mark current step as completed
+    if (!completedSteps.includes(currentStep)) {
+      setCompletedSteps((prev) => [...prev, currentStep]);
+    }
+
+    // Navigate to next step (Checkpoint for Before Photo in edit mode)
+    setCurrentStep(currentStep + 1);
+    setIsEditMode(false);
+    sonnerToast.success("Changes updated successfully!");
   };
 
   const handlePrevious = () => {
@@ -1038,6 +1047,37 @@ export const TaskSubmissionPage: React.FC = () => {
                                 )
                               }
                               className=""
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  backgroundColor: "white",
+                                  "& fieldset": {
+                                    borderColor: "#D1D5DB",
+                                  },
+                                  "&:hover fieldset": {
+                                    borderColor: "#9CA3AF",
+                                  },
+                                },
+                              }}
+                            />
+                          )}
+
+                          {item.type === "date" && (
+                            <TextField
+                              placeholder="Select date..."
+                              fullWidth
+                              variant="outlined"
+                              type="date"
+                              value={formData.checklist[item.id]?.value || ""}
+                              onChange={(e) =>
+                                handleChecklistChange(
+                                  item.id,
+                                  "value",
+                                  e.target.value
+                                )
+                              }
+                              InputLabelProps={{
+                                shrink: true,
+                              }}
                               sx={{
                                 "& .MuiOutlinedInput-root": {
                                   backgroundColor: "white",
@@ -1707,6 +1747,37 @@ export const TaskSubmissionPage: React.FC = () => {
                                   />
                                 )}
 
+                                {item.type === "date" && (
+                                  <TextField
+                                    placeholder="Select date..."
+                                    fullWidth
+                                    variant="outlined"
+                                    type="date"
+                                    value={formData.checklist[item.id]?.value || ""}
+                                    onChange={(e) =>
+                                      handleChecklistChange(
+                                        item.id,
+                                        "value",
+                                        e.target.value
+                                      )
+                                    }
+                                    InputLabelProps={{
+                                      shrink: true,
+                                    }}
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        backgroundColor: "white",
+                                        "& fieldset": {
+                                          borderColor: "#D1D5DB",
+                                        },
+                                        "&:hover fieldset": {
+                                          borderColor: "#9CA3AF",
+                                        },
+                                      },
+                                    }}
+                                  />
+                                )}
+
                                 {item.type === "radio" && (
                                   <RadioGroup
                                     value={formData.checklist[item.id]?.value || ""}
@@ -1890,6 +1961,37 @@ export const TaskSubmissionPage: React.FC = () => {
                                 )
                               }
                               className=""
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  backgroundColor: "white",
+                                  "& fieldset": {
+                                    borderColor: "#D1D5DB",
+                                  },
+                                  "&:hover fieldset": {
+                                    borderColor: "#9CA3AF",
+                                  },
+                                },
+                              }}
+                            />
+                          )}
+
+                          {item.type === "date" && (
+                            <TextField
+                              placeholder="Select date..."
+                              fullWidth
+                              variant="outlined"
+                              type="date"
+                              value={formData.checklist[item.id]?.value || ""}
+                              onChange={(e) =>
+                                handleChecklistChange(
+                                  item.id,
+                                  "value",
+                                  e.target.value
+                                )
+                              }
+                              InputLabelProps={{
+                                shrink: true,
+                              }}
                               sx={{
                                 "& .MuiOutlinedInput-root": {
                                   backgroundColor: "white",
@@ -2206,6 +2308,25 @@ export const TaskSubmissionPage: React.FC = () => {
                                   />
                                 )}
 
+                                {item.type === "date" && (
+                                  <TextField
+                                    placeholder="Select date..."
+                                    fullWidth
+                                    variant="outlined"
+                                    type="date"
+                                    value={formData.checklist[item.id]?.value || ""}
+                                    disabled
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        backgroundColor: "#f9fafb",
+                                        "& fieldset": {
+                                          borderColor: "#D1D5DB",
+                                        },
+                                      },
+                                    }}
+                                  />
+                                )}
+
                                 {item.type === "radio" && (
                                   <RadioGroup
                                     value={formData.checklist[item.id]?.value || ""}
@@ -2319,6 +2440,25 @@ export const TaskSubmissionPage: React.FC = () => {
                               placeholder="Enter your value..."
                               fullWidth
                               variant="outlined"
+                              value={formData.checklist[item.id]?.value || ""}
+                              disabled
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  backgroundColor: "#f9fafb",
+                                  "& fieldset": {
+                                    borderColor: "#D1D5DB",
+                                  },
+                                },
+                              }}
+                            />
+                          )}
+
+                          {item.type === "date" && (
+                            <TextField
+                              placeholder="Select date..."
+                              fullWidth
+                              variant="outlined"
+                              type="date"
                               value={formData.checklist[item.id]?.value || ""}
                               disabled
                               sx={{
@@ -3003,7 +3143,7 @@ export const TaskSubmissionPage: React.FC = () => {
           <div className="flex items-center gap-4">
             {currentStep < steps.length ? (
               <Button
-                onClick={handleNext}
+                onClick={isEditMode ? handleUpdate : handleNext}
                 className="bg-[#C72030] text-white hover:bg-[#B11E2A] px-6 py-2"
               >
                 {isEditMode ? "Update" : "Proceed to Next"}

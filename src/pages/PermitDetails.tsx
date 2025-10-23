@@ -382,6 +382,7 @@ export const PermitDetails = () => {
 
     const completeFileInputRef = useRef(null)
 
+    const isFromPendingApprovals = searchParams.get('type') === 'approval';
     const showApprovalButtons = levelId && userId && isApprovalPage;
     const permitClosure = searchParams.get('resource_type') === 'permit_closure';
     const permitExtension = searchParams.get('resource_type') === 'permit_extend';
@@ -1432,7 +1433,7 @@ export const PermitDetails = () => {
                 </button>
                 {!permitData.all_buttons_hidden && (
                     <div className="flex items-center gap-4">
-                        {permitData.show_edit_button && (
+                        {!isFromPendingApprovals && permitData.show_edit_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1443,7 +1444,7 @@ export const PermitDetails = () => {
                                 Edit
                             </Button>
                         )}
-                        {(permitData.show_extend_permit_approved_button || permitData.show_extend_button) && (
+                        {!isFromPendingApprovals && (permitData.show_extend_permit_approved_button || permitData.show_extend_button) && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1457,7 +1458,7 @@ export const PermitDetails = () => {
                                 Extend Permit
                             </Button>
                         )}
-                        {permitData.show_extend_permit_extended_button && (
+                        {!isFromPendingApprovals && permitData.show_extend_permit_extended_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1468,16 +1469,18 @@ export const PermitDetails = () => {
                                 Extend (Extended)
                             </Button>
                         )}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/safety/permit/vendor-form/${id}`)}
-                            className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
-                        >
-                            <FileText className="w-4 h-4 mr-2" />
-                            Fill Form
-                        </Button>
-                        {permitData.show_fill_jsa_button && (
+                        {!isFromPendingApprovals && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/safety/permit/vendor-form/${id}`)}
+                                className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+                            >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Fill Form
+                            </Button>
+                        )}
+                        {!isFromPendingApprovals && permitData.show_fill_jsa_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1488,7 +1491,7 @@ export const PermitDetails = () => {
                                 Fill JSA Form
                             </Button>
                         )}
-                        {permitData.show_complete_form_button && (
+                        {!isFromPendingApprovals && permitData.show_complete_form_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1499,7 +1502,7 @@ export const PermitDetails = () => {
                                 Complete Form
                             </Button>
                         )}
-                        {permitData.show_complete_draft_open_button && (
+                        {!isFromPendingApprovals && permitData.show_complete_draft_open_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1510,7 +1513,7 @@ export const PermitDetails = () => {
                                 Complete Draft
                             </Button>
                         )}
-                        {(permitData.show_complete_approved_button || permitData.show_complete_button) && (
+                        {!isFromPendingApprovals && (permitData.show_complete_approved_button || permitData.show_complete_button) && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1521,7 +1524,7 @@ export const PermitDetails = () => {
                                 Complete
                             </Button>
                         )}
-                        {(permitData.show_upload_jsa_form_button || permitData.show_upload_jsa_button) && (
+                        {!isFromPendingApprovals && (permitData.show_upload_jsa_form_button || permitData.show_upload_jsa_button) && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1532,23 +1535,21 @@ export const PermitDetails = () => {
                                 Upload JSA
                             </Button>
                         )}
-                        {/* {(permitData.show_resume_permit_button || permitData.show_resume_button) && ( */}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                                setIsResumeSectionVisible(true);
-
-                                setActiveSection(activeSection === "resume-permit" ? "" : "resume-permit");
-                            }}
-
-                            className="bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
-                        >
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Resume
-                        </Button>
-                        {/* )} */}
-                        {permitData.show_print_form_button && (
+                        {!isFromPendingApprovals && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    setIsResumeSectionVisible(true);
+                                    setActiveSection(activeSection === "resume-permit" ? "" : "resume-permit");
+                                }}
+                                className="bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
+                            >
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Resume
+                            </Button>
+                        )}
+                        {!isFromPendingApprovals && permitData.show_print_form_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1558,7 +1559,7 @@ export const PermitDetails = () => {
                                 Print Form
                             </Button>
                         )}
-                        {permitData.show_print_jsa_button && (
+                        {!isFromPendingApprovals && permitData.show_print_jsa_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1568,7 +1569,7 @@ export const PermitDetails = () => {
                                 Print JSA
                             </Button>
                         )}
-                        {permitData.show_send_mail_button && (
+                        {!isFromPendingApprovals && permitData.show_send_mail_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1967,8 +1968,7 @@ export const PermitDetails = () => {
                     </Section>
                 )}
 
-                {/* Vendor Attachments Section */}
-                {permitData.vendor_attachments && (
+                {/* {permitData.vendor_attachments && (
                     permitData.vendor_attachments.list_of_people.length > 0 ||
                     permitData.vendor_attachments.esi_wc_policy.length > 0 ||
                     permitData.vendor_attachments.medical_reports.length > 0 ||
@@ -1982,7 +1982,6 @@ export const PermitDetails = () => {
                             setActiveSection={setActiveSection}
                         >
                             <div className="space-y-6">
-                                {/* List of People */}
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-700 mb-3">List of People</h4>
                                     {permitData.vendor_attachments.list_of_people.length > 0 ? (
@@ -2070,7 +2069,6 @@ export const PermitDetails = () => {
                                     )}
                                 </div>
 
-                                {/* ESI WC Policy */}
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-700 mb-3">ESI WC Policy</h4>
                                     {permitData.vendor_attachments.esi_wc_policy.length > 0 ? (
@@ -2158,7 +2156,6 @@ export const PermitDetails = () => {
                                     )}
                                 </div>
 
-                                {/* Medical Reports */}
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-700 mb-3">Medical Reports</h4>
                                     {permitData.vendor_attachments.medical_reports.length > 0 ? (
@@ -2246,7 +2243,6 @@ export const PermitDetails = () => {
                                     )}
                                 </div>
 
-                                {/* Other */}
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-700 mb-3">Other</h4>
                                     {permitData.vendor_attachments.other.length > 0 ? (
@@ -2335,7 +2331,367 @@ export const PermitDetails = () => {
                                 </div>
                             </div>
                         </Section>
+                    )} */}
+
+                {/* Vendor Attachments Section - Full Implementation with All Categories */}
+                {permitData.vendor_attachments && (
+                    permitData.vendor_attachments.list_of_people.length > 0 ||
+                    permitData.vendor_attachments.esi_wc_policy.length > 0 ||
+                    permitData.vendor_attachments.medical_reports.length > 0 ||
+                    permitData.vendor_attachments.other.length > 0
+                ) && (
+                        <Section
+                            title="VENDOR ATTACHMENTS"
+                            icon={<Upload />}
+                            sectionKey="vendor-attachments"
+                            activeSection={activeSection}
+                            setActiveSection={setActiveSection}
+                        >
+                            <div className="space-y-6">
+                                {/* List of People */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3">List of People</h4>
+                                    {permitData.vendor_attachments.list_of_people.length > 0 ? (
+                                        <div className="flex items-center flex-wrap gap-4">
+                                            {permitData.vendor_attachments.list_of_people.map((attachment: any, index: number) => {
+                                                const attachmentUrl = attachment.url || attachment.document_url;
+                                                const attachmentName = attachment.filename || attachment.document_file_name || attachment.name || `Document_${index + 1}`;
+                                                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+                                                const isDownloadable = isPdf || isExcel || isWord;
+
+                                                return (
+                                                    <div
+                                                        key={attachment.id || index}
+                                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                    >
+                                                        {isImage ? (
+                                                            <>
+                                                                <button
+                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                    title="View"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                    type="button"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </button>
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                />
+                                                            </>
+                                                        ) : isPdf ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isExcel ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                <FileSpreadsheet className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isWord ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                <File className="w-6 h-6" />
+                                                            </div>
+                                                        )}
+                                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                            {attachmentName}
+                                                        </span>
+                                                        {/* Unified Eye button for all types: opens modal for preview/download */}
+                                                        {(isDownloadable || isImage || true) && (  // Show for all, even non-downloadable
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    setSelectedDoc(attachment);
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-500">No attachments</div>
+                                    )}
+                                </div>
+
+                                {/* ESI WC Policy */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3">ESI WC Policy</h4>
+                                    {permitData.vendor_attachments.esi_wc_policy.length > 0 ? (
+                                        <div className="flex items-center flex-wrap gap-4">
+                                            {permitData.vendor_attachments.esi_wc_policy.map((attachment: any, index: number) => {
+                                                const attachmentUrl = attachment.url || attachment.document_url;
+                                                const attachmentName = attachment.filename || attachment.document_file_name || attachment.name || `Document_${index + 1}`;
+                                                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+                                                const isDownloadable = isPdf || isExcel || isWord;
+
+                                                return (
+                                                    <div
+                                                        key={attachment.id || index}
+                                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                    >
+                                                        {isImage ? (
+                                                            <>
+                                                                <button
+                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                    title="View"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                    type="button"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </button>
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                />
+                                                            </>
+                                                        ) : isPdf ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isExcel ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                <FileSpreadsheet className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isWord ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                <File className="w-6 h-6" />
+                                                            </div>
+                                                        )}
+                                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                            {attachmentName}
+                                                        </span>
+                                                        {/* Unified Eye button for all types: opens modal for preview/download */}
+                                                        {(isDownloadable || isImage || true) && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    setSelectedDoc(attachment);
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-500">No attachments</div>
+                                    )}
+                                </div>
+
+                                {/* Medical Reports */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Medical Reports</h4>
+                                    {permitData.vendor_attachments.medical_reports.length > 0 ? (
+                                        <div className="flex items-center flex-wrap gap-4">
+                                            {permitData.vendor_attachments.medical_reports.map((attachment: any, index: number) => {
+                                                const attachmentUrl = attachment.url || attachment.document_url;
+                                                const attachmentName = attachment.filename || attachment.document_file_name || attachment.name || `Document_${index + 1}`;
+                                                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+                                                const isDownloadable = isPdf || isExcel || isWord;
+
+                                                return (
+                                                    <div
+                                                        key={attachment.id || index}
+                                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                    >
+                                                        {isImage ? (
+                                                            <>
+                                                                <button
+                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                    title="View"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                    type="button"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </button>
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                />
+                                                            </>
+                                                        ) : isPdf ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isExcel ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                <FileSpreadsheet className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isWord ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                <File className="w-6 h-6" />
+                                                            </div>
+                                                        )}
+                                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                            {attachmentName}
+                                                        </span>
+                                                        {/* Unified Eye button for all types: opens modal for preview/download */}
+                                                        {(isDownloadable || isImage || true) && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    setSelectedDoc(attachment);
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-500">No attachments</div>
+                                    )}
+                                </div>
+
+                                {/* Other */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Other</h4>
+                                    {permitData.vendor_attachments.other.length > 0 ? (
+                                        <div className="flex items-center flex-wrap gap-4">
+                                            {permitData.vendor_attachments.other.map((attachment: any, index: number) => {
+                                                const attachmentUrl = attachment.url || attachment.document_url;
+                                                const attachmentName = attachment.filename || attachment.document_file_name || attachment.name || `Document_${index + 1}`;
+                                                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+                                                const isDownloadable = isPdf || isExcel || isWord;
+
+                                                return (
+                                                    <div
+                                                        key={attachment.id || index}
+                                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                    >
+                                                        {isImage ? (
+                                                            <>
+                                                                <button
+                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                    title="View"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                    type="button"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </button>
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                />
+                                                            </>
+                                                        ) : isPdf ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isExcel ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                <FileSpreadsheet className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isWord ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                <File className="w-6 h-6" />
+                                                            </div>
+                                                        )}
+                                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                            {attachmentName}
+                                                        </span>
+                                                        {/* Unified Eye button for all types: opens modal for preview/download */}
+                                                        {(isDownloadable || isImage || true) && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    setSelectedDoc(attachment);
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-500">No attachments</div>
+                                    )}
+                                </div>
+                            </div>
+                        </Section>
                     )}
+
+
 
                 {/* Permit Extension Section */}
 
@@ -3208,7 +3564,7 @@ export const PermitDetails = () => {
             </div>
 
             {/* Approve/Reject Buttons - Only show when coming from pending approvals */}
-            {permitMain && (
+            {/* {permitMain && (
                 <div className="mt-8 p-6 bg-gray-50 rounded-lg border">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Approval Actions</h3>
                     <div className="flex items-center gap-4 justify-center">
@@ -3248,7 +3604,61 @@ export const PermitDetails = () => {
                         </Button>
                     </div>
                 </div>
+            )} */}
+
+            {permitMain && (
+                <div className="mt-8 border border-[#D9D9D9] rounded-lg overflow-hidden">
+                    {/* Header */}
+                    <div className="bg-[#F6F4EE] border-b border-[#D9D9D9] px-6 py-4 flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                            <CheckCircle className="w-6 h-6" style={{ color: '#C72030' }} />
+                        </div>
+                        <h3 className="text-lg font-semibold text-[#1A1A1A] uppercase">
+                            Approval Actions
+                        </h3>
+                    </div>
+
+                    {/* Body */}
+                    <div className="p-6 bg-white flex items-center gap-4 justify-center">
+                        <Button
+                            onClick={handleApprove}
+                            disabled={isApproving || isRejecting}
+                            className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
+                        >
+                            {isApproving ? (
+                                <>
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                    Approving...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Approve Permit
+                                </>
+                            )}
+                        </Button>
+
+                        <Button
+                            onClick={handleReject}
+                            disabled={isApproving || isRejecting}
+                            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
+                        >
+                            {isRejecting ? (
+                                <>
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                    Rejecting...
+                                </>
+                            ) : (
+                                <>
+                                    <AlertTriangle className="w-4 h-4 mr-2" />
+                                    Reject Permit
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>
             )}
+
 
             {/* Add Comment Modal */}
             <AddPermitCommentModal
