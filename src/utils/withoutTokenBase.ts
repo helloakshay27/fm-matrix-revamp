@@ -19,19 +19,19 @@ baseClient.interceptors.request.use(
       }
 
       // Call allowed companies API with the token from URL
-      const response = await axios.get(`https://oig-api.gophygital.work/allowed_companies.json?token=${token}`);
+      const response = await axios.get(`https://fm-matrix.lockated.com/allowed_companies.json?token=${token}`);
       const { selected_company } = response.data;
 
       if (selected_company && selected_company.org_backend_url) {
         config.baseURL = `https://${selected_company.org_backend_url}/`;
       } else {
         // Fallback URL if no selected company is found
-        config.baseURL = 'https://oig-api.gophygital.work/';
+        config.baseURL = 'https://fm-matrix.lockated.com/';
       }
     } catch (error) {
       console.error('Error fetching allowed companies:', error);
       // Fallback URL in case of error
-      config.baseURL = 'https://oig-api.gophygital.work/';
+      config.baseURL = 'https://fm-matrix.lockated.com/';
     }
 
     return config;
