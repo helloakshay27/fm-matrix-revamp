@@ -1,0 +1,7 @@
+# Serve static assets directly
+/assets/*  /assets/:splat  200
+/lovable-uploads/*  /lovable-uploads/:splat  200
+/robots.txt  /robots.txt  200
+
+# SPA fallback - serve index.html for all other routes
+/*  /index.html  200

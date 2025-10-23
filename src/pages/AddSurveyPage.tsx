@@ -15,6 +15,7 @@ import { apiClient } from "@/utils/apiClient";
 import {
   ticketManagementAPI,
   CategoryResponse,
+  SubCategoryResponse,
 } from "@/services/ticketManagementAPI";
 import {
   TextField,
@@ -101,12 +102,15 @@ export const AddSurveyPage = () => {
   const [checkType, setCheckType] = useState("");
   const [createTicket, setCreateTicket] = useState(false);
   const [ticketCategory, setTicketCategory] = useState("");
+  const [ticketSubCategory, setTicketSubCategory] = useState("");
   const [assignTo, setAssignTo] = useState("");
   const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>([]);
+  const [ticketSubCategories, setTicketSubCategories] = useState<SubCategoryResponse[]>([]);
   const [fmUsers, setFmUsers] = useState<
     { full_name: string; id: number; firstname: string; lastname: string; email?: string }[]
   >([]);
   const [loadingTicketCategories, setLoadingTicketCategories] = useState(false);
+  const [loadingTicketSubCategories, setLoadingTicketSubCategories] = useState(false);
   const [loadingFmUsers, setLoadingFmUsers] = useState(false);
   const [additionalTitle, setAdditionalTitle] = useState("");
   const [additionalDescription, setAdditionalDescription] = useState("");
@@ -158,6 +162,20 @@ export const AddSurveyPage = () => {
     }
   }, [createTicket]);
 
+  // Load subcategories when category changes
+  const loadTicketSubCategories = useCallback(async (categoryId: number) => {
+    setLoadingTicketSubCategories(true);
+    try {
+      const subcats = await ticketManagementAPI.getSubCategoriesByCategory(categoryId);
+      setTicketSubCategories(subcats);
+      console.log("Ticket subcategories loaded:", subcats);
+    } catch (error) {
+      console.error("Error loading ticket subcategories:", error);
+    } finally {
+      setLoadingTicketSubCategories(false);
+    }
+  }, []);
+
   // Load FM users for assign to dropdown
   const loadFMUsers = useCallback(async () => {
     if (!createTicket) return;
@@ -174,6 +192,16 @@ export const AddSurveyPage = () => {
     }
   }, [createTicket]);
 
+  // Handle category change and load subcategories
+  const handleTicketCategoryChange = (categoryId: string) => {
+    setTicketCategory(categoryId);
+    setTicketSubCategory(""); // Reset subcategory when category changes
+    setTicketSubCategories([]); // Clear subcategories
+    if (categoryId) {
+      loadTicketSubCategories(parseInt(categoryId));
+    }
+  };
+
   // Load ticket data when createTicket checkbox is checked
   useEffect(() => {
     if (createTicket) {
@@ -182,7 +210,9 @@ export const AddSurveyPage = () => {
     } else {
       // Reset selections when unchecked
       setTicketCategory("");
+      setTicketSubCategory("");
       setAssignTo("");
+      setTicketSubCategories([]);
     }
   }, [createTicket, loadTicketCategories, loadFMUsers]);
 
@@ -549,7 +579,12 @@ export const AddSurveyPage = () => {
       formData.append('create_ticket', createTicket ? 'true' : 'false');
       if (createTicket) {
         formData.append('category_name', ticketCategory);
-        formData.append('category_type', assignTo);
+        if (ticketSubCategory) {
+          formData.append('sub_category_id', ticketSubCategory);
+        }
+        // Pass 'subcategory' if both category and subcategory are selected, otherwise pass 'category'
+        const categoryType = ticketSubCategory ? 'subcategory' : 'category';
+        formData.append('category_type', categoryType);
       }
 
       // Process questions with proper FormData structure
@@ -840,7 +875,7 @@ export const AddSurveyPage = () => {
 
             {/* Conditional Ticket Dropdowns */}
             {createTicket && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t border-gray-200">
                 <FormControl
                   fullWidth
                   variant="outlined"
@@ -853,7 +888,7 @@ export const AddSurveyPage = () => {
                   <InputLabel shrink>Ticket Category</InputLabel>
                   <MuiSelect
                     value={ticketCategory}
-                    onChange={(e) => setTicketCategory(e.target.value)}
+                    onChange={(e) => handleTicketCategoryChange(e.target.value)}
                     label="Ticket Category*"
                     notched
                     displayEmpty
@@ -867,6 +902,37 @@ export const AddSurveyPage = () => {
                     {ticketCategories.map((cat) => (
                       <MenuItem key={cat.id} value={cat.id.toString()}>
                         {cat.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  sx={{ 
+                    "& .MuiInputBase-root": fieldStyles,
+                  }}
+                >
+                  <InputLabel shrink>Ticket Sub Category</InputLabel>
+                  <MuiSelect
+                    value={ticketSubCategory}
+                    onChange={(e) => setTicketSubCategory(e.target.value)}
+                    label="Ticket Sub Category"
+                    notched
+                    displayEmpty
+                    disabled={loadingTicketSubCategories || !ticketCategory}
+                  >
+                    <MenuItem value="">
+                      {loadingTicketSubCategories
+                        ? "Loading subcategories..."
+                        : !ticketCategory
+                        ? "Select a category first"
+                        : "Select Ticket Sub Category"}
+                    </MenuItem>
+                    {ticketSubCategories.map((subcat) => (
+                      <MenuItem key={subcat.id} value={subcat.id.toString()}>
+                        {subcat.name}
                       </MenuItem>
                     ))}
                   </MuiSelect>

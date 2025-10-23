@@ -20,6 +20,23 @@ import { TicketJobSheetModal } from '@/components/TicketJobSheetModal';
 import Select, { components } from "react-select";
 import { min } from 'lodash';
 
+// Utility function to format date to DD/MM/YYYY
+const formatDateToDDMMYYYY = (dateString: string) => {
+  if (!dateString) return '-';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    return '-';
+  }
+};
+
 const CustomMultiValue = (props) => (
   <div
     style={{
@@ -312,9 +329,9 @@ const renderAssociationSpecificData = (ticketData: any) => {
         { label: 'Schedule Time', value: ticketData.checklist_schedule_time ? new Date(ticketData.checklist_schedule_time).toLocaleString('en-GB') : '-' },
         { label: 'Completion Time', value: ticketData.checklist_completion_time ? new Date(ticketData.checklist_completion_time).toLocaleString('en-GB') : '-' },
         { label: 'Checklist Type', value: ticketData.checklist_type || '-' },
-        { label: 'Assigned To ID', value: Array.isArray(ticketData.checklist_assigned_to_id) ? ticketData.checklist_assigned_to_id.join(', ') : (ticketData.checklist_assigned_to_id || '-') },
-        { label: 'Assigned To Name', value: ticketData.checklist_assigned_to_name || '-' },
-        { label: 'Response Attachments', value: ticketData.response_attachments && ticketData.response_attachments.length > 0 ? `${ticketData.response_attachments.length} attachment(s)` : 'No attachments' },
+        // { label: 'Assigned To ID', value: Array.isArray(ticketData.checklist_assigned_to_id) ? ticketData.checklist_assigned_to_id.join(', ') : (ticketData.checklist_assigned_to_id || '-') },
+        { label: 'Assigned To', value: ticketData.checklist_assigned_to_name || '-' },
+        { label: 'Attachments', value: ticketData.response_attachments && ticketData.response_attachments.length > 0 ? `${ticketData.response_attachments.length} attachment(s)` : 'No attachments' },
       ];
 
     case 'Patrolling':
@@ -358,7 +375,7 @@ const renderAssociationSpecificData = (ticketData: any) => {
       return [
         { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
         { label: 'Group', value: ticketData.asset_group || '-' },
-        { label: 'Status', value: ticketData.asset_status || ticketData.amc?.amc_status || '-' },
+        { label: 'Asset Status', value: ticketData.asset_status || ticketData.amc?.asset_status || '-' },
         { label: 'Criticality', value: ticketData.asset_criticality === null || ticketData.asset_criticality === "" ? '-' : (ticketData.asset_criticality ? 'Critical' : 'Non Critical') },
         { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
         { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
@@ -568,8 +585,21 @@ export const TicketDetailsPage = () => {
     rca_template_ids: [] as number[],
     additional_notes: '',
     proactive_reactive: '', // <-- Add this property
+    review_tracking: '',
   });
   const [submittingTicketMgmt, setSubmittingTicketMgmt] = useState(false);
+
+  // Ticket Closure Edit State
+  const [isEditingTicketClosure, setIsEditingTicketClosure] = useState(false);
+  const [ticketClosureFormData, setTicketClosureFormData] = useState({
+    preventive_action_template_ids: [] as number[],
+    short_term_impact_template_ids: [] as number[],
+    corrective_action_template_ids: [] as number[],
+    long_term_impact_template_ids: [] as number[],
+    responsible_person: '',
+    review_tracking: '',
+  });
+  const [submittingTicketClosure, setSubmittingTicketClosure] = useState(false);
 
   // (Add handlers near other handlers)
   const addCostRow = () => {
@@ -1778,6 +1808,15 @@ export const TicketDetailsPage = () => {
       converted_completion_date: convertedCompletionDate
     });
 
+    // Convert review_tracking date to YYYY-MM-DD format for input field
+    let convertedReviewDate = '';
+    if (ticketData?.review_tracking) {
+      const reviewDate = new Date(ticketData.review_tracking);
+      if (!isNaN(reviewDate.getTime())) {
+        convertedReviewDate = reviewDate.toISOString().split('T')[0];
+      }
+    }
+
     // Initialize form data with current ticket data
     const formData = {
       selectedStatus: findStatusId(),
@@ -1792,6 +1831,7 @@ export const TicketDetailsPage = () => {
       additional_notes: ticketData?.notes || '',
       supplier_id: ticketData?.supplier_id ? ticketData.supplier_id.toString() : '',
       proactive_reactive: ticketData?.proactive_reactive || '',
+      review_tracking: convertedReviewDate,
     };
 
     console.log('Final form data:', formData);
@@ -1865,6 +1905,11 @@ export const TicketDetailsPage = () => {
       if (ticketMgmtFormData.proactive_reactive) {
         queryParams.append('proactive_reactive', ticketMgmtFormData.proactive_reactive);
       }
+
+      if (ticketMgmtFormData.review_tracking) {
+        queryParams.append('complaint[review_tracking_date]', ticketMgmtFormData.review_tracking);
+      }
+      
       // Build the API URL with query parameters
       const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
       const apiUrl = `https://${baseUrl}/complaint_logs.json?${queryParams.toString()}`;
@@ -1901,6 +1946,200 @@ export const TicketDetailsPage = () => {
       toast.error(error instanceof Error ? error.message : 'Failed to update ticket management');
     } finally {
       setSubmittingTicketMgmt(false);
+    }
+  };
+
+  // Handle Ticket Closure Edit
+  const handleTicketClosureEdit = () => {
+    console.log('=== Ticket Closure Form Initialization ===');
+    console.log('🚀 Edit button clicked for Ticket Closure!');
+    console.log('Current isEditingTicketClosure state:', isEditingTicketClosure);
+    console.log('ticketData:', ticketData);
+
+    // Find the responsible person ID by matching name with responsiblePersons
+    const findResponsiblePersonId = () => {
+      if (!ticketData?.responsible_person) return '';
+      const matchedPerson = responsiblePersons.find(person =>
+        person.full_name === ticketData.responsible_person ||
+        person.id.toString() === ticketData.responsible_person
+      );
+      console.log('Responsible person mapping:', {
+        original: ticketData.responsible_person,
+        matched: matchedPerson,
+        result: matchedPerson ? matchedPerson.id.toString() : ''
+      });
+      return matchedPerson ? matchedPerson.id.toString() : '';
+    };
+
+    // Convert review_tracking date to YYYY-MM-DD format for input field
+    let convertedReviewDate = '';
+    if (ticketData?.review_tracking) {
+      console.log('🔍 Raw review_tracking value:', ticketData.review_tracking);
+      console.log('🔍 Type of review_tracking:', typeof ticketData.review_tracking);
+      
+      try {
+        // Handle different date formats
+        let reviewDate;
+        
+        // If it's already in YYYY-MM-DD format, use it directly
+        if (typeof ticketData.review_tracking === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(ticketData.review_tracking)) {
+          convertedReviewDate = ticketData.review_tracking;
+        }
+        // If it's in DD/MM/YYYY format, convert it
+        else if (typeof ticketData.review_tracking === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(ticketData.review_tracking)) {
+          const [day, month, year] = ticketData.review_tracking.split('/');
+          convertedReviewDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        // Otherwise, try to parse as a date
+        else {
+          reviewDate = new Date(ticketData.review_tracking);
+          if (!isNaN(reviewDate.getTime())) {
+            convertedReviewDate = reviewDate.toISOString().split('T')[0];
+          }
+        }
+      } catch (error) {
+        console.error('🔥 Error converting review date:', error);
+      }
+    }
+
+    console.log('Ticket closure date conversion:', {
+      original_review_date: ticketData?.review_tracking,
+      converted_review_date: convertedReviewDate,
+      length: convertedReviewDate.length
+    });
+
+    // Initialize form data with current ticket data (filter out null/undefined values)
+    const formData = {
+      preventive_action_template_ids: (ticketData?.preventive_action_template_ids || []).filter(id => id != null),
+      short_term_impact_template_ids: (ticketData?.short_term_impact_template_ids || []).filter(id => id != null),
+      corrective_action_template_ids: (ticketData?.corrective_action_template_ids || []).filter(id => id != null),
+      long_term_impact_template_ids: (ticketData?.long_term_impact_template_ids || []).filter(id => id != null),
+      responsible_person: findResponsiblePersonId(),
+      review_tracking: convertedReviewDate,
+    };
+
+    console.log('Final ticket closure form data:', formData);
+    console.log('Review tracking value:', convertedReviewDate);
+    console.log('Setting isEditingTicketClosure to true');
+    console.log('Available responsible persons:', responsiblePersons.length);
+    
+    // Debug: Log the exact values we're setting
+    console.log('🔍 About to set ticketClosureFormData with:', {
+      review_tracking: convertedReviewDate,
+      formData: formData
+    });
+    
+    setTicketClosureFormData(formData);
+    setIsEditingTicketClosure(true);
+    
+    // Debug: Check state after setting
+    setTimeout(() => {
+      console.log('🔍 After setting form data - Current ticketClosureFormData:', ticketClosureFormData);
+    }, 50);
+    
+    // Verify state change with a timeout
+    setTimeout(() => {
+      console.log('🔍 After state update - isEditingTicketClosure:', isEditingTicketClosure);
+    }, 100);
+  };
+
+  // Handle Ticket Closure Form Input Change
+  const handleTicketClosureInputChange = (field: string, value: any) => {
+    setTicketClosureFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle Ticket Closure Form Submit
+  const handleTicketClosureSubmit = async () => {
+    try {
+      setSubmittingTicketClosure(true);
+
+      if (!id) {
+        toast.error('Ticket ID not found');
+        return;
+      }
+
+      console.log('🔄 Submitting ticket closure data:', ticketClosureFormData);
+
+      // Create FormData for submission
+      const formDataToSend = new FormData();
+      formDataToSend.append('complaint_log[complaint_id]', id);
+
+      // Add template IDs for each category
+      if (ticketClosureFormData.preventive_action_template_ids.length > 0) {
+        ticketClosureFormData.preventive_action_template_ids.forEach(templateId => {
+          if (templateId != null) {
+            formDataToSend.append('preventive_action_template_ids[]', templateId.toString());
+          }
+        });
+      }
+
+      if (ticketClosureFormData.short_term_impact_template_ids.length > 0) {
+        ticketClosureFormData.short_term_impact_template_ids.forEach(templateId => {
+          if (templateId != null) {
+            formDataToSend.append('short_term_impact_template_ids[]', templateId.toString());
+          }
+        });
+      }
+
+      if (ticketClosureFormData.corrective_action_template_ids.length > 0) {
+        ticketClosureFormData.corrective_action_template_ids.forEach(templateId => {
+          if (templateId != null) {
+            formDataToSend.append('corrective_action_template_ids[]', templateId.toString());
+          }
+        });
+      }
+
+      if (ticketClosureFormData.long_term_impact_template_ids.length > 0) {
+        ticketClosureFormData.long_term_impact_template_ids.forEach(templateId => {
+          if (templateId != null) {
+            formDataToSend.append('long_term_impact_template_ids[]', templateId.toString());
+          }
+        });
+      }
+
+      if (ticketClosureFormData.responsible_person) {
+        formDataToSend.append('person_id', ticketClosureFormData.responsible_person);
+      }
+
+      if (ticketClosureFormData.review_tracking) {
+        formDataToSend.append('complaint[review_tracking_date]', ticketClosureFormData.review_tracking);
+        console.log('Setting review tracking date:', ticketClosureFormData.review_tracking);
+      }
+
+      const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Ticket closure updated successfully:', data);
+
+      toast.success('Ticket closure updated successfully');
+
+      // Refresh ticket data
+      const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
+      setTicketData(ticketDetails);
+
+      // Exit edit mode
+      setIsEditingTicketClosure(false);
+
+    } catch (error) {
+      console.error('❌ Error updating ticket closure:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update ticket closure');
+    } finally {
+      setSubmittingTicketClosure(false);
     }
   };
 
@@ -3013,7 +3252,7 @@ export const TicketDetailsPage = () => {
                             { label: 'Issue Type', value: capitalizeWords(ticketData.issue_type) },
                             { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                             { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
-                            { label: 'Association', value: ticketData.asset_service || '-' },
+                            { label: 'Source', value: ticketData.asset_service || '-' },
                           ],
                           [
                             { label: 'Created By', value: ticketData.created_by_name || '-' },
@@ -3207,7 +3446,7 @@ export const TicketDetailsPage = () => {
                                   ? ticketData.vendors.map(v => v.name || v).join(', ')
                                   : '-')
                           }, { label: 'Assigned To', value: ticketData.assigned_to || '-' },
-                          { label: 'Source', value: ticketData.asset_service || 'Asset' },
+                          { label: 'Association', value: ticketData.asset_service || '-' },
 
                           { label: 'Expected Visit Date', value: ticketData.visit_date ? ticketData.visit_date : '-' },
                           { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
@@ -3244,48 +3483,26 @@ export const TicketDetailsPage = () => {
                             {/* Right: Root Cause + Notes (stacked) */}
                             <div className="w-full lg:w-[38%] min-w-0">
                               <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                                <div className="relative w-full">
-                                  {/* Floating label on border */}
-                                  <label
-                                    style={{
-                                      position: "absolute",
-                                      top: "-10px",
-                                      left: "12px",
-                                      background: "#fff",
-                                      padding: "0 6px",
-                                      fontWeight: 500,
-                                      fontSize: "14px",
-                                      color: "#1A1A1A",
-                                      zIndex: 1
-                                    }}
-                                  >
+                                <div className="flex text-[14px] leading-snug min-w-0">
+                                  <div className="w-[180px] flex-shrink-0 text-[#6B6B6B] font-medium">
                                     Root Cause Analysis
-                                  </label>
-
-                                  {/* React Select */}
-                                  <Select
-                                    isMulti
-                                    value={getRootCauseAnalysisValues()}
-                                    onChange={(selectedOptions) => {
-                                      const selectedIds = selectedOptions
-                                        ? selectedOptions.map((opt) => opt.value)
-                                        : [];
-                                      handleRootCauseChange(selectedIds);
-                                    }}
-                                    options={communicationTemplates
-                                      .filter((t) => t.identifier === "Root Cause Analysis" && t.active === true)
-                                      .map((t) => ({
-                                        value: t.id,
-                                        label: t.identifier_action,
-                                      }))}
-                                    placeholder="Select Root Cause Analysis..."
-                                    styles={customStyles}
-                                    components={{
-                                      MultiValue: CustomMultiValue,
-                                      MultiValueRemove: () => null,
-                                    }}
-                                    closeMenuOnSelect={false}
-                                  />
+                                  </div>
+                                  <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                    {ticketData.rca_template_ids && ticketData.rca_template_ids.length > 0 
+                                      ? (() => {
+                                          const uniqueIds = [...new Set(ticketData.rca_template_ids)];
+                                          return uniqueIds.map((templateId) => {
+                                            const matchedTemplate = communicationTemplates.find(
+                                              (template) =>
+                                                template.id === templateId &&
+                                                template.identifier === "Root Cause Analysis"
+                                            );
+                                            return matchedTemplate ? matchedTemplate.identifier_action : null;
+                                          }).filter(Boolean).join(', ');
+                                        })()
+                                      : '-'
+                                    }
+                                  </div>
                                 </div>
                               </div>
                               {(ticketData.rca_template_ids && ticketData.rca_template_ids.length > 0) && (
@@ -4001,7 +4218,7 @@ export const TicketDetailsPage = () => {
                           <table className="min-w-full text-[11px]">
                             <thead>
                               <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
-                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5'].map(h => (
+                                {['Request Id', 'Amount', 'Description', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5'].map(h => (
                                   <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
                                     {h}
                                   </th>
@@ -4122,20 +4339,268 @@ export const TicketDetailsPage = () => {
                       </h3>
 
                     </div>
-                    {/* <Button
+                    <Button
                       variant="outline"
                       size="sm"
                       className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                    // onClick={handleUpdate}
+                      onClick={handleTicketClosureEdit}
+                      disabled={isEditingTicketClosure || loadingResponsiblePersons}
                     >
-                      <Edit className="w-4 h-4 mr-1" /> Edit
-                    </Button> */}
+                      <Edit className="w-4 h-4 mr-1" /> 
+                      {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
+                    </Button>
                   </div>
 
                   {/* Body */}
                   <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
-                    {/* Two row / two column panels */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {!isEditingTicketClosure ? (
+                      // View Mode - Show current data as read-only
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          {/* Preventive Action - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Preventive Action
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0
+                                  ? (() => {
+                                      const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
+                                      const matchedTemplates = communicationTemplates.filter(
+                                        template => uniqueIds.includes(template.id) &&
+                                          template.identifier === "Preventive Action"
+                                      );
+                                      return matchedTemplates.length > 0
+                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                        : 'No preventive action selected';
+                                    })()
+                                  : 'No preventive action selected'
+                                }
+                              </div>
+                            </div>
+                            {(ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Preventive Action"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`preventive-action-display-${templateId}`}>
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Short-term Impact - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Short-term Impact
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0
+                                  ? (() => {
+                                      const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                                      const matchedTemplates = communicationTemplates.filter(
+                                        template => uniqueIds.includes(template.id) &&
+                                          template.identifier === "Short-term Impact"
+                                      );
+                                      return matchedTemplates.length > 0
+                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                        : 'No short-term impact selected';
+                                    })()
+                                  : 'No short-term impact selected'
+                                }
+                              </div>
+                            </div>
+                            {(ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Short-term Impact"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`short-term-impact-display-${templateId}`}>
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Corrective Action - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Corrective Action
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0
+                                  ? (() => {
+                                      const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                                      const matchedTemplates = communicationTemplates.filter(
+                                        template => uniqueIds.includes(template.id) &&
+                                          template.identifier === "Corrective Action"
+                                      );
+                                      return matchedTemplates.length > 0
+                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                        : 'No corrective action selected';
+                                    })()
+                                  : 'No corrective action selected'
+                                }
+                              </div>
+                            </div>
+                            {(ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Corrective Action"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`corrective-action-display-${templateId}`}>
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Long-term Impact - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Long-term Impact
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0
+                                  ? (() => {
+                                      const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                                      const matchedTemplates = communicationTemplates.filter(
+                                        template => uniqueIds.includes(template.id) &&
+                                          template.identifier === "Long-term Impact"
+                                      );
+                                      return matchedTemplates.length > 0
+                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                        : 'No long-term impact selected';
+                                    })()
+                                  : 'No long-term impact selected'
+                                }
+                              </div>
+                            </div>
+                            {(ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Long-term Impact"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`long-term-impact-display-${templateId}`}>
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Bottom Row: Review Date & Responsible Person - View Only */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          <div className="flex items-start text-[14px]">
+                            <span className="w-[70px] text-[#6B6B6B] font-medium">Review Date</span>
+                            <span className="ml-2 font-semibold text-[#1A1A1A]">
+                              {ticketData.review_tracking ? ticketData.review_tracking : '-'}
+                            </span>
+                          </div>
+                          <div className="flex items-start text-[14px]">
+                            <span className="w-[140px] text-[#6B6B6B] font-medium">Responsible Person</span>
+                            <span className="ml-2 font-semibold text-[#1A1A1A]">
+                              {ticketData.responsible_person ? ticketData.responsible_person : '-'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      // Edit Mode - Show form
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleTicketClosureSubmit();
+                        }}
+                        className="space-y-6"
+                      >
+                        {/* Two row / two column panels */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                       {/* Preventive Action */}
                       <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                         <div className="relative w-full">
@@ -4407,13 +4872,68 @@ export const TicketDetailsPage = () => {
 
                     {/* Bottom Row: Review Date & Responsible Person */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                      <div className="flex items-start text-[12px]">
-                        <span className="w-[70px] text-[#6B6B6B]">Review Date</span>
-                        <span className="ml-2 font-semibold text-[#1A1A1A]">
-                          {ticketData.review_tracking
-                            ? ticketData.review_tracking
-                            : '-'}
-                        </span>
+                      <div className="relative w-full">
+                        {/* Floating label on border */}
+                        <label
+                          style={{
+                            position: "absolute",
+                            top: "-10px",
+                            left: "12px",
+                            background: "#fff",
+                            padding: "0 6px",
+                            fontWeight: 500,
+                            fontSize: "14px",
+                            color: "#1A1A1A",
+                            zIndex: 1,
+                          }}
+                        >
+                          Review Date
+                        </label>
+                        
+                        <div style={{ minWidth: '240px' }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            type="date"
+                            placeholder="Select review date"
+                            value={ticketClosureFormData.review_tracking || ''}
+                            onChange={(e) => {
+                              console.log('Review date changed:', e.target.value);
+                              handleTicketClosureInputChange('review_tracking', e.target.value);
+                            }}
+                            InputLabelProps={{ 
+                              shrink: true,
+                              style: { display: 'none' } // Hide default label since we have floating label
+                            }}
+                            inputProps={{
+                              style: { fontSize: '14px' }
+                            }}
+                            sx={{
+                              '& .MuiInputBase-root': {
+                                backgroundColor: '#F2F2F2',
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                minHeight: '40px',
+                              },
+                              '& .MuiOutlinedInput-root': {
+                                '& fieldset': {
+                                  borderColor: '#DAD7D0',
+                                  borderWidth: '1px',
+                                },
+                                '&:hover fieldset': {
+                                  borderColor: '#C72030',
+                                },
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#C72030',
+                                },
+                              },
+                              '& .MuiInputBase-input': {
+                                fontSize: '14px',
+                                padding: '10px 12px',
+                              },
+                            }}
+                          />
+                        </div>
                       </div>
                       <div>
                         <div className="relative w-full">
@@ -4472,6 +4992,28 @@ export const TicketDetailsPage = () => {
                           )}
                       </div>
                     </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-3 justify-end mt-6">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsEditingTicketClosure(false)}
+                        disabled={submittingTicketClosure}
+                        className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={submittingTicketClosure}
+                        className="bg-[#C72030] hover:bg-[#A01825] text-white px-8"
+                      >
+                        {submittingTicketClosure ? 'Saving...' : 'Submit'}
+                      </Button>
+                    </div>
+                      </form>
+                    )}
                   </div>
                 </Card>
 
@@ -5414,7 +5956,7 @@ export const TicketDetailsPage = () => {
                             { label: 'Issue Type', value: capitalizeWords(ticketData.issue_type) },
                             { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                             { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
-                            { label: 'Association', value: ticketData.service_or_asset || '-' },
+                            { label: 'Source', value: ticketData.service_or_asset || '-' },
                           ],
                           [
                             { label: 'Created By', value: ticketData.created_by_name || '-' },
@@ -5645,48 +6187,26 @@ export const TicketDetailsPage = () => {
                             {/* Right: Root Cause + Notes (stacked) */}
                             <div className="w-full lg:w-[38%] min-w-0">
                               <div className="bg-[#f2efea] border border-[#f2efea] p-4">
-                                <div className="relative w-full">
-                                  {/* Floating label on border */}
-                                  <label
-                                    style={{
-                                      position: "absolute",
-                                      top: "-10px",
-                                      left: "12px",
-                                      background: "#fff",
-                                      padding: "0 6px",
-                                      fontWeight: 500,
-                                      fontSize: "14px",
-                                      color: "#1A1A1A",
-                                      zIndex: 1
-                                    }}
-                                  >
+                                <div className="flex text-[14px] leading-snug min-w-0">
+                                  <div className="w-[180px] flex-shrink-0 text-[#6B6B6B] font-medium">
                                     Root Cause Analysis
-                                  </label>
-
-                                  {/* React Select */}
-                                  <Select
-                                    isMulti
-                                    value={getRootCauseAnalysisValues()}
-                                    onChange={(selectedOptions) => {
-                                      const selectedIds = selectedOptions
-                                        ? selectedOptions.map((opt) => opt.value)
-                                        : [];
-                                      handleRootCauseChange(selectedIds);
-                                    }}
-                                    options={communicationTemplates
-                                      .filter((t) => t.identifier === "Root Cause Analysis" && t.active === true)
-                                      .map((t) => ({
-                                        value: t.id,
-                                        label: t.identifier_action,
-                                      }))}
-                                    placeholder="Select Root Cause Analysis..."
-                                    styles={customStyles}
-                                    components={{
-                                      MultiValue: CustomMultiValue,
-                                      MultiValueRemove: () => null,
-                                    }}
-                                    closeMenuOnSelect={false}
-                                  />
+                                  </div>
+                                  <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                    {ticketData.rca_template_ids && ticketData.rca_template_ids.length > 0 
+                                      ? (() => {
+                                          const uniqueIds = [...new Set(ticketData.rca_template_ids)];
+                                          return uniqueIds.map((templateId) => {
+                                            const matchedTemplate = communicationTemplates.find(
+                                              (template) =>
+                                                template.id === templateId &&
+                                                template.identifier === "Root Cause Analysis"
+                                            );
+                                            return matchedTemplate ? matchedTemplate.identifier_action : null;
+                                          }).filter(Boolean).join(', ');
+                                        })()
+                                      : '-'
+                                    }
+                                  </div>
                                 </div>
                               </div>
                               {(ticketData.rca_template_ids && ticketData.rca_template_ids.length > 0) && (
@@ -6810,11 +7330,68 @@ export const TicketDetailsPage = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                       <div className="flex items-start text-[12px]">
                         <span className="w-[70px] text-[#6B6B6B]">Review Date</span>
-                        <span className="ml-2 font-semibold text-[#1A1A1A]">
-                          {ticketData.review_tracking
-                            ? ticketData.review_tracking
-                            : '-'}
-                        </span>
+                        {(() => {
+                          console.log('🔍 Render check - isEditingTicketClosure:', isEditingTicketClosure);
+                          console.log('🔍 Render check - ticketClosureFormData.review_tracking:', ticketClosureFormData.review_tracking);
+                          return null;
+                        })()}
+                        {!isEditingTicketClosure ? (
+                          <span className="ml-2 font-semibold text-[#1A1A1A]">
+                            {ticketData.review_tracking
+                              ? formatDateToDDMMYYYY(ticketData.review_tracking)
+                              : '-'}
+                          </span>
+                        ) : (
+                          <div className="ml-2 w-48" style={{ minWidth: '192px', border: '2px solid red' }}>
+                            {console.log('📅 Review Date TextField is rendering in edit mode!')}
+                            <TextField
+                              fullWidth
+                              size="small"
+                              type="date"
+                              label="Review Date"
+                              placeholder="Select review date"
+                              value={ticketClosureFormData.review_tracking || ''}
+                              onChange={(e) => {
+                                console.log('Review date changed:', e.target.value);
+                                handleTicketClosureInputChange('review_tracking', e.target.value);
+                              }}
+                              InputLabelProps={{ 
+                                shrink: true,
+                                style: { fontSize: '12px', color: '#6B6B6B' }
+                              }}
+                              inputProps={{
+                                style: { fontSize: '12px' }
+                              }}
+                              sx={{
+                                '& .MuiInputBase-root': {
+                                  backgroundColor: '#F2F2F2',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  minHeight: '36px',
+                                },
+                                '& .MuiOutlinedInput-root': {
+                                  '& fieldset': {
+                                    borderColor: '#DAD7D0',
+                                    borderWidth: '1px',
+                                  },
+                                  '&:hover fieldset': {
+                                    borderColor: '#C72030',
+                                  },
+                                  '&.Mui-focused fieldset': {
+                                    borderColor: '#C72030',
+                                  },
+                                },
+                                '& .MuiInputBase-input': {
+                                  fontSize: '12px',
+                                  padding: '8px 12px',
+                                },
+                                '& .MuiInputLabel-root': {
+                                  fontSize: '12px',
+                                },
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                       <div>
                         <div className="relative w-full">

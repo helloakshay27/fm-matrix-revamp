@@ -245,6 +245,14 @@ export const SurveyDetailsPage = () => {
                       {snagChecklist.ticket_configs?.category || "Not Assigned"}
                     </div>
                   </div>
+                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ticket Sub Category
+                    </label>
+                    <div className="text-base font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
+                      {snagChecklist.ticket_configs?.subcategory || "Not Assigned"}
+                    </div>
+                  </div>
                 </div>
               </div>
 
