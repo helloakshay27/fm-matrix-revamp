@@ -3335,6 +3335,110 @@ export const TicketDetailsPage = () => {
                         </div>
                       ))}
                     </div>
+
+                    {/* Association Attachments */}
+                    {ticketData.response_attachments && Array.isArray(ticketData.response_attachments) && ticketData.response_attachments.length > 0 && (
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        <div className="mb-3">
+                          <span className="text-sm font-medium text-gray-600">Attachments:</span>
+                        </div>
+                        <div className="flex items-center flex-wrap gap-4">
+                          {ticketData.response_attachments.map((attachmentUrl: string, idx: number) => {
+                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl);
+                            const isPdf = /\.pdf$/i.test(attachmentUrl);
+                            const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl);
+                            const isWord = /\.(doc|docx)$/i.test(attachmentUrl);
+                            const isDownloadable = isPdf || isExcel || isWord;
+                            const fileName = attachmentUrl.split('/').pop() || `Attachment_${idx + 1}`;
+
+                            return (
+                              <div
+                                key={idx}
+                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                              >
+                                {isImage ? (
+                                  <>
+                                    <button
+                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                      title="View"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: idx,
+                                          document_name: fileName,
+                                          url: attachmentUrl,
+                                          document_url: attachmentUrl,
+                                          document: attachmentUrl,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      type="button"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    <img
+                                      src={attachmentUrl}
+                                      alt={fileName}
+                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: idx,
+                                          document_name: fileName,
+                                          url: attachmentUrl,
+                                          document_url: attachmentUrl,
+                                          document: attachmentUrl,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  </>
+                                ) : isPdf ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                    <FileSpreadsheet className="w-6 h-6" />
+                                  </div>
+                                ) : isWord ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                    <File className="w-6 h-6" />
+                                  </div>
+                                )}
+                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                  {fileName}
+                                </span>
+                                {isDownloadable && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                    onClick={() => {
+                                      setSelectedDoc({
+                                        id: idx,
+                                        document_name: fileName,
+                                        url: attachmentUrl,
+                                        document_url: attachmentUrl,
+                                        document: attachmentUrl,
+                                      });
+                                      setShowImagePreview(true);
+                                    }}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -3648,7 +3752,7 @@ export const TicketDetailsPage = () => {
                             </FormControl>
 
                             <FormControl fullWidth size="small">
-                              <InputLabel>Source</InputLabel>
+                              <InputLabel>Association</InputLabel>
                               <MuiSelect
                                 value={ticketMgmtFormData.asset_service}
                                 onChange={(e) => handleTicketMgmtInputChange('asset_service', e.target.value)}
@@ -6039,6 +6143,110 @@ export const TicketDetailsPage = () => {
                         </div>
                       ))}
                     </div>
+
+                    {/* Association Attachments */}
+                    {ticketData.response_attachments && Array.isArray(ticketData.response_attachments) && ticketData.response_attachments.length > 0 && (
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        <div className="mb-3">
+                          <span className="text-sm font-medium text-gray-600">Attachments:</span>
+                        </div>
+                        <div className="flex items-center flex-wrap gap-4">
+                          {ticketData.response_attachments.map((attachmentUrl: string, idx: number) => {
+                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl);
+                            const isPdf = /\.pdf$/i.test(attachmentUrl);
+                            const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl);
+                            const isWord = /\.(doc|docx)$/i.test(attachmentUrl);
+                            const isDownloadable = isPdf || isExcel || isWord;
+                            const fileName = attachmentUrl.split('/').pop() || `Attachment_${idx + 1}`;
+
+                            return (
+                              <div
+                                key={idx}
+                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                              >
+                                {isImage ? (
+                                  <>
+                                    <button
+                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                      title="View"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: idx,
+                                          document_name: fileName,
+                                          url: attachmentUrl,
+                                          document_url: attachmentUrl,
+                                          document: attachmentUrl,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      type="button"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    <img
+                                      src={attachmentUrl}
+                                      alt={fileName}
+                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: idx,
+                                          document_name: fileName,
+                                          url: attachmentUrl,
+                                          document_url: attachmentUrl,
+                                          document: attachmentUrl,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  </>
+                                ) : isPdf ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                    <FileSpreadsheet className="w-6 h-6" />
+                                  </div>
+                                ) : isWord ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                    <File className="w-6 h-6" />
+                                  </div>
+                                )}
+                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                  {fileName}
+                                </span>
+                                {isDownloadable && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                    onClick={() => {
+                                      setSelectedDoc({
+                                        id: idx,
+                                        document_name: fileName,
+                                        url: attachmentUrl,
+                                        document_url: attachmentUrl,
+                                        document: attachmentUrl,
+                                      });
+                                      setShowImagePreview(true);
+                                    }}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -6352,7 +6560,7 @@ export const TicketDetailsPage = () => {
                             </FormControl>
 
                             <FormControl fullWidth size="small">
-                              <InputLabel>Source</InputLabel>
+                              <InputLabel>Association</InputLabel>
                               <MuiSelect
                                 value={ticketMgmtFormData.asset_service}
                                 onChange={(e) => handleTicketMgmtInputChange('asset_service', e.target.value)}
