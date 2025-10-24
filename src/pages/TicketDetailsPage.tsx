@@ -4679,15 +4679,15 @@ export const TicketDetailsPage = () => {
 
                         {/* Bottom Row: Review Date & Responsible Person - View Only */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                          <div className="flex items-start text-[14px]">
-                            <span className="w-[70px] text-[#6B6B6B] font-medium">Review Date</span>
-                            <span className="ml-2 font-semibold text-[#1A1A1A]">
+                          <div className="flex items-center text-[14px]">
+                            <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Review Date</span>
+                            <span className="font-semibold text-[#1A1A1A]">
                               {ticketData.review_tracking ? ticketData.review_tracking : '-'}
                             </span>
                           </div>
-                          <div className="flex items-start text-[14px]">
-                            <span className="w-[140px] text-[#6B6B6B] font-medium">Responsible Person</span>
-                            <span className="ml-2 font-semibold text-[#1A1A1A]">
+                          <div className="flex items-center text-[14px]">
+                            <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Responsible Person</span>
+                            <span className="font-semibold text-[#1A1A1A]">
                               {ticketData.responsible_person ? ticketData.responsible_person : '-'}
                             </span>
                           </div>
@@ -6357,7 +6357,7 @@ export const TicketDetailsPage = () => {
                                   ? ticketData.vendors.map(v => v.name || v).join(', ')
                                   : '-')
                           }, { label: 'Assigned To', value: ticketData.assigned_to || '-' },
-                          { label: 'Source', value: ticketData.asset_service || 'Asset' },
+                          { label: 'Association', value: ticketData.asset_service || 'Asset' },
 
                           { label: 'Expected Visit Date', value: ticketData.visit_date ? ticketData.visit_date : '-' },
                           { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
