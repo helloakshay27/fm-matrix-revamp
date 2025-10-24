@@ -1907,7 +1907,7 @@ export const TicketDetailsPage = () => {
       }
 
       if (ticketMgmtFormData.review_tracking) {
-        queryParams.append('complaint[review_tracking_date]', ticketMgmtFormData.review_tracking);
+        queryParams.append('review_tracking_date', ticketMgmtFormData.review_tracking);
       }
       
       // Build the API URL with query parameters
@@ -2105,7 +2105,7 @@ export const TicketDetailsPage = () => {
       }
 
       if (ticketClosureFormData.review_tracking) {
-        formDataToSend.append('complaint[review_tracking_date]', ticketClosureFormData.review_tracking);
+        formDataToSend.append('review_tracking_date', ticketClosureFormData.review_tracking);
         console.log('Setting review tracking date:', ticketClosureFormData.review_tracking);
       }
 

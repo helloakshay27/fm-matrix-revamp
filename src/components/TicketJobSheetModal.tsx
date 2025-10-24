@@ -76,6 +76,10 @@ interface TicketData {
   root_cause?: string;
   feedback?: string;
   rca_template_ids?: number[];
+  corrective_action_template_ids?: number[];
+  preventive_action_template_ids?: number[];
+  issue_status?: string;
+  issue_related_to?: string;
 }
 
 interface TicketJobSheetModalProps {
@@ -194,7 +198,11 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
       console.log('Ticket data received:', {
         id: ticketData.id,
         rca_template_ids: ticketData.rca_template_ids,
+        corrective_action_template_ids: ticketData.corrective_action_template_ids,
+        preventive_action_template_ids: ticketData.preventive_action_template_ids,
         hasRcaIds: !!ticketData.rca_template_ids?.length,
+        hasCorrectiveIds: !!ticketData.corrective_action_template_ids?.length,
+        hasPreventiveIds: !!ticketData.preventive_action_template_ids?.length,
         allTicketKeys: Object.keys(ticketData)
       });
     }
@@ -234,7 +242,7 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
           identifier: template.identifier,
           matchesId,
           matchesIdentifier,
-          body: template.body?.substring(0, 50) + '...'
+         identifier_action: template.identifier_action.substring(0, 50) + '...'
         });
         
         return matchesId && matchesIdentifier;
@@ -251,15 +259,139 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
       console.log('Any matching templates by ID:', anyMatchingTemplates);
       
       if (anyMatchingTemplates.length > 0) {
-        return anyMatchingTemplates.map(template => template.body).join('\n');
+        return anyMatchingTemplates.map(template => template.identifier_action).join(', ');
       }
       
       return 'No matching templates found';
     }
 
     // Return the body content of matching templates
-    const result = rcaTemplates.map(template => template.body).join('\n');
+    const result = rcaTemplates.map(template => template.identifier_action).join(', ');
     console.log('Final result:', result);
+    return result;
+  };
+
+  const getCorrectiveActionDisplay = () => {
+    // Debug logging
+    console.log('getCorrectiveActionDisplay called:', {
+      ticketData_corrective_action_template_ids: ticketData?.corrective_action_template_ids,
+      communicationTemplates_length: communicationTemplates.length,
+      loadingTemplates
+    });
+
+    if (!ticketData?.corrective_action_template_ids || ticketData.corrective_action_template_ids.length === 0) {
+      console.log('No corrective_action_template_ids found');
+      return '-';
+    }
+
+    if (loadingTemplates) {
+      return 'Loading...';
+    }
+
+    if (communicationTemplates.length === 0) {
+      console.log('No communication templates loaded');
+      return 'No templates loaded';
+    }
+
+    // Find templates that match the IDs in corrective_action_template_ids
+    const correctiveActionTemplates = communicationTemplates.filter(
+      template => {
+        const matchesId = ticketData.corrective_action_template_ids!.includes(template.id);
+        const matchesIdentifier = template.identifier === "Corrective Action";
+        
+        console.log(`Corrective Action Template ${template.id}:`, {
+          id: template.id,
+          identifier: template.identifier,
+          matchesId,
+          matchesIdentifier,
+          identifier_action: template.identifier_action.substring(0, 50) + '...'
+        });
+        
+        return matchesId && matchesIdentifier;
+      }
+    );
+
+    console.log('Filtered Corrective Action templates:', correctiveActionTemplates.length, correctiveActionTemplates);
+
+    if (correctiveActionTemplates.length === 0) {
+      // Try to find any templates with matching IDs regardless of identifier
+      const anyMatchingTemplates = communicationTemplates.filter(
+        template => ticketData.corrective_action_template_ids!.includes(template.id)
+      );
+      console.log('Any matching corrective action templates by ID:', anyMatchingTemplates);
+      
+      if (anyMatchingTemplates.length > 0) {
+        return anyMatchingTemplates.map(template => template.identifier_action).join(', ');
+      }
+      
+      return 'No matching templates found';
+    }
+
+    // Return the identifier_action content of matching templates
+    const result = correctiveActionTemplates.map(template => template.identifier_action).join(', ');
+    console.log('Final corrective action result:', result);
+    return result;
+  };
+
+  const getPreventiveActionDisplay = () => {
+    // Debug logging
+    console.log('getPreventiveActionDisplay called:', {
+      ticketData_preventive_action_template_ids: ticketData?.preventive_action_template_ids,
+      communicationTemplates_length: communicationTemplates.length,
+      loadingTemplates
+    });
+
+    if (!ticketData?.preventive_action_template_ids || ticketData.preventive_action_template_ids.length === 0) {
+      console.log('No preventive_action_template_ids found');
+      return '-';
+    }
+
+    if (loadingTemplates) {
+      return 'Loading...';
+    }
+
+    if (communicationTemplates.length === 0) {
+      console.log('No communication templates loaded');
+      return 'No templates loaded';
+    }
+
+    // Find templates that match the IDs in preventive_action_template_ids
+    const preventiveActionTemplates = communicationTemplates.filter(
+      template => {
+        const matchesId = ticketData.preventive_action_template_ids!.includes(template.id);
+        const matchesIdentifier = template.identifier === "Preventive Action";
+        
+        console.log(`Preventive Action Template ${template.id}:`, {
+          id: template.id,
+          identifier: template.identifier,
+          matchesId,
+          matchesIdentifier,
+          identifier_action: template.identifier_action.substring(0, 50) + '...'
+        });
+        
+        return matchesId && matchesIdentifier;
+      }
+    );
+
+    console.log('Filtered Preventive Action templates:', preventiveActionTemplates.length, preventiveActionTemplates);
+
+    if (preventiveActionTemplates.length === 0) {
+      // Try to find any templates with matching IDs regardless of identifier
+      const anyMatchingTemplates = communicationTemplates.filter(
+        template => ticketData.preventive_action_template_ids!.includes(template.id)
+      );
+      console.log('Any matching preventive action templates by ID:', anyMatchingTemplates);
+      
+      if (anyMatchingTemplates.length > 0) {
+        return anyMatchingTemplates.map(template => template.identifier_action).join(', ');
+      }
+      
+      return 'No matching templates found';
+    }
+
+    // Return the identifier_action content of matching templates
+    const result = preventiveActionTemplates.map(template => template.identifier_action).join(', ');
+    console.log('Final preventive action result:', result);
     return result;
   };
 
@@ -550,11 +682,11 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Preventive Action</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
-                        {ticketData?.preventive_action || '-'}
+                        {getPreventiveActionDisplay()}
                       </td>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Corrective Action</td>
                       <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
-                        {ticketData?.corrective_action || '-'}
+                        {getCorrectiveActionDisplay()}
                       </td>
                     </tr>
                     
