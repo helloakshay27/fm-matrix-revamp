@@ -4464,7 +4464,7 @@ export const TicketDetailsPage = () => {
                           <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                             <div className="flex text-[14px] leading-snug min-w-0">
                               <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                Preventive Action
+                                Preventive Action -
                               </div>
                               <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
                                 {ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0
@@ -4499,6 +4499,7 @@ export const TicketDetailsPage = () => {
 
                                     return (
                                       <div key={`preventive-action-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
                                         {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
                                         <div
                                           className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
@@ -4518,7 +4519,7 @@ export const TicketDetailsPage = () => {
                           <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                             <div className="flex text-[14px] leading-snug min-w-0">
                               <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                Short-term Impact
+                                Short-term Impact -
                               </div>
                               <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
                                 {ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0
@@ -4553,6 +4554,7 @@ export const TicketDetailsPage = () => {
 
                                     return (
                                       <div key={`short-term-impact-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
                                         {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
                                         <div
                                           className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
@@ -4572,7 +4574,7 @@ export const TicketDetailsPage = () => {
                           <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                             <div className="flex text-[14px] leading-snug min-w-0">
                               <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                Corrective Action
+                                Corrective Action -
                               </div>
                               <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
                                 {ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0
@@ -4607,6 +4609,7 @@ export const TicketDetailsPage = () => {
 
                                     return (
                                       <div key={`corrective-action-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
                                         {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
                                         <div
                                           className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
@@ -4626,7 +4629,7 @@ export const TicketDetailsPage = () => {
                           <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                             <div className="flex text-[14px] leading-snug min-w-0">
                               <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                Long-term Impact
+                                Long-term Impact -
                               </div>
                               <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
                                 {ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0
@@ -4661,6 +4664,7 @@ export const TicketDetailsPage = () => {
 
                                     return (
                                       <div key={`long-term-impact-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
                                         {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
                                         <div
                                           className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
@@ -7281,7 +7285,7 @@ export const TicketDetailsPage = () => {
                               zIndex: 1,
                             }}
                           >
-                            Preventive Action
+                            Preventive Action 
                           </label>
 
                           {/* React Select */}

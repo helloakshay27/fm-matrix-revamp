@@ -21,6 +21,20 @@ interface TicketComment {
   created_at?: string;
 }
 
+interface ComplaintLog {
+  id: number;
+  complaint_id: number;
+  complaint_status_id: number | null;
+  changed_by: number | null;
+  priority: string | null;
+  created_at: string;
+  updated_at: string;
+  log_comment: string;
+  log_status: string | null;
+  log_by: string | null;
+  documents: any[];
+}
+
 interface CommunicationTemplate {
   id: number;
   identifier: string;
@@ -65,6 +79,7 @@ interface TicketData {
   asset_name?: string;
   asset_code?: string;
   comments?: TicketComment[];
+  complaint_logs?: ComplaintLog[];
   created_by_name?: string;
   asset_service?: string;
   response_tat?: number;
@@ -714,7 +729,20 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     <tr>
                       <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Comments</td>
                       <td colSpan={3} className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
-                        {ticketData?.description || '-'}
+                        {(() => {
+                          if (ticketData?.complaint_logs && Array.isArray(ticketData.complaint_logs) && ticketData.complaint_logs.length > 0) {
+                            // Get the last complaint log with a non-empty log_comment
+                            const logsWithComments = ticketData.complaint_logs.filter(log => log.log_comment && log.log_comment.trim() !== '');
+                            if (logsWithComments.length > 0) {
+                              const lastLogComment = logsWithComments[logsWithComments.length - 1];
+                              return lastLogComment.log_comment;
+                            }
+                            // If no logs have comments, try to get the last log regardless
+                            const lastLog = ticketData.complaint_logs[ticketData.complaint_logs.length - 1];
+                            return lastLog.log_comment || '-';
+                          }
+                          return ticketData?.description || '-';
+                        })()}
                       </td>
                     </tr>
                     
