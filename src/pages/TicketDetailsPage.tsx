@@ -331,7 +331,6 @@ const renderAssociationSpecificData = (ticketData: any) => {
         { label: 'Checklist Type', value: ticketData.checklist_type || '-' },
         // { label: 'Assigned To ID', value: Array.isArray(ticketData.checklist_assigned_to_id) ? ticketData.checklist_assigned_to_id.join(', ') : (ticketData.checklist_assigned_to_id || '-') },
         { label: 'Assigned To', value: ticketData.checklist_assigned_to_name || '-' },
-        { label: 'Attachments', value: ticketData.response_attachments && ticketData.response_attachments.length > 0 ? `${ticketData.response_attachments.length} attachment(s)` : 'No attachments' },
       ];
 
     case 'Patrolling':
@@ -355,7 +354,7 @@ const renderAssociationSpecificData = (ticketData: any) => {
         { label: 'Third Level Category', value: ticketData.incident_third_level_category || '-' },
         { label: 'Level of Incident', value: ticketData.level_of_incident || '-' },
         { label: 'Support Required', value: ticketData.incident_support_required ? 'Yes' : 'No' },
-        { label: 'Attachments', value: ticketData.incident_attachments && ticketData.incident_attachments.length > 0 ? `${ticketData.incident_attachments.length} attachment(s)` : 'No attachments' },
+        { label: '', value: '' }, // Empty cell for grid alignment
       ];
 
     case 'Audit':
@@ -363,8 +362,8 @@ const renderAssociationSpecificData = (ticketData: any) => {
         { label: 'Audit ID', value: ticketData.audit_id || '-' },
         { label: 'Conducted By', value: ticketData.audit_conducted_by || '-' },
         { label: 'Audit Type', value: ticketData.audit_type || '-' },
-        { label: 'Attachments', value: ticketData.audit_attachments && ticketData.audit_attachments.length > 0 ? `${ticketData.audit_attachments.length} attachment(s)` : 'No attachments' },
         { label: '', value: '' }, // Empty cells for grid alignment
+        { label: '', value: '' },
         { label: '', value: '' },
         { label: '', value: '' },
         { label: '', value: '' },
@@ -3335,6 +3334,110 @@ export const TicketDetailsPage = () => {
                         </div>
                       ))}
                     </div>
+
+                    {/* Association Attachments - Only for Checklist */}
+                    {(ticketData?.asset_service === 'Checklist' || ticketData?.service_or_asset === 'Checklist') && ticketData.response_attachments && Array.isArray(ticketData.response_attachments) && ticketData.response_attachments.length > 0 && (
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        <div className="mb-3">
+                          <span className="text-sm font-medium text-gray-600">Attachments:</span>
+                        </div>
+                        <div className="flex items-center flex-wrap gap-4">
+                          {ticketData.response_attachments.map((attachmentUrl: string, idx: number) => {
+                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl);
+                            const isPdf = /\.pdf$/i.test(attachmentUrl);
+                            const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl);
+                            const isWord = /\.(doc|docx)$/i.test(attachmentUrl);
+                            const isDownloadable = isPdf || isExcel || isWord;
+                            const fileName = attachmentUrl.split('/').pop() || `Attachment_${idx + 1}`;
+
+                            return (
+                              <div
+                                key={idx}
+                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                              >
+                                {isImage ? (
+                                  <>
+                                    <button
+                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                      title="View"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: idx,
+                                          document_name: fileName,
+                                          url: attachmentUrl,
+                                          document_url: attachmentUrl,
+                                          document: attachmentUrl,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      type="button"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    <img
+                                      src={attachmentUrl}
+                                      alt={fileName}
+                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: idx,
+                                          document_name: fileName,
+                                          url: attachmentUrl,
+                                          document_url: attachmentUrl,
+                                          document: attachmentUrl,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  </>
+                                ) : isPdf ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                    <FileSpreadsheet className="w-6 h-6" />
+                                  </div>
+                                ) : isWord ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                    <File className="w-6 h-6" />
+                                  </div>
+                                )}
+                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                  {fileName}
+                                </span>
+                                {isDownloadable && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                    onClick={() => {
+                                      setSelectedDoc({
+                                        id: idx,
+                                        document_name: fileName,
+                                        url: attachmentUrl,
+                                        document_url: attachmentUrl,
+                                        document: attachmentUrl,
+                                      });
+                                      setShowImagePreview(true);
+                                    }}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -3648,7 +3751,7 @@ export const TicketDetailsPage = () => {
                             </FormControl>
 
                             <FormControl fullWidth size="small">
-                              <InputLabel>Source</InputLabel>
+                              <InputLabel>Association</InputLabel>
                               <MuiSelect
                                 value={ticketMgmtFormData.asset_service}
                                 onChange={(e) => handleTicketMgmtInputChange('asset_service', e.target.value)}
@@ -4361,7 +4464,7 @@ export const TicketDetailsPage = () => {
                           <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                             <div className="flex text-[14px] leading-snug min-w-0">
                               <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                Preventive Action
+                                Preventive Action -
                               </div>
                               <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
                                 {ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0
@@ -4396,6 +4499,7 @@ export const TicketDetailsPage = () => {
 
                                     return (
                                       <div key={`preventive-action-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
                                         {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
                                         <div
                                           className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
@@ -4415,7 +4519,7 @@ export const TicketDetailsPage = () => {
                           <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                             <div className="flex text-[14px] leading-snug min-w-0">
                               <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                Short-term Impact
+                                Short-term Impact -
                               </div>
                               <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
                                 {ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0
@@ -4450,6 +4554,7 @@ export const TicketDetailsPage = () => {
 
                                     return (
                                       <div key={`short-term-impact-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
                                         {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
                                         <div
                                           className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
@@ -4469,7 +4574,7 @@ export const TicketDetailsPage = () => {
                           <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                             <div className="flex text-[14px] leading-snug min-w-0">
                               <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                Corrective Action
+                                Corrective Action -
                               </div>
                               <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
                                 {ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0
@@ -4504,6 +4609,7 @@ export const TicketDetailsPage = () => {
 
                                     return (
                                       <div key={`corrective-action-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
                                         {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
                                         <div
                                           className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
@@ -4523,7 +4629,7 @@ export const TicketDetailsPage = () => {
                           <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                             <div className="flex text-[14px] leading-snug min-w-0">
                               <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
-                                Long-term Impact
+                                Long-term Impact -
                               </div>
                               <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
                                 {ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0
@@ -4558,6 +4664,7 @@ export const TicketDetailsPage = () => {
 
                                     return (
                                       <div key={`long-term-impact-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
                                         {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
                                         <div
                                           className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
@@ -4576,15 +4683,15 @@ export const TicketDetailsPage = () => {
 
                         {/* Bottom Row: Review Date & Responsible Person - View Only */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                          <div className="flex items-start text-[14px]">
-                            <span className="w-[70px] text-[#6B6B6B] font-medium">Review Date</span>
-                            <span className="ml-2 font-semibold text-[#1A1A1A]">
+                          <div className="flex items-center text-[14px]">
+                            <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Review Date</span>
+                            <span className="font-semibold text-[#1A1A1A]">
                               {ticketData.review_tracking ? ticketData.review_tracking : '-'}
                             </span>
                           </div>
-                          <div className="flex items-start text-[14px]">
-                            <span className="w-[140px] text-[#6B6B6B] font-medium">Responsible Person</span>
-                            <span className="ml-2 font-semibold text-[#1A1A1A]">
+                          <div className="flex items-center text-[14px]">
+                            <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Responsible Person</span>
+                            <span className="font-semibold text-[#1A1A1A]">
                               {ticketData.responsible_person ? ticketData.responsible_person : '-'}
                             </span>
                           </div>
@@ -6017,14 +6124,14 @@ export const TicketDetailsPage = () => {
                   {/* Body */}
                   <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
                     {/* Association Type Indicator */}
-                    <div className="mb-4 pb-3 border-b border-gray-200">
+                    {/* <div className="mb-4 pb-3 border-b border-gray-200">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-gray-600">Association Type:</span>
                         <span className="px-3 py-1 text-sm font-semibold text-white bg-[#C72030] rounded-full">
                           {ticketData.asset_service || ticketData.service_or_asset || 'Asset'}
                         </span>
                       </div>
-                    </div>
+                    </div> */}
                     
                     {/* Dynamic Association Data */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
@@ -6039,6 +6146,110 @@ export const TicketDetailsPage = () => {
                         </div>
                       ))}
                     </div>
+
+                    {/* Association Attachments - Only for Checklist */}
+                    {(ticketData?.asset_service === 'Checklist' || ticketData?.service_or_asset === 'Checklist') && ticketData.response_attachments && Array.isArray(ticketData.response_attachments) && ticketData.response_attachments.length > 0 && (
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        <div className="mb-3">
+                          <span className="text-sm font-medium text-gray-600">Attachments:</span>
+                        </div>
+                        <div className="flex items-center flex-wrap gap-4">
+                          {ticketData.response_attachments.map((attachmentUrl: string, idx: number) => {
+                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl);
+                            const isPdf = /\.pdf$/i.test(attachmentUrl);
+                            const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl);
+                            const isWord = /\.(doc|docx)$/i.test(attachmentUrl);
+                            const isDownloadable = isPdf || isExcel || isWord;
+                            const fileName = attachmentUrl.split('/').pop() || `Attachment_${idx + 1}`;
+
+                            return (
+                              <div
+                                key={idx}
+                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                              >
+                                {isImage ? (
+                                  <>
+                                    <button
+                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                      title="View"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: idx,
+                                          document_name: fileName,
+                                          url: attachmentUrl,
+                                          document_url: attachmentUrl,
+                                          document: attachmentUrl,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      type="button"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    <img
+                                      src={attachmentUrl}
+                                      alt={fileName}
+                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: idx,
+                                          document_name: fileName,
+                                          url: attachmentUrl,
+                                          document_url: attachmentUrl,
+                                          document: attachmentUrl,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  </>
+                                ) : isPdf ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                    <FileSpreadsheet className="w-6 h-6" />
+                                  </div>
+                                ) : isWord ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                    <File className="w-6 h-6" />
+                                  </div>
+                                )}
+                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                  {fileName}
+                                </span>
+                                {isDownloadable && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                    onClick={() => {
+                                      setSelectedDoc({
+                                        id: idx,
+                                        document_name: fileName,
+                                        url: attachmentUrl,
+                                        document_url: attachmentUrl,
+                                        document: attachmentUrl,
+                                      });
+                                      setShowImagePreview(true);
+                                    }}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -6150,7 +6361,7 @@ export const TicketDetailsPage = () => {
                                   ? ticketData.vendors.map(v => v.name || v).join(', ')
                                   : '-')
                           }, { label: 'Assigned To', value: ticketData.assigned_to || '-' },
-                          { label: 'Source', value: ticketData.asset_service || 'Asset' },
+                          { label: 'Association', value: ticketData.asset_service || 'Asset' },
 
                           { label: 'Expected Visit Date', value: ticketData.visit_date ? ticketData.visit_date : '-' },
                           { label: 'Expected Completion Date', value: ticketData.expected_completion_date ? formatDate(ticketData.expected_completion_date) : '-' },
@@ -6352,7 +6563,7 @@ export const TicketDetailsPage = () => {
                             </FormControl>
 
                             <FormControl fullWidth size="small">
-                              <InputLabel>Source</InputLabel>
+                              <InputLabel>Association</InputLabel>
                               <MuiSelect
                                 value={ticketMgmtFormData.asset_service}
                                 onChange={(e) => handleTicketMgmtInputChange('asset_service', e.target.value)}
@@ -7074,7 +7285,7 @@ export const TicketDetailsPage = () => {
                               zIndex: 1,
                             }}
                           >
-                            Preventive Action
+                            Preventive Action 
                           </label>
 
                           {/* React Select */}

@@ -663,6 +663,8 @@ export const ResolutionEscalationTab: React.FC = () => {
                           placeholder="Select up to 15 Options..."
                           isLoading={loadingUsers}
                           className="min-w-[250px]"
+                          menuPlacement="auto"
+                          maxMenuHeight={150}
                           styles={{
                             control: (base) => ({
                               ...base,
@@ -674,6 +676,31 @@ export const ResolutionEscalationTab: React.FC = () => {
                             multiValue: (base) => ({
                               ...base,
                               fontSize: '12px'
+                            }),
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 50,
+                              position: 'relative'
+                            }),
+                            menuList: (base) => ({
+                              ...base,
+                              maxHeight: '150px',
+                              overflowY: 'auto'
+                            }),
+                            option: (base, state) => ({
+                              ...base,
+                              fontSize: '14px',
+                              padding: '8px 12px',
+                              backgroundColor: state.isSelected 
+                                ? '#3b82f6' 
+                                : state.isFocused 
+                                  ? '#e5e7eb' 
+                                  : 'white',
+                              color: state.isSelected ? 'white' : '#374151',
+                              cursor: 'pointer',
+                              '&:hover': {
+                                backgroundColor: state.isSelected ? '#3b82f6' : '#f3f4f6'
+                              }
                             })
                           }}
                         />
@@ -906,7 +933,7 @@ export const ResolutionEscalationTab: React.FC = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto overflow-x-visible">
           <DialogHeader>
             <DialogTitle>Edit</DialogTitle>
           </DialogHeader>
@@ -959,13 +986,19 @@ export const ResolutionEscalationTab: React.FC = () => {
                         <ReactSelect
                           isMulti
                           options={userOptions}
-                          value={userOptions.filter(option => watch(`escalationLevels.${level}.users`)?.includes(option.value))}
+                          value={userOptions.filter(option => {
+                            const currentUsers = watch(`escalationLevels.${level}.users`) || [];
+                            return currentUsers.includes(option.value);
+                          })}
                           onChange={(selected) => {
-                            setValue(`escalationLevels.${level}.users`, selected ? selected.map(s => s.value) : []);
+                            const selectedUserIds = selected ? selected.map(s => s.value) : [];
+                            setValue(`escalationLevels.${level}.users`, selectedUserIds, { shouldValidate: true });
                           }}
                           placeholder="Select up to 15 Options..."
                           isLoading={loadingUsers}
                           className="min-w-[250px]"
+                          menuPlacement="auto"
+                          maxMenuHeight={150}
                           styles={{
                             control: (base) => ({
                               ...base,
@@ -977,6 +1010,31 @@ export const ResolutionEscalationTab: React.FC = () => {
                             multiValue: (base) => ({
                               ...base,
                               fontSize: '12px'
+                            }),
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 50,
+                              position: 'relative'
+                            }),
+                            menuList: (base) => ({
+                              ...base,
+                              maxHeight: '150px',
+                              overflowY: 'auto'
+                            }),
+                            option: (base, state) => ({
+                              ...base,
+                              fontSize: '14px',
+                              padding: '8px 12px',
+                              backgroundColor: state.isSelected 
+                                ? '#3b82f6' 
+                                : state.isFocused 
+                                  ? '#e5e7eb' 
+                                  : 'white',
+                              color: state.isSelected ? 'white' : '#374151',
+                              cursor: 'pointer',
+                              '&:hover': {
+                                backgroundColor: state.isSelected ? '#3b82f6' : '#f3f4f6'
+                              }
                             })
                           }}
                         />
