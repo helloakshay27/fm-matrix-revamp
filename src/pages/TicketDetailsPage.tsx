@@ -331,7 +331,6 @@ const renderAssociationSpecificData = (ticketData: any) => {
         { label: 'Checklist Type', value: ticketData.checklist_type || '-' },
         // { label: 'Assigned To ID', value: Array.isArray(ticketData.checklist_assigned_to_id) ? ticketData.checklist_assigned_to_id.join(', ') : (ticketData.checklist_assigned_to_id || '-') },
         { label: 'Assigned To', value: ticketData.checklist_assigned_to_name || '-' },
-        { label: 'Attachments', value: ticketData.response_attachments && ticketData.response_attachments.length > 0 ? `${ticketData.response_attachments.length} attachment(s)` : 'No attachments' },
       ];
 
     case 'Patrolling':
@@ -355,7 +354,7 @@ const renderAssociationSpecificData = (ticketData: any) => {
         { label: 'Third Level Category', value: ticketData.incident_third_level_category || '-' },
         { label: 'Level of Incident', value: ticketData.level_of_incident || '-' },
         { label: 'Support Required', value: ticketData.incident_support_required ? 'Yes' : 'No' },
-        { label: 'Attachments', value: ticketData.incident_attachments && ticketData.incident_attachments.length > 0 ? `${ticketData.incident_attachments.length} attachment(s)` : 'No attachments' },
+        { label: '', value: '' }, // Empty cell for grid alignment
       ];
 
     case 'Audit':
@@ -363,8 +362,8 @@ const renderAssociationSpecificData = (ticketData: any) => {
         { label: 'Audit ID', value: ticketData.audit_id || '-' },
         { label: 'Conducted By', value: ticketData.audit_conducted_by || '-' },
         { label: 'Audit Type', value: ticketData.audit_type || '-' },
-        { label: 'Attachments', value: ticketData.audit_attachments && ticketData.audit_attachments.length > 0 ? `${ticketData.audit_attachments.length} attachment(s)` : 'No attachments' },
         { label: '', value: '' }, // Empty cells for grid alignment
+        { label: '', value: '' },
         { label: '', value: '' },
         { label: '', value: '' },
         { label: '', value: '' },
@@ -3336,8 +3335,8 @@ export const TicketDetailsPage = () => {
                       ))}
                     </div>
 
-                    {/* Association Attachments */}
-                    {ticketData.response_attachments && Array.isArray(ticketData.response_attachments) && ticketData.response_attachments.length > 0 && (
+                    {/* Association Attachments - Only for Checklist */}
+                    {(ticketData?.asset_service === 'Checklist' || ticketData?.service_or_asset === 'Checklist') && ticketData.response_attachments && Array.isArray(ticketData.response_attachments) && ticketData.response_attachments.length > 0 && (
                       <div className="mt-6 pt-4 border-t border-gray-200">
                         <div className="mb-3">
                           <span className="text-sm font-medium text-gray-600">Attachments:</span>
@@ -6121,14 +6120,14 @@ export const TicketDetailsPage = () => {
                   {/* Body */}
                   <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
                     {/* Association Type Indicator */}
-                    <div className="mb-4 pb-3 border-b border-gray-200">
+                    {/* <div className="mb-4 pb-3 border-b border-gray-200">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-gray-600">Association Type:</span>
                         <span className="px-3 py-1 text-sm font-semibold text-white bg-[#C72030] rounded-full">
                           {ticketData.asset_service || ticketData.service_or_asset || 'Asset'}
                         </span>
                       </div>
-                    </div>
+                    </div> */}
                     
                     {/* Dynamic Association Data */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
@@ -6144,8 +6143,8 @@ export const TicketDetailsPage = () => {
                       ))}
                     </div>
 
-                    {/* Association Attachments */}
-                    {ticketData.response_attachments && Array.isArray(ticketData.response_attachments) && ticketData.response_attachments.length > 0 && (
+                    {/* Association Attachments - Only for Checklist */}
+                    {(ticketData?.asset_service === 'Checklist' || ticketData?.service_or_asset === 'Checklist') && ticketData.response_attachments && Array.isArray(ticketData.response_attachments) && ticketData.response_attachments.length > 0 && (
                       <div className="mt-6 pt-4 border-t border-gray-200">
                         <div className="mb-3">
                           <span className="text-sm font-medium text-gray-600">Attachments:</span>
