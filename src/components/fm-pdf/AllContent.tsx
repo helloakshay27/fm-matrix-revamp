@@ -3594,14 +3594,14 @@ const AllContent = () => {
                                                         return n > 0 ? `+${base}` : `-${base}`;
                                                     };
 
-                                                    const curOpen = pick('open');
-                                                    const curInProg = pick('in_progress');
-                                                    const curOver = pick('overdue');
-                                                    const curPart = pick('partially_closed');
-                                                    const curClosed = pick('closed');
+                                                    const curOpen = pick('Closed');
+                                                    const curInProg = pick('Work In Progress');
+                                                    const curOver = pick('Overdue');
+                                                    const curPart = pick('Partially Closed');
+                                                    const curClosed = pick('Closed');
 
-                                                    const diffOver = pickDiff('overdue');
-                                                    const diffClosed = pickDiff('closed');
+                                                    const diffOver = pickDiff('Overdue');
+                                                    const diffClosed = pickDiff('Closed');
 
                                                     // Arrow logic: Overdue up = red, down = green. Closed up = green, down = red.
                                                     const overdueArrowUp = diffOver > 0;
