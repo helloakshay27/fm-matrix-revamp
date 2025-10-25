@@ -11,11 +11,11 @@
   height: 36px !important;
 }
 
-td, th{
+/* td, th{
   padding: 12px 16px 12px 12px !important;
   height: 40px !important;
   vertical-align: middle !important;
-}
+} */
 
 @media (min-width: 640px) {
   .MuiFormControl-root .MuiOutlinedInput-root {
