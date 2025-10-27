@@ -776,7 +776,6 @@ import { DashboardMobile } from "./pages/DashboardMobile";
 import SafetyCheckAudit from './pages/SafetyCheckAudit';
 import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
-import NextcloudFilesPage from "./pages/NextcloudFilesPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -3055,10 +3054,7 @@ function App() {
                     path="/master/inventory-sub-type/edit/:id"
                     element={<EditInventorySubTypePage />}
                   />
-                  <Route
-                    path="/vas/nextcloud-files"
-                    element={<NextcloudFilesPage />}
-                  />
+                 
 
                   <Route
                     path="/maintenance/waste/generation/add"
