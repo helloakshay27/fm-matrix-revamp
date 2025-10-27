@@ -195,17 +195,26 @@ export const getOrganizationsByEmail = async (
 export const loginUser = async (
   email: string,
   password: string,
-  baseUrl: string
+  baseUrl: string,
+  organizationId?: number
 ): Promise<User> => {
+  // Build request body
+  const requestBody: any = {
+    email,
+    password,
+  };
+
+  // Add organization_id if provided
+  if (organizationId) {
+    requestBody.organization_id = organizationId;
+  }
+
   const response = await fetch(`https://${baseUrl}/api/users/sign_in.json`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      email,
-      password,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {

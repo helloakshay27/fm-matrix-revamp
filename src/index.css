@@ -883,6 +883,7 @@ td div , td span, th div, td button, td a {
 }
 
 .figma-card-header {
+      border: 1px solid #f6e7e7;
   background: #F6F4EE !important;
   padding: 16px 20px !important;
   /* border-radius: 8px 8px 0 0 !important; */
@@ -917,6 +918,7 @@ td div , td span, th div, td button, td a {
 
 /* Card Content */
 .figma-card-content {
+      border: 1px solid #f6e7e7;
   padding: 24px 20px !important;
   background: white !important;
   border-top: none !important;

@@ -2985,7 +2985,7 @@ export const SurveyResponseDetailPage = () => {
                   ticket_number: complaint.ticket_number,
                   heading: complaint.heading || "Survey Response Issue",
                   category: complaint.category || "-",
-                  assignee: complaint.assignee || "-",
+                  assigned_to: complaint.assigned_to || "-",
                   status: complaint.status || "Pending",
                   updated_by: "-",
                   created_by: "-",

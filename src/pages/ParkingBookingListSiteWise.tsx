@@ -767,6 +767,13 @@ const ParkingBookingListSiteWise = () => {
           total_pages: response.pagination.total_pages
         });
         
+        console.log('🔍 Pagination Update Debug:');
+        console.log('Current Page:', response.pagination.current_page);
+        console.log('Total Pages:', response.pagination.total_pages);
+        console.log('Total Count:', response.pagination.total_count);
+        console.log('Card Filter Active:', cardFilter?.active);
+        console.log('Table Data Length:', transformedBookings.length);
+        
       } catch (error) {
         console.error('Error loading booking data:', error);
         setError('Failed to load parking booking data');
@@ -842,7 +849,17 @@ const ParkingBookingListSiteWise = () => {
     // Only apply filter for Total Booked Parking cards as requested
     if (metric !== 'booked') return;
     const categoryId = getCategoryIdForVehicle(vehicle) || undefined;
+    console.log('🔍 Card Click Debug:');
+    console.log('Vehicle:', vehicle);
+    console.log('Metric:', metric);
+    console.log('Category ID:', categoryId);
     setCardFilter({ active: true, categoryId, status: 'confirmed' });
+    setCurrentPage(1);
+  };
+
+  // Clear card filter
+  const handleClearCardFilter = () => {
+    setCardFilter(null);
     setCurrentPage(1);
   };
 
@@ -874,12 +891,80 @@ const ParkingBookingListSiteWise = () => {
       params.append('start_date', exportDateRange.startDate);
       params.append('end_date', exportDateRange.endDate);
       
+      // Add current applied filters to export parameters
+      // Search query
+      if (debouncedSearchTerm.trim()) {
+        params.append('q[user_full_name_or_user_email_or_user_designation_cont]', debouncedSearchTerm.trim());
+      }
+      
+      // Category filter
+      if (appliedFilters.category && appliedFilters.category !== 'all') {
+        params.append('q[parking_configuration_parking_category_id_eq]', appliedFilters.category);
+      }
+      
+      // User filter
+      if (appliedFilters.user && appliedFilters.user !== 'all') {
+        params.append('q[user_id_in][]', appliedFilters.user);
+      }
+      
+      // Parking slot filter
+      if (appliedFilters.parking_slot.trim()) {
+        params.append('q[parking_number_name_cont]', appliedFilters.parking_slot.trim());
+      }
+      
+      // Status filter
+      if (appliedFilters.status !== 'all') {
+        const statusMap: { [key: string]: string } = {
+          'Confirmed': 'confirmed',
+          'Cancelled': 'cancelled',
+          'confirmed': 'confirmed',
+          'cancelled': 'cancelled'
+        };
+        const apiStatus = statusMap[appliedFilters.status] || appliedFilters.status;
+        params.append('q[status_in][]', apiStatus);
+      }
+      
+      // Building filter
+      if (appliedFilters.building && appliedFilters.building !== 'all') {
+        params.append('q[parking_configuration_building_id_eq]', appliedFilters.building);
+      }
+      
+      // Floor filter
+      if (appliedFilters.floor && appliedFilters.floor !== 'all') {
+        params.append('q[parking_configuration_floor_id_eq]', appliedFilters.floor);
+      }
+      
+      // Scheduled date range filter
+      if (appliedFilters.scheduled_on_from.trim() || appliedFilters.scheduled_on_to.trim()) {
+        const fromDate = appliedFilters.scheduled_on_from.trim() ? formatDateForAPI(appliedFilters.scheduled_on_from.trim()) : formatDateForAPI(appliedFilters.scheduled_on_to.trim());
+        const toDate = appliedFilters.scheduled_on_to.trim() ? formatDateForAPI(appliedFilters.scheduled_on_to.trim()) : formatDateForAPI(appliedFilters.scheduled_on_from.trim());
+        params.append('q[date_range1]', `${fromDate} - ${toDate}`);
+      }
+      
+      // Booked date range filter
+      if (appliedFilters.booked_on_from.trim() || appliedFilters.booked_on_to.trim()) {
+        const fromDate = appliedFilters.booked_on_from.trim() ? formatDateForAPI(appliedFilters.booked_on_from.trim()) : formatDateForAPI(appliedFilters.booked_on_to.trim());
+        const toDate = appliedFilters.booked_on_to.trim() ? formatDateForAPI(appliedFilters.booked_on_to.trim()) : formatDateForAPI(appliedFilters.booked_on_from.trim());
+        params.append('q[date_range]', `${fromDate} - ${toDate}`);
+      }
+      
+      // Card filter overrides (if active)
+      if (cardFilter?.active && cardFilter.categoryId) {
+        params.set('q[parking_configuration_parking_category_id_eq]', cardFilter.categoryId);
+      }
+      if (cardFilter?.active && cardFilter.status) {
+        params.set('q[status_in][]', cardFilter.status);
+      }
+      
       const fullExportUrl = `${exportUrl}?${params.toString()}`;
       
       console.log('🔍 Export API Debug Info:');
       console.log('Export URL:', fullExportUrl);
       console.log('Start Date:', exportDateRange.startDate);
       console.log('End Date:', exportDateRange.endDate);
+      console.log('Applied Filters:', appliedFilters);
+      console.log('Card Filter:', cardFilter);
+      console.log('Search Term:', debouncedSearchTerm);
       
       const response = await fetch(fullExportUrl, options);
       
@@ -1136,11 +1221,12 @@ const ParkingBookingListSiteWise = () => {
       setCurrentPage(page);
       setLoading(true);
       
-      // Convert UI filters to API filter parameters
+      // Convert UI filters to API filter parameters (same logic as in useEffect)
       const buildApiFilterParams = (): ApiFilterParams => {
         const apiParams: ApiFilterParams = {};
         
-        if (appliedFilters.category !== 'all') {
+        // Only apply dialog category if not overridden by card filter
+        if (appliedFilters.category !== 'all' && !cardFilter?.active) {
           console.log('🔍 Building API Filter (Page Change) - Category:');
           console.log('UI Filter category value:', appliedFilters.category);
           console.log('UI Filter category type:', typeof appliedFilters.category);
@@ -1158,7 +1244,8 @@ const ParkingBookingListSiteWise = () => {
           apiParams.parking_slot = appliedFilters.parking_slot.trim();
         }
         
-        if (appliedFilters.status !== 'all') {
+        // Only dialog status if not overridden by card filter
+        if (appliedFilters.status !== 'all' && !cardFilter?.active) {
           // Map UI status to API status
           const statusMap: { [key: string]: string } = {
             'Confirmed': 'confirmed',
@@ -1200,6 +1287,16 @@ const ParkingBookingListSiteWise = () => {
           console.log('🔍 Formatted Booked Date Range (Page Change):', apiParams.booked_date_range);
         }
         
+        // Apply card filter overrides if active
+        if (cardFilter?.active && cardFilter.categoryId) {
+          apiParams.category = cardFilter.categoryId;
+          console.log('🔍 Applied Card Filter Category (Page Change):', cardFilter.categoryId);
+        }
+        if (cardFilter?.active && cardFilter.status) {
+          apiParams.statuses = [cardFilter.status];
+          console.log('🔍 Applied Card Filter Status (Page Change):', cardFilter.status);
+        }
+        
         return apiParams;
       };
       
@@ -1225,6 +1322,14 @@ const ParkingBookingListSiteWise = () => {
         total_count: response.pagination.total_count,
         total_pages: response.pagination.total_pages
       });
+      
+      console.log('🔍 Page Change Debug:');
+      console.log('Requested Page:', page);
+      console.log('API Response - Current Page:', response.pagination.current_page);
+      console.log('API Response - Total Pages:', response.pagination.total_pages);
+      console.log('API Response - Total Count:', response.pagination.total_count);
+      console.log('Card Filter Active:', cardFilter?.active);
+      console.log('Transformed Data Length:', transformedBookings.length);
       
     } catch (error) {
       console.error('Error changing page:', error);
@@ -1383,6 +1488,25 @@ const ParkingBookingListSiteWise = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Left Side Controls */}
         <div className="flex gap-2">
+          {/* Card Filter Indicator */}
+          {/* {cardFilter?.active && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 border border-blue-300 rounded-md text-sm">
+              <span className="text-blue-800 font-medium">
+                Card Filter: {cardFilter.categoryId ? 
+                  parkingCategories.find(c => c.id.toString() === cardFilter.categoryId)?.name || 'Unknown Category' : 
+                  'Active'
+                } - {cardFilter.status === 'confirmed' ? 'Confirmed' : cardFilter.status}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearCardFilter}
+                className="h-5 w-5 p-0 text-blue-600 hover:text-blue-800"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          )} */}
           {/* <Button 
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
             onClick={handleActionClick}
@@ -1700,6 +1824,31 @@ const ParkingBookingListSiteWise = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Show applied filters info */}
+            {(appliedFilters.category !== 'all' || 
+              appliedFilters.user !== 'all' || 
+              appliedFilters.status !== 'all' || 
+              appliedFilters.building !== 'all' || 
+              appliedFilters.floor !== 'all' || 
+              appliedFilters.parking_slot.trim() ||
+              debouncedSearchTerm.trim() ||
+              cardFilter?.active) && (
+              <div className="">
+                {/* <p className="text-sm font-medium text-blue-800 mb-2">Current Filters Applied:</p> */}
+                {/* <div className="text-xs text-blue-700 space-y-1">
+                  {appliedFilters.category !== 'all' && <div>• Category: {parkingCategories.find(c => c.id.toString() === appliedFilters.category)?.name || appliedFilters.category}</div>}
+                  {appliedFilters.user !== 'all' && <div>• User: {users.find(u => u.id.toString() === appliedFilters.user)?.full_name || appliedFilters.user}</div>}
+                  {appliedFilters.status !== 'all' && <div>• Status: {appliedFilters.status}</div>}
+                  {appliedFilters.building !== 'all' && <div>• Building: {buildings.find(b => b.id.toString() === appliedFilters.building)?.name || appliedFilters.building}</div>}
+                  {appliedFilters.floor !== 'all' && <div>• Floor: {floors.find(f => f.id.toString() === appliedFilters.floor)?.name || appliedFilters.floor}</div>}
+                  {appliedFilters.parking_slot.trim() && <div>• Parking Slot: {appliedFilters.parking_slot}</div>}
+                  {debouncedSearchTerm.trim() && <div>• Search: "{debouncedSearchTerm}"</div>}
+                  {cardFilter?.active && <div>• Card Filter: Active</div>}
+                </div> */}
+                {/* <p className="text-xs text-blue-600 mt-2 italic">Export will include only the filtered data.</p> */}
+              </div>
+            )}
+            
             <div className="space-y-2">
               <Label className="text-sm font-medium text-[hsl(var(--analytics-text))]">Start Date *</Label>
               <Input
