@@ -1020,15 +1020,115 @@ export const MobileSurveyLanding: React.FC = () => {
   // Move to previous question
   const moveToPreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
-      // Reset current question states
-      setCurrentQuestionValue("");
-      setSelectedOptions([]);
-      setSelectedRating(null);
-      setSelectedTags([]);
-      setShowGenericTags(false);
+      // Move to previous question first
+      const previousQuestionIndex = currentQuestionIndex - 1;
+      setCurrentQuestionIndex(previousQuestionIndex);
 
-      // Move to previous question
-      setCurrentQuestionIndex((prev) => prev - 1);
+      // Get the previous question
+      const previousQuestion = surveyData?.snag_checklist.snag_questions[previousQuestionIndex];
+      
+      if (previousQuestion) {
+        // Restore saved answer for the previous question
+        const savedAnswer = answers[previousQuestion.id];
+        
+        if (savedAnswer) {
+          // Restore question-specific states based on question type
+          switch (previousQuestion.qtype) {
+            case "multiple":
+              if (savedAnswer.selectedOptions) {
+                setSelectedOptions(savedAnswer.selectedOptions);
+              }
+              // If there are tags and comments, show generic tags view
+              if (savedAnswer.selectedTags && savedAnswer.selectedTags.length > 0) {
+                setSelectedTags(savedAnswer.selectedTags);
+                setShowGenericTags(true);
+                
+                // Set pending negative data for restoration
+                if (savedAnswer.selectedOptions && savedAnswer.selectedOptions.length > 0) {
+                  setPendingNegativeType("multiple");
+                  setPendingNegativeAnswer(savedAnswer.selectedOptions);
+                }
+              }
+              break;
+              
+            case "rating":
+              if (savedAnswer.rating !== undefined) {
+                setSelectedRating(savedAnswer.rating);
+              }
+              // If there are tags and comments, show generic tags view
+              if (savedAnswer.selectedTags && savedAnswer.selectedTags.length > 0) {
+                setSelectedTags(savedAnswer.selectedTags);
+                setShowGenericTags(true);
+                
+                // Set pending negative data for restoration
+                if (savedAnswer.rating !== undefined) {
+                  // Find the corresponding option for the rating
+                  const ratingToOptionIndex = Array.from(
+                    { length: previousQuestion.snag_quest_options?.length || 5 },
+                    (_, index) => ({
+                      rating: index + 1,
+                      optionIndex: index,
+                    })
+                  );
+                  const selectedOptionMapping = ratingToOptionIndex.find(
+                    (opt) => opt.rating === savedAnswer.rating
+                  );
+                  const selectedOption =
+                    selectedOptionMapping &&
+                    previousQuestion.snag_quest_options?.[selectedOptionMapping.optionIndex];
+                  
+                  if (selectedOption) {
+                    setPendingNegativeType("rating");
+                    setPendingNegativeAnswer({
+                      rating: savedAnswer.rating,
+                      option: selectedOption,
+                    });
+                  }
+                }
+              }
+              break;
+              
+            case "emoji":
+            case "smiley":
+              if (savedAnswer.rating !== undefined) {
+                setSelectedRating(savedAnswer.rating);
+              }
+              // If there are tags and comments, show generic tags view
+              if (savedAnswer.selectedTags && savedAnswer.selectedTags.length > 0) {
+                setSelectedTags(savedAnswer.selectedTags);
+                setShowGenericTags(true);
+                
+                // Set pending negative data for restoration
+                if (savedAnswer.rating !== undefined && savedAnswer.emoji && savedAnswer.label) {
+                  setPendingNegativeType(previousQuestion.qtype as "emoji" | "smiley");
+                  setPendingNegativeAnswer({
+                    rating: savedAnswer.rating,
+                    emoji: savedAnswer.emoji,
+                    label: savedAnswer.label,
+                  });
+                }
+              }
+              break;
+              
+            case "input":
+            case "text":
+            case "description":
+              if (savedAnswer.value) {
+                setCurrentQuestionValue(savedAnswer.value.toString());
+              }
+              break;
+          }
+        } else {
+          // No saved answer, reset states
+          setCurrentQuestionValue("");
+          setSelectedOptions([]);
+          setSelectedRating(null);
+          setSelectedTags([]);
+          setShowGenericTags(false);
+          setPendingNegativeType(null);
+          setPendingNegativeAnswer(null);
+        }
+      }
     }
   };
 
@@ -1880,7 +1980,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   currentQuestion.qtype === "smiley") &&
                   !showGenericTags && (
                     <div className="w-full">
-                      <div className="flex justify-center items-start sm:gap-3 bg-black/60 rounded px-2">
+                      <div className="flex justify-between items-center gap-3 sm:gap-4 bg-black/60 rounded-[0.20rem]">
                         {getEmojiOptions(currentQuestion).map((option) => (
                           <button
                             type="button"
@@ -1892,12 +1992,16 @@ export const MobileSurveyLanding: React.FC = () => {
                                 option.label
                               )
                             }
-                            className="flex flex-col rounded-[0.20rem] items-center justify-start p-2 sm:p-3 transition-colors flex-1 min-w-0 mx-4"
+                            className={`flex flex-col rounded-[0.20rem] items-center justify-center p-2 sm:p-3 transition-all flex-1 min-w-0 ${
+                              selectedRating === option.rating
+                                ? "bg-blue-500/40 border-2 border-blue-400 shadow-md"
+                                : "hover:bg-white/10 border-2 border-transparent"
+                            }`}
                           >
-                            <span className="text-3xl sm:text-4xl mb-2">
+                            <span className="text-3xl sm:text-4xl md:text-5xl mb-1 sm:mb-2">
                               {option.emoji}
                             </span>
-                            <span className="text-xs sm:text-xs text-white/90 text-center leading-tight break-words ">
+                            <span className="text-xs sm:text-sm text-white/90 text-center leading-tight break-words font-medium">
                               {option.label}
                             </span>
                           </button>
@@ -1909,7 +2013,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
                 {showGenericTags && (
                   <>
-                    <div className="bg-white/75 backdrop-blur-md rounded-lg p-3 shadow-lg">
+                    <div className="bg-white/50 backdrop-blur-sm rounded-lg p-2 sm:p-3 shadow-lg relative">
                       <button
                         type="button"
                         onClick={() => {
@@ -1919,20 +2023,20 @@ export const MobileSurveyLanding: React.FC = () => {
                           setPendingNegativeType(null);
                           setPendingNegativeAnswer(null);
                         }}
-                        className="absolute top-3 right-3 text-black underline hover:text-black/90 text-xs whitespace-nowrap transition-colors"
+                        className="absolute top-2 right-2 z-10 text-black underline hover:text-black/90 text-[10px] sm:text-xs transition-colors"
                       >
                         Back
                       </button>
 
                       {/* Centered heading */}
-                      <div className="flex justify-center items-center mb-3 mt-4">
-                        <h4 className="text-center text-sm font-semibold text-black/100 whitespace-nowrap">
+                      <div className="flex mt-4 justify-center items-center mb-2 sm:mb-3 pr-10">
+                        <h4 className="text-center text-[11px] sm:text-sm font-semibold text-black/100 leading-tight">
                           What specifically needs improvement?
                         </h4>
                       </div>
 
                       {/* Grid Layout - 2x2 for first 4, then repeat */}
-                      <div className="overflow-x-auto pb-2 -mx-1">
+                      <div className="overflow-x-auto pb-2 -mx-1 sm:-mx-0">
                         {(() => {
                           const tags = getCurrentQuestion()?.generic_tags || [];
                           const itemsPerPage = 4;
@@ -1946,14 +2050,14 @@ export const MobileSurveyLanding: React.FC = () => {
                               )
                           );
                           return (
-                            <div className="flex flex-row gap-3 px-1">
+                            <div className="flex flex-row gap-2 sm:gap-3 px-1 sm:px-0">
                               {pages.map((pageTags, pageIdx) => (
                                 <div
                                   key={pageIdx}
-                                  className="flex flex-col gap-3 flex-shrink-0 w-full"
+                                  className="flex flex-col gap-2 sm:gap-3 flex-shrink-0 w-full"
                                 >
                                   {/* First row: items 0,1 */}
-                                  <div className="flex flex-row gap-3">
+                                  <div className="flex flex-row gap-2 sm:gap-3">
                                     {[0, 1].map((slotIdx) => {
                                       const tag = pageTags[slotIdx];
                                       return tag ? (
@@ -1963,7 +2067,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                           onClick={() =>
                                             handleGenericTagClick(tag)
                                           }
-                                          className={`flex-1 flex flex-col items-center justify-center p-2 rounded-[0.20rem] text-center transition-all border-2 ${
+                                          className={`flex-1 flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
                                             selectedTags.some(
                                               (selectedTag) =>
                                                 selectedTag.id === tag.id
@@ -1973,7 +2077,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                           }`}
                                         >
                                           <div
-                                            className="w-full mb-1"
+                                            className="w-full mb-0.5 sm:mb-1"
                                             style={{ aspectRatio: "16/9" }}
                                           >
                                             {tag.icons &&
@@ -1985,13 +2089,13 @@ export const MobileSurveyLanding: React.FC = () => {
                                               />
                                             ) : (
                                               <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                                <span className="text-xl">
+                                                <span className="text-base sm:text-xl">
                                                   🏷️
                                                 </span>
                                               </div>
                                             )}
                                           </div>
-                                          <span className="text-xs font-medium text-gray-700 leading-tight">
+                                          <span className="text-[10px] sm:text-xs font-medium text-gray-700 leading-tight">
                                             {tag.category_name}
                                           </span>
                                         </button>
@@ -2004,7 +2108,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                     })}
                                   </div>
                                   {/* Second row: items 2,3 */}
-                                  <div className="flex flex-row gap-3">
+                                  <div className="flex flex-row gap-2 sm:gap-3">
                                     {[2, 3].map((slotIdx) => {
                                       const tag = pageTags[slotIdx];
                                       return tag ? (
@@ -2014,7 +2118,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                           onClick={() =>
                                             handleGenericTagClick(tag)
                                           }
-                                          className={`flex-1 flex flex-col items-center justify-center p-2 rounded-[0.20rem] text-center transition-all border-2 ${
+                                          className={`flex-1 flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
                                             selectedTags.some(
                                               (selectedTag) =>
                                                 selectedTag.id === tag.id
@@ -2024,7 +2128,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                           }`}
                                         >
                                           <div
-                                            className="w-full mb-1"
+                                            className="w-full mb-0.5 sm:mb-1"
                                             style={{ aspectRatio: "16/9" }}
                                           >
                                             {tag.icons &&
@@ -2036,13 +2140,13 @@ export const MobileSurveyLanding: React.FC = () => {
                                               />
                                             ) : (
                                               <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                                <span className="text-xl">
+                                                <span className="text-base sm:text-xl">
                                                   🏷️
                                                 </span>
                                               </div>
                                             )}
                                           </div>
-                                          <span className="text-xs font-medium text-gray-700 leading-tight">
+                                          <span className="text-[10px] sm:text-xs font-medium text-gray-700 leading-tight">
                                             {tag.category_name}
                                           </span>
                                         </button>
@@ -2064,7 +2168,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
                     {/* Description Field */}
                     <div>
-                      <label className="block text-xs font-medium text-white/90 mb-2">
+                      <label className="block text-[10px] sm:text-xs font-medium text-white/90 mb-1 sm:mb-2">
                         Comments (Optional)
                       </label>
                       <textarea
@@ -2073,7 +2177,7 @@ export const MobileSurveyLanding: React.FC = () => {
                           setCurrentNegativeComments(e.target.value)
                         }
                         placeholder="Please describe any specific issues or suggestions..."
-                        className="w-full h-16 p-2 border border-blue-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
+                        className="w-full h-14 sm:h-16 p-2 border border-blue-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[10px] sm:text-xs"
                         disabled={isSubmitting}
                       />
                     </div>

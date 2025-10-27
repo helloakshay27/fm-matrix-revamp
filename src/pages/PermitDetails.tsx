@@ -1549,7 +1549,18 @@ export const PermitDetails = () => {
                                 Resume
                             </Button>
                         )}
-                        {!isFromPendingApprovals && permitData.show_print_form_button && (
+                        {/* {!isFromPendingApprovals && permitData.show_print_form_button && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handlePrintForm}
+                            >
+                                <Printer className="w-4 h-4 mr-2" />
+                                Print Form
+                            </Button>
+                        )} */}
+
+                        {permitData.show_print_form_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1559,7 +1570,17 @@ export const PermitDetails = () => {
                                 Print Form
                             </Button>
                         )}
-                        {!isFromPendingApprovals && permitData.show_print_jsa_button && (
+                        {/* {!isFromPendingApprovals && permitData.show_print_jsa_button && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handlePrintJSA}
+                            >
+                                <Printer className="w-4 h-4 mr-2" />
+                                Print JSA
+                            </Button>
+                        )} */}
+                        {permitData.show_print_jsa_button && (
                             <Button
                                 variant="outline"
                                 size="sm"

@@ -3054,6 +3054,7 @@ function App() {
                     path="/master/inventory-sub-type/edit/:id"
                     element={<EditInventorySubTypePage />}
                   />
+                 
 
                   <Route
                     path="/maintenance/waste/generation/add"
