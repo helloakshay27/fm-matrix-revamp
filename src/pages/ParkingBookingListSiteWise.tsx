@@ -138,6 +138,29 @@ interface UsersApiResponse {
   users: User[];
 }
 
+// Interface for buildings API response
+interface Building {
+  id: number;
+  name: string;
+  floors?: Floor[]; // Optional floors array within building
+}
+
+interface BuildingsApiResponse {
+  pms_buildings: Building[];
+}
+
+// Interface for floors API response  
+interface Floor {
+  id: number;
+  name: string;
+  building_id?: number;
+  wing_id?: number;
+}
+
+interface FloorsApiResponse {
+  floors: Floor[];
+}
+
 // Interface for parking categories API response
 interface ParkingCategoryImage {
   id: number;
@@ -170,6 +193,8 @@ interface ApiFilterParams {
   statuses?: string[];
   scheduled_date_range?: string;
   booked_date_range?: string;
+  building_id?: string;
+  floor_id?: string;
 }
 
 // Transform API data to match our UI structure
@@ -179,6 +204,8 @@ interface ParkingBookingSite {
   employee_email: string;
   schedule_date: string;
   booking_schedule: string;
+  booking_schedule_time: string;
+  booking_schedule_slot_time: string;
   category: string;
   building: string;
   floor: string;
@@ -230,6 +257,8 @@ const ParkingBookingListSiteWise = () => {
   } | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [parkingCategories, setParkingCategories] = useState<ParkingCategoryResponse[]>([]);
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [floors, setFloors] = useState<Floor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [apiPagination, setApiPagination] = useState({
@@ -325,12 +354,29 @@ const ParkingBookingListSiteWise = () => {
     return `${y}-${m}-${d}`;
   };
 
-  // Filter states
+  // Filter states - form filters (what user is typing/selecting)
   const [filters, setFilters] = useState({
     category: 'all',
     user: 'all',
     parking_slot: '',
     status: 'all',
+    building: 'all',
+    floor: 'all',
+    // Default Scheduled On to today
+    scheduled_on_from: getTodayYMD(),
+    scheduled_on_to: getTodayYMD(),
+    booked_on_from: '',
+    booked_on_to: ''
+  });
+
+  // Applied filters - actually used for API calls
+  const [appliedFilters, setAppliedFilters] = useState({
+    category: 'all',
+    user: 'all',
+    parking_slot: '',
+    status: 'all',
+    building: 'all',
+    floor: 'all',
     // Default Scheduled On to today
     scheduled_on_from: getTodayYMD(),
     scheduled_on_to: getTodayYMD(),
@@ -431,6 +477,20 @@ const ParkingBookingListSiteWise = () => {
         });
       }
       
+      // Building filter
+      if (filterParams.building_id && filterParams.building_id !== 'all') {
+        console.log('🔍 Building Filter Debug:');
+        console.log('Building filter value:', filterParams.building_id);
+        params.append('q[parking_configuration_building_id_eq]', filterParams.building_id);
+      }
+      
+      // Floor filter
+      if (filterParams.floor_id && filterParams.floor_id !== 'all') {
+        console.log('🔍 Floor Filter Debug:');
+        console.log('Floor filter value:', filterParams.floor_id);
+        params.append('q[parking_configuration_floor_id_eq]', filterParams.floor_id);
+      }
+      
       if (filterParams.scheduled_date_range) {
         // Cards filter needs plain date_range; keep q[date_range1] for current date filter
         params.append('date_range', filterParams.scheduled_date_range);
@@ -509,6 +569,67 @@ const ParkingBookingListSiteWise = () => {
     }
   };
 
+  // Fetch buildings from API for filter dropdown
+  const fetchBuildings = async () => {
+    try {
+      const url = getFullUrl('/pms/buildings.json');
+      const options = getAuthenticatedFetchOptions();
+      
+      console.log('🔍 Fetching buildings from:', url);
+      
+      const response = await fetch(url, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data: BuildingsApiResponse = await response.json();
+      return data.pms_buildings;
+    } catch (error) {
+      console.error('Error fetching buildings:', error);
+      throw error;
+    }
+  };
+
+  // Fetch floors from API for filter dropdown
+  const fetchFloors = async () => {
+    try {
+      // First, get buildings which contain floors
+      const buildingsUrl = getFullUrl('/pms/buildings.json');
+      const options = getAuthenticatedFetchOptions();
+      
+      console.log('🔍 Fetching floors from buildings API:', buildingsUrl);
+      
+      const response = await fetch(buildingsUrl, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data: BuildingsApiResponse = await response.json();
+      
+      // Extract floors from all buildings
+      const allFloors: Floor[] = [];
+      
+      data.pms_buildings.forEach(building => {
+        if (building.floors && building.floors.length > 0) {
+          // Add building_id to each floor for reference
+          const floorsWithBuildingId = building.floors.map(floor => ({
+            ...floor,
+            building_id: building.id
+          }));
+          allFloors.push(...floorsWithBuildingId);
+        }
+      });
+      
+      console.log('🔍 Extracted floors from buildings:', allFloors.length);
+      return allFloors;
+    } catch (error) {
+      console.error('Error fetching floors:', error);
+      throw error;
+    }
+  };
+
   // Load booking data from API
   useEffect(() => {
     const loadBookingData = async () => {
@@ -526,27 +647,27 @@ const ParkingBookingListSiteWise = () => {
           const apiParams: ApiFilterParams = {};
           
           // Only apply dialog category if not overridden by card filter
-          if (filters.category !== 'all' && !cardFilter?.active) {
+          if (appliedFilters.category !== 'all' && !cardFilter?.active) {
             console.log('🔍 Building API Filter - Category:');
-            console.log('UI Filter category value:', filters.category);
-            console.log('UI Filter category type:', typeof filters.category);
-            apiParams.category = filters.category;
+            console.log('UI Filter category value:', appliedFilters.category);
+            console.log('UI Filter category type:', typeof appliedFilters.category);
+            apiParams.category = appliedFilters.category;
           }
           // Do not apply card overrides to base (cards should stay original)
           
-          if (filters.user !== 'all') {
-            apiParams.user_ids = [filters.user];
+          if (appliedFilters.user !== 'all') {
+            apiParams.user_ids = [appliedFilters.user];
           }
           
-          if (filters.parking_slot.trim()) {
+          if (appliedFilters.parking_slot.trim()) {
             console.log('🔍 Building API Filter - Parking Slot:');
-            console.log('UI Filter parking_slot value:', filters.parking_slot);
-            console.log('UI Filter parking_slot trimmed:', filters.parking_slot.trim());
-            apiParams.parking_slot = filters.parking_slot.trim();
+            console.log('UI Filter parking_slot value:', appliedFilters.parking_slot);
+            console.log('UI Filter parking_slot trimmed:', appliedFilters.parking_slot.trim());
+            apiParams.parking_slot = appliedFilters.parking_slot.trim();
           }
           
           // Only dialog status in base
-          if (filters.status !== 'all') {
+          if (appliedFilters.status !== 'all') {
             // Map UI status to API status
             const statusMap: { [key: string]: string } = {
               'Confirmed': 'confirmed',
@@ -554,22 +675,36 @@ const ParkingBookingListSiteWise = () => {
               'confirmed': 'confirmed',
               'cancelled': 'cancelled'
             };
-            const apiStatus = statusMap[filters.status] || filters.status;
+            const apiStatus = statusMap[appliedFilters.status] || appliedFilters.status;
             apiParams.statuses = [apiStatus];
           }
           
-          if (filters.scheduled_on_from.trim() || filters.scheduled_on_to.trim()) {
+          // Building filter
+          if (appliedFilters.building !== 'all') {
+            console.log('🔍 Building API Filter - Building:');
+            console.log('UI Filter building value:', appliedFilters.building);
+            apiParams.building_id = appliedFilters.building;
+          }
+          
+          // Floor filter
+          if (appliedFilters.floor !== 'all') {
+            console.log('🔍 Building API Filter - Floor:');
+            console.log('UI Filter floor value:', appliedFilters.floor);
+            apiParams.floor_id = appliedFilters.floor;
+          }
+          
+          if (appliedFilters.scheduled_on_from.trim() || appliedFilters.scheduled_on_to.trim()) {
             // Build date range for scheduled_on with proper date formatting
-            const fromDate = filters.scheduled_on_from.trim() ? formatDateForAPI(filters.scheduled_on_from.trim()) : formatDateForAPI(filters.scheduled_on_to.trim());
-            const toDate = filters.scheduled_on_to.trim() ? formatDateForAPI(filters.scheduled_on_to.trim()) : formatDateForAPI(filters.scheduled_on_from.trim());
+            const fromDate = appliedFilters.scheduled_on_from.trim() ? formatDateForAPI(appliedFilters.scheduled_on_from.trim()) : formatDateForAPI(appliedFilters.scheduled_on_to.trim());
+            const toDate = appliedFilters.scheduled_on_to.trim() ? formatDateForAPI(appliedFilters.scheduled_on_to.trim()) : formatDateForAPI(appliedFilters.scheduled_on_from.trim());
             apiParams.scheduled_date_range = `${fromDate} - ${toDate}`;
             console.log('🔍 Formatted Scheduled Date Range:', apiParams.scheduled_date_range);
           }
           
-          if (filters.booked_on_from.trim() || filters.booked_on_to.trim()) {
+          if (appliedFilters.booked_on_from.trim() || appliedFilters.booked_on_to.trim()) {
             // Build date range for booked_on with proper date formatting
-            const fromDate = filters.booked_on_from.trim() ? formatDateForAPI(filters.booked_on_from.trim()) : formatDateForAPI(filters.booked_on_to.trim());
-            const toDate = filters.booked_on_to.trim() ? formatDateForAPI(filters.booked_on_to.trim()) : formatDateForAPI(filters.booked_on_from.trim());
+            const fromDate = appliedFilters.booked_on_from.trim() ? formatDateForAPI(appliedFilters.booked_on_from.trim()) : formatDateForAPI(appliedFilters.booked_on_to.trim());
+            const toDate = appliedFilters.booked_on_to.trim() ? formatDateForAPI(appliedFilters.booked_on_to.trim()) : formatDateForAPI(appliedFilters.booked_on_from.trim());
             apiParams.booked_date_range = `${fromDate} - ${toDate}`;
             console.log('🔍 Formatted Booked Date Range:', apiParams.booked_date_range);
           }
@@ -590,11 +725,13 @@ const ParkingBookingListSiteWise = () => {
         };
         
         // Fetch both parking bookings and users in parallel
-        const [cardsResponse, response, usersData, categoriesData] = await Promise.all([
+        const [cardsResponse, response, usersData, categoriesData, buildingsData, floorsData] = await Promise.all([
           fetchParkingBookings(1, debouncedSearchTerm, buildApiFilterParamsBase()),
           fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParamsEffective()),
           fetchUsers(),
-          fetchParkingCategories()
+          fetchParkingCategories(),
+          fetchBuildings(),
+          fetchFloors()
         ]);
         
         // Set users data
@@ -602,6 +739,12 @@ const ParkingBookingListSiteWise = () => {
         
         // Set parking categories data
         setParkingCategories(categoriesData);
+        
+        // Set buildings data
+        setBuildings(buildingsData);
+        
+        // Set floors data
+        setFloors(floorsData);
         
         // Cards stay original (base filters only)
         setCards(cardsResponse.cards);
@@ -634,7 +777,7 @@ const ParkingBookingListSiteWise = () => {
     };
 
     loadBookingData();
-  }, [currentPage, itemsPerPage, debouncedSearchTerm, filters, cardFilter]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm, appliedFilters, cardFilter]);
 
   // Generate parking stats from cards data
   const parkingStats = useMemo(() => {
@@ -683,6 +826,16 @@ const ParkingBookingListSiteWise = () => {
   const getCategoryIdForVehicle = (vehicle: 'two' | 'four'): string | null => {
     return vehicle === 'two' ? twoWheelerCategoryId : fourWheelerCategoryId;
   };
+
+  // Filter floors based on selected building
+  const filteredFloors = useMemo(() => {
+    if (filters.building === 'all') {
+      return floors; // Show all floors if no building is selected
+    }
+    
+    const selectedBuildingId = parseInt(filters.building);
+    return floors.filter(floor => floor.building_id === selectedBuildingId);
+  }, [floors, filters.building]);
 
   // Handle card clicks to filter table data
   const handleStatCardClick = (vehicle: 'two' | 'four', metric: 'total' | 'booked' | 'vacant') => {
@@ -987,25 +1140,25 @@ const ParkingBookingListSiteWise = () => {
       const buildApiFilterParams = (): ApiFilterParams => {
         const apiParams: ApiFilterParams = {};
         
-        if (filters.category !== 'all') {
+        if (appliedFilters.category !== 'all') {
           console.log('🔍 Building API Filter (Page Change) - Category:');
-          console.log('UI Filter category value:', filters.category);
-          console.log('UI Filter category type:', typeof filters.category);
-          apiParams.category = filters.category;
+          console.log('UI Filter category value:', appliedFilters.category);
+          console.log('UI Filter category type:', typeof appliedFilters.category);
+          apiParams.category = appliedFilters.category;
         }
         
-        if (filters.user !== 'all') {
-          apiParams.user_ids = [filters.user];
+        if (appliedFilters.user !== 'all') {
+          apiParams.user_ids = [appliedFilters.user];
         }
         
-        if (filters.parking_slot.trim()) {
+        if (appliedFilters.parking_slot.trim()) {
           console.log('🔍 Building API Filter (Page Change) - Parking Slot:');
-          console.log('UI Filter parking_slot value:', filters.parking_slot);
-          console.log('UI Filter parking_slot trimmed:', filters.parking_slot.trim());
-          apiParams.parking_slot = filters.parking_slot.trim();
+          console.log('UI Filter parking_slot value:', appliedFilters.parking_slot);
+          console.log('UI Filter parking_slot trimmed:', appliedFilters.parking_slot.trim());
+          apiParams.parking_slot = appliedFilters.parking_slot.trim();
         }
         
-        if (filters.status !== 'all') {
+        if (appliedFilters.status !== 'all') {
           // Map UI status to API status
           const statusMap: { [key: string]: string } = {
             'Confirmed': 'confirmed',
@@ -1013,22 +1166,36 @@ const ParkingBookingListSiteWise = () => {
             'confirmed': 'confirmed',
             'cancelled': 'cancelled'
           };
-          const apiStatus = statusMap[filters.status] || filters.status;
+          const apiStatus = statusMap[appliedFilters.status] || appliedFilters.status;
           apiParams.statuses = [apiStatus];
         }
         
-        if (filters.scheduled_on_from.trim() || filters.scheduled_on_to.trim()) {
+        // Building filter
+        if (appliedFilters.building !== 'all') {
+          console.log('🔍 Building API Filter (Page Change) - Building:');
+          console.log('UI Filter building value:', appliedFilters.building);
+          apiParams.building_id = appliedFilters.building;
+        }
+        
+        // Floor filter
+        if (appliedFilters.floor !== 'all') {
+          console.log('🔍 Building API Filter (Page Change) - Floor:');
+          console.log('UI Filter floor value:', appliedFilters.floor);
+          apiParams.floor_id = appliedFilters.floor;
+        }
+        
+        if (appliedFilters.scheduled_on_from.trim() || appliedFilters.scheduled_on_to.trim()) {
           // Build date range for scheduled_on with proper date formatting
-          const fromDate = filters.scheduled_on_from.trim() ? formatDateForAPI(filters.scheduled_on_from.trim()) : formatDateForAPI(filters.scheduled_on_to.trim());
-          const toDate = filters.scheduled_on_to.trim() ? formatDateForAPI(filters.scheduled_on_to.trim()) : formatDateForAPI(filters.scheduled_on_from.trim());
+          const fromDate = appliedFilters.scheduled_on_from.trim() ? formatDateForAPI(appliedFilters.scheduled_on_from.trim()) : formatDateForAPI(appliedFilters.scheduled_on_to.trim());
+          const toDate = appliedFilters.scheduled_on_to.trim() ? formatDateForAPI(appliedFilters.scheduled_on_to.trim()) : formatDateForAPI(appliedFilters.scheduled_on_from.trim());
           apiParams.scheduled_date_range = `${fromDate} - ${toDate}`;
           console.log('🔍 Formatted Scheduled Date Range (Page Change):', apiParams.scheduled_date_range);
         }
         
-        if (filters.booked_on_from.trim() || filters.booked_on_to.trim()) {
+        if (appliedFilters.booked_on_from.trim() || appliedFilters.booked_on_to.trim()) {
           // Build date range for booked_on with proper date formatting
-          const fromDate = filters.booked_on_from.trim() ? formatDateForAPI(filters.booked_on_from.trim()) : formatDateForAPI(filters.booked_on_to.trim());
-          const toDate = filters.booked_on_to.trim() ? formatDateForAPI(filters.booked_on_to.trim()) : formatDateForAPI(filters.booked_on_from.trim());
+          const fromDate = appliedFilters.booked_on_from.trim() ? formatDateForAPI(appliedFilters.booked_on_from.trim()) : formatDateForAPI(appliedFilters.booked_on_to.trim());
+          const toDate = appliedFilters.booked_on_to.trim() ? formatDateForAPI(appliedFilters.booked_on_to.trim()) : formatDateForAPI(appliedFilters.booked_on_from.trim());
           apiParams.booked_date_range = `${fromDate} - ${toDate}`;
           console.log('🔍 Formatted Booked Date Range (Page Change):', apiParams.booked_date_range);
         }
@@ -1098,26 +1265,57 @@ const ParkingBookingListSiteWise = () => {
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1); // Reset to first page when filtering
-    // Note: The useEffect will trigger API call automatically due to dependency changes
+    setFilters(prev => {
+      const updated = { ...prev, [key]: value };
+      
+      // If building changes, reset floor selection to 'all'
+      if (key === 'building') {
+        updated.floor = 'all';
+      }
+      
+      return updated;
+    });
+    // Don't reset page or trigger API call - only update form state
+  };
+
+  const handleApplyFilters = () => {
+    let filtersToApply = { ...filters };
+    
+    // If a building is selected, ensure the selected floor belongs to that building
+    if (filtersToApply.building !== 'all' && filtersToApply.floor !== 'all') {
+      const selectedBuildingId = parseInt(filtersToApply.building);
+      const selectedFloor = floors.find(floor => floor.id.toString() === filtersToApply.floor);
+      
+      // If the selected floor doesn't belong to the selected building, reset floor to 'all'
+      if (selectedFloor && selectedFloor.building_id !== selectedBuildingId) {
+        filtersToApply = { ...filtersToApply, floor: 'all' };
+        setFilters(filtersToApply); // Update the form state as well
+      }
+    }
+    
+    setAppliedFilters(filtersToApply);
+    setCurrentPage(1); // Reset to first page when applying filters
+    setShowFiltersModal(false);
   };
 
   const handleClearFilters = () => {
-    setFilters({
+    const clearedFilters = {
       category: 'all',
       user: 'all',
       parking_slot: '',
       status: 'all',
+      building: 'all',
+      floor: 'all',
       scheduled_on_from: '',
       scheduled_on_to: '',
       booked_on_from: '',
       booked_on_to: ''
-    });
+    };
+    setFilters(clearedFilters);
+    setAppliedFilters(clearedFilters);
     // Also clear any card overrides
     setCardFilter(null);
     setCurrentPage(1);
-    // Note: The useEffect will trigger API call automatically due to dependency changes
   };
 
   // Get unique values for filter dropdowns
@@ -1380,25 +1578,89 @@ const ParkingBookingListSiteWise = () => {
                 />
               </PaginationItem>
 
-              {Array.from(
-                { length: Math.min(totalPages, 10) },
-                (_, i) => i + 1
-              ).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => handlePageChange(page)}
-                    isActive={currentApiPage === page}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
+              {(() => {
+                // Calculate pagination range
+                const maxVisiblePages = 10;
+                let startPage = 1;
+                let endPage = Math.min(totalPages, maxVisiblePages);
 
-              {totalPages > 10 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
+                if (totalPages > maxVisiblePages) {
+                  // Calculate start and end pages to center around current page
+                  const halfRange = Math.floor(maxVisiblePages / 2);
+                  startPage = Math.max(1, currentApiPage - halfRange);
+                  endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                  
+                  // Adjust start page if we're near the end
+                  if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                  }
+                }
+
+                const pages = [];
+                
+                // Show first page and ellipsis if needed
+                if (startPage > 1) {
+                  pages.push(
+                    <PaginationItem key={1}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(1)}
+                        isActive={currentApiPage === 1}
+                      >
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                  
+                  if (startPage > 2) {
+                    pages.push(
+                      <PaginationItem key="ellipsis-start">
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    );
+                  }
+                }
+
+                // Show visible page range
+                for (let page = startPage; page <= endPage; page++) {
+                  // Skip page 1 if we already added it
+                  if (page === 1 && startPage > 1) continue;
+                  
+                  pages.push(
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(page)}
+                        isActive={currentApiPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }
+
+                // Show ellipsis and last page if needed
+                if (endPage < totalPages) {
+                  if (endPage < totalPages - 1) {
+                    pages.push(
+                      <PaginationItem key="ellipsis-end">
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    );
+                  }
+                  
+                  pages.push(
+                    <PaginationItem key={totalPages}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(totalPages)}
+                        isActive={currentApiPage === totalPages}
+                      >
+                        {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }
+
+                return pages;
+              })()}
 
               <PaginationItem>
                 <PaginationNext
@@ -1538,7 +1800,7 @@ const ParkingBookingListSiteWise = () => {
             {/* Filter Options Section */}
             <div>
               <h3 className="text-sm font-medium text-[#C72030] mb-4">Filter Options</h3>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-3 gap-6">
                 {/* Category */}
                 <FormControl fullWidth variant="outlined">
                   <InputLabel id="category-label" shrink>Category</InputLabel>
@@ -1604,9 +1866,48 @@ const ParkingBookingListSiteWise = () => {
                     MenuProps={selectMenuProps}
                   >
                     <MenuItem value="all"><em>All Statuses</em></MenuItem>
-                    {getUniqueValues('status').map(status => (
-                      <MenuItem key={status} value={status}>
-                        {status}
+                    <MenuItem value="confirmed">Confirmed</MenuItem>
+                    <MenuItem value="cancelled">Cancelled</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Building */}
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="building-label" shrink>Building</InputLabel>
+                  <MuiSelect
+                    labelId="building-label"
+                    label="Building"
+                    value={filters.building}
+                    onChange={(e) => handleFilterChange('building', e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="all"><em>All Buildings</em></MenuItem>
+                    {buildings?.map(building => (
+                      <MenuItem key={building.id} value={building.id.toString()}>
+                        {building.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Floor */}
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="floor-label" shrink>Floor</InputLabel>
+                  <MuiSelect
+                    labelId="floor-label"
+                    label="Floor"
+                    value={filters.floor}
+                    onChange={(e) => handleFilterChange('floor', e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="all"><em>All Floors</em></MenuItem>
+                    {filteredFloors?.map(floor => (
+                      <MenuItem key={floor.id} value={floor.id.toString()}>
+                        {floor.name}
                       </MenuItem>
                     ))}
                   </MuiSelect>
@@ -1625,7 +1926,7 @@ const ParkingBookingListSiteWise = () => {
                 {/* Scheduled On */}
                 <div className="space-y-4">
                   <Label className="text-sm font-medium text-gray-700">Scheduled On</Label>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <TextField
                       label="From Date"
                       type="date"
@@ -1657,7 +1958,7 @@ const ParkingBookingListSiteWise = () => {
                 {/* Booked On */}
                 <div className="space-y-4">
                   <Label className="text-sm font-medium text-gray-700">Booked On</Label>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <TextField
                       label="From Date"
                       type="date"
@@ -1689,7 +1990,7 @@ const ParkingBookingListSiteWise = () => {
             </div>
 
             {/* Active Filters Display */}
-            {(filters.category !== 'all' || filters.user !== 'all' || filters.parking_slot.trim() || filters.status !== 'all' || filters.scheduled_on_from.trim() || filters.scheduled_on_to.trim() || filters.booked_on_from.trim() || filters.booked_on_to.trim()) && (
+            {/* {(filters.category !== 'all' || filters.user !== 'all' || filters.parking_slot.trim() || filters.status !== 'all' || filters.scheduled_on_from.trim() || filters.scheduled_on_to.trim() || filters.booked_on_from.trim() || filters.booked_on_to.trim()) && (
               <div className="border-t pt-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Active Filters:</h4>
                 <div className="flex flex-wrap gap-2">
@@ -1749,13 +2050,13 @@ const ParkingBookingListSiteWise = () => {
                   )}
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <Button 
                 variant="secondary" 
-                onClick={() => setShowFiltersModal(false)}
+                onClick={handleApplyFilters}
                 className="flex-1 h-11"
               >
                 Apply

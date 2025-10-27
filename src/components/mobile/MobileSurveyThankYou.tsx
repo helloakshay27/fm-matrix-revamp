@@ -176,7 +176,7 @@ export const MobileSurveyThankYou: React.FC = () => {
 
         {/* Subtitle */}
         <p className="text-xs p-2 text-gray-700 font-medium">
-          For helping us improve!
+          Helping us to improve!
         </p>
       </div>
     </div>
