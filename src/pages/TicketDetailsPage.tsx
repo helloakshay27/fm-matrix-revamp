@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import { Select as MuiSelect, Tooltip } from '@mui/material';
+import { Select as MuiSelect, Tooltip, Radio, RadioGroup, FormControlLabel, FormLabel } from '@mui/material';
 import MenuItem from '@mui/material/MenuItem';
 import { TextField } from '@mui/material';
 import { Button as MuiButton } from '@mui/material';
@@ -317,6 +317,18 @@ const formatTicketAgeing = (ageingSeconds: number): string => {
   return `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
+// Asset and Service interfaces for association functionality
+interface AssetOption {
+  id: number;
+  name: string;
+}
+
+interface ServiceOption {
+  id: number;
+  service_name: string;
+  service_code: string;
+}
+
 // Helper function to render association-specific data
 const renderAssociationSpecificData = (ticketData: any) => {
   const associationType = ticketData?.asset_service || ticketData?.service_or_asset || 'Asset';
@@ -371,20 +383,40 @@ const renderAssociationSpecificData = (ticketData: any) => {
 
     case 'Asset':
     default:
-      return [
-        { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
-        { label: 'Group', value: ticketData.asset_group || '-' },
-        { label: 'Asset Status', value: ticketData.asset_status || ticketData.amc?.asset_status || '-' },
-        { label: 'Criticality', value: ticketData.asset_criticality === null || ticketData.asset_criticality === "" ? '-' : (ticketData.asset_criticality ? 'Critical' : 'Non Critical') },
-        { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
-        { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
-        { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
-        { label: 'Under Warranty', value: ticketData.warranty === null || ticketData.warranty === undefined ? '-' : (ticketData.warranty ? 'Yes' : 'No') },
-        { label: 'Category', value: ticketData.asset_type_category || '-' },
-        { label: 'Allocated', value: ticketData.asset_service || ticketData.asset_service || '-' },
-        { label: 'AMC Type', value: ticketData.amc?.amc_type || '-' },
-        { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
-      ];
+      // Check if allocated to Service or Asset based on asset_service field
+      if (ticketData.asset_service === 'Service') {
+        // Show only Service-specific fields
+        return [
+          { label: 'Service Name', value: ticketData.asset_or_service_name || '-' },
+          { label: 'Service ID', value: ticketData.asset_or_service_id || '-' },
+          { label: 'Allocated', value: 'Service' },
+          { label: '', value: '' }, // Empty cells for grid alignment
+          { label: '', value: '' },
+          { label: '', value: '' },
+          { label: '', value: '' },
+          { label: '', value: '' },
+          { label: '', value: '' },
+          { label: '', value: '' },
+          { label: '', value: '' },
+          { label: '', value: '' },
+        ];
+      } else {
+        // Show Asset-specific fields (default)
+        return [
+          { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
+          { label: 'Group', value: ticketData.asset_group || '-' },
+          { label: 'Asset Status', value: ticketData.asset_status || ticketData.amc?.asset_status || '-' },
+          { label: 'Criticality', value: ticketData.asset_criticality === null || ticketData.asset_criticality === "" ? '-' : (ticketData.asset_criticality ? 'Critical' : 'Non Critical') },
+          { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
+          { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
+          { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
+          { label: 'Under Warranty', value: ticketData.warranty === null || ticketData.warranty === undefined ? '-' : (ticketData.warranty ? 'Yes' : 'No') },
+          { label: 'Category', value: ticketData.asset_type_category || '-' },
+          { label: 'Allocated', value: ticketData.asset_service || 'Asset' },
+          { label: 'AMC Type', value: ticketData.amc?.amc_type || '-' },
+          { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
+        ];
+      }
   }
 };
 
@@ -409,8 +441,15 @@ const hasAssociationData = (ticketData: any) => {
                ticketData.audit_attachments);
     case 'Asset':
     default:
-      return !!(ticketData.asset_or_service_name || ticketData.asset_group || ticketData.asset_status || 
-               ticketData.pms_asset_id || ticketData.asset_or_service_id || ticketData.asset_type_category);
+      // Check if allocated to Service or Asset
+      if (ticketData?.asset_service === 'Service') {
+        // For Service: check if we have service name or service ID
+        return !!(ticketData.asset_or_service_name || ticketData.asset_or_service_id);
+      } else {
+        // For Asset: check if we have asset-specific data
+        return !!(ticketData.asset_or_service_name || ticketData.asset_group || ticketData.asset_status || 
+                 ticketData.pms_asset_id || ticketData.asset_or_service_id || ticketData.asset_type_category);
+      }
   }
 };
 
@@ -585,8 +624,27 @@ export const TicketDetailsPage = () => {
     additional_notes: '',
     proactive_reactive: '', // <-- Add this property
     review_tracking: '',
+    supplier_id: '',
+    // Association fields - updated structure
+    associatedTo: { id: '', name: '', type: '' },
+    selectedAsset: '',
+    selectedService: '',
   });
   const [submittingTicketMgmt, setSubmittingTicketMgmt] = useState(false);
+
+  // Asset and Service state for association functionality
+  const [assetOptions, setAssetOptions] = useState<AssetOption[]>([]);
+  const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [associationType, setAssociationType] = useState<'asset' | 'service' | ''>('');
+
+  // New form state similar to UpdateTicketsPage
+  const [formData, setFormData] = useState({
+    associatedTo: { asset: false, service: false },
+    selectedAsset: "",
+    selectedService: "",
+  });
 
   // Ticket Closure Edit State
   const [isEditingTicketClosure, setIsEditingTicketClosure] = useState(false);
@@ -599,6 +657,37 @@ export const TicketDetailsPage = () => {
     review_tracking: '',
   });
   const [submittingTicketClosure, setSubmittingTicketClosure] = useState(false);
+
+  // Location Edit State
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [locationFormData, setLocationFormData] = useState({
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
+    room: ''
+  });
+  const [submittingLocation, setSubmittingLocation] = useState(false);
+
+  // Location data states
+  const [buildings, setBuildings] = useState<Array<{ id: number; name: string }>>([]);
+  const [wings, setWings] = useState<Array<{ id: number; name: string; building_id: string }>>([]);
+  const [areas, setAreas] = useState<Array<{ id: number; name: string; wing_id: string }>>([]);
+  const [floors, setFloors] = useState<Array<{ id: number; name: string; area_id: string }>>([]);
+  const [rooms, setRooms] = useState<Array<{ id: number; name: string; floor_id: number }>>([]);
+
+  // Filtered location states
+  const [filteredWings, setFilteredWings] = useState<Array<{ id: number; name: string; building_id: string }>>([]);
+  const [filteredAreas, setFilteredAreas] = useState<Array<{ id: number; name: string; wing_id: string }>>([]);
+  const [filteredFloors, setFilteredFloors] = useState<Array<{ id: number; name: string; area_id: string }>>([]);
+  const [filteredRooms, setFilteredRooms] = useState<Array<{ id: number; name: string; floor_id: number }>>([]);
+
+  // Loading states for location dropdowns
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [loadingWings, setLoadingWings] = useState(false);
+  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [loadingFloors, setLoadingFloors] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   // (Add handlers near other handlers)
   const addCostRow = () => {
@@ -902,6 +991,309 @@ export const TicketDetailsPage = () => {
     fetchSuppliers();
   }, []);
 
+  // Fetch Assets for association functionality
+  const fetchAssets = useCallback(async (shouldSetSelectedValue = true) => {
+    if (isLoadingAssets) return;
+
+    setIsLoadingAssets(true);
+    try {
+      console.log("🔄 Fetching assets from API...");
+      const url = getFullUrl('/pms/assets/get_assets.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('🔄 Raw Assets API Response:', data);
+      
+      // Handle different response structures
+      let assets = [];
+      if (data.success && Array.isArray(data.data)) {
+        assets = data.data;
+      } else if (Array.isArray(data)) {
+        assets = data;
+      } else {
+        console.warn('⚠️ Unexpected assets response structure:', data);
+        assets = [];
+      }
+      
+      console.log("📦 Assets received:", assets.length, "items");
+      setAssetOptions(assets);
+
+    } catch (error) {
+      console.error("Error fetching assets:", error);
+      setAssetOptions([]);
+    } finally {
+      setIsLoadingAssets(false);
+    }
+  }, [isLoadingAssets]);
+
+  // Fetch Services for association functionality
+  const fetchServices = useCallback(async (shouldSetSelectedValue = true) => {
+    if (isLoadingServices) return;
+
+    setIsLoadingServices(true);
+    try {
+      console.log("🔄 Fetching services from API...");
+      const url = getFullUrl('/pms/services/get_services.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('🔄 Raw Services API Response:', data);
+      
+      // Handle API response - expect direct array of services
+      let services = [];
+      if (Array.isArray(data)) {
+        // Direct array response with {id, service_name} structure
+        services = data.map(service => ({
+          id: service.id,
+          service_name: service.service_name,
+          service_code: service.service_code || '' // Optional service_code
+        }));
+      } else {
+        console.warn('⚠️ Unexpected services response structure:', data);
+        console.warn('⚠️ Expected array, received:', typeof data);
+        services = [];
+      }
+      
+      console.log("📦 Services received:", services.length, "items");
+      console.log("📦 Sample services:", services.slice(0, 3));
+      setServiceOptions(services);
+
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      setServiceOptions([]);
+    } finally {
+      setIsLoadingServices(false);
+    }
+  }, [isLoadingServices]);
+
+  // Track if we've already fetched data to prevent duplicate calls
+  const hasLoadedAssets = useRef(false);
+  const hasLoadedServices = useRef(false);
+
+  // Initialize assets and services data on component mount
+  useEffect(() => {
+    // Only fetch if we haven't already loaded the data
+    if (!hasLoadedAssets.current && assetOptions.length === 0 && !isLoadingAssets) {
+      fetchAssets(false);
+      hasLoadedAssets.current = true;
+    }
+    if (!hasLoadedServices.current && serviceOptions.length === 0 && !isLoadingServices) {
+      fetchServices(false);
+      hasLoadedServices.current = true;
+    }
+  }, [assetOptions.length, serviceOptions.length, isLoadingAssets, isLoadingServices, fetchAssets, fetchServices]);
+
+  // Handle association changes for the new formData (similar to UpdateTicketsPage)
+  useEffect(() => {
+    console.log("🔄 FormData AssociatedTo change detected:", formData.associatedTo);
+
+    // Only fetch if the option is selected and we don't have data yet
+    if (formData.associatedTo.asset && assetOptions.length === 0 && !isLoadingAssets && !hasLoadedAssets.current) {
+      fetchAssets(false);
+      hasLoadedAssets.current = true;
+    }
+
+    if (formData.associatedTo.service && serviceOptions.length === 0 && !isLoadingServices && !hasLoadedServices.current) {
+      fetchServices(false);
+      hasLoadedServices.current = true;
+    }
+  }, [formData.associatedTo, assetOptions.length, serviceOptions.length, isLoadingAssets, isLoadingServices, fetchAssets, fetchServices]);
+
+  // Load location data
+  useEffect(() => {
+    const loadLocationData = async () => {
+      await Promise.all([
+        loadBuildings(),
+        loadWings(),
+        loadAreas(),
+        loadFloors(),
+        loadRooms()
+      ]);
+    };
+
+    loadLocationData();
+  }, []);
+
+  // Initialize form data based on ticket data (runs once when ticket data and options are available)
+  useEffect(() => {
+    if (ticketData && ticketData.asset_or_service_id) {
+      const targetId = ticketData.asset_or_service_id.toString();
+      
+      if (ticketData.asset_service === "Asset" && assetOptions.length > 0) {
+        const matchingAsset = assetOptions.find((asset: AssetOption) => 
+          asset.id.toString() === targetId
+        );
+        
+        if (matchingAsset && !formData.selectedAsset) {
+          setFormData((prev) => ({
+            ...prev,
+            associatedTo: { asset: true, service: false },
+            selectedAsset: matchingAsset.id.toString(),
+            selectedService: '',
+          }));
+          setAssociationType('asset');
+        }
+      } else if (ticketData.asset_service === "Service" && serviceOptions.length > 0) {
+        const matchingService = serviceOptions.find((service: ServiceOption) => 
+          service.id.toString() === targetId
+        );
+        
+        if (matchingService && !formData.selectedService) {
+          setFormData((prev) => ({
+            ...prev,
+            associatedTo: { asset: false, service: true },
+            selectedAsset: '',
+            selectedService: matchingService.id.toString(),
+          }));
+          setAssociationType('service');
+        }
+      }
+    }
+  }, [ticketData, assetOptions, serviceOptions, formData.selectedAsset, formData.selectedService]);
+
+  // Location data loading functions
+  const loadBuildings = async () => {
+    setLoadingBuildings(true);
+    try {
+      const url = getFullUrl('/pms/buildings.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setBuildings(data.pms_buildings || data || []);
+    } catch (error) {
+      console.error('Error loading buildings:', error);
+      toast.error('Failed to load buildings');
+    } finally {
+      setLoadingBuildings(false);
+    }
+  };
+
+  const loadWings = async (buildingId?: string) => {
+    setLoadingWings(true);
+    try {
+      const url = buildingId
+        ? getFullUrl(`/pms/wings.json?building_id=${buildingId}`)
+        : getFullUrl('/pms/wings.json');
+
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setWings(data.wings || []);
+    } catch (error) {
+      console.error('Error loading wings:', error);
+      toast.error('Failed to load wings');
+    } finally {
+      setLoadingWings(false);
+    }
+  };
+
+  const loadAreas = async (wingId?: string) => {
+    setLoadingAreas(true);
+    try {
+      const url = wingId
+        ? getFullUrl(`/pms/areas.json?wing_id=${wingId}`)
+        : getFullUrl('/pms/areas.json');
+
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setAreas(data.areas || []);
+    } catch (error) {
+      console.error('Error loading areas:', error);
+      toast.error('Failed to load areas');
+    } finally {
+      setLoadingAreas(false);
+    }
+  };
+
+  const loadFloors = async (areaId?: string) => {
+    setLoadingFloors(true);
+    try {
+      const url = areaId
+        ? getFullUrl(`/pms/floors.json?area_id=${areaId}`)
+        : getFullUrl('/pms/floors.json');
+
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setFloors(data.floors || []);
+    } catch (error) {
+      console.error('Error loading floors:', error);
+      toast.error('Failed to load floors');
+    } finally {
+      setLoadingFloors(false);
+    }
+  };
+
+  const loadRooms = async (floorId?: string) => {
+    setLoadingRooms(true);
+    try {
+      const url = floorId
+        ? getFullUrl(`/pms/rooms.json?floor_id=${floorId}`)
+        : getFullUrl('/pms/rooms.json');
+
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setRooms(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading rooms:', error);
+      toast.error('Failed to load rooms');
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
 
   const handleBackToList = () => {
     navigate(-1);
@@ -1028,6 +1420,19 @@ export const TicketDetailsPage = () => {
         formDataToSend.append('root_cause[template_ids][]', String(templateId));
       });
 
+      // Add asset_id and service_id based on current ticket's association
+      if (ticketData?.asset_service === 'Asset' && ticketData?.asset_or_service_id) {
+        formDataToSend.append('asset_id', ticketData.asset_or_service_id.toString());
+        formDataToSend.append('service_id', '');
+      } else if (ticketData?.asset_service === 'Service' && ticketData?.asset_or_service_id) {
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', ticketData.asset_or_service_id.toString());
+      } else {
+        // Default empty values if no association
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', '');
+      }
+
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
       const response = await fetch(apiUrl, {
@@ -1066,6 +1471,47 @@ export const TicketDetailsPage = () => {
     }
   };
 
+  // Handle Root Cause change for Ticket Management form (no API call, just form update)
+  const handleRootCauseFormChange = (selectedValues: number[]) => {
+    console.log('🔄 Updating Root Cause form data only (no API call):', selectedValues);
+    // Just update the form data, don't call API
+    handleTicketMgmtInputChange('rca_template_ids', selectedValues);
+  };
+
+  // Handle Preventive Action change for Ticket Closure form (no API call, just form update)
+  const handlePreventiveActionFormChange = (selectedOptions: Array<{ value: number; label: string }>) => {
+    console.log('🔄 Updating Preventive Action form data only (no API call):', selectedOptions);
+    const selectedIds = selectedOptions.map(option => option.value);
+    handleTicketClosureInputChange('preventive_action_template_ids', selectedIds);
+  };
+
+  // Handle Short-term Impact change for Ticket Closure form (no API call, just form update)
+  const handleShortTermImpactFormChange = (selectedOptions: Array<{ value: number; label: string }>) => {
+    console.log('🔄 Updating Short-term Impact form data only (no API call):', selectedOptions);
+    const selectedIds = selectedOptions.map(option => option.value);
+    handleTicketClosureInputChange('short_term_impact_template_ids', selectedIds);
+  };
+
+  // Handle Corrective Action change for Ticket Closure form (no API call, just form update)
+  const handleCorrectiveActionFormChange = (selectedOptions: Array<{ value: number; label: string }>) => {
+    console.log('🔄 Updating Corrective Action form data only (no API call):', selectedOptions);
+    const selectedIds = selectedOptions.map(option => option.value);
+    handleTicketClosureInputChange('corrective_action_template_ids', selectedIds);
+  };
+
+  // Handle Long-term Impact change for Ticket Closure form (no API call, just form update)
+  const handleLongTermImpactFormChange = (selectedOptions: Array<{ value: number; label: string }>) => {
+    console.log('🔄 Updating Long-term Impact form data only (no API call):', selectedOptions);
+    const selectedIds = selectedOptions.map(option => option.value);
+    handleTicketClosureInputChange('long_term_impact_template_ids', selectedIds);
+  };
+
+  // Handle Responsible Person change for Ticket Closure form (no API call, just form update)
+  const handleResponsiblePersonFormChange = (selectedPersonId: string) => {
+    console.log('🔄 Updating Responsible Person form data only (no API call):', selectedPersonId);
+    handleTicketClosureInputChange('responsible_person', selectedPersonId);
+  };
+
   // Handle Preventive Action change with auto-save (multi-select)
   const handlePreventiveActionChange = async (selectedOptions: Array<{ value: number; label: string }>) => {
     try {
@@ -1092,6 +1538,19 @@ export const TicketDetailsPage = () => {
         const formDataToSend = new FormData();
         formDataToSend.append('complaint_log[complaint_id]', id);
         formDataToSend.append('preventive_action[template_ids][]', '');
+
+        // Add asset_id and service_id based on current ticket's association
+        if (ticketData?.asset_service === 'Asset' && ticketData?.asset_or_service_id) {
+          formDataToSend.append('asset_id', ticketData.asset_or_service_id.toString());
+          formDataToSend.append('service_id', '');
+        } else if (ticketData?.asset_service === 'Service' && ticketData?.asset_or_service_id) {
+          formDataToSend.append('asset_id', '');
+          formDataToSend.append('service_id', ticketData.asset_or_service_id.toString());
+        } else {
+          // Default empty values if no association
+          formDataToSend.append('asset_id', '');
+          formDataToSend.append('service_id', '');
+        }
 
         const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
@@ -1492,6 +1951,19 @@ export const TicketDetailsPage = () => {
       formDataToSend.append('complaint_log[complaint_id]', id);
       formDataToSend.append('person_id', selectedPersonId);
 
+      // Add asset_id and service_id based on current ticket's association
+      if (ticketData?.asset_service === 'Asset' && ticketData?.asset_or_service_id) {
+        formDataToSend.append('asset_id', ticketData.asset_or_service_id.toString());
+        formDataToSend.append('service_id', '');
+      } else if (ticketData?.asset_service === 'Service' && ticketData?.asset_or_service_id) {
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', ticketData.asset_or_service_id.toString());
+      } else {
+        // Default empty values if no association
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', '');
+      }
+
       const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
 
       const response = await fetch(apiUrl, {
@@ -1717,6 +2189,48 @@ export const TicketDetailsPage = () => {
       setSubmittingCostApproval(false);
     }
   };
+
+  // Cancel cost approval handler
+  const handleCancelCostApproval = async (requestId: string) => {
+    if (!requestId) {
+      toast.error('Request ID not found');
+      return;
+    }
+
+    try {
+      const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const url = `https://${baseUrl}/costapprequpdate/${requestId}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Cost approval cancelled successfully:', data);
+
+      toast.success('Cost approval request cancelled successfully!');
+
+      // Refresh ticket data
+      if (id) {
+        const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
+        setTicketData(ticketDetails);
+      }
+
+    } catch (error) {
+      console.error('Error cancelling cost approval:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to cancel cost approval request. Please try again.');
+    }
+  };
+
   const convertDateFormat = (dateString: string | null | undefined): string => {
     if (!dateString) return '';
 
@@ -1821,7 +2335,7 @@ export const TicketDetailsPage = () => {
       selectedStatus: findStatusId(),
       severity: ticketData?.severity || '',
       assigned_to: findAssignedUserId(),
-      asset_service: ticketData?.asset_service || 'Asset',
+      asset_service: ticketData?.asset_service || '',
       visit_date: convertedVisitDate,
       expected_completion_date: convertedCompletionDate,
       issue_related_to: ticketData?.issue_related_to || 'FM',
@@ -1831,19 +2345,128 @@ export const TicketDetailsPage = () => {
       supplier_id: ticketData?.supplier_id ? ticketData.supplier_id.toString() : '',
       proactive_reactive: ticketData?.proactive_reactive || '',
       review_tracking: convertedReviewDate,
+      // Association fields - use new structure
+      associatedTo: (() => {
+        if (ticketData?.asset_service === 'Asset' && ticketData?.asset_or_service_id) {
+          // Find the asset details
+          const assetId = ticketData.asset_or_service_id.toString();
+          const asset = assetOptions.find(a => a.id.toString() === assetId);
+          return {
+            id: ticketData.asset_or_service_id,
+            name: asset?.name || ticketData.asset_or_service_name || 'Unknown Asset',
+            type: 'asset'
+          };
+        } else if (ticketData?.asset_service === 'Service' && ticketData?.asset_or_service_id) {
+          // Find the service details
+          const serviceId = ticketData.asset_or_service_id.toString();
+          const service = serviceOptions.find(s => s.id.toString() === serviceId);
+          return {
+            id: ticketData.asset_or_service_id,
+            name: service?.service_name || ticketData.asset_or_service_name || 'Unknown Service',
+            type: 'service'
+          };
+        }
+        return { id: '', name: '', type: '' };
+      })(),
+      selectedAsset: ticketData?.asset_service === 'Asset' && ticketData?.asset_or_service_id 
+        ? ticketData.asset_or_service_id.toString() : '',
+      selectedService: ticketData?.asset_service === 'Service' && ticketData?.asset_or_service_id 
+        ? ticketData.asset_or_service_id.toString() : '',
     };
 
     console.log('Final form data:', formData);
     setTicketMgmtFormData(formData);
+    
+    // Initialize association type based on existing ticket data
+    if (ticketData?.asset_service === 'Asset') {
+      setAssociationType('asset');
+    } else if (ticketData?.asset_service === 'Service') {
+      setAssociationType('service');
+    } else {
+      setAssociationType('');
+    }
+    
     setIsEditingTicketMgmt(true);
   };
 
   // Handle Ticket Management Form Input Change
   const handleTicketMgmtInputChange = (field: string, value: any) => {
-    setTicketMgmtFormData(prev => ({
+    console.log(`🔄 handleTicketMgmtInputChange: ${field} =`, value);
+    setTicketMgmtFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      console.log('🔄 Updated ticketMgmtFormData:', newData);
+      return newData;
+    });
+  };
+
+  // Helper function to handle asset/service selection with proper associatedTo update
+  const handleAssetServiceSelection = (type: 'asset' | 'service', value: string) => {
+    console.log(`🔄 handleAssetServiceSelection: ${type} = ${value}`);
+    if (type === 'asset') {
+      handleTicketMgmtInputChange('selectedAsset', value);
+      handleTicketMgmtInputChange('selectedService', '');
+      handleTicketMgmtInputChange('asset_service', value); // Pass the actual asset ID
+      
+      // Update associatedTo with proper asset data
+      const selectedAsset = assetOptions.find(asset => asset.id.toString() === value);
+      if (selectedAsset) {
+        setTicketMgmtFormData(prev => ({
+          ...prev,
+          associatedTo: { id: selectedAsset.id.toString(), name: selectedAsset.name, type: 'asset' }
+        }));
+        console.log('✅ Updated associatedTo for asset:', { id: selectedAsset.id, name: selectedAsset.name, type: 'asset' });
+      }
+    } else {
+      handleTicketMgmtInputChange('selectedService', value);
+      handleTicketMgmtInputChange('selectedAsset', '');
+      handleTicketMgmtInputChange('asset_service', value); // Pass the actual service ID
+      
+      // Update associatedTo with proper service data
+      const selectedService = serviceOptions.find(service => service.id.toString() === value);
+      if (selectedService) {
+        setTicketMgmtFormData(prev => ({
+          ...prev,
+          associatedTo: { id: selectedService.id.toString(), name: selectedService.service_name, type: 'service' }
+        }));
+        console.log('✅ Updated associatedTo for service:', { id: selectedService.id, name: selectedService.service_name, type: 'service' });
+      }
+    }
+  };
+
+  // Handle Input Change for the new formData (similar to UpdateTicketsPage)
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
+  };
+
+  // Handle Association Changes for Ticket Management
+  const handleTicketMgmtAssociationChange = (type: 'asset' | 'service') => {
+    if (type === 'asset') {
+      setTicketMgmtFormData(prev => ({
+        ...prev,
+        associatedTo: { asset: true, service: false },
+        selectedService: '', // Reset service selection
+        asset_service: 'Asset'
+      }));
+      if (assetOptions.length === 0) {
+        fetchAssets(false); // Don't auto-select when manually changing
+      }
+    } else {
+      setTicketMgmtFormData(prev => ({
+        ...prev,
+        associatedTo: { asset: false, service: true },
+        selectedAsset: '', // Reset asset selection
+        asset_service: 'Service'
+      }));
+      if (serviceOptions.length === 0) {
+        fetchServices(false); // Don't auto-select when manually changing
+      }
+    }
   };
 
   // Handle Ticket Management Form Submit
@@ -1866,8 +2489,36 @@ export const TicketDetailsPage = () => {
         queryParams.append('severity', ticketMgmtFormData.severity);
       }
 
-      if (ticketMgmtFormData.asset_service) {
-        queryParams.append('source', ticketMgmtFormData.asset_service);
+      // Add selected asset or service ID directly (no source parameter)
+      console.log('🔍 Association Check:', {
+        'associatedTo': ticketMgmtFormData.associatedTo,
+        'associationType': associationType,
+        'selectedAsset': ticketMgmtFormData.selectedAsset,
+        'selectedService': ticketMgmtFormData.selectedService,
+        'asset_service': ticketMgmtFormData.asset_service
+      });
+
+      // Check association type and add appropriate ID parameter
+      if (associationType === 'asset' && ticketMgmtFormData.selectedAsset) {
+        console.log('✅ Adding asset_id:', ticketMgmtFormData.selectedAsset);
+        queryParams.append('asset_id', ticketMgmtFormData.selectedAsset);
+      } else if (associationType === 'service' && ticketMgmtFormData.selectedService) {
+        console.log('✅ Adding service_id:', ticketMgmtFormData.selectedService);
+        queryParams.append('service_id', ticketMgmtFormData.selectedService);
+      } else if (ticketMgmtFormData.associatedTo?.type === 'asset' && ticketMgmtFormData.associatedTo?.id) {
+        console.log('✅ Adding asset_id from associatedTo:', ticketMgmtFormData.associatedTo.id);
+        queryParams.append('asset_id', ticketMgmtFormData.associatedTo.id.toString());
+      } else if (ticketMgmtFormData.associatedTo?.type === 'service' && ticketMgmtFormData.associatedTo?.id) {
+        console.log('✅ Adding service_id from associatedTo:', ticketMgmtFormData.associatedTo.id);
+        queryParams.append('service_id', ticketMgmtFormData.associatedTo.id.toString());
+      } else {
+        console.log('❌ No asset or service association found in form data');
+        console.log('Debug info:', {
+          associationType,
+          selectedAsset: ticketMgmtFormData.selectedAsset,
+          selectedService: ticketMgmtFormData.selectedService,
+          associatedTo: ticketMgmtFormData.associatedTo
+        });
       }
 
       if (ticketMgmtFormData.complaint_mode_id) {
@@ -1908,6 +2559,13 @@ export const TicketDetailsPage = () => {
       if (ticketMgmtFormData.review_tracking) {
         queryParams.append('review_tracking_date', ticketMgmtFormData.review_tracking);
       }
+
+      // Add Root Cause Analysis template IDs
+      if (ticketMgmtFormData.rca_template_ids && ticketMgmtFormData.rca_template_ids.length > 0) {
+        ticketMgmtFormData.rca_template_ids.forEach(templateId => {
+          queryParams.append('root_cause[template_ids][]', String(templateId));
+        });
+      }
       
       // Build the API URL with query parameters
       const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -1915,6 +2573,15 @@ export const TicketDetailsPage = () => {
 
       console.log('🔄 Submitting to:', apiUrl);
       console.log('🔄 Form data:', ticketMgmtFormData);
+      console.log('🔄 Association Debug:', {
+        associatedTo: ticketMgmtFormData.associatedTo,
+        selectedAsset: ticketMgmtFormData.selectedAsset,
+        selectedService: ticketMgmtFormData.selectedService,
+        asset_service: ticketMgmtFormData.asset_service,
+        directAssetId: ticketMgmtFormData.associatedTo.asset ? ticketMgmtFormData.selectedAsset : null,
+        directServiceId: ticketMgmtFormData.associatedTo.service ? ticketMgmtFormData.selectedService : null
+      });
+      console.log('🔄 Query params:', queryParams.toString());
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -1931,7 +2598,17 @@ export const TicketDetailsPage = () => {
       const data = await response.json();
       console.log('✅ Ticket management updated successfully:', data);
 
-      toast.success('Ticket management updated successfully');
+      // Show success message with Root Cause Analysis info if included
+      let successMessage = 'Ticket management updated successfully';
+      // if (ticketMgmtFormData.rca_template_ids && ticketMgmtFormData.rca_template_ids.length > 0) {
+      //   const rcaNames = communicationTemplates
+      //     .filter(t => ticketMgmtFormData.rca_template_ids.includes(t.id))
+      //     .map(t => t.identifier_action)
+      //     .join(', ');
+      //   successMessage += ` (Root Cause Analysis: ${rcaNames})`;
+      // }
+      
+      toast.success(successMessage);
 
       // Refresh ticket data
       const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
@@ -2066,41 +2743,59 @@ export const TicketDetailsPage = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('complaint_log[complaint_id]', id);
 
-      // Add template IDs for each category
+      // Add template IDs for each category with correct parameter format
+      // Only send template IDs if there are actually selected values (non-empty array)
       if (ticketClosureFormData.preventive_action_template_ids.length > 0) {
-        ticketClosureFormData.preventive_action_template_ids.forEach(templateId => {
-          if (templateId != null) {
-            formDataToSend.append('preventive_action_template_ids[]', templateId.toString());
-          }
-        });
+        const validTemplateIds = ticketClosureFormData.preventive_action_template_ids.filter(id => id != null);
+        if (validTemplateIds.length > 0) {
+          validTemplateIds.forEach(templateId => {
+            formDataToSend.append('preventive_action[template_ids][]', templateId.toString());
+          });
+        }
       }
 
       if (ticketClosureFormData.short_term_impact_template_ids.length > 0) {
-        ticketClosureFormData.short_term_impact_template_ids.forEach(templateId => {
-          if (templateId != null) {
-            formDataToSend.append('short_term_impact_template_ids[]', templateId.toString());
-          }
-        });
+        const validTemplateIds = ticketClosureFormData.short_term_impact_template_ids.filter(id => id != null);
+        if (validTemplateIds.length > 0) {
+          validTemplateIds.forEach(templateId => {
+            formDataToSend.append('short_term_impact[template_ids][]', templateId.toString());
+          });
+        }
       }
 
       if (ticketClosureFormData.corrective_action_template_ids.length > 0) {
-        ticketClosureFormData.corrective_action_template_ids.forEach(templateId => {
-          if (templateId != null) {
-            formDataToSend.append('corrective_action_template_ids[]', templateId.toString());
-          }
-        });
+        const validTemplateIds = ticketClosureFormData.corrective_action_template_ids.filter(id => id != null);
+        if (validTemplateIds.length > 0) {
+          validTemplateIds.forEach(templateId => {
+            formDataToSend.append('corrective_action[template_ids][]', templateId.toString());
+          });
+        }
       }
 
       if (ticketClosureFormData.long_term_impact_template_ids.length > 0) {
-        ticketClosureFormData.long_term_impact_template_ids.forEach(templateId => {
-          if (templateId != null) {
-            formDataToSend.append('long_term_impact_template_ids[]', templateId.toString());
-          }
-        });
+        const validTemplateIds = ticketClosureFormData.long_term_impact_template_ids.filter(id => id != null);
+        if (validTemplateIds.length > 0) {
+          validTemplateIds.forEach(templateId => {
+            formDataToSend.append('long_term_impact[template_ids][]', templateId.toString());
+          });
+        }
       }
 
       if (ticketClosureFormData.responsible_person) {
         formDataToSend.append('person_id', ticketClosureFormData.responsible_person);
+      }
+
+      // Add asset_id and service_id based on current ticket's association
+      if (ticketData?.asset_service === 'Asset' && ticketData?.asset_or_service_id) {
+        formDataToSend.append('asset_id', ticketData.asset_or_service_id.toString());
+        formDataToSend.append('service_id', '');
+      } else if (ticketData?.asset_service === 'Service' && ticketData?.asset_or_service_id) {
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', ticketData.asset_or_service_id.toString());
+      } else {
+        // Default empty values if no association
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', '');
       }
 
       if (ticketClosureFormData.review_tracking) {
@@ -2131,6 +2826,20 @@ export const TicketDetailsPage = () => {
       const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
       setTicketData(ticketDetails);
 
+      // Update form data with the fresh ticket data to maintain consistency
+      if (ticketDetails) {
+        const updatedFormData = {
+          preventive_action_template_ids: (ticketDetails.preventive_action_template_ids || []).filter(id => id != null),
+          short_term_impact_template_ids: (ticketDetails.short_term_impact_template_ids || []).filter(id => id != null),
+          corrective_action_template_ids: (ticketDetails.corrective_action_template_ids || []).filter(id => id != null),
+          long_term_impact_template_ids: (ticketDetails.long_term_impact_template_ids || []).filter(id => id != null),
+          responsible_person: ticketClosureFormData.responsible_person, // Keep current form value
+          review_tracking: ticketClosureFormData.review_tracking, // Keep current form value
+        };
+        setTicketClosureFormData(updatedFormData);
+        console.log('🔄 Form data synchronized with updated ticket data:', updatedFormData);
+      }
+
       // Exit edit mode
       setIsEditingTicketClosure(false);
 
@@ -2142,8 +2851,315 @@ export const TicketDetailsPage = () => {
     }
   };
 
-  // Check if ticket is closed/completed/on hold (needed for useEffect dependencies)
-  const isTicketClosed = ticketData?.issue_status ? ['complete', 'completed', 'close', 'closed', 'on hold'].includes(ticketData.issue_status.toLowerCase()) : false;
+  // Location Edit Handlers
+  const handleLocationEdit = () => {
+    console.log('=== Location Edit Form Initialization ===');
+    console.log('🚀 Edit button clicked for Location!');
+    console.log('ticketData:', ticketData);
+
+    // Find location IDs by matching names from ticket data
+    let buildingId = "";
+    let wingId = "";
+    let areaId = "";
+    let floorId = "";
+    let roomId = "";
+
+    // Match building by name using building_name
+    if (ticketData?.building_name) {
+      const matchedBuilding = buildings.find(b => b.name === ticketData.building_name);
+      if (matchedBuilding) {
+        buildingId = matchedBuilding.id.toString();
+        console.log('🏢 Matched building:', ticketData.building_name, '-> ID:', buildingId);
+      }
+    }
+
+    // Match wing by name using wing_name
+    if (ticketData?.wing_name) {
+      const matchedWing = wings.find(w => w.name === ticketData.wing_name);
+      if (matchedWing) {
+        wingId = matchedWing.id.toString();
+        console.log('🏗️ Matched wing:', ticketData.wing_name, '-> ID:', wingId);
+      }
+    }
+
+    // Match area by name using area_name
+    if (ticketData?.area_name) {
+      const matchedArea = areas.find(a => a.name === ticketData.area_name);
+      if (matchedArea) {
+        areaId = matchedArea.id.toString();
+        console.log('🗺️ Matched area:', ticketData.area_name, '-> ID:', areaId);
+      }
+    }
+
+    // Match floor by name using floor_name (prioritize name over ID)
+    if (ticketData?.floor_name) {
+      const matchedFloor = floors.find(f => f.name === ticketData.floor_name);
+      if (matchedFloor) {
+        floorId = matchedFloor.id.toString();
+        console.log('🏢 Matched floor by name:', ticketData.floor_name, '-> ID:', floorId);
+      }
+    } else if (ticketData?.floor_id) {
+      // Fallback to floor_id if floor_name is not available
+      floorId = ticketData.floor_id.toString();
+      console.log('🏢 Using floor_id:', floorId);
+    }
+
+    // Match room by name using room_name (prioritize name over ID)
+    if (ticketData?.room_name) {
+      const matchedRoom = rooms.find(r => r.name === ticketData.room_name);
+      if (matchedRoom) {
+        roomId = matchedRoom.id.toString();
+        console.log('🚪 Matched room by name:', ticketData.room_name, '-> ID:', roomId);
+      }
+    } else if (ticketData?.room_id) {
+      // Fallback to room_id if room_name is not available
+      roomId = ticketData.room_id.toString();
+      console.log('🚪 Using room_id:', roomId);
+    }
+
+    const formData = {
+      building: buildingId || '',
+      wing: wingId || '',
+      area: areaId || '',
+      floor: floorId || '',
+      room: roomId || '',
+    };
+
+    console.log('Final location form data:', formData);
+    console.log('Location data from ticket:', {
+      building_name: ticketData?.building_name || 'null',
+      wing_name: ticketData?.wing_name || 'null',
+      area_name: ticketData?.area_name || 'null',
+      floor_name: ticketData?.floor_name || 'null',
+      room_name: ticketData?.room_name || 'null',
+      site_name: ticketData?.site_name || 'null'
+    });
+    console.log('Setting isEditingLocation to true');
+
+    setLocationFormData(formData);
+    setIsEditingLocation(true);
+
+    // Load cascading data based on current selections using API calls
+    if (buildingId) {
+      console.log('🔄 Loading wings for building:', buildingId);
+      loadWings(buildingId);
+      
+      if (wingId) {
+        console.log('🔄 Loading areas for wing:', wingId);
+        loadAreas(wingId);
+        
+        if (areaId) {
+          console.log('🔄 Loading floors for area:', areaId);
+          loadFloors(areaId);
+          
+          if (floorId) {
+            console.log('🔄 Loading rooms for floor:', floorId);
+            loadRooms(floorId);
+          }
+        }
+      }
+    }
+
+    console.log('✅ Location edit form initialized with API data loading using name parameters');
+  };
+
+  // Handle Location Form Input Change
+  const handleLocationInputChange = (field: string, value: any) => {
+    setLocationFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle Location Building Change
+  const handleLocationBuildingChange = async (buildingId: string) => {
+    setLocationFormData(prev => ({
+      ...prev,
+      building: buildingId,
+      wing: '',
+      area: '',
+      floor: '',
+      room: ''
+    }));
+
+    // Clear dependent dropdowns and data
+    setWings([]);
+    setAreas([]);
+    setFloors([]);
+    setRooms([]);
+    setFilteredWings([]);
+    setFilteredAreas([]);
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+
+    if (buildingId) {
+      console.log('🔄 Building changed, loading wings for building:', buildingId);
+      // Call wings API with building_id parameter - this will fetch wings specific to the building
+      await loadWings(buildingId);
+    } else {
+      console.log('🔄 Building cleared, no wings to load');
+    }
+  };
+
+  // Handle Location Wing Change
+  const handleLocationWingChange = async (wingId: string) => {
+    setLocationFormData(prev => ({
+      ...prev,
+      wing: wingId,
+      area: '',
+      floor: '',
+      room: ''
+    }));
+
+    // Clear dependent dropdowns and data
+    setAreas([]);
+    setFloors([]);
+    setRooms([]);
+    setFilteredAreas([]);
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+
+    if (wingId) {
+      console.log('🔄 Wing changed, loading areas for wing:', wingId);
+      // Call areas API with wing_id parameter - this will fetch areas specific to the wing
+      await loadAreas(wingId);
+    } else {
+      console.log('🔄 Wing cleared, no areas to load');
+    }
+  };
+
+  // Handle Location Area Change
+  const handleLocationAreaChange = async (areaId: string) => {
+    setLocationFormData(prev => ({
+      ...prev,
+      area: areaId,
+      floor: '',
+      room: ''
+    }));
+
+    // Clear dependent dropdowns and data
+    setFloors([]);
+    setRooms([]);
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+
+    if (areaId) {
+      console.log('🔄 Area changed, loading floors for area:', areaId);
+      // Call floors API with area_id parameter - this will fetch floors specific to the area
+      await loadFloors(areaId);
+    } else {
+      console.log('🔄 Area cleared, no floors to load');
+    }
+  };
+
+  // Handle Location Floor Change
+  const handleLocationFloorChange = async (floorId: string) => {
+    setLocationFormData(prev => ({
+      ...prev,
+      floor: floorId,
+      room: ''
+    }));
+
+    // Clear dependent dropdown and data
+    setRooms([]);
+    setFilteredRooms([]);
+
+    if (floorId) {
+      console.log('🔄 Floor changed, loading rooms for floor:', floorId);
+      // Call rooms API with floor_id parameter - this will fetch rooms specific to the floor
+      await loadRooms(floorId);
+    } else {
+      console.log('🔄 Floor cleared, no rooms to load');
+    }
+  };
+
+  // Handle Location Form Submit
+  const handleLocationSubmit = async () => {
+    if (!id) {
+      console.error('No ticket ID available for update');
+      return;
+    }
+
+    try {
+      setSubmittingLocation(true);
+      console.log('🔄 Submitting location data:', locationFormData);
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('id', id);
+      formDataToSend.append('complaint_log[complaint_id]', id);
+      
+      // Add person_id for Rails compatibility
+      const userId = localStorage.getItem('userId') || '';
+      if (userId) {
+        formDataToSend.append('person_id', userId);
+      }
+
+      // Add asset_id and service_id based on current ticket's association
+      if (ticketData?.asset_service === 'Asset' && ticketData?.asset_or_service_id) {
+        formDataToSend.append('asset_id', ticketData.asset_or_service_id.toString());
+        formDataToSend.append('service_id', '');
+      } else if (ticketData?.asset_service === 'Service' && ticketData?.asset_or_service_id) {
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', ticketData.asset_or_service_id.toString());
+      } else {
+        // Default empty values if no association
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', '');
+      }
+
+      // Use direct location parameters without complaint[] wrapper
+      // Always send location data - use empty string or null for unselected fields
+      formDataToSend.append('area_id', locationFormData.area || '-');
+      formDataToSend.append('tower_id', locationFormData.building || '-');
+      formDataToSend.append('wing_id', locationFormData.wing || '-');
+      formDataToSend.append('floor_id', locationFormData.floor || '-');
+      formDataToSend.append('room_id', locationFormData.room || '-');
+
+      console.log('📍 Location data being sent:', {
+        area_id: locationFormData.area || 'null',
+        tower_id: locationFormData.building || 'null',
+        wing_id: locationFormData.wing || 'null',
+        floor_id: locationFormData.floor || 'null',
+        room_id: locationFormData.room || 'null'
+      });
+
+      const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Location updated successfully:', data);
+
+      toast.success('Location updated successfully!');
+      
+      // Refresh ticket data
+      const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
+      setTicketData(ticketDetails);
+      
+      // Close the edit form
+      setIsEditingLocation(false);
+
+    } catch (error) {
+      console.error('❌ Error updating location:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update location');
+    } finally {
+      setSubmittingLocation(false);
+    }
+  };
+
+  // Check if ticket is closed (all timers stop) or on hold (only escalation timers stop)
+  const isTicketClosed = ticketData?.issue_status ? ['complete', 'completed', 'close', 'closed'].includes(ticketData.issue_status.toLowerCase()) : false;
+  const isTicketOnHold = ticketData?.issue_status ? ['on hold'].includes(ticketData.issue_status.toLowerCase()) : false;
 
   useEffect(() => {
     if (ticketData?.created_at && !isTicketClosed) {
@@ -2153,12 +3169,12 @@ export const TicketDetailsPage = () => {
       const initialAgeingSeconds = Math.max(0, Math.floor((now - createdTime) / 1000));
       setCurrentAgeing(initialAgeingSeconds);
 
-      // Initialize escalation timers
+      // Initialize escalation timers (unless on hold)
       const updateEscalationTimers = () => {
         const now = Date.now();
 
         // Response Escalation
-        if (ticketData.next_response_escalation?.escalation_time) {
+        if (ticketData.next_response_escalation?.escalation_time && !isTicketOnHold) {
           try {
             const escalationDate = new Date(ticketData.next_response_escalation.escalation_time).getTime();
             const diffMs = escalationDate - now;
@@ -2171,7 +3187,7 @@ export const TicketDetailsPage = () => {
         }
 
         // Resolution Escalation
-        if (ticketData.next_resolution_escalation?.escalation_time) {
+        if (ticketData.next_resolution_escalation?.escalation_time && !isTicketOnHold) {
           try {
             const escalationDate = new Date(ticketData.next_resolution_escalation.escalation_time).getTime();
             const diffMs = escalationDate - now;
@@ -2184,7 +3200,7 @@ export const TicketDetailsPage = () => {
         }
 
         // Golden Ticket Escalation
-        if (ticketData.next_executive_escalation?.escalation_time) {
+        if (ticketData.next_executive_escalation?.escalation_time && !isTicketOnHold) {
           try {
             const escalationDate = new Date(ticketData.next_executive_escalation.escalation_time).getTime();
             const diffMs = escalationDate - now;
@@ -2201,17 +3217,20 @@ export const TicketDetailsPage = () => {
       updateEscalationTimers();
 
       const interval = setInterval(() => {
+        // Ageing timer continues even when on hold, but stops when closed
         setCurrentAgeing(prev => prev + 1);
         
-        // Update escalation timers (countdown)
-        setResponseEscalationSeconds(prev => Math.max(0, prev - 1));
-        setResolutionEscalationSeconds(prev => Math.max(0, prev - 1));
-        setGoldenTicketEscalationSeconds(prev => Math.max(0, prev - 1));
+        // Escalation timers stop when on hold or closed
+        if (!isTicketOnHold) {
+          setResponseEscalationSeconds(prev => Math.max(0, prev - 1));
+          setResolutionEscalationSeconds(prev => Math.max(0, prev - 1));
+          setGoldenTicketEscalationSeconds(prev => Math.max(0, prev - 1));
+        }
       }, 1000);
 
       return () => clearInterval(interval);
-    } else if (isTicketClosed && ticketData) {
-      // For closed tickets, set static values from API data
+    } else if ((isTicketClosed || isTicketOnHold) && ticketData) {
+      // For closed or on hold tickets, set static values from API data
       if (ticketData.ticket_ageing_minutes) {
         const staticAgeingSeconds = ticketData.ticket_ageing_minutes * 60;
         setCurrentAgeing(staticAgeingSeconds);
@@ -2229,7 +3248,7 @@ export const TicketDetailsPage = () => {
         }
       }
       
-      // Set static escalation values for closed tickets
+      // Set static escalation values for closed/on hold tickets
       if (ticketData.next_response_escalation?.minutes) {
         setResponseEscalationSeconds(ticketData.next_response_escalation.minutes * 60);
       }
@@ -2240,7 +3259,7 @@ export const TicketDetailsPage = () => {
         setGoldenTicketEscalationSeconds(ticketData.next_executive_escalation.minutes * 60);
       }
     }
-  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed]);
+  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed, isTicketOnHold]);
 
   // Add useEffect to trigger balance TAT recalculation every second for real-time countdown (removed - now handled in main timer)
 
@@ -2279,19 +3298,19 @@ export const TicketDetailsPage = () => {
     [
       {
         label: 'Response TAT',
-        value: isTicketClosed
+        value: (isTicketClosed || isTicketOnHold)
           ? (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
           : (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
       },
       {
         label: 'Balance TAT',
-        value: isTicketClosed
+        value: (isTicketClosed || isTicketOnHold)
           ? '00:00:00:00'
           : (ticketData.next_response_escalation?.escalation_time
             ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_response_escalation.escalation_time))
             : '00:00:00:00'),
-        isExceeded: !isTicketClosed && (ticketData.next_response_escalation?.is_overdue || false),
-        exceededBy: !isTicketClosed && ticketData.next_response_escalation?.is_overdue
+        isExceeded: !(isTicketClosed || isTicketOnHold) && (ticketData.next_response_escalation?.is_overdue || false),
+        exceededBy: !(isTicketClosed || isTicketOnHold) && ticketData.next_response_escalation?.is_overdue
           ? formatSecondsToDDHHMMSS(Math.abs(ticketData.next_response_escalation.minutes * 60))
           : ''
       },
@@ -2309,19 +3328,19 @@ export const TicketDetailsPage = () => {
     [
       {
         label: 'Resolution TAT',
-        value: isTicketClosed
+        value: (isTicketClosed || isTicketOnHold)
           ? (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
           : (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
       },
       {
         label: 'Balance TAT',
-        value: isTicketClosed
+        value: (isTicketClosed || isTicketOnHold)
           ? '00:00:00:00'
           : (ticketData.next_resolution_escalation?.escalation_time
             ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_resolution_escalation.escalation_time))
             : '00:00:00:00'),
-        isExceeded: !isTicketClosed && (ticketData.next_resolution_escalation?.is_overdue || false),
-        exceededBy: !isTicketClosed && ticketData.next_resolution_escalation?.is_overdue
+        isExceeded: !(isTicketClosed || isTicketOnHold) && (ticketData.next_resolution_escalation?.is_overdue || false),
+        exceededBy: !(isTicketClosed || isTicketOnHold) && ticketData.next_resolution_escalation?.is_overdue
           ? formatSecondsToDDHHMMSS(Math.abs(ticketData.next_resolution_escalation.minutes * 60))
           : ''
       },
@@ -2355,6 +3374,11 @@ export const TicketDetailsPage = () => {
     console.log('🔍 Responsible Person Matched:', matchedPerson ? `${matchedPerson.full_name} (ID: ${matchedPerson.id})` : 'No match');
 
     return matchedPerson ? matchedPerson.id.toString() : ticketData.responsible_person;
+  };
+
+  // Helper function to get responsible person value from form data
+  const getResponsiblePersonFormValue = () => {
+    return ticketClosureFormData?.responsible_person || '';
   };
 
   // Helper function to get template values for Preventive Action (multi-select)
@@ -2467,6 +3491,67 @@ export const TicketDetailsPage = () => {
       value: t.id,
       label: t.identifier_action,
     }));
+  };
+
+  // Helper functions to get form values for Ticket Closure editing
+  const getPreventiveActionFormValues = () => {
+    if (!ticketClosureFormData?.preventive_action_template_ids || !Array.isArray(ticketClosureFormData.preventive_action_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketClosureFormData.preventive_action_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Preventive Action" &&
+        template.active === true
+    );
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
+  };
+
+  const getShortTermImpactFormValues = () => {
+    if (!ticketClosureFormData?.short_term_impact_template_ids || !Array.isArray(ticketClosureFormData.short_term_impact_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketClosureFormData.short_term_impact_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Short-term Impact" &&
+        template.active === true
+    );
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
+  };
+
+  const getCorrectiveActionFormValues = () => {
+    if (!ticketClosureFormData?.corrective_action_template_ids || !Array.isArray(ticketClosureFormData.corrective_action_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketClosureFormData.corrective_action_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Corrective Action" &&
+        template.active === true
+    );
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
+  };
+
+  const getLongTermImpactFormValues = () => {
+    if (!ticketClosureFormData?.long_term_impact_template_ids || !Array.isArray(ticketClosureFormData.long_term_impact_template_ids)) {
+      return [];
+    }
+
+    const uniqueIds = [...new Set(ticketClosureFormData.long_term_impact_template_ids)];
+    const matchedTemplates = communicationTemplates.filter(
+      template => uniqueIds.includes(template.id) &&
+        template.identifier === "Long-term Impact" &&
+        template.active === true
+    );
+
+    return matchedTemplates.map(t => ({ value: t.id, label: t.identifier_action }));
   };
 
   const getPriorityLabel = (priority: string | null | undefined): string => {
@@ -3750,21 +4835,68 @@ export const TicketDetailsPage = () => {
                               </MuiSelect>
                             </FormControl>
 
-                            <FormControl fullWidth size="small">
-                              <InputLabel>Association</InputLabel>
-                              <MuiSelect
-                                value={ticketMgmtFormData.asset_service}
-                                onChange={(e) => handleTicketMgmtInputChange('asset_service', e.target.value)}
-                                label="Source"
-                                disabled={true}
+                            {/* Association Selection */}
+                            <div className="space-y-3">
+                              <FormLabel component="legend" className="text-sm font-medium">
+                                Association Type
+                              </FormLabel>
+                              <RadioGroup
+                                row
+                                value={associationType}
+                                onChange={(e) => setAssociationType(e.target.value as 'asset' | 'service')}
                               >
-                                <MenuItem value="">
-                                  <span className="text-gray-500">Select source</span>
-                                </MenuItem>
-                                <MenuItem value="Asset">Asset</MenuItem>
-                                <MenuItem value="Service">Service</MenuItem>
-                              </MuiSelect>
-                            </FormControl>
+                                <FormControlLabel
+                                  value="asset"
+                                  control={<Radio size="small" />}
+                                  label="Asset"
+                                />
+                                <FormControlLabel
+                                  value="service"
+                                  control={<Radio size="small" />}
+                                  label="Service"
+                                />
+                              </RadioGroup>
+
+                              {/* Conditional Dropdown */}
+                              {associationType && (
+                                <FormControl fullWidth size="small">
+                                  <InputLabel>
+                                    {associationType === 'asset' ? 'Select Asset' : 'Select Service'}
+                                  </InputLabel>
+                                  <MuiSelect
+                                    value={associationType === 'asset' ? ticketMgmtFormData.selectedAsset : ticketMgmtFormData.selectedService}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      handleAssetServiceSelection(associationType, value);
+                                    }}
+                                    label={associationType === 'asset' ? 'Select Asset' : 'Select Service'}
+                                    disabled={
+                                      associationType === 'asset' 
+                                        ? isLoadingAssets || assetOptions.length === 0
+                                        : isLoadingServices || serviceOptions.length === 0
+                                    }
+                                  >
+                                    <MenuItem value="">
+                                      <span className="text-gray-500">
+                                        Select {associationType === 'asset' ? 'an asset' : 'a service'}
+                                      </span>
+                                    </MenuItem>
+                                    {associationType === 'asset' 
+                                      ? assetOptions.map((asset) => (
+                                          <MenuItem key={asset.id} value={asset.id}>
+                                            {asset.name}
+                                          </MenuItem>
+                                        ))
+                                      : serviceOptions.map((service) => (
+                                          <MenuItem key={service.id} value={service.id}>
+                                            {service.service_name}
+                                          </MenuItem>
+                                        ))
+                                    }
+                                  </MuiSelect>
+                                </FormControl>
+                              )}
+                            </div>
 
                           </div>
 
@@ -3861,9 +4993,8 @@ export const TicketDetailsPage = () => {
                                   .map((t) => ({ value: t.id, label: t.identifier_action }))}
                                 onChange={(selected) => {
                                   const selectedIds = selected ? selected.map((s) => s.value) : [];
-                                  handleTicketMgmtInputChange('rca_template_ids', selectedIds);
-                                  // Auto-save when dropdown changes
-                                  handleRootCauseChange(selectedIds);
+                                  // Only update form data, don't call API immediately
+                                  handleRootCauseFormChange(selectedIds);
                                 }}
                                 options={communicationTemplates
                                   .filter((t) => t.identifier === 'Root Cause Analysis' && t.active)
@@ -4321,7 +5452,7 @@ export const TicketDetailsPage = () => {
                           <table className="min-w-full text-[11px]">
                             <thead>
                               <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
-                                {['Request Id', 'Amount', 'Description', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5'].map(h => (
+                                {['Request Id', 'Amount', 'Description', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5', 'Action'].map(h => (
                                   <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
                                     {h}
                                   </th>
@@ -4396,6 +5527,16 @@ export const TicketDetailsPage = () => {
                                         }`}>
                                         {request.approvals?.L5 || '-'}
                                       </span>
+                                    </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCancelCostApproval(request.id)}
+                                        className="bg-red-500 hover:bg-red-600 text-white text-[10px] font-medium px-3 py-1 rounded transition-colors"
+                                        title="Cancel Request"
+                                      >
+                                        Cancel
+                                      </button>
                                     </td>
                                     {/* <td className="px-4 py-3 border border-[#E5E2DC]">
                                       <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
@@ -4730,9 +5871,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={getPreventiveActionValues()}
+                            value={isEditingTicketClosure ? getPreventiveActionFormValues() : getPreventiveActionValues()}
                             onChange={(selectedOptions) => {
-                              handlePreventiveActionChange(selectedOptions as Array<{ value: number; label: string }>);
+                              handlePreventiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Preventive Action" && t.active === true)
@@ -4751,11 +5892,16 @@ export const TicketDetailsPage = () => {
 
                         <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
                           {(() => {
-                            if (!ticketData?.preventive_action_template_ids || ticketData.preventive_action_template_ids.length === 0) {
+                            // Use form data if in edit mode, otherwise use ticket data
+                            const templateIds = isEditingTicketClosure 
+                              ? (ticketClosureFormData?.preventive_action_template_ids || [])
+                              : (ticketData?.preventive_action_template_ids || []);
+
+                            if (!templateIds || templateIds.length === 0) {
                               return 'No preventive action description available';
                             }
 
-                            const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
+                            const uniqueIds = [...new Set(templateIds)];
                             const matchedTemplates = communicationTemplates.filter(
                               template => uniqueIds.includes(template.id) &&
                                 template.identifier === "Preventive Action"
@@ -4797,9 +5943,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={getShortTermImpactValues()}
+                            value={isEditingTicketClosure ? getShortTermImpactFormValues() : getShortTermImpactValues()}
                             onChange={(selectedOptions) => {
-                              handleShortTermImpactChange(selectedOptions as Array<{ value: number; label: string }>);
+                              handleShortTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Short-term Impact" && t.active === true)
@@ -4864,9 +6010,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={getCorrectiveActionValues()}
+                            value={isEditingTicketClosure ? getCorrectiveActionFormValues() : getCorrectiveActionValues()}
                             onChange={(selectedOptions) => {
-                              handleCorrectiveActionChange(selectedOptions as Array<{ value: number; label: string }>);
+                              handleCorrectiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Corrective Action" && t.active === true)
@@ -4931,9 +6077,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={getLongTermImpactValues()}
+                            value={isEditingTicketClosure ? getLongTermImpactFormValues() : getLongTermImpactValues()}
                             onChange={(selectedOptions) => {
-                              handleLongTermImpactChange(selectedOptions as Array<{ value: number; label: string }>);
+                              handleLongTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Long-term Impact" && t.active === true)
@@ -5064,7 +6210,7 @@ export const TicketDetailsPage = () => {
                           {/* React Select */}
                           <Select
                             value={(() => {
-                              const value = getResponsiblePersonValue();
+                              const value = isEditingTicketClosure ? getResponsiblePersonFormValue() : getResponsiblePersonValue();
                               if (!value) return null;
                               const matchedPerson = responsiblePersons.find(
                                 p => p.id.toString() === value
@@ -5076,7 +6222,7 @@ export const TicketDetailsPage = () => {
                             })()}
                             onChange={(selectedOption) => {
                               if (selectedOption && 'value' in selectedOption) {
-                                handleResponsiblePersonChange(selectedOption.value.toString());
+                                handleResponsiblePersonFormChange(selectedOption.value.toString());
                               }
                             }}
                             options={responsiblePersons.map((person) => ({
@@ -5125,49 +6271,227 @@ export const TicketDetailsPage = () => {
                 </Card>
 
                 <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
+                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Location Details
+                      </h3>
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Location Details
-                    </h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                      onClick={handleLocationEdit}
+                      disabled={isEditingLocation}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
                   </div>
 
                   <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="relative w-full px-4">
-                      <div
-                        className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
-                        style={{
-                          left: `calc(9%)`,
-                          right: `calc(9%)`,
-                        }}
-                      />
+                    {!isEditingLocation ? (
+                      <div className="relative w-full px-4">
+                        <div
+                          className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
+                          style={{
+                            left: `calc(9%)`,
+                            right: `calc(9%)`,
+                          }}
+                        />
 
-                      <div className="flex justify-between items-start relative z-1">
-                        {[
-                          { label: "Site", value: ticketData.site_name || "-" },
-                          { label: "Building", value: ticketData.building_name || "-" },
-                          { label: "Wing", value: ticketData.wing_name || "-" },
-                          { label: "Floor", value: ticketData.floor_name || "-" },
-                          { label: "Area", value: ticketData.area_name || "-" },
-                          { label: "Room", value: ticketData.room_name || "-" },
-                        ].map((item, index) => (
-                          <div
-                            key={`location-${index}`}
-                            className="flex flex-col items-center w-full text-center"
-                          >
-                            <div className="text-sm text-gray-500 mb-2 mt-1">
-                              {item.label}
+                        <div className="flex justify-between items-start relative z-1">
+                          {[
+                            { label: "Site", value: ticketData.site_name || "-" },
+                            { label: "Building", value: ticketData.building_name || "-" },
+                            { label: "Wing", value: ticketData.wing_name || "-" },
+                            { label: "Area", value: ticketData.area_name || "-" },
+                            { label: "Floor", value: ticketData.floor_name || "-" },
+                            { label: "Room", value: ticketData.room_name || "-" },
+                          ].map((item, index) => (
+                            <div
+                              key={`location-${index}`}
+                              className="flex flex-col items-center w-full text-center"
+                            >
+                              <div className="text-sm text-gray-500 mb-2 mt-1">
+                                {item.label}
+                              </div>
+                              <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
+                              <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
+                                {item.value}
+                              </div>
                             </div>
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
-                            <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
-                              {item.value}
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleLocationSubmit();
+                        }}
+                        className="space-y-6"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* Building */}
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          >
+                            <InputLabel shrink>Building</InputLabel>
+                            <MuiSelect
+                              value={locationFormData.building}
+                              onChange={(e) => handleLocationBuildingChange(e.target.value)}
+                              label="Building"
+                              notched
+                              displayEmpty
+                              disabled={loadingBuildings}
+                            >
+                              <MenuItem value="">
+                                {loadingBuildings ? "Loading..." : "Select Building"}
+                              </MenuItem>
+                              {buildings.map((building) => (
+                                <MenuItem key={building.id} value={building.id.toString()}>
+                                  {building.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+
+                          {/* Wing */}
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          >
+                            <InputLabel shrink>Wing</InputLabel>
+                            <MuiSelect
+                              value={locationFormData.wing}
+                              onChange={(e) => handleLocationWingChange(e.target.value)}
+                              label="Wing"
+                              notched
+                              displayEmpty
+                              disabled={loadingWings || !locationFormData.building}
+                            >
+                              <MenuItem value="">
+                                {loadingWings ? "Loading..." :
+                                  !locationFormData.building ? "Select Building First" : "Select Wing"}
+                              </MenuItem>
+                              {wings.map((wing) => (
+                                <MenuItem key={wing.id} value={wing.id.toString()}>
+                                  {wing.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+
+                          {/* Area */}
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          >
+                            <InputLabel shrink>Area</InputLabel>
+                            <MuiSelect
+                              value={locationFormData.area}
+                              onChange={(e) => handleLocationAreaChange(e.target.value)}
+                              label="Area"
+                              notched
+                              displayEmpty
+                              disabled={loadingAreas || !locationFormData.wing}
+                            >
+                              <MenuItem value="">
+                                {loadingAreas ? "Loading..." :
+                                  !locationFormData.wing ? "Select Wing First" : "Select Area"}
+                              </MenuItem>
+                              {areas.map((area) => (
+                                <MenuItem key={area.id} value={area.id.toString()}>
+                                  {area.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+
+                          {/* Floor */}
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          >
+                            <InputLabel shrink>Floor</InputLabel>
+                            <MuiSelect
+                              value={locationFormData.floor}
+                              onChange={(e) => handleLocationFloorChange(e.target.value)}
+                              label="Floor"
+                              notched
+                              displayEmpty
+                              disabled={loadingFloors || !locationFormData.area}
+                            >
+                              <MenuItem value="">
+                                {loadingFloors ? "Loading..." :
+                                  !locationFormData.area ? "Select Area First" : "Select Floor"}
+                              </MenuItem>
+                              {floors.map((floor) => (
+                                <MenuItem key={floor.id} value={floor.id.toString()}>
+                                  {floor.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+
+                          {/* Room */}
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          >
+                            <InputLabel shrink>Room</InputLabel>
+                            <MuiSelect
+                              value={locationFormData.room}
+                              onChange={(e) => handleLocationInputChange('room', e.target.value)}
+                              label="Room"
+                              notched
+                              displayEmpty
+                              disabled={loadingRooms || !locationFormData.floor}
+                            >
+                              <MenuItem value="">
+                                {loadingRooms ? "Loading..." :
+                                  !locationFormData.floor ? "Select Floor First" : "Select Room"}
+                              </MenuItem>
+                              {rooms.map((room) => (
+                                <MenuItem key={room.id} value={room.id.toString()}>
+                                  {room.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-3 justify-end mt-6">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsEditingLocation(false)}
+                            disabled={submittingLocation}
+                            className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={submittingLocation}
+                            className="bg-[#C72030] hover:bg-[#A01825] text-white px-8"
+                          >
+                            {submittingLocation ? 'Saving...' : 'Submit'}
+                          </Button>
+                        </div>
+                      </form>
+                    )}
                   </div>
                 </div>
 
@@ -6562,21 +7886,68 @@ export const TicketDetailsPage = () => {
                               </MuiSelect>
                             </FormControl>
 
-                            <FormControl fullWidth size="small">
-                              <InputLabel>Association</InputLabel>
-                              <MuiSelect
-                                value={ticketMgmtFormData.asset_service}
-                                onChange={(e) => handleTicketMgmtInputChange('asset_service', e.target.value)}
-                                label="Source"
-                                disabled={true}
+                            {/* Association Selection */}
+                            <div className="space-y-3">
+                              <FormLabel component="legend" className="text-sm font-medium">
+                                Association Type
+                              </FormLabel>
+                              <RadioGroup
+                                row
+                                value={associationType}
+                                onChange={(e) => setAssociationType(e.target.value as 'asset' | 'service')}
                               >
-                                <MenuItem value="">
-                                  <span className="text-gray-500">Select source</span>
-                                </MenuItem>
-                                <MenuItem value="Asset">Asset</MenuItem>
-                                <MenuItem value="Service">Service</MenuItem>
-                              </MuiSelect>
-                            </FormControl>
+                                <FormControlLabel
+                                  value="asset"
+                                  control={<Radio size="small" />}
+                                  label="Asset"
+                                />
+                                <FormControlLabel
+                                  value="service"
+                                  control={<Radio size="small" />}
+                                  label="Service"
+                                />
+                              </RadioGroup>
+
+                              {/* Conditional Dropdown */}
+                              {associationType && (
+                                <FormControl fullWidth size="small">
+                                  <InputLabel>
+                                    {associationType === 'asset' ? 'Select Asset' : 'Select Service'}
+                                  </InputLabel>
+                                  <MuiSelect
+                                    value={associationType === 'asset' ? ticketMgmtFormData.selectedAsset : ticketMgmtFormData.selectedService}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      handleAssetServiceSelection(associationType, value);
+                                    }}
+                                    label={associationType === 'asset' ? 'Select Asset' : 'Select Service'}
+                                    disabled={
+                                      associationType === 'asset' 
+                                        ? isLoadingAssets || assetOptions.length === 0
+                                        : isLoadingServices || serviceOptions.length === 0
+                                    }
+                                  >
+                                    <MenuItem value="">
+                                      <span className="text-gray-500">
+                                        Select {associationType === 'asset' ? 'an asset' : 'a service'}
+                                      </span>
+                                    </MenuItem>
+                                    {associationType === 'asset' 
+                                      ? assetOptions.map((asset) => (
+                                          <MenuItem key={asset.id} value={asset.id}>
+                                            {asset.name}
+                                          </MenuItem>
+                                        ))
+                                      : serviceOptions.map((service) => (
+                                          <MenuItem key={service.id} value={service.id}>
+                                            {service.service_name}
+                                          </MenuItem>
+                                        ))
+                                    }
+                                  </MuiSelect>
+                                </FormControl>
+                              )}
+                            </div>
 
                           </div>
 
@@ -6673,9 +8044,8 @@ export const TicketDetailsPage = () => {
                                   .map((t) => ({ value: t.id, label: t.identifier_action }))}
                                 onChange={(selected) => {
                                   const selectedIds = selected ? selected.map((s) => s.value) : [];
-                                  handleTicketMgmtInputChange('rca_template_ids', selectedIds);
-                                  // Auto-save when dropdown changes
-                                  handleRootCauseChange(selectedIds);
+                                  // Only update form data, don't call API immediately
+                                  handleRootCauseFormChange(selectedIds);
                                 }}
                                 options={communicationTemplates
                                   .filter((t) => t.identifier === 'Root Cause Analysis' && t.active)
@@ -7133,7 +8503,7 @@ export const TicketDetailsPage = () => {
                           <table className="min-w-full text-[11px]">
                             <thead>
                               <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
-                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5'].map(h => (
+                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5', 'Action'].map(h => (
                                   <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
                                     {h}
                                   </th>
@@ -7209,6 +8579,14 @@ export const TicketDetailsPage = () => {
                                         {request.approvals?.L5 || '-'}
                                       </span>
                                     </td>
+                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                                      <button
+                                        onClick={() => handleCancelCostApproval(request.id)}
+                                        className="px-3 py-1 text-[10px] font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </td>
                                     {/* <td className="px-4 py-3 border border-[#E5E2DC]">
                                       <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
                                         ? 'bg-yellow-100 text-yellow-700'
@@ -7242,7 +8620,7 @@ export const TicketDetailsPage = () => {
                 </Card>
 
                 {/* Ticket Closure (Figma-aligned) */}
-                <Card className="w-full bg-white rounded-lg shadow-sm border">
+                  <Card className="w-full bg-white rounded-lg shadow-sm border">
                   {/* Header */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
@@ -7258,16 +8636,268 @@ export const TicketDetailsPage = () => {
                       variant="outline"
                       size="sm"
                       className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
-                    // onClick={handleUpdate}
+                      onClick={handleTicketClosureEdit}
+                      disabled={isEditingTicketClosure || loadingResponsiblePersons}
                     >
-                      <Edit className="w-4 h-4 mr-1" /> Edit
+                      <Edit className="w-4 h-4 mr-1" /> 
+                      {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
                     </Button>
                   </div>
 
                   {/* Body */}
                   <div className="bg-[#FFFDFB] border border-t-0 border-[#D9D9D9] px-6 py-6">
-                    {/* Two row / two column panels */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {!isEditingTicketClosure ? (
+                      // View Mode - Show current data as read-only
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          {/* Preventive Action - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Preventive Action -
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0
+                                  ? (() => {
+                                      const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
+                                      const matchedTemplates = communicationTemplates.filter(
+                                        template => uniqueIds.includes(template.id) &&
+                                          template.identifier === "Preventive Action"
+                                      );
+                                      return matchedTemplates.length > 0
+                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                        : 'No preventive action selected';
+                                    })()
+                                  : 'No preventive action selected'
+                                }
+                              </div>
+                            </div>
+                            {(ticketData?.preventive_action_template_ids && ticketData.preventive_action_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Preventive Action"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`preventive-action-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Short-term Impact - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Short-term Impact -
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0
+                                  ? (() => {
+                                      const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                                      const matchedTemplates = communicationTemplates.filter(
+                                        template => uniqueIds.includes(template.id) &&
+                                          template.identifier === "Short-term Impact"
+                                      );
+                                      return matchedTemplates.length > 0
+                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                        : 'No short-term impact selected';
+                                    })()
+                                  : 'No short-term impact selected'
+                                }
+                              </div>
+                            </div>
+                            {(ticketData?.short_term_impact_template_ids && ticketData.short_term_impact_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.short_term_impact_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Short-term Impact"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`short-term-impact-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Corrective Action - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Corrective Action -
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0
+                                  ? (() => {
+                                      const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                                      const matchedTemplates = communicationTemplates.filter(
+                                        template => uniqueIds.includes(template.id) &&
+                                          template.identifier === "Corrective Action"
+                                      );
+                                      return matchedTemplates.length > 0
+                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                        : 'No corrective action selected';
+                                    })()
+                                  : 'No corrective action selected'
+                                }
+                              </div>
+                            </div>
+                            {(ticketData?.corrective_action_template_ids && ticketData.corrective_action_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.corrective_action_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Corrective Action"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`corrective-action-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Long-term Impact - View Only */}
+                          <div className="bg-[#f2efea] border border-[#f2efea] p-4">
+                            <div className="flex text-[14px] leading-snug min-w-0">
+                              <div className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                                Long-term Impact -
+                              </div>
+                              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                                {ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0
+                                  ? (() => {
+                                      const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                                      const matchedTemplates = communicationTemplates.filter(
+                                        template => uniqueIds.includes(template.id) &&
+                                          template.identifier === "Long-term Impact"
+                                      );
+                                      return matchedTemplates.length > 0
+                                        ? matchedTemplates.map(t => t.identifier_action).join(', ')
+                                        : 'No long-term impact selected';
+                                    })()
+                                  : 'No long-term impact selected'
+                                }
+                              </div>
+                            </div>
+                            {(ticketData?.long_term_impact_template_ids && ticketData.long_term_impact_template_ids.length > 0) && (
+                              <div
+                                className="space-y-2 min-w-0 mt-4"
+                                style={{ fontSize: "14px", fontWeight: "500" }}
+                              >
+                                {(() => {
+                                  const uniqueIds = [...new Set(ticketData.long_term_impact_template_ids)];
+                                  return uniqueIds.map((templateId, index) => {
+                                    const matchedTemplate = communicationTemplates.find(
+                                      template => template.id === templateId &&
+                                        template.identifier === "Long-term Impact"
+                                    );
+
+                                    if (!matchedTemplate) return null;
+
+                                    return (
+                                      <div key={`long-term-impact-display-${templateId}`}>
+                                        {index === 0 && <div className="mb-2 border-t border-gray-300"></div>}
+                                        {index > 0 && <div className="my-2 border-t border-gray-300"></div>}
+                                        <div
+                                          className="text-[14px] font-medium text-[#000000] leading-[20px] max-h-48 overflow-y-auto pr-1 break-words overflow-wrap-anywhere"
+                                          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                                        >
+                                          {matchedTemplate.body || matchedTemplate.identifier_action}
+                                        </div>
+                                      </div>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Bottom Row: Review Date & Responsible Person - View Only */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          <div className="flex items-center text-[14px]">
+                            <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Review Date</span>
+                            <span className="font-semibold text-[#1A1A1A]">
+                              {ticketData.review_tracking ? ticketData.review_tracking : '-'}
+                            </span>
+                          </div>
+                          <div className="flex items-center text-[14px]">
+                            <span className="w-[140px] flex-shrink-0 text-[#6B6B6B] font-medium">Responsible Person</span>
+                            <span className="font-semibold text-[#1A1A1A]">
+                              {ticketData.responsible_person ? ticketData.responsible_person : '-'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      // Edit Mode - Show form
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleTicketClosureSubmit();
+                        }}
+                        className="space-y-6"
+                      >
+                        {/* Two row / two column panels */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                       {/* Preventive Action */}
                       <div className="bg-[#f2efea] border border-[#f2efea] p-4">
                         <div className="relative w-full">
@@ -7285,14 +8915,14 @@ export const TicketDetailsPage = () => {
                               zIndex: 1,
                             }}
                           >
-                            Preventive Action 
+                            Preventive Action
                           </label>
 
                           {/* React Select */}
                           <Select
-                            value={getPreventiveActionValues()}
+                            value={isEditingTicketClosure ? getPreventiveActionFormValues() : getPreventiveActionValues()}
                             onChange={(selectedOptions) => {
-                              handlePreventiveActionChange(selectedOptions as Array<{ value: number; label: string }>);
+                              handlePreventiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Preventive Action" && t.active === true)
@@ -7311,11 +8941,16 @@ export const TicketDetailsPage = () => {
 
                         <div className="mt-4 space-y-2 text-[14px] font-medium text-[#000000] leading-[16px] min-h-16 h-auto pr-1">
                           {(() => {
-                            if (!ticketData?.preventive_action_template_ids || ticketData.preventive_action_template_ids.length === 0) {
+                            // Use form data if in edit mode, otherwise use ticket data
+                            const templateIds = isEditingTicketClosure 
+                              ? (ticketClosureFormData?.preventive_action_template_ids || [])
+                              : (ticketData?.preventive_action_template_ids || []);
+
+                            if (!templateIds || templateIds.length === 0) {
                               return 'No preventive action description available';
                             }
 
-                            const uniqueIds = [...new Set(ticketData.preventive_action_template_ids)];
+                            const uniqueIds = [...new Set(templateIds)];
                             const matchedTemplates = communicationTemplates.filter(
                               template => uniqueIds.includes(template.id) &&
                                 template.identifier === "Preventive Action"
@@ -7357,9 +8992,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={getShortTermImpactValues()}
+                            value={isEditingTicketClosure ? getShortTermImpactFormValues() : getShortTermImpactValues()}
                             onChange={(selectedOptions) => {
-                              handleShortTermImpactChange(selectedOptions as Array<{ value: number; label: string }>);
+                              handleShortTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Short-term Impact" && t.active === true)
@@ -7424,9 +9059,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={getCorrectiveActionValues()}
+                            value={isEditingTicketClosure ? getCorrectiveActionFormValues() : getCorrectiveActionValues()}
                             onChange={(selectedOptions) => {
-                              handleCorrectiveActionChange(selectedOptions as Array<{ value: number; label: string }>);
+                              handleCorrectiveActionFormChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Corrective Action" && t.active === true)
@@ -7491,9 +9126,9 @@ export const TicketDetailsPage = () => {
 
                           {/* React Select */}
                           <Select
-                            value={getLongTermImpactValues()}
+                            value={isEditingTicketClosure ? getLongTermImpactFormValues() : getLongTermImpactValues()}
                             onChange={(selectedOptions) => {
-                              handleLongTermImpactChange(selectedOptions as Array<{ value: number; label: string }>);
+                              handleLongTermImpactFormChange(selectedOptions as Array<{ value: number; label: string }>);
                             }}
                             options={communicationTemplates
                               .filter((t) => t.identifier === "Long-term Impact" && t.active === true)
@@ -7539,70 +9174,68 @@ export const TicketDetailsPage = () => {
 
                     {/* Bottom Row: Review Date & Responsible Person */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                      <div className="flex items-start text-[12px]">
-                        <span className="w-[70px] text-[#6B6B6B]">Review Date</span>
-                        {(() => {
-                          console.log('🔍 Render check - isEditingTicketClosure:', isEditingTicketClosure);
-                          console.log('🔍 Render check - ticketClosureFormData.review_tracking:', ticketClosureFormData.review_tracking);
-                          return null;
-                        })()}
-                        {!isEditingTicketClosure ? (
-                          <span className="ml-2 font-semibold text-[#1A1A1A]">
-                            {ticketData.review_tracking
-                              ? formatDateToDDMMYYYY(ticketData.review_tracking)
-                              : '-'}
-                          </span>
-                        ) : (
-                          <div className="ml-2 w-48" style={{ minWidth: '192px', border: '2px solid red' }}>
-                            {console.log('📅 Review Date TextField is rendering in edit mode!')}
-                            <TextField
-                              fullWidth
-                              size="small"
-                              type="date"
-                              label="Review Date"
-                              placeholder="Select review date"
-                              value={ticketClosureFormData.review_tracking || ''}
-                              onChange={(e) => {
-                                console.log('Review date changed:', e.target.value);
-                                handleTicketClosureInputChange('review_tracking', e.target.value);
-                              }}
-                              InputLabelProps={{ 
-                                shrink: true,
-                                style: { fontSize: '12px', color: '#6B6B6B' }
-                              }}
-                              inputProps={{
-                                style: { fontSize: '12px' }
-                              }}
-                              sx={{
-                                '& .MuiInputBase-root': {
-                                  backgroundColor: '#F2F2F2',
-                                  borderRadius: '4px',
-                                  fontSize: '12px',
-                                  minHeight: '36px',
+                      <div className="relative w-full">
+                        {/* Floating label on border */}
+                        <label
+                          style={{
+                            position: "absolute",
+                            top: "-10px",
+                            left: "12px",
+                            background: "#fff",
+                            padding: "0 6px",
+                            fontWeight: 500,
+                            fontSize: "14px",
+                            color: "#1A1A1A",
+                            zIndex: 1,
+                          }}
+                        >
+                          Review Date
+                        </label>
+                        
+                        <div style={{ minWidth: '240px' }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            type="date"
+                            placeholder="Select review date"
+                            value={ticketClosureFormData.review_tracking || ''}
+                            onChange={(e) => {
+                              console.log('Review date changed:', e.target.value);
+                              handleTicketClosureInputChange('review_tracking', e.target.value);
+                            }}
+                            InputLabelProps={{ 
+                              shrink: true,
+                              style: { display: 'none' } // Hide default label since we have floating label
+                            }}
+                            inputProps={{
+                              style: { fontSize: '14px' }
+                            }}
+                            sx={{
+                              '& .MuiInputBase-root': {
+                                backgroundColor: '#F2F2F2',
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                minHeight: '40px',
+                              },
+                              '& .MuiOutlinedInput-root': {
+                                '& fieldset': {
+                                  borderColor: '#DAD7D0',
+                                  borderWidth: '1px',
                                 },
-                                '& .MuiOutlinedInput-root': {
-                                  '& fieldset': {
-                                    borderColor: '#DAD7D0',
-                                    borderWidth: '1px',
-                                  },
-                                  '&:hover fieldset': {
-                                    borderColor: '#C72030',
-                                  },
-                                  '&.Mui-focused fieldset': {
-                                    borderColor: '#C72030',
-                                  },
+                                '&:hover fieldset': {
+                                  borderColor: '#C72030',
                                 },
-                                '& .MuiInputBase-input': {
-                                  fontSize: '12px',
-                                  padding: '8px 12px',
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#C72030',
                                 },
-                                '& .MuiInputLabel-root': {
-                                  fontSize: '12px',
-                                },
-                              }}
-                            />
-                          </div>
-                        )}
+                              },
+                              '& .MuiInputBase-input': {
+                                fontSize: '14px',
+                                padding: '10px 12px',
+                              },
+                            }}
+                          />
+                        </div>
                       </div>
                       <div>
                         <div className="relative w-full">
@@ -7626,7 +9259,7 @@ export const TicketDetailsPage = () => {
                           {/* React Select */}
                           <Select
                             value={(() => {
-                              const value = getResponsiblePersonValue();
+                              const value = isEditingTicketClosure ? getResponsiblePersonFormValue() : getResponsiblePersonValue();
                               if (!value) return null;
                               const matchedPerson = responsiblePersons.find(
                                 p => p.id.toString() === value
@@ -7638,7 +9271,7 @@ export const TicketDetailsPage = () => {
                             })()}
                             onChange={(selectedOption) => {
                               if (selectedOption && 'value' in selectedOption) {
-                                handleResponsiblePersonChange(selectedOption.value.toString());
+                                handleResponsiblePersonFormChange(selectedOption.value.toString());
                               }
                             }}
                             options={responsiblePersons.map((person) => ({
@@ -7661,56 +9294,258 @@ export const TicketDetailsPage = () => {
                           )}
                       </div>
                     </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-3 justify-end mt-6">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsEditingTicketClosure(false)}
+                        disabled={submittingTicketClosure}
+                        className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={submittingTicketClosure}
+                        className="bg-[#C72030] hover:bg-[#A01825] text-white px-8"
+                      >
+                        {submittingTicketClosure ? 'Saving...' : 'Submit'}
+                      </Button>
+                    </div>
+                      </form>
+                    )}
                   </div>
                 </Card>
 
+
+                 {/* Location Details */}
                 <div className="w-full bg-white rounded-lg shadow-sm border">
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
+                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Location Details
+                      </h3>
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-black">
-                      Location Details
-                    </h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-[12px] border-[#D9D9D9] hover:bg-[#F6F4EE]"
+                      onClick={handleLocationEdit}
+                      disabled={isEditingLocation}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
                   </div>
 
                   <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="relative w-full px-4">
-                      <div
-                        className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
-                        style={{
-                          left: `calc(9%)`,
-                          right: `calc(9%)`,
-                        }}
-                      />
+                    {!isEditingLocation ? (
+                      <div className="relative w-full px-4">
+                        <div
+                          className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
+                          style={{
+                            left: `calc(9%)`,
+                            right: `calc(9%)`,
+                          }}
+                        />
 
-                      <div className="flex justify-between items-start relative z-1">
-                        {[
-                          { label: "Site", value: ticketData.site_name || "-" },
-                          { label: "Building", value: ticketData.building_name || "-" },
-                          { label: "Wing", value: ticketData.wing_name || "-" },
-                          { label: "Floor", value: ticketData.floor_name || "-" },
-                          { label: "Area", value: ticketData.area_name || "-" },
-                          { label: "Room", value: ticketData.room_name || "-" },
-                        ].map((item, index) => (
-                          <div
-                            key={`location-${index}`}
-                            className="flex flex-col items-center w-full text-center"
-                          >
-                            <div className="text-sm text-gray-500 mb-2 mt-1">
-                              {item.label}
+                        <div className="flex justify-between items-start relative z-1">
+                          {[
+                            { label: "Site", value: ticketData.site_name || "-" },
+                            { label: "Building", value: ticketData.building_name || "-" },
+                            { label: "Wing", value: ticketData.wing_name || "-" },
+                            { label: "Area", value: ticketData.area_name || "-" },
+                            { label: "Floor", value: ticketData.floor_name || "-" },
+                            { label: "Room", value: ticketData.room_name || "-" },
+                          ].map((item, index) => (
+                            <div
+                              key={`location-${index}`}
+                              className="flex flex-col items-center w-full text-center"
+                            >
+                              <div className="text-sm text-gray-500 mb-2 mt-1">
+                                {item.label}
+                              </div>
+                              <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
+                              <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
+                                {item.value}
+                              </div>
                             </div>
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
-                            <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
-                              {item.value}
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleLocationSubmit();
+                        }}
+                        className="space-y-6"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* Building */}
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          >
+                            <InputLabel shrink>Building</InputLabel>
+                            <MuiSelect
+                              value={locationFormData.building}
+                              onChange={(e) => handleLocationBuildingChange(e.target.value)}
+                              label="Building"
+                              notched
+                              displayEmpty
+                              disabled={loadingBuildings}
+                            >
+                              <MenuItem value="">
+                                {loadingBuildings ? "Loading..." : "Select Building"}
+                              </MenuItem>
+                              {buildings.map((building) => (
+                                <MenuItem key={building.id} value={building.id.toString()}>
+                                  {building.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+
+                          {/* Wing */}
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          >
+                            <InputLabel shrink>Wing</InputLabel>
+                            <MuiSelect
+                              value={locationFormData.wing}
+                              onChange={(e) => handleLocationWingChange(e.target.value)}
+                              label="Wing"
+                              notched
+                              displayEmpty
+                              disabled={loadingWings || !locationFormData.building}
+                            >
+                              <MenuItem value="">
+                                {loadingWings ? "Loading..." :
+                                  !locationFormData.building ? "Select Building First" : "Select Wing"}
+                              </MenuItem>
+                              {wings.map((wing) => (
+                                <MenuItem key={wing.id} value={wing.id.toString()}>
+                                  {wing.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+
+                          {/* Area */}
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          >
+                            <InputLabel shrink>Area</InputLabel>
+                            <MuiSelect
+                              value={locationFormData.area}
+                              onChange={(e) => handleLocationAreaChange(e.target.value)}
+                              label="Area"
+                              notched
+                              displayEmpty
+                              disabled={loadingAreas || !locationFormData.wing}
+                            >
+                              <MenuItem value="">
+                                {loadingAreas ? "Loading..." :
+                                  !locationFormData.wing ? "Select Wing First" : "Select Area"}
+                              </MenuItem>
+                              {areas.map((area) => (
+                                <MenuItem key={area.id} value={area.id.toString()}>
+                                  {area.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+
+                          {/* Floor */}
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          >
+                            <InputLabel shrink>Floor</InputLabel>
+                            <MuiSelect
+                              value={locationFormData.floor}
+                              onChange={(e) => handleLocationFloorChange(e.target.value)}
+                              label="Floor"
+                              notched
+                              displayEmpty
+                              disabled={loadingFloors || !locationFormData.area}
+                            >
+                              <MenuItem value="">
+                                {loadingFloors ? "Loading..." :
+                                  !locationFormData.area ? "Select Area First" : "Select Floor"}
+                              </MenuItem>
+                              {floors.map((floor) => (
+                                <MenuItem key={floor.id} value={floor.id.toString()}>
+                                  {floor.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+
+                          {/* Room */}
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          >
+                            <InputLabel shrink>Room</InputLabel>
+                            <MuiSelect
+                              value={locationFormData.room}
+                              onChange={(e) => handleLocationInputChange('room', e.target.value)}
+                              label="Room"
+                              notched
+                              displayEmpty
+                              disabled={loadingRooms || !locationFormData.floor}
+                            >
+                              <MenuItem value="">
+                                {loadingRooms ? "Loading..." :
+                                  !locationFormData.floor ? "Select Floor First" : "Select Room"}
+                              </MenuItem>
+                              {rooms.map((room) => (
+                                <MenuItem key={room.id} value={room.id.toString()}>
+                                  {room.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+                        </div>
+
+                        <div className="flex items-center gap-3 justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsEditingLocation(false)}
+                            disabled={submittingLocation}
+                            className="border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={submittingLocation}
+                            className="bg-[#C72030] hover:bg-[#A01825] text-white px-8"
+                          >
+                            {submittingLocation ? 'Saving...' : 'Submit'}
+                          </Button>
+                        </div>
+                      </form>
+                    )}
                   </div>
                 </div>
 
+                {/* Attachments */}
                 {ticketData.documents && (
                   <Card className="w-full bg-white rounded-lg shadow-sm border">
                     <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
@@ -7754,8 +9589,9 @@ export const TicketDetailsPage = () => {
                                           url: url,
                                           document_url: url,
                                           document: url,
+                                          type: 'image'
                                         });
-                                        setShowImagePreview(true);
+                                        setIsModalOpen(true);
                                       }}
                                       type="button"
                                     >
@@ -7772,8 +9608,9 @@ export const TicketDetailsPage = () => {
                                           url: url,
                                           document_url: url,
                                           document: url,
+                                          type: 'image'
                                         });
-                                        setShowImagePreview(true);
+                                        setIsModalOpen(true);
                                       }}
                                       onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
@@ -7815,8 +9652,10 @@ export const TicketDetailsPage = () => {
                                         url: url,
                                         document_url: url,
                                         document: url,
+                                        doctype: attachment.doctype,
+                                        type: 'document'
                                       });
-                                      setShowImagePreview(true);
+                                      setIsModalOpen(true);
                                     }}
                                   >
                                     <Download className="w-4 h-4" />
@@ -7831,184 +9670,6 @@ export const TicketDetailsPage = () => {
                       )}
                     </CardContent>
                   </Card>
-                )}
-
-                {isModalOpen && selectedDoc && (
-                  <div
-                    className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    <div
-                      className="max-w-4xl max-h-[90vh] bg-white rounded-lg p-4"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold truncate">
-                          {selectedDoc.document_name ||
-                            selectedDoc.document_file_name ||
-                            selectedDoc.url?.split('/').pop() ||
-                            `Document_${selectedDoc.id}`}
-                        </h3>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
-                              if (!selectedDoc.id) {
-                                toast.error('Unable to download: No document ID found');
-                                return;
-                              }
-
-                              try {
-                                const { API_CONFIG } = await import('@/config/apiConfig');
-                                const baseUrl = API_CONFIG.BASE_URL;
-                                const token = localStorage.getItem('token');
-
-                                const cleanBaseUrl = baseUrl
-                                  .replace(/^https?:\/\//, '')
-                                  .replace(/\/$/, '');
-                                const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${selectedDoc.id}?show_file=true`;
-
-                                const response = await fetch(downloadUrl, {
-                                  method: 'GET',
-                                  headers: {
-                                    Authorization: `Bearer ${token}`,
-                                    Accept: '*/*',
-                                  },
-                                  mode: 'cors',
-                                });
-
-                                if (response.ok) {
-                                  const blob = await response.blob();
-                                  const fileExtension =
-                                    selectedDoc.doctype?.split('/').pop() ||
-                                    selectedDoc.url?.split('.').pop()?.toLowerCase() ||
-                                    'file';
-                                  const documentName = `document_${selectedDoc.id}.${fileExtension}`;
-
-                                  const url = window.URL.createObjectURL(blob);
-                                  const link = window.document.createElement('a');
-                                  link.href = url;
-                                  link.download = documentName;
-                                  link.style.display = 'none';
-                                  window.document.body.appendChild(link);
-                                  link.click();
-
-                                  setTimeout(() => {
-                                    window.document.body.removeChild(link);
-                                    window.URL.revokeObjectURL(url);
-                                  }, 100);
-
-                                  toast.success('File downloaded successfully');
-                                } else {
-                                  throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                                }
-                              } catch (error) {
-                                console.error('Error downloading file:', error);
-                                toast.error(`Failed to download: ${error.message}`);
-                              }
-                            }}
-                          >
-                            <Download className="w-4 h-4 mr-1" />
-                            Download
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsModalOpen(false)}
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Close
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="max-h-[70vh] overflow-auto">
-                        {selectedDoc.type === 'image' ? (
-                          <img
-                            src={selectedDoc.url}
-                            alt={selectedDoc.document_name || 'Document'}
-                            className="max-w-full h-auto rounded-md"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              (target.nextSibling as HTMLElement).style.display = 'block';
-                            }}
-                          />
-                        ) : (
-                          <div className="text-center py-8">
-                            <FileText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                            <p className="text-gray-600 mb-4">
-                              Preview not available for this file type
-                            </p>
-                            <Button
-                              onClick={async () => {
-                                // Same download logic as above
-                                if (!selectedDoc.id) {
-                                  toast.error('Unable to download: No document ID found');
-                                  return;
-                                }
-
-                                try {
-                                  const { API_CONFIG } = await import('@/config/apiConfig');
-                                  const baseUrl = API_CONFIG.BASE_URL;
-                                  const token = localStorage.getItem('token');
-
-                                  const cleanBaseUrl = baseUrl
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/\/$/, '');
-                                  const downloadUrl = `https://${cleanBaseUrl}/attachfiles/${selectedDoc.id}?show_file=true`;
-
-                                  const response = await fetch(downloadUrl, {
-                                    method: 'GET',
-                                    headers: {
-                                      Authorization: `Bearer ${token}`,
-                                      Accept: '*/*',
-                                    },
-                                    mode: 'cors',
-                                  });
-
-                                  if (response.ok) {
-                                    const blob = await response.blob();
-                                    const fileExtension =
-                                      selectedDoc.doctype?.split('/').pop() ||
-                                      selectedDoc.url?.split('.').pop()?.toLowerCase() ||
-                                      'file';
-                                    const documentName = `document_${selectedDoc.id}.${fileExtension}`;
-
-                                    const url = window.URL.createObjectURL(blob);
-                                    const link = window.document.createElement('a');
-                                    link.href = url;
-                                    link.download = documentName;
-                                    link.style.display = 'none';
-                                    window.document.body.appendChild(link);
-                                    link.click();
-
-                                    setTimeout(() => {
-                                      window.document.body.removeChild(link);
-                                      window.URL.revokeObjectURL(url);
-                                    }, 100);
-
-                                    toast.success('File downloaded successfully');
-                                  } else {
-                                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                                  }
-                                } catch (error) {
-                                  console.error('Error downloading file:', error);
-                                  toast.error(`Failed to download: ${error.message}`);
-                                }
-                              }}
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Download File
-                            </Button>
-                          </div>
-                        )}
-                        <div className="hidden text-center py-8 text-gray-500">
-                          Failed to load preview
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 )}
 
                 <Card className="w-full bg-white rounded-lg shadow-sm border">
@@ -8406,6 +10067,134 @@ export const TicketDetailsPage = () => {
                     )}
                   </div>
                 </Card>
+
+                {/* Dynamic Association Selection Component */}
+                {/* <Card className="w-full bg-white rounded-lg shadow-sm border">
+                
+                  <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Dynamic Association
+                      </h3>
+                    </div>
+                  </div>
+
+                  
+                  <div className="p-6">
+                    <div className="space-y-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Associated To</label>
+                      <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <div className="flex gap-6">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="associatedTo"
+                              value="asset"
+                              checked={formData.associatedTo.asset}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    associatedTo: { asset: true, service: false },
+                                    selectedService: "", // Reset service selection
+                                  }));
+                                  if (assetOptions.length === 0) {
+                                    fetchAssets(false); // Don't auto-select when manually changing
+                                  }
+                                }
+                              }}
+                              style={{
+                                accentColor: "#C72030",
+                                width: "16px",
+                                height: "16px",
+                                borderColor: "#C72030",
+                              }}
+                            />
+                            <span className="text-sm text-gray-700">Asset</span>
+                          </label>
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="associatedTo"
+                              value="service"
+                              checked={formData.associatedTo.service}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    associatedTo: { asset: false, service: true },
+                                    selectedAsset: "", // Reset asset selection
+                                  }));
+                                  if (serviceOptions.length === 0) {
+                                    fetchServices(false); // Don't auto-select when manually changing
+                                  }
+                                }
+                              }}
+                              style={{
+                                accentColor: "#C72030",
+                                width: "16px",
+                                height: "16px",
+                                borderColor: "#C72030",
+                              }}
+                            />
+                            <span className="text-sm text-gray-700">Service</span>
+                          </label>
+                        </div>
+                        {(formData.associatedTo.asset || formData.associatedTo.service) && (
+                          <FormControl
+                            fullWidth
+                            variant="outlined"
+                            sx={{
+                              minWidth: 260, // Increased width
+                              maxWidth: 340, // Optional: limit max width
+                              ...fieldStyles,
+                            }}
+                          >
+                            <InputLabel shrink>{formData.associatedTo.asset ? "Select Asset" : "Select Service"}</InputLabel>
+                            <MuiSelect
+                              value={formData.associatedTo.asset ? formData.selectedAsset : formData.selectedService}
+                              onChange={(e) => {
+                                if (formData.associatedTo.asset) {
+                                  handleInputChange("selectedAsset", e.target.value);
+                                } else {
+                                  handleInputChange("selectedService", e.target.value);
+                                }
+                              }}
+                              label={formData.associatedTo.asset ? "Select Asset" : "Select Service"}
+                              notched
+                              displayEmpty
+                              disabled={isLoadingAssets || isLoadingServices}
+                            >
+                              <MenuItem value="">
+                                <span className="text-gray-500">{isLoadingAssets || isLoadingServices ? "Loading..." : `Select ${formData.associatedTo.asset ? "Asset" : "Service"}`}</span>
+                              </MenuItem>
+                              {formData.associatedTo.asset && assetOptions.length > 0 &&
+                                assetOptions.map((asset) => (
+                                  <MenuItem key={asset.id} value={asset.id.toString()}>
+                                    {asset.name}
+                                  </MenuItem>
+                                ))}
+                              {formData.associatedTo.service && serviceOptions.length > 0 &&
+                                serviceOptions.map((service) => (
+                                  <MenuItem key={service.id} value={service.id.toString()}>
+                                    {service.service_name} {service.service_code ? `(${service.service_code})` : ''}
+                                  </MenuItem>
+                                ))}
+                            </MuiSelect>
+                          </FormControl>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Card> */}
+
+                {/* Ticket Closure (Figma-aligned) */}
+             
+               
+
               </TabsContent>
 
           <TabsContent value="creator-info" className="p-4 sm:p-6">
@@ -9056,6 +10845,7 @@ export const TicketDetailsPage = () => {
                       <TableHead>Master Status</TableHead>
                       <TableHead>Cancelled By</TableHead>
                       <TableHead>Attachment</TableHead>
+                      <TableHead>Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -9126,6 +10916,17 @@ export const TicketDetailsPage = () => {
                               </Button>
                             </div>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCancelCostApproval(request.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600"
+                          >
+                            {/* <X className="w-4 h-4 mr-1" /> */}
+                            Cancel
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
