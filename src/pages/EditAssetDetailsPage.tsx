@@ -540,6 +540,7 @@ export const EditAssetDetailsPage = () => {
     warranty: "",
     warranty_period: "",
     warranty_expiry: "",
+    expiry_date: "",
     depreciation_applicable_for: "",
     indiv_group: "",
     similar_product_type: "",
@@ -1664,6 +1665,18 @@ export const EditAssetDetailsPage = () => {
 
     fetchAssetForEdit();
   }, [id]);
+
+  // Auto-select first site when sites are loaded (if no site is already selected)
+  useEffect(() => {
+    if (sites && sites.length > 0 && !selectedLocation.site) {
+      const firstSite = sites[0];
+      setSelectedLocation(prev => ({
+        ...prev,
+        site: firstSite.id.toString()
+      }));
+      handleFieldChange("pms_site_id", firstSite.id.toString());
+    }
+  }, [sites, selectedLocation.site]);
 
   // Location change handlers
   const handleLocationChange = async (field, value) => {
@@ -4016,6 +4029,7 @@ export const EditAssetDetailsPage = () => {
         commisioning_date: formData.commisioning_date,
         purchased_on: formData.purchased_on,
         warranty_expiry: formData.warranty_expiry,
+        expiry_date: formData.expiry_date,
 
         // Asset grouping
         pms_asset_group_id: formData.pms_asset_group_id,
@@ -4569,6 +4583,7 @@ export const EditAssetDetailsPage = () => {
         commisioning_date: formData.commisioning_date,
         purchased_on: formData.purchased_on,
         warranty_expiry: formData.warranty_expiry,
+        expiry_date: formData.expiry_date,
 
         // Asset grouping
         pms_asset_group_id: formData.pms_asset_group_id,
@@ -11565,7 +11580,7 @@ export const EditAssetDetailsPage = () => {
                 </div>
                 {expandedSections.consumption && (
                   <div className="p-4 sm:p-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                       <TextField
                         label={
                           <span>
@@ -11655,6 +11670,24 @@ export const EditAssetDetailsPage = () => {
                         }}
                         onChange={(e) =>
                           handleFieldChange("warranty_expiry", e.target.value)
+                        }
+                      />
+                      <TextField
+                        label="Expiry Date"
+                        placeholder="dd/mm/yyyy"
+                        name="expiryDate"
+                        type="date"
+                        fullWidth
+                        variant="outlined"
+                        value={formData.expiry_date || ""}
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        InputProps={{
+                          sx: fieldStyles,
+                        }}
+                        onChange={(e) =>
+                          handleFieldChange("expiry_date", e.target.value)
                         }
                       />
                       <div>

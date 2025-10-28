@@ -531,6 +531,7 @@ const AddAssetPage = () => {
     warranty: "",
     warranty_period: "",
     warranty_expiry: "",
+    expiry_date: "",
     depreciation_applicable_for: "",
     indiv_group: "",
     similar_product_type: "",
@@ -2037,6 +2038,18 @@ const AddAssetPage = () => {
     }
   }, [meterType]);
 
+  // Auto-select first site when sites are loaded
+  useEffect(() => {
+    if (sites && sites.length > 0 && !selectedLocation.site) {
+      const firstSite = sites[0];
+      setSelectedLocation(prev => ({
+        ...prev,
+        site: firstSite.id.toString()
+      }));
+      handleFieldChange("pms_site_id", firstSite.id.toString());
+    }
+  }, [sites, selectedLocation.site]);
+
   // Fetch parent meters function
   const fetchParentMeters = async () => {
     setParentMeterLoading(true);
@@ -3246,6 +3259,7 @@ const AddAssetPage = () => {
         commisioning_date: formData.commisioning_date,
         purchased_on: formData.purchased_on,
         warranty_expiry: formData.warranty_expiry,
+        expiry_date: formData.expiry_date,
 
         // Asset grouping
         pms_asset_group_id: formData.pms_asset_group_id,
@@ -3789,6 +3803,7 @@ const AddAssetPage = () => {
         commisioning_date: formData.commisioning_date,
         purchased_on: formData.purchased_on,
         warranty_expiry: formData.warranty_expiry,
+        expiry_date: formData.expiry_date,
 
         // Asset grouping
         pms_asset_group_id: formData.pms_asset_group_id,
@@ -10833,7 +10848,7 @@ const AddAssetPage = () => {
                 </div>
                 {expandedSections.consumption && (
                   <div className="p-4 sm:p-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                       <TextField
                         label="Purchase Cost"
                         placeholder="Enter cost"
@@ -10903,6 +10918,23 @@ const AddAssetPage = () => {
                         }}
                         onChange={(e) =>
                           handleFieldChange("warranty_expiry", e.target.value)
+                        }
+                      />
+                      <TextField
+                        label="Expiry Date"
+                        placeholder="dd/mm/yyyy"
+                        name="expiryDate"
+                        type="date"
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        InputProps={{
+                          sx: fieldStyles,
+                        }}
+                        onChange={(e) =>
+                          handleFieldChange("expiry_date", e.target.value)
                         }
                       />
                       <div>
