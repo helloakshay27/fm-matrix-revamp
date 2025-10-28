@@ -107,7 +107,7 @@ const AddInventoryTypePage = () => {
                   <InputLabel shrink>Name <span style={{ color: 'red' }}>*</span></InputLabel>
                   <TextField
                     {...field}
-                    label="Name"
+                    // label="Name"
                     variant="outlined"
                     fullWidth
                     error={!!errors.name}
@@ -128,7 +128,7 @@ const AddInventoryTypePage = () => {
                   <InputLabel shrink>Material Code <span style={{ color: 'red' }}>*</span></InputLabel>
                   <TextField
                     {...field}
-                    label="Material Code"
+                    // label="Material Code"
                     variant="outlined"
                     fullWidth
                     error={!!errors.material_type_code}
@@ -149,7 +149,7 @@ const AddInventoryTypePage = () => {
                   <InputLabel shrink>Company <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     {...field}
-                    label="Company"
+                    // label="Company"
                     notched
                     displayEmpty
                     value={selectedCompany?.id || ''}
@@ -200,7 +200,7 @@ const AddInventoryTypePage = () => {
                   {...field}
                   label={
                     <span style={{ fontSize: '16px' }}>
-                      Description <span style={{ color: "red" }}>*</span>
+                      Description 
                     </span>
                   }
                   placeholder="Enter Description/SOP"
