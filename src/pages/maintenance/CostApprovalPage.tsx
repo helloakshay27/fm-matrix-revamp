@@ -385,6 +385,8 @@ export const CostApprovalPage: React.FC = () => {
                             isLoading={usersLoading}
                             isDisabled={usersLoading}
                             className="min-w-[250px]"
+                            menuPortalTarget={document.body}
+                            menuPosition="fixed"
                             styles={{
                               control: (base) => ({
                                 ...base,
@@ -396,6 +398,14 @@ export const CostApprovalPage: React.FC = () => {
                                 '&:hover': {
                                   borderColor: '#9ca3af'
                                 }
+                              }),
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999
+                              }),
+                              menu: (base) => ({
+                                ...base,
+                                zIndex: 9999
                               }),
                               multiValue: (base) => ({
                                 ...base,
