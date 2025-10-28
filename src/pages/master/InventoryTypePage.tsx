@@ -159,6 +159,24 @@ const InventoryTypePage = () => {
               </div>
             );
           }
+          if (key === 'material_type_description') {
+    return (
+      <span
+        style={{
+          display: 'inline-block',
+          maxWidth: 220, // adjust as needed
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          verticalAlign: 'middle',
+        }}
+        title={row[key]}
+      >
+        {row[key]}
+      </span>
+    );
+  }
+  // return row[key];
           if (key === 'active') {
             const isActive = (optimisticActive[row.id] !== undefined)
               ? optimisticActive[row.id]
