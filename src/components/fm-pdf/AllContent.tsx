@@ -3594,7 +3594,7 @@ const AllContent = () => {
                                                         return n > 0 ? `+${base}` : `-${base}`;
                                                     };
 
-                                                    const curOpen = pick('Closed');
+                                                    const curOpen = pick('Open');
                                                     const curInProg = pick('Work In Progress');
                                                     const curOver = pick('Overdue');
                                                     const curPart = pick('Partially Closed');
