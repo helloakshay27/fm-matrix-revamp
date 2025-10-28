@@ -412,7 +412,7 @@ const renderAssociationSpecificData = (ticketData: any) => {
           { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
           { label: 'Under Warranty', value: ticketData.warranty === null || ticketData.warranty === undefined ? '-' : (ticketData.warranty ? 'Yes' : 'No') },
           { label: 'Category', value: ticketData.asset_type_category || '-' },
-          { label: 'Allocated', value: ticketData.asset_service || 'Asset' },
+          { label: 'Allocated', value: ticketData.asset_service || '-' },
           { label: 'AMC Type', value: ticketData.amc?.amc_type || '-' },
           { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
         ];
