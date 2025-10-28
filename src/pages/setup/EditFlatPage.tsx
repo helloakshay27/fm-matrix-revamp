@@ -55,6 +55,8 @@ export default function EditFlatPage() {
     }
   }, [flatId]);
 
+
+  
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({
       ...prev,
