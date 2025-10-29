@@ -1912,15 +1912,15 @@ export const Dashboard = () => {
         {/* Filter Controls Section */}
         <div className="bg-white ">
           <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <Button
+            <div className="flex items-center justify-end">
+              {/* <Button
                 onClick={() => navigate('/dashboard/configuration')}
                 variant="outline"
                 className="flex items-center gap-2"
               >
                 <Settings className="w-4 h-4" />
                 Configure Dashboard
-              </Button>
+              </Button> */}
 
               <div className="flex items-center gap-4">
                 <UnifiedDateRangeFilter
@@ -1934,21 +1934,7 @@ export const Dashboard = () => {
               </div>
             </div>
 
-            {selectedAnalytics.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-analytics-border">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-analytics-muted">Selected Analytics:</span>
-                  {selectedAnalytics.map((analytic, index) => (
-                    <span
-                      key={analytic.id}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-analytics-background text-analytics-text text-xs rounded-md border"
-                    >
-                      {analytic.title}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+        
           </div>
         </div>
 

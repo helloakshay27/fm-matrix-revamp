@@ -935,6 +935,15 @@ td div , td span, th div, td button, td a {
   position: relative !important;
 }
 
+[data-lov-name="Card"].bg-card{
+  height: 400px !important;
+}
+
+[data-lov-name="CardContent"].p-6.pt-0{
+  height: 300px !important;
+  overflow-y: auto !important;
+}
+
 /* Mobile styles (default - up to 640px) */
 @media (max-width: 640px) {
   .location-stepper-line {
