@@ -6,6 +6,16 @@ import { TicketCategoryData } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
+// Color palette with lighter shades
+const CHART_COLORS = {
+  primary: '#C4B99D',
+  secondary: '#DAD6CA',
+  tertiary: '#D5DBDB',
+  primaryLight: '#DDD4C4',    // Lighter shade of primary
+  secondaryLight: '#E8E5DD',  // Lighter shade of secondary
+  tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
+};
+
 interface CategoryWiseProactiveReactiveCardProps {
   data: TicketCategoryData[];
   dateRange: {
@@ -53,7 +63,7 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
     <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
+          <CardTitle className="text-base sm:text-lg font-bold text-[#1A1A1A]">
             Category Wise Proactive / Reactives
           </CardTitle>
           <Download
@@ -84,6 +94,8 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
                     <YAxis
                       fontSize={12}
                       tick={{ fill: '#374151' }}
+                      allowDecimals={false}
+                      domain={[0, data && data.length > 0 ? Math.max(3, Math.ceil(Math.max(...chartData.map(d => d.proactiveTotal || 0, ...chartData.map(d => d.reactiveTotal || 0))))) : 3]}
                     />
                     <Tooltip
                       content={({ active, payload, label }) => {
@@ -118,8 +130,8 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
                         return null;
                       }}
                     />
-                    <Bar dataKey="proactiveTotal" fill="#C4AE9D" name="Proactive" />
-                    <Bar dataKey="reactiveTotal" fill="#C4AE9D" name="Reactive" />
+                    <Bar dataKey="proactiveTotal" fill={CHART_COLORS.primary} name="Proactive" />
+                    <Bar dataKey="reactiveTotal" fill={CHART_COLORS.secondary} name="Reactive" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

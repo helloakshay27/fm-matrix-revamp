@@ -26,6 +26,16 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { RecentAssetsSidebar } from './RecentAssetsSidebar';
 
+// Color palette with lighter shades
+const CHART_COLORS = {
+    primary: '#C4B99D',
+    secondary: '#DAD6CA',
+    tertiary: '#D5DBDB',
+    primaryLight: '#DDD4C4',    // Lighter shade of primary
+    secondaryLight: '#E8E5DD',  // Lighter shade of secondary
+    tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
+};
+
 // Interfaces
 interface AssetStatistics {
     total_assets?: {
@@ -127,6 +137,7 @@ interface AssetAnalyticsProps {
     onAnalyticsChange?: (data: any) => void;
     showFilter?: boolean;
     showSelector?: boolean;
+    showRecentAssets?: boolean;
     layout?: 'grid' | 'vertical' | 'horizontal';
     className?: string;
 }
@@ -192,6 +203,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
     onAnalyticsChange,
     showFilter = true,
     showSelector = true,
+    showRecentAssets = true,
     layout = 'grid',
     className = '',
 }) => {
@@ -573,22 +585,22 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
             {
                 name: 'In Use',
                 value: assetStatus?.assets_in_use_total || assetStatistics.assets_in_use || 0,
-                color: '#C4B99D',
+                color: CHART_COLORS.primary,
             },
             {
                 name: 'Breakdown',
                 value: assetStatus?.assets_in_breakdown_total || assetStatistics.assets_in_breakdown || 0,
-                color: '#DAD6CA',
+                color: CHART_COLORS.secondary,
             },
             {
                 name: 'In Store',
                 value: assetStatus?.in_store || 0,
-                color: '#D5DBDB',
+                color: CHART_COLORS.tertiary,
             },
             {
                 name: 'In Disposed',
                 value: assetStatus?.in_disposed || 0,
-                color: '#A3A8AA',
+                color: CHART_COLORS.primaryLight,
             }
         ].filter(item => item.value > 0);
         
@@ -613,22 +625,22 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 {
                     name: 'IT Equipment',
                     value: itAssets,
-                    color: '#C4B99D',
+                    color: CHART_COLORS.primary,
                 },
                 {
                     name: 'Non-IT Equipment',
                     value: nonItAssets,
-                    color: '#DAD6CA',
+                    color: CHART_COLORS.secondary,
                 },
             ]
             : [
-                { name: 'No Data Available', value: 1, color: '#D5DBDB' },
+                { name: 'No Data Available', value: 1, color: CHART_COLORS.tertiary },
             ];
 
         // If both values are 0, show a placeholder
         const totalDistributionValue = itAssets + nonItAssets;
         const finalChartTypeData = totalDistributionValue === 0
-            ? [{ name: 'No Data Available', value: 1, color: '#D5DBDB' }]
+            ? [{ name: 'No Data Available', value: 1, color: CHART_COLORS.tertiary }]
             : chartTypeData;
 
         // Category data - support both new and legacy structures
@@ -789,6 +801,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                             onDownload={handleAnalyticsDownload}
                             layout="grid"
                         />
+
                     </div>
                 </SortableChartItem>
             ),
@@ -909,43 +922,53 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 )}
             </div>
 
+            {showRecentAssets ? (
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 min-h-[calc(100vh-200px)]">
+                    <div className="lg:col-span-8">
+                        <div className={`space-y-6 ${className}`}>
+                            {renderErrorMessages()}
 
+                            {/* Analytics Charts */}
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
+                                    {renderLayout()}
+                                </SortableContext>
+                            </DndContext>
 
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2  min-h-[calc(100vh-200px)]">
+                            {/* Analytics Filter Dialog */}
+                            <AssetAnalyticsFilterDialog
+                                isOpen={isAnalyticsFilterOpen}
+                                onClose={() => setIsAnalyticsFilterOpen(false)}
+                                onApplyFilters={handleAnalyticsFilterApply}
+                            />
+                        </div>
+                    </div>
 
-                <div className="lg:col-span-8">
-                    <div className={`space-y-6 ${className}`}>
-                        {renderErrorMessages()}
-
-                        {/* Header with Analytics Filter and Selector */}
-
-
-                        {/* Analytics Charts */}
-                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                            <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                                {renderLayout()}
-                            </SortableContext>
-                        </DndContext>
-
-                        {/* Analytics Filter Dialog */}
-                        <AssetAnalyticsFilterDialog
-                            isOpen={isAnalyticsFilterOpen}
-                            onClose={() => setIsAnalyticsFilterOpen(false)}
-                            onApplyFilters={handleAnalyticsFilterApply}
-                        />
+                    {/* Right Sidebar - Recent Assets (1 column) */}
+                    <div className="lg:col-span-4">
+                        <RecentAssetsSidebar />
                     </div>
                 </div>
+            ) : (
+                <div className={`space-y-6 ${className}`}>
+                    {renderErrorMessages()}
 
-                {/* Right Sidebar - Recent Assets (1 column) */}
-                <div className="lg:col-span-4">
-                    <RecentAssetsSidebar />
+                    {/* Analytics Charts */}
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
+                            {renderLayout()}
+                        </SortableContext>
+                    </DndContext>
+
+                    {/* Analytics Filter Dialog */}
+                    <AssetAnalyticsFilterDialog
+                        isOpen={isAnalyticsFilterOpen}
+                        onClose={() => setIsAnalyticsFilterOpen(false)}
+                        onApplyFilters={handleAnalyticsFilterApply}
+                    />
                 </div>
-
-            </div>
-
+            )}
         </div>
-
-
     );
 };
 

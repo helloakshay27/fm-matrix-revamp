@@ -16,6 +16,7 @@
   height: 4px;
 }
 
+
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }

@@ -5,6 +5,16 @@ import { Download } from 'lucide-react';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
+// Color palette with lighter shades
+const CHART_COLORS = {
+  primary: '#C4B99D',
+  secondary: '#DAD6CA',
+  tertiary: '#D5DBDB',
+  primaryLight: '#DDD4C4',    // Lighter shade of primary
+  secondaryLight: '#E8E5DD',  // Lighter shade of secondary
+  tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
+};
+
 interface ResolutionTATData {
   success: number;
   message: string;
@@ -58,7 +68,7 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
       <Card className={`bg-white ${className}`}>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-bold text-[#C72030]">Resolution TAT Report</CardTitle>
+            <CardTitle className="text-lg font-bold text-[#1A1A1A]">Resolution TAT Report</CardTitle>
             <Download 
               className="w-5 h-5 text-[#C72030] cursor-pointer" 
               onClick={handleDownload}
@@ -87,7 +97,7 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
     <Card className={`bg-white ${className}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-bold text-[#C72030]">Resolution TAT Report</CardTitle>
+          <CardTitle className="text-lg font-bold text-[#1A1A1A]">Resolution TAT Report</CardTitle>
           <Download 
             className={`w-5 h-5 text-[#C72030] cursor-pointer ${isDownloading ? 'opacity-50' : ''}`}
             onClick={handleDownload}
@@ -113,8 +123,8 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
                     formatter={(value, name) => [value, name === 'breached' ? 'Breached' : 'Achieved']}
                     labelFormatter={(label) => `Category: ${label}`}
                   />
-                  <Bar dataKey="breached" fill="#C4AE9D" name="Breached" />
-                  <Bar dataKey="achieved" fill="#C4AE9D" name="Achieved" />
+                  <Bar dataKey="breached" fill={CHART_COLORS.secondary} name="Breached" />
+                  <Bar dataKey="achieved" fill={CHART_COLORS.primary} name="Achieved" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

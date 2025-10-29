@@ -6,6 +6,16 @@ import { UnitCategorywiseData } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
+// Color palette with lighter shades
+const CHART_COLORS = {
+  primary: '#C4B99D',
+  secondary: '#DAD6CA',
+  tertiary: '#D5DBDB',
+  primaryLight: '#DDD4C4',    // Lighter shade of primary
+  secondaryLight: '#E8E5DD',  // Lighter shade of secondary
+  tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
+};
+
 interface UnitCategoryWiseCardProps {
   data: UnitCategorywiseData | null;
   dateRange: {
@@ -115,8 +125,8 @@ export const UnitCategoryWiseCard: React.FC<UnitCategoryWiseCardProps> = ({
                     return null;
                   }}
                 />
-                <Bar dataKey="open" fill="#C4AE9D" name="Open" />
-                <Bar dataKey="closed" fill="#C4AE9D" name="Closed" />
+                <Bar dataKey="open" fill={CHART_COLORS.primary} name="Open" />
+                <Bar dataKey="closed" fill={CHART_COLORS.secondary} name="Closed" />
               </BarChart>
             ) : (
               <div className="flex items-center justify-center h-full">
