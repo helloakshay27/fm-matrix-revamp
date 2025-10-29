@@ -1112,7 +1112,17 @@ const AddAssetPage = () => {
         newLocation.area = "";
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchBuildings(parseInt(value));
+        // Fetch buildings for the selected site - pass site ID to API
+        if (value) {
+          const siteId = parseInt(value);
+          if (siteId) {
+            // Call fetchBuildings with site ID to get buildings for that site
+            fetchBuildings(siteId);
+          }
+        } else {
+          // Clear buildings if no site is selected
+          fetchBuildings(0);
+        }
       } else if (field === "building") {
         newLocation.wing = "";
         newLocation.area = "";
@@ -2049,6 +2059,33 @@ const AddAssetPage = () => {
       handleFieldChange("pms_site_id", firstSite.id.toString());
     }
   }, [sites, selectedLocation.site]);
+
+  // Sync formData.pms_site_id to selectedLocation.site when formData changes (for pre-selected sites)
+  useEffect(() => {
+    if (formData.pms_site_id && formData.pms_site_id !== selectedLocation.site) {
+      setSelectedLocation(prev => ({
+        ...prev,
+        site: formData.pms_site_id
+      }));
+    }
+  }, [formData.pms_site_id]);
+
+  // Fetch buildings when site is selected (for both auto-selection, manual selection, and pre-selected from formData)
+  useEffect(() => {
+    // Priority: selectedLocation.site, then formData.pms_site_id
+    const siteIdToUse = selectedLocation.site || formData.pms_site_id;
+    
+    if (siteIdToUse) {
+      const siteId = parseInt(siteIdToUse);
+      if (siteId) {
+        // Fetch buildings for the selected site - pass site ID to API
+        fetchBuildings(siteId);
+      }
+    } else {
+      // Clear buildings if no site is selected
+      fetchBuildings(0);
+    }
+  }, [selectedLocation.site, formData.pms_site_id]);
 
   // Fetch parent meters function
   const fetchParentMeters = async () => {
