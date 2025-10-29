@@ -236,6 +236,32 @@ export const Dashboard = () => {
     })
   );
 
+  // Add styles for this component only
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.id = 'dashboard-card-styles';
+    style.textContent = `
+      [data-lov-name="Card"].bg-card,
+      .bg-card {
+        height: 400px !important;
+      }
+
+      [data-lov-name="CardContent"].p-6.pt-0,
+      .bg-card .p-6.pt-0 {
+        height: 300px !important;
+        overflow-y: auto !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      const existingStyle = document.getElementById('dashboard-card-styles');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, []);
+
   // Convert date to DD/MM/YYYY format for date range display
   const convertDateToString = (date: Date): string => {
     const day = date.getDate().toString().padStart(2, '0');
