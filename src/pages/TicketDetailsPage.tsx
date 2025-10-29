@@ -412,7 +412,7 @@ const renderAssociationSpecificData = (ticketData: any) => {
           { label: 'AMC Status', value: ticketData.amc?.amc_status || '-' },
           { label: 'Under Warranty', value: ticketData.warranty === null || ticketData.warranty === undefined ? '-' : (ticketData.warranty ? 'Yes' : 'No') },
           { label: 'Category', value: ticketData.asset_type_category || '-' },
-          { label: 'Allocated', value: ticketData.asset_service || 'Asset' },
+          { label: 'Allocated', value: ticketData.asset_service || '-' },
           { label: 'AMC Type', value: ticketData.amc?.amc_type || '-' },
           { label: 'Warranty Expiry', value: ticketData.asset_warranty_expiry ? new Date(ticketData.asset_warranty_expiry).toLocaleDateString('en-GB') : '-' },
         ];
@@ -608,6 +608,10 @@ export const TicketDetailsPage = () => {
   ]);
 
   const [submittingCostApproval, setSubmittingCostApproval] = useState(false);
+
+  // Cancel confirmation modal state
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelRequestId, setCancelRequestId] = useState<string>('');
 
   // Ticket Management Edit State
   const [isEditingTicketMgmt, setIsEditingTicketMgmt] = useState(false);
@@ -815,6 +819,19 @@ export const TicketDetailsPage = () => {
     };
 
     fetchTicketDetails();
+  }, [id]);
+
+  // Function to refresh ticket data from backend (for timer updates)
+  const refreshTicketData = useCallback(async () => {
+    if (!id) return;
+
+    try {
+      const data = await ticketManagementAPI.getTicketDetails(id);
+      setTicketData(data);
+    } catch (err) {
+      console.error('Error refreshing ticket details:', err);
+      // Don't show toast for refresh errors to avoid spam
+    }
   }, [id]);
 
   // Fetch communication templates
@@ -2190,16 +2207,22 @@ export const TicketDetailsPage = () => {
     }
   };
 
+  // Open cancel confirmation modal
+  const handleCancelConfirmation = (requestId: string) => {
+    setCancelRequestId(requestId);
+    setCancelModalOpen(true);
+  };
+
   // Cancel cost approval handler
-  const handleCancelCostApproval = async (requestId: string) => {
-    if (!requestId) {
+  const handleCancelCostApproval = async () => {
+    if (!cancelRequestId) {
       toast.error('Request ID not found');
       return;
     }
 
     try {
       const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
-      const url = `https://${baseUrl}/costapprequpdate/${requestId}`;
+      const url = `https://${baseUrl}/costapprequpdate/${cancelRequestId}`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -2224,6 +2247,10 @@ export const TicketDetailsPage = () => {
         const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
         setTicketData(ticketDetails);
       }
+
+      // Close modal and reset state
+      setCancelModalOpen(false);
+      setCancelRequestId('');
 
     } catch (error) {
       console.error('Error cancelling cost approval:', error);
@@ -3216,6 +3243,10 @@ export const TicketDetailsPage = () => {
       // Initial calculation
       updateEscalationTimers();
 
+      // Counter for API refresh - refresh every 30 seconds to get updated timer data
+      let apiRefreshCounter = 0;
+      const API_REFRESH_INTERVAL = 30; // Refresh API data every 30 seconds
+
       const interval = setInterval(() => {
         // Ageing timer continues even when on hold, but stops when closed
         setCurrentAgeing(prev => prev + 1);
@@ -3225,6 +3256,14 @@ export const TicketDetailsPage = () => {
           setResponseEscalationSeconds(prev => Math.max(0, prev - 1));
           setResolutionEscalationSeconds(prev => Math.max(0, prev - 1));
           setGoldenTicketEscalationSeconds(prev => Math.max(0, prev - 1));
+        }
+
+        // Refresh ticket data from backend every 30 seconds to get accurate timer values and escalation info
+        apiRefreshCounter++;
+        if (apiRefreshCounter >= API_REFRESH_INTERVAL) {
+          apiRefreshCounter = 0;
+          console.log('🕐 Refreshing ticket data for real-time timer updates...');
+          refreshTicketData();
         }
       }, 1000);
 
@@ -3259,7 +3298,7 @@ export const TicketDetailsPage = () => {
         setGoldenTicketEscalationSeconds(ticketData.next_executive_escalation.minutes * 60);
       }
     }
-  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed, isTicketOnHold]);
+  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed, isTicketOnHold, refreshTicketData]);
 
   // Add useEffect to trigger balance TAT recalculation every second for real-time countdown (removed - now handled in main timer)
 
@@ -3306,12 +3345,10 @@ export const TicketDetailsPage = () => {
         label: 'Balance TAT',
         value: (isTicketClosed || isTicketOnHold)
           ? '00:00:00:00'
-          : (ticketData.next_response_escalation?.escalation_time
-            ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_response_escalation.escalation_time))
-            : '00:00:00:00'),
-        isExceeded: !(isTicketClosed || isTicketOnHold) && (ticketData.next_response_escalation?.is_overdue || false),
-        exceededBy: !(isTicketClosed || isTicketOnHold) && ticketData.next_response_escalation?.is_overdue
-          ? formatSecondsToDDHHMMSS(Math.abs(ticketData.next_response_escalation.minutes * 60))
+          : formatSecondsToDDHHMMSS(responseEscalationSeconds),
+        isExceeded: !(isTicketClosed || isTicketOnHold) && responseEscalationSeconds <= 0,
+        exceededBy: !(isTicketClosed || isTicketOnHold) && responseEscalationSeconds <= 0
+          ? formatSecondsToDDHHMMSS(Math.abs(responseEscalationSeconds))
           : ''
       },
       {
@@ -3336,12 +3373,10 @@ export const TicketDetailsPage = () => {
         label: 'Balance TAT',
         value: (isTicketClosed || isTicketOnHold)
           ? '00:00:00:00'
-          : (ticketData.next_resolution_escalation?.escalation_time
-            ? formatSecondsToDDHHMMSS(getBalanceTATSeconds(ticketData.next_resolution_escalation.escalation_time))
-            : '00:00:00:00'),
-        isExceeded: !(isTicketClosed || isTicketOnHold) && (ticketData.next_resolution_escalation?.is_overdue || false),
-        exceededBy: !(isTicketClosed || isTicketOnHold) && ticketData.next_resolution_escalation?.is_overdue
-          ? formatSecondsToDDHHMMSS(Math.abs(ticketData.next_resolution_escalation.minutes * 60))
+          : formatSecondsToDDHHMMSS(resolutionEscalationSeconds),
+        isExceeded: !(isTicketClosed || isTicketOnHold) && resolutionEscalationSeconds <= 0,
+        exceededBy: !(isTicketClosed || isTicketOnHold) && resolutionEscalationSeconds <= 0
+          ? formatSecondsToDDHHMMSS(Math.abs(resolutionEscalationSeconds))
           : ''
       },
       {
@@ -5531,7 +5566,7 @@ export const TicketDetailsPage = () => {
                                     <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                       <button
                                         type="button"
-                                        onClick={() => handleCancelCostApproval(request.id)}
+                                        onClick={() => handleCancelConfirmation(request.id)}
                                         className="bg-red-500 hover:bg-red-600 text-white text-[10px] font-medium px-3 py-1 rounded transition-colors"
                                         title="Cancel Request"
                                       >
@@ -8581,7 +8616,7 @@ export const TicketDetailsPage = () => {
                                     </td>
                                     <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                       <button
-                                        onClick={() => handleCancelCostApproval(request.id)}
+                                        onClick={() => handleCancelConfirmation(request.id)}
                                         className="px-3 py-1 text-[10px] font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
                                       >
                                         Cancel
@@ -10885,6 +10920,7 @@ export const TicketDetailsPage = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="text-center"
                                 onClick={() => {
                                   // Check if request has attachments
                                   if (
@@ -10911,7 +10947,7 @@ export const TicketDetailsPage = () => {
                                   }
                                 }}
                               >
-                                <Eye className="w-4 h-4 mr-1" />
+                                {/* <Eye className="w-4 h-4 mr-1" /> */}
                                 View
                               </Button>
                             </div>
@@ -10921,7 +10957,7 @@ export const TicketDetailsPage = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleCancelCostApproval(request.id)}
+                            onClick={() => handleCancelConfirmation(request.id)}
                             className="bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600"
                           >
                             {/* <X className="w-4 h-4 mr-1" /> */}
@@ -11005,6 +11041,50 @@ export const TicketDetailsPage = () => {
         selectedDoc={selectedDoc}
         setSelectedDoc={setSelectedDoc}
       />
+
+      {/* Cancel Cost Approval Confirmation Modal */}
+      {cancelModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="text-center">
+              <div className="mb-4">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Cancel Cost Approval
+                </h3>
+                <p className="text-gray-600">
+                  Do you want to cancel this cost approval request? This action cannot be undone.
+                </p>
+              </div>
+              
+              <div className="flex justify-center gap-3">
+                 <button
+                  type="button"
+                  onClick={handleCancelCostApproval}
+                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium transition-colors"
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCancelModalOpen(false);
+                    setCancelRequestId('');
+                  }}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium transition-colors"
+                >
+                  No
+                </button>
+               
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Ticket Job Sheet Modal */}
       <TicketJobSheetModal

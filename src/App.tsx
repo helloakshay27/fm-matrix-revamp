@@ -55,7 +55,8 @@ import { AddProjectDashboard } from "./pages/AddProjectDashboard";
 import { FitoutChecklistDashboard } from "./pages/FitoutChecklistDashboard";
 import { AddChecklistDashboard } from "./pages/AddChecklistDashboard";
 import { FitoutViolationDashboard } from "./pages/FitoutViolationDashboard";
-import { CostApprovalPage } from "./pages/CostApprovalPage";
+import { CostApprovalPage } from "./pages/maintenance/CostApprovalPage";
+import { CostApprovalPage as CostApprovalStandalonePage } from "./pages/CostApprovalPage";
 
 // Import Maintenance pages
 import { AssetDashboard } from "./pages/AssetDashboard";
@@ -1085,6 +1086,15 @@ function App() {
                 />
 
                 <Route
+                  path="/cost-approval/:approvalId/:userId"
+                  element={
+                    <ProtectedRoute>
+                      <CostApprovalStandalonePage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
                   path="/"
                   element={
                     <ProtectedRoute>
@@ -1258,10 +1268,6 @@ function App() {
                   <Route
                     path="/settings/asset-setup/approval-matrix"
                     element={<InvoiceApprovalsPage />}
-                  />
-                  <Route
-                    path="/cost-approval"
-                    element={<CostApprovalPage />}
                   />
                   <Route
                     path="/settings/asset-setup/asset-groups"
@@ -3388,11 +3394,6 @@ function App() {
                 <Route
                   path="/survey_mappings/:mappingId/survey"
                   element={<MobileSurveyPage />}
-                />
-                {/* Cost Approval Individual Page Route */}
-                <Route
-                  path="/cost_approvals/:approvalId/approval/:userId"
-                  element={<CostApprovalPage />}
                 />
                 {/* Mobile Asset Routes */}
                 <Route path="/mobile/assets" element={<MobileAssetPage />} />
