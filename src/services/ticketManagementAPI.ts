@@ -636,6 +636,7 @@ export const ticketManagementAPI = {
     formData.append('complaint[complaint_type]', ticketData.complaint_type);
     formData.append('complaint[category_type_id]', ticketData.category_type_id.toString());
     formData.append('complaint[priority]', ticketData.priority);
+    formData.append('complaint[supplier_id]', ticketData.supplier_id.toString());
     formData.append('complaint[society_staff_type]', ticketData.society_staff_type);
     formData.append('complaint[proactive_reactive]', ticketData.proactive_reactive);
     formData.append('complaint[heading]', ticketData.heading);

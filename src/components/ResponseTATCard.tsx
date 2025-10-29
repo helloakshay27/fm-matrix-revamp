@@ -5,6 +5,16 @@ import { Download } from 'lucide-react';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
+// Color palette with lighter shades
+const CHART_COLORS = {
+  primary: '#C4B99D',
+  secondary: '#DAD6CA',
+  tertiary: '#D5DBDB',
+  primaryLight: '#DDD4C4',    // Lighter shade of primary
+  secondaryLight: '#E8E5DD',  // Lighter shade of secondary
+  tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
+};
+
 interface ResponseTATData {
   success: number;
   message: string;
@@ -93,14 +103,14 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
     {
       name: 'Achieved',
       value: data.response.response_tat.open.achieved + data.response.response_tat.close.achieved,
-      color: '#C4B99D',
+      color: CHART_COLORS.primary,
       open: data.response.response_tat.open.achieved,
       close: data.response.response_tat.close.achieved
     },
     {
       name: 'Breached',
       value: data.response.response_tat.open.breached + data.response.response_tat.close.breached,
-      color: '#DAD6CA',
+      color: CHART_COLORS.secondary,
       open: data.response.response_tat.open.breached,
       close: data.response.response_tat.close.breached
     }
@@ -111,14 +121,14 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
     {
       name: 'Achieved',
       value: data.response.resolution_tat.open.achieved + data.response.resolution_tat.close.achieved,
-      color: '#C4B99D',
+      color: CHART_COLORS.primary,
       open: data.response.resolution_tat.open.achieved,
       close: data.response.resolution_tat.close.achieved
     },
     {
       name: 'Breached',
       value: data.response.resolution_tat.open.breached + data.response.resolution_tat.close.breached,
-      color: '#DAD6CA',
+      color: CHART_COLORS.secondary,
       open: data.response.resolution_tat.open.breached,
       close: data.response.resolution_tat.close.breached
     }

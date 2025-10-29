@@ -199,7 +199,8 @@ const UpdateTicketsPage: React.FC = () => {
     building: '',
     wing: '',
     floor: '',
-    room: ''
+    room: '',
+    vendor: "" // <-- Add this line to fix the error
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -211,6 +212,9 @@ const UpdateTicketsPage: React.FC = () => {
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [subCategoriesLoading, setSubCategoriesLoading] = useState(false);
   const [complaintModes, setComplaintModes] = useState<ComplaintMode[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: number; name: string }[]>([]);
+const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showCostPopup, setShowCostPopup] = useState(false);
   const [costPopupData, setCostPopupData] = useState({
@@ -332,6 +336,42 @@ const UpdateTicketsPage: React.FC = () => {
     fetchData();
     dispatch(fetchHelpdeskCategories());
   }, [toast, dispatch]);
+
+  useEffect(() => {
+  const fetchSuppliers = async () => {
+    setLoadingSuppliers(true);
+    try {
+      const url = getFullUrl('/pms/suppliers.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch suppliers');
+      const data = await response.json();
+      setSuppliers(
+        Array.isArray(data.pms_suppliers)
+          ? data.pms_suppliers.map(s => ({
+            id: s.id,
+            name: s.company_name || `Supplier #${s.id}`
+          }))
+          : []
+      );
+    } catch (error) {
+      console.error('Error loading suppliers:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load suppliers",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingSuppliers(false);
+    }
+  };
+  fetchSuppliers();
+}, []);
 
   // Add location data loading functions
   const loadLocationData = async () => {
@@ -725,6 +765,7 @@ const UpdateTicketsPage: React.FC = () => {
         mode: matchedMode ? matchedMode.id.toString() : "",
         serviceType: ticketData.service_or_asset || "",
         selectedStatus: matchedStatus ? matchedStatus.id.toString() : "",
+        vendor: ticketData.supplier_id ? ticketData.supplier_id.toString() : "",
         comments: ticketData.comment || "",
         // Responsible Person
         responsiblePerson: responsiblePersonUser ? responsiblePersonUser.id.toString() : "",
@@ -1725,6 +1766,7 @@ const UpdateTicketsPage: React.FC = () => {
         "complaint[person_id]",
         formData.responsiblePerson || ""
       );
+      formDataToSend.append("complaint[supplier_id]", formData.vendor || "");
 
       // Format review tracking date properly
       if (reviewDate) {
@@ -2192,6 +2234,31 @@ const UpdateTicketsPage: React.FC = () => {
                       </MuiSelect>
                     </FormControl>
                   </div>
+                  <div className="space-y-1">
+                  <FormControl
+  fullWidth
+  variant="outlined"
+  sx={{ '& .MuiInputBase-root': fieldStyles }}
+>
+  <InputLabel shrink>Vendor</InputLabel>
+  <MuiSelect
+    value={formData.vendor}
+    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+    label="Vendor"
+    notched
+    displayEmpty
+    disabled={loadingSuppliers}
+  >
+    <MenuItem value="">
+      {loadingSuppliers ? "Loading..." : "Select Vendor"}
+    </MenuItem>
+    {suppliers.map((supplier) => (
+      <MenuItem key={supplier.id} value={supplier.id.toString()}>
+        {supplier.name}
+      </MenuItem>
+    ))}
+  </MuiSelect>
+</FormControl>  </div>
                 </div>
               </div>
             </div>

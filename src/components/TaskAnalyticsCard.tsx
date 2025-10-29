@@ -16,27 +16,15 @@ interface TaskAnalyticsCardProps {
   };
 }
 
-// Custom color palette matching survey analytics - warm, professional tones
-const STATUS_COLORS = {
-  open: '#E67E22',        // Warm orange for open tasks
-  closed: '#27AE60',      // Green for closed tasks
-  work_in_progress: '#F39C12', // Yellow/gold for work in progress
-  overdue: '#E74C3C',     // Red for overdue tasks
+// Color palette with lighter shades
+const CHART_COLORS = {
+  primary: '#C4B99D',
+  secondary: '#DAD6CA',
+  tertiary: '#D5DBDB',
+  primaryLight: '#DDD4C4',    // Lighter shade of primary
+  secondaryLight: '#E8E5DD',  // Lighter shade of secondary
+  tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
 };
-
-// Color palette for Top 10 charts - warm, professional gradient
-const TOP_TEN_COLORS = [
-  '#8B7355',   // Warm brown
-  '#A8956B',   // Soft gold/tan
-  '#9B8B7E',   // Neutral taupe
-  '#B5A089',   // Light beige
-  '#94857A',   // Medium taupe
-  '#C4B5A0',   // Pale tan
-  '#AA9980',   // Sandy brown
-  '#D4C4B0',   // Light cream
-  '#8E7A6B',   // Deep taupe
-  '#C9B8A3',   // Warm beige
-];
 
 export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({ 
   title, 
@@ -116,10 +104,10 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="open" stackId="a" fill={STATUS_COLORS.open} name="Open" />
-                  <Bar dataKey="closed" stackId="a" fill={STATUS_COLORS.closed} name="Closed" />
-                  <Bar dataKey="work_in_progress" stackId="a" fill={STATUS_COLORS.work_in_progress} name="Work in Progress" />
-                  <Bar dataKey="overdue" stackId="a" fill={STATUS_COLORS.overdue} name="Overdue" />
+                  <Bar dataKey="open" stackId="a" fill={CHART_COLORS.primary} name="Open" />
+                  <Bar dataKey="closed" stackId="a" fill={CHART_COLORS.secondary} name="Closed" />
+                  <Bar dataKey="work_in_progress" stackId="a" fill={CHART_COLORS.tertiary} name="Work in Progress" />
+                  <Bar dataKey="overdue" stackId="a" fill="#A3A8AA" name="Overdue" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -130,30 +118,10 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-2">Category</th>
-                    <th className="text-right p-2">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: STATUS_COLORS.open }}></span>
-                        Open
-                      </span>
-                    </th>
-                    <th className="text-right p-2">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: STATUS_COLORS.closed }}></span>
-                        Closed
-                      </span>
-                    </th>
-                    <th className="text-right p-2">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: STATUS_COLORS.work_in_progress }}></span>
-                        WIP
-                      </span>
-                    </th>
-                    <th className="text-right p-2">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: STATUS_COLORS.overdue }}></span>
-                        Overdue
-                      </span>
-                    </th>
+                    <th className="text-right p-2">Open</th>
+                    <th className="text-right p-2">Closed</th>
+                    <th className="text-right p-2">WIP</th>
+                    <th className="text-right p-2">Overdue</th>
                     <th className="text-right p-2">Total</th>
                   </tr>
                 </thead>
@@ -186,10 +154,18 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
           );
         }
 
-        // For top ten, show both chart and table with custom colors
+        // For top ten, show both chart and table
+        const topTenColors = [
+          CHART_COLORS.primary, 
+          CHART_COLORS.secondary, 
+          CHART_COLORS.tertiary,
+          CHART_COLORS.primaryLight,
+          CHART_COLORS.secondaryLight,
+          CHART_COLORS.tertiaryLight
+        ];
         const chartData = responseData.slice(0, 10).map((item: any, index: number) => ({
           ...item,
-          color: TOP_TEN_COLORS[index % TOP_TEN_COLORS.length]
+          fill: topTenColors[index % topTenColors.length]
         }));
 
         return (
@@ -204,7 +180,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   <Tooltip />
                   <Bar dataKey="count">
                     {chartData.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -224,15 +200,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                 <tbody>
                   {responseData.slice(0, 10).map((item: any, index: number) => (
                     <tr key={index} className="border-b">
-                      <td className="p-2 font-medium">
-                        <span className="inline-flex items-center gap-2">
-                          <span 
-                            className="inline-block w-3 h-3 rounded-sm" 
-                            style={{ backgroundColor: TOP_TEN_COLORS[index % TOP_TEN_COLORS.length] }}
-                          ></span>
-                          #{index + 1}
-                        </span>
-                      </td>
+                      <td className="p-2 font-medium">#{index + 1}</td>
                       <td className="p-2">{item.type || 'N/A'}</td>
                       <td className="text-right p-2 font-semibold">{item.count || 0}</td>
                     </tr>
@@ -274,10 +242,10 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   <XAxis dataKey="site" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="open" stackId="a" fill={STATUS_COLORS.open} name="Open" />
-                  <Bar dataKey="closed" stackId="a" fill={STATUS_COLORS.closed} name="Closed" />
-                  <Bar dataKey="work_in_progress" stackId="a" fill={STATUS_COLORS.work_in_progress} name="Work in Progress" />
-                  <Bar dataKey="overdue" stackId="a" fill={STATUS_COLORS.overdue} name="Overdue" />
+                  <Bar dataKey="open" stackId="a" fill={CHART_COLORS.primary} name="Open" />
+                  <Bar dataKey="closed" stackId="a" fill={CHART_COLORS.secondary} name="Closed" />
+                  <Bar dataKey="work_in_progress" stackId="a" fill={CHART_COLORS.tertiary} name="Work in Progress" />
+                  <Bar dataKey="overdue" stackId="a" fill="#A3A8AA" name="Overdue" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -288,30 +256,10 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-2">Site</th>
-                    <th className="text-right p-2">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: STATUS_COLORS.open }}></span>
-                        Open
-                      </span>
-                    </th>
-                    <th className="text-right p-2">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: STATUS_COLORS.closed }}></span>
-                        Closed
-                      </span>
-                    </th>
-                    <th className="text-right p-2">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: STATUS_COLORS.work_in_progress }}></span>
-                        WIP
-                      </span>
-                    </th>
-                    <th className="text-right p-2">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: STATUS_COLORS.overdue }}></span>
-                        Overdue
-                      </span>
-                    </th>
+                    <th className="text-right p-2">Open</th>
+                    <th className="text-right p-2">Closed</th>
+                    <th className="text-right p-2">WIP</th>
+                    <th className="text-right p-2">Overdue</th>
                     <th className="text-right p-2">Total</th>
                   </tr>
                 </thead>
