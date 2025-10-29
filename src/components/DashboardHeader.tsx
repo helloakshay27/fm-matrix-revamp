@@ -218,13 +218,15 @@ export const DashboardHeader = () => {
 
 
           {/* Dashboard Button */}
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-          >
-            <Home className="w-4 h-4" />
-            Home
-          </button>
+          {userId !== 189005 && (
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              Home
+            </button>
+          )}
 
           {/* Project Dropdown */}
 

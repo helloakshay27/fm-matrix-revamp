@@ -297,13 +297,18 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       // Add a slight delay for better UX, then redirect to dashboard
       setTimeout(() => {
-        isViSite
-          ? navigate("/safety/m-safe/internal")
-          : navigate(from, { replace: true });
+        // Special routing for user ID 189005
+        if (response.id === 189005) {
+          navigate("/dashboard");
+        } else if (isViSite) {
+          navigate("/safety/m-safe/internal");
+        } else {
+          navigate(from, { replace: true });
+        }
       }, 500);
     } catch (error: any) {
       console.error("Login error:", error);
-      
+
       // Handle specific error messages from API
       if (error?.status === 401) {
         // Check for specific error messages
