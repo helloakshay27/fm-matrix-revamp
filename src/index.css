@@ -935,11 +935,11 @@ td div , td span, th div, td button, td a {
   position: relative !important;
 }
 
-[data-lov-name="Card"].bg-card{
+[data-lov-name="Card"].bg-card , .bg-card {
   height: 400px !important;
 }
 
-[data-lov-name="CardContent"].p-6.pt-0{
+[data-lov-name="CardContent"].p-6.pt-0 , .bg-card .p-6.pt-0 {
   height: 300px !important;
   overflow-y: auto !important;
 }
