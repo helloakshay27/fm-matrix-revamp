@@ -46,6 +46,16 @@ import { AmcBulkUploadModal } from '@/components/water-asset-details/AmcBulkUplo
 import { useDebounce } from '@/hooks/useDebounce';
 import { StatsCard } from '@/components/StatsCard';
 
+// Unified analytics color palette
+const analyticsColorPalette = {
+  primary: '#C4B99D', // warm beige
+  secondary: '#DAD6CA', // light taupe
+  tertiary: '#D5DBDB', // soft gray
+  primaryLight: '#DDD4C4', // lighter warm beige
+  secondaryLight: '#E8E5DD', // lighter taupe
+  tertiaryLight: '#E5E9E9', // lighter gray
+};
+
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
   const {
@@ -1089,6 +1099,8 @@ export const AMCDashboard = () => {
                     <div className="h-full">
                       <AMCStatusCard
                         data={amcStatusSummary}
+                        colorPalette={analyticsColorPalette}
+                        headerClassName="text-[#1A1A1A]"
                         onDownload={async () => {
                           const startDate = convertDateStringToDate(analyticsDateRange.startDate);
                           const endDate = convertDateStringToDate(analyticsDateRange.endDate);
@@ -1101,6 +1113,8 @@ export const AMCDashboard = () => {
                     <div className="h-full">
                       <AMCTypeDistributionCard
                         data={amcTypeDistribution}
+                        colorPalette={analyticsColorPalette}
+                        headerClassName="text-[#1A1A1A]"
                         onDownload={async () => {
                           const startDate = convertDateStringToDate(analyticsDateRange.startDate);
                           const endDate = convertDateStringToDate(analyticsDateRange.endDate);
@@ -1116,6 +1130,8 @@ export const AMCDashboard = () => {
                     <div className="h-full">
                       <AMCUnitResourceCard
                         data={amcUnitResourceData}
+                        colorPalette={analyticsColorPalette}
+                        headerClassName="text-[#1A1A1A]"
                         onDownload={async () => {
                           const startDate = convertDateStringToDate(analyticsDateRange.startDate);
                           const endDate = convertDateStringToDate(analyticsDateRange.endDate);
@@ -1128,6 +1144,8 @@ export const AMCDashboard = () => {
                     <div className="h-full">
                       <AMCServiceStatsCard
                         data={amcServiceStatsData}
+                        colorPalette={analyticsColorPalette}
+                        headerClassName="text-[#1A1A1A]"
                         onDownload={async () => {
                           const startDate = convertDateStringToDate(analyticsDateRange.startDate);
                           const endDate = convertDateStringToDate(analyticsDateRange.endDate);
@@ -1142,6 +1160,8 @@ export const AMCDashboard = () => {
                   <div className="h-96">
                     <AMCServiceTrackingCard
                       data={amcServiceTracking}
+                      colorPalette={analyticsColorPalette}
+                      headerClassName="text-[#1A1A1A]"
                       onDownload={async () => {
                         const startDate = convertDateStringToDate(analyticsDateRange.startDate);
                         const endDate = convertDateStringToDate(analyticsDateRange.endDate);
@@ -1155,6 +1175,8 @@ export const AMCDashboard = () => {
                   <div className="h-full">
                     <AMCCoverageByLocationCard
                       data={amcCoverageData}
+                      colorPalette={analyticsColorPalette}
+                      headerClassName="text-[#1A1A1A]"
                       onDownload={async () => {
                         const startDate = convertDateStringToDate(analyticsDateRange.startDate);
                         const endDate = convertDateStringToDate(analyticsDateRange.endDate);
@@ -1168,6 +1190,8 @@ export const AMCDashboard = () => {
                   <div className="w-full lg:w-3/5 h-full">
                     <AMCExpiryAnalysisCard
                       data={amcExpiryAnalysis}
+                      colorPalette={analyticsColorPalette}
+                      headerClassName="text-[#1A1A1A]"
                       onDownload={async () => {
                         const startDate = convertDateStringToDate(analyticsDateRange.startDate);
                         const endDate = convertDateStringToDate(analyticsDateRange.endDate);

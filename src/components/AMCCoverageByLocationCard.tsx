@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ANALYTICS_PALETTE } from '@/styles/chartPalette';
 import { Button } from '@/components/ui/button';
 import { Download, MapPin, ChevronRight, ChevronDown, Building2, Home, Map } from 'lucide-react';
 import { AMCLocationCoverageNode } from '@/services/amcAnalyticsAPI';
@@ -8,14 +7,32 @@ import { AMCLocationCoverageNode } from '@/services/amcAnalyticsAPI';
 interface AMCCoverageByLocationCardProps {
   data: AMCLocationCoverageNode[] | null;
   onDownload: () => Promise<void>;
+  colorPalette?: {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    primaryLight: string;
+    secondaryLight: string;
+    tertiaryLight: string;
+  };
+  headerClassName?: string;
 }
 
 interface ExpandedNodes {
   [key: string]: boolean;
 }
 
-export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLocationCardProps) {
+export function AMCCoverageByLocationCard({ data, onDownload, colorPalette, headerClassName }: AMCCoverageByLocationCardProps) {
   const [expandedNodes, setExpandedNodes] = useState<ExpandedNodes>({});
+
+  const palette = colorPalette || {
+    primary: '#C4B99D',
+    secondary: '#DAD6CA',
+    tertiary: '#D5DBDB',
+    primaryLight: '#DDD4C4',
+    secondaryLight: '#E8E5DD',
+    tertiaryLight: '#E5E9E9',
+  };
 
   const toggleNode = (nodeId: string) => {
     setExpandedNodes(prev => ({
@@ -29,13 +46,13 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
     const l = String(level || '').toLowerCase();
     switch (l) {
       case 'site':
-  return <Building2 className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[3] }} />;
+        return <Building2 className="w-4 h-4" style={{ color: palette.primaryLight }} />;
       case 'building':
-  return <Home className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[0] }} />;
+        return <Home className="w-4 h-4" style={{ color: palette.primary }} />;
       case 'floor':
-  return <Map className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[1] }} />;
+        return <Map className="w-4 h-4" style={{ color: palette.secondary }} />;
       default:
-  return <MapPin className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[2] }} />;
+        return <MapPin className="w-4 h-4" style={{ color: palette.tertiary }} />;
     }
   };
 
@@ -123,8 +140,8 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
     <Card className="h-full flex flex-col">
       <CardHeader className="flex-shrink-0 pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-[#C72030]" />
+          <CardTitle className={`text-lg font-semibold flex items-center gap-2 ${headerClassName || 'text-[#1A1A1A]'}`}> 
+            <MapPin className="w-5 h-5" style={{ color: palette.tertiary }} />
             Coverage by Location
           </CardTitle>
           <Button
@@ -135,44 +152,39 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
             data-download-button
           >
             <Download className="w-4 h-4" />
-            
           </Button>
         </div>
       </CardHeader>
-      
       <CardContent className="flex-1 flex flex-col overflow-hidden">
         {/* Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="p-3 rounded-lg" style={{ background: '#f5f4f1' }}>
+          <div className="p-3 rounded-lg" style={{ background: palette.primaryLight }}>
             <div className="flex items-center gap-2 mb-1">
-              <Building2 className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[3] }} />
-              <span className="text-sm font-medium text-black">Locations</span>
+              <Building2 className="w-4 h-4" style={{ color: palette.primaryLight }} />
+              <span className="text-sm font-medium text-[#1A1A1A]">Locations</span>
             </div>
-            <div className="text-2xl font-bold text-black">{totalLocations}</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{totalLocations}</div>
           </div>
-          
-          <div className="p-3 rounded-lg" style={{ background: '#f0f2f2' }}>
+          <div className="p-3 rounded-lg" style={{ background: palette.primary }}>
             <div className="flex items-center gap-2 mb-1">
-              <Home className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[0] }} />
-              <span className="text-sm font-medium text-black">Total Assets</span>
+              <Home className="w-4 h-4" style={{ color: palette.primary }} />
+              <span className="text-sm font-medium text-[#1A1A1A]">Total Assets</span>
             </div>
-            <div className="text-2xl font-bold text-black">{totalAssets}</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{totalAssets}</div>
           </div>
-          
-          <div className="p-3 rounded-lg" style={{ background: '#f6f0f0' }}>
+          <div className="p-3 rounded-lg" style={{ background: palette.tertiary }}>
             <div className="flex items-center gap-2 mb-1">
-              <MapPin className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[2] }} />
-              <span className="text-sm font-medium text-black">Under AMC</span>
+              <MapPin className="w-4 h-4" style={{ color: palette.tertiary }} />
+              <span className="text-sm font-medium text-[#1A1A1A]">Under AMC</span>
             </div>
-            <div className="text-2xl font-bold text-black">{totalAssetsUnderAMC}</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{totalAssetsUnderAMC}</div>
           </div>
-          
-          <div className="p-3 rounded-lg" style={{ background: '#edeae4' }}>
+          <div className="p-3 rounded-lg" style={{ background: palette.secondary }}>
             <div className="flex items-center gap-2 mb-1">
-              <Map className="w-4 h-4" style={{ color: ANALYTICS_PALETTE[1] }} />
-              <span className="text-sm font-medium text-black">Coverage</span>
+              <Map className="w-4 h-4" style={{ color: palette.secondary }} />
+              <span className="text-sm font-medium text-[#1A1A1A]">Coverage</span>
             </div>
-            <div className="text-2xl font-bold text-black">{overallCoverage.toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{overallCoverage.toFixed(1)}%</div>
           </div>
         </div>
 
