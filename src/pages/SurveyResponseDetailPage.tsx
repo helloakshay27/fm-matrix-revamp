@@ -3224,7 +3224,7 @@ export const SurveyResponseDetailPage = () => {
     },
     {
       key: "review_tracking_date",
-      label: "Review",
+      label: "Review Date",
       defaultVisible: true,
       sortable: true,
     },
