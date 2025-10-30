@@ -2727,37 +2727,11 @@ export const AddSchedulePage = () => {
     }, 100);
   };
 
-  // Save to Draft for Mapping section: Saves mappings to localStorage and navigates to schedule list
-  // This is used ONLY in the Mapping section (last step)
-  const handleSaveMappingToDraft = () => {
-    // Save ALL current state to localStorage including mappings
-    saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
-    saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
-    saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
-    saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep);
-    saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, completedSteps);
-    saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
-
-    // Show success message
-    toast.success("Mapping saved to draft successfully!", {
-      position: 'top-right',
-      duration: 4000,
-      style: {
-        background: '#fff',
-        color: 'black',
-        border: 'none',
-      },
-    });
-
-    // Navigate back to schedule list
-    navigate('/maintenance/schedule');
-  };
-
   // Save to Draft: Saves current progress to localStorage
   // For steps 0-2: Validates, saves to localStorage, and moves to next section
   // For step 3 (Time Setup): Saves to localStorage and navigates to schedule list
   const handleSaveToDraft = () => {
-    // Don't use this for Mapping step (last step) - use handleSaveMappingToDraft instead
+    // Don't use this for Mapping step (last step) - mapping step only has Submit button
     if (activeStep >= steps.length - 1) {
       return;
     }
@@ -5849,14 +5823,8 @@ export const AddSchedulePage = () => {
           )}
         </>
       ) : (
-        // Mapping section (last step) - has Submit and Save to Draft buttons
+        // Mapping section (last step) - has Submit button only
         <>
-          <DraftButton
-            onClick={handleSaveMappingToDraft}
-            disabled={isSubmitting}
-          >
-            Save to Draft
-          </DraftButton>
           <RedButton
             onClick={handleSave}
             disabled={isSubmitting}
@@ -6095,14 +6063,8 @@ export const AddSchedulePage = () => {
               )}
             </>
           ) : (
-            // Mapping section (last step) - has Submit and Save to Draft buttons
+            // Mapping section (last step) - has Submit button only
             <Box className="flex gap-4">
-              <DraftButton
-                onClick={handleSaveMappingToDraft}
-                disabled={isSubmitting}
-              >
-                Save to Draft
-              </DraftButton>
               <DraftButton
                 onClick={handleSave}
                 disabled={isSubmitting}
