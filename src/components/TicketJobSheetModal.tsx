@@ -21,20 +21,6 @@ interface TicketComment {
   created_at?: string;
 }
 
-interface ComplaintLog {
-  id: number;
-  complaint_id: number;
-  complaint_status_id: number | null;
-  changed_by: number | null;
-  priority: string | null;
-  created_at: string;
-  updated_at: string;
-  log_comment: string;
-  log_status: string | null;
-  log_by: string | null;
-  documents: any[];
-}
-
 interface CommunicationTemplate {
   id: number;
   identifier: string;
@@ -79,7 +65,6 @@ interface TicketData {
   asset_name?: string;
   asset_code?: string;
   comments?: TicketComment[];
-  complaint_logs?: ComplaintLog[];
   created_by_name?: string;
   asset_service?: string;
   response_tat?: number;
@@ -452,8 +437,23 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #D9D9D9; background-color: #F6F4EE; }
               .logo { margin: 0 10px; }
               .header-text { margin: 0 0 18px 0 !important; }
-              table { border-collapse: collapse; width: 100%; }
-              th, td { border: 0.5px solid #000; padding: 6px 8px 6px 8px; text-align: left; vertical-align: middle; }
+              table { 
+                border-collapse: collapse; 
+                width: 100%; 
+                table-layout: fixed; 
+                border: 1px solid #000 !important;
+              }
+              th, td { 
+                border: 1px solid #000 !important; 
+                padding: 6px 8px; 
+                text-align: left; 
+                vertical-align: top; 
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
+                white-space: normal !important;
+                line-height: 1.4 !important;
+                min-height: 20px !important;
+              }
               .bg-gray-100 { background-color: #f3f4f6; }
               .bg-tan { background-color: #D2B48C; }
               .bg-gray-200 { background-color: #e5e7eb; }
@@ -483,8 +483,49 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                 padding: 6px 8px 6px 8px !important; 
                 font-weight: bold !important; 
                 font-size: 18px !important; 
-                border: 1px solid #999 !important; 
+                border: 1px solid #000 !important; 
               }
+
+              /* Header cells styling */
+              .header-cell {
+                background-color: #C4B89D59 !important;
+                font-weight: bold !important;
+                border: 1px solid #000 !important;
+                padding: 8px !important;
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
+                white-space: normal !important;
+                line-height: 1.4 !important;
+                text-align: left !important;
+                vertical-align: top !important;
+              }
+
+              /* Data cells styling */
+              .data-cell {
+                background-color: #EFF1F1 !important;
+                border: 1px solid #000 !important;
+                padding: 8px !important;
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
+                white-space: normal !important;
+                line-height: 1.4 !important;
+                text-align: left !important;
+                vertical-align: top !important;
+                min-height: 30px !important;
+              }
+
+              /* Job Card Table Container */
+              .table-container {
+                width: 100%;
+                overflow: hidden;
+                border: 1px solid #000;
+                box-sizing: border-box;
+              }
+
+              /* Column width specifications */
+              .col-header { width: 20% !important; }
+              .col-data { width: 30% !important; }
+              .col-full { width: 100% !important; }
 
               input[type="checkbox"] { margin: 0 4px; }
             </style>
@@ -612,65 +653,65 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
               <div className="h-4"></div>
 
               {/* Job Card Table */}
-              <div>
+              <div className="table-container">
                 <table className="w-full border-collapse">
                   <tbody>
                     {/* Description Row */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold w-1/6" style={{backgroundColor: '#C4B89D59'}}>Description</td>
-                      <td colSpan={3} className="border border-gray-300 px-3 py-2 min-h-[60px]" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Description</td>
+                      <td colSpan={3} className="data-cell col-full">
                         {ticketData?.heading || ticketData?.description || 'No description provided'}
                       </td>
                     </tr>
                     
                     {/* Row 1 */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold w-1/6" style={{backgroundColor: '#C4B89D59'}}>Ticket Id</td>
-                      <td className="border border-gray-300 px-3 py-2 w-1/6" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.ticket_number || ticketData?.ticket_id || ticketData?.id || '-'}</td>
-                      <td className="border border-gray-300 px-3 py-2 font-bold w-1/6" style={{backgroundColor: '#C4B89D59'}}>Status</td>
-                      <td className="border border-gray-300 px-3 py-2 w-1/6" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.issue_status || '-'}</td>
+                      <td className="header-cell col-header">Ticket Id</td>
+                      <td className="data-cell col-data">{ticketData?.ticket_number || ticketData?.ticket_id || ticketData?.id || '-'}</td>
+                      <td className="header-cell col-header">Status</td>
+                      <td className="data-cell col-data">{ticketData?.issue_status || '-'}</td>
                     </tr>
                     
                     {/* Row 2 */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Category</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.category_type || ticketData?.category_name || '-'}</td>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Sub Category</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.sub_category_type || ticketData?.subcategory_name || '-'}</td>
+                      <td className="header-cell col-header">Category</td>
+                      <td className="data-cell col-data">{ticketData?.category_type || ticketData?.category_name || '-'}</td>
+                      <td className="header-cell col-header">Sub Category</td>
+                      <td className="data-cell col-data">{ticketData?.sub_category_type || ticketData?.subcategory_name || '-'}</td>
                     </tr>
                     
                     {/* Row 3 */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Created On</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Created On</td>
+                      <td className="data-cell col-data">
                         {ticketData?.created_at ? new Date(ticketData.created_at).toLocaleDateString('en-GB') : 'DD/MM/YYYY'}
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Created By</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.created_by_name || 'User'}</td>
+                      <td className="header-cell col-header">Created By</td>
+                      <td className="data-cell col-data">{ticketData?.created_by_name || 'User'}</td>
                     </tr>
                     
                     {/* Row 4 */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Priority</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{getPriorityDisplay(ticketData?.priority)}</td>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Assigned to</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.assigned_to || '-'}</td>
+                      <td className="header-cell col-header">Priority</td>
+                      <td className="data-cell col-data">{getPriorityDisplay(ticketData?.priority)}</td>
+                      <td className="header-cell col-header">Assigned to</td>
+                      <td className="data-cell col-data">{ticketData?.assigned_to || '-'}</td>
                     </tr>
                     
                     {/* Row 5 */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Issue Type</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>Complaint</td>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Related to</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.issue_related_to || '-'}</td>
+                      <td className="header-cell col-header">Issue Type</td>
+                      <td className="data-cell col-data">Complaint</td>
+                      <td className="header-cell col-header">Related to</td>
+                      <td className="data-cell col-data">{ticketData?.issue_related_to || '-'}</td>
                     </tr>
                     
                     {/* Row 6 */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Associated To</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.asset_service || '-'}</td>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Location</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Associated To</td>
+                      <td className="data-cell col-data">{ticketData?.asset_service || '-'}</td>
+                      <td className="header-cell col-header">Location</td>
+                      <td className="data-cell col-data">
                         {[
                           ticketData?.building_name,
                           ticketData?.wing_name,
@@ -683,109 +724,96 @@ export const TicketJobSheetModal: React.FC<TicketJobSheetModalProps> = ({
                     
                     {/* Row 7 */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Response TAT</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Response TAT</td>
+                      <td className="data-cell col-data">
                         {ticketData?.response_tat ? `${ticketData.response_tat} Mins` : '30 Mins'}
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Resolution TAT</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Resolution TAT</td>
+                      <td className="data-cell col-data">
                         {ticketData?.resolution_tat ? `${ticketData.resolution_tat} Hour` : '1 Hour'}
                       </td>
                     </tr>
                     
                     {/* Row 8 */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Preventive Action</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Preventive Action</td>
+                      <td className="data-cell col-data">
                         {getPreventiveActionDisplay()}
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Corrective Action</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Corrective Action</td>
+                      <td className="data-cell col-data">
                         {getCorrectiveActionDisplay()}
                       </td>
                     </tr>
                     
                     {/* Row 9 */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Expected Visit Date</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Expected Visit Date</td>
+                      <td className="data-cell col-data">
                         {ticketData?.visit_date || '-'}
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Expected Closer Date</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Expected Closer Date</td>
+                      <td className="data-cell col-data">
                         {ticketData?.expected_completion_date ? new Date(ticketData.expected_completion_date).toLocaleDateString('en-GB') : '-'}
                       </td>
                     </tr>
                     
                     {/* Row 10 */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Severity</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{ticketData?.severity || '-'}</td>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Root Cause</td>
-                      <td className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>{getRootCauseDisplay()}</td>
+                      <td className="header-cell col-header">Severity</td>
+                      <td className="data-cell col-data">{ticketData?.severity || '-'}</td>
+                      <td className="header-cell col-header">Root Cause</td>
+                      <td className="data-cell col-data">{getRootCauseDisplay()}</td>
                     </tr>
                     
                     {/* Comments Row */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Comments</td>
-                      <td colSpan={3} className="border border-gray-300 px-3 py-2" style={{backgroundColor: '#EFF1F1'}}>
-                        {(() => {
-                          if (ticketData?.complaint_logs && Array.isArray(ticketData.complaint_logs) && ticketData.complaint_logs.length > 0) {
-                            // Get the last complaint log with a non-empty log_comment
-                            const logsWithComments = ticketData.complaint_logs.filter(log => log.log_comment && log.log_comment.trim() !== '');
-                            if (logsWithComments.length > 0) {
-                              const lastLogComment = logsWithComments[logsWithComments.length - 1];
-                              return lastLogComment.log_comment;
-                            }
-                            // If no logs have comments, try to get the last log regardless
-                            const lastLog = ticketData.complaint_logs[ticketData.complaint_logs.length - 1];
-                            return lastLog.log_comment || '-';
-                          }
-                          return ticketData?.description || '-';
-                        })()}
+                      <td className="header-cell col-header">Comments</td>
+                      <td colSpan={3} className="data-cell col-full">
+                        {ticketData?.description || '-'}
                       </td>
                     </tr>
                     
                     {/* Feedback Checkboxes Row */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Feedback</td>
-                      <td className="border border-gray-300 px-3 py-2 text-center" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Feedback</td>
+                      <td className="data-cell col-data text-center">
                         <input type="checkbox" className="transform scale-110" disabled />
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 text-center" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="data-cell col-data text-center">
                         <input type="checkbox" className="transform scale-110" disabled />
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 text-center" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="data-cell col-data text-center">
                         <input type="checkbox" className="transform scale-110" disabled />
                       </td>
                     </tr>
                     
                     {/* Feedback Labels Row */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}></td>
-                      <td className="border border-gray-300 px-3 py-2 text-center" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header"></td>
+                      <td className="data-cell col-data text-center">
                         <div className="text-xs font-bold text-gray-800">Need Improvement</div>
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 text-center" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="data-cell col-data text-center">
                         <div className="text-xs font-bold text-gray-800">Satisfied</div>
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 text-center" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="data-cell col-data text-center">
                         <div className="text-xs font-bold text-gray-800">Not Satisfied</div>
                       </td>
                     </tr>
                     
                     {/* Your Valuable Feedback Row */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Your Valuable Feedback</td>
-                      <td colSpan={3} className="border border-gray-300 px-3 py-2 min-h-[80px]" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Your Valuable Feedback</td>
+                      <td colSpan={3} className="data-cell col-full">
                         {ticketData?.feedback || ''}
                       </td>
                     </tr>
                     
                     {/* Customer Signature Row */}
                     <tr>
-                      <td className="border border-gray-300 px-3 py-2 font-bold" style={{backgroundColor: '#C4B89D59'}}>Customer Signature</td>
-                      <td colSpan={3} className="border border-gray-300 px-3 py-2 min-h-[100px]" style={{backgroundColor: '#EFF1F1'}}>
+                      <td className="header-cell col-header">Customer Signature</td>
+                      <td colSpan={3} className="data-cell col-full" style={{minHeight: '100px'}}>
                         {/* Signature area - could be an image or empty for manual signature */}
                       </td>
                     </tr>

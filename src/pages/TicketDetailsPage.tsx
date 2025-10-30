@@ -3352,13 +3352,18 @@ export const TicketDetailsPage = () => {
           : ''
       },
       {
-        label: 'Escalation',
-        value: (() => {
+        label: (() => {
           const escName = ticketData.next_response_escalation?.escalation_name || '';
+          return escName ? `Escalation - ${escName}` : 'Escalation';
+        })(),
+        value: (() => {
           const users = Array.isArray(ticketData.next_response_escalation?.users)
-            ? ticketData.next_response_escalation.users.filter(u => !!u).join(', ')
-            : '';
-          return escName && users ? `${escName} - ${users}` : (escName || '-');
+            ? ticketData.next_response_escalation.users.filter(u => !!u)
+            : [];
+          
+          if (!users || users.length === 0) return '-';
+          
+          return users.join('\n');
         })()
       },
     ],
@@ -3380,13 +3385,18 @@ export const TicketDetailsPage = () => {
           : ''
       },
       {
-        label: 'Escalation',
-        value: (() => {
+        label: (() => {
           const escName = ticketData.next_resolution_escalation?.escalation_name || '';
+          return escName ? `Escalation - ${escName}` : 'Escalation';
+        })(),
+        value: (() => {
           const users = Array.isArray(ticketData.next_resolution_escalation?.users)
-            ? ticketData.next_resolution_escalation.users.filter(u => !!u).join(', ')
-            : '';
-          return escName && users ? `${escName} - ${users}` : (escName || '-');
+            ? ticketData.next_resolution_escalation.users.filter(u => !!u)
+            : [];
+          
+          if (!users || users.length === 0) return '-';
+          
+          return users.join('\n');
         })()
       },
     ],
@@ -3652,27 +3662,27 @@ export const TicketDetailsPage = () => {
             ) : (
               // Show Logs, Create Task, and Edit buttons for all other tabs
               <>
-                <Button
+                {/* <Button
                   onClick={handleFeeds}
                   className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
                 >
                   Logs
-                </Button>
+                </Button> */}
 
-                <Button
+                {/* <Button
                   onClick={handleCreateTask}
                   className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
                 >
                   Create Task
-                </Button>
+                </Button> */}
 
-                <Button
+                {/* <Button
                   onClick={handleUpdate}
                   variant="outline"
                   className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
                 >
                   <Edit className="w-4 h-4" />
-                </Button>
+                </Button> */}
               </>
             )}
           </div>
@@ -4048,15 +4058,24 @@ export const TicketDetailsPage = () => {
                             }
                           </span>
 
-                          <span className="text-[12px] text-[#9CA3AF] mt-1">
+                          <div className="text-[12px] text-[#9CA3AF] mt-1 leading-tight whitespace-pre-line" style={{ textAlign: 'left' }}>
                             {(() => {
                               const escName = ticketData.next_response_escalation?.escalation_name || '';
                               const users = Array.isArray(ticketData.next_response_escalation?.users)
-                                ? ticketData.next_response_escalation.users.filter(u => !!u).join(', ')
-                                : '';
-                              return escName && users ? `${escName} - ${users}` : (escName || '');
+                                ? ticketData.next_response_escalation.users.filter(u => !!u)
+                                : [];
+                              
+                              if (!escName && (!users || users.length === 0)) return '';
+                              
+                              if (escName && users.length > 0) {
+                                return `${escName} -\n${users.join('\n')}`;
+                              } else if (escName) {
+                                return escName;
+                              } else {
+                                return users.join('\n');
+                              }
                             })()}
-                          </span>
+                          </div>
                         </div>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Response Escalation
@@ -4103,15 +4122,24 @@ export const TicketDetailsPage = () => {
                               : formatSecondsToDDHHMMSS(resolutionEscalationSeconds)
                             }
                           </span>
-                          <span className="text-[12px] text-[#9CA3AF] mt-1">
+                          <div className="text-[12px] text-[#9CA3AF] mt-1 leading-tight whitespace-pre-line" style={{ textAlign: 'left' }}>
                             {(() => {
                               const escName = ticketData.next_resolution_escalation?.escalation_name || '';
                               const users = Array.isArray(ticketData.next_resolution_escalation?.users)
-                                ? ticketData.next_resolution_escalation.users.filter(u => !!u).join(', ')
-                                : '';
-                              return escName && users ? `${escName} - ${users}` : (escName || '');
+                                ? ticketData.next_resolution_escalation.users.filter(u => !!u)
+                                : [];
+                              
+                              if (!escName && (!users || users.length === 0)) return '';
+                              
+                              if (escName && users.length > 0) {
+                                return `${escName} -\n${users.join('\n')}`;
+                              } else if (escName) {
+                                return escName;
+                              } else {
+                                return users.join('\n');
+                              }
                             })()}
-                          </span>
+                          </div>
                         </div>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Resolution Escalation
@@ -4158,18 +4186,23 @@ export const TicketDetailsPage = () => {
           : formatSecondsToDDHHMMSS(goldenTicketEscalationSeconds)
         }
       </p>
-      <p className="text-[12px] text-[#9CA3AF] mt-1">
+      <div className="text-[12px] text-[#9CA3AF] mt-1 leading-tight whitespace-pre-line" style={{ textAlign: 'left' }}>
         {(() => {
-          const escName = ticketData.next_executive_escalation?.escalation_name || '';
           const users = Array.isArray(ticketData.next_executive_escalation?.users)
-            ? ticketData.next_executive_escalation.users.filter(u => !!u).join(', ')
-            : '';
-          return escName && users ? `${escName} - ${users}` : (escName || '');
+            ? ticketData.next_executive_escalation.users.filter(u => !!u)
+            : [];
+          
+          if (!users || users.length === 0) return '';
+          
+          return users.join('\n');
         })()}
-      </p>
+      </div>
     </div>
     <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-      Golden Ticket Escalation
+      {(() => {
+        const escName = ticketData.next_executive_escalation?.escalation_name || '';
+        return escName ? `Golden Ticket Escalation - ${escName}` : 'Golden Ticket Escalation';
+      })()}
     </span>
   </div>
 </div>
@@ -4235,15 +4268,15 @@ export const TicketDetailsPage = () => {
                                   </div>
                                 </div>
                                 <div className="bg-white p-4" style={{ width: '75%', borderRadius: '4px' }}>
-                                  <div className="grid grid-cols-3 w-full items-center gap-4">
+                                  <div className="grid grid-cols-3 w-full items-center gap-6">
                                     {tatGridRows.flat().map((cell, idx) => {
-                                      // Determine column alignment
+                                      // Determine column alignment - make escalation column left-aligned for consistency
                                       const colAlign =
                                         idx % 3 === 0
                                           ? 'justify-start'
                                           : idx % 3 === 1
-                                            ? 'justify-center'
-                                            : 'justify-end';
+                                            ? ''
+                                            : cell.label.includes('Escalation') ? 'justify-start' : 'justify-end';
 
                                       return (
                                         <div
@@ -5487,7 +5520,7 @@ export const TicketDetailsPage = () => {
                           <table className="min-w-full text-[11px]">
                             <thead>
                               <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
-                                {['Request Id', 'Amount', 'Description', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5', 'Action'].map(h => (
+                                {['Request Id', 'Amount', 'Description', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5'].map(h => (
                                   <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
                                     {h}
                                   </th>
@@ -5563,7 +5596,7 @@ export const TicketDetailsPage = () => {
                                         {request.approvals?.L5 || '-'}
                                       </span>
                                     </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                                    {/* <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                       <button
                                         type="button"
                                         onClick={() => handleCancelConfirmation(request.id)}
@@ -5572,7 +5605,7 @@ export const TicketDetailsPage = () => {
                                       >
                                         Cancel
                                       </button>
-                                    </td>
+                                    </td> */}
                                     {/* <td className="px-4 py-3 border border-[#E5E2DC]">
                                       <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
                                         ? 'bg-yellow-100 text-yellow-700'
@@ -7288,13 +7321,13 @@ export const TicketDetailsPage = () => {
                                 <div className="bg-white p-4" style={{ width: '75%', borderRadius: '4px' }}>
                                   <div className="grid grid-cols-3 w-full items-center gap-4">
                                     {tatGridRows.flat().map((cell, idx) => {
-                                      // Determine column alignment
+                                      // Determine column alignment - make escalation column left-aligned for consistency
                                       const colAlign =
                                         idx % 3 === 0
                                           ? 'justify-start'
                                           : idx % 3 === 1
                                             ? 'justify-center'
-                                            : 'justify-end';
+                                            : cell.label.includes('Escalation') ? 'justify-start' : 'justify-end';
 
                                       return (
                                         <div
@@ -8538,7 +8571,7 @@ export const TicketDetailsPage = () => {
                           <table className="min-w-full text-[11px]">
                             <thead>
                               <tr className="bg-[#EDEAE3] text-[#1A1A1A] font-semibold">
-                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5', 'Action'].map(h => (
+                                {['Request Id', 'Amount', 'Comments', 'Created On', 'Created By', 'L1', 'L2', 'L3', 'L4', 'L5'].map(h => (
                                   <th key={h} className="px-4 py-3 text-left border border-[#D2CEC4] whitespace-nowrap text-[12px]">
                                     {h}
                                   </th>
@@ -8614,14 +8647,14 @@ export const TicketDetailsPage = () => {
                                         {request.approvals?.L5 || '-'}
                                       </span>
                                     </td>
-                                    <td className="px-4 py-3 border border-[#E5E2DC] text-center">
+                                    {/* <td className="px-4 py-3 border border-[#E5E2DC] text-center">
                                       <button
                                         onClick={() => handleCancelConfirmation(request.id)}
                                         className="px-3 py-1 text-[10px] font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
                                       >
                                         Cancel
                                       </button>
-                                    </td>
+                                    </td> */}
                                     {/* <td className="px-4 py-3 border border-[#E5E2DC]">
                                       <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-semibold ${request.master_status === 'Pending'
                                         ? 'bg-yellow-100 text-yellow-700'
@@ -10913,7 +10946,7 @@ export const TicketDetailsPage = () => {
                             {request.master_status || "Pending"}
                           </Badge>
                         </TableCell>
-                        <TableCell>{request.cancelled_by || "-"}</TableCell>
+                        <TableCell>{request.cancelled_by === "NA" ? "-" : (request.cancelled_by || "-")}</TableCell>
                         <TableCell>
                           {request.attachments && request.attachments.length > 0 && (
                             <div className="flex gap-2">
