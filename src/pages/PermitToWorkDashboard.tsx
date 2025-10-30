@@ -410,6 +410,57 @@ export const PermitToWorkDashboard = () => {
   };
 
   // Handle filtered results from the filter modal
+  // Handle Excel export
+  const handleExcelExport = async () => {
+    try {
+      setLoading(true);
+      const exportUrl = `${API_CONFIG.BASE_URL}/pms/permits/export.xlsx`;
+
+      let url = exportUrl;
+      if (currentFilters) {
+        url += `?${currentFilters}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+
+      // Create a URL for the blob
+      const downloadUrl = window.URL.createObjectURL(blob);
+
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+
+      // Set the filename for the download
+      const currentDate = new Date().toISOString().split('T')[0];
+      link.download = `permits-export-${currentDate}.xlsx`;
+
+      // Append link to document, click it, and remove it
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up the URL object
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error exporting permits:', error);
+      setError('Failed to export permits');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFilteredResults = (filteredPermits: Permit[], paginationInfo?: PaginationInfo, filterString?: string) => {
     setPermits(filteredPermits);
     setIsFilterApplied(true);
@@ -885,6 +936,7 @@ export const PermitToWorkDashboard = () => {
             onSearchChange={handleSearchChange}
             searchPlaceholder="Search permits..."
             enableExport={true}
+            handleExport={handleExcelExport}
             exportFileName="permits-export"
             pagination={false} // Keep client-side pagination disabled since we handle server-side
             pageSize={pageSize}

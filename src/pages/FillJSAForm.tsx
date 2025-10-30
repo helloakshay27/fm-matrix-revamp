@@ -454,7 +454,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioGroup, Radio } from "@mui/material";
 import { Badge } from "@/components/ui/badge";
 import {
     ArrowLeft,
@@ -660,7 +660,7 @@ export const FillJSAForm = () => {
                     <Badge className="bg-blue-100 text-blue-800 px-3 py-1">JSA FORM</Badge>
                 </div>
 
-                <Card className="shadow-sm border border-gray-200 p-5 ">
+                <Card className="shadow-sm border border-gray-200 p-5 h-full">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Basic Information */}
                         <Card className="shadow-sm border border-gray-200">
@@ -753,7 +753,7 @@ export const FillJSAForm = () => {
                             </CardHeader>
                             <CardContent className="p-6">
                                 <div className="overflow-x-auto">
-                                    <table className="w-full border-collapse border border-gray-300">
+                                    <table className="w-full border-collapse border border-gray-300 ">
                                         <thead>
                                             <tr className="bg-gray-50">
                                                 <th className="border border-gray-300 p-3 text-left text-xs font-medium text-gray-900 w-16">Sr No</th>
@@ -784,25 +784,36 @@ export const FillJSAForm = () => {
                                                                         <span className="text-xs text-gray-700">{measure}</span>
                                                                         <div className="flex gap-4">
                                                                             <RadioGroup
+                                                                                row
                                                                                 value={activity.controlMeasures[measure] || ''}
-                                                                                onValueChange={(value) =>
-                                                                                    handleControlMeasureChange(activity.id, measure, value as 'yes' | 'no')
+                                                                                onChange={(e) =>
+                                                                                    handleControlMeasureChange(activity.id, measure, e.target.value as 'yes' | 'no')
                                                                                 }
                                                                                 className="flex gap-4"
                                                                             >
                                                                                 <div className="flex items-center space-x-2">
-                                                                                    <RadioGroupItem
-                                                                                        className="!pl-0"
+                                                                                    <Radio
+                                                                                        className="!pl-2"
                                                                                         value="yes"
                                                                                         id={`${measure}-yes-${activity.id}`}
+                                                                                        sx={{
+                                                                                            "& .MuiSvgIcon-root": {
+                                                                                                left: "2px !important"
+                                                                                            }
+                                                                                        }}
                                                                                     />
                                                                                     <Label htmlFor={`${measure}-yes-${activity.id}`} className="text-xs">Yes</Label>
                                                                                 </div>
                                                                                 <div className="flex items-center space-x-2">
-                                                                                    <RadioGroupItem
-                                                                                        className="!pl-0"
+                                                                                    <Radio
+                                                                                        className="!pl-2"
                                                                                         value="no"
                                                                                         id={`${measure}-no-${activity.id}`}
+                                                                                        sx={{
+                                                                                            "& .MuiSvgIcon-root": {
+                                                                                                left: "2px !important"
+                                                                                            }
+                                                                                        }}
                                                                                     />
                                                                                     <Label htmlFor={`${measure}-no-${activity.id}`} className="text-xs">No</Label>
                                                                                 </div>
