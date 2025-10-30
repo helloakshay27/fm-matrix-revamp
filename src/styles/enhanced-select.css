@@ -16,7 +16,7 @@
    =========================================== */
 
 /* Table Header Cells - Mobile First */
-th {
+.enhancedTable th {
   padding: 8px 10px 8px 8px !important;
   height: 36px !important;
   vertical-align: middle !important;
@@ -35,7 +35,7 @@ th {
 }
 
 /* Table Data Cells - Mobile First */
-td {
+.enhancedTable td {
   padding: 8px 10px 8px 8px !important;
   height: 36px !important;
   vertical-align: middle !important;
@@ -52,13 +52,13 @@ td {
 
 /* Tablet - 640px and up */
 @media (min-width: 640px) {
-  th {
+  .enhancedTable th {
     padding: 10px 14px 10px 10px !important;
     height: 38px !important;
     font-size: 13px !important;
   }
 
-  td {
+  .enhancedTable td {
     padding: 10px 14px 10px 10px !important;
     height: 38px !important;
     font-size: 12px !important;
@@ -67,13 +67,13 @@ td {
 
 /* Desktop - 768px and up */
 @media (min-width: 768px) {
-  th {
+  .enhancedTable th {
     padding: 12px 16px 12px 12px !important;
     height: 40px !important;
     font-size: 14px !important;
   }
 
-  td {
+  .enhancedTable td {
     padding: 12px 16px 12px 12px !important;
     height: 40px !important;
     font-size: 12px !important;
@@ -82,13 +82,13 @@ td {
 
 /* Large Desktop - 1024px and up */
 @media (min-width: 1024px) {
-  th {
+  .enhancedTable th {
     padding: 12px 20px 12px 16px !important;
     height: 40px !important;
     font-size: 14px !important;
   }
 
-  td {
+  .enhancedTable td {
     padding: 12px 20px 12px 16px !important;
     height: 40px !important;
     font-size: 13px !important;

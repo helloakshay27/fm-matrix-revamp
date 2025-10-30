@@ -598,7 +598,7 @@ export function EnhancedTable<T extends Record<string, any>>({
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <Table className={cn(className, "w-full min-w-max")}>
+            <Table className={cn(className, "w-full min-w-max enhancedTable")}>
               <TableHeader className="sticky-header">
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>

@@ -502,7 +502,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
       </div>
 
       <div className=" rounded-lg border border-[#D5DbDB] overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto enhancedTable">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

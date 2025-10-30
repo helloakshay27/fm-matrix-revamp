@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Calendar } from 'lucide-react';
+import { MaterialDatePicker } from '@/components/ui/material-date-picker';
+import { format, parse } from 'date-fns';
 
 interface TicketAnalyticsFilterDialogProps {
   isOpen: boolean;
@@ -11,52 +11,6 @@ interface TicketAnalyticsFilterDialogProps {
   currentStartDate?: string; // Current applied start date in DD/MM/YYYY format
   currentEndDate?: string;   // Current applied end date in DD/MM/YYYY format
 }
-
-// Custom Date Picker Component
-const CustomDatePicker: React.FC<{
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}> = ({ value, onChange, placeholder = "Select date" }) => {
-  // Convert DD/MM/YYYY to YYYY-MM-DD for HTML input
-  const convertToHTMLDate = (ddmmyyyy: string): string => {
-    if (!ddmmyyyy) return '';
-    const [day, month, year] = ddmmyyyy.split('/');
-    if (day && month && year) {
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-    return '';
-  };
-
-  // Convert YYYY-MM-DD to DD/MM/YYYY
-  const convertToDDMMYYYY = (htmlDate: string): string => {
-    if (!htmlDate) return '';
-    const [year, month, day] = htmlDate.split('-');
-    if (year && month && day) {
-      return `${day}/${month}/${year}`;
-    }
-    return '';
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const htmlDate = e.target.value;
-    const ddmmyyyy = convertToDDMMYYYY(htmlDate);
-    onChange(ddmmyyyy);
-  };
-
-  return (
-    <div className="relative">
-      <Input
-        type="date"
-        value={convertToHTMLDate(value)}
-        onChange={handleChange}
-        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        placeholder={placeholder}
-      />
-      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-    </div>
-  );
-};
 
 export const TicketAnalyticsFilterDialog: React.FC<TicketAnalyticsFilterDialogProps> = ({
   isOpen,
@@ -121,18 +75,16 @@ export const TicketAnalyticsFilterDialog: React.FC<TicketAnalyticsFilterDialogPr
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Start Date</label>
-            <CustomDatePicker
+            <MaterialDatePicker
               value={startDate}
               onChange={setStartDate}
-              placeholder="Select start date"
             />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">End Date</label>
-            <CustomDatePicker
+            <MaterialDatePicker
               value={endDate}
               onChange={setEndDate}
-              placeholder="Select end date"
             />
           </div>
         </div>
