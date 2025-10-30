@@ -443,6 +443,13 @@ export const ScheduledTaskDashboard = () => {
         queryParams.append("q[id_cont]", filters.searchTaskId.trim());
       }
 
+      // Ensure the taskCategory filter (q[task_category_eq]) is appended to the API query when present in filters.
+      if (filters.taskCategory) {
+        queryParams.append("q[task_category_eq]", filters.taskCategory);
+      } else if (filters["q[task_category_eq]"]) {
+        queryParams.append("q[task_category_eq]", filters["q[task_category_eq]"]);
+      }
+
       const apiUrl = getFullUrl(
         `/pms/users/scheduled_tasks.json?&${queryParams.toString()}`
       );

@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import './styles/enhanced-select.css';
+@import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "./styles/enhanced-select.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,7 +15,40 @@
   width: 4px;
   height: 4px;
 }
+[data-lov-name="Card"].bg-card,
+.bg-card {
+  height: 400px !important;
+}
 
+[data-lov-name="CardContent"].p-6.pt-0,
+.bg-card .p-6.pt-0 {
+  height: 300px !important;
+  overflow-y: auto !important;
+}
+.bg-card button {
+  border: none !important;
+}
+.tracking-tight ,  .text-lg {
+  color: #000000 !important;
+  font-weight: 600;
+  leading-trim: NONE;
+}
+
+.bg-card button svg {
+  color: #000000 !important;
+}
+
+.bg-card ,
+.cursor-grab svg {
+  color: #000000 !important;
+}
+
+/* 
+
+
+
+
+ */
 
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
@@ -36,7 +69,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -49,47 +82,62 @@
    =========================================== */
 
 /* Force apply to any MUI component that might not be caught - EXCLUDE TEXTAREA */
-[class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
+[class*="MuiFormControl"]
+  [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not(
+    [class*="multiline"]
+  ) {
   height: 36px !important;
   background-color: transparent !important;
 }
 
-
-body{
-      /* font-family: "Work Sans" !important; */
+body {
+  /* font-family: "Work Sans" !important; */
 }
 @media (min-width: 640px) {
-  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
+  [class*="MuiFormControl"]
+    [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not(
+      [class*="multiline"]
+    ) {
     height: 40px !important;
   }
 }
 
 @media (min-width: 768px) {
-  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
+  [class*="MuiFormControl"]
+    [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not(
+      [class*="multiline"]
+    ) {
     height: 45px !important;
   }
 }
 
 /* EXCLUDE textarea from padding and height constraints */
 [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
-[class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
+[class*="MuiFormControl"]
+  [class*="MuiInputBase-input"]:not(textarea):not(
+    .MuiInputBase-inputMultiline
+  ) {
   padding: 8px 12px !important;
   display: block !important;
   align-items: center !important;
 }
 
 @media (min-width: 640px) {
-
   [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
-  [class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
+  [class*="MuiFormControl"]
+    [class*="MuiInputBase-input"]:not(textarea):not(
+      .MuiInputBase-inputMultiline
+    ) {
     padding: 10px 14px !important;
   }
 }
 
 @media (min-width: 768px) {
-
   [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
-  [class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
+  [class*="MuiFormControl"]
+    [class*="MuiInputBase-input"]:not(textarea):not(
+      .MuiInputBase-inputMultiline
+    ) {
     padding: 12px 14px !important;
   }
 }
@@ -100,7 +148,8 @@ body{
    =========================================== */
 
 /* Make all textarea/multiline fields shorter but functional */
-[class*="MuiFormControl"] [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
+[class*="MuiFormControl"]
+  [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
 [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"][class*="multiline"],
 [class*="MuiFormControl"] textarea {
   height: 80px !important;
@@ -154,7 +203,8 @@ body{
 }
 
 /* Focused state for textarea labels */
-[class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"].Mui-focused,
+[class*="MuiFormControl"]:has(.MuiInputBase-multiline)
+  [class*="MuiInputLabel"].Mui-focused,
 [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"].Mui-focused {
   color: #1976d2 !important;
 }
@@ -331,7 +381,7 @@ body{
   /* Container dimensions - exact measurements */
   width: 328px;
   height: 386px;
-  background: #FFFFFF;
+  background: #ffffff;
 
   /* Sharp corners - no border radius */
   border-radius: 0px;
@@ -345,7 +395,7 @@ body{
 
   /* Typography base */
   font-family: system-ui, -apple-system, sans-serif;
-  color: #1A1A1A;
+  color: #1a1a1a;
 
   /* Positioning */
   position: relative;
@@ -370,7 +420,7 @@ body{
 .month-year-text {
   font-size: 16px;
   font-weight: 500;
-  color: #1A1A1A;
+  color: #1a1a1a;
   letter-spacing: 0;
   line-height: auto;
 }
@@ -397,7 +447,7 @@ body{
 }
 
 .nav-arrow-btn:hover {
-  background-color: #F8F8F8;
+  background-color: #f8f8f8;
 }
 
 .nav-arrow {
@@ -455,11 +505,11 @@ body{
 
 /* Date Cell States */
 .date-number-cell.hovered-date {
-  background-color: #F8F8F8;
+  background-color: #f8f8f8;
 }
 
 .date-number-cell.selected-date {
-  background-color: #DC2626;
+  background-color: #dc2626;
   color: white;
 }
 
@@ -470,7 +520,7 @@ body{
 }
 
 .date-number-cell.disabled-date {
-  color: #CCCCCC;
+  color: #cccccc;
   cursor: not-allowed;
 }
 
@@ -616,9 +666,10 @@ body{
 
 /* Mobile responsive textarea styling */
 @media (max-width: 640px) {
-
-  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
-  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"][class*="multiline"],
+  [class*="MuiFormControl"]
+    [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
+  [class*="MuiFormControl"]
+    [class*="MuiOutlinedInput-root"][class*="multiline"],
   [class*="MuiFormControl"] textarea {
     height: 70px !important;
     min-height: 70px !important;
@@ -626,7 +677,8 @@ body{
   }
 
   /* Smaller label on mobile */
-  [class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"],
+  [class*="MuiFormControl"]:has(.MuiInputBase-multiline)
+    [class*="MuiInputLabel"],
   [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"] {
     transform: translate(12px, -8px) scale(0.75) !important;
     font-size: 12px !important;
@@ -658,14 +710,12 @@ body{
 
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
-
   .date-number-cell,
   .action-button,
   .nav-arrow-btn {
     transition: none;
   }
 }
-
 
 @media (min-width: 640px) {
   .sm\:max-w-7xl {
@@ -706,7 +756,7 @@ body{
 
 /* FullCalendar Custom Styles */
 .fc {
-  font-family: 'Inter', 'Work Sans', system-ui, -apple-system, sans-serif;
+  font-family: "Inter", "Work Sans", system-ui, -apple-system, sans-serif;
 }
 
 .fc-theme-standard .fc-scrollgrid {
@@ -785,7 +835,6 @@ body{
   text-decoration: underline;
 }
 
-
 .timeline {
   position: relative;
   padding-left: 40px;
@@ -809,7 +858,8 @@ body{
   left: -7px;
   margin-top: 2px;
 
-  @media screen and (max-width: 942px) {}
+  @media screen and (max-width: 942px) {
+  }
 }
 
 .year-change .timeline-icon {
@@ -843,14 +893,14 @@ body{
 }
 
 .bg-green-500 {
-  background-color: #BF213e !important;
+  background-color: #bf213e !important;
   /* your red */
 }
 
 [data-state="checked"].bg-green-600,
 [data-state="checked"][class*="bg-green-600"] {
   --tw-bg-opacity: 1;
-  background-color: #BF213e !important; /* your red color */
+  background-color: #bf213e !important; /* your red color */
 }
 
 [data-state="checked"].border-green-600,
@@ -858,13 +908,19 @@ body{
   border-color: transparent !important; /* remove the green border */
 }
 
-
-td div , td span, th div, th span {
+td div,
+td span,
+th div,
+th span {
   justify-content: flex-start !important;
   text-align: left !important;
 }
 
-td div , td span, th div, td button, td a {
+td div,
+td span,
+th div,
+td button,
+td a {
   padding-left: 2px !important;
 }
 
@@ -874,18 +930,17 @@ td div , td span, th div, td button, td a {
 
 /* Card Header Styles */
 
-
 .css-rizt0-MuiTypography-root {
-      /* font-family: "Work Sans" !important; */
-    font-weight: 400;
-    font-size: 1rem;
-    line-height: 1.5;
-    letter-spacing: 0.00938em;
+  /* font-family: "Work Sans" !important; */
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.00938em;
 }
 
 .figma-card-header {
-      border: 1px solid #f6e7e7;
-  background: #F6F4EE !important;
+  border: 1px solid #f6e7e7;
+  background: #f6f4ee !important;
   padding: 16px 20px !important;
   /* border-radius: 8px 8px 0 0 !important; */
   margin: 0 !important;
@@ -904,7 +959,7 @@ td div , td span, th div, td button, td a {
 
 /* Card Header Icon */
 .figma-card-icon {
-  color: #C72030 !important;
+  color: #c72030 !important;
   width: 20px !important;
   height: 20px !important;
 }
@@ -919,7 +974,7 @@ td div , td span, th div, td button, td a {
 
 /* Card Content */
 .figma-card-content {
-      border: 1px solid #f6e7e7;
+  border: 1px solid #f6e7e7;
   padding: 24px 20px !important;
   background: white !important;
   border-top: none !important;
@@ -928,15 +983,13 @@ td div , td span, th div, td button, td a {
 
 /* Location Stepper Line - Responsive Design */
 .location-stepper-line {
-  background: #C72030AD !important;
+  background: #c72030ad !important;
   height: 2px !important;
   width: 86% !important;
   top: 2.45rem !important;
   left: 4rem !important;
   position: relative !important;
 }
-
-
 
 /* Mobile styles (default - up to 640px) */
 @media (max-width: 640px) {
@@ -993,7 +1046,7 @@ td div , td span, th div, td button, td a {
   width: 12px !important;
   height: 12px !important;
   border-radius: 50% !important;
-  background: #C72030 !important;
+  background: #c72030 !important;
   border: 2px solid white !important;
   position: relative !important;
   z-index: 2 !important;
@@ -1103,7 +1156,7 @@ td div , td span, th div, td button, td a {
 }
 
 .task-info-label-enhanced {
-  color: #1A1A1A80 !important;
+  color: #1a1a1a80 !important;
   min-width: 140px !important;
   font-weight: 400 !important;
 }
@@ -1114,7 +1167,7 @@ td div , td span, th div, td button, td a {
 }
 
 .task-info-value-enhanced {
-  color: #1A1A1A !important;
+  color: #1a1a1a !important;
   font-weight: 500 !important;
   flex: 1 !important;
 }
@@ -1125,11 +1178,11 @@ td div , td span, th div, td button, td a {
     min-width: 100px !important;
     font-size: 12px !important;
   }
-  
+
   .task-info-separator-enhanced {
     margin: 0 4px !important;
   }
-  
+
   .task-info-value-enhanced {
     font-size: 12px !important;
   }
@@ -1141,11 +1194,11 @@ td div , td span, th div, td button, td a {
     min-width: 120px !important;
     font-size: 13px !important;
   }
-  
+
   .task-info-separator-enhanced {
     margin: 0 6px !important;
   }
-  
+
   .task-info-value-enhanced {
     font-size: 13px !important;
   }
@@ -1157,11 +1210,11 @@ td div , td span, th div, td button, td a {
     min-width: 140px !important;
     font-size: 14px !important;
   }
-  
+
   .task-info-separator-enhanced {
     margin: 0 8px !important;
   }
-  
+
   .task-info-value-enhanced {
     font-size: 14px !important;
   }
@@ -1173,11 +1226,11 @@ td div , td span, th div, td button, td a {
     min-width: 160px !important;
     font-size: 14px !important;
   }
-  
+
   .task-info-separator-enhanced {
     margin: 0 10px !important;
   }
-  
+
   .task-info-value-enhanced {
     font-size: 14px !important;
   }
@@ -1189,17 +1242,16 @@ td div , td span, th div, td button, td a {
     min-width: 180px !important;
     font-size: 14px !important;
   }
-  
+
   .task-info-separator-enhanced {
     margin: 0 12px !important;
   }
-  
+
   .task-info-value-enhanced {
     font-size: 14.5px !important;
   }
 }
 
-
-.hover\:bg-primary\/80:hover{
+.hover\:bg-primary\/80:hover {
   color: white !important;
 }

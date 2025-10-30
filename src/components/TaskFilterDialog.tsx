@@ -41,6 +41,7 @@ export interface TaskFilters {
   showAll?: boolean;
   searchChecklist?: string;
   searchTaskId?: string;
+  taskCategory?: string; // Add this line
 }
 
 const fieldStyles = {
@@ -84,6 +85,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
   const [assetGroupId, setAssetGroupId] = useState("");
   const [assetSubGroupId, setAssetSubGroupId] = useState("");
   const [supplierId, setSupplierId] = useState("");
+  const [taskCategory, setTaskCategory] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [assetGroups, setAssetGroups] = useState<any[]>([]);
@@ -136,6 +138,11 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
   const scheduleTypeOptions = ["asset", "service"];
 
   const typeOptions = ["PPM", "AMC", "Preparedness", "Routine"];
+
+  const taskCategoryOptions = [
+    { value: "Technical", label: "Technical" },
+    { value: "Non Technical", label: "Non Technical" },
+  ];
 
   // Date validation function
   const validateDates = (fromDate: string, toDate: string): string => {
@@ -204,6 +211,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
         ...(assetGroupId && { assetGroupId }),
         ...(assetSubGroupId && { assetSubGroupId }),
         ...(supplierId && { supplierId }),
+        ...(taskCategory && { "q[task_category_eq]": taskCategory }),
       };
 
       console.log("Applying task filters:", filters);
@@ -230,6 +238,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
     setAssetGroupId("");
     setAssetSubGroupId("");
     setSupplierId("");
+    setTaskCategory("");
     setDateError(""); // Clear date error
 
     onApply({});
@@ -336,7 +345,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
             <h3 className="text-sm font-medium text-[#C72030] mb-4">
               Task Type & Asset Information
             </h3>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-3 gap-6">
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Schedule Type</InputLabel>
                 <MuiSelect
@@ -374,6 +383,27 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
                   {typeOptions.map((option) => (
                     <MenuItem key={option} value={option}>
                       {option}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Task Category</InputLabel>
+                <MuiSelect
+                  value={taskCategory}
+                  onChange={(e) => setTaskCategory(e.target.value)}
+                  label="Task Category"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Category</em>
+                  </MenuItem>
+                  {taskCategoryOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
                     </MenuItem>
                   ))}
                 </MuiSelect>
