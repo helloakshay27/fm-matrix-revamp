@@ -15,16 +15,7 @@
   width: 4px;
   height: 4px;
 }
-[data-lov-name="Card"].bg-card,
-.bg-card {
-  height: 400px !important;
-}
 
-[data-lov-name="CardContent"].p-6.pt-0,
-.bg-card .p-6.pt-0 {
-  height: 300px !important;
-  overflow-y: auto !important;
-}
 .bg-card button {
   border: none !important;
 }
