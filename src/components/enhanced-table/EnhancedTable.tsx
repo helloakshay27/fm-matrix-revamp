@@ -120,6 +120,12 @@ interface EnhancedTableProps<T> {
   handleExport?: (columnVisibility?: Record<string, boolean>) => void;
   enableGlobalSearch?: boolean; // Add this prop
   onGlobalSearch?: (searchTerm: string) => void; // Add this prop
+  // Custom search input props
+  customSearchInput?: React.ReactNode;
+  searchValue?: string;
+  searchStatus?: string;
+  disableClientSearch?: boolean;
+  loadingMessage?: string;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -160,6 +166,12 @@ export function EnhancedTable<T extends Record<string, any>>({
   onFilterClick,
   enableGlobalSearch = false, // Add this
   onGlobalSearch, // Add this
+  // Custom search input props
+  customSearchInput,
+  searchValue,
+  searchStatus,
+  disableClientSearch = false,
+  loadingMessage = "Loading...",
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -302,23 +314,30 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
   };
 
-  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
+  // Use external search value if provided (for custom search input)
+  const effectiveSearchValue = searchValue !== undefined ? searchValue : searchInput;
+  const effectiveSearchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   // Use API search results or filter data based on search term
   const filteredData = useMemo(() => {
+    // If client search is disabled, don't filter - return original data
+    if (disableClientSearch) {
+      return baseSortedData;
+    }
+
     // If we have API search results, use them instead of filtering original data
     if (apiSearchResults) {
       return apiSearchResults;
     }
 
-    if (!searchTerm) return baseSortedData;
+    if (!effectiveSearchTerm) return baseSortedData;
 
     return baseSortedData.filter(item =>
       Object.values(item).some(value =>
-        String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        String(value).toLowerCase().includes(effectiveSearchTerm.toLowerCase())
       )
     );
-  }, [baseSortedData, searchTerm, apiSearchResults]);
+  }, [baseSortedData, effectiveSearchTerm, apiSearchResults, disableClientSearch]);
 
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
@@ -407,6 +426,41 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
   };
 
+  // Custom search input render function
+  const renderCustomSearchInput = () => {
+    if (customSearchInput) {
+      return customSearchInput;
+    }
+    
+    // Default search input
+    return (
+      <div className="relative max-w-sm">
+        {isSearching && (
+          <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
+        )}
+        {!isSearching && (
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        )}
+        <Input
+          placeholder={enableGlobalSearch ? `${searchPlaceholder}` : searchPlaceholder}
+          value={effectiveSearchValue}
+          onChange={(e) => handleSearchInputChange(e.target.value)}
+          className="pl-10 pr-10"
+          disabled={isSearching}
+        />
+        {effectiveSearchValue && (
+          <button
+            onClick={handleClearSearch}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            disabled={isSearching}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    );
+  };
+
   const selectedItemObjects = useMemo(() => {
     return filteredData.filter(item => selectedItems.includes(getItemId(item)));
   }, [filteredData, selectedItems, getItemId]);
@@ -470,30 +524,34 @@ export function EnhancedTable<T extends Record<string, any>>({
 
         <div className="flex items-center gap-2">
           {!hideTableSearch && (onSearchChange || !externalSearchTerm || enableGlobalSearch) && (
-            <div className="relative max-w-sm">
-              {isSearching && (
-                <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
-              )}
-              {!isSearching && (
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              )}
-              <Input
-                placeholder={enableGlobalSearch ? `${searchPlaceholder}` : searchPlaceholder}
-                value={searchInput}
-                onChange={(e) => handleSearchInputChange(e.target.value)}
-                className="pl-10 pr-10"
-                disabled={isSearching}
-              />
-              {searchInput && (
-                <button
-                  onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            customSearchInput ? (
+              <div className="relative max-w-sm">
+                {isSearching && (
+                  <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
+                )}
+                {!isSearching && (
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                )}
+                <Input
+                  placeholder={searchPlaceholder}
+                  value={effectiveSearchValue}
+                  onChange={(e) => handleSearchInputChange(e.target.value)}
+                  className="pl-10 pr-10"
                   disabled={isSearching}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+                />
+                {effectiveSearchValue && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    disabled={isSearching}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              renderCustomSearchInput()
+            )
           )}
 
           {onFilterClick && (
@@ -592,7 +650,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                     >
                       <div className="flex items-center justify-center">
                         <Loader2 className="h-8 w-8 animate-spin" />
-                        <span className="ml-2">Loading...</span>
+                        <span className="ml-2">{loadingMessage}</span>
                       </div>
                     </TableCell>
                   </TableRow>
