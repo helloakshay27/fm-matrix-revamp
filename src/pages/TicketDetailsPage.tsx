@@ -7326,7 +7326,7 @@ export const TicketDetailsPage = () => {
                                         idx % 3 === 0
                                           ? 'justify-start'
                                           : idx % 3 === 1
-                                            ? 'justify-center'
+                                            ? ''
                                             : cell.label.includes('Escalation') ? 'justify-start' : 'justify-end';
 
                                       return (
@@ -10951,7 +10951,7 @@ export const TicketDetailsPage = () => {
                           {request.attachments && request.attachments.length > 0 && (
                             <div className="flex gap-2">
                               <Button
-                                variant="outline"
+                                // variant="outline"
                                 size="sm"
                                 className="text-center"
                                 onClick={() => {
@@ -10988,7 +10988,7 @@ export const TicketDetailsPage = () => {
                         </TableCell>
                         <TableCell>
                           <Button
-                            variant="outline"
+                            // variant="outline"
                             size="sm"
                             onClick={() => handleCancelConfirmation(request.id)}
                             className="bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600"
@@ -11090,7 +11090,7 @@ export const TicketDetailsPage = () => {
                   Cancel Cost Approval
                 </h3>
                 <p className="text-gray-600">
-                  Do you want to cancel this cost approval request? This action cannot be undone.
+                  Are you sure you want to cancel the request?
                 </p>
               </div>
               
