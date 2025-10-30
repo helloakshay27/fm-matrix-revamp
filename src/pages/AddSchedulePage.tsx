@@ -1842,6 +1842,34 @@ export const AddSchedulePage = () => {
 
 
   const handleSave = async () => {
+    // For Question Setup (step 2), validate first
+    if (activeStep === 2) {
+      const errors = validateQuestionSetup();
+      if (errors.length > 0) {
+        toast.error(
+          <div style={{ textAlign: 'left' }}>
+            <b>Validation Errors:</b>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {errors.map((err, idx) => (
+                <li key={idx} style={{ fontSize: 13 }}>{err}</li>
+              ))}
+            </ul>
+          </div>,
+          {
+            position: 'top-right',
+            duration: 5000,
+            style: {
+              background: '#fff',
+              color: 'black',
+              border: 'none',
+              minWidth: 320
+            },
+          }
+        );
+        return;
+      }
+    }
+
     // For Time Setup (step 3), validate first
     if (activeStep === 3) {
       if (!validateCurrentStep()) {
@@ -2383,6 +2411,10 @@ export const AddSchedulePage = () => {
           // Help text is optional, but if enabled, value is required
           if (task.helpText && (!task.helpTextValue || !task.helpTextValue.trim())) {
             errors[`section_${sectionIndex}_task_${taskIndex}_helpTextValue`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} help text value is required when help text is enabled`;
+          }
+          // Help text attachment validation - if help text is enabled, attachment is required
+          if (task.helpText && (!task.helpTextAttachments || task.helpTextAttachments.length === 0)) {
+            errors[`section_${sectionIndex}_task_${taskIndex}_helpTextAttachment`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have at least one help text attachment when help text is enabled`;
           }
           // Validate input type specific values
           if (task.inputType === 'dropdown' && task.dropdownValues.some(val => !val.label || !val.label.trim())) {
