@@ -10912,8 +10912,8 @@ export const TicketDetailsPage = () => {
                       <TableHead>L5</TableHead>
                       <TableHead>Master Status</TableHead>
                       <TableHead>Cancelled By</TableHead>
-                      <TableHead>Attachment</TableHead>
-                      <TableHead>Action</TableHead>
+                      <TableHead className="text-center">Attachment</TableHead>
+                      <TableHead className="text-center">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -10947,13 +10947,13 @@ export const TicketDetailsPage = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>{request.cancelled_by === "NA" ? "-" : (request.cancelled_by || "-")}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">
                           {request.attachments && request.attachments.length > 0 && (
-                            <div className="flex gap-2">
+                            <div className="flex justify-center">
                               <Button
                                 // variant="outline"
                                 size="sm"
-                                className="text-center"
+                                className="w-8 h-8 p-0 flex items-center justify-center"
                                 onClick={() => {
                                   // Check if request has attachments
                                   if (
@@ -10980,21 +10980,20 @@ export const TicketDetailsPage = () => {
                                   }
                                 }}
                               >
-                                {/* <Eye className="w-4 h-4 mr-1" /> */}
-                                View
+                                <Eye className="w-4 h-4 mr-1" />
+                                {/* View */}
                               </Button>
                             </div>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">
                           <Button
-                            // variant="outline"
                             size="sm"
                             onClick={() => handleCancelConfirmation(request.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600"
+                            className="text-gray-600 hover:text-gray-800 w-8 h-8 p-0 flex items-center justify-center mx-auto"
                           >
-                            {/* <X className="w-4 h-4 mr-1" /> */}
-                            Cancel
+                            <X className="w-4 h-4 mr-1" />
+                            {/* Cancel */}
                           </Button>
                         </TableCell>
                       </TableRow>
