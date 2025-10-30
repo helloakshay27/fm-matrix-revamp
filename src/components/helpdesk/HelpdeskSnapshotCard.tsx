@@ -56,7 +56,7 @@ export const HelpdeskSnapshotCard: React.FC<Props> = ({ data }) => {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {items.map((it) => (
           <div key={it.label} className="bg-[#F6F4EE] rounded p-3 text-center">
-            <div className="text-2xl font-bold text-[#C72030]">{it.value}</div>
+            <div className="text-2xl font-bold text-black">{it.value}</div>
             <div className="text-xs text-gray-600 mt-1">{it.label}</div>
           </div>
         ))}
