@@ -1029,7 +1029,7 @@ export const TicketDashboard = () => {
     sortable: true
   }, {
     key: 'review_tracking_date',
-    label: 'Review',
+    label: 'Review Date',
     sortable: true
   }, {
     key: 'response_escalation',
