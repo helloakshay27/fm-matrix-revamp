@@ -13,6 +13,8 @@ import {
   MessageSquare,
   CircleCheckBig,
   MessagesSquare,
+  ChartArea,
+  ChartAreaIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -39,6 +41,7 @@ import { getUser, clearAuth } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
+import { AnalyticsGrid } from "./dashboard/AnalyticsGrid";
 
 export interface Company {
   id: number;
@@ -352,12 +355,25 @@ export const Header = () => {
           <div className="flex items-center gap-2">
             {!isViSite && (
               <button
-                onClick={() => navigate("/dashboard")}
+                onClick={() => (window.location.href = "/dashboard")}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
               >
-                <Home className="w-4 h-4" />
+                <ChartArea className="w-4 h-4" />
                 Dashboard
               </button>
+
+              
+            )}
+               {!isViSite && (
+              <button
+                onClick={() => (window.location.href = "/dashboard-executive")}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+              >
+                <ChartAreaIcon className="w-4 h-4" />
+                Executive Dashboard
+              </button>
+
+              
             )}
 
             {isViSite && (

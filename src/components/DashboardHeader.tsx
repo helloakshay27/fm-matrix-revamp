@@ -1,7 +1,19 @@
-
-import React, { useState, useEffect } from 'react';
-import { Bell, Building2, User, MapPin, ChevronDown, Home, Loader2, LogOut, Settings, Mail } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import {
+  Bell,
+  Building2,
+  User,
+  MapPin,
+  ChevronDown,
+  Home,
+  Loader2,
+  LogOut,
+  Settings,
+  Mail,
+  ChartAreaIcon,
+} from "lucide-react";
+import { User as LucideUser } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,12 +22,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { SearchWithSuggestions } from './SearchWithSuggestions';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '@/store/store';
-import { fetchAllowedCompanies, changeCompany } from '@/store/slices/projectSlice';
-import { fetchAllowedSites, changeSite, clearSites } from '@/store/slices/siteSlice';
-import { getUser, clearAuth } from '@/utils/auth';
+import { SearchWithSuggestions } from "./SearchWithSuggestions";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
+import {
+  fetchAllowedCompanies,
+  changeCompany,
+} from "@/store/slices/projectSlice";
+import {
+  fetchAllowedSites,
+  changeSite,
+  clearSites,
+} from "@/store/slices/siteSlice";
+import { getUser, clearAuth } from "@/utils/auth";
 
 export interface Company {
   id: number;
@@ -31,9 +50,10 @@ export const DashboardHeader = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
 
+  const location = useLocation();
   const currentPath = window.location.pathname;
 
-    const hostname = window.location.hostname;
+  const hostname = window.location.hostname;
 
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
@@ -41,8 +61,16 @@ export const DashboardHeader = () => {
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
   // Redux state
-  const { companies, selectedCompany, loading: projectLoading } = useSelector((state: RootState) => state.project);
-  const { sites, selectedSite, loading: siteLoading } = useSelector((state: RootState) => state.site);
+  const {
+    companies,
+    selectedCompany,
+    loading: projectLoading,
+  } = useSelector((state: RootState) => state.project);
+  const {
+    sites,
+    selectedSite,
+    loading: siteLoading,
+  } = useSelector((state: RootState) => state.site);
 
   const navigate = useNavigate();
   const [notificationCount, setNotificationCount] = useState(3);
@@ -52,18 +80,35 @@ export const DashboardHeader = () => {
     id: 0,
     firstname: "Guest",
     lastname: "",
-    email: ""
+    email: "",
   };
   const userId = user.id;
 
   const assetSuggestions = [
-    'sdcdsc', 'test', 'asus zenbook', 'Diesel Generator', 'A.c', 'Energy Meter 23',
-    'Located', 'sebc', 'Hay', 'ktta', 'demo', 'jyoti tower', 'jyoti',
-    '203696', '203606', '194409', '166641', '168838', '144714', '53815'
+    "sdcdsc",
+    "test",
+    "asus zenbook",
+    "Diesel Generator",
+    "A.c",
+    "Energy Meter 23",
+    "Located",
+    "sebc",
+    "Hay",
+    "ktta",
+    "demo",
+    "jyoti tower",
+    "jyoti",
+    "203696",
+    "203606",
+    "194409",
+    "166641",
+    "168838",
+    "144714",
+    "53815",
   ];
 
   const handleSearch = (searchTerm: string) => {
-    console.log('Search term:', searchTerm);
+    console.log("Search term:", searchTerm);
   };
 
   // Load initial data
@@ -87,7 +132,7 @@ export const DashboardHeader = () => {
       // Reload page smoothly after successful company change
       window.location.reload();
     } catch (error) {
-      console.error('Failed to change company:', error);
+      console.error("Failed to change company:", error);
     }
   };
 
@@ -98,7 +143,7 @@ export const DashboardHeader = () => {
       // Reload page smoothly after successful site change
       window.location.reload();
     } catch (error) {
-      console.error('Failed to change site:', error);
+      console.error("Failed to change site:", error);
     }
   };
 
@@ -106,11 +151,7 @@ export const DashboardHeader = () => {
     <header className="h-16 bg-white border-b border-[#D5DbDB] w-full shadow-sm">
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex align-items-center gap-14">
-
-
-
-
-             {isOmanSite ? (
+          {isOmanSite ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
               xmlnsXlink="http://www.w3.org/1999/xlink"
@@ -216,20 +257,40 @@ export const DashboardHeader = () => {
             </svg>
           )}
 
+          <div className="flex items-center gap-2">
+            {userId !== 189005 && (
+              <button
+                onClick={() =>  (window.location.href = "/")}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+              >
+                <Home className="w-4 h-4" />
+                Home
+              </button>
+            )}
 
-          {/* Dashboard Button */}
-          {userId !== 189005 && (
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-            >
-              <Home className="w-4 h-4" />
-              Home
-            </button>
-          )}
+            {/* Dashboard/Executive Buttons */}
+            {location.pathname === "/dashboard-executive" ? (
+              <button
+                onClick={() => (window.location.href = "/dashboard")}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+              >
+                <ChartAreaIcon className="w-4 h-4" />
+                Dashboard
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => (window.location.href = "/dashboard-executive")}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <ChartAreaIcon className="w-4 h-4" />
+                  Dashboard Executive
+                </button>
+              </>
+            )}
 
-          {/* Project Dropdown */}
-
+            {/* Project Dropdown */}
+          </div>
         </div>
 
         <div className="flex items-center gap-6">
@@ -243,7 +304,7 @@ export const DashboardHeader = () => {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <span className="text-sm font-medium">
-                    {selectedCompany?.name || 'Select Project'}
+                    {selectedCompany?.name || "Select Project"}
                   </span>
                 )}
                 <ChevronDown className="w-3 h-3" />
@@ -253,7 +314,11 @@ export const DashboardHeader = () => {
                   <DropdownMenuItem
                     key={company.id}
                     onClick={() => handleCompanyChange(company.id)}
-                    className={selectedCompany?.id === company.id ? 'bg-[#f6f4ee] text-[#C72030]' : ''}
+                    className={
+                      selectedCompany?.id === company.id
+                        ? "bg-[#f6f4ee] text-[#C72030]"
+                        : ""
+                    }
                   >
                     {company.name}
                   </DropdownMenuItem>
@@ -262,36 +327,45 @@ export const DashboardHeader = () => {
             </DropdownMenu>
 
             {/* Site Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors">
-                <MapPin className="w-4 h-4" />
-                {siteLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <span className="text-sm font-medium">
-                    {selectedSite?.name || 'Select Site'}
-                  </span>
-                )}
-                <ChevronDown className="w-3 h-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
-                {sites.length > 0 ? (
-                  sites.map((site) => (
-                    <DropdownMenuItem
-                      key={site.id}
-                      onClick={() => handleSiteChange(site.id)}
-                      className={selectedSite?.id === site.id ? 'bg-[#f6f4ee] text-[#C72030]' : ''}
-                    >
-                      {site.name}
+
+            {location.pathname === "/dashboard" && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors">
+                  <MapPin className="w-4 h-4" />
+                  {siteLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <span className="text-sm font-medium">
+                      {selectedSite?.name || "Select Site"}
+                    </span>
+                  )}
+                  <ChevronDown className="w-3 h-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
+                  {sites.length > 0 ? (
+                    sites.map((site) => (
+                      <DropdownMenuItem
+                        key={site.id}
+                        onClick={() => handleSiteChange(site.id)}
+                        className={
+                          selectedSite?.id === site.id
+                            ? "bg-[#f6f4ee] text-[#C72030]"
+                            : ""
+                        }
+                      >
+                        {site.name}
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <DropdownMenuItem disabled>
+                      {selectedCompany
+                        ? "No sites available"
+                        : "Select a project first"}
                     </DropdownMenuItem>
-                  ))
-                ) : (
-                  <DropdownMenuItem disabled>
-                    {selectedCompany ? 'No sites available' : 'Select a project first'}
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           {/* Actions Section */}
@@ -315,14 +389,21 @@ export const DashboardHeader = () => {
                   <User className="w-4 h-4 text-[#1a1a1a]" />
                 </div>
                 <div className="hidden md:block text-left">
-                  <span className="text-sm font-medium text-[#1a1a1a] block leading-tight">{user.firstname}</span>
+                  <span className="text-sm font-medium text-[#1a1a1a] block leading-tight">
+                    {user.firstname}
+                  </span>
                   <span className="text-xs text-gray-500">User</span>
                 </div>
                 <ChevronDown className="w-3 h-3 text-[#1a1a1a] hidden md:block" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64 bg-white border border-[#D5DbDB] shadow-lg p-2" align="end">
+              <DropdownMenuContent
+                className="w-64 bg-white border border-[#D5DbDB] shadow-lg p-2"
+                align="end"
+              >
                 <div className="px-2 py-2 mb-2 border-b border-gray-100">
-                  <p className="font-medium text-sm">{user.firstname} {user.lastname}</p>
+                  <p className="font-medium text-sm">
+                    {user.firstname} {user.lastname}
+                  </p>
                   <div className="flex items-center text-gray-600 text-xs mt-1">
                     <Mail className="w-3 h-3 mr-1" />
                     <span>{user.email}</span>
@@ -340,7 +421,7 @@ export const DashboardHeader = () => {
                   onClick={() => {
                     clearAuth();
                     window.location.reload();
-                    navigate('/login');
+                    navigate("/login");
                   }}
                   className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50"
                 >

@@ -71,7 +71,7 @@ export const amcAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?amcs_stats=true&export=amcs_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&amcs_stats=true&export=amcs_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_status_report_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
@@ -83,7 +83,7 @@ export const amcAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?breakdown_vs_preventive=true&export=breakdown_vs_preventive_visits&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&breakdown_vs_preventive=true&export=breakdown_vs_preventive_visits&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_type_distribution_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
@@ -95,7 +95,7 @@ export const amcAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?amcs_expiry_stats=true&export=amcs_expiry_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&amcs_expiry_stats=true&export=amcs_expiry_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_expiry_analysis_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
@@ -107,7 +107,7 @@ export const amcAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?service_tracking=true&export=service_tracking&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&service_tracking=true&export=service_tracking&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_service_tracking_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
@@ -143,7 +143,7 @@ export const amcAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?amcs_unit_resource_wise=true&export=amcs_unit_resource_wise&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&amcs_unit_resource_wise=true&export=amcs_unit_resource_wise&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_unit_resource_wise_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
@@ -155,7 +155,7 @@ export const amcAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?service_stats=true&export=service_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&service_stats=true&export=service_stats&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_service_stats_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);
@@ -167,7 +167,7 @@ export const amcAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const url = `/pms/asset_amcs/amc_statistics.json?coverage_by_location=true&export=coverage_by_location&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/asset_amcs/amc_statistics.json?site_id=${siteId}&coverage_by_location=true&export=coverage_by_location&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     const filename = `amc_coverage_by_location_${fromDateStr}_to_${toDateStr}.xlsx`;
 
     await downloadFile(url, filename);

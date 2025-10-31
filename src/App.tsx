@@ -991,6 +991,14 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                 <Route
+                  path="/dashboard-executive"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
 
                 <Route
                   path="/permissions-test"
