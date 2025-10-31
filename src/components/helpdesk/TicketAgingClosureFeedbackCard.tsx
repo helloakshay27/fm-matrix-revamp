@@ -74,28 +74,42 @@ export const TicketAgingClosureFeedbackCard: React.FC<Props> = ({ agingClosureDa
 
   return (
     <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
-      <h3 className="font-semibold text-base mb-4">Ticket Ageing, Closure Efficiency & Feedback Overview by Center</h3>
-      <table className="min-w-full border text-sm text-center">
+      <h3
+        className="mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3"
+        style={{
+          fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+          fontWeight: 600,
+          fontSize: '16px',
+          lineHeight: '100%',
+          letterSpacing: '0%'
+        }}
+      >
+        Ticket Ageing, Closure Efficiency & Feedback Overview by Center
+      </h3>
+      <table className="min-w-full border-collapse text-sm text-center">
         <thead className="bg-[#ded9cd] text-[#b62527] font-semibold">
-          <tr>
-            <th className="border p-2 text-left">Site Name</th>
+          <tr className="border-t border-gray-200 border-b border-gray-200">
+            <th className="border-x border-gray-200 px-2 py-3 text-left">Site Name</th>
             {centerNames.map((name, i) => (
-              <th key={i} className="border p-2">{name}</th>
+              <th key={i} className="border-x border-gray-200 px-2 py-3">{name}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, rIdx) => (
-            <tr key={rIdx} className={row.shaded ? 'bg-[#ded9cd]' : ''}>
-              <td className="border p-2 text-left font-medium">{row.label}</td>
-              {row.values.map((v: any, idx: number) => (
-                <td key={idx} className="border p-2">{v ?? '-'}</td>
-              ))}
-            </tr>
-          ))}
+          {rows.map((row, rIdx) => {
+            const isLast = rIdx === rows.length - 1;
+            return (
+              <tr key={rIdx} className={`${row.shaded ? 'bg-[#ded9cd]' : ''} ${isLast ? 'border-b border-gray-200' : ''}`}>
+                <td className="border-x border-gray-200 px-2 py-3 text-left font-medium">{row.label}</td>
+                {row.values.map((v: any, idx: number) => (
+                  <td key={idx} className="border-x border-gray-200 px-2 py-3">{v ?? '-'}</td>
+                ))}
+              </tr>
+            );
+          })}
           {centers.length === 0 && (
             <tr>
-              <td colSpan={Math.max(1, centerNames.length) + 1} className="p-4 text-gray-500">No data</td>
+              <td colSpan={Math.max(1, centerNames.length) + 1} className="px-4 py-6 text-gray-500">No data</td>
             </tr>
           )}
         </tbody>

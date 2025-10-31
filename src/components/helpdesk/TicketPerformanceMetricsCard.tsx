@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 
 interface Props { data: any }
 
@@ -35,11 +35,12 @@ const percentToAgeBand = (p: number | string | null | undefined): string => {
 };
 
 const agingColors: Record<string,string> = {
-  '0-10': 'bg-[#F6F4EE]',
-  '11-20': 'bg-[#C4B89D]',
+  // Updated to the colors provided by the user
+  '0-10': 'bg-[#C4B89D]',
+  '11-20': 'bg-[#D5DBDB]',
   '21-30': 'bg-[#DAD6C9]',
-  '31-40': 'bg-[#D5DBDB]',
-  '40+': 'bg-[#C5AF9E]',
+  '31-40': 'bg-[#C4B89D]',
+  '40+': 'bg-[#F6F4EE]',
 };
 
 const displayPercent = (p: any): string => {
@@ -52,6 +53,13 @@ const getTextColor = () => 'text-black';
 
 export const TicketPerformanceMetricsCard: React.FC<Props> = ({ data }) => {
   const apiMetrics = data?.data?.metrics ?? data?.metrics ?? [];
+
+  // refs and state to measure positions so axes can be drawn to meet exactly at origin
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const siteLabelsRef = useRef<HTMLDivElement | null>(null);
+  const [axisTop, setAxisTop] = useState<number | null>(null);
+  const [gridTop, setGridTop] = useState<number | null>(null);
 
   const categories = useMemo(() => Array.isArray(apiMetrics) ? apiMetrics.map((m:any)=> m.category_name ?? m.category ?? 'Unknown') : [], [apiMetrics]);
   const sites = useMemo(() => {
@@ -89,9 +97,34 @@ export const TicketPerformanceMetricsCard: React.FC<Props> = ({ data }) => {
     return rows;
   }, [apiMetrics, categories, sites]);
 
+  // measure positions after render so axes can be positioned precisely
+  useEffect(() => {
+    const w = wrapperRef.current;
+    const g = gridRef.current;
+    const s = siteLabelsRef.current;
+    if (!w || !g || !s) {
+      setAxisTop(null);
+      setGridTop(null);
+      return;
+    }
+    const wRect = w.getBoundingClientRect();
+    const gRect = g.getBoundingClientRect();
+    const sRect = s.getBoundingClientRect();
+    // compute coordinates relative to wrapper
+    setGridTop(Math.round(gRect.top - wRect.top));
+    setAxisTop(Math.round(sRect.top - wRect.top));
+  }, [sites.length, categories.length, grid.length]);
+
   return (
     <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
-      <h3 className="font-semibold text-base mb-4">Ticket Performance Metrics by Category – Volume, Closure Rate & Ageing</h3>
+      <h3   className="mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3"
+        style={{
+          fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+          fontWeight: 600,
+          fontSize: '16px',
+          lineHeight: '100%',
+          letterSpacing: '0%'
+        }}>Ticket Performance Metrics by Category – Volume, Closure Rate & Ageing</h3>
       <div className="flex items-center justify-between gap-4 flex-wrap text-sm mb-3">
         <div className="flex items-center gap-1">
           <span>% of tickets raised by category</span>
@@ -100,7 +133,8 @@ export const TicketPerformanceMetricsCard: React.FC<Props> = ({ data }) => {
         </div>
         <div className="flex items-center gap-2">
           <span>Ageing:</span>
-          {Object.entries(agingColors).map(([range, color]) => (
+          {/* show legend in reverse order: 40+ first, then down to 0-10 */}
+          {Object.entries(agingColors).slice().reverse().map(([range, color]) => (
             <span key={range} className="flex items-center gap-1"><span className={`w-3 h-3 rounded-full ${color}`} />{range}</span>
           ))}
         </div>
@@ -110,16 +144,16 @@ export const TicketPerformanceMetricsCard: React.FC<Props> = ({ data }) => {
         {/* Left Categories */}
         <div className="flex flex-col justify-around gap-[2px]">
           {categories.map((cat, idx) => (
-            <div key={idx} className="h-14 flex items-center justify-end pr-1 text-xs font-medium">{cat}</div>
+            <div key={idx} className="h-14 flex items-center justify-end pr-2 text-xs font-medium">{cat}</div>
           ))}
         </div>
 
-        {/* Grid and Site Labels */}
-        <div className="flex flex-col">
+  {/* Wrapper containing grid + site labels + absolute axes */}
+  <div ref={wrapperRef} className="relative flex-1 ">
           {/* Grid */}
-          <div className="grid" style={{gridTemplateColumns:`repeat(${sites.length},minmax(80px,1fr))`, gap: '8px'}}>
+          <div ref={gridRef} className="grid min-w-0 ml-3 mr-3" style={{gridTemplateColumns:`repeat(${sites.length},minmax(80px,1fr))`, gap: '8px'}}>
             {grid.map((item, index) => (
-              <div key={index} className="relative w-[90px] h-14 border border-[#C4AE9D] bg-white">
+              <div key={index} className="relative h-14 border border-[#C4AE9D] bg-white min-w-0 overflow-hidden px-3">
                 <div className={`absolute inset-0 [clip-path:polygon(0_0,100%_0,100%_100%)] ${agingColors[item.agingBand] || 'bg-white'}`}></div>
                 <div className="absolute inset-0 [clip-path:polygon(0_100%,0_0,100%_100%)] bg-white"></div>
                 <div className={`absolute top-1 right-1 text-[11px] ${getTextColor()}`}><span className="font-bold">{displayPercent(item.volume)}</span></div>
@@ -128,12 +162,22 @@ export const TicketPerformanceMetricsCard: React.FC<Props> = ({ data }) => {
             ))}
           </div>
 
-          {/* Site Row */}
-          <div className="grid mt-2" style={{gridTemplateColumns:`repeat(${sites.length},minmax(80px,1fr))`, gap: '4px'}}>
+          {/* Site labels (site names row) */}
+          <div ref={siteLabelsRef} className="grid mt-3" style={{gridTemplateColumns:`repeat(${sites.length},minmax(80px,1fr))`, gap: '4px'}}>
             {sites.map((site, index) => (
-              <div key={index} className="text-center text-xs font-medium">{site}</div>
+              <div key={index} className="text-center text-xs font-medium mt-2">{site}</div>
             ))}
           </div>
+
+          {/* Axes: render only when measurements are available */}
+          {axisTop !== null && gridTop !== null && (
+            <>
+              {/* vertical Y-axis: start at top of grid and end at X-axis (axisTop) - thicker */}
+              <div className="absolute bg-gray-700 mr-2" style={{left: 0, top: gridTop, width: 1, height: Math.max(0, axisTop - gridTop), zIndex: 40}} />
+              {/* horizontal X-axis: draw across columns, positioned at axisTop - thicker */}
+              <div className="absolute bg-gray-700" style={{left: 0, top: axisTop - 1, right: 0, height: 1, zIndex: 40}} />
+            </>
+          )}
         </div>
       </div>
     </div>

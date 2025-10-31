@@ -52,14 +52,82 @@ export const HelpdeskSnapshotCard: React.FC<Props> = ({ data }) => {
 
   return (
     <div className="bg-white border border-gray-200 rounded-md p-4">
-      <h3 className="font-semibold text-base mb-4">{title}</h3>
+      <h3
+        className="mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3"
+        style={{
+          fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+          fontWeight: 600,
+          fontSize: '16px',
+          lineHeight: '100%',
+          letterSpacing: '0%'
+        }}
+      >
+        {title}
+      </h3>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {items.map((it) => (
-          <div key={it.label} className="bg-[#F6F4EE] rounded p-3 text-center">
-            <div className="text-2xl font-bold text-black">{it.value}</div>
-            <div className="text-xs text-gray-600 mt-1">{it.label}</div>
-          </div>
-        ))}
+        {items.map((it) => {
+          const labelText = String(it.label || "");
+          const isOpen = /open/i.test(labelText);
+          const isClosed = /closed/i.test(labelText);
+
+          // color classes are handled by Tailwind; exact typography is applied inline to match design
+          const valueColorClass = isOpen ? "text-red-600" : isClosed ? "text-green-600" : "text-black";
+
+          const labelClass = `mt-1 text-black`;
+
+          // compute percentage only for Total Tickets, Open Tickets, Closed Tickets
+          const showPercent = /^(total tickets|open tickets|closed tickets)$/i.test(labelText);
+          const totalCountNum = Number(totalTickets);
+          const itemValueNum = Number(it.value);
+          let percentText: string | null = null;
+          if (showPercent && Number.isFinite(totalCountNum) && totalCountNum > 0 && Number.isFinite(itemValueNum)) {
+            // For Total Tickets, show 100% explicitly
+            if (/^total tickets$/i.test(labelText)) {
+              percentText = '100%';
+            } else {
+              const pct = (itemValueNum / totalCountNum) * 100;
+              // format with up to 2 decimals, trim trailing zeros
+              const s = pct.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+              percentText = `${s}%`;
+            }
+          }
+
+          return (
+            <div key={it.label} className="bg-[#F6F4EE] rounded px-4 py-6 text-center flex flex-col items-center justify-center">
+              <div
+                className={valueColorClass}
+                style={{
+                  fontFamily: 'Work Sans, sans-serif',
+                  fontWeight: 700,
+                  fontSize: '24px',
+                  lineHeight: '100%',
+                  letterSpacing: '0%',
+                }}
+              >
+                {it.value}
+              </div>
+
+              {/* Reserve the percentage row for layout consistency. Show percent when available, otherwise an empty line */}
+              <div className="text-xs text-gray-600 mt-1" style={{ fontFamily: 'Work Sans, sans-serif', minHeight: '1.25rem' }}>
+                {percentText ?? '\u00A0'}
+              </div>
+
+              <div
+                className={labelClass}
+                style={{
+                  fontFamily: 'Work Sans, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  lineHeight: '100%',
+                  letterSpacing: '0%',
+                  textAlign: 'center',
+                }}
+              >
+                {it.label}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

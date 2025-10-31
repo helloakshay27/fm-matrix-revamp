@@ -33,7 +33,14 @@ export const CustomerExperienceFeedbackCard: React.FC<Props> = ({ data }) => {
 
   return (
     <div className="bg-white border border-gray-200 rounded-md p-4">
-      <h3 className="font-semibold text-base mb-4">Customer Experience Feedback</h3>
+      <h3  className="mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3"
+        style={{
+          fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+          fontWeight: 600,
+          fontSize: '16px',
+          lineHeight: '100%',
+          letterSpacing: '0%'
+        }}>Customer Experience Feedback</h3>
       <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
         {display.map((item, idx) => (
           <div key={idx} className="flex flex-col items-center justify-center h-[110px]" style={{ backgroundColor: item.bg, color: (item as any).text || '#000' }}>
