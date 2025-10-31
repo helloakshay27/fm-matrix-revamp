@@ -31,6 +31,7 @@ const TailwindMultiSelect: React.FC<Props> = ({
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const portalRef = useRef<HTMLDivElement | null>(null);
   const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [search, setSearch] = useState("");
 
   // close on outside click
   useEffect(() => {
@@ -86,10 +87,30 @@ const TailwindMultiSelect: React.FC<Props> = ({
     else onChange([...selected, val]);
   };
 
+  // Filter options by search
+  const filteredOptions = useMemo(() => {
+    if (!search.trim()) return options;
+    const s = search.trim().toLowerCase();
+    return options.filter(o => o.label.toLowerCase().includes(s));
+  }, [options, search]);
+
   return (
     <div ref={rootRef} className={`relative ${className}`}>
       {label ? (
-        <label className="block text-sm font-bold text-gray-700 mb-1">{label}</label>
+        <label
+          style={{
+            display: 'block',
+            fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
+            fontWeight: 400,
+            fontStyle: 'normal',
+            fontSize: '18px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            marginBottom: '0.25rem',
+          }}
+        >
+          {label}
+        </label>
       ) : null}
       <button
         type="button"
@@ -116,6 +137,16 @@ const TailwindMultiSelect: React.FC<Props> = ({
           className="z-[9999] max-h-64 overflow-auto rounded-[18px] border border-gray-200 bg-white shadow-lg"
           style={{ position: 'fixed', top: coords.top, left: coords.left, width: Math.max(200, Math.floor(coords.width)) }}
         >
+          <div className="px-3 pt-2 pb-1">
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="w-full rounded-[12px] border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:border-gray-400"
+              autoFocus
+            />
+          </div>
           <ul className="py-1 text-sm text-gray-900" role="listbox" aria-multiselectable>
             <li
               className="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50"
@@ -133,25 +164,29 @@ const TailwindMultiSelect: React.FC<Props> = ({
               <span className="ml-2 select-none">Select All</span>
             </li>
             <li className="my-1 border-t border-gray-100" />
-            {options.map((o) => (
-              <li
-                key={o.value}
-                className="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => toggleOne(o.value)}
-                role="option"
-                aria-selected={selected.includes(o.value)}
-              >
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 accent-red-600 focus:ring-red-600"
-                  style={{ accentColor: '#EE0B0B' }}
-                  readOnly
-                  checked={selected.includes(o.value)}
-                />
-                <span className="ml-2 select-none truncate">{o.label}</span>
-              </li>
-            ))}
+            {filteredOptions.length === 0 ? (
+              <li className="px-3 py-2 text-gray-400 select-none">No options found</li>
+            ) : (
+              filteredOptions.map((o) => (
+                <li
+                  key={o.value}
+                  className="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => toggleOne(o.value)}
+                  role="option"
+                  aria-selected={selected.includes(o.value)}
+                >
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 accent-red-600 focus:ring-red-600"
+                    style={{ accentColor: '#EE0B0B' }}
+                    readOnly
+                    checked={selected.includes(o.value)}
+                  />
+                  <span className="ml-2 select-none truncate">{o.label}</span>
+                </li>
+              ))
+            )}
           </ul>
         </div>,
         document.body

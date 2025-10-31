@@ -28,6 +28,7 @@ const TailwindSingleSelect: React.FC<Props> = ({
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const portalRef = useRef<HTMLDivElement | null>(null);
   const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [search, setSearch] = useState('');
 
   // close on outside click
   useEffect(() => {
@@ -64,6 +65,13 @@ const TailwindSingleSelect: React.FC<Props> = ({
     return found?.label ?? placeholder;
   }, [options, value, placeholder]);
 
+  // Filter options by search
+  const filteredOptions = useMemo(() => {
+    if (!search.trim()) return options;
+    const s = search.trim().toLowerCase();
+    return options.filter(o => o.label.toLowerCase().includes(s));
+  }, [options, search]);
+
   const handleSelect = (v: string) => {
     onChange(v);
     setOpen(false);
@@ -72,7 +80,20 @@ const TailwindSingleSelect: React.FC<Props> = ({
   return (
     <div ref={rootRef} className={`relative ${className}`}>
       {label ? (
-        <label className="block text-sm font-bold text-gray-700 mb-1">{label}</label>
+        <label
+          style={{
+            display: 'block',
+            fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
+            fontWeight: 400,
+            fontStyle: 'normal',
+            fontSize: '18px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            marginBottom: '0.25rem',
+          }}
+        >
+          {label}
+        </label>
       ) : null}
       <button
         type="button"
@@ -99,27 +120,41 @@ const TailwindSingleSelect: React.FC<Props> = ({
           className="z-[9999] max-h-64 overflow-auto rounded-[18px] border border-gray-200 bg-white shadow-lg"
           style={{ position: 'fixed', top: coords.top, left: coords.left, width: Math.max(200, Math.floor(coords.width)) }}
         >
+          <div className="px-3 pt-2 pb-1">
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="w-full rounded-[12px] border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:border-gray-400"
+              autoFocus
+            />
+          </div>
           <ul className="py-1 text-sm text-gray-900" role="listbox">
-            {options.map((o) => {
-              const active = o.value === value;
-              return (
-                <li
-                  key={o.value}
-                  className={`flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50 ${active ? 'bg-gray-50' : ''}`}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => handleSelect(o.value)}
-                  role="option"
-                  aria-selected={active}
-                >
-                  <span className="truncate">{o.label}</span>
-                  {active ? (
-                    <svg className="ml-auto h-4 w-4 text-red-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.5 7.5a1 1 0 01-1.42 0l-3-3a1 1 0 011.42-1.42l2.29 2.29 6.79-6.79a1 1 0 011.42 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : null}
-                </li>
-              );
-            })}
+            {filteredOptions.length === 0 ? (
+              <li className="px-3 py-2 text-gray-400 select-none">No options found</li>
+            ) : (
+              filteredOptions.map((o) => {
+                const active = o.value === value;
+                return (
+                  <li
+                    key={o.value}
+                    className={`flex items-center px-3 py-2 cursor-pointer hover:bg-gray-50 ${active ? 'bg-gray-50' : ''}`}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { handleSelect(o.value); setSearch(''); }}
+                    role="option"
+                    aria-selected={active}
+                  >
+                    <span className="truncate">{o.label}</span>
+                    {active ? (
+                      <svg className="ml-auto h-4 w-4 text-red-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.5 7.5a1 1 0 01-1.42 0l-3-3a1 1 0 011.42-1.42l2.29 2.29 6.79-6.79a1 1 0 011.42 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : null}
+                  </li>
+                );
+              })
+            )}
           </ul>
         </div>,
         document.body

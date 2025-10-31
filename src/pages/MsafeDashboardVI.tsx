@@ -172,15 +172,24 @@ const MsafeDashboardVI: React.FC = () => {
         [today]
     );
 
-    const dateLabel = useMemo(
-        () =>
-            today.toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-            }),
-        [today]
-    );
+    const dateLabel = useMemo(() => {
+        const d = new Date(today);
+        if (Number.isNaN(d.getTime())) return '';
+        const day = d.getDate();
+        const year = d.getFullYear();
+        const month = d.toLocaleString('en-US', { month: 'long' });
+        const getOrdinal = (n: number) => {
+            const v = n % 100;
+            if (v >= 11 && v <= 13) return 'th';
+            const rem = n % 10;
+            if (rem === 1) return 'st';
+            if (rem === 2) return 'nd';
+            if (rem === 3) return 'rd';
+            return 'th';
+        };
+        const suffix = getOrdinal(day);
+        return `${day}${suffix} ${month}, ${year}`;
+    }, [today]);
 
     // Cluster options loaded from API
     const [clusterOptions, setClusterOptions] = useState<Option[]>([]);
@@ -1746,34 +1755,32 @@ const MsafeDashboardVI: React.FC = () => {
 
     // Section components (reuse existing JSX)
     const SectionOnboardingStatus = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff' }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', borderRadius: '12px' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
+                <Typography variant="h6" sx={{ color: '#000000', fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                     Onboarding Status
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                    {/* <IconButton aria-label="download chart" onClick={downloadChart}>
-                        <DownloadIcon />
-                    </IconButton> */}
-                    <IconButton aria-label="download data" onClick={downloadOnboardingData}>
-                        <DownloadIcon />
-                    </IconButton>
-                </Stack>
+                {/* download button moved to legend row */}
             </Stack>
 
-            <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
+            <Stack direction="row" spacing={4} alignItems="center" justifyContent="end" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.krcc }} />
-                    <Typography variant="body2">KRCC</Typography>
+                    <Typography variant="body2" fontWeight="bold">KRCC</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.approval }} />
-                    <Typography variant="body2">Approved</Typography>
+                    <Typography variant="body2" fontWeight="bold">Approval</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.hsw }} />
-                    <Typography variant="body2">HSW Induction</Typography>
+                    <Typography variant="body2" fontWeight="bold">HSW Induction</Typography>
                 </Stack>
+                <Box sx={{ ml: 'auto' }}>
+                    <IconButton aria-label="download data" onClick={downloadOnboardingData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Box>
             </Stack>
 
             <Box ref={chartRef} sx={{ width: '100%', height: 420, overflowX: 'auto' }}>
@@ -1823,8 +1830,8 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionOnboardingSummary = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750', mb: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
+            <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Onboarding Summary
             </Typography>
             <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: 1 }}>
@@ -1874,29 +1881,27 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionDay1HSW = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
+                <Typography variant="h6" sx={{ color: '#000000', fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '26px', lineHeight: '100%', letterSpacing: '0%' }}>
                     Day 1 HSW Induction
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                    {/* <IconButton aria-label="download chart" onClick={downloadDay1Chart}>
-                        <DownloadIcon />
-                    </IconButton> */}
-                    <IconButton aria-label="download data" onClick={downloadDay1HSWData}>
-                        <DownloadIcon />
-                    </IconButton>
-                </Stack>
+                {/* download button moved to legend row */}
             </Stack>
-            <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
+            <Stack direction="row" spacing={4} alignItems="center" justifyContent="end" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.krcc }} />
-                    <Typography variant="body2">Complaint</Typography>
+                    <Typography variant="body2" fontWeight="bold">Complaint</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.approval }} />
-                    <Typography variant="body2">Non Complaint</Typography>
+                    <Typography variant="body2" fontWeight="bold">Non Complaint</Typography>
                 </Stack>
+                <Box sx={{ ml: 'auto' }}>
+                    <IconButton aria-label="download data" onClick={downloadDay1HSWData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Box>
             </Stack>
             <Box ref={day1ChartRef} sx={{ width: '100%', height: 420 }}>
                 {day1HSWLoading ? (
@@ -1941,41 +1946,39 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionTraining = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
+                <Typography variant="h6" sx={{ color: '#000000', fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                     Training compliance
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                    {/* <IconButton aria-label="download chart" onClick={downloadTrainingChart}>
-                        <DownloadIcon />
-                    </IconButton> */}
-                    <IconButton aria-label="download data" onClick={downloadTrainingData}>
-                        <DownloadIcon />
-                    </IconButton>
-                </Stack>
+                {/* download button moved to legend row */}
             </Stack>
-            <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
+            <Stack direction="row" spacing={4} alignItems="center" justifyContent="end" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: TRAINING_COLORS.twoW }} />
-                    <Typography variant="body2">2W</Typography>
+                    <Typography variant="body2" fontWeight="bold">2W</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: TRAINING_COLORS.fourW }} />
-                    <Typography variant="body2">4W</Typography>
+                    <Typography variant="body2" fontWeight="bold">4W</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: TRAINING_COLORS.workAtHeight }} />
-                    <Typography variant="body2">Work at height</Typography>
+                    <Typography variant="body2" fontWeight="bold">Work at height</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: TRAINING_COLORS.electrical }} />
-                    <Typography variant="body2">Electrical</Typography>
+                    <Typography variant="body2" fontWeight="bold">Electrical</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: TRAINING_COLORS.ofc }} />
-                    <Typography variant="body2">OFC</Typography>
+                    <Typography variant="body2" fontWeight="bold">OFC</Typography>
                 </Stack>
+                <Box sx={{ ml: 'auto' }}>
+                    <IconButton aria-label="download data" onClick={downloadTrainingData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Box>
             </Stack>
             <Box ref={trainingChartRef} sx={{ width: '100%', height: 520, overflowX: 'auto' }}>
                 {trainingLoading ? (
@@ -2031,8 +2034,8 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionTrainingSummary = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750', mb: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
+            <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Training compliance Summary
             </Typography>
             <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: 1 }}>
@@ -2077,36 +2080,39 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionFTPR = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
+                <Typography variant="h6" sx={{ color: '#000000', fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                     Training- First Time Pass Rate
                 </Typography>
-                <IconButton aria-label="download" onClick={downloadFtprChart}>
-                    <DownloadIcon />
-                </IconButton>
+                {/* download button moved to legend row */}
             </Stack>
-            <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
+            <Stack direction="row" spacing={4} alignItems="center" justifyContent="end" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: TRAINING_COLORS.twoW }} />
-                    <Typography variant="body2">2W</Typography>
+                    <Typography variant="body2" fontWeight="bold">2W</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: TRAINING_COLORS.fourW }} />
-                    <Typography variant="body2">4W</Typography>
+                    <Typography variant="body2" fontWeight="bold">4W</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: TRAINING_COLORS.workAtHeight }} />
-                    <Typography variant="body2">Work at height</Typography>
+                    <Typography variant="body2" fontWeight="bold">Work at height</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: TRAINING_COLORS.electrical }} />
-                    <Typography variant="body2">Electrical</Typography>
+                    <Typography variant="body2" fontWeight="bold">Electrical</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: TRAINING_COLORS.ofc }} />
-                    <Typography variant="body2">OFC</Typography>
+                    <Typography variant="body2" fontWeight="bold">OFC</Typography>
                 </Stack>
+                <Box sx={{ ml: 'auto' }}>
+                    <IconButton aria-label="download" onClick={downloadFtprChart}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Box>
             </Stack>
             <Box ref={ftprChartRef} sx={{ width: '100%', height: 460, overflowX: 'auto' }}>
                 {ftprLoading ? (
@@ -2155,9 +2161,9 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionNewJoineeTrend = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
+                <Typography variant="h6" sx={{ color: '#000000', fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                     New Joinee Trend
                 </Typography>
                 <Stack direction="row" spacing={1}>
@@ -2219,8 +2225,8 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionNewJoineeSummary = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750', mb: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
+            <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 New Joinee Summary
             </Typography>
             <TableContainer component={Box} sx={{ position: 'relative', overflowX: 'auto', overflowY: 'auto', borderRadius: 1, maxHeight: 380 }}>
@@ -2286,27 +2292,25 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionLMC = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>LMC</Typography>
-                <Stack direction="row" spacing={1}>
-                    {/* <IconButton aria-label="download chart" onClick={downloadLmc}>
-                        <DownloadIcon />
-                    </IconButton> */}
-                    <IconButton aria-label="download data" onClick={downloadLMCData}>
-                        <DownloadIcon />
-                    </IconButton>
-                </Stack>
+                <Typography variant="h6" sx={{ color: '#000000', fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>LMC</Typography>
+                {/* download button moved to legend row */}
             </Stack>
-            <Stack direction="row" spacing={3} alignItems="center" justifyContent="center" sx={{ mb: 1 }}>
+            <Stack direction="row" spacing={3} alignItems="center" justifyContent="end" sx={{ mb: 1 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.krcc }} />
-                    <Typography variant="body2">LMC Completed</Typography>
+                    <Typography variant="body2" fontWeight="bold">LMC Completed</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.approval }} />
-                    <Typography variant="body2">LMC Due</Typography>
+                    <Typography variant="body2" fontWeight="bold">LMC Due</Typography>
                 </Stack>
+                <Box sx={{ ml: 'auto' }}>
+                    <IconButton aria-label="download data" onClick={downloadLMCData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Box>
             </Stack>
             <Box ref={lmcChartRef} sx={{ width: '100%', height: 420 }}>
                 {lmcLoading ? (
@@ -2351,27 +2355,25 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionSMT = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>SMT</Typography>
-                <Stack direction="row" spacing={1}>
-                    {/* <IconButton aria-label="download chart" onClick={downloadSmt}>
-                        <DownloadIcon />
-                    </IconButton> */}
-                    <IconButton aria-label="download data" onClick={downloadSMTData}>
-                        <DownloadIcon />
-                    </IconButton>
-                </Stack>
+                <Typography variant="h6" sx={{ color: '#000000', fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>SMT</Typography>
+                {/* download button moved to legend row */}
             </Stack>
-            <Stack direction="row" spacing={3} alignItems="center" justifyContent="center" sx={{ mb: 1 }}>
+            <Stack direction="row" spacing={3} alignItems="center" justifyContent="end" sx={{ mb: 1 }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.krcc }} />
-                    <Typography variant="body2">SMT Completed</Typography>
+                    <Typography variant="body2" fontWeight="bold">SMT Completed</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.approval }} />
-                    <Typography variant="body2">SMT Due</Typography>
+                    <Typography variant="body2" fontWeight="bold">SMT Due</Typography>
                 </Stack>
+                <Box sx={{ ml: 'auto' }}>
+                    <IconButton aria-label="download data" onClick={downloadSMTData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Box>
             </Stack>
             <Box ref={smtChartRef} sx={{ width: '100%', height: 420 }}>
                 {smtLoading ? (
@@ -2416,45 +2418,43 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionComplianceForecast = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
+                <Typography variant="h6" sx={{ color: '#000000', fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                     Compliance Forcasting
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                    {/* <IconButton aria-label="download chart" onClick={downloadComplianceForecast}>
-                        <DownloadIcon />
-                    </IconButton> */}
-                    <IconButton aria-label="download data" onClick={downloadComplianceForecastData}>
-                        <DownloadIcon />
-                    </IconButton>
-                </Stack>
+                {/* download button moved to legend row */}
             </Stack>
-            <Stack direction="row" spacing={3} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
+            <Stack direction="row" spacing={3} alignItems="center" justifyContent="end" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: CF_COLORS.twoW }} />
-                    <Typography variant="body2">2W</Typography>
+                    <Typography variant="body2" fontWeight="bold">2W</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: CF_COLORS.fourW }} />
-                    <Typography variant="body2">4W</Typography>
+                    <Typography variant="body2" fontWeight="bold">4W</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: CF_COLORS.workAtHeight }} />
-                    <Typography variant="body2">Work at height</Typography>
+                    <Typography variant="body2" fontWeight="bold">Work at height</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: CF_COLORS.electrical }} />
-                    <Typography variant="body2">Electrical</Typography>
+                    <Typography variant="body2" fontWeight="bold">Electrical</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: CF_COLORS.ofc }} />
-                    <Typography variant="body2">OFC</Typography>
+                    <Typography variant="body2" fontWeight="bold">OFC</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: CF_COLORS.firstAid }} />
-                    <Typography variant="body2">First Aid Training</Typography>
+                    <Typography variant="body2" fontWeight="bold">First Aid Training</Typography>
                 </Stack>
+                <Box sx={{ ml: 'auto' }}>
+                    <IconButton aria-label="download data" onClick={downloadComplianceForecastData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Box>
             </Stack>
             <Box sx={{ width: '100%', height: 500, overflowX: 'auto' }} ref={complianceForecastRef}>
                 {complianceForecastLoading ? (
@@ -2496,8 +2496,8 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionComplianceForecastSummary = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750', mb: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
+            <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Compliance Forecasting Summary
             </Typography>
             <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: 1 }}>
@@ -2537,33 +2537,31 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionDriving = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
+                <Typography variant="h6" sx={{ color: '#000000', fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                     Driving
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                    {/* <IconButton aria-label="download chart" onClick={downloadDrivingChart}>
-                        <DownloadIcon />
-                    </IconButton> */}
-                    <IconButton aria-label="download data" onClick={downloadDrivingData}>
-                        <DownloadIcon />
-                    </IconButton>
-                </Stack>
+                {/* download button moved to legend row */}
             </Stack>
-            <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
+            <Stack direction="row" spacing={4} alignItems="center" justifyContent="end" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: DRIVING_COLORS.license }} />
-                    <Typography variant="body2">Driving License</Typography>
+                    <Typography variant="body2" fontWeight="bold">Driving License</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: DRIVING_COLORS.insurance }} />
-                    <Typography variant="body2">Insurance</Typography>
+                    <Typography variant="body2" fontWeight="bold">Insurance</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: DRIVING_COLORS.puc }} />
-                    <Typography variant="body2">PUC</Typography>
+                    <Typography variant="body2" fontWeight="bold">PUC</Typography>
                 </Stack>
+                <Box sx={{ ml: 'auto' }}>
+                    <IconButton aria-label="download data" onClick={downloadDrivingData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Box>
             </Stack>
             <Box ref={drivingChartRef} sx={{ width: '100%', height: 460, overflowX: 'auto' }}>
                 {drivingLoading ? (
@@ -2621,8 +2619,8 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionDrivingSummary = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750', mb: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
+            <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Driving Summary
             </Typography>
             <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: 1 }}>
@@ -2655,29 +2653,27 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionMedical = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750' }}>
+                <Typography variant="h6" sx={{ color: '#000000', fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                     Medical Checkup & First Aid Training
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                    {/* <IconButton aria-label="download chart" onClick={downloadMedicalFirstAid}>
-                        <DownloadIcon />
-                    </IconButton> */}
-                    <IconButton aria-label="download data" onClick={downloadMedicalData}>
-                        <DownloadIcon />
-                    </IconButton>
-                </Stack>
+                {/* download button moved to legend row */}
             </Stack>
-            <Stack direction="row" spacing={3} alignItems="center" justifyContent="center" sx={{ mb: 1, width: '100%' }}>
+            <Stack direction="row" spacing={3} alignItems="center" justifyContent="end" sx={{ mb: 1, width: '100%' }}>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.krcc }} />
-                    <Typography variant="body2">Medical Checkup</Typography>
+                    <Typography variant="body2" fontWeight="bold">Medical Checkup</Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{ width: 12, height: 12, borderRadius: '2px', bgcolor: COLORS.approval }} />
-                    <Typography variant="body2">First Aid Training</Typography>
+                    <Typography variant="body2" fontWeight="bold">First Aid Training</Typography>
                 </Stack>
+                <Box sx={{ ml: 'auto' }}>
+                    <IconButton aria-label="download data" onClick={downloadMedicalData}>
+                        <DownloadIcon />
+                    </IconButton>
+                </Box>
             </Stack>
             <Box ref={medicalFirstAidRef} sx={{ width: '100%', height: 520 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -2724,8 +2720,8 @@ const MsafeDashboardVI: React.FC = () => {
     );
 
     const SectionMedicalSummary = () => (
-        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#5e2750', mb: 2 }}>
+        <Paper elevation={0} sx={{ p: 2.5, bgcolor: '#fff', mt: 2, borderRadius: '12px' }}>
+            <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Medical Checkup & First Aid Training Summary
             </Typography>
             <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: 1 }}>
@@ -2985,7 +2981,7 @@ const MsafeDashboardVI: React.FC = () => {
             </Box>
 
             {/* Show 'Set Custom Date' outside of the white filter Paper, aligned above the date fields */}
-            <Typography variant="h6" sx={{ fontWeight: 700, mt: 2, ml: `${dateLabelOffset}px` }}>
+            <Typography variant="h6" sx={{ mt: 2, ml: `${dateLabelOffset}px`, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Set Custom Date
             </Typography>
 
@@ -3092,11 +3088,11 @@ const FiltersPanel: React.FC<{
                 useFlexGap
                 sx={{
                     flexWrap: 'nowrap',
-                    gap: '12px',
+                    gap: '5px',
                     width: '100%',
                 }}
             >
-                <Box sx={{ flex: '1 1 220px', minWidth: 200 }}>
+                <Box sx={{ flex: '1 1 220px', minWidth: 100 }}>
                     <TailwindMultiSelect
                         label="Cluster"
                         options={clusterOptions}
@@ -3108,7 +3104,7 @@ const FiltersPanel: React.FC<{
                     />
                 </Box>
 
-                <Box sx={{ flex: '1 1 220px', minWidth: 200 }}>
+                <Box sx={{ flex: '1 1 220px', minWidth: 100 }}>
                     <TailwindMultiSelect
                         label="Circle"
                         options={circleOptions}
@@ -3120,7 +3116,7 @@ const FiltersPanel: React.FC<{
                     />
                 </Box>
 
-                <Box sx={{ flex: '1 1 220px', minWidth: 200 }}>
+                <Box sx={{ flex: '1 1 220px', minWidth: 100 }}>
                     <TailwindMultiSelect
                         label="Function"
                         options={functionOptions}
@@ -3159,9 +3155,22 @@ const FiltersPanel: React.FC<{
 
                 {/* Date controls */}
                 <Box sx={{ flex: '1 1 360px', minWidth: 280, maxWidth: 520, alignSelf: 'flex-end', mt: '10px' }} ref={dateBlockRef}>
-                    <Stack direction="row" spacing={2} alignItems="flex-end">
+                    <Stack direction="row" spacing={1} alignItems="flex-end">
                         <div style={{ flex: '1 1 160px' }}>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Start Date</label>
+                            <label
+                                style={{
+                                    display: 'block',
+                                    fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
+                                    fontWeight: 400,
+                                    fontStyle: 'normal',
+                                    fontSize: '18px',
+                                    lineHeight: '100%',
+                                    letterSpacing: '0%',
+                                    marginBottom: '0.25rem',
+                                }}
+                            >
+                                Start Date
+                            </label>
                             <input
                                 type="date"
                                 className="w-full h-10 rounded-[25px] border border-gray-300 bg-white px-3 py-0 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-0 focus:border-gray-400"
@@ -3175,8 +3184,35 @@ const FiltersPanel: React.FC<{
                                 }}
                             />
                         </div>
+                            <span
+                                style={{
+                                    fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
+                                    fontWeight: 400,
+                                    fontStyle: 'normal',
+                                    // fontSize: '18px',
+                                    lineHeight: '100%',
+                                    letterSpacing: '0%',
+                                    color: '#374151', /* text-gray-700 */
+                                    paddingBottom: '0.5rem',
+                                }}
+                            >
+                                To
+                            </span>
                         <div style={{ flex: '1 1 160px' }}>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">End Date</label>
+                            <label
+                                style={{
+                                    display: 'block',
+                                    fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
+                                    fontWeight: 400,
+                                    fontStyle: 'normal',
+                                    fontSize: '18px',
+                                    lineHeight: '100%',
+                                    letterSpacing: '0%',
+                                    marginBottom: '0.25rem',
+                                }}
+                            >
+                                End Date
+                            </label>
                             <input
                                 type="date"
                                 className="w-full h-10 rounded-[25px] border border-gray-300 bg-white px-3 py-0 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-0 focus:border-gray-400"
