@@ -1430,7 +1430,7 @@ export const TicketDashboard = () => {
                     </div>
 
                     {/* Fourth Row - Unit Category-wise Tickets */}
-                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                    {/* <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('categoryChart') && (
                         <SortableChartItem key="categoryChart" id="categoryChart">
                           <UnitCategoryWiseCard
@@ -1442,7 +1442,7 @@ export const TicketDashboard = () => {
                           />
                         </SortableChartItem>
                       )}
-                    </div>
+                    </div> */}
 
                     {/* Fifth Row - Tickets Aging Matrix */}
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">

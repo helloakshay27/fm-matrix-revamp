@@ -120,7 +120,11 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
                   />
                   <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
                   <Tooltip 
-                    formatter={(value, name) => [value, name === 'breached' ? 'Breached' : 'Achieved']}
+                    formatter={(value, name) => {
+                      const key = String(name || '').toLowerCase();
+                      const label = key === 'breached' || key.includes('breach') ? 'Breached' : key === 'achieved' || key.includes('achiev') ? 'Achieved' : String(name);
+                      return [value, label];
+                    }}
                     labelFormatter={(label) => `Category: ${label}`}
                   />
                   <Bar dataKey="breached" fill={CHART_COLORS.secondary} name="Breached" />
