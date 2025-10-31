@@ -115,6 +115,7 @@ import VisitorTrendAnalysisCard from "@/components/visitor/VisitorTrendAnalysisC
 import checklistManagementAnalyticsAPI from "@/services/checklistManagementAnalyticsAPI";
 import { ChecklistProgressQuarterlyCard } from "@/components/checklist-management/ChecklistProgressQuarterlyCard";
 import { TopOverdueChecklistsCenterwiseCard } from "@/components/checklist-management/TopOverdueChecklistsCenterwiseCard";
+import { RecentUpdatedSidebar } from "@/components/RecentUpdatedSidebar";
 
 interface SelectedAnalytic {
   id: string;
@@ -2529,6 +2530,8 @@ export const Dashboard = () => {
           [data-lov-name="Card"].bg-card,
           .bg-card {
             height: 400px !important;
+            box-shadow: 0px 4px 14.2px 0px #0000001A;
+
           }
 
           [data-lov-name="CardContent"].p-6.pt-0,
@@ -2602,29 +2605,6 @@ export const Dashboard = () => {
 
           {/* Summary Stats */}
           <div className="p-6">
-            {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatsCard
-              title="Total Tickets"
-              value={summaryStats.totalTickets}
-              icon={<Activity className="w-6 h-6" />}
-            />
-            <StatsCard
-              title="Completed Tasks"
-              value={summaryStats.completedTasks}
-              icon={<TrendingUp className="w-6 h-6" />}
-            />
-            <StatsCard
-              title="Active AMCs"
-              value={summaryStats.activeAMCs}
-              icon={<Settings className="w-6 h-6" />}
-            />
-            <StatsCard
-              title="Low Stock Items"
-              value={summaryStats.lowStockItems}
-              icon={<Package className="w-6 h-6" />}
-            />
-          </div> */}
-
             {/* Asset Summary Stats Row */}
             {summaryStats.totalAssets > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -2636,73 +2616,79 @@ export const Dashboard = () => {
               </div>
             )}
 
-            {/* Analytics Grid */}
-            {selectedAnalytics.length > 0 ? (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={chartOrder}
-                  strategy={rectSortingStrategy}
-                >
-                  {/* Unified 2-Column Grid for All Analytics */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    {chartOrder.map((chartId) => {
-                      const analytic = selectedAnalytics.find(
-                        (a) => a.id === chartId
-                      );
-                      if (!analytic) return null;
-                      const card = renderAnalyticsCard(analytic);
-                      const perCardLoading =
-                        !!loadingMap?.[analytic.module]?.[analytic.endpoint];
-                      const spanClass =
-                        analytic.module === "consumables_overview" &&
-                        analytic.endpoint ===
-                          "consumable_inventory_value_quarterly"
-                          ? "lg:col-span-2"
-                          : "";
-                      return card ? (
-                        <SectionLoader
-                          key={chartId}
-                          loading={perCardLoading}
-                          className={spanClass}
-                        >
-                          {card}
-                        </SectionLoader>
-                      ) : null;
-                    })}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            ) : (
-              <Card className="p-8 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <BarChart3 className="w-16 h-16 text-analytics-muted" />
-                  <div>
-                    <h3 className="text-lg font-medium text-analytics-text mb-2">
-                      No Analytics Selected
-                    </h3>
-                    <p className="text-analytics-muted mb-4">
-                      Select analytics from different modules to start viewing
-                      your dashboard
-                    </p>
-                    <Button
-                      onClick={() => {
-                        const selector = document.querySelector(
-                          "[data-analytics-selector]"
-                        ) as HTMLButtonElement;
-                        selector?.click();
-                      }}
-                      variant="outline"
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 min-h-[calc(100vh-200px)] overflow-scroll">
+              {/* Analytics Grid */}
+              <div className="xl:col-span-8 space-y-4 sm:space-y-6">
+                {selectedAnalytics.length > 0 ? (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={chartOrder}
+                      strategy={rectSortingStrategy}
                     >
-                      Select Analytics
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            )}
+                      {/* Unified 2-Column Grid for All Analytics */}
+                      {chartOrder.map((chartId) => {
+                        const analytic = selectedAnalytics.find(
+                          (a) => a.id === chartId
+                        );
+                        if (!analytic) return null;
+                        const card = renderAnalyticsCard(analytic);
+                        const perCardLoading =
+                          !!loadingMap?.[analytic.module]?.[analytic.endpoint];
+                        const spanClass =
+                          analytic.module === "consumables_overview" &&
+                          analytic.endpoint ===
+                            "consumable_inventory_value_quarterly"
+                            ? "lg:col-span-2"
+                            : "";
+                        return card ? (
+                          <SectionLoader
+                            key={chartId}
+                            loading={perCardLoading}
+                            className={spanClass}
+                          >
+                            {card}
+                          </SectionLoader>
+                        ) : null;
+                      })}
+                    </SortableContext>
+                  </DndContext>
+                ) : (
+                  <Card className="p-8 text-center height-90vh">
+                    <div className="flex flex-col items-center gap-4">
+                      <BarChart3 className="w-16 h-16 text-analytics-muted" />
+                      <div>
+                        <h3 className="text-lg font-medium text-analytics-text mb-2">
+                          No Analytics Selected
+                        </h3>
+                        <p className="text-analytics-muted mb-4">
+                          Select analytics from different modules to start
+                          viewing your dashboard
+                        </p>
+                        <Button
+                          onClick={() => {
+                            const selector = document.querySelector(
+                              "[data-analytics-selector]"
+                            ) as HTMLButtonElement;
+                            selector?.click();
+                          }}
+                          variant="outline"
+                        >
+                          Select Analytics
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+              </div>
+
+              <div className="xl:col-span-4 order-first xl:order-last">
+                <RecentUpdatedSidebar />
+              </div>
+            </div>
           </div>
         </div>
       </div>

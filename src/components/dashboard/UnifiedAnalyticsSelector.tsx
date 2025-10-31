@@ -195,16 +195,16 @@ const analyticsOptions = {
     ]
   },
 
-  surveys: {
-    icon: BarChart3,
-    label: 'Surveys',
-    color: '#8B5CF6',
-    options: [
-      { id: 'survey_summary', endpoint: 'survey_summary', label: 'Survey Summary' },
-      { id: 'survey_status_distribution', endpoint: 'survey_status_distribution', label: '' },
-      { id: 'top_surveys', endpoint: 'top_surveys', label: 'Top Surveys' },
-    ]
-  },
+  // surveys: {
+  //   icon: BarChart3,
+  //   label: 'Surveys',
+  //   color: '#8B5CF6',
+  //   options: [
+  //     { id: 'survey_summary', endpoint: 'survey_summary', label: 'Survey Summary' },
+  //     { id: 'survey_status_distribution', endpoint: 'survey_status_distribution', label: '' },
+  //     { id: 'top_surveys', endpoint: 'top_surveys', label: 'Top Surveys' },
+  //   ]
+  // },
 
 } as const;
 
