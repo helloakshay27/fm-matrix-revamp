@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { recentUpdatedApi } from "@/services/recentUpdatedApi";
 import { apiClient } from "@/utils/apiClient";
 import { useToast } from "@/hooks/use-toast";
+import { changeSite } from "@/store/slices/siteSlice";
 interface RecentTicketsSidebarProps {
   onTicketUpdate?: () => void; // Callback to refresh parent data
 }
@@ -222,6 +223,10 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
     }
   };
 
+  useEffect(() => {
+    fetchRecentTickets();
+  }, [location.pathname, localStorage.getItem('selectedSiteId') ]);
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "in_use":
@@ -238,9 +243,6 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
         return "bg-[#AAB9C5] text-[#1A1A1A]";
     }
   };
-  useEffect(() => {
-    fetchRecentTickets();
-  }, []);
   const handleAddComment = (ticketId: string) => {
     setCommentModal({
       isOpen: true,
