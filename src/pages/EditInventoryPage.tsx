@@ -51,6 +51,8 @@ export const EditInventoryPage = () => {
   const [invSubTypeId, setInvSubTypeId] = useState<string>('');
   // Preserve the originally saved expiry date (YYYY-MM-DD) to enforce as minimum in edit
   const [initialExpiryYMD, setInitialExpiryYMD] = useState<string>('');
+  // Plants list for Plant Code dropdown
+  const [plants, setPlants] = useState<Array<{ id?: string | number; plant_name?: string }>>([]);
   // Main form data state (moved up so suggestion filtering can reference it)
   const [formData, setFormData] = useState({
     assetName: '',
@@ -69,7 +71,11 @@ export const EditInventoryPage = () => {
     sacHsnCode: '',
     sgstRate: '',
     cgstRate: '',
-    igstRate: ''
+    igstRate: '',
+    // New fields
+    plantCode: '',
+    categoryCode: '',
+    taxCategory: '',
   });
   // Today (YYYY-MM-DD) in LOCAL time to align with DatePicker disablePast and comparisons
   const todayISO = useMemo(() => {
@@ -135,6 +141,30 @@ export const EditInventoryPage = () => {
   // Fetch SAC/HSN codes on mount
   useEffect(() => {
     fetchSAC();
+  }, []);
+
+  // Fetch plants for Plant Code dropdown
+  useEffect(() => {
+    const loadPlants = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const url = `https://${baseUrl}/pms/purchase_orders/get_plant_detail?token=${encodeURIComponent(token)}`;
+        const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+        if (!res.ok) return;
+        const data = await res.json();
+        const arr: Array<{ id?: string | number; plant_name?: string }> = Array.isArray(data)
+          ? data
+          : Array.isArray((data as any)?.data)
+            ? (data as any).data
+            : Array.isArray((data as any)?.plants)
+              ? (data as any).plants
+              : [];
+        setPlants(arr);
+      } catch {/* ignore */}
+    };
+    loadPlants();
   }, []);
 
 
@@ -256,7 +286,11 @@ export const EditInventoryPage = () => {
         ),
         sgstRate: fetchedInventory.sgst_rate?.toString() || '',
         cgstRate: fetchedInventory.cgst_rate?.toString() || '',
-        igstRate: fetchedInventory.igst_rate?.toString() || ''
+        igstRate: fetchedInventory.igst_rate?.toString() || '',
+        // New fields hydrate
+        plantCode: (fetchedInventory as any)?.sap_plant_code || '',
+        categoryCode: (fetchedInventory as any)?.category_code || '',
+        taxCategory: (fetchedInventory as any)?.tax_category || '',
       });
 
       // Handle numeric values for radio buttons
@@ -400,12 +434,10 @@ export const EditInventoryPage = () => {
       setFormData(prev => ({ ...prev, expiryDate: val }));
       setErrors(prev => ({
         ...prev,
-        // In edit, the minimum allowed should be the originally saved expiry date.
-        // Fallback to today only if we don't have an original.
+        // In edit, the minimum allowed should be today; do not allow past dates
         expiryDate: (() => {
-          const minYMD = initialExpiryYMD || todayISO;
+          const minYMD = todayISO;
           if (val && minYMD && val < minYMD) {
-            // Show friendly dd-MM-yyyy for the min date
             const [y,m,d] = minYMD.split('-');
             return `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
           }
@@ -472,7 +504,7 @@ export const EditInventoryPage = () => {
       }
     }
     if (formData.expiryDate) {
-      const minYMD = initialExpiryYMD || todayISO;
+      const minYMD = todayISO;
       if (formData.expiryDate < minYMD) {
         const [y,m,d] = minYMD.split('-');
         newErrors.expiryDate = `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
@@ -529,7 +561,10 @@ export const EditInventoryPage = () => {
       expiry_date: formatExpiryDate(formData.expiryDate),
       unit: formData.unit || "",
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      // New fields in payload
+      sap_plant_code: formData.plantCode || null,
+      category_code: formData.categoryCode || null,
     };
 
     if (taxApplicable) {
@@ -538,6 +573,7 @@ export const EditInventoryPage = () => {
       inventoryData.cgst_rate = formData.cgstRate ? parseFloat(formData.cgstRate) : 0;
       inventoryData.igst_rate = formData.igstRate ? parseFloat(formData.igstRate) : 0;
       inventoryData.tax_applicable = 1;
+      inventoryData.tax_category = formData.taxCategory || null;
     } else {
       inventoryData.tax_applicable = 0;
     }
@@ -834,6 +870,8 @@ export const EditInventoryPage = () => {
                     sx={fieldStyles}
                   />
                 </div>
+
+           
               </div>
 
               {/* Form Grid - Second Row */}
@@ -924,8 +962,8 @@ export const EditInventoryPage = () => {
                         const ymd = formatDateToYMD(date as Date | null);
                         handleInputChange("expiryDate", ymd);
                       }}
-                      // In edit mode, allow any date on/after the originally saved expiry date
-                      minDate={parseYMDToDate(initialExpiryYMD) || undefined}
+                      // Allow any date on/after today only
+                      minDate={parseYMDToDate(todayISO) || undefined}
                       format='dd-MM-yyyy'
                       slotProps={{
                         textField: {
@@ -994,6 +1032,42 @@ export const EditInventoryPage = () => {
                       <MenuItem value="Pantry">Pantry</MenuItem>
                     </MuiSelect>
                   </FormControl>
+                </div>
+
+
+                     {/* Plant Code dropdown */}
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                    <InputLabel shrink>Plant Code</InputLabel>
+                    <MuiSelect
+                      value={formData.plantCode}
+                      onChange={handleSelectChange('plantCode')}
+                      label="Plant Code"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Plant</MenuItem>
+                      {plants.map((p, idx) => (
+                        <MenuItem key={p.id ?? idx} value={(p as any)?.plant_name || ''}>
+                          {(p as any)?.plant_name || 'Unnamed Plant'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+
+                {/* Category Code input */}
+                <div>
+                  <TextField
+                    label="Category Code"
+                    placeholder="Enter Category Code"
+                    value={formData.categoryCode}
+                    onChange={(e) => handleInputChange('categoryCode', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
                 </div>
 
                 <div>
@@ -1121,6 +1195,20 @@ export const EditInventoryPage = () => {
                         ))}
                       </MuiSelect>
                     </FormControl>
+                  </div>
+
+                  {/* Tax Category input */}
+                  <div>
+                    <TextField
+                      label="Tax Category"
+                      placeholder="Enter Tax Category"
+                      value={formData.taxCategory}
+                      onChange={(e) => handleInputChange('taxCategory', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
                   </div>
 
                   <div>

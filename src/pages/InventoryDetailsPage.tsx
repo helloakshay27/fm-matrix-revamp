@@ -895,6 +895,27 @@ export const InventoryDetailsPage = () => {
                     {inventoryData?.site || '—'}
                   </span>
                 </div>
+                <div className="flex text-sm">
+                  <span className="text-gray-500 w-24">Vendor</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {(inventoryData as any)?.supplier_detail?.company_name || '—'}
+                  </span>
+                </div>
+                <div className="flex text-sm">
+                  <span className="text-gray-500 w-24">Mobile Number</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {(inventoryData as any)?.supplier_detail?.mobile1 || "-"}
+                  </span>
+                </div>
+                <div className="flex text-sm">
+                  <span className="text-gray-500 w-24">Email ID</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {(inventoryData as any)?.supplier_detail?.email || '—'}
+                  </span>
+                </div>
               </div>
             </div>
           </TabsContent>

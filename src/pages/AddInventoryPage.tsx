@@ -92,7 +92,11 @@ export const AddInventoryPage = () => {
     sacHsnCode: '',
     sgstRate: '',
     cgstRate: '',
-    igstRate: ''
+    igstRate: '',
+    // New fields
+    plantCode: '',
+    categoryCode: '',
+    taxCategory: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [sacList, setSacList] = useState([])
@@ -106,6 +110,8 @@ export const AddInventoryPage = () => {
   const [invSubTypeId, setInvSubTypeId] = useState<string>('');
   // Suggestions state for inventory name
   const [nameSuggestions, setNameSuggestions] = useState<{ id: number; name: string }[]>([]);
+  // Plants list for PlantCode dropdown
+  const [plants, setPlants] = useState<Array<{ id?: string | number; name?: string }>>([]);
   const [nameSuggestLoading, setNameSuggestLoading] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const nameDebounceRef = useRef<number | null>(null);
@@ -115,6 +121,31 @@ export const AddInventoryPage = () => {
     dispatch(fetchInventoryAssets());
     dispatch(fetchSuppliersData());
   }, [dispatch]);
+
+  // Fetch plants for PlantCode dropdown
+  useEffect(() => {
+    const loadPlants = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const url = `https://${baseUrl}/pms/purchase_orders/get_plant_detail?token=${encodeURIComponent(token)}`;
+        const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+        if (!res.ok) return;
+        const data = await res.json();
+        // Normalize to [{name: string}]
+        const arr: Array<{ id?: string | number; name?: string }> = Array.isArray(data)
+          ? data
+          : Array.isArray((data as any)?.data)
+            ? (data as any).data
+            : Array.isArray((data as any)?.plants)
+              ? (data as any).plants
+              : [];
+        setPlants(arr);
+      } catch {/* ignore */}
+    };
+    loadPlants();
+  }, []);
 
   // Pre-select asset if asset_id query param is present (coming from asset details / E-BOM add flow)
   const location = useLocation();
@@ -405,7 +436,11 @@ export const AddInventoryPage = () => {
   pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
   pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
         green_product: ecoFriendly ? 1 : 0,
+        // New fields in payload
+        sap_plant_code: formData.plantCode || null, // send plant NAME per requirement
+        category_code: formData.categoryCode || null,
         ...(taxApplicable && {
+          tax_category: formData.taxCategory || null,
           hsn_id: formData.sacHsnCode ? parseInt(String(formData.sacHsnCode), 10) : null,
           sgst_rate: parseFloat(formData.sgstRate) || 0,
           cgst_rate: parseFloat(formData.cgstRate) || 0,
@@ -901,6 +936,8 @@ export const AddInventoryPage = () => {
                     helperText={errors.quantity}
                   />
                 </div>
+
+                
               </div>
 
               {/* Form Grid - Second Row */}
@@ -1062,6 +1099,41 @@ export const AddInventoryPage = () => {
                   </FormControl>
                 </div>
 
+                {/* Category Code input (moved below Category) */}
+                <div>
+                  <TextField
+                    label="Category Code"
+                    placeholder="Enter Category Code"
+                    value={formData.categoryCode}
+                    onChange={(e) => handleInputChange('categoryCode', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
+                </div>
+
+                {/* Plant Code dropdown (moved below Category Code) */}
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                    <InputLabel shrink>Plant Code</InputLabel>
+                    <MuiSelect
+                      value={formData.plantCode}
+                      onChange={handleSelectChange('plantCode')}
+                      label="Plant Code"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Plant</MenuItem>
+                      {plants.map((p, idx) => (
+                        <MenuItem key={p.id ?? idx} value={(p as any).plant_name || ''}>
+                          {(p as any).plant_name || 'Unnamed Plant'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+
                 <div>
                   <FormControl fullWidth variant="outlined" sx={selectStyles}>
                     <InputLabel shrink>Vendor</InputLabel>
@@ -1205,6 +1277,20 @@ export const AddInventoryPage = () => {
                     </FormControl>
 
 
+                  </div>
+
+                  {/* Tax Category input */}
+                  <div>
+                    <TextField
+                      label="Tax Category"
+                      placeholder="Enter Tax Category"
+                      value={formData.taxCategory}
+                      onChange={(e) => handleInputChange('taxCategory', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
                   </div>
 
                   <div>
