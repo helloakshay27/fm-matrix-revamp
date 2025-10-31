@@ -203,6 +203,7 @@ export const ScheduleListDashboard = () => {
         id: item.id,
         activityName: item.form_name || '',
         type: item.schedule_type || '',
+        steps:item.steps ||'-',
         scheduleType,
         noOfAssociation: item.no_of_associations?.toString() || '0',
         category: item.category_name
@@ -386,7 +387,13 @@ export const ScheduleListDashboard = () => {
     key: 'type',
     label: 'Type',
     sortable: true
-  }, {
+  }, 
+  {
+    key: 'steps',
+    label: 'Checklist Step',
+    sortable: true
+  },
+  {
     key: 'scheduleType',
     label: 'Schedule For',
     sortable: true
