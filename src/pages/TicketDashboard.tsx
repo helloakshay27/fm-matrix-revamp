@@ -262,12 +262,16 @@ export const TicketDashboard = () => {
     const endDate = convertDateStringToDate(filters.endDate);
 
     fetchAnalyticsData(startDate, endDate);
+    // Also apply the same date range to ticket filters so summary cards & ticket list respect it
+    const dateRangeParam = `${filters.startDate} - ${filters.endDate}`;
+    setFilters(prev => ({ ...prev, 'q[date_range]': dateRangeParam }));
   };
 
   // Fetch ticket summary from API - Optimized with caching
   const fetchTicketSummary = useCallback(async () => {
     try {
-      const summary = await ticketManagementAPI.getTicketSummary();
+      // Pass current filters to the summary API so summary cards respect active filters
+      const summary = await ticketManagementAPI.getTicketSummary(filters);
       setTicketSummary(summary);
 
       // Store initial total count only if not already stored and no filters are applied
