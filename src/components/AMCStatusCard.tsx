@@ -50,7 +50,7 @@ export const AMCStatusCard: React.FC<AMCStatusCardProps> = ({ data, className, o
     { key: 'active', label: 'Active', value: data.activeAMCs, color: BASE_COLORS[1] },
     { key: 'inactive', label: 'Inactive', value: data.inactiveAMCs, color: BASE_COLORS[2] },
     { key: 'critical', label: 'Critical Assets Under AMC', value: data.criticalAssetsUnderAMC, color: BASE_COLORS[3] },
-    { key: 'missing', label: 'Missing AMC', value: data.missingAMC, color: BASE_COLORS[0] },
+    { key: 'missing', label: 'Missed Visit', value: data.missingAMC, color: BASE_COLORS[0] },
     { key: 'comp', label: 'Comprehensive', value: data.comprehensiveAMCs, color: BASE_COLORS[1] },
     { key: 'noncomp', label: 'Non-Comprehensive', value: data.nonComprehensiveAMCs, color: BASE_COLORS[2] },
   ] : [];

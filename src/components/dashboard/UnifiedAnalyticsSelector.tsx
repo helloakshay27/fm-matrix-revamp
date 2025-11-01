@@ -75,11 +75,11 @@ const dashboardAnalyticsOptions = {
         endpoint: "ticket_aging_matrix",
         label: "Ticket Aging Matrix",
       },
-      {
-        id: "unit_categorywise",
-        endpoint: "unit_categorywise",
-        label: "Unit Category-wise",
-      },
+      // {
+      //   id: "unit_categorywise",
+      //   endpoint: "unit_categorywise",
+      //   label: "Unit Category-wise",
+      // },
       {
         id: "response_tat",
         endpoint: "response_tat",
@@ -117,11 +117,11 @@ const dashboardAnalyticsOptions = {
         endpoint: "category_wise",
         label: "Category Wise Assets",
       },
-      {
-        id: "assets_distribution",
-        endpoint: "asset_distribution",
-        label: "Asset Distribution (IT vs Non-IT)",
-      },
+      // {
+      //   id: "assets_distribution",
+      //   endpoint: "asset_distribution",
+      //   label: "Asset Distribution (IT vs Non-IT)",
+      // },
     ],
   },
   tasks: {

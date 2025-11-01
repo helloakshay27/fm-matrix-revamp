@@ -2616,9 +2616,9 @@ export const Dashboard = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 min-h-[calc(100vh-200px)] overflow-scroll">
+            <div className="grid grid-cols-1 xl:grid-cols-10 gap-2 min-h-[calc(100vh-200px)] overflow-scroll">
               {/* Analytics Grid */}
-              <div className="xl:col-span-8 space-y-4 sm:space-y-6">
+              <div className="xl:col-span-7 space-y-4 sm:space-y-6" style={{ minWidth: "70%" }}>
                 {selectedAnalytics.length > 0 ? (
                   <DndContext
                     sensors={sensors}
@@ -2685,7 +2685,7 @@ export const Dashboard = () => {
                 )}
               </div>
 
-              <div className="xl:col-span-4 order-first xl:order-last">
+              <div className="xl:col-span-3 order-first xl:order-last" style={{ minWidth: "30%" }}>
                 <RecentUpdatedSidebar />
               </div>
             </div>
