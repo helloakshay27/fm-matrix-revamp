@@ -98,39 +98,67 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
     );
   }
 
-  // Prepare data for Response TAT chart
+  // Prepare data for Response TAT chart (4 separate segments)
   const responseTATData = [
     {
-      name: 'Achieved',
-      value: data.response.response_tat.open.achieved + data.response.response_tat.close.achieved,
+      name: 'Open - Achieved',
+      value: data.response.response_tat.open.achieved,
       color: CHART_COLORS.primary,
-      open: data.response.response_tat.open.achieved,
-      close: data.response.response_tat.close.achieved
+      status: 'Achieved',
+      state: 'Open'
     },
     {
-      name: 'Breached',
-      value: data.response.response_tat.open.breached + data.response.response_tat.close.breached,
+      name: 'Open - Breached',
+      value: data.response.response_tat.open.breached,
       color: CHART_COLORS.secondary,
-      open: data.response.response_tat.open.breached,
-      close: data.response.response_tat.close.breached
+      status: 'Breached',
+      state: 'Open'
+    },
+    {
+      name: 'Close - Achieved',
+      value: data.response.response_tat.close.achieved,
+      color: CHART_COLORS.primaryLight,
+      status: 'Achieved',
+      state: 'Close'
+    },
+    {
+      name: 'Close - Breached',
+      value: data.response.response_tat.close.breached,
+      color: CHART_COLORS.secondaryLight,
+      status: 'Breached',
+      state: 'Close'
     }
   ];
 
-  // Prepare data for Resolution TAT chart
+  // Prepare data for Resolution TAT chart (4 separate segments)
   const resolutionTATData = [
     {
-      name: 'Achieved',
-      value: data.response.resolution_tat.open.achieved + data.response.resolution_tat.close.achieved,
+      name: 'Open - Achieved',
+      value: data.response.resolution_tat.open.achieved,
       color: CHART_COLORS.primary,
-      open: data.response.resolution_tat.open.achieved,
-      close: data.response.resolution_tat.close.achieved
+      status: 'Achieved',
+      state: 'Open'
     },
     {
-      name: 'Breached',
-      value: data.response.resolution_tat.open.breached + data.response.resolution_tat.close.breached,
+      name: 'Open - Breached',
+      value: data.response.resolution_tat.open.breached,
       color: CHART_COLORS.secondary,
-      open: data.response.resolution_tat.open.breached,
-      close: data.response.resolution_tat.close.breached
+      status: 'Breached',
+      state: 'Open'
+    },
+    {
+      name: 'Close - Achieved',
+      value: data.response.resolution_tat.close.achieved,
+      color: CHART_COLORS.primaryLight,
+      status: 'Achieved',
+      state: 'Close'
+    },
+    {
+      name: 'Close - Breached',
+      value: data.response.resolution_tat.close.breached,
+      color: CHART_COLORS.secondaryLight,
+      status: 'Breached',
+      state: 'Close'
     }
   ];
 
@@ -197,17 +225,17 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                           <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg z-50">
                             <p className="font-semibold text-gray-800 mb-2">{data.name}</p>
                             <div className="space-y-1">
-                              <div className="flex justify-between items-center">
-                                <span className="text-blue-600 font-medium">Open:</span>
-                                <span className="text-gray-700">{data.open}</span>
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-gray-600 font-medium">Status:</span>
+                                <span className="text-gray-700">{data.status}</span>
                               </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-gray-600 font-medium">Close:</span>
-                                <span className="text-gray-700">{data.close}</span>
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-gray-600 font-medium">State:</span>
+                                <span className="text-gray-700">{data.state}</span>
                               </div>
                               <div className="pt-1 border-t border-gray-200">
-                                <div className="flex justify-between items-center font-semibold">
-                                  <span>Total:</span>
+                                <div className="flex justify-between items-center font-semibold gap-4">
+                                  <span>Count:</span>
                                   <span>{data.value}</span>
                                 </div>
                               </div>
@@ -227,14 +255,14 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                 </div>
               </div>
             </div>
-            <div className="flex justify-center gap-4 mt-2">
+            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2 px-2">
               {responseTATData.map((item, index) => (
-                <div key={index} className="flex items-center gap-2">
+                <div key={index} className="flex items-center gap-1.5">
                   <div 
-                    className="w-3 h-3 rounded-sm"
+                    className="w-3 h-3 rounded-sm flex-shrink-0"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-xs font-medium text-gray-700">{item.name}</span>
+                  <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{item.name}</span>
                 </div>
               ))}
             </div>
@@ -287,17 +315,17 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                           <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg z-50">
                             <p className="font-semibold text-gray-800 mb-2">{data.name}</p>
                             <div className="space-y-1">
-                              <div className="flex justify-between items-center">
-                                <span className="text-blue-600 font-medium">Open:</span>
-                                <span className="text-gray-700">{data.open}</span>
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-gray-600 font-medium">Status:</span>
+                                <span className="text-gray-700">{data.status}</span>
                               </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-gray-600 font-medium">Close:</span>
-                                <span className="text-gray-700">{data.close}</span>
+                              <div className="flex justify-between items-center gap-4">
+                                <span className="text-gray-600 font-medium">State:</span>
+                                <span className="text-gray-700">{data.state}</span>
                               </div>
                               <div className="pt-1 border-t border-gray-200">
-                                <div className="flex justify-between items-center font-semibold">
-                                  <span>Total:</span>
+                                <div className="flex justify-between items-center font-semibold gap-4">
+                                  <span>Count:</span>
                                   <span>{data.value}</span>
                                 </div>
                               </div>
@@ -317,14 +345,14 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                 </div>
               </div>
             </div>
-            <div className="flex justify-center gap-4 mt-2">
+            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2 px-2">
               {resolutionTATData.map((item, index) => (
-                <div key={index} className="flex items-center gap-2">
+                <div key={index} className="flex items-center gap-1.5">
                   <div 
-                    className="w-3 h-3 rounded-sm"
+                    className="w-3 h-3 rounded-sm flex-shrink-0"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-xs font-medium text-gray-700">{item.name}</span>
+                  <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{item.name}</span>
                 </div>
               ))}
             </div>

@@ -324,43 +324,39 @@ const executiveAnalyticsOptions = {
       {
         id: "am_amc_contract_expiry_90",
         endpoint: "amc_contract_expiry_90",
-        label: "AMC Contract Summary – Expiry in 90 Days",
+        label: "AMC Contract Summary – Expiry in Days",
       },
-      {
-        id: "am_amc_contract_expired",
-        endpoint: "amc_contract_expired",
-        label: "AMC Contract Summary – Expired",
-      },
+     
     ],
   },
 
-  inventory_management: {
-    icon: Package,
-    label: "Inventory Management",
-    color: "#F59E0B",
-    options: [
-      {
-        id: "inv_overview_summary",
-        endpoint: "inventory_overview_summary",
-        label: "Overview Summary",
-      },
-      {
-        id: "inv_overstock_top10",
-        endpoint: "inventory_overstock_top10",
-        label: "Overstock Analysis – Top 10 Items",
-      },
-       {
-        id: "consumables_top_center",
-        endpoint: "top_consumables_center",
-        label: "Top Consumables – Centre-wise Overview",
-      },
-      {
-        id: "consumables_value_quarterly",
-        endpoint: "consumable_inventory_value_quarterly",
-        label: "Consumable Inventory Value – Comparison",
-      },
-    ],
-  },
+  // inventory_management: {
+  //   icon: Package,
+  //   label: "Inventory Management",
+  //   color: "#F59E0B",
+  //   options: [
+  //     {
+  //       id: "inv_overview_summary",
+  //       endpoint: "inventory_overview_summary",
+  //       label: "Overview Summary",
+  //     },
+  //     {
+  //       id: "inv_overstock_top10",
+  //       endpoint: "inventory_overstock_top10",
+  //       label: "Overstock Analysis – Top 10 Items",
+  //     },
+  //      {
+  //       id: "consumables_top_center",
+  //       endpoint: "top_consumables_center",
+  //       label: "Top Consumables – Centre-wise Overview",
+  //     },
+  //     {
+  //       id: "consumables_value_quarterly",
+  //       endpoint: "consumable_inventory_value_quarterly",
+  //       label: "Consumable Inventory Value – Comparison",
+  //     },
+  //   ],
+  // },
 
  
   checklist_management: {

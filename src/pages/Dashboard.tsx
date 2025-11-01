@@ -2527,11 +2527,18 @@ export const Dashboard = () => {
     <>
       <style>
         {`
+
+
           [data-lov-name="Card"].bg-card,
           .bg-card {
             height: 400px !important;
             box-shadow: 0px 4px 14.2px 0px #0000001A;
 
+          }
+            .bg-card.coverage-card {
+            height: auto !important;
+            box-shadow: 0px 4px 14.2px 0px #0000001A;
+            max-height: 750px !important;
           }
 
           [data-lov-name="CardContent"].p-6.pt-0,
@@ -2618,7 +2625,10 @@ export const Dashboard = () => {
 
             <div className="grid grid-cols-1 xl:grid-cols-10 gap-2 min-h-[calc(100vh-200px)] overflow-scroll">
               {/* Analytics Grid */}
-              <div className="xl:col-span-7 space-y-4 sm:space-y-6" style={{ minWidth: "75%" }}>
+              <div
+                className="xl:col-span-7 space-y-4 sm:space-y-6"
+                style={{ minWidth: "75%" }}
+              >
                 {selectedAnalytics.length > 0 ? (
                   <DndContext
                     sensors={sensors}
@@ -2685,7 +2695,10 @@ export const Dashboard = () => {
                 )}
               </div>
 
-              <div className="xl:col-span-3 order-first xl:order-last" style={{ minWidth: "25%" }}>
+              <div
+                className="xl:col-span-3 order-first xl:order-last"
+                style={{ minWidth: "25%" }}
+              >
                 <RecentUpdatedSidebar />
               </div>
             </div>

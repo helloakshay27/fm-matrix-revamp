@@ -169,13 +169,13 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
         }));
 
         return (
-          <div className="space-y-4">
+          <div className="space-y-4 h-[500px]">
             {/* Bar Chart */}
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="type" angle={-45} textAnchor="end" height={80} />
+                  <XAxis dataKey="type" angle={-35} textAnchor="end" height={100} fontSize={9} />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="count">

@@ -135,9 +135,11 @@ export function AMCCoverageByLocationCard({ data, onDownload, colorPalette, head
   const totalAssets = (Array.isArray(data) ? data : []).reduce((sum, location: any) => sum + Number(location?.total ?? 0), 0);
   const totalAssetsUnderAMC = (Array.isArray(data) ? data : []).reduce((sum, location: any) => sum + Number(location?.covered ?? 0), 0);
   const overallCoverage = totalAssets > 0 ? (totalAssetsUnderAMC / totalAssets) * 100 : 0;
-
+ 
   return (
-    <Card className="h-full flex flex-col">
+    <>
+   
+    <Card className="h-full flex flex-col height-full coverage-card">
       <CardHeader className="flex-shrink-0 pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className={`text-lg font-semibold flex items-center gap-2 ${headerClassName || 'text-[#1A1A1A]'}`}> 
@@ -210,7 +212,7 @@ export function AMCCoverageByLocationCard({ data, onDownload, colorPalette, head
         </div>
 
         {/* Location Tree */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto" style={{ height: '400px' }}>
           {!data || (Array.isArray(data) ? data.length === 0 : false) ? (
             <div className="flex items-center justify-center h-32">
               <div className="text-center">
@@ -219,7 +221,7 @@ export function AMCCoverageByLocationCard({ data, onDownload, colorPalette, head
               </div>
             </div>
           ) : (
-            <div className="h-full overflow-auto">
+            <div className="space-y-2">
               {(() => {
                 const list = Array.isArray(data) ? data : (data ? [data as any] : []);
                 return list.map((location, idx) => (
@@ -233,5 +235,6 @@ export function AMCCoverageByLocationCard({ data, onDownload, colorPalette, head
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }
