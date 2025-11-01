@@ -364,9 +364,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
               Status: {hoveredEvent.extendedProps.status}
             </div>
           )}
-          <div className="text-xs text-blue-600 mt-2">
-            Click to view details
-          </div>
+
         </div>
       )}
 

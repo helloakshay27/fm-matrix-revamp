@@ -227,6 +227,14 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
     fetchRecentTickets();
   }, [location.pathname, localStorage.getItem('selectedSiteId') ]);
 
+  // Utility to format status values (e.g., 'in_use' -> 'in use')
+  const formatStatus = (status: string) => {
+    if (!status) return '';
+    return status
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "in_use":
@@ -508,7 +516,7 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
                       <span className="text-sm text-gray-700">:</span>
                       <div className="flex items-center gap-2 text-sm">
                         <span className="italic text-gray-600">
-                          {ticket.status}
+                          {formatStatus(ticket.status)}
                         </span>
                       </div>
                     </div>
@@ -585,7 +593,7 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
                         className="text-blue-800 px-6 py-1 rounded-full text-xs font-medium"
                         style={{ backgroundColor: "#E0F2FE" }}
                       >
-                        {ticket.status}
+                        {formatStatus(ticket.status)}
                       </span>
                     </div>
                   </div>
@@ -615,7 +623,7 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
                       </span>
                       <span className="text-sm text-gray-700">:</span>
                       <span className="text-sm text-gray-900">
-                        {ticket.status}
+                        {formatStatus(ticket.status)}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -690,7 +698,7 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
                       <span className="text-sm text-gray-700">:</span>
                       <div className="flex items-center gap-2 text-sm">
                         <span className="italic text-gray-600">
-                          {ticket.status}
+                          {formatStatus(ticket.status)}
                         </span>
                       </div>
                     </div>
