@@ -79,8 +79,8 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
   };
   if (!data || !data.response) {
     return (
-      <Card className={`bg-white ${className}`}>
-        <CardHeader>
+      <Card className={`bg-white ${className} relative z-0`}>
+        <CardHeader className="relative z-0">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-bold text-[#C72030]">Response & Resolution TAT</CardTitle>
             <Download 
@@ -89,7 +89,7 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
             />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-0">
           <div className="flex items-center justify-center h-48">
             <p className="text-gray-500">No data available</p>
           </div>
@@ -166,8 +166,8 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
   const resolutionTotalValue = resolutionTATData.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <Card className={`bg-white ${className}`}>
-      <CardHeader>
+    <Card className={`bg-white ${className} relative z-0`}>
+      <CardHeader className="relative z-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold text-[#C72030]">Response & Resolution TAT</CardTitle>
           <Download 
@@ -176,7 +176,7 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
           />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative z-0">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Response TAT Chart */}
           <div className="text-center">
