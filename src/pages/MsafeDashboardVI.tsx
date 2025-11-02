@@ -25,7 +25,8 @@ const COLORS = {
     krcc: '#FFC107', // Yellow
     approval: '#D32F2F', // Red
     hsw: '#7E57C2', // Purple
-    grid: '#E0E0E0',
+    grid: '#D0D0D0', // Darker grid
+    axis: '#666666', // Dark axis lines
 };
 
 type Option = { label: string; value: string };
@@ -1791,25 +1792,26 @@ const MsafeDashboardVI: React.FC = () => {
                 ) : (
                     <Box sx={{ width: onboardingChartWidth, height: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={onboardingData} margin={{ top: 28, right: 24, left: 16, bottom: 80 }} barCategoryGap="55%" barGap={12}>
-                                <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                            <BarChart data={onboardingData} margin={{ top: 28, right: 24, left: 16, bottom: 80 }} barCategoryGap="5%" barGap={0}>
+                                <CartesianGrid stroke={COLORS.axis} strokeDasharray="3 3" vertical={false} />
                                 <XAxis
                                     dataKey="site"
                                     tickLine={false}
-                                    axisLine={{ stroke: COLORS.grid }}
+                                    axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                     interval={0}
                                     angle={0}
                                     tickMargin={12}
                                     dy={12}
                                     padding={{ left: 28, right: 28 }}
-                                    tick={{ fontSize: 12 }}
+                                    tick={{ fontSize: 12, fill: COLORS.axis, fontWeight: 'bold' }}
                                 />
                                 <YAxis
                                     tickLine={false}
-                                    axisLine={{ stroke: COLORS.grid }}
+                                    axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                     allowDecimals={false}
                                     domain={[0, onboardingYAxis.upper]}
                                     ticks={onboardingYAxis.ticks}
+                                    tick={{ fill: COLORS.axis, fontWeight: 'bold' }}
                                 />
                                 <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                                 <Bar dataKey="KRCC" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
@@ -1848,8 +1850,8 @@ const MsafeDashboardVI: React.FC = () => {
                     </TableHead>
                     <TableBody>
                         {[
-                            { label: 'Approval', key: 'Approval' as const },
                             { label: 'KRCC', key: 'KRCC' as const },
+                            { label: 'Approval', key: 'Approval' as const },                 
                             { label: 'HSW Induction', key: 'HSW' as const },
                         ].map((row) => (
                             <TableRow key={row.key}>
@@ -1910,26 +1912,27 @@ const MsafeDashboardVI: React.FC = () => {
                     </Box>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={day1HSWData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="55%" barGap={12}>
-                            <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                        <BarChart data={day1HSWData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="5%" barGap={0}>
+                            <CartesianGrid stroke={COLORS.axis} strokeDasharray="3 3" vertical={false} />
                             <XAxis
                                 dataKey="site"
                                 tickLine={false}
-                                axisLine={{ stroke: COLORS.grid }}
+                                axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                 interval={0}
                                 angle={0}
                                 dy={12}
-                                tick={{ fontSize: 12 }}
+                                tick={{ fontSize: 12, fill: COLORS.axis, fontWeight: 'bold' }}
                                 tickMargin={12}
                                 minTickGap={28}
                                 padding={{ left: 28, right: 28 }}
                             />
                             <YAxis
                                 tickLine={false}
-                                axisLine={{ stroke: COLORS.grid }}
+                                axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                 allowDecimals={false}
                                 domain={[0, day1HSWYAxis.upper]}
                                 ticks={day1HSWYAxis.ticks}
+                                tick={{ fill: COLORS.axis, fontWeight: 'bold' }}
                             />
                             <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                             <Bar dataKey="Complaint" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
@@ -1988,26 +1991,27 @@ const MsafeDashboardVI: React.FC = () => {
                 ) : (
                     <Box sx={{ width: trainingChartWidth, height: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={trainingData} margin={{ top: 44, right: 24, left: 24, bottom: 40 }} barCategoryGap="45%" barGap={12}>
-                                <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                            <BarChart data={trainingData} margin={{ top: 44, right: 24, left: 24, bottom: 40 }} barCategoryGap="5%" barGap={0}>
+                                <CartesianGrid stroke={COLORS.axis} strokeDasharray="3 3" vertical={false} />
                                 <XAxis
                                     dataKey="site"
                                     tickLine={false}
-                                    axisLine={{ stroke: COLORS.grid }}
+                                    axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                     interval={0}
                                     minTickGap={28}
                                     tickMargin={10}
                                     angle={0}
                                     dy={12}
                                     padding={{ left: 28, right: 28 }}
-                                    tick={{ fontSize: 12 }}
+                                    tick={{ fontSize: 12, fill: COLORS.axis, fontWeight: 'bold' }}
                                 />
                                 <YAxis
                                     tickLine={false}
-                                    axisLine={{ stroke: COLORS.grid }}
+                                    axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                     allowDecimals={false}
                                     domain={[0, trainingYAxis.upper]}
                                     ticks={trainingYAxis.ticks}
+                                    tick={{ fill: COLORS.axis, fontWeight: 'bold' }}
                                 />
                                 <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [String(value), '']} />
                                 <Bar dataKey="twoW" name="2W" fill={TRAINING_COLORS.twoW} barSize={20} radius={[3, 3, 0, 0]}>
@@ -2122,20 +2126,20 @@ const MsafeDashboardVI: React.FC = () => {
                 ) : (
                     <Box sx={{ width: ftprChartWidth, height: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={ftprData} margin={{ top: 24, right: 24, left: 24, bottom: 36 }} barCategoryGap="70%" barGap={16}>
-                                <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                            <BarChart data={ftprData} margin={{ top: 24, right: 24, left: 24, bottom: 36 }} barCategoryGap="5%" barGap={0}>
+                                <CartesianGrid stroke={COLORS.axis} strokeDasharray="3 3" vertical={false} />
                                 <XAxis
                                     dataKey="site"
                                     tickLine={false}
-                                    axisLine={{ stroke: COLORS.grid }}
+                                    axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                     interval={0}
                                     minTickGap={28}
                                     tickMargin={10}
                                     dy={12}
                                     padding={{ left: 28, right: 28 }}
-                                    tick={{ fontSize: 12 }}
+                                    tick={{ fontSize: 12, fill: COLORS.axis, fontWeight: 'bold' }}
                                 />
-                                <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} domain={[0, 100]} allowDecimals={false} />
+                                <YAxis tickLine={false} axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }} domain={[0, 100]} allowDecimals={false} tick={{ fill: COLORS.axis, fontWeight: 'bold' }} />
                                 <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${Number(value).toFixed(0)}%`, '']} />
                                 <Bar dataKey="twoW" name="2W" fill={TRAINING_COLORS.twoW} barSize={16} radius={[3, 3, 0, 0]}>
                                     <LabelList dataKey="twoW" content={makeCenteredLabel((n) => (n < 4 ? null : `${n.toFixed(0)}%`), 12)} />
@@ -2186,26 +2190,27 @@ const MsafeDashboardVI: React.FC = () => {
                         return (
                             <Box sx={{ width: newJoineeChartWidth, height: '100%' }}>
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={newJoineeData} margin={{ top: 28, right: 24, left: 16, bottom: 80 }} barCategoryGap="55%" barGap={12}>
-                                        <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                                    <BarChart data={newJoineeData} margin={{ top: 28, right: 24, left: 16, bottom: 80 }} barCategoryGap="5%" barGap={0}>
+                                        <CartesianGrid stroke={COLORS.axis} strokeDasharray="3 3" vertical={false} />
                                         <XAxis
                                             dataKey="site"
                                             tickLine={false}
-                                            axisLine={{ stroke: COLORS.grid }}
+                                            axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                             interval={0}
                                             minTickGap={28}
                                             angle={0}
                                             dy={12}
                                             tickMargin={12}
                                             padding={{ left: 28, right: 28 }}
-                                            tick={{ fontSize: 12 }}
+                                            tick={{ fontSize: 12, fill: COLORS.axis, fontWeight: 'bold' }}
                                         />
                                         <YAxis
                                             tickLine={false}
-                                            axisLine={{ stroke: COLORS.grid }}
+                                            axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                             allowDecimals={false}
                                             domain={[0, newJoineeYAxis.upper]}
                                             ticks={newJoineeYAxis.ticks}
+                                            tick={{ fill: COLORS.axis, fontWeight: 'bold' }}
                                         />
                                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                                         <Bar dataKey="count" name="New Joinees" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
@@ -2319,26 +2324,27 @@ const MsafeDashboardVI: React.FC = () => {
                     </Box>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={lmcData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="55%" barGap={12}>
-                            <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                        <BarChart data={lmcData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="5%" barGap={0}>
+                            <CartesianGrid stroke={COLORS.axis} strokeDasharray="3 3" vertical={false} />
                             <XAxis
                                 dataKey="site"
                                 tickLine={false}
-                                axisLine={{ stroke: COLORS.grid }}
+                                axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                 interval={0}
                                 angle={0}
                                 dy={12}
-                                tick={{ fontSize: 10 }}
+                                tick={{ fontSize: 10, fill: COLORS.axis, fontWeight: 'bold' }}
                                 tickMargin={12}
                                 minTickGap={28}
                                 padding={{ left: 28, right: 28 }}
                             />
                             <YAxis
                                 tickLine={false}
-                                axisLine={{ stroke: COLORS.grid }}
+                                axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                 allowDecimals={false}
                                 domain={[0, lmcYAxis.upper]}
                                 ticks={lmcYAxis.ticks}
+                                tick={{ fill: COLORS.axis, fontWeight: 'bold' }}
                             />
                             <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                             <Bar dataKey="completed" name="LMC Completed" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
@@ -2382,26 +2388,27 @@ const MsafeDashboardVI: React.FC = () => {
                     </Box>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={smtData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="55%" barGap={12}>
-                            <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                        <BarChart data={smtData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="5%" barGap={0}>
+                            <CartesianGrid stroke={COLORS.axis} strokeDasharray="3 3" vertical={false} />
                             <XAxis
                                 dataKey="site"
                                 tickLine={false}
-                                axisLine={{ stroke: COLORS.grid }}
+                                axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                 interval={0}
                                 angle={0}
                                 dy={12}
-                                tick={{ fontSize: 10 }}
+                                tick={{ fontSize: 10, fill: COLORS.axis, fontWeight: 'bold' }}
                                 tickMargin={12}
                                 minTickGap={28}
                                 padding={{ left: 28, right: 28 }}
                             />
                             <YAxis
                                 tickLine={false}
-                                axisLine={{ stroke: COLORS.grid }}
+                                axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                 allowDecimals={false}
                                 domain={[0, smtYAxis.upper]}
                                 ticks={smtYAxis.ticks}
+                                tick={{ fill: COLORS.axis, fontWeight: 'bold' }}
                             />
                             <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                             <Bar dataKey="completed" name="SMT Completed" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
@@ -2464,10 +2471,10 @@ const MsafeDashboardVI: React.FC = () => {
                 ) : (
                     <Box sx={{ width: complianceForecastWidth, height: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={complianceForecastData} margin={{ top: 28, right: 24, left: 24, bottom: 36 }} barCategoryGap="70%" barGap={16}>
-                                <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                                <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.grid }} interval={0} minTickGap={28} tickMargin={10} dy={12} padding={{ left: 28, right: 28 }} tick={{ fontSize: 12 }} />
-                                <YAxis tickLine={false} axisLine={{ stroke: COLORS.grid }} allowDecimals={false} domain={[0, complianceForecastYAxis.upper]} ticks={complianceForecastYAxis.ticks} />
+                            <BarChart data={complianceForecastData} margin={{ top: 28, right: 24, left: 24, bottom: 36 }} barCategoryGap="5%" barGap={0}>
+                                <CartesianGrid stroke={COLORS.axis} strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="site" tickLine={false} axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }} interval={0} minTickGap={28} tickMargin={10} dy={12} padding={{ left: 28, right: 28 }} tick={{ fontSize: 12, fill: COLORS.axis, fontWeight: 'bold' }} />
+                                <YAxis tickLine={false} axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }} allowDecimals={false} domain={[0, complianceForecastYAxis.upper]} ticks={complianceForecastYAxis.ticks} tick={{ fill: COLORS.axis, fontWeight: 'bold' }} />
                                 <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [`${value}`, '']} />
                                 <Bar dataKey="twoW" name="2W" fill={CF_COLORS.twoW} barSize={16} radius={[3, 3, 0, 0]}>
                                     <LabelList dataKey="twoW" position="top" formatter={(v: any) => (v ? v : 0)} />
@@ -2574,26 +2581,27 @@ const MsafeDashboardVI: React.FC = () => {
                         return (
                             <Box sx={{ width: drivingChartWidth, height: '100%' }}>
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={drivingData} margin={{ top: 28, right: 16, left: 10, bottom: 80 }} barCategoryGap="55%" barGap={12}>
-                                        <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                                    <BarChart data={drivingData} margin={{ top: 28, right: 16, left: 10, bottom: 80 }} barCategoryGap="5%" barGap={0}>
+                                        <CartesianGrid stroke={COLORS.axis} strokeDasharray="3 3" vertical={false} />
                                         <XAxis
                                             dataKey="site"
                                             tickLine={false}
-                                            axisLine={{ stroke: COLORS.grid }}
+                                            axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                             interval={0}
                                             angle={0}
                                             dy={12}
-                                            tick={{ fontSize: 12 }}
+                                            tick={{ fontSize: 12, fill: COLORS.axis, fontWeight: 'bold' }}
                                             tickMargin={12}
                                             minTickGap={28}
                                             padding={{ left: 28, right: 28 }}
                                         />
                                         <YAxis
                                             tickLine={false}
-                                            axisLine={{ stroke: COLORS.grid }}
+                                            axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                                             allowDecimals={false}
                                             domain={[0, drivingYAxis.upper]}
                                             ticks={drivingYAxis.ticks}
+                                            tick={{ fill: COLORS.axis, fontWeight: 'bold' }}
                                         />
                                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                                         <Bar dataKey="license" name="Driving License" fill={DRIVING_COLORS.license} barSize={20} radius={[3, 3, 0, 0]}>
@@ -2677,26 +2685,27 @@ const MsafeDashboardVI: React.FC = () => {
             </Stack>
             <Box ref={medicalFirstAidRef} sx={{ width: '100%', height: 520 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={medicalFirstAidData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="55%" barGap={12}>
-                        <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
+                    <BarChart data={medicalFirstAidData} margin={{ top: 28, right: 12, left: 10, bottom: 80 }} barCategoryGap="5%" barGap={0}>
+                        <CartesianGrid stroke={COLORS.axis} strokeDasharray="3 3" vertical={false} />
                         <XAxis
                             dataKey="site"
                             tickLine={false}
-                            axisLine={{ stroke: COLORS.grid }}
+                            axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                             interval={0}
                             angle={0}
                             dy={12}
-                            tick={{ fontSize: 12 }}
+                            tick={{ fontSize: 12, fill: COLORS.axis, fontWeight: 'bold' }}
                             tickMargin={12}
                             minTickGap={28}
                             padding={{ left: 28, right: 28 }}
                         />
                         <YAxis
                             tickLine={false}
-                            axisLine={{ stroke: COLORS.grid }}
+                            axisLine={{ stroke: COLORS.axis, strokeWidth: 2 }}
                             allowDecimals={false}
                             domain={[0, medicalYAxis.upper]}
                             ticks={medicalYAxis.ticks}
+                            tick={{ fill: COLORS.axis, fontWeight: 'bold' }}
                         />
                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                         <Bar dataKey="medical" name="Medical Checkup" fill={COLORS.krcc} barSize={20} radius={[3, 3, 0, 0]}>
