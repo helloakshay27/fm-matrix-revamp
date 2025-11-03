@@ -379,7 +379,7 @@ export const Dashboard = () => {
                   break;
                 case "tickets_proactive_reactive":
                   promises.push(
-                    ticketAnalyticsAPI.getTicketsCategorywiseData(
+                    ticketAnalyticsAPI.getTicketStatusData(
                       dateRange.from,
                       dateRange.to
                     )
@@ -1536,8 +1536,18 @@ export const Dashboard = () => {
 
         case "tickets_proactive_reactive":
           // Return data as-is for proactive/reactive breakdown
+          if (data?.proactive_reactive) {
+            return {
+              proactiveOpen: data.proactive_reactive.proactive.open || 0,
+              proactiveClosed: data.proactive_reactive.proactive.closed || 0,
+              reactiveOpen: data.proactive_reactive.reactive.open || 0,
+              reactiveClosed:
+                data.proactive_reactive.reactive.closed || 0,
+              proactiveWIP: data.proactive_reactive.proactive.wip || 0,
+              proactiveInfo: data.proactive_reactive.proactive.info,
+            };
+          }
           return data;
-
         case "unit_categorywise":
         case "tickets_unit_categorywise":
           // Return unit category-wise data as-is
@@ -1618,24 +1628,31 @@ export const Dashboard = () => {
 
           case "tickets_proactive_reactive":
             // Proactive/Reactive tickets breakdown
+            // The data has already been transformed by transformTicketData
+            // It now has the flat structure: proactiveOpen, proactiveClosed, reactiveOpen, reactiveClosed
+            console.log("🔍 tickets_proactive_reactive - Transformed data:", data);
+            
             const proactiveReactiveData =
-              Array.isArray(data) && data.length > 0 ? data[0] : null;
+              data &&
+              typeof data === "object" &&
+              "proactiveOpen" in data
+                ? data
+                : { proactiveOpen: 0, proactiveClosed: 0, reactiveOpen: 0, reactiveClosed: 0 };
+
+            console.log("🔍 tickets_proactive_reactive - Final values:", {
+              proactiveOpen: proactiveReactiveData.proactiveOpen,
+              proactiveClosed: proactiveReactiveData.proactiveClosed,
+              reactiveOpen: proactiveReactiveData.reactiveOpen,
+              reactiveClosed: proactiveReactiveData.reactiveClosed,
+            });
 
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <ProactiveReactiveCard
-                  proactiveOpenTickets={
-                    proactiveReactiveData?.proactive?.Open || 0
-                  }
-                  proactiveClosedTickets={
-                    proactiveReactiveData?.proactive?.Closed || 0
-                  }
-                  reactiveOpenTickets={
-                    proactiveReactiveData?.reactive?.Open || 0
-                  }
-                  reactiveClosedTickets={
-                    proactiveReactiveData?.reactive?.Closed || 0
-                  }
+                  proactiveOpenTickets={proactiveReactiveData.proactiveOpen || 0}
+                  proactiveClosedTickets={proactiveReactiveData.proactiveClosed || 0}
+                  reactiveOpenTickets={proactiveReactiveData.reactiveOpen || 0}
+                  reactiveClosedTickets={proactiveReactiveData.reactiveClosed || 0}
                 />
               </SortableChartItem>
             );
