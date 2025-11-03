@@ -339,7 +339,7 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
           </div>
          
         </div>
-          <div className="flex flex-wrap justify-center gap-x-14 gap-y-1 mt-2 px-2">
+          <div className="flex flex-wrap justify-center gap-x-10 gap-y-1 mt-2 px-2">
               {responseTATData.map((item, index) => (
                 <div key={index} className="flex items-center gap-1.5">
                   <div 

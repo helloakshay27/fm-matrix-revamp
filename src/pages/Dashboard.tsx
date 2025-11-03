@@ -2597,6 +2597,16 @@ export const Dashboard = () => {
                         color: #000000 !important;
 
             }
+        table th {
+                                        color: #000000 !important;
+        
+        
+        }
+                                        div{
+                                                                                color: #000000 !important;
+
+                                        }
+
 
           
         `}

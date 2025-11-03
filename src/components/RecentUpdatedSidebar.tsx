@@ -416,7 +416,7 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
         </div>
 
         {/* Tickets List */}
-        <div className="flex-1  space-y-4">
+        <div className="flex-1  space-y-4 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ">
           {recentTickets.map((ticket, index) => {
             // Debug logging for each ticket
             const isCurrentlyFlagged = flaggedTickets.has(ticket.id.toString());
