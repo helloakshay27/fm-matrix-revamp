@@ -374,6 +374,41 @@ export const assetAnalyticsDownloadAPI = {
     }
   },
 
+  downloadCardAMCAssets: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+
+    const url = `${getBaseUrl()}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}&amc_assets=true&export=amc_asstes`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download AMC assets data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `amc_assets_${fromDateStr}_to_${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading AMC assets data:', error);
+      throw error;
+    }
+  },
+
   // Download all asset analytics data
   downloadAllAssetAnalyticsData: async (fromDate: Date, toDate: Date, selectedTypes: string[] = []): Promise<void> => {
     try {

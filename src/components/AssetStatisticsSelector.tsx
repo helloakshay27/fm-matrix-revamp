@@ -52,6 +52,11 @@ interface AssetStatistics {
       total: number;
     };
   };
+  amc_assets?: {
+    assets_under_amc: number;
+    assets_missing_amc: number;
+    info: string;
+  };
   // Legacy support for transformed data
   total_value?: string;
   it_assets?: number;
@@ -125,6 +130,16 @@ const METRICS_CONFIG = [
     iconBgColor: 'bg-[#C4B89D54]',
     downloadType: 'card_ppm_conduct_assets',
   },
+  {
+    id: 'amc_assets',
+    label: 'AMC Assets',
+    icon: BarChart3,
+    color: 'text-[#C72030]',
+    bgColor: 'bg-[#F6F4EE]',
+    borderColor: 'border-gray-200',
+    iconBgColor: 'bg-[#C4B89D54]',
+    downloadType: 'card_amc_assets',
+  },
 ];
 
 export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = ({
@@ -134,7 +149,8 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
     'assets_in_use', 
     'assets_in_breakdown', 
     'critical_assets_in_breakdown', 
-    'ppm_conduct_assets_count'
+    'ppm_conduct_assets_count',
+    'amc_assets'
   ],
   onMetricsChange,
   onDownload,
@@ -226,6 +242,10 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
           await assetAnalyticsDownloadAPI.downloadCardPPMConductAssets(dateRange.startDate, dateRange.endDate);
           toast.success('PPM conduct assets data downloaded successfully!');
           break;
+        case 'card_amc_assets':
+          await assetAnalyticsDownloadAPI.downloadCardAMCAssets(dateRange.startDate, dateRange.endDate);
+          toast.success('AMC assets data downloaded successfully!');
+          break;
         default:
           toast.info('Download not available for this metric');
       }
@@ -256,6 +276,9 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
           // Check for new structure first, then fallback to old structure
           return (value as any).ppm_conduct_assets_count?.toLocaleString() || 
                  (value as any).total?.toLocaleString() || 'N/A';
+        case 'amc_assets':
+          // Special handling for AMC assets - return the object itself
+          return value;
         default:
           return 'N/A';
       }
@@ -286,6 +309,8 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
         return statistics.critical_assets_breakdown;
       case 'ppm_conduct_assets_count':
         return statistics.ppm_overdue_assets || statistics.ppm_conduct_assets_count;
+      case 'amc_assets':
+        return statistics.amc_assets;
       default:
         return statistics[metricId as keyof AssetStatistics];
     }
@@ -340,6 +365,90 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
     const hasDownload = metric.downloadType !== 'average_rating';
     const displayValue = formatValue(metric.id, value);
     const isDataAvailable = displayValue !== 'N/A' && displayValue !== '0';
+
+    // Special rendering for AMC Assets card with two values
+    if (metric.id === 'amc_assets' && value && typeof value === 'object') {
+      const amcData = value as { assets_under_amc?: number; assets_missing_amc?: number; info?: string };
+      const underAmc = amcData.assets_under_amc ?? 0;
+      const missingAmc = amcData.assets_missing_amc ?? 0;
+      const hasData = underAmc > 0 || missingAmc > 0;
+
+      return (
+        <div
+          key={metric.id}
+          className={`group relative bg-[#F6F4EE] rounded-lg border border-[#E5E5E5] hover:shadow-md transition-all duration-200 overflow-hidden ${
+            !hasData ? 'opacity-60' : ''
+          }`}
+        >
+          <div className="p-6">
+            {/* Icon and Actions Row */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 rounded-lg bg-[#C4B89D54] flex items-center justify-center">
+                <Icon className="w-6 h-6 text-[#C72030]" />
+              </div>
+              <div className="flex items-center gap-1">
+                {amcData.info && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50"
+                        >
+                          <Info className="w-4 h-4 text-[#6B7280]" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 text-white border-gray-700 max-w-xs">
+                        <p className="text-sm font-medium">{amcData.info}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {hasDownload && showDownload && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(metric.downloadType);
+                    }}
+                    className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50"
+                    title={`Download ${metric.label} data`}
+                    disabled={!hasData}
+                  >
+                    <Download className="w-4 h-4 text-[#C72030]" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-sm font-medium text-[#6B7280] leading-tight mb-4">
+              {metric.label}
+            </h3>
+
+            {/* Two-part divided display */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Assets Under AMC */}
+              <div className="border-r border-gray-300 pr-3">
+                <div className="text-xs text-[#6B7280] mb-1">Assets Under AMC</div>
+                <div className="text-2xl font-semibold text-[#1F2937]">
+                  {underAmc.toLocaleString()}
+                </div>
+              </div>
+              {/* Assets Missing AMC */}
+              <div className="pl-3">
+                <div className="text-xs text-[#6B7280] mb-1">Assets Missing AMC</div>
+                <div className="text-2xl font-semibold text-[#1F2937]">
+                  {missingAmc.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div
@@ -511,7 +620,7 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
       );
     }
 
-    // Default grid layout - responsive grid for 5 cards
+    // Default grid layout - responsive grid for 6 cards
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[300px]">
         {allMetrics.map(renderMetricCard)}

@@ -92,6 +92,11 @@ export interface AssetStatisticsData {
       total: number;
     };
   };
+  amc_assets?: {
+    assets_under_amc: number;
+    assets_missing_amc: number;
+    info: string;
+  };
   average_customer_rating?: {
     info: string;
     avg_rating: number;
@@ -264,7 +269,7 @@ export const assetAnalyticsAPI = {
     const accessToken = getAccessToken();
     
     // Note: The API endpoint has "statictics" (not "statistics") - this appears to be the correct endpoint
-    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&total_assets=true&assets_in_use=true&assets_in_breakdown=true&critical_assets_breakdown=true&ppm_overdue_assets=true`;
+    const url = `${API_CONFIG.BASE_URL}/pms/assets/assets_statistics.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}&access_token=${accessToken}&total_assets=true&assets_in_use=true&assets_in_breakdown=true&critical_assets_breakdown=true&ppm_overdue_assets=true&amc_assets=true`;
     
     const response = await fetch(url, {
       headers: {
