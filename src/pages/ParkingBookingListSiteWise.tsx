@@ -809,20 +809,19 @@ const ParkingBookingListSiteWise = () => {
         const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
         setSummary(generatedSummary);
         
-        // Set pagination - calculate per_page from data length or default to 20
-        const perPage = response.parking_bookings.length > 0 ? response.parking_bookings.length : 20;
+        // Set pagination - use fixed per_page of 20 for consistent serial number calculation
         setApiPagination({
           current_page: response.pagination.current_page,
           total_count: response.pagination.total_count,
           total_pages: response.pagination.total_pages,
-          per_page: perPage
+          per_page: 20 // Fixed per_page value for consistent pagination
         });
         
         console.log('🔍 Pagination Update Debug:');
         console.log('Current Page:', response.pagination.current_page);
         console.log('Total Pages:', response.pagination.total_pages);
         console.log('Total Count:', response.pagination.total_count);
-        console.log('Per Page:', perPage);
+        console.log('Per Page:', 20);
         console.log('Card Filter Active:', cardFilter?.active);
         console.log('Table Data Length:', transformedBookings.length);
         
@@ -1415,13 +1414,12 @@ const ParkingBookingListSiteWise = () => {
       const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
       setSummary(generatedSummary);
       
-      // Set pagination - calculate per_page from data length or default to 20
-      const perPage = response.parking_bookings.length > 0 ? response.parking_bookings.length : 20;
+      // Set pagination - use fixed per_page of 20 for consistent serial number calculation
       setApiPagination({
         current_page: response.pagination.current_page,
         total_count: response.pagination.total_count,
         total_pages: response.pagination.total_pages,
-        per_page: perPage
+        per_page: 20 // Fixed per_page value for consistent pagination
       });
       
       console.log('🔍 Page Change Debug:');
