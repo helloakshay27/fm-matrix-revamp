@@ -1981,7 +1981,7 @@ export const Sidebar = () => {
               {level === 0 && (
                 <>
                   {isActive && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#1a1a1a]"></div>
                   )}
                   <item.icon className="w-5 h-5" />
                 </>
@@ -2014,7 +2014,7 @@ export const Sidebar = () => {
                           className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                         >
                           {subItem.href && isActiveRoute(subItem.href) && (
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#1a1a1a]"></div>
                           )}
                           <span>{subItem.name}</span>
                           {expandedItems.includes(subItem.name) ? (
@@ -2042,7 +2042,7 @@ export const Sidebar = () => {
                                   }`}
                                 >
                                   {isActiveRoute(nestedItem.href) && (
-                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#1a1a1a]"></div>
                                   )}
                                   {nestedItem.name}
                                 </button>
@@ -2061,7 +2061,7 @@ export const Sidebar = () => {
                         }`}
                       >
                         {isActiveRoute(subItem.href) && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#1a1a1a]"></div>
                         )}
                         {subItem.name}
                       </button>
@@ -2088,7 +2088,7 @@ export const Sidebar = () => {
           {level === 0 && (
             <>
               {isActive && (
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#1a1a1a]"></div>
               )}
               <item.icon className="w-5 h-5" />
             </>
@@ -2170,12 +2170,12 @@ export const Sidebar = () => {
           title={module.name}
         >
           {(active || isExpanded) && (
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#1a1a1a]"></div>
           )}
           {level === 0 ? (
             <module.icon
               className={`w-5 h-5 ${
-                active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
+                active || isExpanded ? "text-[#1a1a1a]" : "text-[#1a1a1a]"
               }`}
             />
           ) : (
@@ -2277,12 +2277,12 @@ export const Sidebar = () => {
                   title={module.name}
                 >
                   {isActiveRoute(module.href) && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#1a1a1a]"></div>
                   )}
                   <module.icon
                     className={`w-5 h-5 ${
                       isActiveRoute(module.href)
-                        ? "text-[#C72030]"
+                        ? "text-[#1a1a1a]"
                         : "text-[#1a1a1a]"
                     }`}
                   />

@@ -281,24 +281,14 @@ export default function EditFlatPage() {
             </div>
           </div>
 
-          {/* Update Button */}
-          <div className="flex justify-start pt-4">
-            <Button
-              onClick={handleUpdate}
-              className="px-8 py-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white"
-            >
-              Update
-            </Button>
-          </div>
-
           {/* Attachment Documents Section */}
-          <div className="pt-6 border-t">
+          <div className="pt-4">
             <h3 className="text-base font-semibold text-gray-900 mb-4">
               Attachment Documents
             </h3>
             
-            <div className="space-y-4">
-              <div className="relative">
+            <div className="flex items-end gap-4">
+              <div className="flex-1">
                 <Input
                   id="fileUpload"
                   type="file"
@@ -331,11 +321,21 @@ export default function EditFlatPage() {
               <Button
                 onClick={handleUpload}
                 variant="outline"
-                className="px-6 py-2"
+                className="px-8 py-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               >
                 upload
               </Button>
             </div>
+          </div>
+
+          {/* Update Button */}
+          <div className="flex justify-center pt-6 border-t">
+            <Button
+              onClick={handleUpdate}
+              className="px-8 py-2 bg-[#C72030] hover:bg-[#A01828] text-white"
+            >
+              Update
+            </Button>
           </div>
         </div>
       </div>

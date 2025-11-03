@@ -457,8 +457,8 @@ export function EnhancedTable<T extends Record<string, any>>({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-0">
+      <div className="flex items-center justify-between gap-4 px-6 py-3">
         <div className="flex items-center gap-4 flex-1">
           {leftActions}
 
@@ -626,7 +626,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {renderActions && (
-                        <TableCell className="p-4 text-center w-16 min-w-16" data-actions>
+                        <TableCell className="p-4 text-center w-16 min-w-16 align-middle" data-actions>
                           <div className="flex justify-center items-center gap-2">
                             {renderActions(item)}
                           </div>

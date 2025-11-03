@@ -23,7 +23,46 @@ const columns: ColumnConfig[] = [
 
 // Sample data
 const sampleCategories = [
-  // Empty initially as shown in image
+  {
+    id: "1",
+    sNo: 1,
+    categoryName: "Other",
+  },
+  {
+    id: "2",
+    sNo: 2,
+    categoryName: "Committee Member",
+  },
+  {
+    id: "3",
+    sNo: 3,
+    categoryName: "Pregnant Lady",
+  },
+  {
+    id: "4",
+    sNo: 4,
+    categoryName: "Senior Citizen",
+  },
+  {
+    id: "5",
+    sNo: 5,
+    categoryName: "Prioritize Complaint",
+  },
+  {
+    id: "6",
+    sNo: 6,
+    categoryName: "New User",
+  },
+  {
+    id: "7",
+    sNo: 7,
+    categoryName: "Test Category",
+  },
+  {
+    id: "8",
+    sNo: 8,
+    categoryName: "Abc",
+  },
 ];
 
 export const SpecialUsersCategoryDashboard = () => {
@@ -32,7 +71,9 @@ export const SpecialUsersCategoryDashboard = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+  const [editingCategory, setEditingCategory] = useState<any>(null);
 
   const handleAddCategory = () => {
     setShowAddDialog(true);
@@ -73,8 +114,30 @@ export const SpecialUsersCategoryDashboard = () => {
   };
 
   const handleEditCategory = (categoryId: string) => {
-    console.log("Edit category:", categoryId);
-    // Edit functionality to be implemented
+    const category = categories.find((c) => c.id === categoryId);
+    if (category) {
+      setEditingCategory(category);
+      setCategoryName(category.categoryName);
+      setShowEditDialog(true);
+    }
+  };
+
+  const handleSubmitEdit = () => {
+    if (!categoryName.trim()) {
+      toast.error("Please enter a category name");
+      return;
+    }
+
+    setCategories(categories.map((c) => 
+      c.id === editingCategory.id 
+        ? { ...c, categoryName: categoryName }
+        : c
+    ));
+    
+    setCategoryName("");
+    setEditingCategory(null);
+    setShowEditDialog(false);
+    toast.success("Category updated successfully!");
   };
 
   const handleDeleteCategory = (categoryId: string) => {
@@ -219,6 +282,62 @@ export const SpecialUsersCategoryDashboard = () => {
                   className="px-6 py-2 bg-[#1E3A8A] hover:bg-[#1E40AF] text-white"
                 >
                   Add
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Category Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="max-w-md bg-white">
+            <DialogHeader className="border-b pb-4">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-lg font-semibold">Edit Category</DialogTitle>
+                <button
+                  onClick={() => {
+                    setShowEditDialog(false);
+                    setCategoryName("");
+                    setEditingCategory(null);
+                  }}
+                  className="text-red-500 hover:text-red-700 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </DialogHeader>
+
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="editCategoryName" className="text-sm font-medium text-gray-700">
+                  Category Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="editCategoryName"
+                  placeholder="Enter Category Name"
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button
+                  onClick={() => {
+                    setShowEditDialog(false);
+                    setCategoryName("");
+                    setEditingCategory(null);
+                  }}
+                  variant="outline"
+                  className="px-6 py-2"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmitEdit}
+                  className="px-6 py-2 bg-[#1E3A8A] hover:bg-[#1E40AF] text-white"
+                >
+                  Update
                 </Button>
               </div>
             </div>

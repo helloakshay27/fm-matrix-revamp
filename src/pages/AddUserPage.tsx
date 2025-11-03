@@ -68,8 +68,10 @@ export const AddUserPage = () => {
     <div className="min-h-screen bg-[#fafafa] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-[#e8e8e8] px-6 py-4 mb-6 border-l-4 border-orange-500">
-          <h1 className="text-xl font-semibold text-[#1A1A1A]">Add User</h1>
+        <div className="bg-white rounded-lg shadow-sm mb-6">
+          <div className="px-6 py-4">
+            <h1 className="text-2xl font-semibold text-[#1A1A1A]">Add User</h1>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm">

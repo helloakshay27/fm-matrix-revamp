@@ -314,6 +314,7 @@ import { ManageFlatsPage } from "./pages/setup/ManageFlatsPage";
 import EditFlatPage from "./pages/setup/EditFlatPage";
 import { SpecialUsersCategoryDashboard } from "./pages/setup/SpecialUsersCategoryDashboard";
 import { KYCDetailsDashboard } from "./pages/setup/KYCDetailsDashboard";
+import { KYCDetailView } from "./pages/setup/KYCDetailView";
 import { HelpdeskSetupDashboard } from "./pages/setup/HelpdeskSetupDashboard";
 import { CommunicationSetupDashboard } from "./pages/setup/CommunicationSetupDashboard";
 
@@ -322,8 +323,10 @@ import NoticePage from "./pages/communication/NoticePage";
 import AddNoticePage from "./pages/communication/AddNoticePage";
 import NoticeDetailPage from "./pages/communication/NoticeDetailPage";
 import EventsPage from "./pages/communication/EventsPage";
+import CommunicationAddEventPage from "./pages/communication/AddEventPage";
 import EventDetailPage from "./pages/communication/EventDetailPage";
 import PollsPage from "./pages/communication/PollsPage";
+import AddPollPage from "./pages/communication/AddPollPage";
 import NotificationsPage from "./pages/communication/NotificationsPage";
 
 // Import User Roasters pages
@@ -548,7 +551,6 @@ import { HotelBookingPage } from "./pages/HotelBookingPage";
 
 // Import CRM Polls page
 import CRMPollsPage from "./pages/CRMPollsPage";
-import AddPollPage from "./pages/AddPollPage";
 
 // Import CRM Occupant User Detail page
 import { CRMOccupantUserDetailPage } from "./pages/CRMOccupantUserDetailPage";
@@ -1306,6 +1308,12 @@ function App() {
                     element={<KYCDetailsDashboard />}
                   />
 
+                  {/* Setup - KYC Detail View Route */}
+                  <Route
+                    path="/kyc-details/:id"
+                    element={<KYCDetailView />}
+                  />
+
                   {/* Setup - Helpdesk Setup Route */}
                   <Route
                     path="/setup/helpdesk-setup"
@@ -1336,12 +1344,20 @@ function App() {
                     element={<EventsPage />}
                   />
                   <Route
+                    path="/communication/events/add"
+                    element={<CommunicationAddEventPage />}
+                  />
+                  <Route
                     path="/communication/events/view/:id"
                     element={<EventDetailPage />}
                   />
                   <Route
                     path="/communication/polls"
                     element={<PollsPage />}
+                  />
+                  <Route
+                    path="/communication/polls/add"
+                    element={<AddPollPage />}
                   />
                   <Route
                     path="/communication/notifications"

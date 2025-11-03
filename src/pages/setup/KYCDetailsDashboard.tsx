@@ -9,8 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Edit2, X } from "lucide-react";
+import { Plus, Eye, X } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface KYCDetail {
   id: string;
@@ -19,9 +20,27 @@ interface KYCDetail {
   userMobile: string;
 }
 
+// Sample data to match the reference image
+const sampleKYCDetails: KYCDetail[] = [
+  {
+    id: "kyc-1",
+    userName: "Nupura Waradkar",
+    userEmail: "Nupura@Stnc.In",
+    userMobile: "9864181000",
+  },
+  {
+    id: "kyc-2",
+    userName: "Demo Demo",
+    userEmail: "Demo@Lockated.Com",
+    userMobile: "5889965447",
+  },
+];
+
 export const KYCDetailsDashboard = () => {
-  // Sample data - empty initially to match the design
-  const [kycDetails, setKycDetails] = useState<KYCDetail[]>([]);
+  const navigate = useNavigate();
+  
+  // Sample data populated from reference image
+  const [kycDetails, setKycDetails] = useState<KYCDetail[]>(sampleKYCDetails);
   
   const [selectedKYCDetails, setSelectedKYCDetails] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,12 +55,6 @@ export const KYCDetailsDashboard = () => {
 
   // Define columns for the table
   const columns = [
-    {
-      key: "actions",
-      label: "Actions",
-      sortable: false,
-      draggable: false,
-    },
     {
       key: "userName",
       label: "User Name",
@@ -127,39 +140,26 @@ export const KYCDetailsDashboard = () => {
     }
   };
 
-  const handleEditKYCDetail = (kycDetailId: string) => {
-    // TODO: Implement edit functionality
-    console.log("Edit KYC Detail:", kycDetailId);
-    toast.info("Edit functionality coming soon!");
+  const handleViewKYCDetail = (kycDetailId: string) => {
+    navigate(`/kyc-details/${kycDetailId}`);
   };
 
-  const handleDeleteKYCDetail = (kycDetailId: string) => {
-    setKycDetails(kycDetails.filter((detail) => detail.id !== kycDetailId));
-    toast.success("KYC Detail deleted successfully!");
+  // Render actions for each row
+  const renderActions = (item: KYCDetail) => {
+    return (
+      <button
+        onClick={() => handleViewKYCDetail(item.id)}
+        className="text-black hover:text-gray-700"
+        title="View"
+      >
+        <Eye className="w-4 h-4" />
+      </button>
+    );
   };
 
   // Custom cell renderer
   const renderCell = (item: KYCDetail, columnKey: string) => {
     switch (columnKey) {
-      case "actions":
-        return (
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => handleEditKYCDetail(item.id)}
-              className="text-blue-600 hover:text-blue-800"
-              title="Edit"
-            >
-              <Edit2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => handleDeleteKYCDetail(item.id)}
-              className="text-red-600 hover:text-red-800"
-              title="Delete"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        );
       case "userName":
         return <span>{item.userName}</span>;
       case "userEmail":
@@ -173,32 +173,37 @@ export const KYCDetailsDashboard = () => {
 
   return (
     <div className="p-6 bg-[#fafafa] min-h-screen">
-      <div className="bg-white rounded-lg shadow-sm">
-        <div className="p-6">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+      {/* Separate Header */}
+      <div className="bg-white rounded-lg shadow-sm mb-6">
+        <div className="px-6 py-4">
+          <h1 className="text-2xl font-semibold text-gray-900">
             KYC Details
           </h1>
-
-          <EnhancedTable
-            data={kycDetails}
-            columns={columns}
-            selectedItems={selectedKYCDetails}
-            onSelectAll={handleSelectAll}
-            onSelectItem={handleSelectKYCDetail}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            renderCell={renderCell}
-            leftActions={
-              <Button
-                onClick={handleAddKYCDetail}
-                className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-              </Button>
-            }
-          />
         </div>
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-white rounded-lg shadow-sm">
+        <EnhancedTable
+          data={kycDetails}
+          columns={columns}
+          selectedItems={selectedKYCDetails}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectKYCDetail}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          renderCell={renderCell}
+          renderActions={renderActions}
+          leftActions={
+            <Button
+              onClick={handleAddKYCDetail}
+              className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+          }
+        />
       </div>
 
       {/* Add KYC Detail Dialog */}
@@ -206,6 +211,16 @@ export const KYCDetailsDashboard = () => {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Add KYC Detail</DialogTitle>
+            <button
+              onClick={() => {
+                setShowAddDialog(false);
+                setFormData({ userName: "", userEmail: "", userMobile: "" });
+              }}
+              className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </button>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
