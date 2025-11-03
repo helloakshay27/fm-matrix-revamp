@@ -941,7 +941,7 @@ export const AddInventoryPage = () => {
               </div>
 
               {/* Form Grid - Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div>
                   <TextField
                     label="Cost"
@@ -975,6 +975,34 @@ export const AddInventoryPage = () => {
                     sx={fieldStyles}
                     error={!!errors.cost}
                     helperText={errors.cost}
+                  />
+                </div>
+
+                <div>
+                  <TextField
+                    label="Total Value"
+                    placeholder="Total Value"
+                    value={(() => {
+                      const qty = parseFloat(formData.quantity) || 0;
+                      const cost = parseFloat(formData.cost) || 0;
+                      const total = qty * cost;
+                      return total > 0 ? total.toFixed(2) : '';
+                    })()}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={{
+                      ...fieldStyles,
+                      '& .MuiOutlinedInput-root': {
+                        ...fieldStyles['& .MuiOutlinedInput-root'],
+                        backgroundColor: '#F5F5F5',
+                      },
+                      '& .MuiInputBase-input': {
+                        ...fieldStyles['& .MuiInputBase-input'],
+                        cursor: 'not-allowed',
+                      },
+                    }}
+                    disabled
                   />
                 </div>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, X, PlusCircle } from 'lucide-react';
+import { ArrowLeft, X, PlusCircle, Download } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionDetails } from '@/store/slices/inventoryConsumptionDetailsSlice';
@@ -242,6 +242,58 @@ const InventoryConsumptionViewPage = () => {
     navigate('/maintenance/inventory-consumption');
   };
 
+  const handleExport = async () => {
+    if (!id || !startDate || !endDate) {
+      toast.error('Missing required parameters for export');
+      return;
+    }
+
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      
+      if (!baseUrl || !token) {
+        toast.error('Missing base URL or token');
+        return;
+      }
+
+      const url = `https://${baseUrl}/pms/inventories/inventory_assets_consumption_details.xlsx?resource_id=${id}&q[start_date]=${startDate}&q[end_date]=${endDate}&token=${encodeURIComponent(token)}`;
+      
+      toast.info('Preparing export...');
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to export data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // Create descriptive filename with inventory name and date range
+      const inventoryName = inventory?.name?.replace(/[^a-z0-9]/gi, '_') || 'inventory';
+      const fileName = `inventory_consumption_${inventoryName}_${startDate}_to_${endDate}.xlsx`;
+      link.download = fileName;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast.success('Export downloaded successfully!');
+    } catch (error: any) {
+      console.error('Error exporting data:', error);
+      toast.error(error.message || 'Failed to export data. Please try again.');
+    }
+  };
+
   // Render cell content for EnhancedTable
   const renderCell = useCallback(
     (item: any, columnKey: string) => {
@@ -310,12 +362,22 @@ const InventoryConsumptionViewPage = () => {
           getItemId={(item) => (item as any)?.id?.toString?.() ?? ''}
           emptyMessage="No consumption data available"
           leftActions={
-            <Button
-            onClick={handleAddConsume}
-            className="inline-flex items-center gap-1 bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-md px-3 py-2 h-9 text-sm"
-          >
-            Add / Consume
-          </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleAddConsume}
+                className="inline-flex items-center gap-1 bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-md px-3 py-2 h-9 text-sm"
+              >
+                Add / Consume
+              </Button>
+              <Button
+                onClick={handleExport}
+                className="inline-flex items-center gap-1 bg-[#C72030] text-white hover:bg-[#B01D2E] rounded-md px-3 py-2 h-9 text-sm"
+                disabled={!id || !startDate || !endDate}
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </Button>
+            </div>
           }
         />
       )}
