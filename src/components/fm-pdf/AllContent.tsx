@@ -3615,14 +3615,14 @@ const AllContent = () => {
                                                             <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curOpen)}</td>
                                                             <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curInProg)}</td>
                                                             <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                                                {fmt(curOver)} <span className="text-xs text-gray-600">(Δ {fmtDiff(diffOver)})</span>
+                                                                {fmt(curOver)} <span className="text-xs text-gray-600">({fmtDiff(diffOver)})</span>
                                                                 {overdueArrowUp && <span className="text-red-600 arrow-print">▲</span>}
                                                                 {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
                                                                 {!overdueArrowUp && !overdueArrowDown && <span className="text-gray-400">—</span>}
                                                             </td>
                                                             <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curPart)}</td>
                                                             <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                                                {fmt(curClosed)} <span className="text-xs text-gray-600">(Δ {fmtDiff(diffClosed)})</span>
+                                                                {fmt(curClosed)} <span className="text-xs text-gray-600">({fmtDiff(diffClosed)})</span>
                                                                 {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
                                                                 {closedArrowDown && <span className="text-red-600 arrow-print">▼</span>}
                                                                 {!closedArrowUp && !closedArrowDown && <span className="text-gray-400">—</span>}
