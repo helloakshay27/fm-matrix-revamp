@@ -108,6 +108,24 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
   );
 };
 
+// Section Loader Component
+const SectionLoader: React.FC<{
+  loading: boolean;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ loading, children, className }) => {
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      {children}
+      {loading && (
+        <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface AMCRecord {
   id: number;
   asset_name: string;
@@ -175,6 +193,18 @@ export const AMCDashboard = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 600);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  
+  // Individual loading states for each analytics card
+  const [loadingStates, setLoadingStates] = useState({
+    status_overview: false,
+    type_distribution: false,
+    unit_resource_wise: false,
+    service_stats: false,
+    expiry_analysis: false,
+    service_tracking: false,
+    coverage_by_location: false
+  });
+  
   const [amcAnalyticsData, setAmcAnalyticsData] = useState<AMCStatusData | null>(null);
   const [amcStatusSummary, setAmcStatusSummary] = useState<AMCStatusSummary | null>(null);
   const [amcTypeDistribution, setAmcTypeDistribution] = useState<AMCTypeDistribution[] | null>(null);
@@ -242,43 +272,138 @@ export const AMCDashboard = () => {
 
   const fetchAMCAnalyticsData = async (startDate: Date, endDate: Date) => {
     setAnalyticsLoading(true);
+    
+    // Set all individual cards to loading initially (only for selected analytics)
+    const newLoadingStates = {
+      status_overview: selectedAnalyticsOptions?.includes('status_overview'),
+      type_distribution: selectedAnalyticsOptions?.includes('type_distribution'),
+      unit_resource_wise: selectedAnalyticsOptions?.includes('unit_resource_wise'),
+      service_stats: selectedAnalyticsOptions?.includes('service_stats'),
+      expiry_analysis: selectedAnalyticsOptions?.includes('expiry_analysis'),
+      service_tracking: selectedAnalyticsOptions?.includes('service_tracking'),
+      coverage_by_location: selectedAnalyticsOptions?.includes('coverage_by_location')
+    };
+    setLoadingStates(newLoadingStates);
+    
     try {
-      const [
-        statusData,
-        statusSummary,
-        typeDistribution,
-        unitResourceData,
-        expiryAnalysis,
-        serviceTracking,
-        serviceStatsData,
-        vendorPerformance,
-        complianceReport,
-        coverageData
-      ] = await Promise.all([
-        amcAnalyticsAPI.getAMCStatusData(startDate, endDate),
-        amcAnalyticsAPI.getAMCStatusSummary(startDate, endDate),
-        amcAnalyticsAPI.getAMCTypeDistribution(startDate, endDate),
-        amcAnalyticsAPI.getAMCUnitResourceWise(startDate, endDate),
-        amcAnalyticsAPI.getAMCExpiryAnalysis(startDate, endDate),
-        amcAnalyticsAPI.getAMCServiceTracking(startDate, endDate),
-        amcAnalyticsAPI.getAMCServiceStats(startDate, endDate),
-        amcAnalyticsAPI.getAMCVendorPerformance(startDate, endDate),
-        amcAnalyticsAPI.getAMCComplianceReport(startDate, endDate),
-        amcAnalyticsAPI.getAMCCoverageByLocation(startDate, endDate)
-      ]);
+      // Fetch all data in parallel but update states individually as they complete
+      const promises = [];
 
-      setAmcAnalyticsData(statusData);
-      setAmcStatusSummary(statusSummary);
-      setAmcTypeDistribution(typeDistribution);
-      setAmcUnitResourceData(unitResourceData);
-      setAmcExpiryAnalysis(expiryAnalysis);
-      setAmcServiceTracking(serviceTracking);
-      setAmcServiceStatsData(serviceStatsData);
-      setAmcVendorPerformance(vendorPerformance);
-      setAmcComplianceReport(complianceReport);
-      setAmcCoverageData(coverageData);
+      // Status Overview
+      if (selectedAnalyticsOptions?.includes('status_overview')) {
+        promises.push(
+          Promise.all([
+            amcAnalyticsAPI.getAMCStatusData(startDate, endDate),
+            amcAnalyticsAPI.getAMCStatusSummary(startDate, endDate)
+          ]).then(([statusData, statusSummary]) => {
+            setAmcAnalyticsData(statusData);
+            setAmcStatusSummary(statusSummary);
+            setLoadingStates(prev => ({ ...prev, status_overview: false }));
+            return { statusData, statusSummary };
+          })
+        );
+      }
+
+      // Type Distribution
+      if (selectedAnalyticsOptions?.includes('type_distribution')) {
+        promises.push(
+          amcAnalyticsAPI.getAMCTypeDistribution(startDate, endDate)
+            .then(data => {
+              setAmcTypeDistribution(data);
+              setLoadingStates(prev => ({ ...prev, type_distribution: false }));
+              return data;
+            })
+        );
+      }
+
+      // Unit Resource Wise
+      if (selectedAnalyticsOptions?.includes('unit_resource_wise')) {
+        promises.push(
+          amcAnalyticsAPI.getAMCUnitResourceWise(startDate, endDate)
+            .then(data => {
+              setAmcUnitResourceData(data);
+              setLoadingStates(prev => ({ ...prev, unit_resource_wise: false }));
+              return data;
+            })
+        );
+      }
+
+      // Service Stats
+      if (selectedAnalyticsOptions?.includes('service_stats')) {
+        promises.push(
+          amcAnalyticsAPI.getAMCServiceStats(startDate, endDate)
+            .then(data => {
+              setAmcServiceStatsData(data);
+              setLoadingStates(prev => ({ ...prev, service_stats: false }));
+              return data;
+            })
+        );
+      }
+
+      // Expiry Analysis
+      if (selectedAnalyticsOptions?.includes('expiry_analysis')) {
+        promises.push(
+          amcAnalyticsAPI.getAMCExpiryAnalysis(startDate, endDate)
+            .then(data => {
+              setAmcExpiryAnalysis(data);
+              setLoadingStates(prev => ({ ...prev, expiry_analysis: false }));
+              return data;
+            })
+        );
+      }
+
+      // Service Tracking
+      if (selectedAnalyticsOptions?.includes('service_tracking')) {
+        promises.push(
+          amcAnalyticsAPI.getAMCServiceTracking(startDate, endDate)
+            .then(data => {
+              setAmcServiceTracking(data);
+              setLoadingStates(prev => ({ ...prev, service_tracking: false }));
+              return data;
+            })
+        );
+      }
+
+      // Coverage by Location
+      if (selectedAnalyticsOptions?.includes('coverage_by_location')) {
+        promises.push(
+          amcAnalyticsAPI.getAMCCoverageByLocation(startDate, endDate)
+            .then(data => {
+              setAmcCoverageData(data);
+              setLoadingStates(prev => ({ ...prev, coverage_by_location: false }));
+              return data;
+            })
+        );
+      }
+
+      // Fetch vendor performance and compliance report (not displayed in selected cards)
+      promises.push(
+        amcAnalyticsAPI.getAMCVendorPerformance(startDate, endDate).then(data => {
+          setAmcVendorPerformance(data);
+          return data;
+        }),
+        amcAnalyticsAPI.getAMCComplianceReport(startDate, endDate).then(data => {
+          setAmcComplianceReport(data);
+          return data;
+        })
+      );
+
+      await Promise.all(promises);
+      
     } catch (error) {
       console.error('Error fetching AMC analytics data:', error);
+      
+      // Reset all loading states on error
+      setLoadingStates({
+        status_overview: false,
+        type_distribution: false,
+        unit_resource_wise: false,
+        service_stats: false,
+        expiry_analysis: false,
+        service_tracking: false,
+        coverage_by_location: false
+      });
+      
       toast.error('Failed to fetch AMC analytics data');
     } finally {
       setAnalyticsLoading(false);
@@ -1080,7 +1205,6 @@ export const AMCDashboard = () => {
                   variant="outline"
                   onClick={() => setIsAnalyticsFilterOpen(true)}
                   className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
-                  disabled={analyticsLoading}
                 >
                   <Filter className="w-4 h-4" />
                 </Button>
@@ -1088,15 +1212,10 @@ export const AMCDashboard = () => {
               </div>
             </div>
 
-            {analyticsLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="text-gray-600">Loading analytics data...</div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-120">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-120">
                   {selectedAnalyticsOptions?.includes('status_overview') && (
-                    <div className="h-full">
+                    <SectionLoader loading={loadingStates.status_overview} className="h-full">
                       <AMCStatusCard
                         data={amcStatusSummary}
                         colorPalette={analyticsColorPalette}
@@ -1107,10 +1226,10 @@ export const AMCDashboard = () => {
                           await amcAnalyticsDownloadAPI.downloadAMCStatusData(startDate, endDate);
                         }}
                       />
-                    </div>
+                    </SectionLoader>
                   )}
                   {selectedAnalyticsOptions?.includes('type_distribution') && (
-                    <div className="h-full">
+                    <SectionLoader loading={loadingStates.type_distribution} className="h-full">
                       <AMCTypeDistributionCard
                         data={amcTypeDistribution}
                         colorPalette={analyticsColorPalette}
@@ -1121,13 +1240,13 @@ export const AMCDashboard = () => {
                           await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(startDate, endDate);
                         }}
                       />
-                    </div>
+                    </SectionLoader>
                   )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
                   {selectedAnalyticsOptions?.includes('unit_resource_wise') && (
-                    <div className="h-full">
+                    <SectionLoader loading={loadingStates.unit_resource_wise} className="h-full">
                       <AMCUnitResourceCard
                         data={amcUnitResourceData}
                         colorPalette={analyticsColorPalette}
@@ -1138,10 +1257,10 @@ export const AMCDashboard = () => {
                           await amcAnalyticsDownloadAPI.downloadAMCUnitResourceWise(startDate, endDate);
                         }}
                       />
-                    </div>
+                    </SectionLoader>
                   )}
                   {selectedAnalyticsOptions?.includes('service_stats') && (
-                    <div className="h-full">
+                    <SectionLoader loading={loadingStates.service_stats} className="h-full">
                       <AMCServiceStatsCard
                         data={amcServiceStatsData}
                         colorPalette={analyticsColorPalette}
@@ -1152,7 +1271,7 @@ export const AMCDashboard = () => {
                           await amcAnalyticsDownloadAPI.downloadAMCServiceStats(startDate, endDate);
                         }}
                       />
-                    </div>
+                    </SectionLoader>
                   )}
                 </div>
 
@@ -1172,7 +1291,7 @@ export const AMCDashboard = () => {
                 )} */}
 
                 {selectedAnalyticsOptions?.includes('coverage_by_location') && (
-                  <div className="h-full">
+                  <SectionLoader loading={loadingStates.coverage_by_location} className="h-full">
                     <AMCCoverageByLocationCard
                       data={amcCoverageData}
                       colorPalette={analyticsColorPalette}
@@ -1183,11 +1302,11 @@ export const AMCDashboard = () => {
                         await amcAnalyticsDownloadAPI.downloadAMCCoverageByLocation(startDate, endDate);
                       }}
                     />
-                  </div>
+                  </SectionLoader>
                 )}
 
                 {selectedAnalyticsOptions?.includes('expiry_analysis') && (
-                  <div className="w-full lg:w-3/5 h-full">
+                  <SectionLoader loading={loadingStates.expiry_analysis} className="w-full lg:w-3/5 h-full">
                     <AMCExpiryAnalysisCard
                       data={amcExpiryAnalysis}
                       colorPalette={analyticsColorPalette}
@@ -1198,7 +1317,7 @@ export const AMCDashboard = () => {
                         await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(startDate, endDate);
                       }}
                     />
-                  </div>
+                  </SectionLoader>
                 )}
 
                 {selectedAnalyticsOptions?.length === 0 && (
@@ -1210,7 +1329,6 @@ export const AMCDashboard = () => {
                   </div>
                 )}
               </div>
-            )}
           </TabsContent>
 
           <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">

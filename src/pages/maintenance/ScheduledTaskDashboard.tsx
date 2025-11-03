@@ -132,6 +132,24 @@ const SortableChartItem = ({
   );
 };
 
+// Section Loader Component
+const SectionLoader: React.FC<{
+  loading: boolean;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ loading, children, className }) => {
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      {children}
+      {loading && (
+        <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface TaskRecord {
   id: string;
   checklist: string;
@@ -305,6 +323,15 @@ export const ScheduledTaskDashboard = () => {
   const [siteWiseData, setSiteWiseData] =
     useState<SiteWiseChecklistResponse | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  
+  // Individual loading states for each analytics card
+  const [loadingStates, setLoadingStates] = useState({
+    technical: false,
+    nonTechnical: false,
+    topTen: false,
+    siteWise: false
+  });
+  
   const [selectedAnalytics, setSelectedAnalytics] = useState<string[]>([
     "technical",
     "nonTechnical",
@@ -670,51 +697,89 @@ export const ScheduledTaskDashboard = () => {
     selectedTypes: string[] = selectedAnalytics
   ) => {
     setAnalyticsLoading(true);
+    
+    // Set selected cards to loading
+    setLoadingStates({
+      technical: selectedTypes.includes("technical"),
+      nonTechnical: selectedTypes.includes("nonTechnical"),
+      topTen: selectedTypes.includes("topTen"),
+      siteWise: selectedTypes.includes("siteWise")
+    });
+    
     try {
       const promises: Promise<any>[] = [];
 
       if (selectedTypes.includes("technical")) {
         promises.push(
-          taskAnalyticsAPI.getTechnicalChecklistData(startDate, endDate)
+          taskAnalyticsAPI.getTechnicalChecklistData(startDate, endDate).then(data => {
+            setTechnicalData(data);
+            setLoadingStates(prev => ({ ...prev, technical: false }));
+            return data;
+          })
         );
       } else {
-        promises.push(Promise.resolve(null));
+        promises.push(Promise.resolve(null).then(() => {
+          setTechnicalData(null);
+          return null;
+        }));
       }
 
       if (selectedTypes.includes("nonTechnical")) {
         promises.push(
-          taskAnalyticsAPI.getNonTechnicalChecklistData(startDate, endDate)
+          taskAnalyticsAPI.getNonTechnicalChecklistData(startDate, endDate).then(data => {
+            setNonTechnicalData(data);
+            setLoadingStates(prev => ({ ...prev, nonTechnical: false }));
+            return data;
+          })
         );
       } else {
-        promises.push(Promise.resolve(null));
+        promises.push(Promise.resolve(null).then(() => {
+          setNonTechnicalData(null);
+          return null;
+        }));
       }
 
       if (selectedTypes.includes("topTen")) {
         promises.push(
-          taskAnalyticsAPI.getTopTenChecklistData(startDate, endDate)
+          taskAnalyticsAPI.getTopTenChecklistData(startDate, endDate).then(data => {
+            setTopTenData(data);
+            setLoadingStates(prev => ({ ...prev, topTen: false }));
+            return data;
+          })
         );
       } else {
-        promises.push(Promise.resolve(null));
+        promises.push(Promise.resolve(null).then(() => {
+          setTopTenData(null);
+          return null;
+        }));
       }
 
       if (selectedTypes.includes("siteWise")) {
         promises.push(
-          taskAnalyticsAPI.getSiteWiseChecklistData(startDate, endDate)
+          taskAnalyticsAPI.getSiteWiseChecklistData(startDate, endDate).then(data => {
+            setSiteWiseData(data);
+            setLoadingStates(prev => ({ ...prev, siteWise: false }));
+            return data;
+          })
         );
       } else {
-        promises.push(Promise.resolve(null));
+        promises.push(Promise.resolve(null).then(() => {
+          setSiteWiseData(null);
+          return null;
+        }));
       }
 
-      const [technical, nonTechnical, topTen, siteWise] = await Promise.all(
-        promises
-      );
-
-      setTechnicalData(technical);
-      setNonTechnicalData(nonTechnical);
-      setTopTenData(topTen);
-      setSiteWiseData(siteWise);
+      await Promise.all(promises);
     } catch (error) {
       console.error("Error fetching analytics data:", error);
+      
+      // Reset all loading states on error
+      setLoadingStates({
+        technical: false,
+        nonTechnical: false,
+        topTen: false,
+        siteWise: false
+      });
     } finally {
       setAnalyticsLoading(false);
     }
@@ -1335,95 +1400,95 @@ export const ScheduledTaskDashboard = () => {
             </div>
           </div>
 
-          {analyticsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-gray-500">Loading analytics...</div>
-            </div>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={chartOrder}
+              strategy={rectSortingStrategy}
             >
-              <SortableContext
-                items={chartOrder}
-                strategy={rectSortingStrategy}
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {chartOrder.map((analyticsType) => {
                     if (!selectedAnalytics.includes(analyticsType)) return null;
 
-                    if (analyticsType === "technical" && technicalData) {
+                    if (analyticsType === "technical" && (technicalData || loadingStates.technical)) {
                       return (
                         <SortableChartItem key="technical" id="technical">
-                          <TaskAnalyticsCard
-                            title="Technical Checklist"
-                            data={technicalData.response}
-                            type="technical"
-                            dateRange={getDateRangeForComponents()}
-                          />
+                          <SectionLoader loading={loadingStates.technical}>
+                            <TaskAnalyticsCard
+                              title="Technical Checklist"
+                              data={technicalData?.response || []}
+                              type="technical"
+                              dateRange={getDateRangeForComponents()}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       );
                     }
 
-                    if (analyticsType === "nonTechnical" && nonTechnicalData) {
+                    if (analyticsType === "nonTechnical" && (nonTechnicalData || loadingStates.nonTechnical)) {
                       return (
                         <SortableChartItem key="nonTechnical" id="nonTechnical">
-                          <TaskAnalyticsCard
-                            title="Non-Technical Checklist"
-                            data={nonTechnicalData.response}
-                            type="nonTechnical"
-                            dateRange={getDateRangeForComponents()}
-                          />
+                          <SectionLoader loading={loadingStates.nonTechnical}>
+                            <TaskAnalyticsCard
+                              title="Non-Technical Checklist"
+                              data={nonTechnicalData?.response || []}
+                              type="nonTechnical"
+                              dateRange={getDateRangeForComponents()}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       );
                     }
 
-                    if (analyticsType === "topTen" && topTenData) {
+                    if (analyticsType === "topTen" && (topTenData || loadingStates.topTen)) {
                       return (
                         <SortableChartItem key="topTen" id="topTen">
-                          <TaskAnalyticsCard
-                            title="Top 10 Checklist Types"
-                            data={topTenData.response}
-                            type="topTen"
-                            dateRange={getDateRangeForComponents()}
-                          />
+                          <SectionLoader loading={loadingStates.topTen}>
+                            <TaskAnalyticsCard
+                              title="Top 10 Checklist Types"
+                              data={topTenData?.response || []}
+                              type="topTen"
+                              dateRange={getDateRangeForComponents()}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       );
                     }
 
-                    if (analyticsType === "siteWise" && siteWiseData) {
+                    if (analyticsType === "siteWise" && (siteWiseData || loadingStates.siteWise)) {
                       return (
                         <SortableChartItem key="siteWise" id="siteWise">
-                          <TaskAnalyticsCard
-                            title="Site-wise Checklist Status"
-                            data={siteWiseData.response}
-                            type="siteWise"
-                            dateRange={getDateRangeForComponents()}
-                          />
+                          <SectionLoader loading={loadingStates.siteWise}>
+                            <TaskAnalyticsCard
+                              title="Site-wise Checklist Status"
+                              data={siteWiseData?.response || []}
+                              type="siteWise"
+                              dateRange={getDateRangeForComponents()}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       );
                     }
 
                     return null;
-                  })}
-
-                  {/* No selection message */}
-                  {selectedAnalytics.length === 0 && (
-                    <div className="col-span-2 flex items-center justify-center py-12">
-                      <div className="text-center">
-                        <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">
-                          No analytics selected. Please select at least one
-                          report to view.
-                        </p>
-                      </div>
+                  })}                {/* No selection message */}
+                {selectedAnalytics.length === 0 && (
+                  <div className="col-span-2 flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">
+                        No analytics selected. Please select at least one
+                        report to view.
+                      </p>
                     </div>
-                  )}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
+                  </div>
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
         </TabsContent>
       </Tabs>
 

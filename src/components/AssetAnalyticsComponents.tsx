@@ -26,6 +26,24 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { RecentAssetsSidebar } from './RecentAssetsSidebar';
 
+// SectionLoader Component for individual card loading states
+const SectionLoader: React.FC<{
+  loading: boolean;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ loading, children, className }) => {
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      {children}
+      {loading && (
+        <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Color palette with lighter shades
 const CHART_COLORS = {
     primary: '#C4B99D',
@@ -807,59 +825,67 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
             ),
             currentSelectedTypes.includes('statusDistribution') && (
                 <SortableChartItem key="statusDistribution" id="statusDistribution">
-                    <AssetAnalyticsCard
-                        title="Asset Status"
-                        type="statusDistribution"
-                        data={chartStatusData}
-                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                        onDownload={() => handleAnalyticsDownload('assetsInUse')}
-                        info={assetStatus?.info || "Overall Distribution between in-use, breakdown, in-store, in-disposed assets"}
-                    />
+                    <SectionLoader loading={statusLoading}>
+                        <AssetAnalyticsCard
+                            title="Asset Status"
+                            type="statusDistribution"
+                            data={chartStatusData}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            onDownload={() => handleAnalyticsDownload('assetsInUse')}
+                            info={assetStatus?.info || "Overall Distribution between in-use, breakdown, in-store, in-disposed assets"}
+                        />
+                    </SectionLoader>
                 </SortableChartItem>
             ),
             currentSelectedTypes.includes('assetDistributions') && (
                 <SortableChartItem key="assetDistributions" id="assetDistributions">
-                    <AssetAnalyticsCard
-                        title="Asset Type Distribution"
-                        type="assetDistributions"
-                        data={chartTypeData}
-                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                        onDownload={() => handleAnalyticsDownload('assetDistribution')}
-                        info={assetDistributions?.assets_statistics?.filters ? 
-                            `Distribution between IT and Non-IT assets for ${assetDistributions.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
-                            "Distribution between IT and Non-IT assets"
-                        }
-                    />
+                    <SectionLoader loading={distributionsLoading}>
+                        <AssetAnalyticsCard
+                            title="Asset Type Distribution"
+                            type="assetDistributions"
+                            data={chartTypeData}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            onDownload={() => handleAnalyticsDownload('assetDistribution')}
+                            info={assetDistributions?.assets_statistics?.filters ? 
+                                `Distribution between IT and Non-IT assets for ${assetDistributions.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
+                                "Distribution between IT and Non-IT assets"
+                            }
+                        />
+                    </SectionLoader>
                 </SortableChartItem>
             ),
             currentSelectedTypes.includes('categoryWise') && (
                 <SortableChartItem key="categoryWise" id="categoryWise">
-                    <AssetAnalyticsCard
-                        title="Category-wise Assets"
-                        type="categoryWise"
-                        data={categoryData}
-                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                        onDownload={() => handleAnalyticsDownload('categoryWise')}
-                        info={categoryWiseAssets?.assets_statistics?.filters ? 
-                            `Showing Assets Category-wise based on Site and date range for ${categoryWiseAssets.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
-                            "Showing Assets Category-wise based on Site and date range"
-                        }
-                    />
+                    <SectionLoader loading={categoryWiseLoading}>
+                        <AssetAnalyticsCard
+                            title="Category-wise Assets"
+                            type="categoryWise"
+                            data={categoryData}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            onDownload={() => handleAnalyticsDownload('categoryWise')}
+                            info={categoryWiseAssets?.assets_statistics?.filters ? 
+                                `Showing Assets Category-wise based on Site and date range for ${categoryWiseAssets.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
+                                "Showing Assets Category-wise based on Site and date range"
+                            }
+                        />
+                    </SectionLoader>
                 </SortableChartItem>
             ),
             currentSelectedTypes.includes('groupWise') && (
                 <SortableChartItem key="groupWise" id="groupWise">
-                    <AssetAnalyticsCard
-                        title="Group-wise Assets"
-                        type="groupWise"
-                        data={groupData}
-                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                        onDownload={() => handleAnalyticsDownload('groupWise')}
-                        info={groupWiseAssets?.assets_statistics?.filters ? 
-                            `Showing Assets Group-wise based on site and date range for ${groupWiseAssets.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
-                            "Showing Assets Group-wise based on site and date range"
-                        }
-                    />
+                    <SectionLoader loading={groupWiseLoading}>
+                        <AssetAnalyticsCard
+                            title="Group-wise Assets"
+                            type="groupWise"
+                            data={groupData}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            onDownload={() => handleAnalyticsDownload('groupWise')}
+                            info={groupWiseAssets?.assets_statistics?.filters ? 
+                                `Showing Assets Group-wise based on site and date range for ${groupWiseAssets.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
+                                "Showing Assets Group-wise based on site and date range"
+                            }
+                        />
+                    </SectionLoader>
                 </SortableChartItem>
             ),
             currentSelectedTypes.includes('ppmConductAssets') && (

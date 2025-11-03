@@ -91,6 +91,25 @@ const SortableChartItem = ({
     </div>
   );
 };
+
+// Section Loader Component
+const SectionLoader: React.FC<{
+  loading: boolean;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ loading, children, className }) => {
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      {children}
+      {loading && (
+        <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const TicketDashboard = () => {
   const navigate = useNavigate();
   const {
@@ -139,6 +158,17 @@ export const TicketDashboard = () => {
   const [recentTicketsData, setRecentTicketsData] = useState<RecentTicketsResponse | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsLoaded, setAnalyticsLoaded] = useState(false); // Track if analytics data has been loaded
+  
+  // Individual loading states for each analytics card
+  const [loadingStates, setLoadingStates] = useState({
+    statusChart: false,
+    reactiveChart: false,
+    responseTat: false,
+    categoryWiseProactiveReactive: false,
+    categoryChart: false,
+    agingMatrix: false,
+    resolutionTat: false
+  });
 
   // Utility function to convert DD/MM/YYYY to Date object
   const convertDateStringToDate = (dateString: string): Date => {
@@ -208,33 +238,58 @@ export const TicketDashboard = () => {
   // Fetch analytics data from API
   const fetchAnalyticsData = useCallback(async (startDate: Date, endDate: Date) => {
     setAnalyticsLoading(true);
+    
+    // Set all individual cards to loading
+    setLoadingStates({
+      statusChart: true,
+      reactiveChart: true,
+      responseTat: true,
+      categoryWiseProactiveReactive: true,
+      categoryChart: true,
+      agingMatrix: true,
+      resolutionTat: true
+    });
+    
     try {
-      const [
-        categoryData,
-        statusData,
-        agingData,
-        unitCategoryData,
-        responseTATData,
-        resolutionTATData,
-        recentTickets
-      ] = await Promise.all([
-        ticketAnalyticsAPI.getTicketsCategorywiseData(startDate, endDate),
-        ticketAnalyticsAPI.getTicketStatusData(startDate, endDate),
-        ticketAnalyticsAPI.getTicketAgingMatrix(startDate, endDate),
-        ticketAnalyticsAPI.getUnitCategorywiseData(startDate, endDate),
-        ticketAnalyticsAPI.getResponseTATData(startDate, endDate),
-        ticketAnalyticsAPI.getResolutionTATReportData(startDate, endDate),
-        ticketAnalyticsAPI.getRecentTickets()
-      ]);
+      // Fetch all data in parallel but update states individually as they complete
+      const promises = [
+        ticketAnalyticsAPI.getTicketsCategorywiseData(startDate, endDate).then(data => {
+          setCategoryAnalyticsData(data);
+          setCategorywiseTicketsData(data);
+          setLoadingStates(prev => ({ ...prev, categoryWiseProactiveReactive: false, categoryChart: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getTicketStatusData(startDate, endDate).then(data => {
+          setStatusAnalyticsData(data);
+          setLoadingStates(prev => ({ ...prev, statusChart: false, reactiveChart: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getTicketAgingMatrix(startDate, endDate).then(data => {
+          setAgingMatrixAnalyticsData(data);
+          setLoadingStates(prev => ({ ...prev, agingMatrix: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getUnitCategorywiseData(startDate, endDate).then(data => {
+          setUnitCategorywiseData(data);
+          return data;
+        }),
+        ticketAnalyticsAPI.getResponseTATData(startDate, endDate).then(data => {
+          setResponseTATData(data);
+          setLoadingStates(prev => ({ ...prev, responseTat: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getResolutionTATReportData(startDate, endDate).then(data => {
+          setResolutionTATReportData(data);
+          setLoadingStates(prev => ({ ...prev, resolutionTat: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getRecentTickets().then(data => {
+          setRecentTicketsData(data);
+          return data;
+        })
+      ];
 
-      setCategoryAnalyticsData(categoryData);
-      setCategorywiseTicketsData(categoryData); // Set the same data for the new category-wise section
-      setStatusAnalyticsData(statusData);
-      setAgingMatrixAnalyticsData(agingData);
-      setUnitCategorywiseData(unitCategoryData);
-      setResponseTATData(responseTATData);
-      setResolutionTATReportData(resolutionTATData);
-      setRecentTicketsData(recentTickets);
+      await Promise.all(promises);
       setAnalyticsLoaded(true); // Mark analytics as loaded
 
       // toast({
@@ -243,6 +298,18 @@ export const TicketDashboard = () => {
       // });
     } catch (error) {
       console.error('Error fetching analytics data:', error);
+      
+      // Reset all loading states on error
+      setLoadingStates({
+        statusChart: false,
+        reactiveChart: false,
+        responseTat: false,
+        categoryWiseProactiveReactive: false,
+        categoryChart: false,
+        agingMatrix: false,
+        resolutionTat: false
+      });
+      
       toast({
         title: "Error",
         description: "Failed to fetch analytics data. Please try again.",
@@ -1344,9 +1411,6 @@ export const TicketDashboard = () => {
 
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-4 mt-4">
-
-
-
           {/* Header with Filter and Ticket Selector */}
           <div className="flex justify-end items-center gap-2">
 
@@ -1379,22 +1443,26 @@ export const TicketDashboard = () => {
                         if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
-                              <TicketStatusOverviewCard
-                                openTickets={openticketanalyticsData}
-                                closedTickets={closedticketanalyticsData}
-                              />
+                              <SectionLoader loading={loadingStates.statusChart}>
+                                <TicketStatusOverviewCard
+                                  openTickets={openticketanalyticsData}
+                                  closedTickets={closedticketanalyticsData}
+                                />
+                              </SectionLoader>
                             </SortableChartItem>
                           );
                         }
                         if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
-                              <ProactiveReactiveCard
-                                proactiveOpenTickets={proactiveOpenTickets}
-                                proactiveClosedTickets={proactiveClosedTickets}
-                                reactiveOpenTickets={reactiveOpenTickets}
-                                reactiveClosedTickets={reactiveClosedTickets}
-                              />
+                              <SectionLoader loading={loadingStates.reactiveChart}>
+                                <ProactiveReactiveCard
+                                  proactiveOpenTickets={proactiveOpenTickets}
+                                  proactiveClosedTickets={proactiveClosedTickets}
+                                  reactiveOpenTickets={reactiveOpenTickets}
+                                  reactiveClosedTickets={reactiveClosedTickets}
+                                />
+                              </SectionLoader>
                             </SortableChartItem>
                           );
                         }
@@ -1406,14 +1474,16 @@ export const TicketDashboard = () => {
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('responseTat') && (
                         <SortableChartItem key="responseTat" id="responseTat">
-                          <ResponseTATCard
-                            data={responseTATData}
-                            className="h-full"
-                            dateRange={{
-                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                            }}
-                          />
+                          <SectionLoader loading={loadingStates.responseTat}>
+                            <ResponseTATCard
+                              data={responseTATData}
+                              className="h-full"
+                              dateRange={{
+                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                              }}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       )}
                     </div>
@@ -1422,13 +1492,15 @@ export const TicketDashboard = () => {
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('categoryWiseProactiveReactive') && (
                         <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
-                          <CategoryWiseProactiveReactiveCard
-                            data={categorywiseTicketsData}
-                            dateRange={{
-                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                            }}
-                          />
+                          <SectionLoader loading={loadingStates.categoryWiseProactiveReactive}>
+                            <CategoryWiseProactiveReactiveCard
+                              data={categorywiseTicketsData}
+                              dateRange={{
+                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                              }}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       )}
                     </div>
@@ -1452,14 +1524,16 @@ export const TicketDashboard = () => {
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('agingMatrix') && (
                         <SortableChartItem key="agingMatrix" id="agingMatrix">
-                          <TicketAgingMatrixCard
-                            data={agingMatrixAnalyticsData}
-                            agingMatrixData={agingMatrixData}
-                            dateRange={{
-                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                            }}
-                          />
+                          <SectionLoader loading={loadingStates.agingMatrix}>
+                            <TicketAgingMatrixCard
+                              data={agingMatrixAnalyticsData}
+                              agingMatrixData={agingMatrixData}
+                              dateRange={{
+                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                              }}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       )}
                     </div>
@@ -1468,14 +1542,16 @@ export const TicketDashboard = () => {
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('resolutionTat') && (
                         <SortableChartItem key="resolutionTat" id="resolutionTat">
-                          <ResolutionTATCard
-                            data={resolutionTATReportData}
-                            className="bg-white border border-gray-200 rounded-lg"
-                            dateRange={{
-                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                            }}
-                          />
+                          <SectionLoader loading={loadingStates.resolutionTat}>
+                            <ResolutionTATCard
+                              data={resolutionTATReportData}
+                              className="bg-white border border-gray-200 rounded-lg"
+                              dateRange={{
+                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                              }}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       )}
                     </div>
@@ -1576,7 +1652,6 @@ export const TicketDashboard = () => {
               className="transition-all duration-500 ease-in-out"
               loading={loading}
               loadingMessage="Loading tickets..."
-              exportLoading={isExporting}
             />
 
                 {/* Add custom CSS for smooth row transitions */}
