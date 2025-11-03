@@ -24,7 +24,9 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 }) => {
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'listWeek' | 'year'>('dayGridMonth');
   const [date, setDate] = useState(new Date());
+  const [selectedYear, setSelectedYear] = useState(moment().year());
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isYearLoading, setIsYearLoading] = useState(false);
   const calendarRef = useRef<FullCalendar>(null);
 
   // State for event hover/click in weekly view
@@ -106,8 +108,28 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
     }
   };
 
+  const handleYearNavigate = (action: 'next' | 'prev') => {
+    setIsYearLoading(true);
+    if (action === 'next') {
+      setSelectedYear(prev => prev + 1);
+    } else {
+      setSelectedYear(prev => prev - 1);
+    }
+    // Reset loading state after a short delay to allow re-render
+    setTimeout(() => setIsYearLoading(false), 300);
+  };
+
   const handleViewChange = (newView: any) => {
     const calendarApi = calendarRef.current?.getApi();
+    
+    if (newView === 'year') {
+      setIsYearLoading(true);
+      // Delay to show loading state
+      setTimeout(() => {
+        setIsYearLoading(false);
+      }, 300);
+    }
+    
     if (calendarApi && newView !== 'year') {
       calendarApi.changeView(newView);
     }
@@ -176,7 +198,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const CustomToolbar = () => {
     const getToolbarTitle = () => {
       if (view === 'year') {
-        return `${moment().year()} - Yearly Calendar View`;
+        return `${selectedYear} - Yearly Calendar View`;
       }
       return moment(date).format('MMMM YYYY');
     };
@@ -187,18 +209,18 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleNavigate('prev')}
+            onClick={() => view === 'year' ? handleYearNavigate('prev') : handleNavigate('prev')}
             className="h-8 w-8 p-0"
-            disabled={view === 'year'}
+            disabled={isYearLoading}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleNavigate('next')}
+            onClick={() => view === 'year' ? handleYearNavigate('next') : handleNavigate('next')}
             className="h-8 w-8 p-0"
-            disabled={view === 'year'}
+            disabled={isYearLoading}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -220,8 +242,16 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
               size="sm"
               onClick={() => handleViewChange(key)}
               className="px-3 py-1 h-8 capitalize"
+              disabled={isYearLoading && key === 'year'}
             >
-              {label}
+              {isYearLoading && key === 'year' ? (
+                <div className="flex items-center gap-2">
+                  <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                  <span>{label}</span>
+                </div>
+              ) : (
+                label
+              )}
             </Button>
           ))}
         </div>
@@ -283,12 +313,22 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         {view === 'year' ? (
           <>
             <CustomToolbar />
-            <div className="h-full overflow-y-auto">
-              <YearlyView
-                events={calendarEvents.length > 0 ? calendarEvents : []}
-                onSelectEvent={handleSelectEvent}
-              />
-            </div>
+            {isYearLoading ? (
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
+                  <p className="text-gray-600 font-medium">Loading {selectedYear} calendar...</p>
+                </div>
+              </div>
+            ) : (
+              <div className="h-full overflow-y-auto">
+                <YearlyView
+                  events={calendarEvents.length > 0 ? calendarEvents : []}
+                  onSelectEvent={handleSelectEvent}
+                  year={selectedYear}
+                />
+              </div>
+            )}
           </>
         ) : (
           <>
@@ -494,20 +534,20 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 const YearlyView: React.FC<{
   events: any[];
   onSelectEvent: (event: any) => void;
-}> = ({ events, onSelectEvent }) => {
+  year: number;
+}> = ({ events, onSelectEvent, year }) => {
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedDayEvents, setSelectedDayEvents] = useState<any[]>([]);
 
-  // Generate 12 months for the current year
+  // Generate 12 months for the selected year
   const months = useMemo(() => {
     const monthsArray = [];
-    const currentYear = moment().year();
 
     for (let i = 0; i < 12; i++) {
-      const monthStart = moment().year(currentYear).month(i).startOf('month');
-      const monthEnd = moment().year(currentYear).month(i).endOf('month');
+      const monthStart = moment().year(year).month(i).startOf('month');
+      const monthEnd = moment().year(year).month(i).endOf('month');
 
       // Generate weeks for this month
       const weeks = [];
@@ -546,12 +586,12 @@ const YearlyView: React.FC<{
       monthsArray.push({
         name: monthStart.format('MMM'),
         fullName: monthStart.format('MMMM'),
-        year: currentYear,
+        year: year,
         weeks
       });
     }
     return monthsArray;
-  }, [events]);
+  }, [events, year]);
 
   const handleDayHover = (day: any, event: React.MouseEvent) => {
     // Always show tooltip for debugging, even for days with 0 events
