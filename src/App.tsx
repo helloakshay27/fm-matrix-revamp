@@ -777,6 +777,7 @@ import { DashboardMobile } from "./pages/DashboardMobile";
 import SafetyCheckAudit from './pages/SafetyCheckAudit';
 import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
+import Sitemap from "./pages/Sitemap";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -982,6 +983,7 @@ function App() {
                   element={<DirectPDFDownloadPage />}
                 />
                 <Route path="/dashboard-mobile" element={<DashboardMobile />} />
+                <Route path="/sitemap" element={<Sitemap />} />
 
                 <Route
                   path="/dashboard"
@@ -1154,6 +1156,7 @@ function App() {
                     path="/holiday-calendar"
                     element={<HolidayCalendarPage />}
                   />
+                  <Route path="/sitemap" element={<Sitemap />} />
 
                   {/* Rule Engine Routes */}
                   <Route
