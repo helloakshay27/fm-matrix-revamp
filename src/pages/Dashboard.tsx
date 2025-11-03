@@ -1541,8 +1541,7 @@ export const Dashboard = () => {
               proactiveOpen: data.proactive_reactive.proactive.open || 0,
               proactiveClosed: data.proactive_reactive.proactive.closed || 0,
               reactiveOpen: data.proactive_reactive.reactive.open || 0,
-              reactiveClosed:
-                data.proactive_reactive.reactive.closed || 0,
+              reactiveClosed: data.proactive_reactive.reactive.closed || 0,
               proactiveWIP: data.proactive_reactive.proactive.wip || 0,
               proactiveInfo: data.proactive_reactive.proactive.info,
             };
@@ -1630,14 +1629,20 @@ export const Dashboard = () => {
             // Proactive/Reactive tickets breakdown
             // The data has already been transformed by transformTicketData
             // It now has the flat structure: proactiveOpen, proactiveClosed, reactiveOpen, reactiveClosed
-            console.log("🔍 tickets_proactive_reactive - Transformed data:", data);
-            
+            console.log(
+              "🔍 tickets_proactive_reactive - Transformed data:",
+              data
+            );
+
             const proactiveReactiveData =
-              data &&
-              typeof data === "object" &&
-              "proactiveOpen" in data
+              data && typeof data === "object" && "proactiveOpen" in data
                 ? data
-                : { proactiveOpen: 0, proactiveClosed: 0, reactiveOpen: 0, reactiveClosed: 0 };
+                : {
+                    proactiveOpen: 0,
+                    proactiveClosed: 0,
+                    reactiveOpen: 0,
+                    reactiveClosed: 0,
+                  };
 
             console.log("🔍 tickets_proactive_reactive - Final values:", {
               proactiveOpen: proactiveReactiveData.proactiveOpen,
@@ -1649,10 +1654,16 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <ProactiveReactiveCard
-                  proactiveOpenTickets={proactiveReactiveData.proactiveOpen || 0}
-                  proactiveClosedTickets={proactiveReactiveData.proactiveClosed || 0}
+                  proactiveOpenTickets={
+                    proactiveReactiveData.proactiveOpen || 0
+                  }
+                  proactiveClosedTickets={
+                    proactiveReactiveData.proactiveClosed || 0
+                  }
                   reactiveOpenTickets={proactiveReactiveData.reactiveOpen || 0}
-                  reactiveClosedTickets={proactiveReactiveData.reactiveClosed || 0}
+                  reactiveClosedTickets={
+                    proactiveReactiveData.reactiveClosed || 0
+                  }
                 />
               </SortableChartItem>
             );
@@ -2600,11 +2611,23 @@ export const Dashboard = () => {
             <DashboardHeader />
           </div>
 
+          {/* Page Title Section */}
+
           {/* Filter Controls Section */}
           <div className="bg-white ">
             <div className="px-6 py-4">
-              <div className="flex items-center justify-end">
-                {/* <Button
+              <div className="flex items-center justify-between">
+                <div className="bg-white border-b border-analytics-border">
+                  <div className="px-6 py-4">
+                    <h1 className="text-lg font-bold text-gray-900">
+                      {location.pathname === "/dashboard-executive"
+                        ? "Executive Dashboard View "
+                        : "Dashboard View"}
+                    </h1>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end">
+                  {/* <Button
                 onClick={() => navigate('/dashboard/configuration')}
                 variant="outline"
                 className="flex items-center gap-2"
@@ -2613,15 +2636,16 @@ export const Dashboard = () => {
                 Configure Dashboard
               </Button> */}
 
-                <div className="flex items-center gap-4">
-                  <UnifiedDateRangeFilter
-                    dateRange={dateRange}
-                    onDateRangeChange={handleDateRangeChange}
-                  />
-                  <UnifiedAnalyticsSelector
-                    selectedAnalytics={selectedAnalytics}
-                    onSelectionChange={handleAnalyticsSelectionChange}
-                  />
+                  <div className="flex items-center gap-4">
+                    <UnifiedDateRangeFilter
+                      dateRange={dateRange}
+                      onDateRangeChange={handleDateRangeChange}
+                    />
+                    <UnifiedAnalyticsSelector
+                      selectedAnalytics={selectedAnalytics}
+                      onSelectionChange={handleAnalyticsSelectionChange}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
