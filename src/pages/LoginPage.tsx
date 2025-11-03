@@ -502,11 +502,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('/lovable-uploads/02d5802a-cd33-44e2-a858-a1e149cace5f.png')`,
+            backgroundImage: `url('https://vendor.panchshil.com/assets/pan_logo-4e1c867e2fada5efc385ef5c565a0ad3b533cd396d1ed187a0bc7fdec161a35a.jpg')`,
           }}
         />
-
-
       </div>
 
       {/* Right Side - Forgot Password Form */}
