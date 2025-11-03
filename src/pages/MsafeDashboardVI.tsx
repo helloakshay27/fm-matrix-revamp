@@ -3172,10 +3172,11 @@ const FiltersPanel: React.FC<{
                                     fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
                                     fontWeight: 400,
                                     fontStyle: 'normal',
-                                    fontSize: '18px',
+                                    fontSize: '16px',
                                     lineHeight: '100%',
                                     letterSpacing: '0%',
                                     marginBottom: '0.25rem',
+                                    marginLeft: '10px',
                                 }}
                             >
                                 Start Date
@@ -3214,10 +3215,11 @@ const FiltersPanel: React.FC<{
                                     fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
                                     fontWeight: 400,
                                     fontStyle: 'normal',
-                                    fontSize: '18px',
+                                    fontSize: '16px',
                                     lineHeight: '100%',
                                     letterSpacing: '0%',
                                     marginBottom: '0.25rem',
+                                    marginLeft: '10px',
                                 }}
                             >
                                 End Date
