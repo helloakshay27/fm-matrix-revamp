@@ -38,11 +38,16 @@ const AllContent = () => {
         try {
             const s = new Date(startDate);
             const e = new Date(endDate);
-            const fmt = (d: Date) => d.toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
+            const fmt = (d: Date) => d.toLocaleDateString(undefined, {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+            });
             // If within same month, show e.g., "Jan 2025"
             if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
                 return fmt(e);
             }
+
             return `${fmt(s)} to ${fmt(e)}`;
         } catch {
             return `${startDate} to ${endDate}`;
@@ -1802,7 +1807,7 @@ const AllContent = () => {
                             <div className="text-6xl  print:ml-20  font-extrabold ml-2 print:text-4xl">ORT</div>
                         </div>
 
-                        <div className="flex justify-end items-end print:mt-[110px]  print:mr-[110px] mb-4 mt-[10px] ml-[120px] print:w-full">
+                        <div className="flex justify-end items-end print:mt-[110px]  print:mr-[110px] mb-4 mt-[10px] ml-[140px] print:w-full">
                             <p className="text-xl print:text-[18px] font-medium text-red-700 print:text-red-700 print:mt-[40px]">
                                 {dateRangeLabel}
                             </p>
