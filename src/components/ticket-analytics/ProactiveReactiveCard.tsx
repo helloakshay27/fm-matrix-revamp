@@ -20,7 +20,7 @@ export const ProactiveReactiveCard: React.FC<ProactiveReactiveCardProps> = ({
     <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
       <CardHeader className="pb-4">
         <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
-          Proactive/Reactive Ticketsss
+          Proactive/Reactive Tickets
         </CardTitle>
       </CardHeader>
       <CardContent>
