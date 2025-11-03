@@ -2,14 +2,13 @@
 import React, { useState } from 'react';
 import { CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
 
 interface DateRange {
   from?: Date;
@@ -26,8 +25,8 @@ export const UnifiedDateRangeFilter: React.FC<UnifiedDateRangeFilterProps> = ({
   onDateRangeChange,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // Format date to DD/MM/YYYY
   const formatDateToDDMMYYYY = (date: Date): string => {
@@ -37,33 +36,69 @@ export const UnifiedDateRangeFilter: React.FC<UnifiedDateRangeFilterProps> = ({
     return `${day}/${month}/${year}`;
   };
 
+  // Convert Date to YYYY-MM-DD for HTML input
+  const formatDateToHTML = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Convert YYYY-MM-DD to Date
+  const parseHTMLDate = (dateString: string): Date | null => {
+    if (!dateString) return null;
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   // Update local state when dateRange prop changes
   React.useEffect(() => {
-    setStartDate(dateRange?.from || null);
-    setEndDate(dateRange?.to || null);
+    if (dateRange?.from) {
+      setStartDate(formatDateToHTML(dateRange.from));
+    } else {
+      setStartDate('');
+    }
+    
+    if (dateRange?.to) {
+      setEndDate(formatDateToHTML(dateRange.to));
+    } else {
+      setEndDate('');
+    }
   }, [dateRange]);
 
-  const handleDateChange = (dates: [Date | null, Date | null]) => {
-    const [start, end] = dates;
-    setStartDate(start);
-    setEndDate(end);
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setStartDate(value);
     
-    if (start && end) {
+    const fromDate = parseHTMLDate(value);
+    const toDate = endDate ? parseHTMLDate(endDate) : null;
+    
+    if (fromDate) {
       onDateRangeChange({
-        from: start,
-        to: end
+        from: fromDate,
+        to: toDate || undefined
       });
-    } else if (start) {
+    }
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEndDate(value);
+    
+    const fromDate = startDate ? parseHTMLDate(startDate) : null;
+    const toDate = parseHTMLDate(value);
+    
+    if (toDate) {
       onDateRangeChange({
-        from: start,
-        to: undefined
+        from: fromDate || undefined,
+        to: toDate
       });
     }
   };
 
   const handleClear = () => {
-    setStartDate(null);
-    setEndDate(null);
+    setStartDate('');
+    setEndDate('');
     onDateRangeChange(undefined);
     setIsOpen(false);
   };
@@ -86,64 +121,10 @@ export const UnifiedDateRangeFilter: React.FC<UnifiedDateRangeFilterProps> = ({
   const calculateDaysSelected = () => {
     if (dateRange?.from && dateRange?.to) {
       const diffTime = dateRange.to.getTime() - dateRange.from.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return diffDays;
     }
     return 0;
-  };
-
-  const renderCustomHeader = ({
-    date,
-    changeYear,
-    changeMonth,
-    decreaseMonth,
-    increaseMonth,
-    prevMonthButtonDisabled,
-    nextMonthButtonDisabled,
-  }: any) => {
-    const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - 50 + i);
-    const months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-
-    return (
-      <div className="flex flex-col gap-2 px-3 py-2 bg-gray-50 border-b">
-        {/* Title */}
-        <div className="flex items-center justify-center">
-          <h3 className="text-base font-semibold text-gray-900">
-            {months[date.getMonth()]} {date.getFullYear()}
-          </h3>
-        </div>
-        
-        {/* Dropdowns */}
-        <div className="flex items-center justify-center gap-2">
-          <select
-            value={months[date.getMonth()]}
-            onChange={({ target: { value } }) => changeMonth(months.indexOf(value))}
-            className="text-sm font-medium px-3 py-1.5 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            {months.map((month) => (
-              <option key={month} value={month}>
-                {month}
-              </option>
-            ))}
-          </select>
-          
-          <select
-            value={date.getFullYear()}
-            onChange={({ target: { value } }) => changeYear(parseInt(value))}
-            className="text-sm font-medium px-3 py-1.5 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -160,21 +141,32 @@ export const UnifiedDateRangeFilter: React.FC<UnifiedDateRangeFilterProps> = ({
           <span className="truncate">{formatDateRange()}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 bg-background border-analytics-border" align="start" side="bottom">
-        <div className="custom-datepicker">
-          <DatePicker
-            selected={startDate}
-            onChange={handleDateChange}
-            startDate={startDate}
-            endDate={endDate}
-            selectsRange
-            inline
-            monthsShown={2}
-            renderCustomHeader={renderCustomHeader}
-            dateFormat="dd/MM/yyyy"
-            calendarStartDay={1}
-            todayButton="Today"
-          />
+      <PopoverContent className="w-80 p-0 bg-background border-analytics-border" align="start" side="bottom">
+        <div className="p-4 space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Start Date</label>
+            <div className="relative">
+              <Input
+                type="date"
+                value={startDate}
+                onChange={handleStartDateChange}
+                className="w-full"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">End Date</label>
+            <div className="relative">
+              <Input
+                type="date"
+                value={endDate}
+                onChange={handleEndDateChange}
+                min={startDate}
+                className="w-full"
+              />
+            </div>
+          </div>
         </div>
         
         <div className="p-3 border-t border-analytics-border bg-analytics-background">
