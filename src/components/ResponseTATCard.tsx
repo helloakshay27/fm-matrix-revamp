@@ -255,17 +255,7 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                 </div>
               </div>
             </div>
-            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2 px-2">
-              {responseTATData.map((item, index) => (
-                <div key={index} className="flex items-center gap-1.5">
-                  <div 
-                    className="w-3 h-3 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{item.name}</span>
-                </div>
-              ))}
-            </div>
+           
           </div>
 
           {/* Resolution TAT Chart */}
@@ -345,8 +335,12 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                 </div>
               </div>
             </div>
-            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2 px-2">
-              {resolutionTATData.map((item, index) => (
+           
+          </div>
+         
+        </div>
+          <div className="flex flex-wrap justify-center gap-x-14 gap-y-1 mt-2 px-2">
+              {responseTATData.map((item, index) => (
                 <div key={index} className="flex items-center gap-1.5">
                   <div 
                     className="w-3 h-3 rounded-sm flex-shrink-0"
@@ -356,8 +350,6 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                 </div>
               ))}
             </div>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
