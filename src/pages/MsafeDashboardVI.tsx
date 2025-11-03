@@ -20,6 +20,8 @@ import {
     ResponsiveContainer,
     LabelList,
 } from 'recharts';
+import { Download } from 'lucide-react';
+import { DownloadOutlined } from '@mui/icons-material';
 
 const COLORS = {
     krcc: '#FFC107', // Yellow
@@ -1779,7 +1781,7 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
                 <Box sx={{ ml: 'auto' }}>
                     <IconButton aria-label="download data" onClick={downloadOnboardingData}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton>
                 </Box>
             </Stack>
@@ -1836,8 +1838,8 @@ const MsafeDashboardVI: React.FC = () => {
             <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Onboarding Summary
             </Typography>
-            <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: 1 }}>
-                <Table size="small" sx={{ minWidth: 1000 }}>
+            <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: '8px' }}>
+                <Table size="small" sx={{ minWidth: 1000, '& .MuiTableCell-root': { border: '0.5px solid rgba(224, 224, 224, 1)', borderLeft: 'none', borderTop: 'none' } }}>
                     <TableHead>
                         <TableRow>
                             <TableCell sx={{ bgcolor: '#EE0B0B', color: '#fff', fontWeight: 700, position: 'sticky', left: 0, zIndex: 1 }} />
@@ -1901,7 +1903,7 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
                 <Box sx={{ ml: 'auto' }}>
                     <IconButton aria-label="download data" onClick={downloadDay1HSWData}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton>
                 </Box>
             </Stack>
@@ -1979,7 +1981,7 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
                 <Box sx={{ ml: 'auto' }}>
                     <IconButton aria-label="download data" onClick={downloadTrainingData}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton>
                 </Box>
             </Stack>
@@ -2012,6 +2014,7 @@ const MsafeDashboardVI: React.FC = () => {
                                     domain={[0, trainingYAxis.upper]}
                                     ticks={trainingYAxis.ticks}
                                     tick={{ fill: COLORS.axis, fontWeight: 'bold' }}
+                                    tickFormatter={(value) => `${value}%`}
                                 />
                                 <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} formatter={(value: any) => [String(value), '']} />
                                 <Bar dataKey="twoW" name="2W" fill={TRAINING_COLORS.twoW} barSize={20} radius={[3, 3, 0, 0]}>
@@ -2042,8 +2045,8 @@ const MsafeDashboardVI: React.FC = () => {
             <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Training compliance Summary
             </Typography>
-            <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: 1 }}>
-                <Table size="small" sx={{ minWidth: 1200 }}>
+            <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: '8px' }}>
+                <Table size="small" sx={{ minWidth: 1200, '& .MuiTableCell-root': { border: '0.5px solid rgba(224, 224, 224, 1)', borderLeft: 'none', borderTop: 'none' } }}>
                     <TableHead>
                         <TableRow>
                             <TableCell sx={{ bgcolor: '#EE0B0B', color: '#fff', fontWeight: 700, position: 'sticky', left: 0, zIndex: 1 }} />
@@ -2071,7 +2074,7 @@ const MsafeDashboardVI: React.FC = () => {
                                     const display = formatPercentCell(raw);
                                     return (
                                         <TableCell key={`${row.key}-${d.site}`} align="center">
-                                            {display}
+                                            {display !== '-' ? `${display}%` : display}
                                         </TableCell>
                                     );
                                 })}
@@ -2114,7 +2117,7 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
                 <Box sx={{ ml: 'auto' }}>
                     <IconButton aria-label="download" onClick={downloadFtprChart}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton>
                 </Box>
             </Stack>
@@ -2172,10 +2175,10 @@ const MsafeDashboardVI: React.FC = () => {
                 </Typography>
                 <Stack direction="row" spacing={1}>
                     {/* <IconButton aria-label="download chart" onClick={downloadNewJoineeChart}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton> */}
                     <IconButton aria-label="download data" onClick={downloadNewJoineeData}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton>
                 </Stack>
             </Stack>
@@ -2234,8 +2237,8 @@ const MsafeDashboardVI: React.FC = () => {
             <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 New Joinee Summary
             </Typography>
-            <TableContainer component={Box} sx={{ position: 'relative', overflowX: 'auto', overflowY: 'auto', borderRadius: 1, maxHeight: 380 }}>
-                <Table size="small" stickyHeader sx={{ minWidth: Math.max(600, 160 + njSummaryMonths.length * 120) }}>
+            <TableContainer component={Box} sx={{ position: 'relative', overflowX: 'auto', overflowY: 'auto', borderRadius: '8px', maxHeight: 380 }}>
+                <Table size="small" stickyHeader sx={{ minWidth: Math.max(600, 160 + njSummaryMonths.length * 120), '& .MuiTableCell-root': { border: '0.5px solid rgba(224, 224, 224, 1)', borderLeft: 'none', borderTop: 'none' } }}>
                     <TableHead>
                         <TableRow sx={{ '& th': { bgcolor: '#EE0B0B', color: '#fff', fontWeight: 700, fontSize: '0.975rem' } }}>
                             <TableCell sx={{ width: 160, position: 'sticky', left: 0, top: 0, bgcolor: '#EE0B0B', zIndex: 6, borderTopLeftRadius: 8, fontWeight: 700 }}>
@@ -2313,7 +2316,7 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
                 <Box sx={{ ml: 'auto' }}>
                     <IconButton aria-label="download data" onClick={downloadLMCData}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton>
                 </Box>
             </Stack>
@@ -2377,7 +2380,7 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
                 <Box sx={{ ml: 'auto' }}>
                     <IconButton aria-label="download data" onClick={downloadSMTData}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton>
                 </Box>
             </Stack>
@@ -2459,7 +2462,7 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
                 <Box sx={{ ml: 'auto' }}>
                     <IconButton aria-label="download data" onClick={downloadComplianceForecastData}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton>
                 </Box>
             </Stack>
@@ -2507,8 +2510,8 @@ const MsafeDashboardVI: React.FC = () => {
             <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Compliance Forecasting Summary
             </Typography>
-            <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: 1 }}>
-                <Table size="small" stickyHeader>
+            <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: '8px' }}>
+                <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { border: '0.5px solid rgba(224, 224, 224, 1)', borderLeft: 'none', borderTop: 'none' } }}>
                     <TableHead>
                         <TableRow sx={{ '& th': { bgcolor: '#EE0B0B', color: '#fff', fontWeight: 700 } }}>
                             <TableCell />
@@ -2566,7 +2569,7 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
                 <Box sx={{ ml: 'auto' }}>
                     <IconButton aria-label="download data" onClick={downloadDrivingData}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton>
                 </Box>
             </Stack>
@@ -2631,8 +2634,8 @@ const MsafeDashboardVI: React.FC = () => {
             <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Driving Summary
             </Typography>
-            <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: 1 }}>
-                <Table size="small" stickyHeader>
+            <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: '8px' }}>
+                <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { border: '0.5px solid rgba(224, 224, 224, 1)', borderLeft: 'none', borderTop: 'none' } }}>
                     <TableHead>
                         <TableRow sx={{ '& th': { bgcolor: '#EE0B0B', color: '#fff', fontWeight: 700 } }}>
                             <TableCell />
@@ -2679,7 +2682,7 @@ const MsafeDashboardVI: React.FC = () => {
                 </Stack>
                 <Box sx={{ ml: 'auto' }}>
                     <IconButton aria-label="download data" onClick={downloadMedicalData}>
-                        <DownloadIcon />
+                        <Download strokeWidth={2.5} color="#000000" />
                     </IconButton>
                 </Box>
             </Stack>
@@ -2733,8 +2736,8 @@ const MsafeDashboardVI: React.FC = () => {
             <Typography variant="h6" sx={{ color: '#000000', mb: 2, fontFamily: '"Work Sans", sans-serif', fontWeight: 500, fontSize: '28px', lineHeight: '100%', letterSpacing: '0%' }}>
                 Medical Checkup & First Aid Training Summary
             </Typography>
-            <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: 1 }}>
-                <Table size="small" stickyHeader>
+            <TableContainer component={Box} sx={{ overflowX: 'auto', borderRadius: '8px' }}>
+                <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { border: '0.5px solid rgba(224, 224, 224, 1)', borderLeft: 'none', borderTop: 'none' } }}>
                     <TableHead>
                         <TableRow sx={{ '& th': { bgcolor: '#EE0B0B', color: '#fff', fontWeight: 700 } }}>
                             <TableCell />
@@ -2957,6 +2960,7 @@ const MsafeDashboardVI: React.FC = () => {
                                 fontSize: "14px",
                                 fontWeight: 600,
                                 lineHeight: 1.2,
+                                color: "#fff",
                             }}
                         >
                             {weekdayLabel}
@@ -2964,8 +2968,8 @@ const MsafeDashboardVI: React.FC = () => {
                         <Typography
                             sx={{
                                 fontSize: "14px",
-                                opacity: 0.8,
                                 fontWeight: 400,
+                                color: "#fff",
                             }}
                         >
                             {dateLabel}
@@ -3103,7 +3107,7 @@ const FiltersPanel: React.FC<{
             >
                 <Box sx={{ flex: '1 1 220px', minWidth: 100 }}>
                     <TailwindMultiSelect
-                        label="Cluster"
+                        label={<span>Cluster <span style={{ color: '#EE0B0B' }}>*</span></span>}
                         options={clusterOptions}
                         selected={cluster}
                         onChange={setCluster}
@@ -3115,7 +3119,7 @@ const FiltersPanel: React.FC<{
 
                 <Box sx={{ flex: '1 1 220px', minWidth: 100 }}>
                     <TailwindMultiSelect
-                        label="Circle"
+                        label={<span>Circle <span style={{ color: '#EE0B0B' }}>*</span></span>}
                         options={circleOptions}
                         selected={circle}
                         onChange={setCircle}
@@ -3127,7 +3131,7 @@ const FiltersPanel: React.FC<{
 
                 <Box sx={{ flex: '1 1 220px', minWidth: 100 }}>
                     <TailwindMultiSelect
-                        label="Function"
+                        label={<span>Function <span style={{ color: '#EE0B0B' }}>*</span></span>}
                         options={functionOptions}
                         selected={func}
                         onChange={setFunc}
@@ -3139,7 +3143,7 @@ const FiltersPanel: React.FC<{
 
                 <Box sx={{ flex: '1 1 180px', minWidth: 180, maxWidth: 260 }}>
                     <TailwindSingleSelect
-                        label="Employee Type"
+                        label={<span>Employee Type <span style={{ color: '#EE0B0B' }}>*</span></span>}
                         options={employeeTypes}
                         value={employeeType}
                         onChange={(v) => setEmployeeType(v)}
@@ -3179,7 +3183,7 @@ const FiltersPanel: React.FC<{
                                     marginLeft: '10px',
                                 }}
                             >
-                                Start Date
+                                Start Date <span style={{ color: '#EE0B0B' }}>*</span>
                             </label>
                             <input
                                 type="date"
@@ -3222,7 +3226,7 @@ const FiltersPanel: React.FC<{
                                     marginLeft: '10px',
                                 }}
                             >
-                                End Date
+                                End Date <span style={{ color: '#EE0B0B' }}>*</span>
                             </label>
                             <input
                                 type="date"
@@ -3246,7 +3250,33 @@ const FiltersPanel: React.FC<{
                 <Button
                     variant="contained"
                     size="small"
-                    onClick={() =>
+                    onClick={() => {
+                        // Validate all fields are filled
+                        if (cluster.length === 0) {
+                            toast.error('Please select at least one Cluster');
+                            return;
+                        }
+                        if (circle.length === 0) {
+                            toast.error('Please select at least one Circle');
+                            return;
+                        }
+                        if (func.length === 0) {
+                            toast.error('Please select at least one Function');
+                            return;
+                        }
+                        if (!employeeType) {
+                            toast.error('Please select Employee Type');
+                            return;
+                        }
+                        if (!startDate) {
+                            toast.error('Please select Start Date');
+                            return;
+                        }
+                        if (!endDate) {
+                            toast.error('Please select End Date');
+                            return;
+                        }
+                        
                         onApply({
                             cluster,
                             circle,
@@ -3254,8 +3284,8 @@ const FiltersPanel: React.FC<{
                             employeeType,
                             from: startDate,
                             to: endDate,
-                        })
-                    }
+                        });
+                    }}
                     sx={{ ml: 'auto', flexShrink: 0, whiteSpace: 'nowrap', mt: '10px', mb: '4px', backgroundColor: '#EE0B0B', fontSize: '0.85rem', fontWeight: 600, fontFamily: '"Open Sans", sans-serif', height: 40, px: 2.5, borderRadius: '25px' }}
                 >
                     Apply
