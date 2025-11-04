@@ -1105,7 +1105,7 @@ export const IncidentDashboard = () => {
         return;
       }
 
-      const exportUrl = `${baseUrl}/pms/incidents/export.xlsx`;
+      const exportUrl = `https://${baseUrl}/pms/incidents/export.xlsx`;
 
       const response = await fetch(exportUrl, {
         method: "GET",
@@ -1388,6 +1388,9 @@ export const IncidentDashboard = () => {
         incidents={originalIncidents}
         onApply={(filtered) => setIncidents(filtered)}
         onReset={() => setIncidents(originalIncidents)}
+        setCurrentPage={setCurrentPage}
+        setTotalPages={setTotalPages}
+        setTotalCount={setTotalCount}
       />
     </div>
   );
