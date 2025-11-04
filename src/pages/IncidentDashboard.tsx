@@ -780,7 +780,7 @@ export const IncidentDashboard = () => {
     // },
     {
       key: "building_name",
-      label: "Tower",
+      label: "Building",
       sortable: true,
       defaultVisible: true,
       draggable: true,
