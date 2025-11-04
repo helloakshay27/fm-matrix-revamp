@@ -270,7 +270,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/response_tat_performance_quarterly';
+                const endpoint = `/api/pms/reports/response_tat_performance_quarterly${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -294,7 +294,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/resolution_tat_performance_quarterly';
+                const endpoint = `/api/pms/reports/resolution_tat_performance_quarterly${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -320,7 +320,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/device_platform_statistics';
+                const endpoint = `/api/pms/reports/device_platform_statistics${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
