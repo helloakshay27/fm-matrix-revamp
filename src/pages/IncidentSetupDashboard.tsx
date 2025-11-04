@@ -2437,7 +2437,7 @@ export const IncidentSetupDashboard = () => {
                           Escalate To Users <span style={{ color: '#C72030' }}>*</span>
                         </label>
                         <FormControl fullWidth className="mb-2">
-                          <InputLabel>Escalate To Users <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          {/* <InputLabel>Escalate To Users <span style={{ color: '#C72030' }}>*</span></InputLabel> */}
                           <MuiSelect
                             multiple
                             value={escalateToUsers}
