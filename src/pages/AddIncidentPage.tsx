@@ -1567,6 +1567,20 @@ export const AddIncidentPage = () => {
       form.append('incident[inc_sub_sub_category_id]', incidentData.subSubCategory);
       form.append('incident[inc_sub_sub_sub_category_id]', incidentData.subSubSubCategory);
 
+      // Secondary hierarchy (only append if values exist)
+      if (incidentData.secondaryCategory) {
+        form.append('incident[inc_sec_category_id]', incidentData.secondaryCategory);
+      }
+      if (incidentData.secondarySubCategory) {
+        form.append('incident[inc_sec_sub_category_id]', incidentData.secondarySubCategory);
+      }
+      if (incidentData.secondarySubSubCategory) {
+        form.append('incident[inc_sec_sub_sub_category_id]', incidentData.secondarySubSubCategory);
+      }
+      if (incidentData.secondarySubSubSubCategory) {
+        form.append('incident[inc_sec_sub_sub_sub_category_id]', incidentData.secondarySubSubSubCategory);
+      }
+
       // Severity, Probability, Incident Level
       // form.append('incident[consequence_insignificant]', incidentData.severity);
       form.append('incident[probability]', incidentData.probability);
