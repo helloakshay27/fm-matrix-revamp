@@ -180,21 +180,21 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Response TAT Chart */}
           <div className="text-center">
-            <h3 className="text-md font-semibold text-gray-700 mb-4">Response TAT</h3>
+            <h3 className="text-md font-semibold text-gray-700">Response TAT</h3>
             <div className="relative flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
                     data={responseTATData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={30}
-                    outerRadius={70}
+                    innerRadius={40}
+                    outerRadius={100}
                     paddingAngle={2}
                     dataKey="value"
                     label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
                       const RADIAN = Math.PI / 180;
-                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                      const radius = innerRadius + (outerRadius - innerRadius) * 0.6  ;
                       const x = cx + radius * Math.cos(-midAngle * RADIAN);
                       const y = cy + radius * Math.sin(-midAngle * RADIAN);
                       return (
@@ -204,7 +204,7 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                           fill="white"
                           textAnchor={x > cx ? 'start' : 'end'}
                           dominantBaseline="central"
-                          fontSize="12"
+                          fontSize="11"
                           fontWeight="bold"
                         >
                           {value}
@@ -251,7 +251,8 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                 <div className="text-center">
-                  <div className="text-sm font-semibold text-gray-700">Total: {responseTotalValue}</div>
+                  <div className="text-xl font-extrabold">{responseTotalValue}</div>
+                  <div className="text-base font-semibold text-gray-700">Total</div>
                 </div>
               </div>
             </div>
@@ -260,21 +261,21 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
 
           {/* Resolution TAT Chart */}
           <div className="text-center">
-            <h3 className="text-md font-semibold text-gray-700 mb-4">Resolution TAT</h3>
+            <h3 className="text-md font-semibold text-gray-700">Resolution TAT</h3>
             <div className="relative flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
                     data={resolutionTATData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={30}
-                    outerRadius={70}
+                    innerRadius={40}
+                    outerRadius={100}
                     paddingAngle={2}
                     dataKey="value"
                     label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
                       const RADIAN = Math.PI / 180;
-                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                      const radius = innerRadius + (outerRadius - innerRadius) * 0.6  ;
                       const x = cx + radius * Math.cos(-midAngle * RADIAN);
                       const y = cy + radius * Math.sin(-midAngle * RADIAN);
                       return (
@@ -284,7 +285,7 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                           fill="white"
                           textAnchor={x > cx ? 'start' : 'end'}
                           dominantBaseline="central"
-                          fontSize="12"
+                          fontSize="11"
                           fontWeight="bold"
                         >
                           {value}
@@ -331,7 +332,8 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                 <div className="text-center">
-                  <div className="text-sm font-semibold text-gray-700">Total: {resolutionTotalValue}</div>
+                  <div className="text-xl font-extrabold ">{resolutionTotalValue}</div>
+                  <div className="text-base font-semibold text-gray-700">Total</div>
                 </div>
               </div>
             </div>
