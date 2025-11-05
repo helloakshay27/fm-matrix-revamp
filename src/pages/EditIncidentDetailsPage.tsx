@@ -2754,26 +2754,57 @@ export const EditIncidentDetailsPage = () => {
   };
 
   // Delete witness by id (set _destroy true and show toast)
-  const handleDeleteWitness = (id: number | null) => {
-    setFormData(prev => ({
-      ...prev,
-      witnesses: prev.witnesses.map(w =>
-        w.id === id ? { ...w, _destroy: true } : w
-      )
-    }));
+  // const handleDeleteWitness = (id: number | null) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     witnesses: prev.witnesses.map(w =>
+  //       w.id === id ? { ...w, _destroy: true } : w
+  //     )
+  //   }));
+  //   toast.success('Witness deleted');
+  // };
+  const handleDeleteWitness = (id: number | null, index: number) => {
+    setFormData((prev) => {
+      const updatedWitnesses = id
+        ? prev.witnesses.map((w) =>
+          w.id === id ? { ...w, _destroy: true } : w
+        )
+        : prev.witnesses.filter((_, i) => i !== index);
+
+      return {
+        ...prev,
+        witnesses: updatedWitnesses,
+      };
+    });
     toast.success('Witness deleted');
   };
 
   // Delete investigation team member by id (set _destroy true and show toast)
-  const handleDeleteInvestigationMember = (id: number | null) => {
-    setFormData(prev => ({
-      ...prev,
-      investigationTeam: prev.investigationTeam.map(m =>
-        m.id === id ? { ...m, _destroy: true } : m
-      )
-    }));
-    toast.success('Investigation team member deleted');
+  // const handleDeleteInvestigationMember = (id: number | null) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     investigationTeam: prev.investigationTeam.map(m =>
+  //       m.id === id ? { ...m, _destroy: true } : m
+  //     )
+  //   }));
+  //   toast.success('Investigation team member deleted');
+  // };
+  const handleDeleteInvestigationMember = (id: number | null, index: number) => {
+    setFormData((prev) => {
+      const updatedTeam = id
+        ? prev.investigationTeam.map((m) =>
+          m.id === id ? { ...m, _destroy: true } : m
+        )
+        : prev.investigationTeam.filter((_, i) => i !== index);
+
+      return {
+        ...prev,
+        investigationTeam: updatedTeam,
+      };
+    });
+    toast.success("Investigation team member deleted");
   };
+
 
   // Field styles for Material-UI components
   const fieldStyles = {
@@ -2853,10 +2884,6 @@ export const EditIncidentDetailsPage = () => {
         return false;
       }
     }
-    if (!formData.supportRequired) {
-      toast.error("Please select support checkbox")
-      return false;
-    }
     if (!formData.factsCorrect) {
       toast.error("Please select the desclaimer")
       return false;
@@ -2935,7 +2962,7 @@ export const EditIncidentDetailsPage = () => {
               <span className="text-[#1A1A1A] font-semibold uppercase">BASIC INFORMATION</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6 bg-white space-y-4">
+          <CardContent className="p-6 bg-[#F6F7F7] space-y-4">
             {/* Time & Date Section */}
             <div className="mb-6">
               <h3 className="text-sm font-medium mb-3">Time & Date <span style={{ color: '#C72030' }}>*</span></h3>
@@ -3581,8 +3608,8 @@ export const EditIncidentDetailsPage = () => {
           </CardHeader>
           <CardContent className="p-6 bg-[#F6F7F7] space-y-4">
             {formData.witnesses && formData.witnesses.filter(w => !w._destroy).map((witness, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start border-b border-gray-200 pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
-                <fieldset className="border border-gray-300 rounded p-3" style={{ height: '60px' }}>
+              <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border-b border-gray-200 pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
+                {/* <fieldset className="border border-gray-300 rounded p-3" style={{ height: '60px' }}>
                   <legend className="float-none px-2 text-sm font-medium text-gray-700">
                     Name <span style={{ color: '#C72030' }}>*</span>
                   </legend>
@@ -3596,7 +3623,24 @@ export const EditIncidentDetailsPage = () => {
                       handleInputChange('witnesses', newWitnesses);
                     }}
                   />
+                </fieldset> */}
+                <fieldset className="border border-gray-300 rounded p-3" style={{ height: '60px' }}>
+                  <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                    Name <span style={{ color: '#C72030' }}>*</span>
+                  </legend>
+                  <input
+                    className="w-full p-0 border-0 bg-transparent outline-none text-sm"
+                    placeholder="Enter Name"
+                    value={witness.name}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^A-Za-z\s]/g, ''); // ✅ Allow only letters and spaces
+                      const newWitnesses = [...formData.witnesses];
+                      newWitnesses[index].name = value;
+                      handleInputChange('witnesses', newWitnesses);
+                    }}
+                  />
                 </fieldset>
+
 
                 <fieldset className="border border-gray-300 rounded p-3" style={{ height: '60px' }}>
                   <legend className="float-none px-2 text-sm font-medium text-gray-700">
@@ -3618,14 +3662,22 @@ export const EditIncidentDetailsPage = () => {
                 </fieldset>
 
 
-                <div className="flex justify-center items-center">
-                  <button
+                <div className="flex items-center">
+                  {/* <button
                     type="button"
                     onClick={() => handleDeleteWitness(witness.id)}
                     className="text-red-600 hover:text-red-800 p-2"
                   >
                     <Trash className="h-5 w-5" />
+                  </button> */}
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteWitness(witness.id, index)}
+                    className="text-red-600 hover:text-red-800 p-2"
+                  >
+                    <Trash className="h-5 w-5" />
                   </button>
+
                 </div>
               </div>
             ))}
@@ -3839,7 +3891,7 @@ export const EditIncidentDetailsPage = () => {
         </Card>
 
         {/* Add Investigation Team Details */}
-        <Card className="mb-6 border border-[#D9D9D9]">
+        {/* <Card className="mb-6 border border-[#D9D9D9]">
           <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
             <CardTitle className="flex items-center gap-3 text-lg">
               <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
@@ -3850,7 +3902,7 @@ export const EditIncidentDetailsPage = () => {
           </CardHeader>
           <CardContent className="p-6 bg-[#F6F7F7] space-y-4">
             {formData.investigationTeam && formData.investigationTeam.filter(member => !member._destroy).map((member, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start border-b border-gray-200 pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
+              <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center border-b border-gray-200 pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0">
                 <fieldset className="border border-gray-300 rounded p-3" style={{ height: '60px' }}>
                   <legend className="float-none px-2 text-sm font-medium text-gray-700">
                     Name
@@ -3903,7 +3955,7 @@ export const EditIncidentDetailsPage = () => {
                   />
                 </fieldset>
 
-                <div className="flex justify-center items-center">
+                <div className="flex items-center">
                   <button
                     type="button"
                     onClick={() => handleDeleteInvestigationMember(member.id)}
@@ -3928,14 +3980,133 @@ export const EditIncidentDetailsPage = () => {
               </Button>
             </div>
           </CardContent>
+        </Card> */}
+
+        <Card className="mb-6 border border-[#D9D9D9]">
+          <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                <UserSearch className="w-6 h-6" style={{ color: '#C72030' }} />
+              </div>
+              <span className="text-[#1A1A1A] font-semibold uppercase">
+                ADD INVESTIGATION TEAM DETAILS
+              </span>
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="p-6 bg-[#F6F7F7] space-y-4">
+            {formData.investigationTeam &&
+              formData.investigationTeam
+                .filter((member) => !member._destroy)
+                .map((member, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center border-b border-gray-200 pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0"
+                  >
+                    {/* Name */}
+                    <fieldset
+                      className="border border-gray-300 rounded p-3"
+                      style={{ height: '60px' }}
+                    >
+                      <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                        Name
+                      </legend>
+                      <input
+                        className="w-full p-0 border-0 bg-transparent outline-none text-sm"
+                        placeholder="Enter Name"
+                        value={member.name}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^A-Za-z\s]/g, ""); // ✅ only alphabets and spaces
+                          const newTeam = [...formData.investigationTeam];
+                          newTeam[index].name = value;
+                          handleInputChange("investigationTeam", newTeam);
+                        }}
+                      />
+                    </fieldset>
+
+                    {/* Mobile */}
+                    <fieldset
+                      className="border border-gray-300 rounded p-3"
+                      style={{ height: "60px" }}
+                    >
+                      <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                        Mobile
+                      </legend>
+                      <input
+                        type="text"
+                        maxLength={10}
+                        className="w-full p-0 border-0 bg-transparent outline-none text-sm"
+                        placeholder="Enter Mobile"
+                        value={member.mobile}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, ""); // only numbers
+                          const newTeam = [...formData.investigationTeam];
+                          newTeam[index].mobile = value.slice(0, 10);
+                          handleInputChange("investigationTeam", newTeam);
+                        }}
+                      />
+                    </fieldset>
+
+                    {/* Designation */}
+                    <fieldset
+                      className="border border-gray-300 rounded p-3"
+                      style={{ height: "60px" }}
+                    >
+                      <legend className="float-none px-2 text-sm font-medium text-gray-700">
+                        Designation
+                      </legend>
+                      <input
+                        className="w-full p-0 border-0 bg-transparent outline-none text-sm"
+                        placeholder="Enter Designation"
+                        value={member.designation}
+                        onChange={(e) => {
+                          const newTeam = [...formData.investigationTeam];
+                          newTeam[index].designation = e.target.value;
+                          handleInputChange("investigationTeam", newTeam);
+                        }}
+                      />
+                    </fieldset>
+
+                    {/* Delete Button */}
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDeleteInvestigationMember(member.id, index)
+                        }
+                        className="text-red-600 hover:text-red-800 p-2"
+                      >
+                        <Trash className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+            {/* Add More Button */}
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const newTeam = [
+                    ...(formData.investigationTeam || []),
+                    { name: "", mobile: "", designation: "", id: null, _destroy: false },
+                  ];
+                  handleInputChange("investigationTeam", newTeam);
+                }}
+                className="bg-purple-600 text-white hover:bg-purple-700"
+              >
+                + Add More
+              </Button>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Support and Disclaimer */}
         <Card className="mb-6 border border-[#D9D9D9]">
-          <CardContent className="p-6">
+          <CardContent className="p-6 bg-[#F6F7F7]">
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-medium mb-3">Support<span style={{ color: '#C72030' }}>*</span></h3>
+                <h3 className="text-lg font-medium mb-3">Support</h3>
                 <FormControlLabel
                   control={
                     <Checkbox
