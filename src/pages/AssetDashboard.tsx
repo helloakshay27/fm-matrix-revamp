@@ -1260,10 +1260,14 @@ export const AssetDashboard = () => {
     'critical-breakdown',
   ]);
   const [analyticsDateRange, setAnalyticsDateRange] = useState(() => {
+    // Default date range: last 7 days from today
     const today = new Date();
-    const lastYear = new Date();
-    lastYear.setFullYear(today.getFullYear() - 1);
-    return { fromDate: lastYear, toDate: today };
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    // Reset time to start of day
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+    today.setHours(23, 59, 59, 999);
+    return { fromDate: sevenDaysAgo, toDate: today };
   });
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [selectedAnalyticsTypes, setSelectedAnalyticsTypes] = useState<string[]>([
@@ -1309,6 +1313,9 @@ export const AssetDashboard = () => {
   const handleAnalyticsFilterApply = (startDateStr: string, endDateStr: string) => {
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
+    // Set time to start of day for startDate and end of day for endDate
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
     setAnalyticsDateRange({ fromDate: startDate, toDate: endDate });
   };
 
@@ -1947,6 +1954,8 @@ export const AssetDashboard = () => {
       <AssetAnalyticsFilterDialog
         isOpen={isAnalyticsFilterOpen}
         onClose={() => setIsAnalyticsFilterOpen(false)}
+        currentStartDate={analyticsDateRange.fromDate}
+        currentEndDate={analyticsDateRange.toDate}
         onApplyFilters={handleAnalyticsFilterApply}
       />
     </div>
