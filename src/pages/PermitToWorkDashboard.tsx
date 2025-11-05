@@ -93,6 +93,7 @@ const permitColumns = [
     draggable: true,
     defaultVisible: true
   },
+
   {
     key: 'reference_number',
     label: 'Ref No',
@@ -160,6 +161,13 @@ const permitColumns = [
     key: 'expiry_date',
     label: 'Permit Expiry/Extend Date',
     sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'label',
+    label: 'Label',
+    sortable: false,
     draggable: true,
     defaultVisible: true
   }
@@ -554,6 +562,15 @@ export const PermitToWorkDashboard = () => {
       }
       case 'id':
         return <span className="font-medium">{permit.id}</span>;
+      case 'label':
+        const color = permit["color"] || '#E5E7EB';
+        if (color.toLowerCase() === '#6c3483') {
+          return 'Permit To Complete';
+        } else if (color.toLowerCase() === '#008081') {
+          return 'Awaiting Closure';
+        } else {
+          return '-';
+        }
       case 'reference_number':
         return permit.reference_number;
       case 'permit_type': {

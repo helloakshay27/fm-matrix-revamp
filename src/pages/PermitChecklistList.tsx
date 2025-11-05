@@ -3,13 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Plus, Eye } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useNavigate } from 'react-router-dom';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 
 interface PermitChecklist {
-    id: string;
+    id: number;
     name: string;
-    status: boolean;
+    active: number;
+    snag_audit_category_id: number;
     category: string;
-    questionCount: number;
+    questions_count: number;
 }
 
 export const PermitChecklistList = () => {
@@ -24,69 +26,55 @@ export const PermitChecklistList = () => {
         navigate('/safety/permit-checklist/add');
     };
 
-    const handleViewDetails = (id: string) => {
+    const handleViewDetails = (id: number) => {
         navigate(`/safety/permit/checklist/details/${id}`);
     };
 
-    // Mock data - replace with actual API call
-    const mockChecklists: PermitChecklist[] = [
-        {
-            id: '1',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Loading, Unloading Hazardous Material Work',
-            questionCount: 16
-        },
-        {
-            id: '2',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Hot Work',
-            questionCount: 18
-        },
-        {
-            id: '3',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Height Work',
-            questionCount: 13
-        },
-        {
-            id: '4',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Excavation Work',
-            questionCount: 17
-        },
-        {
-            id: '5',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Electrical Work',
-            questionCount: 14
-        },
-        {
-            id: '6',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Cold Work',
-            questionCount: 14
-        },
-        {
-            id: '7',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Confined Space Work',
-            questionCount: 17
-        },
-        {
-            id: '8',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Radiology Work',
-            questionCount: 16
+    const [checklists, setChecklists] = React.useState<PermitChecklist[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    const fetchChecklists = async () => {
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
+            if (!baseUrl || !token) {
+                console.error('Base URL or token not found in localStorage');
+                return;
+            }
+
+            const response = await fetch(
+                `https://${baseUrl}/pms/admin/snag_checklists/permit_checklist.json`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch checklists');
+            }
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                console.log('Checklist data:', data.checklists);
+                setChecklists(data.checklists);
+            }
+        } catch (error) {
+            console.error('Error fetching checklists:', error);
+        } finally {
+            setIsLoading(false);
         }
-    ];
+    };
+
+    React.useEffect(() => {
+        fetchChecklists();
+    }, []);
+
+    if (isLoading) {
+        return <div className="p-6">Loading...</div>;
+    }
 
     return (
         <div className="p-6">
@@ -102,55 +90,63 @@ export const PermitChecklistList = () => {
                 </Button>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border">
-                <table className="w-full">
-                    <thead>
-                        <tr className="border-b bg-gray-50">
-                            <th className="text-left p-4 font-medium text-gray-700">
-                                <input type="checkbox" className="rounded border-gray-300" />
-                            </th>
-                            <th className="text-left p-4 font-medium text-gray-700">Action</th>
-                            <th className="text-left p-4 font-medium text-gray-700">Name</th>
-                            <th className="text-left p-4 font-medium text-gray-700">Status</th>
-                            <th className="text-left p-4 font-medium text-gray-700">Category</th>
-                            <th className="text-right p-4 font-medium text-gray-700">No. Of Q.</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {mockChecklists.map((checklist) => (
-                            <tr key={checklist.id} className="border-b hover:bg-gray-50">
-                                <td className="p-4">
-                                    <input type="checkbox" className="rounded border-gray-300" />
-                                </td>
-                                <td className="p-4">
-                                    <Button
-                                        onClick={() => handleViewDetails(checklist.id)}
-                                        variant="ghost"
-                                        size="sm"
-                                        className="p-2 hover:bg-gray-100"
-                                    >
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
-                                </td>
-                                <td className="p-4 text-gray-900">{checklist.name}</td>
-                                <td className="p-4">
-                                    <div className="flex items-center">
-                                        <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center mr-2">
-                                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                                        </div>
-                                        <span className={checklist.status ? 'text-blue-600' : 'text-gray-500'}>
-                                            {checklist.status ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="p-4 text-gray-900">{checklist.category}</td>
-                                <td className="p-4 text-right text-gray-900">{checklist.questionCount}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+            {/* Enhanced Table */}
+            <EnhancedTable
+                data={checklists}
+                columns={[
+                    {
+                        key: 'sr_no',
+                        label: 'Sr. No.',
+                        sortable: false,
+                        defaultVisible: true,
+                        draggable: false
+                    },
+                    {
+                        key: 'name',
+                        label: 'Name',
+                        sortable: true,
+                        defaultVisible: true,
+                        draggable: true
+                    },
+                    {
+                        key: 'category',
+                        label: 'Category',
+                        sortable: true,
+                        defaultVisible: true,
+                        draggable: true
+                    },
+                    {
+                        key: 'questions_count',
+                        label: 'No. of Questions',
+                        sortable: true,
+                        defaultVisible: true,
+                        draggable: true
+                    }
+                ]}
+                renderCell={(item, columnKey) => {
+                    if (columnKey === 'sr_no') {
+                        return <div className="text-center">{checklists.indexOf(item) + 1}</div>;
+                    }
+                    return <div className="text-center">{item[columnKey as keyof PermitChecklist]}</div>;
+                }}
+                renderActions={(item) => (
+                    <Button
+                        onClick={() => handleViewDetails(item.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="p-2 hover:bg-gray-100"
+                    >
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                )}
+                enableSearch={true}
+                searchPlaceholder="Search checklists..."
+                pagination={false}
+                pageSize={20}
+                storageKey="permit-checklist-list"
+                enableExport={true}
+                exportFileName="permit-checklists"
+            />
         </div>
     );
 };
