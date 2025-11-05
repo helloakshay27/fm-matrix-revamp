@@ -35,10 +35,13 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
     setLocalData(data);
   }, [data]);
 
-  // Helper to format date as YYYY-MM-DD
+  // Helper to format date as YYYY-MM-DD (using local date components to avoid timezone issues)
   const formatDate = (date: Date) => {
     if (!(date instanceof Date) || isNaN(date.getTime())) return '';
-    return date.toISOString().slice(0, 10);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const handleDownload = async (e?: React.MouseEvent) => {
@@ -777,8 +780,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                       toast.error('Missing base URL or token');
                       return;
                     }
-                    const from = dateRange.startDate.toISOString().slice(0, 10);
-                    const to = dateRange.endDate.toISOString().slice(0, 10);
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
                     const url = `https://${baseUrl}/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -833,8 +836,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                       toast.error('Missing base URL or token');
                       return;
                     }
-                    const from = dateRange.startDate.toISOString().slice(0, 10);
-                    const to = dateRange.endDate.toISOString().slice(0, 10);
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
                     const url = `https://${baseUrl}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -887,8 +890,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                       toast.error('Missing base URL or token');
                       return;
                     }
-                    const from = dateRange.startDate.toISOString().slice(0, 10);
-                    const to = dateRange.endDate.toISOString().slice(0, 10);
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
                     const url = `https://${baseUrl}/pms/inventories/card_inventory_cost_over_month.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -941,8 +944,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                       toast.error('Missing base URL or token');
                       return;
                     }
-                    const from = dateRange.startDate.toISOString().slice(0, 10);
-                    const to = dateRange.endDate.toISOString().slice(0, 10);
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
                     const url = `https://${baseUrl}/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -995,8 +998,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                       toast.error('Missing base URL or token');
                       return;
                     }
-                    const from = dateRange.startDate.toISOString().slice(0, 10);
-                    const to = dateRange.endDate.toISOString().slice(0, 10);
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
                     const url = `https://${baseUrl}/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -1049,8 +1052,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                       toast.error('Missing base URL or token');
                       return;
                     }
-                    const from = dateRange.startDate.toISOString().slice(0, 10);
-                    const to = dateRange.endDate.toISOString().slice(0, 10);
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
                     const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -1103,8 +1106,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                       toast.error('Missing base URL or token');
                       return;
                     }
-                    const from = dateRange.startDate.toISOString().slice(0, 10);
-                    const to = dateRange.endDate.toISOString().slice(0, 10);
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
                     const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -1157,8 +1160,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                       toast.error('Missing base URL or token');
                       return;
                     }
-                    const from = dateRange.startDate.toISOString().slice(0, 10);
-                    const to = dateRange.endDate.toISOString().slice(0, 10);
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
                     const url = `https://${baseUrl}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
                     setRefreshLoading(true);
                     const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });

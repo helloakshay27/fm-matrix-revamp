@@ -183,11 +183,20 @@ export const InventoryDashboard = () => {
   ]);
   const [activeTab, setActiveTab] = useState<string>("list");
   const [showDateFilter, setShowDateFilter] = useState(false);
-  const [dateRange, setDateRange] = useState({
-    // Updated default range per request: 01/07/2025 - 15/08/2025 (DD/MM/YYYY)
-    startDate: new Date(2025, 6, 1), // 01 July 2025
-    endDate: new Date(2025, 7, 15), // 15 August 2025
-  });
+  // Default date range: last 7 days from today
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    // Reset time to start of day
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+    today.setHours(23, 59, 59, 999);
+    return {
+      startDate: sevenDaysAgo,
+      endDate: today,
+    };
+  };
+  const [dateRange, setDateRange] = useState(getDefaultDateRange());
   const [inventory, setInventory] = useState([]);
   const [downloadingQR, setDownloadingQR] = useState(false);
   // Track currently applied server-side filters so pagination & refresh honor them
@@ -1406,12 +1415,17 @@ export const InventoryDashboard = () => {
       <InventoryAnalyticsFilterDialog
         isOpen={isAnalyticsFilterOpen}
         onClose={() => setIsAnalyticsFilterOpen(false)}
+        currentStartDate={dateRange.startDate}
+        currentEndDate={dateRange.endDate}
         onApplyFilters={(filters) => {
           // Parse DD/MM/YYYY to Date objects
           const [startDay, startMonth, startYear] = filters.startDate.split('/').map(Number);
           const [endDay, endMonth, endYear] = filters.endDate.split('/').map(Number);
           const startDate = new Date(startYear, startMonth - 1, startDay);
           const endDate = new Date(endYear, endMonth - 1, endDay);
+          // Set time to start of day for startDate and end of day for endDate
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
           setDateRange({ startDate, endDate });
         }}
       />
