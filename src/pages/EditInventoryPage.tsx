@@ -89,6 +89,9 @@ export const EditInventoryPage = () => {
   const [errors, setErrors] = useState<{
     inventoryName?: string;
     inventoryCode?: string;
+    quantity?: string;
+    unit?: string;
+    category?: string;
     minStockLevel?: string;
     maxStockLevel?: string;
     expiryDate?: string;
@@ -458,6 +461,18 @@ export const EditInventoryPage = () => {
       const msg = nextVal.trim() ? '' : 'Inventory Code is required.';
       setErrors(prev => ({ ...prev, inventoryCode: msg }));
     }
+    if (field === 'quantity') {
+      const isValidPositiveNumber = (val: string) => {
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= 0;
+      };
+      const msg = !nextVal
+        ? 'Quantity is required'
+        : !isValidPositiveNumber(nextVal)
+          ? 'Quantity must be a valid number'
+          : '';
+      setErrors(prev => ({ ...prev, quantity: msg }));
+    }
     // Min/Max Stock cross-field validation (Edit page)
     if (field === 'minStockLevel' || field === 'maxStockLevel') {
       const newMin = field === 'minStockLevel' ? nextVal : formData.minStockLevel;
@@ -485,7 +500,18 @@ export const EditInventoryPage = () => {
   };
 
   const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
-    setFormData(prev => ({ ...prev, [field]: event.target.value }));
+    const value = event.target.value;
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Validate unit and category when changed
+    if (field === 'unit') {
+      const msg = !value ? 'Unit is required' : '';
+      setErrors(prev => ({ ...prev, unit: msg }));
+    }
+    if (field === 'category') {
+      const msg = !value ? 'Category is required' : '';
+      setErrors(prev => ({ ...prev, category: msg }));
+    }
   };
 
   // Validate full form for required fields
@@ -493,6 +519,16 @@ export const EditInventoryPage = () => {
     const newErrors: typeof errors = {};
     if (!formData.inventoryName.trim()) newErrors.inventoryName = 'Inventory Name is required.';
     if (!formData.inventoryCode.trim()) newErrors.inventoryCode = 'Inventory Code is required.';
+    if (!formData.quantity) {
+      newErrors.quantity = 'Quantity is required';
+    } else {
+      const qtyNum = parseFloat(formData.quantity);
+      if (isNaN(qtyNum) || qtyNum < 0) {
+        newErrors.quantity = 'Quantity must be a valid number';
+      }
+    }
+    if (!formData.unit) newErrors.unit = 'Unit is required';
+    if (!formData.category) newErrors.category = 'Category is required';
     if (!formData.minStockLevel.trim()) newErrors.minStockLevel = 'Min. Stock Level is required.';
     else if (!/^\d+$/.test(formData.minStockLevel)) newErrors.minStockLevel = 'Enter a valid number.';
     if (formData.maxStockLevel && !/^\d+$/.test(formData.maxStockLevel)) newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
@@ -847,7 +883,7 @@ export const EditInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label="Quantity"
+                    label={<>Quantity<span className="text-red-500">*</span></>}
                     placeholder="Qty"
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', e.target.value.replace(/[^0-9.]/g, ''))}
@@ -867,6 +903,8 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
+                    error={!!errors.quantity}
+                    helperText={errors.quantity}
                     sx={fieldStyles}
                   />
                 </div>
@@ -937,8 +975,8 @@ export const EditInventoryPage = () => {
                 </div>
 
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Select Unit</InputLabel>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.unit}>
+                    <InputLabel shrink>Select Unit<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={formData.unit}
                       onChange={handleSelectChange('unit')}
@@ -978,6 +1016,9 @@ export const EditInventoryPage = () => {
                       <MenuItem value="Brass">Brass</MenuItem>
                       <MenuItem value="Tonnes">Tonnes</MenuItem>
                     </MuiSelect>
+                    {errors.unit && (
+                      <p className="text-red-500 text-sm mt-1">{errors.unit}</p>
+                    )}
                   </FormControl>
                 </div>
 
@@ -1017,32 +1058,9 @@ export const EditInventoryPage = () => {
 
                 </div>
 
-                {/* Inventory Type moved here before Select Category */}
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Type</InputLabel>
-                    <MuiSelect
-                      value={invTypeId}
-                      onChange={(e) => {
-                        setInvTypeId(e.target.value as string);
-                      }}
-                      label="Inventory Type"
-                      notched
-                      displayEmpty
-                    >
-                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
-                      {invTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Select Category</InputLabel>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.category}>
+                    <InputLabel shrink>Select Category<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={formData.category}
                       onChange={handleSelectChange('category')}
@@ -1059,6 +1077,9 @@ export const EditInventoryPage = () => {
                       <MenuItem value="Stationary">Stationary</MenuItem>
                       <MenuItem value="Pantry">Pantry</MenuItem>
                     </MuiSelect>
+                    {errors.category && (
+                      <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+                    )}
                   </FormControl>
                 </div>
 

@@ -42,6 +42,8 @@ interface FormErrors {
   inventoryName?: string;
   inventoryCode?: string;
   quantity?: string;
+  unit?: string;
+  category?: string;
   cost?: string;
   minStockLevel?: string;
   maxStockLevel?: string;
@@ -195,9 +197,17 @@ export const AddInventoryPage = () => {
         newErrors.inventoryCode = !value ? 'Inventory Code is required' : '';
         break;
       case 'quantity':
-        newErrors.quantity = value && !isValidPositiveNumber(value)
-          ? 'Quantity must be a valid number'
-          : '';
+        newErrors.quantity = !value
+          ? 'Quantity is required'
+          : !isValidPositiveNumber(value)
+            ? 'Quantity must be a valid number'
+            : '';
+        break;
+      case 'unit':
+        newErrors.unit = !value ? 'Unit is required' : '';
+        break;
+      case 'category':
+        newErrors.category = !value ? 'Category is required' : '';
         break;
       case 'cost':
         newErrors.cost = value && !isValidPositiveNumber(value) ? 'Cost must be a valid number' : '';
@@ -312,9 +322,13 @@ export const AddInventoryPage = () => {
     newErrors.criticality = !criticality ? 'Criticality is required' : '';
     newErrors.inventoryName = !formData.inventoryName ? 'Inventory Name is required' : '';
     newErrors.inventoryCode = !formData.inventoryCode ? 'Inventory Code is required' : '';
-    newErrors.quantity = formData.quantity && (isNaN(parseFloat(formData.quantity)) || parseFloat(formData.quantity) < 0)
-      ? 'Quantity must be a valid number'
-      : '';
+    newErrors.quantity = !formData.quantity
+      ? 'Quantity is required'
+      : (isNaN(parseFloat(formData.quantity)) || parseFloat(formData.quantity) < 0)
+        ? 'Quantity must be a valid number'
+        : '';
+    newErrors.unit = !formData.unit ? 'Unit is required' : '';
+    newErrors.category = !formData.category ? 'Category is required' : '';
     newErrors.minStockLevel = !formData.minStockLevel
       ? 'Min Stock Level is required'
       : !isNaN(parseFloat(formData.minStockLevel)) && parseFloat(formData.minStockLevel) >= 0
@@ -924,7 +938,7 @@ export const AddInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Quantity</>}
+                    label={<>Quantity<span className="text-red-500">*</span></>}
                     placeholder="Qty"
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', e.target.value)}
@@ -1007,8 +1021,8 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Select Unit</InputLabel>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.unit}>
+                    <InputLabel shrink>Select Unit<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={formData.unit}
                       onChange={handleSelectChange('unit')}
@@ -1048,6 +1062,9 @@ export const AddInventoryPage = () => {
                       <MenuItem value="Brass">Brass</MenuItem>
                       <MenuItem value="Tonnes">Tonnes</MenuItem>
                     </MuiSelect>
+                    {errors.unit && (
+                      <p className="text-red-500 text-sm mt-1">{errors.unit}</p>
+                    )}
                   </FormControl>
                 </div>
 
@@ -1080,34 +1097,9 @@ export const AddInventoryPage = () => {
                   </LocalizationProvider>
                 </div>
 
-                {/* Inventory Type moved here before Select Category */}
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Type</InputLabel>
-                    <MuiSelect
-                      value={invTypeId}
-                      onChange={(e) => {
-                        setInvTypeId(e.target.value as string);
-                        setInvSubTypeId('');
-                      }}
-                      label="Inventory Type"
-                      notched
-                      displayEmpty
-                    >
-                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
-                      {invTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-
-
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Select Category</InputLabel>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.category}>
+                    <InputLabel shrink>Select Category<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={formData.category}
                       onChange={handleSelectChange('category')}
@@ -1124,6 +1116,9 @@ export const AddInventoryPage = () => {
                       <MenuItem value="Stationary">Stationary</MenuItem>
                       <MenuItem value="Pantry">Pantry</MenuItem>
                     </MuiSelect>
+                    {errors.category && (
+                      <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+                    )}
                   </FormControl>
                 </div>
 
