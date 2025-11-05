@@ -229,6 +229,24 @@ interface ParkingBookingSiteSummary {
   checked_out_count: number;
 }
 
+// Section Loader Component
+const SectionLoader: React.FC<{
+  loading: boolean;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ loading, children, className }) => {
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      {children}
+      {loading && (
+        <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ParkingBookingListSiteWise = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -241,6 +259,7 @@ const ParkingBookingListSiteWise = () => {
   const navigate = useNavigate();
   const { isSidebarCollapsed } = useLayout();
   const panelRef = useRef<HTMLDivElement>(null);
+  const isInitialLoadRef = useRef(true); // Track if it's the first load
 
   // API state
   const [bookings, setBookings] = useState<ParkingBooking[]>([]);
@@ -264,6 +283,7 @@ const ParkingBookingListSiteWise = () => {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cardsLoading, setCardsLoading] = useState(false); // Separate loading state for cards
   const [error, setError] = useState<string | null>(null);
   const [apiPagination, setApiPagination] = useState({
     current_page: 1,
@@ -638,6 +658,9 @@ const ParkingBookingListSiteWise = () => {
   useEffect(() => {
     const loadBookingData = async () => {
       try {
+        // Check if it's the initial load using ref
+        const isInitialLoad = isInitialLoadRef.current;
+        
         setLoading(true);
         setError(null);
         
@@ -645,6 +668,7 @@ const ParkingBookingListSiteWise = () => {
         console.log('🔍 Detailed URL Debug:');
         console.log('Raw Base URL from API_CONFIG:', API_CONFIG.BASE_URL);
         console.log('Raw endpoint:', '/pms/admin/parking_bookings.json');
+        console.log('Is Initial Load:', isInitialLoad);
         
         // Convert UI filters to API filter parameters
         const buildApiFilterParamsBase = (): ApiFilterParams => {
@@ -728,102 +752,132 @@ const ParkingBookingListSiteWise = () => {
           return effective;
         };
         
-        // First fetch categories and basic data
-        const [cardsResponse, response, usersData, categoriesData, buildingsData, floorsData] = await Promise.all([
-          fetchParkingBookings(1, debouncedSearchTerm, buildApiFilterParamsBase()),
-          fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParamsEffective()),
-          fetchUsers(),
-          fetchParkingCategories(),
-          fetchBuildings(),
-          fetchFloors()
-        ]);
-        
-        // Set users data
-        setUsers(usersData);
-        
-        // Set parking categories data
-        setParkingCategories(categoriesData);
-        
-        // Set buildings data
-        setBuildings(buildingsData);
-        
-        // Set floors data
-        setFloors(floorsData);
-        
-        // Now resolve category IDs from the fetched categories
-        const twoWheelerCategory = categoriesData.find(cat => {
-          const lower = cat.name.toLowerCase();
-          return lower.includes('two') || lower.includes('2') || lower.includes('bike');
-        });
-        const twoWheelerCategoryIdLocal = twoWheelerCategory ? twoWheelerCategory.id.toString() : null;
-        
-        const fourWheelerCategory = categoriesData.find(cat => {
-          const lower = cat.name.toLowerCase();
-          return lower.includes('four') || lower.includes('4') || lower.includes('car');
-        });
-        const fourWheelerCategoryIdLocal = fourWheelerCategory ? fourWheelerCategory.id.toString() : null;
-        
-        // Build filter params for cancelled counts (base filters + cancelled status for each vehicle type)
-        const buildCancelledFilterParams = (vehicleType: 'two' | 'four'): ApiFilterParams => {
-          const baseParams = buildApiFilterParamsBase();
-          const categoryId = vehicleType === 'two' ? twoWheelerCategoryIdLocal : fourWheelerCategoryIdLocal;
+        // On initial load, fetch everything including cards
+        // On subsequent loads, only fetch table data
+        if (isInitialLoad) {
+          // First fetch categories and basic data
+          const [cardsResponse, response, usersData, categoriesData, buildingsData, floorsData] = await Promise.all([
+            fetchParkingBookings(1, debouncedSearchTerm, buildApiFilterParamsBase()),
+            fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParamsEffective()),
+            fetchUsers(),
+            fetchParkingCategories(),
+            fetchBuildings(),
+            fetchFloors()
+          ]);
           
-          return {
-            ...baseParams,
-            category: categoryId || undefined,
-            statuses: ['cancelled']
+          // Set users data
+          setUsers(usersData);
+          
+          // Set parking categories data
+          setParkingCategories(categoriesData);
+          
+          // Set buildings data
+          setBuildings(buildingsData);
+          
+          // Set floors data
+          setFloors(floorsData);
+          
+          // Now resolve category IDs from the fetched categories
+          const twoWheelerCategory = categoriesData.find(cat => {
+            const lower = cat.name.toLowerCase();
+            return lower.includes('two') || lower.includes('2') || lower.includes('bike');
+          });
+          const twoWheelerCategoryIdLocal = twoWheelerCategory ? twoWheelerCategory.id.toString() : null;
+          
+          const fourWheelerCategory = categoriesData.find(cat => {
+            const lower = cat.name.toLowerCase();
+            return lower.includes('four') || lower.includes('4') || lower.includes('car');
+          });
+          const fourWheelerCategoryIdLocal = fourWheelerCategory ? fourWheelerCategory.id.toString() : null;
+          
+          // Build filter params for cancelled counts (base filters + cancelled status for each vehicle type)
+          const buildCancelledFilterParams = (vehicleType: 'two' | 'four'): ApiFilterParams => {
+            const baseParams = buildApiFilterParamsBase();
+            const categoryId = vehicleType === 'two' ? twoWheelerCategoryIdLocal : fourWheelerCategoryIdLocal;
+            
+            return {
+              ...baseParams,
+              category: categoryId || undefined,
+              statuses: ['cancelled']
+            };
           };
-        };
+          
+          // Now fetch cancelled counts with the resolved category IDs
+          const [twoWheelerCancelledResponse, fourWheelerCancelledResponse] = await Promise.all([
+            // Fetch all cancelled two wheeler bookings (we only need the count from pagination)
+            twoWheelerCategoryIdLocal ? fetchParkingBookings(1, '', buildCancelledFilterParams('two')) : Promise.resolve({ pagination: { total_count: 0 }, parking_bookings: [], cards: {} }),
+            // Fetch all cancelled four wheeler bookings (we only need the count from pagination)
+            fourWheelerCategoryIdLocal ? fetchParkingBookings(1, '', buildCancelledFilterParams('four')) : Promise.resolve({ pagination: { total_count: 0 }, parking_bookings: [], cards: {} })
+          ]);
+          
+          // Cards stay original (base filters only)
+          // Get cancelled counts from API response total_count (this gives us ALL cancelled bookings, not just first page)
+          const twoWheelerCancelled = twoWheelerCancelledResponse.pagination.total_count || 0;
+          const fourWheelerCancelled = fourWheelerCancelledResponse.pagination.total_count || 0;
+          
+          console.log('🔍 Cancelled Bookings Debug:');
+          console.log('Two Wheeler Cancelled Count:', twoWheelerCancelled);
+          console.log('Four Wheeler Cancelled Count:', fourWheelerCancelled);
+          
+          setCards({
+            ...cardsResponse.cards,
+            two_cancelled: twoWheelerCancelled,
+            four_cancelled: fourWheelerCancelled
+          });
+          
+          // Set raw API data
+          setBookings(response.parking_bookings);
+          
+          // Transform for UI
+          const transformedBookings = transformApiDataToBookings(response.parking_bookings);
+          setBookingData(transformedBookings);
+          
+          // Generate summary
+          const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
+          setSummary(generatedSummary);
+          
+          // Set pagination - use fixed per_page of 20 for consistent serial number calculation
+          setApiPagination({
+            current_page: response.pagination.current_page,
+            total_count: response.pagination.total_count,
+            total_pages: response.pagination.total_pages,
+            per_page: 20 // Fixed per_page value for consistent pagination
+          });
+        } else {
+          // For non-initial loads, only fetch table data
+          const response = await fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParamsEffective());
+          
+          // Set raw API data
+          setBookings(response.parking_bookings);
+          
+          // Transform for UI
+          const transformedBookings = transformApiDataToBookings(response.parking_bookings);
+          setBookingData(transformedBookings);
+          
+          // Generate summary
+          const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
+          setSummary(generatedSummary);
+          
+          // Set pagination - use fixed per_page of 20 for consistent serial number calculation
+          setApiPagination({
+            current_page: response.pagination.current_page,
+            total_count: response.pagination.total_count,
+            total_pages: response.pagination.total_pages,
+            per_page: 20 // Fixed per_page value for consistent pagination
+          });
+          
+          console.log('🔍 Pagination Update Debug (Non-Initial):');
+          console.log('Current Page:', response.pagination.current_page);
+          console.log('Total Pages:', response.pagination.total_pages);
+          console.log('Total Count:', response.pagination.total_count);
+          console.log('Card Filter Active:', cardFilter?.active);
+          console.log('Table Data Length:', transformedBookings.length);
+        }
         
-        // Now fetch cancelled counts with the resolved category IDs
-        const [twoWheelerCancelledResponse, fourWheelerCancelledResponse] = await Promise.all([
-          // Fetch all cancelled two wheeler bookings (we only need the count from pagination)
-          twoWheelerCategoryIdLocal ? fetchParkingBookings(1, '', buildCancelledFilterParams('two')) : Promise.resolve({ pagination: { total_count: 0 }, parking_bookings: [], cards: {} }),
-          // Fetch all cancelled four wheeler bookings (we only need the count from pagination)
-          fourWheelerCategoryIdLocal ? fetchParkingBookings(1, '', buildCancelledFilterParams('four')) : Promise.resolve({ pagination: { total_count: 0 }, parking_bookings: [], cards: {} })
-        ]);
-        
-        // Cards stay original (base filters only)
-        // Get cancelled counts from API response total_count (this gives us ALL cancelled bookings, not just first page)
-        const twoWheelerCancelled = twoWheelerCancelledResponse.pagination.total_count || 0;
-        const fourWheelerCancelled = fourWheelerCancelledResponse.pagination.total_count || 0;
-        
-        console.log('🔍 Cancelled Bookings Debug:');
-        console.log('Two Wheeler Cancelled Count:', twoWheelerCancelled);
-        console.log('Four Wheeler Cancelled Count:', fourWheelerCancelled);
-        
-        setCards({
-          ...cardsResponse.cards,
-          two_cancelled: twoWheelerCancelled,
-          four_cancelled: fourWheelerCancelled
-        });
-        
-        // Set raw API data
-        setBookings(response.parking_bookings);
-        
-        // Transform for UI
-        const transformedBookings = transformApiDataToBookings(response.parking_bookings);
-        setBookingData(transformedBookings);
-        
-        // Generate summary
-        const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
-        setSummary(generatedSummary);
-        
-        // Set pagination - use fixed per_page of 20 for consistent serial number calculation
-        setApiPagination({
-          current_page: response.pagination.current_page,
-          total_count: response.pagination.total_count,
-          total_pages: response.pagination.total_pages,
-          per_page: 20 // Fixed per_page value for consistent pagination
-        });
-        
-        console.log('🔍 Pagination Update Debug:');
-        console.log('Current Page:', response.pagination.current_page);
-        console.log('Total Pages:', response.pagination.total_pages);
-        console.log('Total Count:', response.pagination.total_count);
-        console.log('Per Page:', 20);
-        console.log('Card Filter Active:', cardFilter?.active);
-        console.log('Table Data Length:', transformedBookings.length);
+        // Mark initial load as complete
+        if (isInitialLoad) {
+          isInitialLoadRef.current = false;
+        }
         
       } catch (error) {
         console.error('Error loading booking data:', error);
@@ -842,29 +896,29 @@ const ParkingBookingListSiteWise = () => {
     if (!cards) {
       return [
         // First row - Car parking stats
-        { title: "Total Parking", count: 0, icon: Car, vehicle: 'four' as const, metric: 'total' as const },
-        { title: "Total Booked Parking", count: 0, icon: CheckCircle, vehicle: 'four' as const, metric: 'booked' as const },
-        { title: "Total Vacant Parking", count: 0, icon: AlertTriangle, vehicle: 'four' as const, metric: 'vacant' as const },
-        { title: "Total Cancelled Booking", count: 0, icon: XCircle, vehicle: 'four' as const, metric: 'cancelled' as const },
+        { title: "Total Parking Slots", count: 0, icon: Car, vehicle: 'four' as const, metric: 'total' as const },
+        { title: "Booked Parking", count: 0, icon: CheckCircle, vehicle: 'four' as const, metric: 'booked' as const },
+        { title: "Vacant Parking", count: 0, icon: AlertTriangle, vehicle: 'four' as const, metric: 'vacant' as const },
+        { title: "Cancelled Booking", count: 0, icon: XCircle, vehicle: 'four' as const, metric: 'cancelled' as const },
         // Second row - Bike parking stats
-        { title: "Total Parking", count: 0, icon: Bike, vehicle: 'two' as const, metric: 'total' as const },
-        { title: "Total Booked Parking", count: 0, icon: CheckCircle, vehicle: 'two' as const, metric: 'booked' as const },
-        { title: "Total Vacant Parking", count: 0, icon: AlertTriangle, vehicle: 'two' as const, metric: 'vacant' as const },
-        { title: "Total Cancelled Booking", count: 0, icon: XCircle, vehicle: 'two' as const, metric: 'cancelled' as const }
+        { title: "Total Parking Slots", count: 0, icon: Bike, vehicle: 'two' as const, metric: 'total' as const },
+        { title: "Booked Parking", count: 0, icon: CheckCircle, vehicle: 'two' as const, metric: 'booked' as const },
+        { title: "Vacant Parking", count: 0, icon: AlertTriangle, vehicle: 'two' as const, metric: 'vacant' as const },
+        { title: "Cancelled Booking", count: 0, icon: XCircle, vehicle: 'two' as const, metric: 'cancelled' as const }
       ];
     }
 
     return [
       // First row - Car parking stats
-      { title: "Total Parking", count: cards.four_total, icon: Car, vehicle: 'four' as const, metric: 'total' as const },
-      { title: "Total Booked Parking", count: cards.four_booked, icon: CheckCircle, vehicle: 'four' as const, metric: 'booked' as const },
-      { title: "Total Vacant Parking", count: cards.four_available, icon: AlertTriangle, vehicle: 'four' as const, metric: 'vacant' as const },
-      { title: "Total Cancelled Booking", count: cards.four_cancelled, icon: XCircle, vehicle: 'four' as const, metric: 'cancelled' as const },
+      { title: "Total Parking Slots", count: cards.four_total, icon: Car, vehicle: 'four' as const, metric: 'total' as const },
+      { title: "Booked Slots", count: cards.four_booked, icon: CheckCircle, vehicle: 'four' as const, metric: 'booked' as const },
+      { title: "Vacant Slots", count: cards.four_available, icon: AlertTriangle, vehicle: 'four' as const, metric: 'vacant' as const },
+      { title: "Cancelled Slots", count: cards.four_cancelled, icon: XCircle, vehicle: 'four' as const, metric: 'cancelled' as const },
       // Second row - Bike parking stats
-      { title: "Total Parking", count: cards.two_total, icon: Bike, vehicle: 'two' as const, metric: 'total' as const },
-      { title: "Total Booked Parking", count: cards.two_booked, icon: CheckCircle, vehicle: 'two' as const, metric: 'booked' as const },
-      { title: "Total Vacant Parking", count: cards.two_available, icon: AlertTriangle, vehicle: 'two' as const, metric: 'vacant' as const },
-      { title: "Total Cancelled Booking", count: cards.two_cancelled, icon: XCircle, vehicle: 'two' as const, metric: 'cancelled' as const }
+      { title: "Total Parking Slots", count: cards.two_total, icon: Bike, vehicle: 'two' as const, metric: 'total' as const },
+      { title: "Booked Slots", count: cards.two_booked, icon: CheckCircle, vehicle: 'two' as const, metric: 'booked' as const },
+      { title: "Vacant Slots", count: cards.two_available, icon: AlertTriangle, vehicle: 'two' as const, metric: 'vacant' as const },
+      { title: "Cancelled Slots", count: cards.two_cancelled, icon: XCircle, vehicle: 'two' as const, metric: 'cancelled' as const }
     ];
   }, [cards]);
 
@@ -912,6 +966,7 @@ const ParkingBookingListSiteWise = () => {
     console.log('Status:', status);
     setCardFilter({ active: true, categoryId, status });
     setCurrentPage(1);
+    // No need to set cardsLoading here - cards don't reload on card click, only table does
   };
 
   // Clear card filter
@@ -1539,50 +1594,50 @@ const ParkingBookingListSiteWise = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, index) => (
+      <SectionLoader loading={cardsLoading} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
+        {!cards ? (
+          // Show skeleton loading only on initial load when cards are null
+          Array.from({ length: 8 }).map((_, index) => (
             <div
               key={index}
-              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 animate-pulse bg-[#f6f4ee]"
+              className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 animate-pulse"
             >
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gray-300 rounded"></div>
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <div className="w-6 h-6 bg-gray-300 rounded"></div>
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate text-gray-400">0</div>
-                <div className="text-xs sm:text-sm font-medium leading-tight text-gray-400">Loading...</div>
+              <div>
+                <div className="text-2xl font-semibold text-gray-400">0</div>
+                <div className="text-sm font-medium text-gray-400">Loading...</div>
               </div>
             </div>
           ))
         ) : (
-          parkingStats.map((stat, index) => (
-            <div
-              key={index}
-              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] hover:bg-[#e6e2da] transition-all duration-200"
-              onClick={() => handleStatCardClick(stat.vehicle, stat.metric)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleStatCardClick(stat.vehicle, stat.metric); }}
-            >
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <stat.icon
-                  className="w-4 h-4 sm:w-6 sm:h-6"
-                  style={{ color: '#C72030' }}
-                />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {stat.count}
+          // Show actual card data once loaded
+          parkingStats.map((stat, index) => {
+            const IconComponent = stat.icon;
+            const isClickable = stat.metric === 'booked' || stat.metric === 'cancelled';
+            return (
+              <div
+                key={index}
+                className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 ${isClickable ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
+                onClick={() => isClickable && handleStatCardClick(stat.vehicle, stat.metric)}
+              >
+                <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                  <IconComponent className="w-6 h-6 text-[#C72030]" />
                 </div>
-                <div className="text-xs sm:text-sm font-medium leading-tight text-muted-foreground">
-                  {stat.title}
+                <div>
+                  <div className="text-2xl font-semibold text-[#1A1A1A]">
+                    {stat.count}
+                  </div>
+                  <div className="text-sm font-medium text-[#1A1A1A]">
+                    {stat.title}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
-      </div>
+      </SectionLoader>
 
       {/* Controls Section */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1675,7 +1730,7 @@ const ParkingBookingListSiteWise = () => {
       {/* Filters are now in a modal - see below */}
 
       {/* Data Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+      <SectionLoader loading={loading && cards !== null} className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
@@ -1700,7 +1755,8 @@ const ParkingBookingListSiteWise = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {loading && !cards ? (
+              // Show loading text only on initial load
               <TableRow>
                 <TableCell colSpan={columns.filter(col => col.visible).length} className="text-center py-8 text-gray-500">
                   Loading parking booking data...
@@ -1782,7 +1838,7 @@ const ParkingBookingListSiteWise = () => {
             )}
           </TableBody>
         </Table>
-      </div>
+      </SectionLoader>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
@@ -2330,59 +2386,57 @@ const ParkingBookingListSiteWise = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Cancel Booking Confirmation Dialog */}
-      <Dialog open={showCancelConfirmation} onOpenChange={setShowCancelConfirmation}>
-        <DialogContent className="max-w-md bg-white">
-          <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-            <DialogTitle className="text-xl font-bold text-[#C72030]">Cancel Booking</DialogTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => {
-                setShowCancelConfirmation(false);
-                setBookingToCancel(null);
-              }}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </DialogHeader>
-
-          <div className="space-y-4 py-6">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <XCircle className="w-5 h-5 text-[#C72030]" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold text-gray-900 mb-1">
-                  Confirm Cancellation
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Are you sure you want to cancel booking #{bookingToCancel}? This action cannot be undone.
-                </p>
+      {/* Cancel Booking Confirmation Modal */}
+      {showCancelConfirmation && (() => {
+        const bookingDetails = bookingData.find(b => b.id === bookingToCancel);
+        return (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="text-center">
+                <div className="mb-4">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Cancel Booking
+                  </h3>
+                  <p className="text-gray-600">
+                    Are you sure you want to cancel booking #{bookingToCancel}?
+                  </p>
+                  {bookingDetails && (
+                    <div className="mt-3 text-sm text-gray-500">
+                      <p><span className="font-medium">Date:</span> {bookingDetails.schedule_date}</p>
+                      <p><span className="font-medium">Booking Time:</span> {bookingDetails.booking_schedule_time}</p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={confirmCancelBooking}
+                    className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium transition-colors"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCancelConfirmation(false);
+                      setBookingToCancel(null);
+                    }}
+                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium transition-colors"
+                  >
+                    No
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-
-          <DialogFooter className="flex justify-end gap-3 pt-4 border-t">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowCancelConfirmation(false);
-                setBookingToCancel(null);
-              }}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              No, Keep Booking
-            </Button>
-            <Button 
-              onClick={confirmCancelBooking}
-              className="bg-[#C72030] hover:bg-[#A01828] text-white"
-            >
-              Yes, Cancel Booking
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        );
+      })()}
     </div>
   );
 };
