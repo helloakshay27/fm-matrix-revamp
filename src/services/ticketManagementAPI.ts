@@ -254,6 +254,7 @@ export interface OccupantUserResponse {
 // Interface for ticket filters
 export interface TicketFilters {
   date_range?: string;
+  'q[date_range]'?: string; // Add support for q[date_range] parameter format
   category_type_id_eq?: number;
   sub_category_id_eq?: number;
   dept_id_eq?: number;
@@ -270,6 +271,11 @@ export interface TicketFilters {
   complaint_status_fixed_state_not_eq?: string;
   complaint_status_fixed_state_null?: string;
   m?: string;
+  g?: Array<{
+    m?: string;
+    complaint_status_fixed_state_not_eq?: string;
+    complaint_status_fixed_state_null?: string;
+  }>;
 }
 
 // Helper function to format date for API (DD/MM/YYYY)
@@ -594,11 +600,21 @@ export const ticketManagementAPI = {
     queryParams.append('page', page.toString());
     queryParams.append('per_page', perPage.toString());
     
+    console.log('🔵 API getTickets called with filters:', filters);
     
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
-          if (Array.isArray(value)) {
+          // Handle nested group structure for open tickets
+          if (key === 'g' && Array.isArray(value)) {
+            value.forEach((group, index) => {
+              Object.entries(group).forEach(([groupKey, groupValue]) => {
+                if (groupValue !== undefined && groupValue !== null && groupValue !== '') {
+                  queryParams.append(`q[g][${index}][${groupKey}]`, groupValue.toString());
+                }
+              });
+            });
+          } else if (Array.isArray(value)) {
             value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
           } else if (key === 'date_range' && typeof value === 'string' && value.includes('+-+')) {
             // Handle date range - convert from ISO to DD/MM/YYYY format
@@ -616,8 +632,8 @@ export const ticketManagementAPI = {
     }
 
     const url = `/pms/admin/complaints.json?${queryParams.toString()}`;
-    console.log('API URL:', url);
-    console.log('Query parameters:', Object.fromEntries(queryParams.entries()));
+    console.log('🔵 Final API URL:', url);
+    console.log('🔵 Query parameters object:', Object.fromEntries(queryParams.entries()));
     const response = await apiClient.get(url);
     return {
       complaints: response.data.complaints || [],

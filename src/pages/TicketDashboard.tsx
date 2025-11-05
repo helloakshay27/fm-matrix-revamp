@@ -329,20 +329,29 @@ export const TicketDashboard = () => {
     const endDate = convertDateStringToDate(filters.endDate);
 
     fetchAnalyticsData(startDate, endDate);
-    // Also apply the same date range to ticket filters so summary cards & ticket list respect it
+    
+    // Apply date range to ticket summary cards
     const dateRangeParam = `${filters.startDate} - ${filters.endDate}`;
-    setFilters(prev => ({ ...prev, 'q[date_range]': dateRangeParam }));
+    // The API will automatically wrap date_range with q[] so just pass date_range
+    const summaryFilters: TicketFilters = {
+      date_range: dateRangeParam
+    };
+    fetchTicketSummary(summaryFilters);
   };
 
-  // Fetch ticket summary from API - Optimized with caching
-  const fetchTicketSummary = useCallback(async () => {
+  // Fetch ticket summary from API - accepts optional filter object
+  const fetchTicketSummary = useCallback(async (filters?: TicketFilters) => {
     try {
-      // Pass current filters to the summary API so summary cards respect active filters
-      const summary = await ticketManagementAPI.getTicketSummary(filters);
+      // Summary cards should show overall counts by default
+      // Only pass filters when explicitly provided
+      // Status filters should NEVER be passed to ticket_summary API
+      const summaryFilters: TicketFilters = filters || {};
+      
+      const summary = await ticketManagementAPI.getTicketSummary(summaryFilters);
       setTicketSummary(summary);
 
-      // Store initial total count only if not already stored and no filters are applied
-      if (Object.keys(filters).length === 0 && initialTotalTickets === 0) {
+      // Store initial total count only on first load without filters
+      if (!filters && initialTotalTickets === 0) {
         setInitialTotalTickets(summary.total_tickets);
       }
     } catch (error) {
@@ -353,7 +362,7 @@ export const TicketDashboard = () => {
         variant: "destructive"
       });
     }
-  }, [filters, initialTotalTickets, toast]);
+  }, [initialTotalTickets, toast]);
 
   // Fetch tickets from API - Optimized for faster loading
   const fetchTickets = useCallback(async (page: number = 1) => {
@@ -452,20 +461,8 @@ export const TicketDashboard = () => {
     fetchTickets(currentPage);
   }, [currentPage, filters, fetchTickets]);
 
-  // Separate effect for fetching summary - only when necessary
-  useEffect(() => {
-    // Only fetch summary when:
-    // 1. Component mounts (no filters)
-    // 2. Non-search filters change (status filters, etc.)
-    // 3. Search is cleared
-    const isSearchFilter = filters.search_all_fields_cont;
-    const isInitialLoad = Object.keys(filters).length === 0;
-    const isNonSearchFilter = Object.keys(filters).length > 0 && !isSearchFilter;
-    
-    if (isInitialLoad || isNonSearchFilter) {
-      fetchTicketSummary();
-    }
-  }, [filters, fetchTicketSummary]);
+  // Summary should NEVER be affected by filters
+  // It's only fetched once on component mount (see useEffect below)
 
   // Load analytics data with default date range on component mount - Only when analytics tab is active
   useEffect(() => {
@@ -500,8 +497,8 @@ export const TicketDashboard = () => {
   const closedTickets = ticketSummary.closed_tickets || 0;
   const totalSummaryTickets = ticketSummary.total_tickets || 0;
   const pendingTickets = ticketSummary.pending_tickets || 0; // Use ticket summary for pending as it's not in analytics
-  const totalTicketsCount = initialTotalTickets || totalSummaryTickets;
-  const displayTotalTickets = totalTicketsCount.toLocaleString();
+  // Always use the current totalSummaryTickets from API to ensure the count is up-to-date
+  const displayTotalTickets = totalSummaryTickets.toLocaleString();
 
 
   // Memoized calculations for better performance
@@ -941,62 +938,89 @@ export const TicketDashboard = () => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when applying filters
     setIsFilterOpen(false);
+    
+    // Update ticket summary cards with the applied filters
+    // Extract only the date_range filter for the summary API
+    const dateRange = newFilters.date_range;
+    
+    if (dateRange) {
+      // Pass only date filter to ticket summary API
+      // The API will automatically wrap it with q[] so just pass date_range
+      const summaryFilters: TicketFilters = {
+        date_range: dateRange
+      };
+      fetchTicketSummary(summaryFilters);
+    } else {
+      // If no date filter, refresh summary to show overall counts
+      fetchTicketSummary();
+    }
   };
 
   // Handle status card click for filtering
   const handleStatusCardClick = (cardType: string) => {
     console.log('Status card clicked:', cardType);
-    const newFilters: TicketFilters = {};
 
     if (cardType === 'total') {
-      // Clear all filters to show all records
-      // console.log('Clearing all filters to show all tickets');
-      setFilters({});
+      // Clear only status filters, keep other filters like date_range
+      setFilters(prevFilters => {
+        const { 
+          complaint_status_fixed_state_eq, 
+          complaint_status_fixed_state_not_eq, 
+          complaint_status_fixed_state_null, 
+          m, 
+          g, // Remove nested group structure
+          ...otherFilters 
+        } = prevFilters;
+        console.log('Total card - Clearing status filters, keeping:', otherFilters);
+        return otherFilters;
+      });
       setCurrentPage(1);
       return;
     }
 
-    if (cardType !== 'total') {
-      // Use the correct API parameter format for status filtering
+    // Preserve existing filters (like date_range) and only update status filters
+    setFilters(prevFilters => {
+      // Remove any existing status filters first (including nested group structure)
+      const { 
+        complaint_status_fixed_state_eq, 
+        complaint_status_fixed_state_not_eq, 
+        complaint_status_fixed_state_null, 
+        m, 
+        g, // Remove nested group structure
+        ...otherFilters 
+      } = prevFilters;
+
+      const newFilters: TicketFilters = { ...otherFilters };
+
+      // Add the new status filter
       if (cardType === 'open') {
-        // Use specific API call format for open tickets: q[complaint_status_fixed_state_not_eq]=closed&q[complaint_status_fixed_state_null]=1&q[m]=or
-        newFilters.complaint_status_fixed_state_not_eq = 'closed';
-        newFilters.complaint_status_fixed_state_null = '1';
-        newFilters.m = 'or';
-        console.log('Setting Open filter with complaint_status_fixed_state_not_eq=closed&complaint_status_fixed_state_null=1&m=or');
+        // Use nested group structure for open tickets as per API requirement
+        // q[m]=and&q[g][0][m]=or&q[g][0][complaint_status_fixed_state_not_eq]=closed&q[g][0][complaint_status_fixed_state_null]=1
+        newFilters.m = 'and';
+        newFilters.g = [{
+          m: 'or',
+          complaint_status_fixed_state_not_eq: 'closed',
+          complaint_status_fixed_state_null: '1'
+        }];
+        console.log('✅ Open card - Combined filters with date_range:', newFilters);
       } else if (cardType === 'pending') {
         newFilters.complaint_status_fixed_state_eq = 'Pending';
-        //  console.log('Setting Pending filter with complaint_status_fixed_state_eq=Pending');
+        console.log('✅ Pending card - Combined filters with date_range:', newFilters);
       } else if (cardType === 'in_progress') {
         newFilters.complaint_status_fixed_state_eq = 'In Progress';
-        //  console.log('Setting In Progress filter with complaint_status_fixed_state_eq=In Progress');
+        console.log('✅ In Progress card - Combined filters with date_range:', newFilters);
       } else if (cardType === 'closed') {
         newFilters.complaint_status_fixed_state_eq = 'Closed';
-        console.log('Setting Closed filter with complaint_status_fixed_state_eq=Closed');
+        console.log('✅ Closed card - Combined filters with date_range:', newFilters);
       }
-    }
 
-    console.log('Setting filters:', newFilters);
-    setFilters(newFilters);
+      return newFilters;
+    });
+
     setCurrentPage(1);
-
-    // Log what the resulting URL will look like
-    const testParams = new URLSearchParams();
-    testParams.append('page', '1');
-    testParams.append('per_page', '20');
-    if (newFilters.complaint_status_fixed_state_eq) {
-      testParams.append('q[complaint_status_fixed_state_eq]', newFilters.complaint_status_fixed_state_eq);
-    }
-    if (newFilters.complaint_status_fixed_state_not_eq) {
-      testParams.append('q[complaint_status_fixed_state_not_eq]', newFilters.complaint_status_fixed_state_not_eq);
-    }
-    if (newFilters.complaint_status_fixed_state_null) {
-      testParams.append('q[complaint_status_fixed_state_null]', newFilters.complaint_status_fixed_state_null);
-    }
-    if (newFilters.m) {
-      testParams.append('q[m]', newFilters.m);
-    }
-    console.log('Expected API URL will be:', `/pms/admin/complaints.json?${testParams.toString()}`);
+    
+    // DO NOT call fetchTicketSummary here - status card clicks should only filter the ticket list,
+    // not affect the summary counts which should remain unfiltered
   };
 
   // Helper function to check if a status card is currently active
@@ -1004,9 +1028,11 @@ export const TicketDashboard = () => {
     if (cardType === 'total') return false;
 
     if (cardType === 'open') {
-      return filters.complaint_status_fixed_state_not_eq === 'closed' &&
-        filters.complaint_status_fixed_state_null === '1' &&
-        filters.m === 'or';
+      // Check for nested group structure
+      return filters.m === 'and' &&
+        filters.g?.[0]?.m === 'or' &&
+        filters.g?.[0]?.complaint_status_fixed_state_not_eq === 'closed' &&
+        filters.g?.[0]?.complaint_status_fixed_state_null === '1';
     } else if (cardType === 'pending') {
       return filters.complaint_status_fixed_state_eq === 'Pending';
     } else if (cardType === 'in_progress') {
@@ -1359,6 +1385,17 @@ export const TicketDashboard = () => {
       const startDate = convertDateStringToDate(defaultRange.startDate);
       const endDate = convertDateStringToDate(defaultRange.endDate);
       fetchAnalyticsData(startDate, endDate);
+      
+      // Also fetch ticket summary with date range for analytics tab
+      const dateRangeParam = `${defaultRange.startDate} - ${defaultRange.endDate}`;
+      // The API will automatically wrap date_range with q[] so just pass date_range
+      const summaryFilters: TicketFilters = {
+        date_range: dateRangeParam
+      };
+      fetchTicketSummary(summaryFilters);
+    } else if (value === 'tickets') {
+      // Reset to show all tickets without date filter when switching to tickets tab
+      fetchTicketSummary();
     }
   };
 
