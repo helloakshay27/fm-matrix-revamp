@@ -2746,11 +2746,54 @@ export const EditIncidentDetailsPage = () => {
     setFormData(updatedFormData);
     setFormKey(prev => prev + 1); // Force re-render
     console.log('Form data set successfully');
-  }; const handleInputChange = (field: string, value: string | boolean | any[]) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  };
+  //  const handleInputChange = (field: string, value: string | boolean | any[]) => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     [field]: value
+  //   }));
+  // };
+  const handleInputChange = (field: string, value: string | boolean | any[]) => {
+    console.log(`Field changed: ${field}, New value:`, value);
+
+    // Create updated state
+    let updates: any = { [field]: value };
+
+    // Primary Category Hierarchy - Clear dependent fields
+    if (field === 'primaryCategory') {
+      updates.subCategory = '';
+      updates.subSubCategory = '';
+      updates.subSubSubCategory = '';
+      console.log('Primary category changed - clearing sub, subsub, and subsubsub categories');
+    } else if (field === 'subCategory') {
+      updates.subSubCategory = '';
+      updates.subSubSubCategory = '';
+      console.log('Sub category changed - clearing subsub and subsubsub categories');
+    } else if (field === 'subSubCategory') {
+      updates.subSubSubCategory = '';
+      console.log('Sub-sub category changed - clearing subsubsub category');
+    }
+
+    // Secondary Category Hierarchy - Clear dependent fields
+    if (field === 'secondaryCategory') {
+      updates.secondarySubCategory = '';
+      updates.secondarySubSubCategory = '';
+      updates.secondarySubSubSubCategory = '';
+      console.log('Secondary category changed - clearing secondary sub, subsub, and subsubsub categories');
+    } else if (field === 'secondarySubCategory') {
+      updates.secondarySubSubCategory = '';
+      updates.secondarySubSubSubCategory = '';
+      console.log('Secondary sub category changed - clearing secondary subsub and subsubsub categories');
+    } else if (field === 'secondarySubSubCategory') {
+      updates.secondarySubSubSubCategory = '';
+      console.log('Secondary sub-sub category changed - clearing secondary subsubsub category');
+    }
+
+    setFormData(prev => {
+      const newState = { ...prev, ...updates };
+      console.log('Updated form data:', newState);
+      return newState;
+    });
   };
 
   // Delete witness by id (set _destroy true and show toast)
