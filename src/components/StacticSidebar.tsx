@@ -1411,7 +1411,7 @@ export const StacticSidebar = () => {
       setCurrentSection("Market Place");
     } else if (path.startsWith("/master")) {
       setCurrentSection("Master");
-    } else if (path.startsWith("/club-management/")) {
+    } else if (path.startsWith("/club-management")) {
       setCurrentSection("Club Management");
     }
   }, [location.pathname, setCurrentSection]);
