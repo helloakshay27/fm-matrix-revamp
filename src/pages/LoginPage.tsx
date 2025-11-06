@@ -291,7 +291,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       const from =
         (location.state as { from?: Location })?.from?.pathname +
           (location.state as { from?: Location })?.from?.search ||
-        "/maintenance/asset";
+        "/club-management/membership";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 

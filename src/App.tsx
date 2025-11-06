@@ -778,6 +778,7 @@ import SafetyCheckAudit from './pages/SafetyCheckAudit';
 import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 import Sitemap from "./pages/Sitemap";
+import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashboard";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1461,7 +1462,7 @@ function App() {
                   {/* Club Management Routes */}
                   <Route
                     path="/club-management/membership"
-                    element={<CRMCustomersDashboard />}
+                    element={<ClubMembershipDashboard />}
                   />
                   
                   {/* Club Management - FM Users */}
