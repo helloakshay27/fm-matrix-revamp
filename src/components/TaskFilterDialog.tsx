@@ -165,12 +165,6 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
       if (from > to) {
         return '"From Date" cannot be later than "To Date"';
       }
-
-      // Check if date range is too large (more than 1 year)
-      const oneYear = 365 * 24 * 60 * 60 * 1000; // milliseconds in a year
-      if (to.getTime() - from.getTime() > oneYear) {
-        return "Date range cannot exceed 1 year";
-      }
     }
 
     return "";
