@@ -431,6 +431,8 @@ import { WBSElementDashboard } from "./pages/WBSElementDashboard";
 import { FMUsersDashboard } from "./pages/settings/FMUsersDashboard";
 import { CloneRolePage } from "./pages/settings/CloneRolePage";
 import { AccountDashboard } from "./pages/settings/AccountDashboard";
+import { PaymentManagementDashboard } from "./pages/settings/PaymentManagementDashboard";
+import { PaymentDetailPage } from "./pages/settings/PaymentDetailPage";
 
 // Import Approval Matrix pages
 import { ApprovalMatrixDashboard } from "./pages/settings/ApprovalMatrixDashboard";
@@ -1189,6 +1191,14 @@ function App() {
                     element={<AccountDashboard />}
                   />
                   <Route
+                    path="/settings/payment-management"
+                    element={<PaymentManagementDashboard />}
+                  />
+                  <Route
+                    path="/settings/payment-management/:id"
+                    element={<PaymentDetailPage />}
+                  />
+                  <Route
                     path="/settings/approval-matrix"
                     element={<ApprovalMatrixDashboard />}
                   />
@@ -1582,7 +1592,12 @@ function App() {
                   {/* Club Management - Accounting */}
                   <Route
                     path="/club-management/accounting"
-                    element={<AccountingDashboard />}
+                    element={<PaymentManagementDashboard />}
+                  />
+
+                   <Route
+                    path="/club-management/accounting/details/:id"
+                    element={<PaymentDetailPage />}
                   />
 
                   {/* Snagging Routes */}

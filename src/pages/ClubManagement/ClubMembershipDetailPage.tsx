@@ -231,127 +231,151 @@ export const ClubMembershipDetailPage = () => {
         {/* Left Column - Main Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Personal Information */}
-          <Card>
-            <CardHeader className="bg-gray-50 border-b">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <User className="w-5 h-5 text-[#C72030]" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                  <User className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Full Name</p>
-                    <p className="font-medium text-gray-900">{membershipData.user_name}</p>
-                  </div>
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <User className="figma-card-icon" />
                 </div>
-
-                <div className="flex items-start gap-3">
-                  <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium text-gray-900">{membershipData.user_email}</p>
-                  </div>
+                <h3 className="figma-card-title">Personal Information</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Full Name
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user_name}
+                  </span>
                 </div>
-
-                <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Mobile</p>
-                    <p className="font-medium text-gray-900">{membershipData.user_mobile}</p>
-                  </div>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Email
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user_email}
+                  </span>
                 </div>
-
-                <div className="flex items-start gap-3">
-                  <Building2 className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Site</p>
-                    <p className="font-medium text-gray-900">{membershipData.site_name}</p>
-                  </div>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Mobile
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user_mobile}
+                  </span>
+                </div>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Site
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.site_name}
+                  </span>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
 
           {/* Membership Details */}
-          <Card>
-            <CardHeader className="bg-gray-50 border-b">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-[#C72030]" />
-                Membership Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Membership Number</p>
-                    <p className="font-medium text-gray-900">{membershipData.membership_number}</p>
-                  </div>
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <CreditCard className="figma-card-icon" />
                 </div>
-
-                <div className="flex items-start gap-3">
-                  <CreditCard className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Club Member</p>
+                <h3 className="figma-card-title">Membership Details</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Membership Number
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.membership_number}
+                  </span>
+                </div>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Club Member
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
                     <Badge variant={membershipData.club_member_enabled ? "default" : "secondary"}>
                       {membershipData.club_member_enabled ? 'Enabled' : 'Disabled'}
                     </Badge>
-                  </div>
+                  </span>
                 </div>
-
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Start Date</p>
-                    <p className="font-medium text-gray-900">{formatDate(membershipData.start_date)}</p>
-                  </div>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Start Date
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {formatDate(membershipData.start_date)}
+                  </span>
                 </div>
-
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">End Date</p>
-                    <p className="font-medium text-gray-900">{formatDate(membershipData.end_date)}</p>
-                  </div>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    End Date
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {formatDate(membershipData.end_date)}
+                  </span>
                 </div>
-
-                <div className="flex items-start gap-3">
-                  <CreditCard className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Access Card</p>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Access Card
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
                     <Badge variant={membershipData.access_card_enabled ? "default" : "secondary"}>
                       {membershipData.access_card_enabled ? 'Enabled' : 'Disabled'}
                     </Badge>
-                  </div>
+                  </span>
                 </div>
-
-                <div className="flex items-start gap-3">
-                  <CreditCard className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Access Card ID</p>
-                    <p className="font-medium text-gray-900">
-                      {membershipData.access_card_id || '-'}
-                    </p>
-                  </div>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Access Card ID
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.access_card_id || '-'}
+                  </span>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
 
           {/* Attachments */}
           {membershipData.attachments && membershipData.attachments.length > 0 && (
-            <Card>
-              <CardHeader className="bg-gray-50 border-b">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-[#C72030]" />
-                  Attachments ({membershipData.attachments.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
+            <Card className="w-full bg-transparent shadow-none border-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <FileText className="figma-card-icon" />
+                  </div>
+                  <h3 className="figma-card-title">Attachments ({membershipData.attachments.length})</h3>
+                </div>
+              </div>
+              <div className="figma-card-content">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {membershipData.attachments.map((attachment, index) => (
                     <a
@@ -372,7 +396,7 @@ export const ClubMembershipDetailPage = () => {
                     </a>
                   ))}
                 </div>
-              </CardContent>
+              </div>
             </Card>
           )}
         </div>
@@ -381,14 +405,16 @@ export const ClubMembershipDetailPage = () => {
         <div className="space-y-6">
           {/* Identification Image */}
           {membershipData.identification_image && (
-            <Card>
-              <CardHeader className="bg-gray-50 border-b">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <ImageIcon className="w-5 h-5 text-[#C72030]" />
-                  ID Card
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
+            <Card className="w-full bg-transparent shadow-none border-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <ImageIcon className="figma-card-icon" />
+                  </div>
+                  <h3 className="figma-card-title">ID Card</h3>
+                </div>
+              </div>
+              <div className="figma-card-content">
                 <a
                   href={membershipData.identification_image}
                   target="_blank"
@@ -404,20 +430,22 @@ export const ClubMembershipDetailPage = () => {
                     <Download className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </a>
-              </CardContent>
+              </div>
             </Card>
           )}
 
           {/* User Photo */}
           {avatarUrl && !avatarUrl.includes('profile.png') && (
-            <Card>
-              <CardHeader className="bg-gray-50 border-b">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <User className="w-5 h-5 text-[#C72030]" />
-                  User Photo
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
+            <Card className="w-full bg-transparent shadow-none border-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <User className="figma-card-icon" />
+                  </div>
+                  <h3 className="figma-card-title">User Photo</h3>
+                </div>
+              </div>
+              <div className="figma-card-content">
                 <a
                   href={avatarUrl}
                   target="_blank"
@@ -433,38 +461,63 @@ export const ClubMembershipDetailPage = () => {
                     <Download className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </a>
-              </CardContent>
+              </div>
             </Card>
           )}
 
           {/* System Information */}
-          <Card>
-            <CardHeader className="bg-gray-50 border-b">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#C72030]" />
-                System Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-500">User ID</p>
-                  <p className="font-medium text-gray-900">{membershipData.user_id}</p>
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <FileText className="figma-card-icon" />
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Site ID</p>
-                  <p className="font-medium text-gray-900">{membershipData.pms_site_id}</p>
+                <h3 className="figma-card-title">System Information</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    User ID
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user_id}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Created At</p>
-                  <p className="font-medium text-gray-900">{formatDateTime(membershipData.created_at)}</p>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Site ID
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.pms_site_id}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Last Updated</p>
-                  <p className="font-medium text-gray-900">{formatDateTime(membershipData.updated_at)}</p>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Created At
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {formatDateTime(membershipData.created_at)}
+                  </span>
+                </div>
+                
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Last Updated
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {formatDateTime(membershipData.updated_at)}
+                  </span>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </Card>
         </div>
       </div>
