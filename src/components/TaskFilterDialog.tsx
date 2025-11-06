@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,14 +12,27 @@ import {
   InputLabel,
   Select as MuiSelect,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { debounce } from "lodash";
 import { AsyncSearchableDropdown } from "@/components/AsyncSearchableDropdown";
 import { userService, User } from "@/services/userService";
 import { taskServiceFilter } from "@/services/taskServiceFilter";
+import { API_CONFIG } from "@/config/apiConfig";
 
-interface TaskFilterDialogProps {
+interface CustomForm {
+  id: number;
+  form_name: string;
+  description: string;
+  checklist_for: string;
+  schedule_type: string;
+  category_name: string | null;
+  custom_form_code: string;
+}
+
+export interface TaskFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (filters: TaskFilters) => void;
@@ -75,6 +88,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
   showAll = true,
   onShowAllChange,
 }) => {
+  // Existing state
   const [taskId, setTaskId] = useState("");
   const [checklist, setChecklist] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
@@ -92,6 +106,8 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
   const [assetSubGroups, setAssetSubGroups] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [dateError, setDateError] = useState<string>("");
+  const [customForms, setCustomForms] = useState<CustomForm[]>([]);
+  const [isLoadingCustomForms, setIsLoadingCustomForms] = useState(false);
 
   // Fetch initial data when component mounts
   useEffect(() => {
@@ -234,6 +250,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
     setSupplierId("");
     setTaskCategory("");
     setDateError(""); // Clear date error
+    setCustomForms([]); // Clear custom form suggestions
 
     onApply({});
     toast.success("Filters cleared successfully");
@@ -258,6 +275,74 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
     selectedOption: { value: string; label: string } | null
   ) => {
     setAssignedTo(selectedOption?.value || "");
+  };
+
+  // Function to fetch custom forms
+  const fetchCustomForms = async (searchQuery: string) => {
+    setIsLoadingCustomForms(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const accessToken = API_CONFIG.TOKEN;
+      
+      if (!baseUrl || !accessToken) {
+        throw new Error('Missing API configuration');
+      }
+      
+      // Remove trailing slash from baseUrl if present
+      const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+      
+      // Add https:// protocol if not present
+      const fullBaseUrl = cleanBaseUrl.startsWith('http') 
+        ? cleanBaseUrl 
+        : `https://${cleanBaseUrl}`;
+      
+      // Build the API URL - ensure proper format
+      const apiUrl = `${fullBaseUrl}/pms/custom_forms.json?page=1&access_token=${accessToken}&q[form_name_cont]=${encodeURIComponent(searchQuery)}`;
+      
+      console.log('Fetching custom forms from:', apiUrl);
+      console.log('Base URL:', baseUrl);
+      console.log('Access Token:', accessToken ? 'Present' : 'Missing');
+      
+      const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Custom forms response:', data);
+      
+      setCustomForms(data.custom_forms || []);
+    } catch (error) {
+      console.error("Error fetching custom forms:", error);
+      toast.error("Failed to fetch custom forms");
+    } finally {
+      setIsLoadingCustomForms(false);
+    }
+  };
+
+  // Debounced function for checklist search
+  const debouncedFetchCustomForms = useCallback(
+    debounce((query: string) => {
+      if (query) {
+        fetchCustomForms(query);
+      } else {
+        setCustomForms([]);
+      }
+    }, 300),
+    []
+  );
+
+  // Handle checklist input change
+  const handleChecklistChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setChecklist(value);
+    debouncedFetchCustomForms(value);
+  };
+
+  const handleChecklistSelect = (form: CustomForm) => {
+    setChecklist(form.form_name);
+    setCustomForms([]); // Clear suggestions after selection
   };
 
   return (
@@ -301,16 +386,41 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
               />
-              <TextField
-                label="Checklist"
-                placeholder="Enter Checklist Name"
-                value={checklist}
-                onChange={(e) => setChecklist(e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
+              <div className="relative">
+                <TextField
+                  label="Checklist"
+                  placeholder="Type to search checklists..."
+                  value={checklist}
+                  onChange={handleChecklistChange}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ 
+                    sx: fieldStyles,
+                    endAdornment: isLoadingCustomForms ? (
+                      <CircularProgress size={20} />
+                    ) : null
+                  }}
+                />
+                {customForms.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {customForms.map((form) => (
+                      <div
+                        key={form.id}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => handleChecklistSelect(form)}
+                      >
+                        <div className="font-medium">{form.form_name}</div>
+                        {form.description && (
+                          <div className="text-sm text-gray-500">
+                            {form.description}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Assigned To</InputLabel>
                 <MuiSelect
