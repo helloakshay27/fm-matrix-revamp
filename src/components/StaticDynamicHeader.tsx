@@ -3,17 +3,9 @@ import React, { useEffect } from 'react';
 import { useLayout } from '../contexts/LayoutContext';
 
 const packages = [
-  'Transitioning',
-  'Maintenance',
-  'Safety',
-  'Finance',
-  'CRM',
-  'Utility',
-  'Security',
-  'Value Added Services',
-  'Market Place',
-  'Master',
-  'Settings'
+
+  'Club Management',
+
 ];
 
 export const StaticDynamicHeader = () => {

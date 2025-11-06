@@ -303,6 +303,55 @@ const navigationStructure = {
 };
 
 const modulesByPackage = {
+  "Club Management": [
+    {
+      name: "Club Membership",
+      icon: Star,
+      href: "/club-management/membership",
+    },
+    {
+      name: "User Management",
+      icon: Users,
+      href: "/club-management/users",
+      subItems: [
+        {
+          name: "FM Users",
+          href: "/club-management/users/fm-users",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Occupant Users",
+          href: "/club-management/users/occupant-users",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "Helpdesk",
+      icon: Headphones,
+      href: "/club-management/helpdesk",
+    },
+    {
+      name: "Amenities Booking",
+      icon: Calendar,
+      href: "/club-management/amenities-booking",
+    },
+    {
+      name: "Broadcast",
+      icon: Bell,
+      href: "/club-management/broadcast",
+    },
+    {
+      name: "Event Management",
+      icon: Calendar,
+      href: "/club-management/events",
+    },
+    {
+      name: "Accounting",
+      icon: Calculator,
+      href: "/club-management/accounting",
+    },
+  ],
   Master: [
     {
       name: "Location Master",

@@ -1458,6 +1458,118 @@ function App() {
                     element={<EditCRMWalletPointExpiry />}
                   />
 
+                  {/* Club Management Routes */}
+                  <Route
+                    path="/club-management/membership"
+                    element={<CRMCustomersDashboard />}
+                  />
+                  
+                  {/* Club Management - FM Users */}
+                  <Route
+                    path="/club-management/users/fm-users"
+                    element={<FMUserMasterDashboard />}
+                  />
+                  <Route
+                    path="/club-management/users/fm-users/add"
+                    element={<AddFMUserPage />}
+                  />
+                  <Route
+                    path="/club-management/users/fm-users/edit/:id"
+                    element={<EditFMUserPage />}
+                  />
+                  <Route
+                    path="/club-management/users/fm-users/view/:id"
+                    element={<ViewFMUserPage />}
+                  />
+                  
+                  {/* Club Management - Occupant Users */}
+                  <Route
+                    path="/club-management/users/occupant-users"
+                    element={<CRMOccupantUsersDashboard />}
+                  />
+                  <Route
+                    path="/club-management/users/occupant-users/add"
+                    element={<AddOccupantUserPage />}
+                  />
+                  <Route
+                    path="/club-management/users/occupant-users/view/:id"
+                    element={<ViewOccupantUserPage />}
+                  />
+                  <Route
+                    path="/club-management/users/occupant-users/edit/:id"
+                    element={<EditOccupantUserPage />}
+                  />
+                  <Route
+                    path="/club-management/users/occupant-users/:id"
+                    element={<CRMOccupantUserDetailPage />}
+                  />
+                  
+                  {/* Club Management - Helpdesk */}
+                  <Route
+                    path="/club-management/helpdesk"
+                    element={<TicketDashboard />}
+                  />
+                  <Route
+                    path="/club-management/helpdesk/add"
+                    element={<AddTicketDashboard />}
+                  />
+                  <Route
+                    path="/club-management/helpdesk/details/:id"
+                    element={<TicketDetailsPage />}
+                  />
+                  <Route
+                    path="/club-management/helpdesk/edit/:id"
+                    element={<UpdateTicketsPage />}
+                  />
+                  
+                  {/* Club Management - Amenities Booking */}
+                  <Route
+                    path="/club-management/amenities-booking"
+                    element={<BookingListDashboard />}
+                  />
+                  <Route
+                    path="/club-management/amenities-booking/add"
+                    element={<AddFacilityBookingPage />}
+                  />
+                  <Route
+                    path="/club-management/amenities-booking/:id"
+                    element={<BookingDetailsPage />}
+                  />
+                  
+                  {/* Club Management - Broadcast */}
+                  <Route
+                    path="/club-management/broadcast"
+                    element={<BroadcastDashboard />}
+                  />
+                  <Route
+                    path="/club-management/broadcast/add"
+                    element={<AddBroadcastPage />}
+                  />
+                  <Route
+                    path="/club-management/broadcast/details/:id"
+                    element={<BroadcastDetailsPage />}
+                  />
+                  
+                  {/* Club Management - Events */}
+                  <Route
+                    path="/club-management/events"
+                    element={<CRMEventsPage />}
+                  />
+                  <Route
+                    path="/club-management/events/add"
+                    element={<AddEventPage />}
+                  />
+                  <Route
+                    path="/club-management/events/details/:id"
+                    element={<CRMEventDetailsPage />}
+                  />
+                  
+                  {/* Club Management - Accounting */}
+                  <Route
+                    path="/club-management/accounting"
+                    element={<AccountingDashboard />}
+                  />
+
                   {/* Snagging Routes */}
                   <Route
                     path="/transitioning/snagging"
