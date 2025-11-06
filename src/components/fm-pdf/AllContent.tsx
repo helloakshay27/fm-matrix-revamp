@@ -43,10 +43,6 @@ const AllContent = () => {
                 month: 'short',
                 year: 'numeric',
             });
-            // If within same month, show e.g., "Jan 2025"
-            if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
-                return fmt(e);
-            }
 
             return `${fmt(s)} to ${fmt(e)}`;
         } catch {
@@ -1807,7 +1803,7 @@ const AllContent = () => {
                             <div className="text-6xl  print:ml-20  font-extrabold ml-2 print:text-4xl">ORT</div>
                         </div>
 
-                        <div className="flex justify-end items-end print:mt-[110px]  print:mr-[110px] mb-4 mt-[10px] ml-[140px] print:w-full">
+                        <div className="flex justify-end items-end print:mt-[110px]  print:mr-[110px] mb-4 mt-[10px] ml-[140px] print:ml-0 print:w-full">
                             <p className="text-xl print:text-[18px] font-medium text-red-700 print:text-red-700 print:mt-[40px]">
                                 {dateRangeLabel}
                             </p>
@@ -1993,13 +1989,13 @@ const AllContent = () => {
 
                         <hr className="mb-6 border-gray-400 print:border-gray-400" />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-1 print:gap-4">
                             <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
                                 <p className="italic text-lg mb-1 print:italic print:text-lg">
                                     Total Revenue from
                                 </p>
                                 <div className="flex justify-between items-center print:flex print:justify-between">
-                                    <p className="text-2xl font-bold print:text-1xl print:font-bold">
+                                    <p className="text-xl font-bold print:text-1xl print:font-bold">
                                         {localStorage.getItem('selectedCompany')}
                                     </p>
                                     <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
@@ -2686,13 +2682,13 @@ const AllContent = () => {
                             <div className="flex items-center justify-between gap-4 flex-wrap text-sm print:text-xs print:gap-2">
                                 <div className="flex items-center gap-1">
                                     <span>% of tickets raised by category</span>
-                                    <span className="mx-1 text-gray-600" aria-hidden>→</span>
+                                    <span className="ml-1 text-gray-600" aria-hidden>→</span>
                                     {/* Diagonal split box indicator */}
-                                    <span className="relative inline-block w-5 h-5 border border-gray-300 mx-2 print:w-4 print:h-4" aria-hidden>
+                                    <span className="relative inline-block w-5 h-5 border border-gray-300 print:w-4 print:h-4" aria-hidden>
                                         <span className="absolute inset-0 clip-triangle-tr" style={{ backgroundColor: '#DAD6C9' }} />
                                         <span className="absolute inset-0 clip-triangle-bl" style={{ backgroundColor: '#FFFFFF' }} />
                                     </span>
-                                    <span className="mx-1 text-gray-600" aria-hidden>←</span>
+                                    <span className="mr-1 text-gray-600" aria-hidden>←</span>
                                     <span>% of tickets closure by category</span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -2716,13 +2712,13 @@ const AllContent = () => {
                                 <div className="flex flex-col">
                                     {ticketCategories.map((cat) => {
                                         return (
-                                            <div key={cat} className="flex mb-[10px] last:mb-0">
+                                            <div key={cat} className="flex mb-[10px] last:mb-0 w-full">
                                                 {/* Category label */}
-                                                <div className="w-[140px] flex items-center justify-end pr-2 text-[10px] font-medium print:text-[8px] print:w-[120px]">
+                                                <div className="w-[140px] flex items-center justify-end pr-2 text-[10px] font-medium print:text-[8px] print:w-[90px]">
                                                     {cat}
                                                 </div>
                                                 {/* Cells for each site within this category */}
-                                                <div className="grid grid-cols-10 gap-[10px] print:gap-[6px]">
+                                                <div className="flex items-center gap-[10px] print:gap-[6px] max-w-[1100px] overflow-x-auto">
                                                     {ticketSites.map((site) => {
                                                         const item = ticketGridData.find(d => d.category === cat && d.site === site);
                                                         return (
@@ -2745,7 +2741,7 @@ const AllContent = () => {
                                     {/* Site header row placed after rows for print width consistency */}
                                     <div className="flex mt-4 print:mt-2">
                                         <div className="w-[140px] print:w-[120px]" />
-                                        <div className="grid grid-cols-10 gap-[10px] print:gap-[6px]">
+                                        <div className="flex items-center gap-[10px] print:gap-[6px] max-w-[1000px] overflow-x-auto">
                                             {ticketSites.map((site) => (
                                                 <div key={site} className="text-center text-[10px] font-medium print:text-[8px] w-[100px] print:w-[50px]">
                                                     {site}
@@ -2853,39 +2849,33 @@ const AllContent = () => {
 
                     {/* Title */}
                     <h1 className="text-3xl md:text-3xl font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
-                        Response TAT Performance by Center – {periodUnit}ly Comparison
+                        TAT Performance by Site – {periodUnit}ly Comparison
                     </h1>
 
                     {/* Legend Row */}
-                    <div className="flex print:w-[95%] w-[95%] m-auto flex-col items-end gap-2 px-6 print:px-4 print:py-4 text-sm print:text-xs mb-4">
-                        {/* Row 1: Response Achieved */}
+                    {/* <div className="flex print:w-[95%] w-[95%] m-auto flex-col items-end gap-2 px-6 print:px-4 print:py-4 text-sm print:text-xs mb-4">
                         <div className="flex items-center gap-2">
                             <span className="font-semibold">Response Achieved</span>
                             <span className="font-medium">:</span>
 
-                            {/* Striped Circle for Last Quarter */}
                             <div className="w-4 h-4 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
                             <span>{lastLabel}</span>
 
-                            {/* Solid Circle for Current Quarter */}
                             <div className="w-4 h-4 rounded-full bg-[#C4AD98] ml-6" />
                             <span>{currentLabel}</span>
                         </div>
 
-                        {/* Row 2: Resolution Achieved */}
                         <div className="flex items-center gap-2">
                             <span className="font-semibold">Resolution Achieved</span>
                             <span className="font-medium">:</span>
 
-                            {/* Striped Circle for Last Quarter */}
                             <div className="w-4 h-4 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
                             <span>{lastLabel}</span>
 
-                            {/* Solid Circle for Current Quarter */}
                             <div className="w-4 h-4 rounded-full bg-[#C4AD98] ml-6" />
                             <span>{currentLabel}</span>
                         </div>
-                    </div>
+                    </div> */}
 
 
                     {/* Section Header for Chart */}
@@ -3620,17 +3610,15 @@ const AllContent = () => {
                                                             <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curOpen)}</td>
                                                             <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curInProg)}</td>
                                                             <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                                                {fmt(curOver)} <span className="text-xs text-gray-600">({fmtDiff(diffOver)})</span>
+                                                                {fmt(curOver)} <span className="text-xs print:!text-[8px] text-gray-600">({fmtDiff(diffOver)})</span>
                                                                 {overdueArrowUp && <span className="text-red-600 arrow-print">▲</span>}
                                                                 {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
-                                                                {!overdueArrowUp && !overdueArrowDown && <span className="text-gray-400">—</span>}
                                                             </td>
                                                             <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curPart)}</td>
                                                             <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                                                {fmt(curClosed)} <span className="text-xs text-gray-600">({fmtDiff(diffClosed)})</span>
+                                                                {fmt(curClosed)} <span className="text-xs print:!text-[8px] text-gray-600">({fmtDiff(diffClosed)})</span>
                                                                 {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
                                                                 {closedArrowDown && <span className="text-red-600 arrow-print">▼</span>}
-                                                                {!closedArrowUp && !closedArrowDown && <span className="text-gray-400">—</span>}
                                                             </td>
                                                         </tr>
                                                     );
