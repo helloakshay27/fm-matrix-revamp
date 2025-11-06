@@ -79,6 +79,20 @@ export const fetchCompanyList = createAsyncThunk(
                 }
             );
 
+            // Store selected company in localStorage if available
+            if (response.data.selected_company) {
+                localStorage.setItem('selected_company', JSON.stringify(response.data.selected_company));
+                localStorage.setItem('selected_company_id', response.data.selected_company.id.toString());
+                
+                // Also update the user's company_id in localStorage
+                const userData = localStorage.getItem('user');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    user.company_id = response.data.selected_company.id;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+            }
+
             return response.data;
         } catch (error) {
             const message =
@@ -105,6 +119,30 @@ export const changeCompany = createAsyncThunk(
                     },
                 }
             );
+
+            // Store the newly selected company in localStorage
+            if (response.data.selected_company) {
+                localStorage.setItem('selected_company', JSON.stringify(response.data.selected_company));
+                localStorage.setItem('selected_company_id', response.data.selected_company.id.toString());
+                
+                // Also update the user's company_id in localStorage
+                const userData = localStorage.getItem('user');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    user.company_id = response.data.selected_company.id;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+            } else {
+                // If selected_company is not in response, store the id that was changed to
+                localStorage.setItem('selected_company_id', id.toString());
+                
+                const userData = localStorage.getItem('user');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    user.company_id = id;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+            }
 
             return response.data;
         } catch (error) {

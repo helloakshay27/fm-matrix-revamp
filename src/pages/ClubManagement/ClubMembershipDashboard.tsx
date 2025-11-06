@@ -1,43 +1,45 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Eye, Plus, Download, Filter, QrCode, MoreVertical, Edit, Trash2, Users } from 'lucide-react';
+import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { API_CONFIG } from '@/config/apiConfig';
+import { ClubMembershipFilterDialog, ClubMembershipFilters } from '@/components/ClubMembershipFilterDialog';
 
 interface MembershipData {
   id: number;
-  tower: string;
-  flat: string;
-  name: string;
-  age: number;
-  gender: string;
-  mobile: string;
-  email: string;
-  relationWithOwner: string;
-  residentType: string;
-  membershipNumber: string;
-  startDate: string;
-  endDate: string;
-  membershipStatus: string;
-  cardAllocated: boolean;
-  accessCard: string;
-  idCard: string;
-  residentPhoto: string;
-  attachments: string[];
-  createdOn: string;
+  user_id: number;
+  pms_site_id: number;
+  club_member_enabled: boolean;
+  membership_number: string;
+  access_card_enabled: boolean;
+  access_card_id: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+  updated_at: string;
+  user_name: string;
+  site_name: string;
+  user_email: string;
+  user_mobile: string;
+  attachments: Array<{
+    id: number;
+    relation: string;
+    relation_id: number;
+    document: string;
+  }>;
+  identification_image: string | null;
+  avatar: string;
 }
 
 export const ClubMembershipDashboard = () => {
   const navigate = useNavigate();
+  const loginState = useSelector((state: RootState) => state.login);
   
   // State management
   const [memberships, setMemberships] = useState<MembershipData[]>([]);
@@ -51,11 +53,12 @@ export const ClubMembershipDashboard = () => {
   const isSearchingRef = useRef(false);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    tower: '',
-    residentType: '',
-    membershipStatus: '',
-    dateRange: ''
+  const [filters, setFilters] = useState<ClubMembershipFilters>({
+    search: '',
+    clubMemberEnabled: '',
+    accessCardEnabled: '',
+    startDate: '',
+    endDate: ''
   });
   
   const perPage = 20;
@@ -64,97 +67,89 @@ export const ClubMembershipDashboard = () => {
   const fetchMemberships = useCallback(async (page: number = 1) => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const response = await apiClient.get('/club-management/memberships', {
-      //   params: {
-      //     page,
-      //     per_page: perPage,
-      //     search: searchQuery,
-      //     ...filters
-      //   }
-      // });
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
       
-      // Mock data for now
-      const mockData: MembershipData[] = [
-        {
-          id: 1,
-          tower: 'Tower 9',
-          flat: 'T9-2503',
-          name: 'Jyoti Nikam',
-          age: 39,
-          gender: 'Female',
-          mobile: '7977963223',
-          email: 'jyoti.endtm@gmail.com',
-          relationWithOwner: 'Sister',
-          residentType: 'Owner',
-          membershipNumber: '3040-1555A',
-          startDate: '31/10/2025',
-          endDate: '30/10/2026',
-          membershipStatus: 'Approved',
-          cardAllocated: true,
-          accessCard: 'Not Available',
-          idCard: 'Not Available',
-          residentPhoto: '/placeholder.jpg',
-          attachments: [],
-          createdOn: '31/10/2025'
-        },
-        {
-          id: 2,
-          tower: 'T3-PINE',
-          flat: 'T3-A-0901',
-          name: 'Vikas Gupta',
-          age: 32,
-          gender: 'Male',
-          mobile: '8097638947',
-          email: 'vikas.gupta@gmail.com',
-          relationWithOwner: 'Self',
-          residentType: 'Owner',
-          membershipNumber: '3040-1465T',
-          startDate: '30/10/2025',
-          endDate: '',
-          membershipStatus: 'Pending EndDate',
-          cardAllocated: false,
-          accessCard: 'Not Available',
-          idCard: 'Not Available',
-          residentPhoto: '/placeholder.jpg',
-          attachments: [],
-          createdOn: '30/10/2025'
-        },
-        {
-          id: 3,
-          tower: 'T1-PALM',
-          flat: 'T1-1702',
-          name: 'Sejadh Singh',
-          age: 0,
-          gender: '',
-          mobile: '9986310520',
-          email: 'sejadh.singh@gmail.com',
-          relationWithOwner: '',
-          residentType: 'Tenant',
-          membershipNumber: '3040-1452',
-          startDate: '29/10/2025',
-          endDate: '28/10/2026',
-          membershipStatus: 'Approved',
-          cardAllocated: true,
-          accessCard: 'Not Available',
-          idCard: 'Not Available',
-          residentPhoto: '/placeholder.jpg',
-          attachments: [],
-          createdOn: '29/10/2025'
-        }
-      ];
+      console.log('Fetching club members...', { baseUrl, hasToken: !!token, page, filters });
       
-      setMemberships(mockData);
-      setTotalMembers(mockData.length);
-      setTotalPages(Math.ceil(mockData.length / perPage));
+      // baseUrl already includes protocol (https://)
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.json`);
+      url.searchParams.append('access_token', token || '');
+      
+      // Add search filter - search by firstname, lastname, email, or mobile
+      if (filters.search) {
+        url.searchParams.append('q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]', filters.search);
+      }
+      
+      // Add club member enabled filter
+      if (filters.clubMemberEnabled) {
+        url.searchParams.append('q[club_member_enabled_eq]', filters.clubMemberEnabled);
+      }
+      
+      // Add access card enabled filter
+      if (filters.accessCardEnabled) {
+        url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
+      }
+      
+      // Add start date filter
+      if (filters.startDate) {
+        // Convert YYYY-MM-DD to DD/MM/YYYY
+        const [year, month, day] = filters.startDate.split('-');
+        const formattedDate = `${day}/${month}/${year}`;
+        url.searchParams.append('q[start_date_eq]', formattedDate);
+      }
+      
+      // Add end date filter
+      if (filters.endDate) {
+        // Convert YYYY-MM-DD to DD/MM/YYYY
+        const [year, month, day] = filters.endDate.split('-');
+        const formattedDate = `${day}/${month}/${year}`;
+        url.searchParams.append('q[end_date_eq]', formattedDate);
+      }
+      
+      // Pagination (commented out for now as per your code)
+      // url.searchParams.append('page', page.toString());
+      // url.searchParams.append('per_page', perPage.toString());
+      
+      console.log('API URL:', url.toString());
+      
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch club members: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Received data:', data);
+      
+      if (Array.isArray(data)) {
+        setMemberships(data);
+        setTotalMembers(data.length);
+        setTotalPages(Math.ceil(data.length / perPage));
+        toast.success(`Loaded ${data.length} members`);
+      } else {
+        setMemberships([]);
+        setTotalMembers(0);
+        setTotalPages(1);
+      }
       
     } catch (error) {
       console.error('Error fetching memberships:', error);
       toast.error('Failed to fetch membership data');
+      setMemberships([]);
+      setTotalMembers(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, filters, perPage]);
+  }, [filters, perPage]);
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
@@ -164,7 +159,7 @@ export const ClubMembershipDashboard = () => {
 
   // Effect to handle debounced search
   useEffect(() => {
-    const currentSearch = filters.tower || ''; // Use tower as search filter for now
+    const currentSearch = filters.search || '';
     const newSearch = debouncedSearchQuery.trim();
 
     if (currentSearch === newSearch) {
@@ -173,16 +168,21 @@ export const ClubMembershipDashboard = () => {
 
     setFilters(prevFilters => ({
       ...prevFilters,
-      tower: newSearch
+      search: newSearch
     }));
 
     if (isSearchingRef.current || (newSearch && !currentSearch)) {
       setCurrentPage(1);
       isSearchingRef.current = false;
     }
-  }, [debouncedSearchQuery]);
+  }, [debouncedSearchQuery, filters.search]);
 
+  // Fetch on mount and when dependencies change
   useEffect(() => {
+    console.log('Effect triggered - fetching memberships', { 
+      currentPage, 
+      filters
+    });
     fetchMemberships(currentPage);
   }, [currentPage, filters, fetchMemberships]);
 
@@ -229,9 +229,10 @@ export const ClubMembershipDashboard = () => {
   };
 
   // Handle filter apply
-  const handleFilterApply = () => {
+  const handleFilterApply = (newFilters: ClubMembershipFilters) => {
+    console.log('Applying filters:', newFilters);
+    setFilters(newFilters);
     setCurrentPage(1);
-    fetchMemberships(1);
     setIsFilterOpen(false);
   };
 
@@ -261,19 +262,26 @@ export const ClubMembershipDashboard = () => {
   };
 
   // Render membership status badge
-  const renderStatusBadge = (status: string) => {
-    const statusConfig = {
-      'Approved': { color: 'bg-green-100 text-green-800', icon: '✓' },
-      'Pending EndDate': { color: 'bg-red-100 text-red-800', icon: '⏱' },
-      'Pending': { color: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
-      'Rejected': { color: 'bg-gray-100 text-gray-800', icon: '✗' }
-    };
-
-    const config = statusConfig[status] || statusConfig['Pending'];
+  const renderStatusBadge = (startDate: string | null, endDate: string | null, accessCardEnabled: boolean) => {
+    if (!startDate && !endDate) {
+      return (
+        <Badge className="bg-red-100 text-red-800 border-0">
+          Pending Dates
+        </Badge>
+      );
+    }
+    
+    if (!endDate && startDate) {
+      return (
+        <Badge className="bg-red-100 text-red-800 border-0">
+          Pending EndDate
+        </Badge>
+      );
+    }
     
     return (
-      <Badge className={`${config.color} border-0`}>
-        {status}
+      <Badge className="bg-green-100 text-green-800 border-0">
+        Approved
       </Badge>
     );
   };
@@ -292,72 +300,74 @@ export const ClubMembershipDashboard = () => {
   // Define columns for EnhancedTable
   const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
-    { key: 'tower', label: 'Tower', sortable: true },
-    { key: 'flat', label: 'Flat', sortable: true },
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'age', label: 'Age', sortable: true },
-    { key: 'gender', label: 'Gender', sortable: true },
-    { key: 'mobile', label: 'Mobile', sortable: true },
-    { key: 'email', label: 'Email', sortable: true },
-    { key: 'relationWithOwner', label: 'Relation With Owner', sortable: true },
-    { key: 'residentType', label: 'Resident Type', sortable: true },
-    { key: 'membershipNumber', label: 'Membership Number', sortable: true },
-    { key: 'startDate', label: 'Start Date', sortable: true },
-    { key: 'endDate', label: 'End Date', sortable: true },
+    { key: 'membership_number', label: 'Membership Number', sortable: true },
+    { key: 'user_name', label: 'Name', sortable: true },
+    { key: 'user_email', label: 'Email', sortable: true },
+    { key: 'user_mobile', label: 'Mobile', sortable: true },
+    { key: 'site_name', label: 'Site Name', sortable: true },
+    { key: 'start_date', label: 'Start Date', sortable: true },
+    { key: 'end_date', label: 'End Date', sortable: true },
     { key: 'membershipStatus', label: 'Membership Status', sortable: true },
-    { key: 'cardAllocated', label: 'Card Allocated', sortable: true },
-    { key: 'accessCard', label: 'Access Card', sortable: true },
-    { key: 'idCard', label: 'ID Card', sortable: true },
-    { key: 'residentPhoto', label: "Resident's Photo", sortable: false },
+    { key: 'access_card_enabled', label: 'Card Allocated', sortable: true },
+    { key: 'access_card_id', label: 'Access Card ID', sortable: true },
+    { key: 'identification_image', label: 'ID Card', sortable: false },
+    { key: 'avatar', label: "User Photo", sortable: false },
     { key: 'attachments', label: 'Attachments', sortable: false },
-    { key: 'createdOn', label: 'Created On', sortable: true }
+    { key: 'created_at', label: 'Created On', sortable: true }
   ];
 
   // Render cell content
   const renderCell = (item: MembershipData, columnKey: string) => {
     if (columnKey === 'actions') {
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <MoreVertical className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => navigate(`/club-management/membership/${item.id}`)}>
-              <Eye className="w-4 h-4 mr-2" />
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate(`/club-management/membership/${item.id}/edit`)}>
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate(`/club-management/membership/${item.id}`)}
+            title="View Details"
+            className="h-8 w-8 p-0"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate(`/club-management/membership/${item.id}/edit`)}
+            title="Edit"
+            className="h-8 w-8 p-0"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+            title="Delete"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       );
     }
 
     if (columnKey === 'membershipStatus') {
-      return renderStatusBadge(item.membershipStatus);
+      return renderStatusBadge(item.start_date, item.end_date, item.access_card_enabled);
     }
 
-    if (columnKey === 'residentType') {
-      return <Badge variant="outline">{item.residentType}</Badge>;
+    if (columnKey === 'access_card_enabled') {
+      return renderCardAllocated(item.access_card_enabled);
     }
 
-    if (columnKey === 'cardAllocated') {
-      return renderCardAllocated(item.cardAllocated);
-    }
-
-    if (columnKey === 'residentPhoto') {
-      return item.residentPhoto ? (
+    if (columnKey === 'avatar') {
+      const avatarUrl = item.avatar?.startsWith('%2F') 
+        ? `https://fm-uat-api.lockated.com${decodeURIComponent(item.avatar)}` 
+        : item.avatar;
+      
+      return avatarUrl && !avatarUrl.includes('profile.png') ? (
         <img 
-          src={item.residentPhoto} 
-          alt="Resident" 
+          src={avatarUrl} 
+          alt="User" 
           className="w-10 h-10 rounded-full object-cover"
         />
       ) : (
@@ -367,21 +377,46 @@ export const ClubMembershipDashboard = () => {
       );
     }
 
-    if (columnKey === 'attachments') {
-      return item.attachments.length > 0 ? (
-        <Button variant="link" size="sm">
-          View ({item.attachments.length})
-        </Button>
-      ) : '-';
+    if (columnKey === 'identification_image') {
+      return item.identification_image ? (
+        <a href={item.identification_image} target="_blank" rel="noopener noreferrer">
+          <img 
+            src={item.identification_image} 
+            alt="ID Card" 
+            className="w-10 h-10 object-cover cursor-pointer hover:opacity-80"
+          />
+        </a>
+      ) : (
+        <span className="text-gray-400">Not Available</span>
+      );
     }
 
-    if (columnKey === 'age' && !item.age) return '-';
-    if (columnKey === 'gender' && !item.gender) return '-';
-    if (columnKey === 'relationWithOwner' && !item.relationWithOwner) return '-';
-    if (columnKey === 'endDate' && !item.endDate) return '-';
+    if (columnKey === 'attachments') {
+      return item.attachments.length > 0 ? (
+        <Button variant="link" size="sm" className="p-0 h-auto">
+          View ({item.attachments.length})
+        </Button>
+      ) : (
+        <span className="text-gray-400">-</span>
+      );
+    }
+
+    if (columnKey === 'start_date' || columnKey === 'end_date') {
+      const dateValue = item[columnKey];
+      if (!dateValue) return <span className="text-gray-400">-</span>;
+      return new Date(dateValue).toLocaleDateString('en-GB');
+    }
+
+    if (columnKey === 'created_at') {
+      return new Date(item.created_at).toLocaleDateString('en-GB');
+    }
+
+    if (columnKey === 'access_card_id') {
+      return item.access_card_id || <span className="text-gray-400">-</span>;
+    }
     
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
-      return '--';
+      return <span className="text-gray-400">--</span>;
     }
     
     return item[columnKey];
@@ -581,6 +616,13 @@ export const ClubMembershipDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Filter Dialog */}
+      <ClubMembershipFilterDialog
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={handleFilterApply}
+      />
     </div>
   );
 };

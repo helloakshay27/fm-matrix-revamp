@@ -779,6 +779,8 @@ import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 import Sitemap from "./pages/Sitemap";
 import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashboard";
+import ClubMembershipDetailPage from "./pages/ClubManagement/ClubMembershipDetailPage";
+import AddClubMembershipPage from "./pages/ClubManagement/AddClubMembershipPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1463,6 +1465,18 @@ function App() {
                   <Route
                     path="/club-management/membership"
                     element={<ClubMembershipDashboard />}
+                  />
+                  <Route
+                    path="/club-management/membership/add"
+                    element={<AddClubMembershipPage />}
+                  />
+                  <Route
+                    path="/club-management/membership/:id"
+                    element={<ClubMembershipDetailPage />}
+                  />
+                  <Route
+                    path="/club-management/membership/:id/edit"
+                    element={<AddClubMembershipPage />}
                   />
                   
                   {/* Club Management - FM Users */}
