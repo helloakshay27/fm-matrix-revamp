@@ -2740,7 +2740,7 @@ const AllContent = () => {
                                     })}
                                     {/* Site header row placed after rows for print width consistency */}
                                     <div className="flex mt-4 print:mt-2">
-                                        <div className="w-[140px] print:w-[120px]" />
+                                        <div className="w-[140px] print:w-[90px]" />
                                         <div className="flex items-center gap-[10px] print:gap-[6px] max-w-[1000px] overflow-x-auto">
                                             {ticketSites.map((site) => (
                                                 <div key={site} className="text-center text-[10px] font-medium print:text-[8px] w-[100px] print:w-[50px]">
