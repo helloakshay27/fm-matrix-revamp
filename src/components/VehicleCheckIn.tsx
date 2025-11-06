@@ -1,43 +1,62 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Button } from '@/components/ui/button';
 import { Filter, Pencil } from 'lucide-react';
+import { API_CONFIG } from '@/config/apiConfig';
+import apiClient from '@/utils/apiClient';
 
 type LtmRecord = {
   id: string | number;
-  vehicle_type: string; // e.g., "2 Wheeler"
-  vehicle_number: string; // e.g., HR20AT6860
-  vehicle_name: string; // e.g., Bike / Activa
-  user: string;
-  email: string;
+  vehicle: string; // Combined: "2 Wheeler / HR20AT6860 / Bike"
+  user_name: string;
+  user_email: string;
   circle: string;
-  odo_start: number;
-  odo_end: number;
-  check_in_time: string; // DD/MM/YYYY hh:mm A
-  check_out_time: string; // DD/MM/YYYY hh:mm A
-  total_distance: number;
-  reimbursable_kms: number;
-  fuel_amount: number;
-  toll_amount: number;
-  total_amount: number;
-  vehicle_photo?: string;
-  check_in_photo?: string;
-  check_out_photo?: string;
-  parking_photo?: string;
+  odometer_start: number;
+  check_in_time: string;
+  start_location: string;
+  destination_location: string[]; // Array of destinations
+  visit_purpose: string;
+  odometer_end: number | null;
+  check_out_time: string | null;
+  total_distance: number | null;
+  reimbursable_kms: number | null;
+  fuel_amount: number | null;
+  toll_amount: number | null;
+  total_amount: number | null;
+  vehicle_photos?: string[];
+  check_in_photos?: string[];
+  check_out_photos?: string[];
+  parking_photos?: string[];
 };
 
+interface ApiResponse {
+  vehicle_histories: LtmRecord[];
+  pagination: {
+    current_page: number;
+    total_count: number;
+    total_pages: number;
+  };
+}
+
 interface VehicleCheckInProps {
-  data?: LtmRecord[];
-  loading?: boolean;
   onFilterClick?: () => void;
 }
 
-const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ data = [], loading = false, onFilterClick }) => {
+const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ onFilterClick }) => {
   const navigate = useNavigate();
+  const [apiData, setApiData] = useState<LtmRecord[]>([]);
+  const [apiLoading, setApiLoading] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
+
   const columns: ColumnConfig[] = useMemo(() => ([
-    { key: 'action', label: 'Action', sortable: false },
+    // { key: 'action', label: 'Action', sortable: false },
     { key: 'vehicle', label: 'Vehicle', sortable: true },
     { key: 'user', label: 'User', sortable: true },
     { key: 'email', label: 'Email', sortable: true },
@@ -56,120 +75,32 @@ const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ data = [], loading = fa
     { key: 'parking_photo', label: 'Parking Photo', sortable: false },
   ]), []);
 
-  const dummyData: LtmRecord[] = useMemo(() => ([
-    {
-      id: 1,
-      vehicle_type: '2 Wheeler',
-      vehicle_number: 'HR20AT6860',
-      vehicle_name: 'Bike',
-      user: 'Dayavir .',
-      email: 'dayavir.d@vodafoneidea.com',
-      circle: 'VIMSL – Haryana',
-      odo_start: 6000.0,
-      odo_end: 6230.0,
-      check_in_time: '23/08/2025 9:00 AM',
-      check_out_time: '23/08/2025 6:12 PM',
-      total_distance: 230.0,
-      reimbursable_kms: 200.0,
-      fuel_amount: 0,
-      toll_amount: 0,
-      total_amount: 0,
-      vehicle_photo: '/placeholder.svg',
-      check_in_photo: '/placeholder.svg',
-      check_out_photo: '/placeholder.svg',
-      parking_photo: '/placeholder.svg',
-    },
-    {
-      id: 2,
-      vehicle_type: '2 Wheeler',
-      vehicle_number: 'MP47MJ3941',
-      vehicle_name: 'Activa',
-      user: 'Lokesh Gupta',
-      email: 'lokesh.gupta@vodafoneidea.com',
-      circle: 'VIL-MPC–MP & Chhattisgarh',
-      odo_start: 36447.0,
-      odo_end: 36547.0,
-      check_in_time: '23/08/2025 9:15 AM',
-      check_out_time: '23/08/2025 6:00 PM',
-      total_distance: 100.0,
-      reimbursable_kms: 90.0,
-      fuel_amount: 0,
-      toll_amount: 0,
-      total_amount: 0,
-      vehicle_photo: '/placeholder.svg',
-      check_in_photo: '/placeholder.svg',
-      check_out_photo: '/placeholder.svg',
-      parking_photo: '/placeholder.svg',
-    },
-    {
-      id: 3,
-      vehicle_type: '4 Wheeler',
-      vehicle_number: 'AP40CX0073',
-      vehicle_name: 'TATA PUNCH',
-      user: 'Sreeramulu Narla',
-      email: 'narla.sreeramulu@vodafoneidea.com',
-      circle: 'VIL–APT–Andhra Pradesh',
-      odo_start: 30313.0,
-      odo_end: 30413.0,
-      check_in_time: '23/08/2025 10:00 AM',
-      check_out_time: '23/08/2025 5:34 PM',
-      total_distance: 100.0,
-      reimbursable_kms: 90.0,
-      fuel_amount: 0,
-      toll_amount: 0,
-      total_amount: 0,
-      vehicle_photo: '/placeholder.svg',
-      check_in_photo: '/placeholder.svg',
-      check_out_photo: '/placeholder.svg',
-      parking_photo: '/placeholder.svg',
-    },
-    {
-      id: 4,
-      vehicle_type: '4 Wheeler',
-      vehicle_number: 'HR36AH2362',
-      vehicle_name: 'XUV 300',
-      user: 'Yogesh Kumar',
-      email: 'yogesh.kumar3@vodafoneidea.com',
-      circle: 'VIL–PUH–Haryana',
-      odo_start: 112765.0,
-      odo_end: 112865.0,
-      check_in_time: '23/08/2025 9:45 AM',
-      check_out_time: '23/08/2025 5:33 PM',
-      total_distance: 100.0,
-      reimbursable_kms: 90.0,
-      fuel_amount: 0,
-      toll_amount: 0,
-      total_amount: 0,
-      vehicle_photo: '/placeholder.svg',
-      check_in_photo: '/placeholder.svg',
-      check_out_photo: '/placeholder.svg',
-      parking_photo: '/placeholder.svg',
-    },
-    {
-      id: 5,
-      vehicle_type: '2 Wheeler',
-      vehicle_number: 'KA11EN1371',
-      vehicle_name: 'Honda activa',
-      user: 'Sushma V',
-      email: 'sushma.h@vodafoneidea.com',
-      circle: 'VIMSL – Karnataka',
-      odo_start: 68678.0,
-      odo_end: 68728.0,
-      check_in_time: '23/08/2025 9:30 AM',
-      check_out_time: '23/08/2025 5:32 PM',
-      total_distance: 50.0,
-      reimbursable_kms: 45.0,
-      fuel_amount: 0,
-      toll_amount: 0,
-      total_amount: 0,
-      vehicle_photo: '/placeholder.svg',
-      check_in_photo: '/placeholder.svg',
-      check_out_photo: '/placeholder.svg',
-      parking_photo: '/placeholder.svg',
-    },
-  ]), []);
+  // Fetch LTM list from API
+  useEffect(() => {
+    const fetchLtmList = async (page: number = 1) => {
+      setApiLoading(true);
+      try {
+        const url = `${API_CONFIG.ENDPOINTS.LTM_LIST}?page=${page}`;
+        const response = await apiClient.get<ApiResponse>(url);
+        
+        if (response.data && response.data.vehicle_histories) {
+          setApiData(response.data.vehicle_histories);
+          setPagination(response.data.pagination);
+        }
+      } catch (error) {
+        console.error('Error fetching LTM list:', error);
+        setApiData([]);
+      } finally {
+        setApiLoading(false);
+      }
+    };
 
-  const tableData = data.length > 0 ? data : dummyData;
+    fetchLtmList(currentPage);
+  }, [currentPage]);
+
+  const tableData = useMemo(() => {
+    return apiData.length > 0 ? apiData : [];
+  }, [apiData]);
 
   const leftActions = (
     <Button
@@ -198,35 +129,44 @@ const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ data = [], loading = fa
         );
       case 'vehicle':
         return (
-          <span className="whitespace-nowrap">{`${item.vehicle_type} / ${item.vehicle_number} / ${item.vehicle_name}`}</span>
+          <span className="whitespace-nowrap">{item.vehicle}</span>
         );
       case 'user':
-        return item.user;
+        return item.user_name;
       case 'email':
-        return item.email;
+        return item.user_email;
       case 'circle':
         return item.circle;
       case 'odo_start':
-        return item.odo_start?.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        return item.odometer_start?.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
       case 'odo_end':
-        return item.odo_end?.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        return item.odometer_end?.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) || '-';
       case 'check_out_time':
-        return item.check_out_time;
+        return item.check_out_time || '-';
       case 'total_distance':
-        return item.total_distance?.toLocaleString();
+        return item.total_distance?.toLocaleString() || '-';
       case 'reimbursable_kms':
-        return item.reimbursable_kms?.toLocaleString();
+        return item.reimbursable_kms?.toLocaleString() || '-';
       case 'fuel_amount':
-        return item.fuel_amount?.toLocaleString();
+        return item.fuel_amount?.toLocaleString() || '-';
       case 'toll_amount':
-        return item.toll_amount?.toLocaleString();
+        return item.toll_amount?.toLocaleString() || '-';
       case 'total_amount':
-        return item.total_amount?.toLocaleString();
+        return item.total_amount?.toLocaleString() || '-';
       case 'vehicle_photo':
       case 'check_in_photo':
       case 'check_out_photo':
       case 'parking_photo': {
-        const src = (item as any)[columnKey] || '/placeholder.svg';
+        // Map the column key to the correct photo array property
+        const photoMap: Record<string, keyof Pick<LtmRecord, 'vehicle_photos' | 'check_in_photos' | 'check_out_photos' | 'parking_photos'>> = {
+          'vehicle_photo': 'vehicle_photos',
+          'check_in_photo': 'check_in_photos',
+          'check_out_photo': 'check_out_photos',
+          'parking_photo': 'parking_photos'
+        };
+        const photoArrayKey = photoMap[columnKey];
+        const photos = item[photoArrayKey];
+        const src = (photos && photos.length > 0) ? photos[0] : '/placeholder.svg';
         return (
           <img
             src={src}
@@ -250,7 +190,7 @@ const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ data = [], loading = fa
         leftActions={leftActions}
         enableExport={false}
         pagination={false}
-        loading={loading}
+        loading={apiLoading}
         storageKey="vehicle-checkin-table"
         searchPlaceholder="Search..."
         enableSearch={true}
