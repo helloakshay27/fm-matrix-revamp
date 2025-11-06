@@ -327,8 +327,7 @@ const modulesByPackage = {
       ],
     },
     {
-      name: "Helpdesk",
-      icon: Headphones,
+    name: "Ticket", icon: FileText,
       href: "/club-management/helpdesk",
     },
     {

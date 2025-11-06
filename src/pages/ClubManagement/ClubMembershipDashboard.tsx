@@ -323,30 +323,27 @@ export const ClubMembershipDashboard = () => {
         <div className="flex gap-2">
           <Button 
             variant="ghost" 
-            size="sm"
             onClick={() => navigate(`/club-management/membership/${item.id}`)}
             title="View Details"
-            className="h-8 w-8 p-0"
+            className=" p-0"
           >
             <Eye className="w-4 h-4" />
           </Button>
           <Button 
             variant="ghost" 
-            size="sm"
             onClick={() => navigate(`/club-management/membership/${item.id}/edit`)}
             title="Edit"
-            className="h-8 w-8 p-0"
+            className=" p-0"
           >
             <Edit className="w-4 h-4" />
           </Button>
-          <Button 
+          {/* <Button 
             variant="ghost" 
-            size="sm"
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+            className=" text-red-600 hover:text-red-700"
             title="Delete"
           >
             <Trash2 className="w-4 h-4" />
-          </Button>
+          </Button> */}
         </div>
       );
     }
@@ -453,9 +450,7 @@ export const ClubMembershipDashboard = () => {
       {/* Header Section */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-[#1a1a1a]">Club Membership</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Total Members: {totalMembers.toLocaleString()}
-        </p>
+       
       </div>
 
       {/* Memberships Table */}
