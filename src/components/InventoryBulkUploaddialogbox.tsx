@@ -71,7 +71,7 @@ export const InventoryBulkUploadDialog: React.FC<Props> = ({
             // Align with service bulk upload field naming convention
             formData.append('pms_inventory_file', file);
 
-            const res = await fetch(`https://${baseUrl}/pms/inventory/inventory_import.json`, {
+            const res = await fetch(`https://${baseUrl}/pms/inventories/inventory_import.json`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData,
@@ -89,9 +89,17 @@ export const InventoryBulkUploadDialog: React.FC<Props> = ({
             }
 
             if (data?.import_errors?.length) {
-                const first = data.import_errors[0];
+                // Show all error messages
+                const errorMessages = data.import_errors
+                    .map((err: any) => {
+                        const rowNum = err.row_number || 'Unknown';
+                        const msg = err.message || err.error || 'Unknown error';
+                        return `Row ${rowNum}: ${msg}`;
+                    })
+                    .join('\n');
+                
                 toast.error('Import completed with errors', {
-                    description: first?.error ? `Row ${first?.row_number}: ${first.error}` : undefined,
+                    description: errorMessages,
                     duration: 10000,
                 });
             } else {
