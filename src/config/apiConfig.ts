@@ -246,6 +246,8 @@ export const API_CONFIG = {
     VISITOR_HISTORY_EXPORT: '/pms/admin/visitors/visitors_history.xlsx',
     ASSET_TYPES: '/pms/custom_forms/get_asset_type',
     COMMUNICATION_TEMPLATES: '/communication_templates.json',
+    // Vehicle details endpoint
+    VEHICLE_DETAILS: '/vehicle_details/vehicle_detail_list.json',
   },
 } as const
 

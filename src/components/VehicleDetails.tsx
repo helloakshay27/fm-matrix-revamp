@@ -1,8 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
+import { apiClient } from '@/utils/apiClient';
+import { API_CONFIG } from '@/config/apiConfig';
+import { toast } from '@/hooks/use-toast';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 export interface VehicleRecord {
   name: string;
@@ -13,6 +24,15 @@ export interface VehicleRecord {
   ownership_type: string;
   vehicle_number: string;
   vehicle_name: string;
+}
+
+interface VehicleDetailsApiResponse {
+  vehicle_details: VehicleRecord[];
+  pagination: {
+    current_page: number;
+    total_count: number;
+    total_pages: number;
+  };
 }
 
 interface VehicleDetailsProps {
@@ -55,62 +75,60 @@ const exportVehiclesCsv = (rows: VehicleRecord[]) => {
   URL.revokeObjectURL(url);
 };
 
-const VehicleDetails: React.FC<VehicleDetailsProps> = ({ data = [], loading = false }) => {
-  // 5 dummy rows used as fallback when no data provided
-  const dummyData: VehicleRecord[] = useMemo(() => ([
-    {
-      name: 'Aditya Saha',
-      circle: 'VIL-GUJ-Gujarat',
-      email: 'aditya.saha1@vodafoneidea.com',
-      id: 237383,
-      vehicle_type: '2 Wheeler',
-      ownership_type: 'Self/Spouse',
-      vehicle_number: 'MP44MS6584',
-      vehicle_name: 'Bajaj pulser',
-    },
-    {
-      name: 'Arindam Chattopadhyay',
-      circle: 'VIL-WBKA-Rest of Bengal',
-      email: 'arindam.chattopadhyay@vodafoneidea.com',
-      id: 128428,
-      vehicle_type: '4 Wheeler',
-      ownership_type: 'Others',
-      vehicle_number: 'WB06P6050',
-      vehicle_name: 'Hyundai i 20',
-    },
-    {
-      name: 'Vibhat Pandey',
-      circle: 'VIMSL - Madhya Pradesh',
-      email: 'vibhat.pandey@vodafoneidea.com',
-      id: 135400,
-      vehicle_type: '2 Wheeler',
-      ownership_type: 'Self/Spouse',
-      vehicle_number: 'MP53ZC0284',
-      vehicle_name: '—',
-    },
-    {
-      name: 'Jaymalbhai Barot',
-      circle: 'VIL-GUJ-Gujarat',
-      email: 'jaymalbhai.barot@vodafoneidea.com',
-      id: 144554,
-      vehicle_type: '4 Wheeler',
-      ownership_type: 'Self/Spouse',
-      vehicle_number: 'GJ03MR7427',
-      vehicle_name: 'Venue',
-    },
-    {
-      name: 'Gaurav Thakare',
-      circle: 'VIL-MAH-Maharashtra & Goa',
-      email: 'gaurav.thakare@vodafoneidea.com',
-      id: 128664,
-      vehicle_type: '4 Wheeler',
-      ownership_type: 'Self/Spouse',
-      vehicle_number: 'MH32AX4167',
-      vehicle_name: 'Baleno',
-    },
-  ]), []);
+const VehicleDetails: React.FC<VehicleDetailsProps> = ({ data = [], loading: externalLoading = false }) => {
+  const [apiData, setApiData] = useState<VehicleRecord[]>([]);
+  const [apiLoading, setApiLoading] = useState<boolean>(false);
+  const [hasFetched, setHasFetched] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
 
-  const tableData = data && data.length > 0 ? data : dummyData;
+  // Fetch vehicle details from API
+  useEffect(() => {
+    const fetchVehicleDetails = async (page: number = 1) => {
+      try {
+        setApiLoading(true);
+        const response = await apiClient.get<VehicleDetailsApiResponse>(
+          `${API_CONFIG.ENDPOINTS.VEHICLE_DETAILS}?page=${page}`
+        );
+        
+        if (response.data && response.data.vehicle_details) {
+          setApiData(response.data.vehicle_details);
+          setPagination(response.data.pagination);
+          setHasFetched(true);
+        }
+      } catch (error) {
+        console.error('Error fetching vehicle details:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch vehicle details',
+          variant: 'destructive',
+        });
+        setHasFetched(true);
+      } finally {
+        setApiLoading(false);
+      }
+    };
+
+    // Only fetch from API once if no external data is provided
+    if (!hasFetched && (!data || data.length === 0)) {
+      fetchVehicleDetails(currentPage);
+    }
+  }, [data, hasFetched, currentPage]);
+
+  // Use API data if available, otherwise use provided data, no dummy data
+  const tableData = useMemo(() => {
+    if (data && data.length > 0) return data;
+    if (apiData && apiData.length > 0) return apiData;
+    return [];
+  }, [data, apiData]);
+
+  // Determine loading state
+  const isLoading = externalLoading || apiLoading;
+
   const columns: ColumnConfig[] = useMemo(() => ([
     { key: 'name', label: 'Name', sortable: true },
     { key: 'circle', label: 'Circle', sortable: true },
@@ -155,9 +173,134 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({ data = [], loading = fa
     }
   };
 
+  // Pagination rendering (same style as TrainingDashboard)
+  const renderPaginationItems = () => {
+    const items = [];
+    const showEllipsis = pagination.total_pages > 7;
+    
+    if (showEllipsis) {
+      // Show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink 
+            onClick={() => setCurrentPage(1)} 
+            isActive={currentPage === 1} 
+            className="cursor-pointer"
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      
+      // Show ellipsis or pages 2-3
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <span className="px-2">...</span>
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, pagination.total_pages - 1); i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink 
+                onClick={() => setCurrentPage(i)} 
+                isActive={currentPage === i} 
+                className="cursor-pointer"
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+      
+      // Show current page area
+      if (currentPage > 3 && currentPage < pagination.total_pages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink 
+                onClick={() => setCurrentPage(i)} 
+                isActive={currentPage === i} 
+                className="cursor-pointer"
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+      
+      // Show ellipsis or pages before last
+      if (currentPage < pagination.total_pages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <span className="px-2">...</span>
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(pagination.total_pages - 2, 2); i < pagination.total_pages; i++) {
+          if (!items.find(item => item.key === i)) {
+            items.push(
+              <PaginationItem key={i}>
+                <PaginationLink 
+                  onClick={() => setCurrentPage(i)} 
+                  isActive={currentPage === i} 
+                  className="cursor-pointer"
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+      
+      // Show last page
+      if (pagination.total_pages > 1) {
+        items.push(
+          <PaginationItem key={pagination.total_pages}>
+            <PaginationLink 
+              onClick={() => setCurrentPage(pagination.total_pages)} 
+              isActive={currentPage === pagination.total_pages} 
+              className="cursor-pointer"
+            >
+              {pagination.total_pages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Show all pages if total is 7 or less
+      for (let i = 1; i <= pagination.total_pages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink 
+              onClick={() => setCurrentPage(i)} 
+              isActive={currentPage === i} 
+              className="cursor-pointer"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+    
+    return items;
+  };
+
   return (
     <div className="p-4 sm:p-6">
-      <h2 className="text-2xl font-bold mb-4">VEHICLE DETAILS</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">VEHICLE DETAILS</h2>
+        {pagination.total_count > 0 && (
+          <div className="text-sm text-gray-600">
+            Total Vehicles: <span className="font-semibold">{pagination.total_count.toLocaleString()}</span>
+          </div>
+        )}
+      </div>
       <EnhancedTable
         data={tableData}
         columns={columns}
@@ -165,12 +308,40 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({ data = [], loading = fa
         leftActions={leftActions}
         enableExport={false}
         pagination={false}
-        loading={loading}
+        loading={isLoading}
         storageKey="vehicle-details-table"
         searchPlaceholder="Search..."
         enableSearch={true}
         hideColumnsButton={false}
+        emptyMessage="No vehicle details available"
       />
+      
+      {/* Pagination (same as TrainingDashboard) */}
+      {pagination.total_pages > 1 && (
+        <div className="flex justify-center mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              {renderPaginationItems()}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(Math.min(pagination.total_pages, currentPage + 1))}
+                  className={currentPage === pagination.total_pages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+      
+      {pagination.total_pages === 1 && !isLoading && (
+        <div className="text-xs text-gray-500 mt-4">Showing {tableData.length} record(s)</div>
+      )}
     </div>
   );
 };
