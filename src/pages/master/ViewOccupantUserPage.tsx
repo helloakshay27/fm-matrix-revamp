@@ -214,7 +214,11 @@ export const ViewOccupantUserPage = () => {
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-2 border-gray-300"
-                    onClick={() => navigate(`/master/user/occupant-users/edit/${id}`)}
+                    onClick={() => location.pathname.includes("/club-management/") ? (
+                      navigate(`/club-management/users/occupant-users/edit/${id}`)
+                    ) : (
+                      navigate(`/master/user/occupant-users/edit/${id}`)
+                    )}
                 >
                     <Edit2 className="w-4 h-4" />
                 </Button>

@@ -1510,7 +1510,7 @@ function App() {
                   {/* Club Management - Occupant Users */}
                   <Route
                     path="/club-management/users/occupant-users"
-                    element={<CRMOccupantUsersDashboard />}
+                    element={<OccupantUserMasterDashboard />}
                   />
                   <Route
                     path="/club-management/users/occupant-users/add"

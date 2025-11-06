@@ -234,7 +234,11 @@ export const AddOccupantUserPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(-1)}
+          onClick={() => location.pathname.includes("/club-management/") ? (
+            navigate("/club-management/users/occupant-users")
+          ) : (
+            navigate("/master/user/occupant-users")
+          )}
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>

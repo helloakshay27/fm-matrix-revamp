@@ -227,11 +227,17 @@ export const AddFMUserPage = () => {
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/master/user/fm-users')}
-        >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => 
+              location.pathname.includes("/club-management/") ? (
+                navigate('/club-management/users/fm-users')
+              ) : (
+                navigate('/master/user/fm-users')
+              )
+            }
+          >
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <h1 className="text-2xl font-semibold text-[#1a1a1a]">Add FM User</h1>

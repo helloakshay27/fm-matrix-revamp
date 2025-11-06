@@ -158,7 +158,7 @@ export const PaymentDetailPage = () => {
   };
 
   const handleGoBack = () => {
-    navigate('/settings/payment-management');
+    navigate('/club-management/accounting');
   };
 
   const handleDownloadReceipt = () => {

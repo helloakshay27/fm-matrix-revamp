@@ -178,7 +178,11 @@ export const ViewFMUserPage = () => {
           variant="outline"
           size="sm"
           className="flex items-center gap-2 border-gray-300"
-          onClick={() => navigate(`/master/user/fm-users/edit/${id}`)}
+          onClick={() => location.pathname.includes("/club-management/") ? (
+            navigate(`/club-management/users/fm-users/edit/${id}`)
+          ) : (
+            navigate(`/master/user/fm-users/edit/${id}`)
+            )}
         >
           <Edit2 className="w-4 h-4" />
         </Button>

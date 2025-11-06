@@ -23,7 +23,14 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import axios from "axios";
-import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import { OccupantUsersFilterDialog } from "@/components/OccupantUsersFilterDialog";
 import { useAppSelector } from "@/store/hooks";
 import { debounce } from "lodash";
@@ -36,7 +43,12 @@ const columns: ColumnConfig[] = [
   { key: "email", label: "Email", sortable: true, draggable: true },
   { key: "entity", label: "Entity", sortable: true, draggable: true },
   { key: "status", label: "Status", sortable: true, draggable: true },
-  { key: "appDownloaded", label: "App Downloaded", sortable: true, draggable: true },
+  {
+    key: "appDownloaded",
+    label: "App Downloaded",
+    sortable: true,
+    draggable: true,
+  },
 ];
 
 export const OccupantUserMasterDashboard = () => {
@@ -120,7 +132,8 @@ export const OccupantUserMasterDashboard = () => {
     search?: string;
   }) => {
     setFilters(newFilters);
-    const [firstName = "", lastName = ""] = (newFilters?.name?.trim().split(" ") ?? []);
+    const [firstName = "", lastName = ""] =
+      newFilters?.name?.trim().split(" ") ?? [];
     await dispatch(
       fetchOccupantUsers({
         page: 1,
@@ -131,7 +144,7 @@ export const OccupantUserMasterDashboard = () => {
         lock_user_permission_status_eq: newFilters.status,
         entity_id_eq: newFilters.entity,
         app_downloaded_eq: newFilters.downloaded,
-        search_all_fields_cont: newFilters.search
+        search_all_fields_cont: newFilters.search,
       })
     );
     setFilterDialogOpen(false);
@@ -173,9 +186,9 @@ export const OccupantUserMasterDashboard = () => {
         fetchOccupantUsers({ page: pagination.current_page, perPage: 10 })
       );
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   useEffect(() => {
     setCurrentSection("Master");
@@ -187,7 +200,7 @@ export const OccupantUserMasterDashboard = () => {
     debounce(async (searchQuery: string) => {
       handleApplyFilters({
         search: searchQuery,
-      })
+      });
     }, 500),
     [pagination.current_page]
   );
@@ -213,7 +226,7 @@ export const OccupantUserMasterDashboard = () => {
           lock_user_permission_status_eq: filters.status,
           entity_id_eq: filters.entity,
           app_downloaded_eq: filters.downloaded,
-          search_all_fields_cont: searchTerm
+          search_all_fields_cont: searchTerm,
         })
       );
     } catch (error) {
@@ -403,9 +416,9 @@ export const OccupantUserMasterDashboard = () => {
         prevUsers.map((user) =>
           user.id === selectedUser.id
             ? {
-              ...user,
-              status: selectedStatus,
-            }
+                ...user,
+                status: selectedStatus,
+              }
             : user
         )
       );
@@ -508,7 +521,11 @@ export const OccupantUserMasterDashboard = () => {
                   size="icon"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/master/user/occupant-users/view/${item.id}`);
+                    location.pathname.includes("/club-management/")
+                      ? navigate(
+                          `/club-management/users/occupant-users/view/${item.id}`
+                        )
+                      : navigate(`/master/user/occupant-users/view/${item.id}`);
                   }}
                   title="View"
                 >
@@ -556,7 +573,7 @@ export const OccupantUserMasterDashboard = () => {
                   }
                   className={
                     pagination.current_page === pagination.total_pages ||
-                      loading
+                    loading
                       ? "pointer-events-none opacity-50"
                       : "cursor-pointer"
                   }
@@ -569,8 +586,10 @@ export const OccupantUserMasterDashboard = () => {
 
       {showActionPanel && (
         <SelectionPanel
-          onAdd={() => navigate("/master/user/occupant-users/add")}
-          onImport={() => { }}
+          onAdd={() => location.pathname.includes("/club-management/")
+            ? navigate("/club-management/users/occupant-users/add")
+            : navigate("/master/user/occupant-users/add")}
+          onImport={() => {}}
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
@@ -583,13 +602,16 @@ export const OccupantUserMasterDashboard = () => {
         handleApplyFilters={handleApplyFilters}
       />
 
-      <Dialog open={statusDialogOpen} onClose={setStatusDialogOpen} maxWidth="xs" fullWidth>
+      <Dialog
+        open={statusDialogOpen}
+        onClose={setStatusDialogOpen}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogContent className="p-0 bg-white">
           <div className="px-6 py-3 border-b mb-3">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-semibold">
-                Update Status
-              </h1>
+              <h1 className="text-xl font-semibold">Update Status</h1>
               <Button
                 variant="ghost"
                 size="sm"

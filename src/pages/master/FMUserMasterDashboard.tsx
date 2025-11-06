@@ -251,11 +251,19 @@ export const FMUserMasterDashboard = () => {
     fmUsersData.filter((user) => user.appDownloaded).length;
 
   const handleAddUser = () => {
-    navigate("/master/user/fm-users/add");
+    location.pathname.includes("/club-management/") ? (
+      navigate(`/club-management/users/fm-users/add`)
+    ) : (
+      navigate(`/master/user/fm-users/add`)
+    );
   };
 
   const handleViewUser = (id: string) => {
-    navigate(`/master/user/fm-users/view/${id}`);
+    location.pathname.includes("/club-management/") ? (
+      navigate(`/club-management/users/fm-users/view/${id}`)
+    ) : (
+      navigate(`/master/user/fm-users/view/${id}`)
+    );
   };
 
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
