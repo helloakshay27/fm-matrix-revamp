@@ -850,7 +850,7 @@ export const CategoryTypeTab: React.FC = () => {
                   name="responseTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Response Time (hours) <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>Response Time (Minutes) <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="Enter response time" {...field} />
                       </FormControl>

@@ -407,7 +407,7 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
                   <div className="flex items-center gap-3">
                     <RotateCcw className="h-4 w-4 text-red-500" />
                     <span className="text-sm font-medium text-gray-700 min-w-[100px]">
-                      Update
+                      Status
                     </span>
                     <span className="text-sm text-gray-700">:</span>
                     <div className="flex items-center gap-2 text-sm">
