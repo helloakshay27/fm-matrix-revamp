@@ -941,7 +941,7 @@ const AllContent = () => {
         if (cards && typeof cards === 'object') {
             const active = Number((cards as any)?.active_contracts?.count ?? 0);
             const expiry90 = Number((cards as any)?.expiring_soon?.count ?? 0);
-            const expired = Number((cards as any)?.expired_contracts?.count ?? 0);
+            const expired = Number((root as any)?.contract_details.filter((c: any) => c?.contract_status === 'Expired').length ?? 0);
             // If totals are present and individual counts are zero, still accept zeros.
             return { active, expiry90, expired };
         }
