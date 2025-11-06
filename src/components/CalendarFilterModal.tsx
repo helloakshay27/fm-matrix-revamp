@@ -80,13 +80,63 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     };
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [dateError, setDateError] = useState<string>('');
+
+  // Date validation function
+  const validateDates = (fromDate: string, toDate: string): string => {
+    if (!fromDate && !toDate) {
+      return '';
+    }
+
+    if (fromDate && !toDate) {
+      return 'Please select an "End Date"';
+    }
+
+    if (!fromDate && toDate) {
+      return 'Please select a "Start Date"';
+    }
+
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+
+      if (from > to) {
+        return '"Start Date" cannot be later than "End Date"';
+      }
+
+      // Check if date range exceeds 1 year
+      const oneYear = 365 * 24 * 60 * 60 * 1000; // milliseconds in a year
+      if (to.getTime() - from.getTime() > oneYear) {
+        return 'Date range cannot exceed 1 year';
+      }
+    }
+
+    return '';
+  };
+
   const handleFilterChange = (key: keyof CalendarFilters, value: string) => {
     setFilters(prev => ({
       ...prev,
       [key]: value
     }));
+
+    // Validate dates when date fields change
+    if (key === 'dateFrom' || key === 'dateTo') {
+      const newFromDate = key === 'dateFrom' ? value : filters.dateFrom;
+      const newToDate = key === 'dateTo' ? value : filters.dateTo;
+      const error = validateDates(newFromDate, newToDate);
+      setDateError(error);
+    }
   };
   const handleApply = async () => {
+    // Validate dates before applying
+    const dateValidationError = validateDates(filters.dateFrom, filters.dateTo);
+    if (dateValidationError) {
+      setDateError(dateValidationError);
+      toast.error(dateValidationError);
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Convert YYYY-MM-DD to DD/MM/YYYY for API
@@ -121,6 +171,7 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
       's[task_task_of_eq]': ''
     };
     setFilters(clearedFilters);
+    setDateError(''); // Clear date error
     
     // Convert to DD/MM/YYYY for API
     const formatForAPI = (dateStr: string) => {
@@ -173,6 +224,8 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
+                error={!!dateError && dateError.includes('Start')}
+                helperText={dateError && dateError.includes('Start') ? dateError : ''}
               />
               <TextField
                 label="End Date"
@@ -183,8 +236,13 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
+                error={!!dateError && dateError.includes('End')}
+                helperText={dateError && dateError.includes('End') ? dateError : ''}
               />
             </div>
+            {dateError && !dateError.includes('Start') && !dateError.includes('End') && (
+              <div className="mt-2 text-sm text-red-600">{dateError}</div>
+            )}
           </div>
 
           {/* Filter Options Section */}
