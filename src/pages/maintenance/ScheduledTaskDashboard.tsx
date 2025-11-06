@@ -419,7 +419,7 @@ export const ScheduledTaskDashboard = () => {
       if (filters.dateTo)
         queryParams.append("q[start_date_lteq]", filters.dateTo);
       if (filters.checklist)
-        queryParams.append("q[custom_form_form_name_cont]", filters.checklist);
+        queryParams.append("q[custom_form_form_name_eq]", filters.checklist);
       if (filters.scheduleType)
         queryParams.append("q[custom_form_sch_type_eq", filters.scheduleType);
       if (filters.type)
@@ -460,7 +460,7 @@ export const ScheduledTaskDashboard = () => {
       } else if (filters.searchChecklist && filters.searchChecklist.trim()) {
         // Only use advanced filter checklist search if no general search term
         queryParams.append(
-          "q[custom_form_form_name_cont]",
+          "q[custom_form_form_name_eq]",
           filters.searchChecklist.trim()
         );
       }
