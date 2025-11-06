@@ -467,7 +467,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
         >
           <Eye className="w-4 h-4" />
         </button>
-        {/* <button
+        <button
           onClick={() => site?.id && handleEdit(site.id)}
           className="p-1 text-green-600 hover:bg-green-50 rounded"
           title="Edit"
@@ -482,7 +482,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
           disabled={!canEditSite || !site?.id}
         >
           <Trash2 className="w-4 h-4" />
-        </button> */}
+        </button>
       </div>
     ),
     name: (

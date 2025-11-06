@@ -399,7 +399,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
         >
           <Eye className="w-4 h-4" />
         </button>
-        {/* <button
+        <button
           onClick={() => region?.id && handleEdit(region.id)}
           className="p-1 text-green-600 hover:bg-green-50 rounded"
           title="Edit"
@@ -414,7 +414,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
           disabled={!canEditRegion || !region?.id}
         >
           <Trash2 className="w-4 h-4" />
-        </button> */}
+        </button>
       </div>
     ),
     name: (

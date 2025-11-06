@@ -106,7 +106,7 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
     <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50" aria-describedby="add-country-dialog-description">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">ADD NEW COUNTRY</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-gray-900">ADD NEW Headquarter</DialogTitle>
           <Button
             variant="ghost"
             size="sm"

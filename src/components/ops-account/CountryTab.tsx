@@ -291,58 +291,43 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/headquarters.json'), {
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU');
 
       if (response.ok) {
         const data = await response.json();
-
+        console.log('Countries API response:', data);
         
+        // Map the API response to the expected dropdown format
+        // API returns array of objects with id and name properties
         if (Array.isArray(data)) {
-          // Handle direct array format
-          const uniqueCountries = new Map();
-          data.forEach((country: any) => {
-            const id = country.country_id || country.id;
-            const name = country.country_name || country.name;
-            if (id && name && !uniqueCountries.has(id)) {
-              uniqueCountries.set(id, name);
-            }
-          });
-          
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id, name }));
-          setCountriesDropdown(countriesArray);
-          setCountriesMap(uniqueCountries);
-        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
-          // Handle nested headquarters format
-          const uniqueCountries = new Map();
-          data.headquarters.forEach((hq: any) => {
-            const id = hq.country_id;
-            const name = hq.country_name;
-            if (id && name && !uniqueCountries.has(id)) {
-              uniqueCountries.set(id, name);
-            }
-          });
-          
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id, name }));
-          setCountriesDropdown(countriesArray);
-          setCountriesMap(uniqueCountries);
-        } else if (data && data.countries && Array.isArray(data.countries)) {
-          // Handle existing format as fallback
-          const mappedCountries = data.countries.map(([id, name]) => ({ id, name }));
+          const mappedCountries = data
+            .filter((country) => country?.id && country?.name) // Filter out invalid entries
+            .map((country) => ({ 
+              id: Number(country.id), 
+              name: String(country.name) 
+            }));
           setCountriesDropdown(mappedCountries);
+          
+          // Also update the countries map for quick lookups
           const countryMap = new Map();
-          data.countries.forEach(([id, name]) => {
-            countryMap.set(id, name);
+          mappedCountries.forEach((country) => {
+            countryMap.set(country.id, country.name);
           });
           setCountriesMap(countryMap);
+        } else {
+          console.error('Countries data format unexpected:', data);
+          setCountriesDropdown([]);
+          setCountriesMap(new Map());
         }
+      } else {
+        console.error('Failed to fetch countries');
+        setCountriesDropdown([]);
+        setCountriesMap(new Map());
       }
     } catch (error) {
       console.error('Error fetching countries:', error);
+      setCountriesDropdown([]);
+      setCountriesMap(new Map());
     }
   };
 
@@ -419,7 +404,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
             loading={loading}
             renderActions={(country: CountryItem) => (
               <div className="flex items-center gap-2">
-                {/* <Button
+                <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleEdit(country.id)}
@@ -436,7 +421,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                   title="Delete"
                 >
                   <Trash2 className="h-4 w-4" />
-                </Button> */}
+                </Button>
               </div>
             )}
             renderCell={(country: CountryItem, columnKey: string) => {
@@ -471,7 +456,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Country
+                Add Headquarter
               </Button>
             }
             // rightActions={(

@@ -264,63 +264,21 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/headquarters.json'), {
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU');
 
       if (response.ok) {
         const data = await response.json();
         console.log('Countries API response:', data);
         
+        // Map the API response to the expected dropdown format
+        // API returns array of objects with id and name properties
         if (Array.isArray(data)) {
-          // Handle direct array format
-          const uniqueCountries = new Map();
-          data.forEach((country: any) => {
-            const id = country?.country_id || country?.id;
-            const name = country?.country_name || country?.name;
-            if (id && name && !uniqueCountries.has(id)) {
-              uniqueCountries.set(id, name);
-            }
-          });
-          
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
-          setCountriesDropdown(countriesArray);
-        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
-          // Handle nested headquarters format
-          const uniqueCountries = new Map();
-          data.headquarters.forEach((hq: any) => {
-            const id = hq?.country_id;
-            const name = hq?.country_name;
-            if (id && name && !uniqueCountries.has(id)) {
-              uniqueCountries.set(id, name);
-            }
-          });
-          
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
-          setCountriesDropdown(countriesArray);
-        } else if (data && data.countries && Array.isArray(data.countries)) {
-          // Handle existing format as fallback
-          const mappedCountries = data.countries
-            .filter(([id, name]) => id && name)
-            .map(([id, name]) => ({ id: Number(id), name: String(name) }));
-          setCountriesDropdown(mappedCountries);
-        } else if (Array.isArray(data)) {
           const mappedCountries = data
-            .map((item) => {
-              if (Array.isArray(item) && item.length >= 2 && item[0] && item[1]) {
-                return { id: Number(item[0]), name: String(item[1]) };
-              }
-              const id = item?.id || item?.value;
-              const name = item?.name || item?.label;
-              if (id && name) {
-                return { id: Number(id), name: String(name) };
-              }
-              return null;
-            })
-            .filter(Boolean);
+            .filter((country) => country?.id && country?.name) // Filter out invalid entries
+            .map((country) => ({ 
+              id: Number(country.id), 
+              name: String(country.name) 
+            }));
           setCountriesDropdown(mappedCountries);
         } else {
           console.error('Countries data format unexpected:', data);
@@ -407,22 +365,22 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
         >
           <Eye className="w-4 h-4" />
         </button>
-        {/* <button
+        <button
           onClick={() => org?.id && handleEdit(org.id)}
           className="p-1 text-green-600 hover:bg-green-50 rounded"
           title="Edit"
           disabled={!canEditOrganization || !org?.id}
         >
           <Edit className="w-4 h-4" />
-        </button> */}
-        {/* <button
+        </button>
+        <button
           onClick={() => org?.id && handleDelete(org.id)}
           className="p-1 text-red-600 hover:bg-red-50 rounded"
           title="Delete"
           disabled={!canEditOrganization || !org?.id}
         >
           <Trash2 className="w-4 h-4" />
-        </button> */}
+        </button>
       </div>
     ),
     name: (
