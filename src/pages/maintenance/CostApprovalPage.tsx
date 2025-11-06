@@ -10,12 +10,25 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Badge } from '@/components/ui/badge';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
 import { API_CONFIG } from '@/config/apiConfig';
 import { TextField, FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import ReactSelect from 'react-select';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { 
   APPROVAL_LEVELS, 
   COST_UNITS, 
@@ -86,6 +99,7 @@ export const CostApprovalPage: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<{ [key: string]: number[] }>({});
   const [escalateToUsers, setEscalateToUsers] = useState<EscalateToUser[]>([]);
   const [usersLoading, setUsersLoading] = useState<boolean>(false);
+  const [selectedCostFilter, setSelectedCostFilter] = useState<string>('all');
 
   const { rules, createLoading, fetchLoading, deleteLoading } = useSelector((state: RootState) => state.costApproval);
 
@@ -141,13 +155,42 @@ export const CostApprovalPage: React.FC = () => {
   }, [dispatch]);
 
   // Filter rules based on active tab and only show active rules
-  const filteredRules = useMemo(() => 
-    rules.filter(rule => 
+  const filteredRules = useMemo(() => {
+    let filtered = rules.filter(rule => 
       rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project') && 
       rule.active === true
-    ),
-    [rules, activeTab]
-  )
+    );
+
+    // Apply cost filter if not 'all'
+    if (selectedCostFilter !== 'all') {
+      filtered = filtered.filter(rule => {
+        const costRange = rule.cost_unit === 'between' && rule.cost_from !== null
+          ? `₹${rule.cost_from} - ₹${rule.cost_to}`
+          : `> ₹${rule.cost_to}`;
+        return costRange.toLowerCase().includes(selectedCostFilter.toLowerCase());
+      });
+    }
+
+    return filtered;
+  }, [rules, activeTab, selectedCostFilter]);
+
+  // Helper function to get user names from user IDs
+  const getUserNames = (userIds: number[] | null | undefined): string => {
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) return '-';
+    
+    return userIds.map(id => {
+      const user = escalateToUsers.find(u => u.id === id);
+      return user ? user.full_name : `User ${id}`;
+    }).join(', ');
+  };
+
+  // Helper function to get cost range display
+  const getCostRangeDisplay = (rule: CostApprovalGetResponse): string => {
+    if (rule.cost_unit === 'between' && rule.cost_from !== null) {
+      return `₹${rule.cost_from} - ₹${rule.cost_to}`;
+    }
+    return `> ₹${rule.cost_to}`;
+  };
 
   const handleUserSelect = (level: string, selectedOptions: { value: number; label: string }[]) => {
     const newUsers = selectedOptions ? selectedOptions.map(option => option.value) : [];
@@ -489,80 +532,140 @@ export const CostApprovalPage: React.FC = () => {
             {renderForm()}
             
             {/* Existing Rules Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Existing Cost Approval Rules</CardTitle>
+            <Card className="border border-gray-200">
+              <CardHeader className="border-b border-gray-200 bg-white">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold text-gray-900">Filter</CardTitle>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="cost-filter" className="text-sm font-medium text-gray-700">
+                        Cost Range
+                      </Label>
+                      <Select value={selectedCostFilter} onValueChange={setSelectedCostFilter}>
+                        <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
+                          <SelectValue placeholder="Select Cost Range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Ranges</SelectItem>
+                          {rules
+                            .filter(rule => rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project') && rule.active === true)
+                            .map((rule) => (
+                              <SelectItem key={rule.id} value={getCostRangeDisplay(rule)}>
+                                {getCostRangeDisplay(rule)}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button 
+                      variant="default"
+                      size="sm" 
+                      className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-4"
+                      onClick={() => setSelectedCostFilter('all')}
+                    >
+                      Apply
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4"
+                      onClick={() => setSelectedCostFilter('all')}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {fetchLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <div className="text-sm text-muted-foreground">Loading existing rules...</div>
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#C72030]" />
+                    <span className="ml-2 text-gray-600">Loading cost approval rules...</span>
                   </div>
                 ) : filteredRules.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No cost approval rules found for Project
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No cost approval rules found.</p>
+                    <p className="text-sm mt-1">Create your first rule using the form above.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                       <thead>
-                         <tr className="border-b">
-                           <th className="text-left p-3 font-medium">Cost Range</th>
-                           <th className="text-left p-3 font-medium">Unit</th>
-                           <th className="text-left p-3 font-medium">Levels</th>
-                           <th className="text-left p-3 font-medium">Status</th>
-                           <th className="text-left p-3 font-medium">Created Date</th>
-                           <th className="text-left p-3 font-medium">Actions</th>
-                         </tr>
-                       </thead>
-                       <tbody>
-                         {filteredRules.map((rule) => (
-                           <tr key={rule.id} className="border-b hover:bg-muted/50">
-                             <td className="p-3">
-                               {rule.cost_unit === 'between' && rule.cost_from !== null
-                                 ? `₹${rule.cost_from} - ₹${rule.cost_to}`
-                                 : `> ₹${rule.cost_to}`
-                               }
-                             </td>
-                             <td className="p-3 capitalize">
-                               {rule.cost_unit.replace('_', ' ')}
-                             </td>
-                             <td className="p-3">
-                               <div className="flex flex-wrap gap-1">
-                                 {['L1', 'L2', 'L3', 'L4', 'L5'].map(level => (
-                                   <span key={level} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                                     {level}
-                                   </span>
-                                 ))}
-                               </div>
-                             </td>
-                             <td className="p-3">
-                               <span className={`px-2 py-1 rounded-full text-xs ${
-                                 rule.active 
-                                   ? 'bg-green-100 text-green-800' 
-                                   : 'bg-gray-100 text-gray-800'
-                               }`}>
-                                 {rule.active ? 'Active' : 'Inactive'}
-                               </span>
-                             </td>
-                             <td className="p-3 text-sm text-muted-foreground">
-                               {new Date(rule.created_at).toLocaleDateString()}
-                             </td>
-                             <td className="p-3">
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => handleDelete(rule.id)}
-                                 disabled={deleteLoading}
-                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
-                             </td>
-                           </tr>
-                         ))}
-                       </tbody>
-                    </table>
+                  <div className="space-y-6 p-6">
+                    {filteredRules.map((rule, index) => (
+                      <div key={rule.id} className="border border-gray-200 rounded-lg bg-white shadow-sm">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-base font-semibold text-gray-900">Rule {index + 1}</h3>
+                            <div className="flex gap-2">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-gray-600 hover:text-red-600 hover:bg-red-50"
+                                    disabled={deleteLoading}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Rule</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete this cost approval rule for {getCostRangeDisplay(rule)}? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="border-gray-300">Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      onClick={() => handleDelete(rule.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="overflow-hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-gray-50 border-b border-gray-200 hover:bg-gray-50">
+                                <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/3">Cost Range</TableHead>
+                                <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/6">Levels</TableHead>
+                                <TableHead className="font-semibold text-gray-900 text-left py-3 px-4">Approvers</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              <TableRow className="border-b border-gray-100 hover:bg-gray-50/50">
+                                <TableCell className="py-4 px-4 align-top font-medium text-gray-900">
+                                  {getCostRangeDisplay(rule)}
+                                </TableCell>
+                                <TableCell className="py-4 px-4 align-top">
+                                  <div className="space-y-2">
+                                    {rule.cost_approval_levels?.map((level) => (
+                                      <div key={level.id} className="text-sm text-gray-700 font-medium">
+                                        {level.name}
+                                      </div>
+                                    )) || <span className="text-sm text-gray-500">-</span>}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4 px-4 align-top">
+                                  <div className="space-y-2">
+                                    {rule.cost_approval_levels?.map((level) => (
+                                      <div key={level.id} className="text-sm text-gray-700">
+                                        {getUserNames(level.escalate_to_users)}
+                                      </div>
+                                    )) || <span className="text-sm text-gray-500">-</span>}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
@@ -575,80 +678,140 @@ export const CostApprovalPage: React.FC = () => {
             {renderForm()}
             
             {/* Existing Rules Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Existing Cost Approval Rules</CardTitle>
+            <Card className="border border-gray-200">
+              <CardHeader className="border-b border-gray-200 bg-white">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold text-gray-900">Filter</CardTitle>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="cost-filter" className="text-sm font-medium text-gray-700">
+                        Cost Range
+                      </Label>
+                      <Select value={selectedCostFilter} onValueChange={setSelectedCostFilter}>
+                        <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
+                          <SelectValue placeholder="Select Cost Range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Ranges</SelectItem>
+                          {rules
+                            .filter(rule => rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project') && rule.active === true)
+                            .map((rule) => (
+                              <SelectItem key={rule.id} value={getCostRangeDisplay(rule)}>
+                                {getCostRangeDisplay(rule)}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button 
+                      variant="default"
+                      size="sm" 
+                      className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-4"
+                      onClick={() => setSelectedCostFilter('all')}
+                    >
+                      Apply
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4"
+                      onClick={() => setSelectedCostFilter('all')}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {fetchLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <div className="text-sm text-muted-foreground">Loading existing rules...</div>
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#C72030]" />
+                    <span className="ml-2 text-gray-600">Loading cost approval rules...</span>
                   </div>
                 ) : filteredRules.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No cost approval rules found for FM
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No cost approval rules found.</p>
+                    <p className="text-sm mt-1">Create your first rule using the form above.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                       <thead>
-                         <tr className="border-b">
-                           <th className="text-left p-3 font-medium">Cost Range</th>
-                           <th className="text-left p-3 font-medium">Unit</th>
-                           <th className="text-left p-3 font-medium">Levels</th>
-                           <th className="text-left p-3 font-medium">Status</th>
-                           <th className="text-left p-3 font-medium">Created Date</th>
-                           <th className="text-left p-3 font-medium">Actions</th>
-                         </tr>
-                       </thead>
-                       <tbody>
-                         {filteredRules.map((rule) => (
-                           <tr key={rule.id} className="border-b hover:bg-muted/50">
-                             <td className="p-3">
-                               {rule.cost_unit === 'between' && rule.cost_from !== null
-                                 ? `₹${rule.cost_from} - ₹${rule.cost_to}`
-                                 : `> ₹${rule.cost_to}`
-                               }
-                             </td>
-                             <td className="p-3 capitalize">
-                               {rule.cost_unit.replace('_', ' ')}
-                             </td>
-                             <td className="p-3">
-                               <div className="flex flex-wrap gap-1">
-                                 {['L1', 'L2', 'L3', 'L4', 'L5'].map(level => (
-                                   <span key={level} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                                     {level}
-                                   </span>
-                                 ))}
-                               </div>
-                             </td>
-                             <td className="p-3">
-                               <span className={`px-2 py-1 rounded-full text-xs ${
-                                 rule.active 
-                                   ? 'bg-green-100 text-green-800' 
-                                   : 'bg-gray-100 text-gray-800'
-                               }`}>
-                                 {rule.active ? 'Active' : 'Inactive'}
-                               </span>
-                             </td>
-                             <td className="p-3 text-sm text-muted-foreground">
-                               {new Date(rule.created_at).toLocaleDateString()}
-                             </td>
-                             <td className="p-3">
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => handleDelete(rule.id)}
-                                 disabled={deleteLoading}
-                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
-                             </td>
-                           </tr>
-                         ))}
-                       </tbody>
-                    </table>
+                  <div className="space-y-6 p-6">
+                    {filteredRules.map((rule, index) => (
+                      <div key={rule.id} className="border border-gray-200 rounded-lg bg-white shadow-sm">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-base font-semibold text-gray-900">Rule {index + 1}</h3>
+                            <div className="flex gap-2">
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-gray-600 hover:text-red-600 hover:bg-red-50"
+                                    disabled={deleteLoading}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Rule</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete this cost approval rule for {getCostRangeDisplay(rule)}? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="border-gray-300">Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      onClick={() => handleDelete(rule.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="overflow-hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-gray-50 border-b border-gray-200 hover:bg-gray-50">
+                                <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/3">Cost Range</TableHead>
+                                <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/6">Levels</TableHead>
+                                <TableHead className="font-semibold text-gray-900 text-left py-3 px-4">Approvers</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              <TableRow className="border-b border-gray-100 hover:bg-gray-50/50">
+                                <TableCell className="py-4 px-4 align-top font-medium text-gray-900">
+                                  {getCostRangeDisplay(rule)}
+                                </TableCell>
+                                <TableCell className="py-4 px-4 align-top">
+                                  <div className="space-y-2">
+                                    {rule.cost_approval_levels?.map((level) => (
+                                      <div key={level.id} className="text-sm text-gray-700 font-medium">
+                                        {level.name}
+                                      </div>
+                                    )) || <span className="text-sm text-gray-500">-</span>}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-4 px-4 align-top">
+                                  <div className="space-y-2">
+                                    {rule.cost_approval_levels?.map((level) => (
+                                      <div key={level.id} className="text-sm text-gray-700">
+                                        {getUserNames(level.escalate_to_users)}
+                                      </div>
+                                    )) || <span className="text-sm text-gray-500">-</span>}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
