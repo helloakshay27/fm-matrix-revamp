@@ -248,6 +248,8 @@ export const API_CONFIG = {
     COMMUNICATION_TEMPLATES: '/communication_templates.json',
     // Vehicle details endpoint
     VEHICLE_DETAILS: '/vehicle_details/vehicle_detail_list.json',
+    // LTM list endpoint
+    LTM_LIST: '/vehicle_histories/ltm_list.json',
   },
 } as const
 
