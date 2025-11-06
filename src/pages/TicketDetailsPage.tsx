@@ -1313,7 +1313,15 @@ export const TicketDetailsPage = () => {
 
 
   const handleBackToList = () => {
-    navigate(-1);
+        const currentPath = window.location.pathname;
+  
+ if (currentPath.includes("/club-management/helpdesk")) {
+      navigate(`/club-management/helpdesk`);
+    } else if (currentPath.includes("tickets")) {
+      navigate(`/tickets`);
+    } else {
+      navigate(`/maintenance/tickets`);
+    }
   };
 
   const handleFeeds = () => {

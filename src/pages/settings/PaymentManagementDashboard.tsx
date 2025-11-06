@@ -392,7 +392,7 @@ export const PaymentManagementDashboard = () => {
           renderCell={renderCell}
           selectable={true}
           pagination={false}
-          enableExport={true}
+          enableExport={false}
           exportFileName="lock-payments"
           handleExport={handleExport}
           storageKey="lock-payments-table"
@@ -401,13 +401,13 @@ export const PaymentManagementDashboard = () => {
           onSelectItem={handlePaymentSelection}
           onSelectAll={handleSelectAll}
           getItemId={(payment) => payment.id.toString()}
-          leftActions={
-            <div className="flex gap-3">
-              {renderCustomActions()}
-            </div>
-          }
+        //   leftActions={
+        //     <div className="flex gap-3">
+        //       {renderCustomActions()}
+        //     </div>
+        //   }
           onFilterClick={() => setIsFilterOpen(true)}
-          rightActions={renderRightActions()}
+        //   rightActions={renderRightActions()}
           searchPlaceholder="Search Payments"
           onSearchChange={handleSearch}
           hideTableExport={false}

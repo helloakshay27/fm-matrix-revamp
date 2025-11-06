@@ -1102,7 +1102,9 @@ export const AddTicketDashboard = () => {
   const handleGoBack = () => {
     const currentPath = window.location.pathname;
 
-    if (currentPath.includes("tickets")) {
+if (currentPath.includes("/club-management/helpdesk")) {
+      navigate("/club-management/helpdesk");
+    } else if (currentPath.includes("tickets")) {
       navigate("/tickets");
     } else {
       navigate("/maintenance/ticket");
