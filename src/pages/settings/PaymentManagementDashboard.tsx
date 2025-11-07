@@ -79,7 +79,6 @@ export const PaymentManagementDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const isSearchingRef = useRef(false);
-  const [selectedPayments, setSelectedPayments] = useState<number[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   const perPage = 20;
@@ -166,26 +165,6 @@ export const PaymentManagementDashboard = () => {
     }
   };
 
-  // Handle payment selection
-  const handlePaymentSelection = (paymentIdString: string, isSelected: boolean) => {
-    const paymentId = parseInt(paymentIdString);
-    setSelectedPayments(prev => 
-      isSelected 
-        ? [...prev, paymentId]
-        : prev.filter(id => id !== paymentId)
-    );
-  };
-
-  // Handle select all
-  const handleSelectAll = (isSelected: boolean) => {
-    if (isSelected) {
-      const allPaymentIds = payments.map(p => p.id);
-      setSelectedPayments(allPaymentIds);
-    } else {
-      setSelectedPayments([]);
-    }
-  };
-
   // Render payment status badge
   const renderPaymentStatusBadge = (status: string | null) => {
     if (!status) {
@@ -232,10 +211,9 @@ export const PaymentManagementDashboard = () => {
   // Render payment type badge
   const renderPaymentTypeBadge = (paymentOf: string) => {
     const colors: Record<string, string> = {
-      'FacilityBooking': 'bg-blue-100 text-blue-800',
-      'LockAccountBill': 'bg-purple-100 text-purple-800',
-      'Maintenance': 'bg-orange-100 text-orange-800',
-      'Other': 'bg-gray-100 text-gray-800'
+      'FacilityBooking': 'bg-grey-100 text-black-800',
+      'LockAccountBill': 'bg-lightgrey-100 text-black-800',
+      'Maintenance': 'bg-lightgrey-100 text-black-800',
     };
     
     const color = colors[paymentOf] || colors['Other'];
@@ -276,10 +254,11 @@ export const PaymentManagementDashboard = () => {
     { key: 'payment_gateway', label: 'Gateway', sortable: true },
     { key: 'pg_transaction_id', label: 'Transaction ID', sortable: true },
     { key: 'receipt_number', label: 'Receipt Number', sortable: true },
-    { key: 'resource_type', label: 'Resource Type', sortable: true },
-    { key: 'resource_id', label: 'Resource ID', sortable: true },
+    // { key: 'resource_type', label: 'Resource Type', sortable: true },
+    // { key: 'resource_id', label: 'Resource ID', sortable: true },
+        { key: 'recon_status', label: 'Reconciliation', sortable: true },
+
     { key: 'created_at', label: 'Created On', sortable: true },
-    { key: 'recon_status', label: 'Reconciliation', sortable: true }
   ];
 
   // Render cell content
@@ -371,9 +350,7 @@ export const PaymentManagementDashboard = () => {
       {/* Header Section */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-[#1a1a1a]">Payment Management</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Total Payments: {totalCount.toLocaleString()}
-        </p>
+        
       </div>
 
       {/* Payments Table */}
@@ -390,24 +367,14 @@ export const PaymentManagementDashboard = () => {
           data={payments || []}
           columns={columns}
           renderCell={renderCell}
-          selectable={true}
+          selectable={false}
           pagination={false}
           enableExport={false}
           exportFileName="lock-payments"
           handleExport={handleExport}
           storageKey="lock-payments-table"
-          enableSelection={true}
-          selectedItems={selectedPayments.map(id => id.toString())}
-          onSelectItem={handlePaymentSelection}
-          onSelectAll={handleSelectAll}
-          getItemId={(payment) => payment.id.toString()}
-        //   leftActions={
-        //     <div className="flex gap-3">
-        //       {renderCustomActions()}
-        //     </div>
-        //   }
+          enableSelection={false}
           onFilterClick={() => setIsFilterOpen(true)}
-        //   rightActions={renderRightActions()}
           searchPlaceholder="Search Payments"
           onSearchChange={handleSearch}
           hideTableExport={false}
