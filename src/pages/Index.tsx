@@ -11,7 +11,9 @@ const Index = () => {
 
     if (isViSite) {
       navigate('/safety/m-safe/internal', { replace: true });
-    } else {
+    }else if (hostname.includes('club.lockated.com')) {
+      navigate('/club-management/membership', { replace: true });
+    }else {
       navigate('/maintenance/asset', { replace: true });
     }
   }, [navigate]);
