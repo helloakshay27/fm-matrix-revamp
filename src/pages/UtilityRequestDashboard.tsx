@@ -555,7 +555,7 @@ export const UtilityRequestDashboard = () => {
         throw new Error('Authentication token not found');
       }
 
-      const response = await axios.get(`${baseUrl}/compile_utilizations.json?page=${page}&per_page=${PAGE_SIZE}`, {
+      const response = await axios.get(`https://${baseUrl}/compile_utilizations.json?page=${page}&per_page=${PAGE_SIZE}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
