@@ -123,6 +123,7 @@ export const OccupantUsersFilterDialog = ({
               <TextField
                 fullWidth
                 label="Mobile Number"
+                placeholder="Mobile Number"
                 variant="outlined"
                 value={filters.mobile}
                 onChange={(e) => handleFilterChange("mobile", e.target.value)}

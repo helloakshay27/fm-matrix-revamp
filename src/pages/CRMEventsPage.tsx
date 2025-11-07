@@ -375,9 +375,12 @@ export const CRMEventsPage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+<<<<<<< HEAD
       {/* Header */}
     
 
+=======
+>>>>>>> 2eb5e06dbda8c3fcb380e165fe8459a4f9b5947e
       {/* Filter Dialog */}
       <Dialog open={openFilterDialog} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Filter Events</DialogTitle>

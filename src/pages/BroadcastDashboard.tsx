@@ -373,7 +373,10 @@ export const BroadcastDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2eb5e06dbda8c3fcb380e165fe8459a4f9b5947e
       <EnhancedTable
         data={broadcasts}
         columns={columns}

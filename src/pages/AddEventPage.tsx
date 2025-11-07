@@ -297,7 +297,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="Title*"
+                  label={<span>Title<span className="text-red-500">*</span></span>}
                   placeholder="Title"
                   fullWidth
                   variant="outlined"
@@ -315,7 +315,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="Venue*"
+                  label={<span>Venue<span className="text-red-500">*</span></span>}
                   placeholder="Enter Venue"
                   fullWidth
                   variant="outlined"
@@ -342,7 +342,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="Start date*"
+                  label={<span>Start date<span className="text-red-500">*</span></span>}
                   type="date"
                   fullWidth
                   variant="outlined"
@@ -362,7 +362,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="End date*"
+                  label={<span>End date<span className="text-red-500">*</span></span>}
                   type="date"
                   fullWidth
                   variant="outlined"
@@ -380,7 +380,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="Start Time*"
+                  label={<span>Start Time<span className="text-red-500">*</span></span>}
                   type="time"
                   fullWidth
                   variant="outlined"
@@ -400,7 +400,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="End Time*"
+                  label={<span>End Time<span className="text-red-500">*</span></span>}
                   type="time"
                   fullWidth
                   variant="outlined"

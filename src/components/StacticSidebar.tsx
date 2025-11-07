@@ -327,7 +327,7 @@ const modulesByPackage = {
       ],
     },
     {
-    name: "Ticket", icon: FileText,
+      name: "Ticket", icon: FileText,
       href: "/club-management/helpdesk",
     },
     {
@@ -341,7 +341,7 @@ const modulesByPackage = {
       href: "/club-management/broadcast",
     },
     {
-      name: "Event ",
+      name: "Event",
       icon: Calendar,
       href: "/club-management/events",
     },

@@ -285,11 +285,11 @@ export const AddFacilityBookingPage = () => {
           <RadioGroup value={userType} onValueChange={setUserType} className="flex gap-6">
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="fm" id="fm" />
-              <Label htmlFor="fm">FM User</Label>
+              <Label htmlFor="fm">Staff</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="occupant" id="occupant" />
-              <Label htmlFor="occupant">Occupant User</Label>
+              <Label htmlFor="occupant">Members</Label>
             </div>
           </RadioGroup>
         </div>
