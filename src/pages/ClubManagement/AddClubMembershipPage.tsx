@@ -876,7 +876,7 @@ export const AddClubMembershipPage = () => {
               {/* Resident Photo Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Resident's Photo <span className="text-red-500">*</span>
+                  Member Photo <span className="text-red-500">*</span>
                 </label>
                 <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                   residentPhotoFile ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'
