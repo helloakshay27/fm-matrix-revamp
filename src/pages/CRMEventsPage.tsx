@@ -90,16 +90,6 @@ export const CRMEventsPage = () => {
     { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
   ];
 
-  // Handle view event
-  const handleViewEvent = (event) => {
-    navigate(`/crm/events/details/${event.id}`);
-  };
-
-  // Handle add event
-  const handleAddEvent = () => {
-    navigate('/crm/events/add');
-  };
-
   // Handle filter dialog
   const handleOpenFilterDialog = () => {
     setOpenFilterDialog(true);
@@ -158,6 +148,25 @@ export const CRMEventsPage = () => {
       status: '',
     });
   };
+
+  const handleAdd = () => {
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("club-management")) {
+      navigate("/club-management/events/add");
+    } else {
+      navigate("/crm/events/add");
+    }
+  };
+
+  const handleView = (id: number) => {
+    const currentPath = window.location.pathname;
+    if (currentPath.includes("club-management")) {
+      navigate(`/club-management/events/details/${id}`);
+    } else {
+      navigate(`/crm/events/details/${id}`);
+    }
+  }
 
   // Render cell content
   const renderCell = (item, columnKey) => {
@@ -347,7 +356,7 @@ export const CRMEventsPage = () => {
       variant="ghost"
       size="icon"
       className="h-8 w-8 text-blue-600"
-      onClick={() => handleViewEvent(item)}
+      onClick={() => handleView(item.id)}
     >
       <Eye className="h-4 w-4" />
     </Button>
@@ -457,7 +466,7 @@ export const CRMEventsPage = () => {
           <div className="flex flex-wrap gap-2">
             <Button
               className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
-              onClick={handleAddEvent}
+              onClick={handleAdd}
             >
               <Plus className="w-4 h-4" />
               Add

@@ -199,6 +199,25 @@ export const BroadcastDashboard = () => {
     }
   };
 
+  const handleAdd = () => {
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("club-management")) {
+      navigate("/club-management/broadcast/add");
+    } else {
+      navigate("/crm/broadcast/add");
+    }
+  };
+
+  const handleView = (id: number) => {
+    const currentPath = window.location.pathname;
+    if (currentPath.includes("club-management")) {
+      navigate(`/club-management/broadcast/details/${id}`);
+    } else {
+      navigate(`/crm/broadcast/details/${id}`);
+    }
+  }
+
   const handleApplyFilter = async (data) => {
     const params = {
       "q[publish_eq]": data.status,
@@ -345,7 +364,7 @@ export const BroadcastDashboard = () => {
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => handleViewDetails(item.id)}
+      onClick={() => handleView(item.id)}
       className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
     >
       <Eye className="w-4 h-4" />
@@ -373,7 +392,7 @@ export const BroadcastDashboard = () => {
         leftActions={
           <Button
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-            onClick={() => navigate("/crm/broadcast/add")}
+            onClick={handleAdd}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add

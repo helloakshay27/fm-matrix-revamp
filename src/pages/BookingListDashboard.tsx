@@ -346,6 +346,8 @@ const BookingListDashboard = () => {
 
     if (currentPath.includes("bookings")) {
       navigate('/bookings/add');
+    } else if (currentPath.includes("club-management")) {
+      navigate('/club-management/amenities-booking/add')
     } else {
       navigate('/vas/booking/add');
     }
@@ -587,6 +589,8 @@ const BookingListDashboard = () => {
 
     if (currentPath.includes("bookings")) {
       navigate(`/bookings/${id}`);
+    } else if (currentPath.includes("club-management")) {
+      navigate(`/club-management/amenities-booking/${id}`);
     } else {
       navigate(`/vas/bookings/details/${id}`);
     }
