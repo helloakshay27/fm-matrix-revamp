@@ -96,9 +96,9 @@
 }
 
 /* Table Row Hover Effect */
-tr:hover td {
+/* tr:hover td {
   background-color: rgba(196, 184, 157, 0.1) !important;
-}
+} */
 
 /* Remove borders from last column */
 th:last-child,

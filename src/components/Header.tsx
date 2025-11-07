@@ -242,7 +242,7 @@ export const Header = () => {
     "User";
 
   return (
-    <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-full shadow-sm">
+    <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-20 w-full shadow-sm">
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex align-items-center gap-14">
           {isOmanSite ? (
@@ -362,9 +362,9 @@ export const Header = () => {
                 Dashboard
               </button>
 
-              
+
             )}
-               {!isViSite && (
+            {!isViSite && (
               <button
                 onClick={() => (window.location.href = "/dashboard-executive")}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -373,7 +373,7 @@ export const Header = () => {
                 Executive Dashboard
               </button>
 
-              
+
             )}
 
             {isViSite && (

@@ -600,9 +600,6 @@ import { EditAddressPage } from "./pages/EditAddressPage";
 // Import ChecklistGroupDashboard for setup and settings
 import { ChecklistGroupDashboard } from "./pages/setup/ChecklistGroupDashboard";
 
-// Import Booking List page
-import BookingListDashboard from "./pages/BookingListDashboard";
-
 // Import Booking Setup Dashboard
 import { BookingSetupDashboard } from "./pages/BookingSetupDashboard";
 import { BookingSetupDetailPage } from "./pages/BookingSetupDetailPage";
@@ -783,6 +780,7 @@ import Sitemap from "./pages/Sitemap";
 import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashboard";
 import ClubMembershipDetailPage from "./pages/ClubManagement/ClubMembershipDetailPage";
 import AddClubMembershipPage from "./pages/ClubManagement/AddClubMembershipPage";
+import BookingList from "./pages/BookingList";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -998,7 +996,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                 <Route
+                <Route
                   path="/dashboard-executive"
                   element={
                     <ProtectedRoute>
@@ -1077,7 +1075,7 @@ function App() {
                   path="/bookings"
                   element={
                     <ProtectedRoute>
-                      <BookingListDashboard />
+                      <BookingList />
                     </ProtectedRoute>
                   }
                 />
@@ -1504,7 +1502,7 @@ function App() {
                     path="/club-management/membership/:id/edit"
                     element={<AddClubMembershipPage />}
                   />
-                  
+
                   {/* Club Management - FM Users */}
                   <Route
                     path="/club-management/users/fm-users"
@@ -1522,7 +1520,7 @@ function App() {
                     path="/club-management/users/fm-users/view/:id"
                     element={<ViewFMUserPage />}
                   />
-                  
+
                   {/* Club Management - Occupant Users */}
                   <Route
                     path="/club-management/users/occupant-users"
@@ -1544,7 +1542,7 @@ function App() {
                     path="/club-management/users/occupant-users/:id"
                     element={<CRMOccupantUserDetailPage />}
                   />
-                  
+
                   {/* Club Management - Helpdesk */}
                   <Route
                     path="/club-management/helpdesk"
@@ -1562,11 +1560,11 @@ function App() {
                     path="/club-management/helpdesk/edit/:id"
                     element={<UpdateTicketsPage />}
                   />
-                  
+
                   {/* Club Management - Amenities Booking */}
                   <Route
                     path="/club-management/amenities-booking"
-                    element={<BookingListDashboard />}
+                    element={<BookingList />}
                   />
                   <Route
                     path="/club-management/amenities-booking/add"
@@ -1576,7 +1574,7 @@ function App() {
                     path="/club-management/amenities-booking/:id"
                     element={<BookingDetailsPage />}
                   />
-                  
+
                   {/* Club Management - Broadcast */}
                   <Route
                     path="/club-management/broadcast"
@@ -1590,7 +1588,7 @@ function App() {
                     path="/club-management/broadcast/details/:id"
                     element={<BroadcastDetailsPage />}
                   />
-                  
+
                   {/* Club Management - Events */}
                   <Route
                     path="/club-management/events"
@@ -1604,14 +1602,14 @@ function App() {
                     path="/club-management/events/details/:id"
                     element={<CRMEventDetailsPage />}
                   />
-                  
+
                   {/* Club Management - Accounting */}
                   <Route
                     path="/club-management/accounting"
                     element={<PaymentManagementDashboard />}
                   />
 
-                   <Route
+                  <Route
                     path="/club-management/accounting/details/:id"
                     element={<PaymentDetailPage />}
                   />
@@ -1703,7 +1701,7 @@ function App() {
                     path="/maintenance/ticket/:id/tag-vendor"
                     element={<TicketTagVendorPage />}
                   />
-                   <Route
+                  <Route
                     path="/maintenance/ticket/:id/job-sheet"
                     element={<TicketJobSheetPage />}
                   />
@@ -3029,7 +3027,7 @@ function App() {
                   {/* VAS Booking Routes */}
                   <Route
                     path="/vas/booking/list"
-                    element={<BookingListDashboard />}
+                    element={<BookingList />}
                   />
                   <Route
                     path="/vas/booking/add"
@@ -3233,7 +3231,7 @@ function App() {
                     path="/master/inventory-sub-type/edit/:id"
                     element={<EditInventorySubTypePage />}
                   />
-                 
+
 
                   <Route
                     path="/maintenance/waste/generation/add"
