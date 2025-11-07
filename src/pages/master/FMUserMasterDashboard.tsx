@@ -741,11 +741,6 @@ export const FMUserMasterDashboard = () => {
 
   return (
     <div className="w-full p-6 space-y-6">
-<<<<<<< HEAD
-      
-
-=======
->>>>>>> 2eb5e06dbda8c3fcb380e165fe8459a4f9b5947e
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="Total Users"
