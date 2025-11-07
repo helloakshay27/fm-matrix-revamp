@@ -162,7 +162,7 @@ export const AddEventPage = () => {
       await dispatch(createEvent({ baseUrl, token, data: formDataToSend })).unwrap();
 
       toast.success("Event created successfully");
-      navigate("/crm/events");
+      navigate(-1);
     } catch (error) {
       console.log(error);
       toast.error(error.message || error);

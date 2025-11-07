@@ -129,7 +129,7 @@ export const AddBroadcastPage = () => {
 
       await dispatch(createBroadcast({ data: formDataToSend, baseUrl, token })).unwrap();
       toast.success("Broadcast created successfully");
-      navigate("/crm/broadcast");
+      navigate(-1);
     } catch (error) {
       console.log(error);
       toast.error(error);
