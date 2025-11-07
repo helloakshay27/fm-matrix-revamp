@@ -356,6 +356,14 @@ const modulesByPackage = {
       href: "https://lockated.com/lock_accounts",
       blank: true,
     },
+
+      {
+      name: "Facility Setup",
+      icon: Calculator,
+      href: "/club-management/vas/booking/setup",
+      blank: true,
+    },
+    
   ],
   Master: [
     {
