@@ -292,7 +292,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       const from =
         (location.state as { from?: Location })?.from?.pathname +
           (location.state as { from?: Location })?.from?.search ||
-        "/maintenance/assets";
+        "/club-management/membership";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 
@@ -302,7 +302,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         if (response.id === 189005) {
           navigate("/dashboard");
         }else if (isClubSite) {
-          navigate("/club-management/memberships");
+          navigate("/club-management/membership");
         }else if (isViSite) {
           navigate("/safety/m-safe/internal");
         } else {
