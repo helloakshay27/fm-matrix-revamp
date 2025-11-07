@@ -56,7 +56,7 @@ export const CRMEventsPage = () => {
           created_by: event.created_by || 'Unknown',
           from_time: event.from_time,
           to_time: event.to_time,
-          event_type: event.event_type || '-',
+          event_type: event.shared === 0 ? "General" : "Personal",
           status: event.status,
           is_expired: event.is_expired === 1,
           attachments: event.documents || [],
@@ -129,7 +129,7 @@ export const CRMEventsPage = () => {
         created_by: event.created_by || 'Unknown',
         from_time: event.from_time,
         to_time: event.to_time,
-        event_type: event.event_type || '-',
+        event_type: event.shared === 0 ? "General" : "Personal",
         status: event.status,
         is_expired: event.is_expired === 1,
         attachments: event.documents || [],
@@ -151,7 +151,10 @@ export const CRMEventsPage = () => {
   const handleResetFilters = () => {
     setFilters({
       unit: '',
-      dateRange: undefined,
+      dateRange: {
+        from: undefined,
+        to: undefined,
+      },
       status: '',
     });
   };
@@ -165,7 +168,7 @@ export const CRMEventsPage = () => {
         );
       case 'event_type':
         return (
-          <Badge className="bg-blue-600 text-white">{item.event_type}</Badge>
+          <span>{item.event_type}</span>
         );
       case 'is_expired':
         return item.is_expired ? (
@@ -205,7 +208,7 @@ export const CRMEventsPage = () => {
         created_by: event.created_by || 'Unknown',
         from_time: event.from_time,
         to_time: event.to_time,
-        event_type: event.event_type || '-',
+        event_type: event.shared === 0 ? "General" : "Personal",
         status: event.status,
         is_expired: event.is_expired === 1,
         attachments: event.documents || [],
@@ -446,8 +449,6 @@ export const CRMEventsPage = () => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search events..."
-        enableExport={true}
-        exportFileName="events"
         pagination={true}
         pageSize={10}
         enableSearch={true}

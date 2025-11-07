@@ -216,8 +216,7 @@ export const AddFacilityBookingPage = () => {
       console.log('Response received:', response.status, response.data);
 
       if (response.status === 200 || response.status === 201) {
-        console.log('Booking created successfully:', response.data);
-        toast.error('Booking created successfully!');
+        toast.success('Booking created successfully!');
         navigate('/vas/booking/list');
       }
     } catch (error: any) {
@@ -459,6 +458,9 @@ export const AddFacilityBookingPage = () => {
                   asterisk: "text-red-500", // Tailwind class for red color
                 },
                 shrink: true
+              }}
+              inputProps={{
+                min: new Date().toISOString().split("T")[0],
               }}
               sx={fieldStyles}
             />

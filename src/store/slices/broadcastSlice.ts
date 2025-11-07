@@ -10,7 +10,7 @@ export const fetchBroadcasts = createAsyncThunk(
     ) => {
         try {
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/noticeboards.json?per_page=${per_page}&page=${page}&${params}`,
+                `https://${baseUrl}/pms/admin/noticeboards.json?per_page=${per_page}&page=${page}${params ? `&${params}` : ''}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

@@ -9,6 +9,66 @@ import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBroadcasts } from "@/store/slices/broadcastSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { BroadcastFilterModal } from "@/components/BroadcastFilterModal";
+
+const columns: ColumnConfig[] = [
+  {
+    key: "notice_heading",
+    label: "Title",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "type",
+    label: "Type",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_at",
+    label: "Created On",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "createdBy",
+    label: "Created by",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "expire_time",
+    label: "Expired On",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "expired",
+    label: "Expired",
+    sortable: true,
+    hideable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "attachments",
+    label: "Attachment",
+    sortable: false,
+    hideable: true,
+    defaultVisible: true,
+  },
+];
 
 export const BroadcastDashboard = () => {
   const dispatch = useAppDispatch();
@@ -18,6 +78,7 @@ export const BroadcastDashboard = () => {
 
   const { loading } = useAppSelector(state => state.fetchBroadcasts)
 
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [broadcasts, setBroadcasts] = useState([]);
   const [pagination, setPagination] = useState({
@@ -52,80 +113,19 @@ export const BroadcastDashboard = () => {
     fetchData();
   }, []);
 
-  const columns: ColumnConfig[] = [
-    {
-      key: "title",
-      label: "Title",
-      sortable: true,
-      hideable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "type",
-      label: "Type",
-      sortable: true,
-      hideable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "createdOn",
-      label: "Created On",
-      sortable: true,
-      hideable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "createdBy",
-      label: "Created by",
-      sortable: true,
-      hideable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "status",
-      label: "Status",
-      sortable: true,
-      hideable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "expiredOn",
-      label: "Expired On",
-      sortable: true,
-      hideable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "expired",
-      label: "Expired",
-      sortable: true,
-      hideable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "attachments",
-      label: "Attachment",
-      sortable: false,
-      hideable: true,
-      defaultVisible: true,
-    },
-  ];
-
   const handleViewDetails = (id: number) => {
     navigate(`/crm/broadcast/details/${id}`);
   };
 
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
-      case "title":
-        return <span className="font-medium">{item.notice_heading}</span>;
       case "type":
         return (
           <span>
-            {item.notice_type || "-"}
+            {item.shared === 0 ? "General" : "Personal"}
           </span>
         );
-      case "createdOn":
+      case "created_at":
         return new Date(item.created_at).toLocaleDateString("en-US", {
           year: "numeric",
           month: "short",
@@ -139,7 +139,7 @@ export const BroadcastDashboard = () => {
             {item.status}
           </Badge>
         );
-      case "expiredOn":
+      case "expire_time":
         return item.expire_time
           ? new Date(item.expire_time).toLocaleDateString("en-US", {
             year: "numeric",
@@ -196,6 +196,32 @@ export const BroadcastDashboard = () => {
       });
     } catch (error) {
       toast.error('Failed to fetch bookings');
+    }
+  };
+
+  const handleApplyFilter = async (data) => {
+    const params = {
+      "q[publish_eq]": data.status,
+    }
+    const queryString = new URLSearchParams(params).toString();
+    try {
+      const response = await dispatch(
+        fetchBroadcasts({
+          baseUrl,
+          token,
+          per_page: 10,
+          page: pagination.current_page,
+          params: queryString
+        })
+      ).unwrap();
+      setBroadcasts(response.noticeboards || []);
+      setPagination({
+        current_page: response.pagination.current_page,
+        total_count: response.pagination.total_count,
+        total_pages: response.pagination.total_pages,
+      });
+    } catch (error) {
+      toast.error('Failed to fetch broadcasts');
     }
   };
 
@@ -340,12 +366,10 @@ export const BroadcastDashboard = () => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search broadcasts..."
-        enableSelection={true}
-        getItemId={(item) => item.id.toString()}
         emptyMessage="No broadcasts found"
         pagination={true}
         pageSize={10}
-        onFilterClick={() => { }}
+        onFilterClick={() => setIsFilterModalOpen(true)}
         leftActions={
           <Button
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
@@ -376,6 +400,12 @@ export const BroadcastDashboard = () => {
           </PaginationContent>
         </Pagination>
       </div>
+
+      <BroadcastFilterModal
+        onOpenChange={setIsFilterModalOpen}
+        open={isFilterModalOpen}
+        onApply={handleApplyFilter}
+      />
     </div>
   );
 };
