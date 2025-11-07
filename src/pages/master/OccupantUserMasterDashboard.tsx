@@ -140,6 +140,7 @@ export const OccupantUserMasterDashboard = () => {
         perPage: 10,
         firstname_cont: firstName,
         lastname_cont: lastName,
+        mobile_cont: newFilters.mobile,
         email_cont: newFilters.email,
         lock_user_permission_status_eq: newFilters.status,
         entity_id_eq: newFilters.entity,
@@ -147,6 +148,7 @@ export const OccupantUserMasterDashboard = () => {
         search_all_fields_cont: newFilters.search,
       })
     );
+    toast.success("Filters applied successfully");
     setFilterDialogOpen(false);
   };
 
@@ -416,9 +418,9 @@ export const OccupantUserMasterDashboard = () => {
         prevUsers.map((user) =>
           user.id === selectedUser.id
             ? {
-                ...user,
-                status: selectedStatus,
-              }
+              ...user,
+              status: selectedStatus,
+            }
             : user
         )
       );
@@ -463,12 +465,6 @@ export const OccupantUserMasterDashboard = () => {
   return (
     <div className="w-full p-4 sm:p-6 space-y-6">
       <div className="w-full space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-[#1a1a1a]">
-            Occupant Users
-          </h1>
-        </div>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -523,8 +519,8 @@ export const OccupantUserMasterDashboard = () => {
                     e.stopPropagation();
                     location.pathname.includes("/club-management/")
                       ? navigate(
-                          `/club-management/users/occupant-users/view/${item.id}`
-                        )
+                        `/club-management/users/occupant-users/view/${item.id}`
+                      )
                       : navigate(`/master/user/occupant-users/view/${item.id}`);
                   }}
                   title="View"
@@ -573,7 +569,7 @@ export const OccupantUserMasterDashboard = () => {
                   }
                   className={
                     pagination.current_page === pagination.total_pages ||
-                    loading
+                      loading
                       ? "pointer-events-none opacity-50"
                       : "cursor-pointer"
                   }
@@ -589,7 +585,7 @@ export const OccupantUserMasterDashboard = () => {
           onAdd={() => location.pathname.includes("/club-management/")
             ? navigate("/club-management/users/occupant-users/add")
             : navigate("/master/user/occupant-users/add")}
-          onImport={() => {}}
+          onImport={() => { }}
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
