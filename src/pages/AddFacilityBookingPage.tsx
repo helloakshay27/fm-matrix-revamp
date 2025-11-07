@@ -217,7 +217,7 @@ export const AddFacilityBookingPage = () => {
 
       if (response.status === 200 || response.status === 201) {
         toast.success('Booking created successfully!');
-        navigate('/vas/booking/list');
+        navigate(-1);
       }
     } catch (error: any) {
       console.error('Error creating facility booking:', error);
