@@ -353,7 +353,8 @@ const modulesByPackage = {
      {
       name: "Accounting",
       icon: Calculator,
-      href: "/club-management/accounting",
+      href: "https://lockated.com/lock_accounts",
+      blank: true,
     },
   ],
   Master: [
@@ -1582,14 +1583,37 @@ export const StacticSidebar = () => {
       );
     }
 
+    // External link handling
+    if (item.blank && item.href) {
+      return (
+        <div key={item.name}>
+          <a
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"}`}
+          >
+            {level === 0 && (
+              <>
+                {isActive && (
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                )}
+                <item.icon className="w-5 h-5" />
+              </>
+            )}
+            {item.name}
+          </a>
+        </div>
+      );
+    }
+
     return (
       <div key={item.name}>
         <button
           onClick={() =>
             item.href && handleNavigation(item.href, currentSection)
           }
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
-            }`}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"}`}
         >
           {level === 0 && (
             <>
@@ -1601,7 +1625,6 @@ export const StacticSidebar = () => {
           )}
           {item.name}
         </button>
-
         {/* Show dropdowns for Roles (RACI) when on that page */}
         {showDropdowns && (
           <div className="mt-4 space-y-3 px-3">
