@@ -1472,6 +1472,22 @@ function App() {
                   />
 
                   {/* Club Management Routes */}
+                   <Route
+                    path="/club-management/vas/booking/setup"
+                    element={<BookingSetupDashboard />}
+                  />
+                  <Route
+                    path="/club-management/vas/booking/setup/add"
+                    element={<AddBookingSetupPage />}
+                  />
+                  <Route
+                    path="/club-management/vas/booking/setup/details/:id"
+                    element={<BookingSetupDetailPage />}
+                  />
+                  <Route
+                    path="/club-management/vas/booking/setup/edit/:id"
+                    element={<EditBookingSetupPage />}
+                  />
                   <Route
                     path="/club-management/membership"
                     element={<ClubMembershipDashboard />}
@@ -3332,22 +3348,7 @@ function App() {
                     path="/settings/vas/fnb/details/:id"
                     element={<FnBRestaurantDetailsPage />}
                   />
-                   <Route
-                    path="/club-management/vas/booking/setup"
-                    element={<BookingSetupDashboard />}
-                  />
-                  <Route
-                    path="/club-management/vas/booking/setup/add"
-                    element={<AddBookingSetupPage />}
-                  />
-                  <Route
-                    path="/club-management/vas/booking/setup/details/:id"
-                    element={<BookingSetupDetailPage />}
-                  />
-                  <Route
-                    path="/club-management/vas/booking/setup/edit/:id"
-                    element={<EditBookingSetupPage />}
-                  />
+                  
                   <Route
                     path="/settings/vas/booking/setup"
                     element={<BookingSetupDashboard />}
