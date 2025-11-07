@@ -200,400 +200,292 @@ export const ViewOccupantUserPage = () => {
         );
     }
 
+    const getUserTypeLabel = (type: string) => {
+        const types = {
+            'pms_admin': 'Admin (Web & App)',
+            'pms_technician': 'Technician (App)',
+            'pms_hse': 'Head Site Engineer',
+            'pms_se': 'Site Engineer',
+            'pms_occupant': 'Occupant',
+            'pms_occupant_admin': 'Customer Admin',
+            'pms_accounts': 'Accounts',
+            'pms_po': 'Purchase Officer',
+            'pms_qc': 'Quality Control',
+            'pms_security': 'Security',
+            'pms_security_supervisor': 'Security Supervisor',
+        };
+        return types[type] || type;
+    };
+
+    const getEmailPreferenceLabel = (pref: string) => {
+        const prefs = {
+            '0': 'All Emails',
+            '1': 'Critical Emails Only',
+            '2': 'No Emails',
+        };
+        return prefs[pref] || pref;
+    };
+
+    const getSiteName = (siteId: string) => {
+        const site = sites?.find(s => String(s.id) === siteId);
+        return site?.name || '-';
+    };
+
+    const getRoleName = (roleId: string) => {
+        const role = Array.isArray(roles) ? roles.find(r => String(r.id) === roleId) : null;
+        return role?.name || '-';
+    };
+
     return (
-        <div className="w-full p-6 space-y-6 bg-gray-50 min-h-screen">
+        <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <button onClick={() => navigate(-1)} className='flex items-center gap-2'>
-                        <ArrowLeft className="w-4 h-4" />
-                        Back
-                    </button>
-                </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2 border-gray-300"
-                    onClick={() => location.pathname.includes("/club-management/") ? (
-                      navigate(`/club-management/users/occupant-users/edit/${id}`)
-                    ) : (
-                      navigate(`/master/user/occupant-users/edit/${id}`)
-                    )}
+            <div className="mb-6">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-1 text-gray-600 hover:text-gray-800 mb-4 transition-colors"
                 >
-                    <Edit2 className="w-4 h-4" />
-                </Button>
+                    <ArrowLeft className="w-4 h-4" />
+                    Back
+                </button>
+
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                        {/* Avatar */}
+                        <div className="flex-shrink-0">
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center border-2 border-gray-200">
+                                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
+                                    <svg className="w-10 h-10 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* User Info */}
+                        <div className="flex flex-col gap-2">
+                            <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+                                {formData.firstname} {formData.lastname}
+                            </h1>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <span className="text-sm text-gray-600">
+                                    {formData.email}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Button
+                            onClick={() => location.pathname.includes("/club-management/") ? (
+                                navigate(`/club-management/users/occupant-users/edit/${id}`)
+                            ) : (
+                                navigate(`/master/user/occupant-users/edit/${id}`)
+                            )}
+                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        >
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            Edit
+                        </Button>
+                    </div>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Profile Section */}
-                <div className="lg:col-span-4">
-                    <Card className="border-0 shadow-sm">
-                        <CardContent className="p-6 space-y-6">
-                            {/* Profile Picture */}
-                            <div className="text-center">
-                                <div className="w-40 h-40 mx-auto mb-4 relative">
-                                    <div className="w-full h-full bg-gradient-to-br from-amber-200 to-amber-300 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                                        <div className="w-32 h-32 bg-amber-100 rounded-full flex items-center justify-center">
-                                            <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center">
-                                                <svg className="w-16 h-16 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                                </svg>
-                                            </div>
+            {/* Main Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+                {/* Left Column - Main Details */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Personal Information */}
+                    <Card className="w-full bg-transparent shadow-none border-none">
+                        <div className="figma-card-header">
+                            <div className="flex items-center gap-3">
+                                <div className="figma-card-icon-wrapper">
+                                    <svg className="figma-card-icon" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                    </svg>
+                                </div>
+                                <h3 className="figma-card-title">Personal Information</h3>
+                            </div>
+                        </div>
+                        <div className="figma-card-content">
+                            <div className="task-info-enhanced">
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        First Name
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {formData.firstname || '-'}
+                                    </span>
+                                </div>
+                                
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Last Name
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {formData.lastname || '-'}
+                                    </span>
+                                </div>
+                                
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Gender
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {formData.gender || '-'}
+                                    </span>
+                                </div>
+                                
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Mobile
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {formData.mobile || '-'}
+                                    </span>
+                                </div>
+                                
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Email
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {formData.email || '-'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* User Details */}
+                    <Card className="w-full bg-transparent shadow-none border-none">
+                        <div className="figma-card-header">
+                            <div className="flex items-center gap-3">
+                                <div className="figma-card-icon-wrapper">
+                                    <svg className="figma-card-icon" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+                                    </svg>
+                                </div>
+                                <h3 className="figma-card-title">User Details</h3>
+                            </div>
+                        </div>
+                        <div className="figma-card-content">
+                            <div className="task-info-enhanced">
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Employee ID
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {formData.employee_id || '-'}
+                                    </span>
+                                </div>
+                                
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Role
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {getRoleName(formData.role)}
+                                    </span>
+                                </div>
+                                
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Access Level
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {formData.access_level || '-'}
+                                    </span>
+                                </div>
+                                
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Access
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                            {formData.access.length > 0 ? (
+                                                formData.access.map((access, index) => (
+                                                    <Badge key={index} variant="secondary" className="bg-red-100 text-red-800 border-red-200">
+                                                        {access}
+                                                    </Badge>
+                                                ))
+                                            ) : '-'}
                                         </div>
-                                    </div>
+                                    </span>
+                                </div>
+                                
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Daily Helpdesk Report
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        <Badge variant={formData.daily_helpdesk_report ? "default" : "secondary"}>
+                                            {formData.daily_helpdesk_report ? 'Enabled' : 'Disabled'}
+                                        </Badge>
+                                    </span>
                                 </div>
                             </div>
-
-                            {/* Left Side Form Controls */}
-                            <div className="space-y-4">
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Site</Label>
-                                    <Select value={formData.site} onValueChange={(value) => handleInputChange('site', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Site" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {sites?.length > 0 ? (
-                                                sites.map((site) => (
-                                                    <SelectItem key={site.id} value={site.id}>
-                                                        {site.name}
-                                                    </SelectItem>
-                                                ))
-                                            ) : (
-                                                <div className="px-2 py-1 text-sm text-gray-500">
-                                                    No sites available
-                                                </div>
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Base Unit</Label>
-                                    <Select value={formData.base_unit} onValueChange={(value) => handleInputChange('base_unit', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Base Unit" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {Array.isArray(units) && units?.length > 0 ? (
-                                                units.map((unit) => (
-                                                    <SelectItem key={unit.id} value={unit.id}>
-                                                        {unit?.building?.name} - {unit.unit_name}
-                                                    </SelectItem>
-                                                ))
-                                            ) : (
-                                                <div className="px-2 py-1 text-sm text-gray-500">
-                                                    No units available
-                                                </div>
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">User Type</Label>
-                                    <Select value={formData.system_user_type} onValueChange={(value) => handleInputChange('system_user_type', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select User Type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="pms_admin">Admin (Web & App)</SelectItem>
-                                            <SelectItem value="pms_technician">Technician (App)</SelectItem>
-                                            <SelectItem value="pms_hse">Head Site Engineer</SelectItem>
-                                            <SelectItem value="pms_se">Site Engineer</SelectItem>
-                                            <SelectItem value="pms_occupant_admin">Customer Admin</SelectItem>
-                                            <SelectItem value="pms_accounts">Accounts</SelectItem>
-                                            <SelectItem value="pms_po">Purchase Officer</SelectItem>
-                                            <SelectItem value="pms_qc">Quality Control</SelectItem>
-                                            <SelectItem value="pms_security">Security</SelectItem>
-                                            <SelectItem value="pms_security_supervisor">Security Supervisor</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Entity Name</Label>
-                                    <Select value={formData.entity_id} onValueChange={(value) => handleInputChange('entity_id', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Entity" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {entitiesData?.entities?.length > 0 ? (
-                                                entitiesData.entities.map((entity: Entity) => (
-                                                    <SelectItem key={entity.id} value={entity.id}>
-                                                        {entity.name}
-                                                    </SelectItem>
-                                                ))
-                                            ) : (
-                                                <div className="px-2 py-1 text-sm text-gray-500">
-                                                    No entities available
-                                                </div>
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Email Preference</Label>
-                                    <Select value={formData.email_preference} onValueChange={(value) => handleInputChange('email_preference', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Email Preference" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="0">All Emails</SelectItem>
-                                            <SelectItem value="1">Critical Emails Only</SelectItem>
-                                            <SelectItem value="2">No Emails</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                        </CardContent>
+                        </div>
                     </Card>
                 </div>
 
-                {/* Main Form Section */}
-                <div className="lg:col-span-8">
-                    <Card className="border-0 shadow-sm">
-                        <CardContent className="p-6 space-y-6">
-                            {/* Name Fields */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">First Name</Label>
-                                    <Input
-                                        value={formData.firstname}
-                                        onChange={(e) => handleInputChange('firstname', e.target.value)}
-                                        className="w-full"
-                                        disabled
-                                    />
+                {/* Right Column - System Information */}
+                <div className="space-y-6">
+                    {/* System Information */}
+                    <Card className="w-full bg-transparent shadow-none border-none">
+                        <div className="figma-card-header">
+                            <div className="flex items-center gap-3">
+                                <div className="figma-card-icon-wrapper">
+                                    <svg className="figma-card-icon" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+                                    </svg>
                                 </div>
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Last Name</Label>
-                                    <Input
-                                        value={formData.lastname}
-                                        onChange={(e) => handleInputChange('lastname', e.target.value)}
-                                        className="w-full"
-                                        disabled
-                                    />
+                                <h3 className="figma-card-title">System Information</h3>
+                            </div>
+                        </div>
+                        <div className="figma-card-content">
+                            <div className="task-info-enhanced">
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Site
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {getSiteName(formData.site)}
+                                    </span>
+                                </div>
+                                
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        User Type
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {getUserTypeLabel(formData.system_user_type)}
+                                    </span>
+                                </div>
+                                
+                                <div className="task-info-row">
+                                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                                        Email Preference
+                                    </span>
+                                    <span className="task-info-separator-enhanced">:</span>
+                                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                                        {getEmailPreferenceLabel(formData.email_preference)}
+                                    </span>
                                 </div>
                             </div>
-
-                            {/* Gender and Company Cluster */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Gender</Label>
-                                    <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Gender" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Male">Male</SelectItem>
-                                            <SelectItem value="Female">Female</SelectItem>
-                                            <SelectItem value="Other">Other</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                {/* <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Company Cluster</Label>
-                                    <Select value={formData.company_cluster} onValueChange={(value) => handleInputChange('company_cluster', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Cluster" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Select Cluster" disabled>Select Cluster</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div> */}
-                            </div>
-
-                            {/* Mobile and Email */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Mobile</Label>
-                                    <Input
-                                        value={formData.mobile}
-                                        onChange={(e) => handleInputChange('mobile', e.target.value)}
-                                        className="w-full"
-                                        disabled
-                                    />
-                                </div>
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Email</Label>
-                                    <Input
-                                        value={formData.email}
-                                        onChange={(e) => handleInputChange('email', e.target.value)}
-                                        className="w-full"
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-
-                            {/* User Type Radio Buttons */}
-                            {/* <div className="space-y-2">
-                                <RadioGroup
-                                    value={formData.user_type}
-                                    onValueChange={(value) => handleInputChange('user_type', value)}
-                                    className="flex gap-6"
-                                    disabled
-                                >
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="internal" id="internal" />
-                                        <Label htmlFor="internal" className="text-sm">Internal</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="external" id="external" />
-                                        <Label htmlFor="external" className="text-sm">External</Label>
-                                    </div>
-                                </RadioGroup>
-                            </div> */}
-
-                            {/* Employee and Last Working Day */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Employee</Label>
-                                    <Input
-                                        value={formData.employee_id}
-                                        onChange={(e) => handleInputChange('employee_id', e.target.value)}
-                                        placeholder="Employee ID"
-                                        className="w-full"
-                                        disabled
-                                    />
-                                </div>
-                                {/* <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Last Working Day</Label>
-                                    <Input
-                                        value={formData.last_working_day}
-                                        onChange={(e) => handleInputChange('last_working_day', e.target.value)}
-                                        placeholder="Last Working Day"
-                                        className="w-full"
-                                        disabled
-                                    />
-                                </div> */}
-                            </div>
-
-                            {/* Department and Designation */}
-                            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Department</Label>
-                                    <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Department" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {Array.isArray(department) && department?.length > 0 ? (
-                                                department.map((dept) => (
-                                                    <SelectItem key={dept.id} value={dept.id}>
-                                                        {dept.department_name}
-                                                    </SelectItem>
-                                                ))
-                                            ) : (
-                                                <div className="px-2 py-1 text-sm text-gray-500">
-                                                    No departments available
-                                                </div>
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Designation</Label>
-                                    <Input
-                                        value={formData.designation}
-                                        onChange={(e) => handleInputChange('designation', e.target.value)}
-                                        className="w-full"
-                                        disabled
-                                    />
-                                </div>
-                            </div> */}
-
-                            {/* Role and Vendor Company */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Role</Label>
-                                    <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Role" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {Array.isArray(roles) && roles?.length > 0 ? (
-                                                roles.map((role) => (
-                                                    <SelectItem key={role.id} value={role.id}>
-                                                        {role.name}
-                                                    </SelectItem>
-                                                ))
-                                            ) : (
-                                                <div className="px-2 py-1 text-sm text-gray-500">
-                                                    No roles available
-                                                </div>
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                {/* <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Vendor Company Name</Label>
-                                    <Select value={formData.vendor_company} onValueChange={(value) => handleInputChange('vendor_company', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Vendor Company" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {Array.isArray(suppliers) && suppliers?.length > 0 ? (
-                                                suppliers.map((supplier) => (
-                                                    <SelectItem key={supplier.id} value={supplier.id}>
-                                                        {supplier.name}
-                                                    </SelectItem>
-                                                ))
-                                            ) : (
-                                                <div className="px-2 py-1 text-sm text-gray-500">
-                                                    No vendors available
-                                                </div>
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div> */}
-                            </div>
-
-                            {/* Access Level and Access */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Access Level</Label>
-                                    <Select value={formData.access_level} onValueChange={(value) => handleInputChange('access_level', value)} disabled>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Access Level" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Company">Company</SelectItem>
-                                            <SelectItem value="Site">Site</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Access</Label>
-                                    <div className="mt-2 flex items-center gap-1 flex-wrap">
-                                        {
-                                            formData.access.map((access, index) => (
-                                                <Badge key={index} variant="secondary" className="bg-red-100 text-red-800 border-red-200">
-                                                    {access}
-                                                </Badge>
-                                            ))
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Daily Helpdesk Report Checkbox */}
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="daily-helpdesk"
-                                    checked={formData.daily_helpdesk_report}
-                                    onCheckedChange={(checked) => handleInputChange('daily_helpdesk_report', Boolean(checked))}
-                                    disabled
-                                />
-                                <Label htmlFor="daily-helpdesk" className="text-sm text-gray-700">
-                                    Daily Helpdesk Report Email
-                                </Label>
-                            </div>
-
-
-                            
-                        </CardContent>
+                        </div>
                     </Card>
                 </div>
             </div>
