@@ -596,6 +596,7 @@ export const EditInventoryPage = () => {
       criticality: criticalityValue,
       expiry_date: formatExpiryDate(formData.expiryDate),
       unit: formData.unit || "",
+      category: formData.category || "",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       // New fields in payload
