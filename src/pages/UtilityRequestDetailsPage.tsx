@@ -96,7 +96,11 @@ export const UtilityRequestDetailsPage = () => {
         setLoading(true);
         setError(null);
 
-        const baseUrl = localStorage.getItem('baseUrl') || 'https://fm-uat-api.lockated.com';
+        // Remove any 'http://' or 'https://' prefix if it exists in the stored baseUrl
+        let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+        baseUrl = baseUrl.replace(/^(https?:\/\/)/, '');
+        baseUrl = `https://${baseUrl}`; // Ensure we always use https
+
         const token = localStorage.getItem('token');
 
         if (!token) {
@@ -119,20 +123,25 @@ export const UtilityRequestDetailsPage = () => {
         console.log('Utilization details API response:', response.data);
 
         const apiData: ApiUtilizationData = response.data;
-        const entityName = entityMap.get(apiData.entity_id.toString());
 
-        // Map API response to component data structure
+        if (!apiData) {
+          throw new Error('No data received from the API');
+        }
+
+        const entityName = entityMap.get(apiData.entity_id?.toString() || '');
+
+        // Map API response to component data structure with null checks
         const mappedData: DetailedData = {
-          id: apiData.id.toString(),
-          customer: entityName || `Entity ID: ${apiData.entity_id}`,
-          totalConsumption: apiData.total_consumption.toString(),
-          rate: apiData.rate.toString(),
-          readingType: apiData.reading_type,
-          toDate: apiData.to_date,
-          status: apiData.status,
-          amount: apiData.amount.toString(),
+          id: apiData.id?.toString() || '',
+          customer: entityName || `Entity ID: ${apiData.entity_id || 'Unknown'}`,
+          totalConsumption: apiData.total_consumption?.toString() || '0',
+          rate: apiData.rate?.toString() || '0',
+          readingType: apiData.reading_type || '',
+          toDate: apiData.to_date || '',
+          status: apiData.status || 'pending',
+          amount: apiData.amount?.toString() || '0',
           plantDetail: apiData.plant_detail_id?.toString() || '',
-          fromDate: apiData.from_date,
+          fromDate: apiData.from_date || '',
           consumptionDetails: [
             {
               clientName: entityName || `Entity ID: ${apiData.entity_id}`,
