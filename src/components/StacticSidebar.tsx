@@ -353,7 +353,7 @@ const modulesByPackage = {
      {
       name: "Accounting",
       icon: Calculator,
-      href: "https://lockated.com/lock_accounts",
+      href: "https://app.lockated.com/lock_accounts",
       blank: true,
     },
 
