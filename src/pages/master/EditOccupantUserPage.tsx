@@ -164,31 +164,50 @@ export const EditOccupantUserPage: React.FC = () => {
   };
 
   const handleCancel = () => navigate(`/master/user/occupant-users/view/${id}`);
-  const handleSubmit = async () => {
-    const hasFirstName = formData.firstName.trim() !== '';
-    const hasLastName = formData.lastName.trim() !== '';
-    const hasMobile = formData.mobileNumber.trim() !== '';
-    const hasEmail = formData.email.trim() !== '';
-    const hasUserType = formData.userType !== '';
-    const hasAccess = formData.accessLevel !== '';
+  
+  const validateForm = () => {
+    const mobileRegex = /^[0-9]{10}$/;
 
-    const needSites = formData.accessLevel === 'Site' && formData.selectedSites.length === 0;
-    const needCompanies = formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0;
-
-    setErrors({
-      firstName: !hasFirstName,
-      lastName: !hasLastName,
-      mobileNumber: !hasMobile,
-      email: !hasEmail,
-      userType: !hasUserType,
-      accessLevel: !hasAccess,
-      selectedSites: needSites,
-      selectedCompanies: needCompanies,
-    });
-
-    if (!hasFirstName || !hasLastName || !hasMobile || !hasEmail || !hasUserType || !hasAccess || needSites || needCompanies) {
-      return;
+    if (!formData.firstName) {
+      toast.error("First Name is required.");
+      return false;
     }
+    if (!formData.lastName) {
+      toast.error("Last Name is required.");
+      return false;
+    }
+    if (!formData.mobileNumber) {
+      toast.error("Mobile Number is required.");
+      return false;
+    } else if (!mobileRegex.test(formData.mobileNumber)) {
+      toast.error("Mobile Number must be 10 digits.");
+      return false;
+    }
+    if (!formData.email) {
+      toast.error("Email is required.");
+      return false;
+    }
+   
+    if (!formData.accessLevel) {
+      toast.error("Access Level is required.");
+      return false;
+    }
+
+    if (formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0) {
+      toast.error("Select at least one company.");
+      return false;
+    }
+
+    if (formData.accessLevel === 'Site' && formData.selectedSites.length === 0) {
+      toast.error("Select at least one site.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
     try {
       const token = localStorage.getItem('token') || '';
@@ -199,14 +218,13 @@ export const EditOccupantUserPage: React.FC = () => {
       const payload = {
         user: {
           site_id: siteId,
-          registration_source: 'Web',
-          lock_user_permissions_attributes: [
+          registration_source: 'Web',              lock_user_permissions_attributes: [
             {
               account_id: accountId,
               employee_id: formData.employeeId,
               designation: formData.designation,
               department_id: formData.department || undefined,
-              user_type: formData.userType,
+              user_type: 'pms_occupant',
               access_level: formData.accessLevel,
               access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
             },
@@ -338,61 +356,7 @@ export const EditOccupantUserPage: React.FC = () => {
                 </MuiSelect>
               </FormControl>
 
-              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Select Entity</InputLabel>
-                <MuiSelect
-                  value={formData.selectEntity}
-                  onChange={(e) => handleInputChange('selectEntity', e.target.value as string)}
-                  label="Select Entity"
-                  displayEmpty
-                  notched
-                >
-                  <MenuItem value="">Select Entity</MenuItem>
-                  {entitiesLoading && (
-                    <MenuItem value="" disabled>Loading...</MenuItem>
-                  )}
-                  {entitiesError && (
-                    <MenuItem value="" disabled>Error loading entities</MenuItem>
-                  )}
-                  {entitiesData?.entities?.map((entity: Entity) => (
-                    <MenuItem key={entity.id} value={String(entity.id)}>
-                      {entity.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-
-              <TextField
-                label="Employee ID"
-                placeholder="Enter Employee ID"
-                value={formData.employeeId}
-                onChange={(e) => handleInputChange('employeeId', e.target.value)}
-                fullWidth
-                variant="outlined"
-                slotProps={{ inputLabel: { shrink: true } }}
-                InputProps={{ sx: fieldStyles }}
-              />
-
-              <FormControl fullWidth variant="outlined" error={errors.userType} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>
-                  Select User Type<span className='text-red-600'>*</span>
-                </InputLabel>
-                <MuiSelect
-                  value={formData.userType}
-                  onChange={(e) => handleInputChange('userType', e.target.value as string)}
-                  label="Select User Type"
-                  displayEmpty
-                  notched
-                >
-                  <MenuItem value="">Select User Type</MenuItem>
-                  <MenuItem value="pms_occupant_admin">Admin</MenuItem>
-                  <MenuItem value="pms_occupant">Member</MenuItem>
-                  <MenuItem value="pms_guest">Guest</MenuItem>
-                </MuiSelect>
-                {errors.userType && (
-                  <p className="text-red-600 text-xs mt-1">User Type is required</p>
-                )}
-              </FormControl>
+            
 
               <FormControl fullWidth variant="outlined" error={errors.accessLevel} sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>
@@ -548,37 +512,8 @@ export const EditOccupantUserPage: React.FC = () => {
                   slotProps={{ inputLabel: { shrink: true } }}
                   InputProps={{ sx: fieldStyles }}
                 />
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Select Department</InputLabel>
-                  <MuiSelect
-                    value={formData.department}
-                    onChange={(e) => handleInputChange('department', e.target.value as string)}
-                    label="Select Department"
-                    displayEmpty
-                    notched
-                  >
-                    <MenuItem value="">Select Department</MenuItem>
-                    {departmentsLoading && (
-                      <MenuItem value="" disabled>Loading...</MenuItem>
-                    )}
-                    {departmentsError && (
-                      <MenuItem value="" disabled>{departmentsError}</MenuItem>
-                    )}
-                    {departments?.map((d: any) => (
-                      <MenuItem key={d.id} value={String(d.id)}>{d.department_name}</MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-                <TextField
-                  label="Designation"
-                  placeholder="Enter Designation"
-                  value={formData.designation}
-                  onChange={(e) => handleInputChange('designation', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                />
+               
+             
               </div>
             )}
           </Box>
