@@ -1590,9 +1590,9 @@ export const AddIncidentPage = () => {
       // Description
       form.append('incident[description]', incidentData.description);
 
-      // Disclaimer and support
-      form.append('incident[support_required]', incidentData.supportRequired ? '1' : '0');
-      form.append('incident[disclaimer]', incidentData.factsCorrect ? '1' : '0');
+      // Disclaimer and support required - passing true/false instead of 1/0
+      form.append('incident[support_required]', incidentData.supportRequired ? 'true' : 'false');
+      form.append('incident[disclaimer]', incidentData.factsCorrect ? 'true' : 'false');
 
       // Attachments (optional)
       if (incidentData.attachments) {
@@ -2132,10 +2132,11 @@ export const AddIncidentPage = () => {
       <div className="flex justify-center pt-6">
         <Button
           onClick={handleSubmit}
-          style={{
-            backgroundColor: '#8B4A8C'
-          }}
-          className="text-white hover:opacity-90 px-8 py-3 text-lg"
+          // style={{
+          //   backgroundColor: '#8B4A8C'
+          // }}
+          // className="text-white hover:opacity-90 px-8 py-3 text-lg"
+          className='text-[18px]'
         >
           Create Incident
         </Button>
