@@ -161,8 +161,51 @@ export const PaymentDetailPage = () => {
     navigate('/club-management/accounting');
   };
 
-  const handleDownloadReceipt = () => {
-    toast.info('Download receipt functionality coming soon');
+  const handleDownloadReceipt = async () => {
+    if (!id) {
+      toast.error('Payment ID not found');
+      return;
+    }
+
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+      
+      const url = `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/pms_facility_bookings/payment_details_pdf?lock_payment_id=${id}`;
+      
+      toast.loading('Downloading receipt...');
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to download receipt');
+      }
+      
+      // Get the blob from response
+      const blob = await response.blob();
+      
+      // Create a download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `payment_receipt_${payment?.order_number || id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast.dismiss();
+      toast.success('Receipt downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      toast.dismiss();
+      toast.error('Failed to download receipt');
+    }
   };
 
   if (loading) {
@@ -209,7 +252,7 @@ export const PaymentDetailPage = () => {
             <p className="text-sm text-gray-500">Order: {payment.order_number}</p>
           </div>
           <div className="flex gap-2">
-            {/* <Button
+            <Button
               variant="outline"
               onClick={handleDownloadReceipt}
               className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
@@ -224,7 +267,7 @@ export const PaymentDetailPage = () => {
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
-            </Button> */}
+            </Button>
           </div>
         </div>
       </div>
