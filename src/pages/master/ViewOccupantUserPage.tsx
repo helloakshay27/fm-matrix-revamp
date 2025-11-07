@@ -362,7 +362,7 @@ export const ViewOccupantUserPage = () => {
                     </Card>
 
                     {/* User Details */}
-                    <Card className="w-full bg-transparent shadow-none border-none">
+                    {/* <Card className="w-full bg-transparent shadow-none border-none">
                         <div className="figma-card-header">
                             <div className="flex items-center gap-3">
                                 <div className="figma-card-icon-wrapper">
@@ -436,7 +436,7 @@ export const ViewOccupantUserPage = () => {
                                 </div>
                             </div>
                         </div>
-                    </Card>
+                    </Card> */}
                 </div>
 
                 {/* Right Column - System Information */}

@@ -37,11 +37,11 @@ import { debounce } from "lodash";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "ID", sortable: true, draggable: true },
-  { key: "company", label: "Company", sortable: true, draggable: true },
+  // { key: "company", label: "Company", sortable: true, draggable: true },
   { key: "name", label: "Name", sortable: true, draggable: true },
   { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
   { key: "email", label: "Email", sortable: true, draggable: true },
-  { key: "entity", label: "Entity", sortable: true, draggable: true },
+  // { key: "entity", label: "Entity", sortable: true, draggable: true },
   { key: "status", label: "Status", sortable: true, draggable: true },
   {
     key: "appDownloaded",
