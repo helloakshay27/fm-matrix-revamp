@@ -143,6 +143,8 @@ export const BookingSetupDashboard = () => {
   };
 
   const handleViewDetails = (id: string) => {
+    location.pathname.includes("/club-management/") ?
+      navigate(`/club-management/vas/booking/setup/details/${id}`) :
     navigate(`/settings/vas/booking/setup/details/${id}`);
   };
 

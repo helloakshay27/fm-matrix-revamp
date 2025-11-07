@@ -390,7 +390,9 @@ export const BookingSetupDetailPage = () => {
           <div className="flex items-end justify-between gap-2">
             <Button
               variant="ghost"
-              onClick={() => navigate("/settings/vas/booking/setup")}
+              onClick={() => location.pathname.includes("/club-management/") ?
+                navigate("/club-management/vas/booking/setup") :  navigate("/settings/vas/booking/setup")
+              }
               className="p-0"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
