@@ -69,6 +69,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const isOmanSite = hostname.includes("oig.gophygital.work");
   // Check if it's VI site
   const isViSite = hostname.includes("vi-web.gophygital.work");
+  const isClubSite = hostname.includes("club.lockated.com/");
 
   // Check URL for email and orgId parameters on component mount
   React.useEffect(() => {
@@ -291,7 +292,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       const from =
         (location.state as { from?: Location })?.from?.pathname +
           (location.state as { from?: Location })?.from?.search ||
-        "/club-management/membership";
+        "/maintenance/assets";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 
@@ -300,7 +301,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         // Special routing for user ID 189005
         if (response.id === 189005) {
           navigate("/dashboard");
-        } else if (isViSite) {
+        }else if (isClubSite) {
+          navigate("/club-management/memberships");
+        }else if (isViSite) {
           navigate("/safety/m-safe/internal");
         } else {
           navigate(from, { replace: true });
