@@ -465,11 +465,6 @@ export const OccupantUserMasterDashboard = () => {
   return (
     <div className="w-full p-4 sm:p-6 space-y-6">
       <div className="w-full space-y-6">
-<<<<<<< HEAD
-        {/* Header */}
-       
-=======
->>>>>>> 2eb5e06dbda8c3fcb380e165fe8459a4f9b5947e
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
