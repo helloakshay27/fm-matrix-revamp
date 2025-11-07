@@ -81,13 +81,7 @@ export const PermitChecklistList = () => {
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">PERMIT CHECKLIST</h1>
-                <Button
-                    onClick={handleAddChecklist}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
-                >
-                    <Plus className="h-4 w-4" />
-                    Add Checklist
-                </Button>
+
             </div>
 
             {/* Enhanced Table */}
@@ -146,6 +140,13 @@ export const PermitChecklistList = () => {
                 storageKey="permit-checklist-list"
                 enableExport={true}
                 exportFileName="permit-checklists"
+                leftActions={(<Button
+                    onClick={handleAddChecklist}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+                >
+                    <Plus className="h-4 w-4" />
+                    Add Checklist
+                </Button>)}
             />
         </div>
     );
