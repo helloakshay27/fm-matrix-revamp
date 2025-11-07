@@ -239,7 +239,7 @@ export const AddOccupantUserPage: React.FC = () => {
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-2xl font-semibold text-[#1a1a1a]">Add Occupant User</h1>
+        <h1 className="text-2xl font-semibold text-[#1a1a1a]">Add Members</h1>
       </div>
 
       {/* Basic Details */}
