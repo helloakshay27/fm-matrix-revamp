@@ -139,10 +139,7 @@ export const AddOccupantUserPage: React.FC = () => {
       toast.error("Email is required.");
       return false;
     }
-    if (!formData.userType) {
-      toast.error("User Type is required.");
-      return false;
-    }
+   
     if (!formData.accessLevel) {
       toast.error("Access Level is required.");
       return false;
@@ -180,7 +177,7 @@ export const AddOccupantUserPage: React.FC = () => {
               employee_id: formData.employeeId,
               designation: formData.designation,
               department_id: formData.department || undefined,
-              user_type: formData.userType,
+              user_type: 'pms_occupant',
               access_level: formData.accessLevel,
               access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
               status: "pending"
@@ -317,60 +314,9 @@ export const AddOccupantUserPage: React.FC = () => {
                   <MenuItem value="Female">Female</MenuItem>
                 </MuiSelect>
               </FormControl>
-              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Select Entity</InputLabel>
-                <MuiSelect
-                  value={formData.selectEntity}
-                  onChange={(e) => handleInputChange('selectEntity', e.target.value as string)}
-                  label="Select Entity"
-                  displayEmpty
-                  notched
-                >
-                  <MenuItem value="">Select Entity</MenuItem>
-                  {entitiesLoading && (
-                    <MenuItem value="" disabled>Loading...</MenuItem>
-                  )}
-                  {entitiesError && (
-                    <MenuItem value="" disabled>Error loading entities</MenuItem>
-                  )}
-                  {entitiesData?.entities?.map((entity: Entity) => (
-                    <MenuItem key={entity.id} value={String(entity.id)}>
-                      {entity.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+          
 
-              <TextField
-                label="Employee ID"
-                placeholder="Enter Employee ID"
-                value={formData.employeeId}
-                onChange={(e) => handleInputChange('employeeId', e.target.value)}
-                fullWidth
-                variant="outlined"
-                slotProps={{ inputLabel: { shrink: true } }}
-                InputProps={{ sx: fieldStyles }}
-              />
-              <FormControl fullWidth variant="outlined" error={errors.userType} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>
-                  Select User Type<span className='text-red-600'>*</span>
-                </InputLabel>
-                <MuiSelect
-                  value={formData.userType}
-                  onChange={(e) => handleInputChange('userType', e.target.value as string)}
-                  label="Select User Type"
-                  displayEmpty
-                  notched
-                >
-                  <MenuItem value="">Select User Type</MenuItem>
-                  <MenuItem value="pms_occupant_admin">Admin</MenuItem>
-                  <MenuItem value="pms_occupant">Member</MenuItem>
-                  <MenuItem value="pms_guest">Guest</MenuItem>
-                </MuiSelect>
-                {errors.userType && (
-                  <p className="text-red-600 text-xs mt-1">User Type is required</p>
-                )}
-              </FormControl>
+             
               <FormControl fullWidth variant="outlined" error={errors.accessLevel} sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>
                   Select Access Level<span className='text-red-600'>*</span>
@@ -524,37 +470,7 @@ export const AddOccupantUserPage: React.FC = () => {
                   slotProps={{ inputLabel: { shrink: true } }}
                   InputProps={{ sx: fieldStyles }}
                 />
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Select Department</InputLabel>
-                  <MuiSelect
-                    value={formData.department}
-                    onChange={(e) => handleInputChange('department', e.target.value as string)}
-                    label="Select Department"
-                    displayEmpty
-                    notched
-                  >
-                    <MenuItem value="">Select Department</MenuItem>
-                    {departmentsLoading && (
-                      <MenuItem value="" disabled>Loading...</MenuItem>
-                    )}
-                    {departmentsError && (
-                      <MenuItem value="" disabled>{departmentsError}</MenuItem>
-                    )}
-                    {departments?.map((d: any) => (
-                      <MenuItem key={d.id} value={String(d.id)}>{d.department_name}</MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-                <TextField
-                  label="Designation"
-                  placeholder="Enter Designation"
-                  value={formData.designation}
-                  onChange={(e) => handleInputChange('designation', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                />
+ 
               </div>
             )}
           </Box>
