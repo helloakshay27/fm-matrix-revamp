@@ -442,7 +442,7 @@ export const ViewOccupantUserPage = () => {
                 {/* Right Column - System Information */}
                 <div className="space-y-6">
                     {/* System Information */}
-                    <Card className="w-full bg-transparent shadow-none border-none">
+                    {/* <Card className="w-full bg-transparent shadow-none border-none">
                         <div className="figma-card-header">
                             <div className="flex items-center gap-3">
                                 <div className="figma-card-icon-wrapper">
@@ -486,7 +486,7 @@ export const ViewOccupantUserPage = () => {
                                 </div>
                             </div>
                         </div>
-                    </Card>
+                    </Card> */}
                 </div>
             </div>
         </div>

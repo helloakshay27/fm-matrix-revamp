@@ -358,7 +358,7 @@ const modulesByPackage = {
     },
 
       {
-      name: "Facility Setup",
+      name: "Amenities Setup",
       icon: Calculator,
       href: "/club-management/vas/booking/setup",
     },
