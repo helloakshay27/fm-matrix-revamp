@@ -23,20 +23,32 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import axios from "axios";
-import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import { OccupantUsersFilterDialog } from "@/components/OccupantUsersFilterDialog";
 import { useAppSelector } from "@/store/hooks";
 import { debounce } from "lodash";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "ID", sortable: true, draggable: true },
-  { key: "company", label: "Company", sortable: true, draggable: true },
+  // { key: "company", label: "Company", sortable: true, draggable: true },
   { key: "name", label: "Name", sortable: true, draggable: true },
   { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
   { key: "email", label: "Email", sortable: true, draggable: true },
-  { key: "entity", label: "Entity", sortable: true, draggable: true },
+  // { key: "entity", label: "Entity", sortable: true, draggable: true },
   { key: "status", label: "Status", sortable: true, draggable: true },
-  { key: "appDownloaded", label: "App Downloaded", sortable: true, draggable: true },
+  {
+    key: "appDownloaded",
+    label: "App Downloaded",
+    sortable: true,
+    draggable: true,
+  },
 ];
 
 export const OccupantUserMasterDashboard = () => {
@@ -120,20 +132,23 @@ export const OccupantUserMasterDashboard = () => {
     search?: string;
   }) => {
     setFilters(newFilters);
-    const [firstName = "", lastName = ""] = (newFilters?.name?.trim().split(" ") ?? []);
+    const [firstName = "", lastName = ""] =
+      newFilters?.name?.trim().split(" ") ?? [];
     await dispatch(
       fetchOccupantUsers({
         page: 1,
         perPage: 10,
         firstname_cont: firstName,
         lastname_cont: lastName,
+        mobile_cont: newFilters.mobile,
         email_cont: newFilters.email,
         lock_user_permission_status_eq: newFilters.status,
         entity_id_eq: newFilters.entity,
         app_downloaded_eq: newFilters.downloaded,
-        search_all_fields_cont: newFilters.search
+        search_all_fields_cont: newFilters.search,
       })
     );
+    toast.success("Filters applied successfully");
     setFilterDialogOpen(false);
   };
 
@@ -173,9 +188,9 @@ export const OccupantUserMasterDashboard = () => {
         fetchOccupantUsers({ page: pagination.current_page, perPage: 10 })
       );
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   useEffect(() => {
     setCurrentSection("Master");
@@ -187,7 +202,7 @@ export const OccupantUserMasterDashboard = () => {
     debounce(async (searchQuery: string) => {
       handleApplyFilters({
         search: searchQuery,
-      })
+      });
     }, 500),
     [pagination.current_page]
   );
@@ -213,7 +228,7 @@ export const OccupantUserMasterDashboard = () => {
           lock_user_permission_status_eq: filters.status,
           entity_id_eq: filters.entity,
           app_downloaded_eq: filters.downloaded,
-          search_all_fields_cont: searchTerm
+          search_all_fields_cont: searchTerm,
         })
       );
     } catch (error) {
@@ -450,12 +465,6 @@ export const OccupantUserMasterDashboard = () => {
   return (
     <div className="w-full p-4 sm:p-6 space-y-6">
       <div className="w-full space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-[#1a1a1a]">
-            Occupant Users
-          </h1>
-        </div>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -508,7 +517,11 @@ export const OccupantUserMasterDashboard = () => {
                   size="icon"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/master/user/occupant-users/view/${item.id}`);
+                    location.pathname.includes("/club-management/")
+                      ? navigate(
+                        `/club-management/users/occupant-users/view/${item.id}`
+                      )
+                      : navigate(`/master/user/occupant-users/view/${item.id}`);
                   }}
                   title="View"
                 >
@@ -569,7 +582,9 @@ export const OccupantUserMasterDashboard = () => {
 
       {showActionPanel && (
         <SelectionPanel
-          onAdd={() => navigate("/master/user/occupant-users/add")}
+          onAdd={() => location.pathname.includes("/club-management/")
+            ? navigate("/club-management/users/occupant-users/add")
+            : navigate("/master/user/occupant-users/add")}
           onImport={() => { }}
           onClearSelection={() => setShowActionPanel(false)}
         />
@@ -583,13 +598,16 @@ export const OccupantUserMasterDashboard = () => {
         handleApplyFilters={handleApplyFilters}
       />
 
-      <Dialog open={statusDialogOpen} onClose={setStatusDialogOpen} maxWidth="xs" fullWidth>
+      <Dialog
+        open={statusDialogOpen}
+        onClose={setStatusDialogOpen}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogContent className="p-0 bg-white">
           <div className="px-6 py-3 border-b mb-3">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-semibold">
-                Update Status
-              </h1>
+              <h1 className="text-xl font-semibold">Update Status</h1>
               <Button
                 variant="ghost"
                 size="sm"
