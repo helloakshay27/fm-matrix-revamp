@@ -47,7 +47,7 @@ export const CRMEventDetailsPage = () => {
 
   return <div className="p-6 bg-gray-50 min-h-screen">
     <div className="flex items-center gap-4 mb-6">
-      <Button variant="ghost" onClick={() => navigate('/crm/events')} className="flex items-center gap-2 px-0 text-gray-600 hover:text-gray-800">
+      <Button variant="ghost" onClick={() => navigate(-1)} className="flex items-center gap-2 px-0 text-gray-600 hover:text-gray-800">
         <ArrowLeft className="w-4 h-4" />
         Back to Events
       </Button>

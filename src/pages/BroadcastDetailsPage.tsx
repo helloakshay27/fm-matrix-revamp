@@ -92,7 +92,7 @@ export const BroadcastDetailsPage = () => {
       <div className="flex items-center justify-between gap-4 mb-6">
         <Button
           variant="ghost"
-          onClick={() => navigate('/crm/broadcast')}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-0"
         >
           <ArrowLeft className="w-4 h-4" />

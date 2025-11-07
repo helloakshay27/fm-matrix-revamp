@@ -220,7 +220,7 @@ export const AddEventPage = () => {
       >
         <MuiButton
           startIcon={<ArrowBack />}
-          onClick={() => navigate("/crm/events")}
+          onClick={() => navigate(-1)}
           sx={{
             color: "#666",
             textTransform: "none",
