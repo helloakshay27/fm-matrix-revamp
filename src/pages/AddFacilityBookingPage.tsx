@@ -460,6 +460,9 @@ export const AddFacilityBookingPage = () => {
                 },
                 shrink: true
               }}
+              inputProps={{
+                min: new Date().toISOString().split("T")[0],
+              }}
               sx={fieldStyles}
             />
           </div>
