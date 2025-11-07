@@ -398,6 +398,34 @@ export const AddClubMembershipPage = () => {
       }
     }
 
+    // Mandatory membership date validations
+    if (!startDate) {
+      toast.error('Please select start date (mandatory)');
+      return;
+    }
+
+    if (!endDate) {
+      toast.error('Please select end date (mandatory)');
+      return;
+    }
+
+    // Validate that end date is after start date
+    if (endDate && startDate && endDate.isBefore(startDate)) {
+      toast.error('End date must be after start date');
+      return;
+    }
+
+    // Mandatory file validations
+    if (!idCardFile) {
+      toast.error('Please upload ID card (mandatory)');
+      return;
+    }
+
+    if (!residentPhotoFile) {
+      toast.error('Please upload resident photo (mandatory)');
+      return;
+    }
+
     if (cardAllocated && !formData.accessCardId) {
       toast.error('Please enter access card ID');
       return;
@@ -498,8 +526,43 @@ export const AddClubMembershipPage = () => {
       const response = await fetch(url, options);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to ${isEditMode ? 'update' : 'create'} club membership`);
+        let errorData: any = {};
+        const contentType = response.headers.get('content-type');
+        
+        try {
+          // Try to parse as JSON first
+          if (contentType && contentType.includes('application/json')) {
+            errorData = await response.json();
+          } else {
+            // If not JSON, read as text
+            const errorText = await response.text();
+            errorData = { error: errorText };
+          }
+        } catch (parseError) {
+          // If parsing fails, try to read as text
+          const errorText = await response.text();
+          errorData = { error: errorText };
+        }
+        
+        console.error('API Error Response:', errorData);
+        
+        // Handle specific error messages
+        if (errorData.error === "User is already exist" || errorData.error === "User already exists") {
+          toast.error('This user already has a club membership');
+        } else if (errorData.error && errorData.error.includes('User has already been taken')) {
+          toast.error('This user already has a club membership');
+        } else if (typeof errorData.error === 'string' && errorData.error.includes('already')) {
+          toast.error('This user already exists in the system');
+        } else if (errorData.message) {
+          toast.error(errorData.message);
+        } else if (errorData.error) {
+          toast.error(errorData.error);
+        } else {
+          toast.error(`Failed to ${isEditMode ? 'update' : 'create'} club membership`);
+        }
+        
+        setIsSubmitting(false);
+        return;
       }
 
       const data = await response.json();
@@ -680,28 +743,42 @@ export const AddClubMembershipPage = () => {
 
           {/* Membership Details */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-4">Membership Details</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-4">
+              Membership Details <span className="text-red-500">*</span>
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <DatePicker
-                  label="Start Date"
+                  label="Start Date *"
                   value={startDate}
                   onChange={(newValue) => setStartDate(newValue as Dayjs | null)}
                   slotProps={{
                     textField: {
                       fullWidth: true,
-                      sx: fieldStyles,
+                      sx: {
+                        ...fieldStyles,
+                        '& .MuiOutlinedInput-root': {
+                          ...fieldStyles['& .MuiOutlinedInput-root'],
+                          backgroundColor: startDate ? '#f0fdf4' : '#fff',
+                        },
+                      },
                     },
                   }}
                 />
 
                 <DatePicker
-                  label="End Date"
+                  label="End Date *"
                   value={endDate}
                   onChange={(newValue) => setEndDate(newValue as Dayjs | null)}
                   slotProps={{
                     textField: {
                       fullWidth: true,
-                      sx: fieldStyles,
+                      sx: {
+                        ...fieldStyles,
+                        '& .MuiOutlinedInput-root': {
+                          ...fieldStyles['& .MuiOutlinedInput-root'],
+                          backgroundColor: endDate ? '#f0fdf4' : '#fff',
+                        },
+                      },
                     },
                   }}
                 />
@@ -747,9 +824,11 @@ export const AddClubMembershipPage = () => {
               {/* ID Card Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ID Card
+                  ID Card <span className="text-red-500">*</span>
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#C72030] transition-colors">
+                <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  idCardFile ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'
+                }`}>
                   {idCardFile ? (
                     <div>
                       {idCardPreview && (
@@ -776,7 +855,7 @@ export const AddClubMembershipPage = () => {
                   ) : (
                     <div>
                       <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500 mb-2">Upload ID Card</p>
+                      <p className="text-sm text-gray-500 mb-2">Upload ID Card (Required)</p>
                       <input
                         type="file"
                         accept="image/*"
@@ -797,9 +876,11 @@ export const AddClubMembershipPage = () => {
               {/* Resident Photo Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Resident's Photo
+                  Resident's Photo <span className="text-red-500">*</span>
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#C72030] transition-colors">
+                <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  residentPhotoFile ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'
+                }`}>
                   {residentPhotoFile ? (
                     <div>
                       {residentPhotoPreview && (
@@ -826,7 +907,7 @@ export const AddClubMembershipPage = () => {
                   ) : (
                     <div>
                       <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500 mb-2">Upload Photo</p>
+                      <p className="text-sm text-gray-500 mb-2">Upload Photo (Required)</p>
                       <input
                         type="file"
                         accept="image/*"
