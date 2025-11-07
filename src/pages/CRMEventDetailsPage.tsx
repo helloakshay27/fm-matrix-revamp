@@ -19,6 +19,10 @@ interface Event {
   to_time: string;
   description: string;
   documents?: any[];
+  shared: number;
+  sharedwith?: {
+    user_name: string;
+  }[];
 }
 
 export const CRMEventDetailsPage = () => {
@@ -82,7 +86,7 @@ export const CRMEventDetailsPage = () => {
             <span className="text-gray-500 min-w-[140px]">Event Type</span>
             <span className="text-gray-500 mx-2">:</span>
             <span className="text-gray-900 font-medium">
-              {eventData.event_type || "-"}
+              {eventData.shared === 0 ? "General" : "Personal"}
             </span>
           </div>
 
@@ -100,14 +104,6 @@ export const CRMEventDetailsPage = () => {
               {eventData.event_at}
             </span>
           </div>
-          <div className="flex items-start">
-            <span className="text-gray-500 min-w-[140px]">Attendees</span>
-            <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">
-              {eventData.attendeeCount || "-"}
-            </span>
-          </div>
-
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[140px]">Status</span>
             <span className="text-gray-500 mx-2">:</span>
@@ -181,5 +177,28 @@ export const CRMEventDetailsPage = () => {
 
       </div>
     </div>
+
+    {
+      eventData.sharedwith?.length > 0 && <div className="bg-white rounded-lg border border-gray-200 mb-6">
+        <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+          <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+            S
+          </div>
+          <h2 className="text-lg font-bold text-gray-900">Shared With</h2>
+        </div>
+
+        <div className="px-[80px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+          <ol className="list-decimal pl-6">
+            {
+              eventData.sharedwith?.map(((data, idx) => (
+                <li key={idx} className="text-14">
+                  <span className="fw-medium text-13">{data.user_name}</span>
+                </li>
+              )))
+            }
+          </ol>
+        </div>
+      </div>
+    }
   </div >;
 };

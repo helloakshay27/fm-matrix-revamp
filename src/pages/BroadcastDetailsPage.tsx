@@ -21,6 +21,7 @@ interface BroadcastDetails {
   notice_text?: string;
   attachments?: any[]; // Uncomment if the attachments section is used
   shared_notices?: string[];
+  shared?: number;
 }
 
 export const BroadcastDetailsPage = () => {
@@ -141,7 +142,7 @@ export const BroadcastDetailsPage = () => {
               <span className="text-gray-500 min-w-[140px]">Type</span>
               <span className="text-gray-500 mx-2">:</span>
               <span className="text-gray-900 font-medium">
-                {broadcastDetails.notice_type || "-"}
+                {broadcastDetails.shared === 0 ? "General" : "Personal"}
               </span>
             </div>
 
