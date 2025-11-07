@@ -209,7 +209,7 @@ export const PaymentDetailPage = () => {
             <p className="text-sm text-gray-500">Order: {payment.order_number}</p>
           </div>
           <div className="flex gap-2">
-            <Button
+            {/* <Button
               variant="outline"
               onClick={handleDownloadReceipt}
               className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
@@ -224,7 +224,7 @@ export const PaymentDetailPage = () => {
             >
               <RefreshCw className="w-4 h-4 mr-2" />
               Refresh
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
