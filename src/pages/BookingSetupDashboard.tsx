@@ -98,7 +98,10 @@ export const BookingSetupDashboard = () => {
   }, []);
 
   const handleAddBooking = () => {
-    navigate("/settings/vas/booking/setup/add");
+
+    location.pathname.includes("/club-management/") ?
+      navigate("/club-management/vas/booking/setup/add") :
+      navigate("/settings/vas/booking/setup/add");
   };
 
   const handleStatusToggle = async (id: string) => {
