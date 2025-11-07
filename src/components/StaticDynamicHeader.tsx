@@ -4,8 +4,7 @@ import { useLayout } from '../contexts/LayoutContext';
 
 const packages = [
 
-  'Club Management',
-
+ 
 ];
 
 export const StaticDynamicHeader = () => {

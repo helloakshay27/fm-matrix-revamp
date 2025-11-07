@@ -392,7 +392,7 @@ export const ViewOccupantUserPage = () => {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div>
+                                {/* <div>
                                     <Label className="text-sm font-medium text-gray-700 mb-2 block">Company Cluster</Label>
                                     <Select value={formData.company_cluster} onValueChange={(value) => handleInputChange('company_cluster', value)} disabled>
                                         <SelectTrigger className="w-full">
@@ -402,7 +402,7 @@ export const ViewOccupantUserPage = () => {
                                             <SelectItem value="Select Cluster" disabled>Select Cluster</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                </div>
+                                </div> */}
                             </div>
 
                             {/* Mobile and Email */}
@@ -428,7 +428,7 @@ export const ViewOccupantUserPage = () => {
                             </div>
 
                             {/* User Type Radio Buttons */}
-                            <div className="space-y-2">
+                            {/* <div className="space-y-2">
                                 <RadioGroup
                                     value={formData.user_type}
                                     onValueChange={(value) => handleInputChange('user_type', value)}
@@ -444,7 +444,7 @@ export const ViewOccupantUserPage = () => {
                                         <Label htmlFor="external" className="text-sm">External</Label>
                                     </div>
                                 </RadioGroup>
-                            </div>
+                            </div> */}
 
                             {/* Employee and Last Working Day */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -458,7 +458,7 @@ export const ViewOccupantUserPage = () => {
                                         disabled
                                     />
                                 </div>
-                                <div>
+                                {/* <div>
                                     <Label className="text-sm font-medium text-gray-700 mb-2 block">Last Working Day</Label>
                                     <Input
                                         value={formData.last_working_day}
@@ -467,11 +467,11 @@ export const ViewOccupantUserPage = () => {
                                         className="w-full"
                                         disabled
                                     />
-                                </div>
+                                </div> */}
                             </div>
 
                             {/* Department and Designation */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <Label className="text-sm font-medium text-gray-700 mb-2 block">Department</Label>
                                     <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)} disabled>
@@ -502,7 +502,7 @@ export const ViewOccupantUserPage = () => {
                                         disabled
                                     />
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* Role and Vendor Company */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -527,7 +527,7 @@ export const ViewOccupantUserPage = () => {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div>
+                                {/* <div>
                                     <Label className="text-sm font-medium text-gray-700 mb-2 block">Vendor Company Name</Label>
                                     <Select value={formData.vendor_company} onValueChange={(value) => handleInputChange('vendor_company', value)} disabled>
                                         <SelectTrigger className="w-full">
@@ -547,7 +547,7 @@ export const ViewOccupantUserPage = () => {
                                             )}
                                         </SelectContent>
                                     </Select>
-                                </div>
+                                </div> */}
                             </div>
 
                             {/* Access Level and Access */}
@@ -590,6 +590,9 @@ export const ViewOccupantUserPage = () => {
                                     Daily Helpdesk Report Email
                                 </Label>
                             </div>
+
+
+                            
                         </CardContent>
                     </Card>
                 </div>

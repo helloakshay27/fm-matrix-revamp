@@ -348,10 +348,7 @@ export const PaymentManagementDashboard = () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       {/* Header Section */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-[#1a1a1a]">Payment Management</h1>
-        
-      </div>
+     
 
       {/* Payments Table */}
       <div className="overflow-x-auto animate-fade-in">

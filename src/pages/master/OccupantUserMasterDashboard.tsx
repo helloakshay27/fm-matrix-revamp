@@ -464,11 +464,7 @@ export const OccupantUserMasterDashboard = () => {
     <div className="w-full p-4 sm:p-6 space-y-6">
       <div className="w-full space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-[#1a1a1a]">
-            Occupant Users
-          </h1>
-        </div>
+       
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

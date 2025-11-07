@@ -315,12 +315,12 @@ const modulesByPackage = {
       href: "/club-management/users",
       subItems: [
         {
-          name: "FM Users",
+          name: "Staff",
           href: "/club-management/users/fm-users",
           color: "text-[#1a1a1a]",
         },
         {
-          name: "Occupant Users",
+          name: "Members",
           href: "/club-management/users/occupant-users",
           color: "text-[#1a1a1a]",
         },
@@ -341,11 +341,16 @@ const modulesByPackage = {
       href: "/club-management/broadcast",
     },
     {
-      name: "Event Management",
+      name: "Event ",
       icon: Calendar,
       href: "/club-management/events",
     },
     {
+      name: "Payments",
+      icon: Package,
+      href: "/club-management/accounting",
+    },
+     {
       name: "Accounting",
       icon: Calculator,
       href: "/club-management/accounting",
