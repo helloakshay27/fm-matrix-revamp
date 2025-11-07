@@ -42,8 +42,8 @@ export const BookingSetupDashboard = () => {
 
   // Format dhm object to string like "0D • 0H • 4M"
   const formatDHM = (dhm: { d: number; h: number; m: number } | null) => {
-    if (!dhm) return "";
-    return `${dhm.d}D • ${dhm.h}H • ${dhm.m}M`;
+    if (!dhm) return "0D • 0H • 0M";
+    return `${dhm.d ?? 0}D • ${dhm.h ?? 0}H • ${dhm.m ?? 0}M`;
   };
 
   // Format date string to "22-11-2022" format
@@ -145,7 +145,7 @@ export const BookingSetupDashboard = () => {
   const handleViewDetails = (id: string) => {
     location.pathname.includes("/club-management/") ?
       navigate(`/club-management/vas/booking/setup/details/${id}`) :
-    navigate(`/settings/vas/booking/setup/details/${id}`);
+      navigate(`/settings/vas/booking/setup/details/${id}`);
   };
 
   const columns: ColumnConfig[] = [
