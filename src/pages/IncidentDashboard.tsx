@@ -1725,7 +1725,7 @@ export const IncidentDashboard = () => {
       else if (type === 'closed') filterQuery = 'q[current_status_eq]=Closed';
       else if (type === 'pending') filterQuery = 'q[current_status_eq]=Pending';
       else if (type === 'under_investigation') filterQuery = 'q[current_status_eq]=Under%20Investigation';
-      else if (type === 'support_required') filterQuery = 'q[current_status_eq]=Support%20Required';
+      else if (type === 'support_required') filterQuery = 'q[support_required_eq]=true';
 
       setActiveFilterQuery(filterQuery);
       setCurrentPage(1);
@@ -1762,7 +1762,6 @@ export const IncidentDashboard = () => {
       if (!response.ok) {
         throw new Error("Failed to export incidents");
       }
-
       let filename = `incidents_${new Date().toISOString().split("T")[0]}.xlsx`;
       const disposition = response.headers.get("Content-Disposition");
       if (disposition && disposition.includes("filename=")) {
