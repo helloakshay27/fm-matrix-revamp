@@ -110,43 +110,67 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 
   const handleYearNavigate = (action: 'next' | 'prev') => {
     setIsYearLoading(true);
-    if (action === 'next') {
-      setSelectedYear(prev => prev + 1);
-    } else {
-      setSelectedYear(prev => prev - 1);
-    }
+    const newYear = action === 'next' ? selectedYear + 1 : selectedYear - 1;
+
+    // Update selected year
+    setSelectedYear(newYear);
+
+    // Update date range for the new year
+    const startOfYear = moment().year(newYear).startOf('year').format('DD/MM/YYYY');
+    const endOfYear = moment().year(newYear).endOf('year').format('DD/MM/YYYY');
+    const filters = { ...activeFilters, dateFrom: startOfYear, dateTo: endOfYear };
+
+    // Update filters and trigger callbacks
+    setActiveFilters(filters);
+    onDateRangeChange?.(startOfYear, endOfYear);
+    onFiltersChange?.(filters);
+
     // Reset loading state after a short delay to allow re-render
     setTimeout(() => setIsYearLoading(false), 300);
   };
 
+  const getCurrentYearDateRange = () => {
+    const currentDate = moment().year(selectedYear);
+    const startOfYear = currentDate.clone().startOf('year').format('DD/MM/YYYY');
+    const endOfYear = currentDate.clone().endOf('year').format('DD/MM/YYYY');
+    return { startOfYear, endOfYear };
+  };
+
+  // Update year range when year changes
+  useEffect(() => {
+    if (view === 'year') {
+      const { startOfYear, endOfYear } = getCurrentYearDateRange();
+      const filters = { ...activeFilters, dateFrom: startOfYear, dateTo: endOfYear };
+      setActiveFilters(filters);
+      onDateRangeChange?.(startOfYear, endOfYear);
+      onFiltersChange?.(filters);
+    }
+  }, [selectedYear]);
+
   const handleViewChange = (newView: any) => {
     const calendarApi = calendarRef.current?.getApi();
-    
+
     if (newView === 'year') {
       setIsYearLoading(true);
-      // Delay to show loading state
+      // Get current year's date range
+      const { startOfYear, endOfYear } = getCurrentYearDateRange();
+      const filters = { ...activeFilters, dateFrom: startOfYear, dateTo: endOfYear };
+
+      // Update filters with current year's range
+      setActiveFilters(filters);
+      onDateRangeChange?.(startOfYear, endOfYear);
+      onFiltersChange?.(filters);
+
+      // Reset loading state after a short delay
       setTimeout(() => {
         setIsYearLoading(false);
       }, 300);
     }
-    
+
     if (calendarApi && newView !== 'year') {
       calendarApi.changeView(newView);
     }
     setView(newView);
-
-    if (newView === 'year') {
-      // For yearly view, only set date range if user wants automatic year filtering
-      // Otherwise, keep existing filters unchanged
-      if (!activeFilters.dateFrom && !activeFilters.dateTo) {
-        const startOfYear = moment().startOf('year').format('DD/MM/YYYY');
-        const endOfYear = moment().endOf('year').format('DD/MM/YYYY');
-        const filters = { ...activeFilters, dateFrom: startOfYear, dateTo: endOfYear };
-        setActiveFilters(filters);
-        onDateRangeChange?.(startOfYear, endOfYear);
-        onFiltersChange?.(filters);
-      }
-    }
   };
 
   const handleApplyFilters = (filters: CalendarFilters) => {
@@ -270,13 +294,13 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <span className="text-sm font-medium text-gray-700">
-              {activeFilters.dateFrom && activeFilters.dateTo 
+              {activeFilters.dateFrom && activeFilters.dateTo
                 ? `${activeFilters.dateFrom} - ${activeFilters.dateTo}`
                 : activeFilters.dateFrom || activeFilters.dateTo || 'All Dates'}
             </span>
           </div>
         )}
-        
+
         <Button
           onClick={() => setIsFilterModalOpen(true)}
           variant="outline"
@@ -693,14 +717,14 @@ const YearlyView: React.FC<{
       </div>
 
       {/* Event Summary at Bottom */}
-    
+
       {/* Enhanced Hover Tooltip with Debug Info */}
       {hoveredDay && (
         <div
           className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-xl p-4 max-w-sm"
           style={{
             left: Math.min(mousePosition.x + 10, window.innerWidth - 320), // Prevent overflow to the right
-            top: mousePosition.y > window.innerHeight / 2 
+            top: mousePosition.y > window.innerHeight / 2
               ? mousePosition.y - 300 // Show above cursor if in bottom half
               : mousePosition.y + 10, // Show below cursor if in top half
             pointerEvents: 'none',
@@ -732,7 +756,7 @@ const YearlyView: React.FC<{
                 </div>
 
                 {/* Debug Info */}
-          
+
 
                 {dayEvents.length > 0 ? (
                   <>
@@ -804,7 +828,7 @@ const YearlyView: React.FC<{
                       </div>
                     </div>
 
-                
+
                   </div>
                 </div>
 
@@ -939,7 +963,7 @@ const YearlyView: React.FC<{
             </div>
 
             {/* Footer in form style */}
-         
+
           </div>
         </div>
       )}
