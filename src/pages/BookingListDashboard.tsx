@@ -15,7 +15,7 @@ import { format, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 const enhancedTableColumns: ColumnConfig[] = [
@@ -187,7 +187,7 @@ const BookingListDashboard = () => {
     setStatusUpdating(bookingId);
     try {
       await axios.patch(
-        `https://${baseUrl}/pms/admin/bookings/${bookingId}`,
+        `https://${baseUrl}/pms/admin/facility_bookings/${bookingId}.json`,
         { current_status: newStatus.toLowerCase() },
         {
           headers: {
@@ -575,6 +575,31 @@ const BookingListDashboard = () => {
                 </Badge>
               </SelectValue>
             </SelectTrigger>
+
+            {item.facilityType === "Request" && (
+              <SelectContent>
+                <SelectItem value="Pending">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#F4C790]" />
+                    Pending
+                  </div>
+                </SelectItem>
+
+                <SelectItem value="Confirmed">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#A3E4DB]" />
+                    Confirmed
+                  </div>
+                </SelectItem>
+
+                <SelectItem value="Cancelled">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#E4626F]" />
+                    Cancelled
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            )}
           </Select>
         );
       default:
