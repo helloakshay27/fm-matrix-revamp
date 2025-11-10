@@ -552,6 +552,19 @@ export const TicketDetailsPage = () => {
   const [responseEscalationSeconds, setResponseEscalationSeconds] = useState<number>(0);
   const [resolutionEscalationSeconds, setResolutionEscalationSeconds] = useState<number>(0);
   const [goldenTicketEscalationSeconds, setGoldenTicketEscalationSeconds] = useState<number>(0);
+  // Extra TAT timings fetched from dedicated endpoints
+  const [responseTatTimings, setResponseTatTimings] = useState<any>(null);
+  const [resolutionTatTimings, setResolutionTatTimings] = useState<any>(null);
+  // Sequence support for multi-level escalations (response/resolution)
+  const [responseSequence, setResponseSequence] = useState<any[] | null>(null);
+  const responseSeqRef = useRef<any[] | null>(null);
+  const responseSeqIndexRef = useRef<number>(-1);
+  const [responseSequenceIndex, setResponseSequenceIndex] = useState<number>(-1);
+
+  const [resolutionSequence, setResolutionSequence] = useState<any[] | null>(null);
+  const resolutionSeqRef = useRef<any[] | null>(null);
+  const resolutionSeqIndexRef = useRef<number>(-1);
+  const [resolutionSequenceIndex, setResolutionSequenceIndex] = useState<number>(-1);
   
   const [communicationTemplates, setCommunicationTemplates] = useState<Array<{
     id: number;
@@ -834,6 +847,63 @@ export const TicketDetailsPage = () => {
     }
   }, [id]);
 
+  // Fetch extra TAT timings (response & resolution) when ticket details are available
+  useEffect(() => {
+    if (!ticketData?.id) return;
+
+    const fetchTatTimings = async () => {
+      try {
+        const resp = await ticketManagementAPI.getResponseTatTimings(String(ticketData.id || id));
+        setResponseTatTimings(resp);
+        // If the endpoint returned an array of escalation steps, store as sequence
+        if (Array.isArray(resp) && resp.length > 0) {
+          setResponseSequence(resp);
+          responseSeqRef.current = resp;
+          // find pending step; we don't show 'triggered' steps. If none pending, mark as inactive (-1)
+          const pendingIdx = resp.findIndex((r: any) => r.status === 'pending');
+          const startIdx = pendingIdx !== -1 ? pendingIdx : -1;
+          responseSeqIndexRef.current = startIdx;
+          setResponseSequenceIndex(startIdx);
+          // initialize seconds for that stage only if a pending step exists
+          if (startIdx !== -1) {
+            const mins = resp[startIdx]?.scheduled_minutes ?? resp[startIdx]?.minutes ?? 0;
+            setResponseEscalationSeconds(Math.floor((mins || 0) * 60));
+          } else {
+            setResponseEscalationSeconds(0);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching response TAT timings:', err);
+        setResponseTatTimings(null);
+      }
+
+      try {
+        const res = await ticketManagementAPI.getResolutionTatTimings(String(ticketData.id || id));
+        setResolutionTatTimings(res);
+        if (Array.isArray(res) && res.length > 0) {
+          setResolutionSequence(res);
+          resolutionSeqRef.current = res;
+          const pendingIdx = res.findIndex((r: any) => r.status === 'pending');
+          const startIdx = pendingIdx !== -1 ? pendingIdx : -1;
+          resolutionSeqIndexRef.current = startIdx;
+          setResolutionSequenceIndex(startIdx);
+          if (startIdx !== -1) {
+            const mins = res[startIdx]?.scheduled_minutes ?? res[startIdx]?.minutes ?? 0;
+            setResolutionEscalationSeconds(Math.floor((mins || 0) * 60));
+          } else {
+            setResolutionEscalationSeconds(0);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching resolution TAT timings:', err);
+        setResolutionTatTimings(null);
+      }
+    };
+
+    fetchTatTimings();
+  }, [ticketData?.id, id]);
+ console.log("responce tat time ------------------",responseTatTimings)
+  console.log("resolution  tat time ------------------",resolutionTatTimings)
   // Fetch communication templates
   useEffect(() => {
     const fetchCommunicationTemplates = async () => {
@@ -3188,7 +3258,142 @@ export const TicketDetailsPage = () => {
   const isTicketClosed = ticketData?.issue_status ? ['complete', 'completed', 'close', 'closed'].includes(ticketData.issue_status.toLowerCase()) : false;
   const isTicketOnHold = ticketData?.issue_status ? ['on hold'].includes(ticketData.issue_status.toLowerCase()) : false;
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   if (ticketData?.created_at && !isTicketClosed) {
+  //     // Calculate ageing in seconds from created_at to now
+  //     const createdTime = new Date(ticketData.created_at).getTime();
+  //     const now = Date.now();
+  //     const initialAgeingSeconds = Math.max(0, Math.floor((now - createdTime) / 1000));
+  //     setCurrentAgeing(initialAgeingSeconds);
+
+  //     // Initialize escalation timers (unless on hold)
+  //     const updateEscalationTimers = () => {
+  //       const now = Date.now();
+
+  //       // Response Escalation
+  //       if (!isTicketOnHold) {
+  //         try {
+  //           if (ticketData.next_response_escalation?.escalation_time) {
+  //             const escalationDate = new Date(ticketData.next_response_escalation.escalation_time).getTime();
+  //             const diffMs = escalationDate - now;
+  //             setResponseEscalationSeconds(Math.max(0, Math.floor(diffMs / 1000)));
+  //           } else if (responseTatTimings?.escalation_time) {
+  //             const escalationDate = new Date(responseTatTimings.escalation_time).getTime();
+  //             const diffMs = escalationDate - now;
+  //             setResponseEscalationSeconds(Math.max(0, Math.floor(diffMs / 1000)));
+  //           } else if (responseTatTimings?.minutes != null) {
+  //             // If API returns minutes, use minutes -> seconds directly
+  //             setResponseEscalationSeconds(Math.floor(responseTatTimings.minutes * 60));
+  //           } else {
+  //             setResponseEscalationSeconds(0);
+  //           }
+  //         } catch {
+  //           setResponseEscalationSeconds(0);
+  //         }
+  //       } else {
+  //         setResponseEscalationSeconds(0);
+  //       }
+
+  //       // Resolution Escalation
+  //       if (!isTicketOnHold) {
+  //         try {
+  //           if (ticketData.next_resolution_escalation?.escalation_time) {
+  //             const escalationDate = new Date(ticketData.next_resolution_escalation.escalation_time).getTime();
+  //             const diffMs = escalationDate - now;
+  //             setResolutionEscalationSeconds(Math.max(0, Math.floor(diffMs / 1000)));
+  //           } else if (resolutionTatTimings?.escalation_time) {
+  //             const escalationDate = new Date(resolutionTatTimings.escalation_time).getTime();
+  //             const diffMs = escalationDate - now;
+  //             setResolutionEscalationSeconds(Math.max(0, Math.floor(diffMs / 1000)));
+  //           } else if (resolutionTatTimings?.minutes != null) {
+  //             // If API returns minutes, use minutes -> seconds directly
+  //             setResolutionEscalationSeconds(Math.floor(resolutionTatTimings.minutes * 60));
+  //           } else {
+  //             setResolutionEscalationSeconds(0);
+  //           }
+  //         } catch {
+  //           setResolutionEscalationSeconds(0);
+  //         }
+  //       } else {
+  //         setResolutionEscalationSeconds(0);
+  //       }
+
+  //       // Golden Ticket Escalation
+  //       if (ticketData.next_executive_escalation?.escalation_time && !isTicketOnHold) {
+  //         try {
+  //           const escalationDate = new Date(ticketData.next_executive_escalation.escalation_time).getTime();
+  //           const diffMs = escalationDate - now;
+  //           setGoldenTicketEscalationSeconds(Math.max(0, Math.floor(diffMs / 1000)));
+  //         } catch {
+  //           setGoldenTicketEscalationSeconds(0);
+  //         }
+  //       } else {
+  //         setGoldenTicketEscalationSeconds(0);
+  //       }
+  //     };
+
+  //     // Initial calculation
+  //     updateEscalationTimers();
+
+  //     // Counter for API refresh - refresh every 30 seconds to get updated timer data
+  //     let apiRefreshCounter = 0;
+  //     const API_REFRESH_INTERVAL = 30; // Refresh API data every 30 seconds
+
+  //     const interval = setInterval(() => {
+  //       // Ageing timer continues even when on hold, but stops when closed
+  //       setCurrentAgeing(prev => prev + 1);
+        
+  //       // Escalation timers stop when on hold or closed
+  //       if (!isTicketOnHold) {
+  //         setResponseEscalationSeconds(prev => Math.max(0, prev - 1));
+  //         setResolutionEscalationSeconds(prev => Math.max(0, prev - 1));
+  //         setGoldenTicketEscalationSeconds(prev => Math.max(0, prev - 1));
+  //       }
+
+  //       // Refresh ticket data from backend every 30 seconds to get accurate timer values and escalation info
+  //       apiRefreshCounter++;
+  //       if (apiRefreshCounter >= API_REFRESH_INTERVAL) {
+  //         apiRefreshCounter = 0;
+  //         console.log('🕐 Refreshing ticket data for real-time timer updates...');
+  //         refreshTicketData();
+  //       }
+  //     }, 1000);
+
+  //     return () => clearInterval(interval);
+  //   } else if ((isTicketClosed || isTicketOnHold) && ticketData) {
+  //     // For closed or on hold tickets, set static values from API data
+  //     if (ticketData.ticket_ageing_minutes) {
+  //       const staticAgeingSeconds = ticketData.ticket_ageing_minutes * 60;
+  //       setCurrentAgeing(staticAgeingSeconds);
+  //     } else if (ticketData.ticket_ageing) {
+  //       // Parse "43 hour 7 min" format
+  //       const ageingString = ticketData.ticket_ageing;
+  //       const hourMatch = ageingString.match(/(\d+)\s*hour/i);
+  //       const minMatch = ageingString.match(/(\d+)\s*min/i);
+        
+  //       if (hourMatch || minMatch) {
+  //         const hours = hourMatch ? parseInt(hourMatch[1]) : 0;
+  //         const mins = minMatch ? parseInt(minMatch[1]) : 0;
+  //         const totalSeconds = (hours * 60 + mins) * 60;
+  //         setCurrentAgeing(totalSeconds);
+  //       }
+  //     }
+      
+  //     // Set static escalation values for closed/on hold tickets
+  //     if (ticketData.next_response_escalation?.minutes) {
+  //       setResponseEscalationSeconds(ticketData.next_response_escalation.minutes * 60);
+  //     }
+  //     if (ticketData.next_resolution_escalation?.minutes) {
+  //       setResolutionEscalationSeconds(ticketData.next_resolution_escalation.minutes * 60);
+  //     }
+  //     if (ticketData.next_executive_escalation?.minutes) {
+  //       setGoldenTicketEscalationSeconds(ticketData.next_executive_escalation.minutes * 60);
+  //     }
+  //   }
+  // }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed, isTicketOnHold, refreshTicketData, responseTatTimings, resolutionTatTimings]);
+
+
+   useEffect(() => {
     if (ticketData?.created_at && !isTicketClosed) {
       // Calculate ageing in seconds from created_at to now
       const createdTime = new Date(ticketData.created_at).getTime();
@@ -3199,14 +3404,42 @@ export const TicketDetailsPage = () => {
       // Initialize escalation timers (unless on hold)
       const updateEscalationTimers = () => {
         const now = Date.now();
-
+console.log("Updating escalation timers ", responseTatTimings)
         // Response Escalation
-        if (ticketData.next_response_escalation?.escalation_time && !isTicketOnHold) {
+        if (!isTicketOnHold) {
           try {
-            const escalationDate = new Date(ticketData.next_response_escalation.escalation_time).getTime();
-            const diffMs = escalationDate - now;
-            setResponseEscalationSeconds(Math.max(0, Math.floor(diffMs / 1000)));
-          } catch {
+            // If the dedicated endpoint returned a sequence (array), prefer the current step
+            if (Array.isArray(responseTatTimings) && responseTatTimings.length > 0) {
+              const idx = responseSeqIndexRef.current || 0;
+              const step = responseTatTimings[idx] || responseTatTimings[0];
+              const mins = step?.scheduled_minutes ?? step?.minutes ?? 0;
+              console.log("res minnnn:", mins)
+              setResponseEscalationSeconds(Math.floor((mins || 0) * 60));
+            } 
+            // else if (responseTatTimings?.escalation_time) {
+            //   // If API returned an absolute escalation_time, compute seconds (allow negative for exceeded)
+            //   const escalationDate = new Date(responseTatTimings.escalation_time).getTime();
+            //   const diffMs = escalationDate - now;
+            //   setResponseEscalationSeconds(Math.floor(diffMs / 1000));
+            // } 
+            // else if (responseTatTimings?.minutes != null) {
+            //   // Use minutes directly as requested (minutes -> seconds)
+            //   setResponseEscalationSeconds(Math.floor(responseTatTimings.minutes * 60));
+            // } 
+            // else if (ticketData.next_response_escalation?.escalation_time) {
+            //   // Fallback to ticketData escalation_time
+            //   const escalationDate = new Date(ticketData.next_response_escalation.escalation_time).getTime();
+            //   const diffMs = escalationDate - now;
+            //   setResponseEscalationSeconds(Math.floor(diffMs / 1000));
+            // } 
+            // else if (ticketData.next_response_escalation?.minutes != null) {
+            //   setResponseEscalationSeconds(Math.floor(ticketData.next_response_escalation.minutes * 60));
+            // } 
+            else {
+              setResponseEscalationSeconds(0);
+            }
+          } catch (e) {
+            console.error('Error initializing response escalation seconds', e);
             setResponseEscalationSeconds(0);
           }
         } else {
@@ -3214,12 +3447,35 @@ export const TicketDetailsPage = () => {
         }
 
         // Resolution Escalation
-        if (ticketData.next_resolution_escalation?.escalation_time && !isTicketOnHold) {
+        if (!isTicketOnHold) {
           try {
-            const escalationDate = new Date(ticketData.next_resolution_escalation.escalation_time).getTime();
-            const diffMs = escalationDate - now;
-            setResolutionEscalationSeconds(Math.max(0, Math.floor(diffMs / 1000)));
-          } catch {
+            if (Array.isArray(resolutionTatTimings) && resolutionTatTimings.length > 0) {
+              const idx = resolutionSeqIndexRef.current || 0;
+              const step = resolutionTatTimings[idx] || resolutionTatTimings[0];
+              const mins = step?.scheduled_minutes ?? step?.minutes ?? 0;
+              setResolutionEscalationSeconds(Math.floor((mins || 0) * 60));
+            } 
+            // else if (resolutionTatTimings?.escalation_time) {
+            //   const escalationDate = new Date(resolutionTatTimings.escalation_time).getTime();
+            //   const diffMs = escalationDate - now;
+            //   setResolutionEscalationSeconds(Math.floor(diffMs / 1000));
+            // } 
+            // else if (resolutionTatTimings?.minutes != null) {
+            //   setResolutionEscalationSeconds(Math.floor(resolutionTatTimings.minutes * 60));
+            // } 
+            // else if (ticketData.next_resolution_escalation?.escalation_time) {
+            //   const escalationDate = new Date(ticketData.next_resolution_escalation.escalation_time).getTime();
+            //   const diffMs = escalationDate - now;
+            //   setResolutionEscalationSeconds(Math.floor(diffMs / 1000));
+            // } 
+            // else if (ticketData.next_resolution_escalation?.minutes != null) {
+            //   setResolutionEscalationSeconds(Math.floor(ticketData.next_resolution_escalation.minutes * 60));
+            // } 
+            else {
+              setResolutionEscalationSeconds(0);
+            }
+          } catch (e) {
+            console.error('Error initializing resolution escalation seconds', e);
             setResolutionEscalationSeconds(0);
           }
         } else {
@@ -3243,27 +3499,74 @@ export const TicketDetailsPage = () => {
       // Initial calculation
       updateEscalationTimers();
 
-      // Counter for API refresh - refresh every 30 seconds to get updated timer data
-      let apiRefreshCounter = 0;
-      const API_REFRESH_INTERVAL = 30; // Refresh API data every 30 seconds
-
+      // Tick every second. Instead of polling every 30s, refresh only when a timer completes
       const interval = setInterval(() => {
         // Ageing timer continues even when on hold, but stops when closed
         setCurrentAgeing(prev => prev + 1);
-        
+
         // Escalation timers stop when on hold or closed
         if (!isTicketOnHold) {
-          setResponseEscalationSeconds(prev => Math.max(0, prev - 1));
-          setResolutionEscalationSeconds(prev => Math.max(0, prev - 1));
-          setGoldenTicketEscalationSeconds(prev => Math.max(0, prev - 1));
-        }
+          // Flag to indicate if we should refresh ticket data this tick
+          let refreshNeeded = false;
 
-        // Refresh ticket data from backend every 30 seconds to get accurate timer values and escalation info
-        apiRefreshCounter++;
-        if (apiRefreshCounter >= API_REFRESH_INTERVAL) {
-          apiRefreshCounter = 0;
-          console.log('🕐 Refreshing ticket data for real-time timer updates...');
-          refreshTicketData();
+          // Response sequence-aware decrement/advance
+          setResponseEscalationSeconds(prev => {
+            const next = prev - 1;
+            const seq = responseSeqRef.current;
+            const idx = responseSeqIndexRef.current;
+
+            // Detect crossing from positive to non-positive (timer completed)
+            if (prev > 0 && next <= 0) {
+              refreshNeeded = true;
+            }
+
+            if (seq && idx >= 0 && idx < seq.length - 1 && next <= 0) {
+              // advance to next stage
+              const newIdx = idx + 1;
+              responseSeqIndexRef.current = newIdx;
+              setResponseSequenceIndex(newIdx);
+              const mins = seq[newIdx]?.scheduled_minutes ?? seq[newIdx]?.minutes ?? 0;
+              return Math.floor((mins || 0) * 60);
+            }
+
+            // If sequence end or no sequence, allow negative for exceeded display (don't clamp)
+            return next;
+          });
+
+          // Resolution sequence-aware decrement/advance
+          setResolutionEscalationSeconds(prev => {
+            const next = prev - 1;
+            const seq = resolutionSeqRef.current;
+            const idx = resolutionSeqIndexRef.current;
+
+            if (prev > 0 && next <= 0) {
+              refreshNeeded = true;
+            }
+
+            if (seq && idx >= 0 && idx < seq.length - 1 && next <= 0) {
+              const newIdx = idx + 1;
+              resolutionSeqIndexRef.current = newIdx;
+              setResolutionSequenceIndex(newIdx);
+              const mins = seq[newIdx]?.scheduled_minutes ?? seq[newIdx]?.minutes ?? 0;
+              return Math.floor((mins || 0) * 60);
+            }
+            return next;
+          });
+
+          // Golden ticket remains unchanged (single deadline)
+          setGoldenTicketEscalationSeconds(prev => {
+            const next = prev - 1;
+            if (prev > 0 && next <= 0) {
+              refreshNeeded = true;
+            }
+            return next;
+          });
+
+          // If any timer just completed this tick, refresh ticket data once
+          if (refreshNeeded) {
+            console.log('🕐 Timer completed — refreshing ticket data for updated escalation info...');
+            refreshTicketData();
+          }
         }
       }, 1000);
 
@@ -3298,7 +3601,7 @@ export const TicketDetailsPage = () => {
         setGoldenTicketEscalationSeconds(ticketData.next_executive_escalation.minutes * 60);
       }
     }
-  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed, isTicketOnHold, refreshTicketData]);
+  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed, isTicketOnHold, refreshTicketData, responseTatTimings, resolutionTatTimings]);
 
   // Add useEffect to trigger balance TAT recalculation every second for real-time countdown (removed - now handled in main timer)
 
@@ -3337,9 +3640,17 @@ export const TicketDetailsPage = () => {
     [
       {
         label: 'Response TAT',
-        value: (isTicketClosed || isTicketOnHold)
-          ? (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
-          : (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
+        value: (() => {
+          // Prefer sequence step minutes when available, otherwise fallback to ticketData
+          const seq = responseSequence;
+          const seqMinutes = (seq && seq.length > 0 && responseSequenceIndex >= 0)
+            ? (seq[responseSequenceIndex]?.scheduled_minutes ?? seq[responseSequenceIndex]?.minutes)
+            : null;
+          const sourceMinutes = seqMinutes ?? ticketData.next_response_escalation?.minutes ?? 0;
+          return (isTicketClosed || isTicketOnHold)
+            ? (sourceMinutes ? formatMinutesToDDHHMM(sourceMinutes) : '00:00:00')
+            : (sourceMinutes ? formatMinutesToDDHHMM(sourceMinutes) : '00:00:00');
+        })()
       },
       {
         label: 'Balance TAT',
@@ -3353,16 +3664,30 @@ export const TicketDetailsPage = () => {
       },
       {
         label: (() => {
+          // Prefer sequence step if available, else fallback to ticketData
+          const seq = responseSequence;
+          if (seq && seq.length > 0 && responseSequenceIndex >= 0) {
+            const step = seq[responseSequenceIndex];
+            const name = step?.escalation_name || '';
+            return name ? `Escalation - ${name}` : 'Escalation';
+          }
           const escName = ticketData.next_response_escalation?.escalation_name || '';
           return escName ? `Escalation - ${escName}` : 'Escalation';
         })(),
         value: (() => {
+          const seq = responseSequence;
+          if (seq && seq.length > 0 && responseSequenceIndex >= 0) {
+            const step = seq[responseSequenceIndex];
+            const usersArr = Array.isArray(step?.escalate_to_user) ? step.escalate_to_user : (Array.isArray(step?.users) ? step.users : []);
+            if (!usersArr || usersArr.length === 0) return '-';
+            return usersArr.filter(u => !!u).join('\n');
+          }
+
           const users = Array.isArray(ticketData.next_response_escalation?.users)
             ? ticketData.next_response_escalation.users.filter(u => !!u)
             : [];
           
           if (!users || users.length === 0) return '-';
-          
           return users.join('\n');
         })()
       },
@@ -3370,9 +3695,16 @@ export const TicketDetailsPage = () => {
     [
       {
         label: 'Resolution TAT',
-        value: (isTicketClosed || isTicketOnHold)
-          ? (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
-          : (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
+        value: (() => {
+          const seq = resolutionSequence;
+          const seqMinutes = (seq && seq.length > 0 && resolutionSequenceIndex >= 0)
+            ? (seq[resolutionSequenceIndex]?.scheduled_minutes ?? seq[resolutionSequenceIndex]?.minutes)
+            : null;
+          const sourceMinutes = seqMinutes ?? ticketData.next_resolution_escalation?.minutes ?? 0;
+          return (isTicketClosed || isTicketOnHold)
+            ? (sourceMinutes ? formatMinutesToDDHHMM(sourceMinutes) : '00:00:00')
+            : (sourceMinutes ? formatMinutesToDDHHMM(sourceMinutes) : '00:00:00');
+        })()
       },
       {
         label: 'Balance TAT',
@@ -3386,16 +3718,29 @@ export const TicketDetailsPage = () => {
       },
       {
         label: (() => {
+          const seq = resolutionSequence;
+          if (seq && seq.length > 0 && resolutionSequenceIndex >= 0) {
+            const step = seq[resolutionSequenceIndex];
+            const name = step?.escalation_name || '';
+            return name ? `Escalation - ${name}` : 'Escalation';
+          }
           const escName = ticketData.next_resolution_escalation?.escalation_name || '';
           return escName ? `Escalation - ${escName}` : 'Escalation';
         })(),
         value: (() => {
+          const seq = resolutionSequence;
+          if (seq && seq.length > 0 && resolutionSequenceIndex >= 0) {
+            const step = seq[resolutionSequenceIndex];
+            const usersArr = Array.isArray(step?.escalate_to_user) ? step.escalate_to_user : (Array.isArray(step?.users) ? step.users : []);
+            if (!usersArr || usersArr.length === 0) return '-';
+            return usersArr.filter(u => !!u).join('\n');
+          }
+
           const users = Array.isArray(ticketData.next_resolution_escalation?.users)
             ? ticketData.next_resolution_escalation.users.filter(u => !!u)
             : [];
           
           if (!users || users.length === 0) return '-';
-          
           return users.join('\n');
         })()
       },
