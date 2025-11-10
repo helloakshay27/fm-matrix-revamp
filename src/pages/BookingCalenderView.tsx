@@ -126,24 +126,35 @@ const BookingCalenderView = () => {
 
     const fetchTimeSlotsForDate = async (date) => {
         try {
-            // Generate time slots from 9 AM to 9 PM
-            const timeSlots = Array.from({ length: 12 }, (_, i) => {
+            // Generate time slots from 9 AM to 9 PM with 15-minute intervals
+            const timeSlots = [];
+            for (let i = 0; i < 12; i++) {
                 const startHour = i + 9;
                 const startAmPm = startHour < 12 ? "AM" : "PM";
-                const endHour = startHour + 1;
-                const endAmPm = endHour < 12 ? "AM" : "PM";
 
-                return {
-                    id: i + 1,
-                    start_hour: startHour,
-                    start_minute: 0,
-                    end_hour: endHour,
-                    end_minute: 0,
-                    start: `${startHour > 12 ? startHour - 12 : startHour}:00${startAmPm}`,
-                    end: `${endHour > 12 ? endHour - 12 : endHour}:00${endAmPm}`,
-                    time_text: `${startHour > 12 ? startHour - 12 : startHour}:00 ${startAmPm} to ${endHour > 12 ? endHour - 12 : endHour}:00 ${endAmPm}`
-                };
-            });
+                // Create 4 fifteen-minute slots for each hour
+                for (let minute = 0; minute < 60; minute += 15) {
+                    const displayHour = startHour > 12 ? startHour - 12 : startHour;
+                    const slotId = `${i + 1}_${minute / 15}`;
+
+                    const endHour = minute === 45 ? startHour + 1 : startHour;
+                    const endMinute = minute === 45 ? 0 : minute + 15;
+                    const endAmPm = endHour < 12 ? "AM" : "PM";
+                    const displayEndHour = endHour > 12 ? endHour - 12 : endHour;
+
+                    timeSlots.push({
+                        id: slotId,
+                        start_hour: startHour,
+                        start_minute: minute,
+                        end_hour: endHour,
+                        end_minute: endMinute,
+                        start: `${displayHour}:${minute.toString().padStart(2, '0')}${startAmPm}`,
+                        end: `${displayEndHour}:${endMinute.toString().padStart(2, '0')}${endAmPm}`,
+                        time_text: `${displayHour}:${minute.toString().padStart(2, '0')}${startAmPm} - ${displayEndHour}:${endMinute.toString().padStart(2, '0')}${endAmPm}`,
+                        quarter: Math.floor(minute / 15) // 0, 1, 2, or 3 for each quarter
+                    });
+                }
+            };
 
             setTimeSlots(timeSlots);
             // Fetch bookings for all facilities
@@ -180,13 +191,18 @@ const BookingCalenderView = () => {
         const facilityBookings = bookings[facilityId];
         if (!facilityBookings) return false;
 
-        return facilityBookings.booked.some(
-            bookedSlot =>
-                bookedSlot.start_hour === timeSlot.start_hour &&
-                bookedSlot.start_minute === timeSlot.start_minute &&
-                bookedSlot.end_hour === timeSlot.end_hour &&
-                bookedSlot.end_minute === timeSlot.end_minute
-        );
+        return facilityBookings.booked.some(bookedSlot => {
+            // Convert booking times to minutes since midnight for easier comparison
+            const bookedStart = bookedSlot.start_hour * 60 + bookedSlot.start_minute;
+            const bookedEnd = bookedSlot.end_hour * 60 + bookedSlot.end_minute;
+            const slotStart = timeSlot.start_hour * 60 + timeSlot.start_minute;
+            const slotEnd = timeSlot.end_hour * 60 + timeSlot.end_minute;
+
+            // Check if the current 15-minute slot overlaps with any booked slot
+            return (slotStart >= bookedStart && slotStart < bookedEnd) ||
+                (slotEnd > bookedStart && slotEnd <= bookedEnd) ||
+                (slotStart <= bookedStart && slotEnd >= bookedEnd);
+        });
     };
 
     const handleSlotClick = (facilityId, slotId, isBooked) => {
@@ -350,13 +366,24 @@ const BookingCalenderView = () => {
                             </div>
 
                             <div className="flex-1 flex">
-                                {timeSlots.map((slot) => (
-                                    <div key={slot.id} className="border border-gray-400 bg-[rgba(86,86,86,0.2)] px-1 py-3 w-[110px]">
-                                        <div className="text-[12px] text-gray-600 font-normal text-center">{slot.start}</div>
-                                        <div className="text-[12px] text-gray-600 font-normal text-center">-</div>
-                                        <div className="text-[12px] text-gray-600 font-normal text-center">{slot.end}</div>
-                                    </div>
-                                ))}
+                                {timeSlots.filter(slot => slot.quarter === 0).map((slot) => {
+                                    const startHour = slot.start_hour;
+                                    const endHour = startHour + 1;
+                                    const startDisplay = `${startHour > 12 ? startHour - 12 : startHour}:00${startHour < 12 ? 'AM' : 'PM'}`;
+                                    const endDisplay = `${endHour > 12 ? endHour - 12 : endHour}:00${endHour < 12 ? 'AM' : 'PM'}`;
+
+                                    return (
+                                        <div key={slot.id} className="border border-gray-400 bg-[rgba(86,86,86,0.2)] px-1 py-2 w-[110px]">
+                                            <div className="text-[11px] text-gray-600 font-medium text-center">
+                                                {startDisplay}
+                                            </div>
+                                            <div className="text-[10px] text-gray-500 text-center">to</div>
+                                            <div className="text-[11px] text-gray-600 font-medium text-center">
+                                                {endDisplay}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -373,34 +400,43 @@ const BookingCalenderView = () => {
                                 </div>
 
                                 <div className="flex-1 flex">
-                                    {timeSlots.map((slot) => {
-                                        const slotBooked = isBooked(facility.id, slot);
-                                        const facilityBookings = bookings[facility.id] || { booked: [], vacant: [] };
-                                        const bookedSlot = facilityBookings.booked.find(
-                                            b => b.start_hour === slot.start_hour && b.start_minute === slot.start_minute
-                                        );
-                                        const vacantSlot = facilityBookings.vacant.find(
-                                            v => v.start_hour === slot.start_hour && v.start_minute === slot.start_minute
+                                    {/* Group slots by hour */}
+                                    {timeSlots.filter(slot => slot.quarter === 0).map((hourSlot) => {
+                                        const hourSlots = timeSlots.filter(
+                                            s => s.start_hour === hourSlot.start_hour
                                         );
 
                                         return (
-                                            <div
-                                                key={slot.id}
-                                                onClick={() => handleSlotClick(facility.id, slot.id, slotBooked)}
-                                                className={`border border-gray-400 h-16 w-[110px] flex items-center justify-center transition-colors ${selectedDateInfo?.isOff
-                                                    ? "bg-gray-100 cursor-not-allowed"
-                                                    : slotBooked
-                                                        ? "bg-[rgba(26,26,26,0.1)] cursor-pointer"
-                                                        : vacantSlot
-                                                            ? "bg-white hover:bg-blue-50 cursor-pointer"
-                                                            : "bg-white hover:bg-blue-50 cursor-pointer"
-                                                    }`}
-                                            >
-                                                {!selectedDateInfo?.isOff && (
-                                                    <div className={`text-center ${slotBooked ? 'text-[#000]' : 'text-[#2E7D32]'}`}>
-                                                        {slotBooked ? 'Booked' : vacantSlot ? '' : ''}
-                                                    </div>
-                                                )}
+                                            <div key={hourSlot.id} className="flex flex-col w-[110px]">
+                                                {/* Four 15-minute slots */}
+                                                <div className="flex h-16">
+                                                    {hourSlots.map((slot) => {
+                                                        const slotBooked = isBooked(facility.id, slot);
+                                                        const facilityBookings = bookings[facility.id] || { booked: [], vacant: [] };
+                                                        const bookedSlot = facilityBookings.booked.find(
+                                                            b => b.start_hour === slot.start_hour &&
+                                                                b.start_minute === slot.start_minute
+                                                        );
+
+                                                        return (
+                                                            <div
+                                                                key={slot.id}
+                                                                onClick={() => handleSlotClick(facility.id, slot.id, slotBooked)}
+                                                                className={`flex-1 border border-gray-200 transition-colors
+                                                                    ${selectedDateInfo?.isOff
+                                                                        ? "bg-gray-100 cursor-not-allowed"
+                                                                        : slotBooked
+                                                                            ? "bg-[rgba(86,86,86,0.2)] cursor-pointer"
+                                                                            : "hover:bg-blue-50 cursor-pointer"
+                                                                    }
+                                                                    ${slot.quarter === 0 ? 'border-l border-l-gray-400' : ''}
+                                                                    ${slot.quarter === 3 ? 'border-r border-r-gray-400' : ''}
+                                                                `}
+                                                            >
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         );
                                     })}
