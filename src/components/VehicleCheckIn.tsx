@@ -3,9 +3,33 @@ import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Button } from '@/components/ui/button';
-import { Filter, Pencil } from 'lucide-react';
+import { Filter, Pencil, X } from 'lucide-react';
 import { API_CONFIG } from '@/config/apiConfig';
 import apiClient from '@/utils/apiClient';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 type LtmRecord = {
   id: string | number;
@@ -44,6 +68,13 @@ interface VehicleCheckInProps {
   onFilterClick?: () => void;
 }
 
+interface FilterState {
+  dateFrom: Date | undefined;
+  dateTo: Date | undefined;
+  email: string;
+  circle: string;
+}
+
 const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ onFilterClick }) => {
   const navigate = useNavigate();
   const [apiData, setApiData] = useState<LtmRecord[]>([]);
@@ -53,6 +84,13 @@ const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ onFilterClick }) => {
     current_page: 1,
     total_count: 0,
     total_pages: 0,
+  });
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    dateFrom: undefined,
+    dateTo: undefined,
+    email: '',
+    circle: '',
   });
 
   const columns: ColumnConfig[] = useMemo(() => ([
@@ -107,13 +145,35 @@ const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ onFilterClick }) => {
       variant="outline"
       size="sm"
       className="border-[#5B2D66] text-[#5B2D66] hover:bg-[#5B2D66]/10 flex items-center gap-2"
-      onClick={onFilterClick}
+      onClick={() => setIsFilterOpen(true)}
       title="Filters"
     >
       <Filter className="w-4 h-4" />
       Filters
     </Button>
   );
+
+  const handleFilterSubmit = () => {
+    // TODO: Apply filters to API call
+    console.log('Applying filters:', filters);
+    setIsFilterOpen(false);
+    // Refetch data with filters
+    // fetchLtmList(1, filters);
+  };
+
+  const handleFilterReset = () => {
+    setFilters({
+      dateFrom: undefined,
+      dateTo: undefined,
+      email: '',
+      circle: '',
+    });
+  };
+
+  const handleFilterExport = () => {
+    // TODO: Implement export with filters
+    console.log('Exporting with filters:', filters);
+  };
 
   const renderCell = (item: LtmRecord, columnKey: string) => {
     switch (columnKey) {
@@ -196,6 +256,136 @@ const VehicleCheckIn: React.FC<VehicleCheckInProps> = ({ onFilterClick }) => {
         enableSearch={true}
         hideColumnsButton={false}
       />
+
+      {/* Filter Modal */}
+      <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setIsFilterOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            {/* Date Range */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dateFrom">Date Range*</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="dateFrom"
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !filters.dateFrom && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {filters.dateFrom ? format(filters.dateFrom, "PPP") : "Select Date Range"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={filters.dateFrom}
+                      onSelect={(date) => setFilters({ ...filters, dateFrom: date })}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dateTo" className="invisible">To</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="dateTo"
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !filters.dateTo && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {filters.dateTo ? format(filters.dateTo, "PPP") : "Select Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={filters.dateTo}
+                      onSelect={(date) => setFilters({ ...filters, dateTo: date })}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email*</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter Email"
+                value={filters.email}
+                onChange={(e) => setFilters({ ...filters, email: e.target.value })}
+              />
+            </div>
+
+            {/* Circle */}
+            <div className="space-y-2">
+              <Label htmlFor="circle">Circle</Label>
+              <Select
+                value={filters.circle}
+                onValueChange={(value) => setFilters({ ...filters, circle: value })}
+              >
+                <SelectTrigger id="circle">
+                  <SelectValue placeholder="Select Circle" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="circle1">Circle 1</SelectItem>
+                  <SelectItem value="circle2">Circle 2</SelectItem>
+                  <SelectItem value="circle3">Circle 3</SelectItem>
+                  {/* Add more circles as needed */}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-3 pt-4 border-t">
+            <Button
+              className="bg-[#5B2D66] hover:bg-[#5B2D66]/90 text-white px-8"
+              onClick={handleFilterSubmit}
+            >
+              Submit
+            </Button>
+            <Button
+              className="bg-[#5B2D66] hover:bg-[#5B2D66]/90 text-white px-8"
+              onClick={handleFilterExport}
+            >
+              Export
+            </Button>
+            <Button
+              variant="outline"
+              className="px-8"
+              onClick={handleFilterReset}
+            >
+              Reset
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

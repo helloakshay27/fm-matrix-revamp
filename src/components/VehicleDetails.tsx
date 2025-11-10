@@ -75,11 +75,14 @@ const exportVehiclesCsv = (rows: VehicleRecord[]) => {
   URL.revokeObjectURL(url);
 };
 
+
+
 const VehicleDetails: React.FC<VehicleDetailsProps> = ({ data = [], loading: externalLoading = false }) => {
   const [apiData, setApiData] = useState<VehicleRecord[]>([]);
   const [apiLoading, setApiLoading] = useState<boolean>(false);
   const [hasFetched, setHasFetched] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
@@ -87,37 +90,62 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({ data = [], loading: ext
   });
 
   // Fetch vehicle details from API
-  useEffect(() => {
-    const fetchVehicleDetails = async (page: number = 1) => {
-      try {
-        setApiLoading(true);
-        const response = await apiClient.get<VehicleDetailsApiResponse>(
-          `${API_CONFIG.ENDPOINTS.VEHICLE_DETAILS}?page=${page}`
-        );
-        
-        if (response.data && response.data.vehicle_details) {
-          setApiData(response.data.vehicle_details);
-          setPagination(response.data.pagination);
-          setHasFetched(true);
-        }
-      } catch (error) {
-        console.error('Error fetching vehicle details:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch vehicle details',
-          variant: 'destructive',
-        });
-        setHasFetched(true);
-      } finally {
-        setApiLoading(false);
+  const fetchVehicleDetails = async (page: number = 1, search: string = '') => {
+    try {
+      setApiLoading(true);
+      let url = `${API_CONFIG.ENDPOINTS.VEHICLE_DETAILS}?page=${page}`;
+      
+      // Add search query parameter if search is provided
+      if (search.trim()) {
+        url += `&q[user_email_cont]=${encodeURIComponent(search.trim())}`;
       }
-    };
+      
+      const response = await apiClient.get<VehicleDetailsApiResponse>(url);
+      
+      if (response.data && response.data.vehicle_details) {
+        setApiData(response.data.vehicle_details);
+        setPagination(response.data.pagination);
+        setHasFetched(true);
+      }
+    } catch (error) {
+      console.error('Error fetching vehicle details:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch vehicle details',
+        variant: 'destructive',
+      });
+      setHasFetched(true);
+    } finally {
+      setApiLoading(false);
+    }
+  };
 
+  // Initial fetch
+  useEffect(() => {
     // Only fetch from API once if no external data is provided
     if (!hasFetched && (!data || data.length === 0)) {
-      fetchVehicleDetails(currentPage);
+      fetchVehicleDetails(currentPage, searchQuery);
     }
-  }, [data, hasFetched, currentPage]);
+  }, [data, hasFetched]);
+
+  // Handle page change
+  useEffect(() => {
+    if (hasFetched && (!data || data.length === 0)) {
+      fetchVehicleDetails(currentPage, searchQuery);
+    }
+  }, [currentPage]);
+
+  // Handle search with debounce
+  useEffect(() => {
+    if (!hasFetched || (data && data.length > 0)) return;
+    
+    const debounceTimer = setTimeout(() => {
+      setCurrentPage(1); // Reset to first page on search
+      fetchVehicleDetails(1, searchQuery);
+    }, 300); // 300ms debounce for faster response
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
 
   // Use API data if available, otherwise use provided data, no dummy data
   const tableData = useMemo(() => {
@@ -128,6 +156,11 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({ data = [], loading: ext
 
   // Determine loading state
   const isLoading = externalLoading || apiLoading;
+
+  // Handle search change from EnhancedTable
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+  };
 
   const columns: ColumnConfig[] = useMemo(() => ([
     { key: 'name', label: 'Name', sortable: true },
@@ -140,15 +173,15 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({ data = [], loading: ext
     { key: 'vehicle_name', label: 'Vehicle Name', sortable: true },
   ]), []);
 
-  const leftActions = (
-    <Button
-      className="bg-[#5B2D66] text-white hover:bg-[#5B2D66]/90"
-      onClick={() => exportVehiclesCsv(tableData)}
-    >
-      <Download className="w-4 h-4 mr-2" />
-      Export
-    </Button>
-  );
+  // const leftActions = (
+  //   <Button
+  //     className="bg-[#5B2D66] text-white hover:bg-[#5B2D66]/90"
+  //     onClick={() => exportVehiclesCsv(tableData)}
+  //   >
+  //     <Download className="w-4 h-4 mr-2" />
+  //     Export
+  //   </Button>
+  // );
 
   const renderCell = (item: VehicleRecord, columnKey: string) => {
     switch (columnKey) {
@@ -305,15 +338,17 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({ data = [], loading: ext
         data={tableData}
         columns={columns}
         renderCell={renderCell}
-        leftActions={leftActions}
-        enableExport={false}
+        // leftActions={leftActions}
+        // enableExport={false}
         pagination={false}
         loading={isLoading}
         storageKey="vehicle-details-table"
-        searchPlaceholder="Search..."
+        searchPlaceholder="Search by email..."
         enableSearch={true}
         hideColumnsButton={false}
         emptyMessage="No vehicle details available"
+        onSearchChange={handleSearchChange}
+        disableClientSearch={true}
       />
       
       {/* Pagination (same as TrainingDashboard) */}
