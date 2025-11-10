@@ -598,9 +598,6 @@ import { EditAddressPage } from "./pages/EditAddressPage";
 // Import ChecklistGroupDashboard for setup and settings
 import { ChecklistGroupDashboard } from "./pages/setup/ChecklistGroupDashboard";
 
-// Import Booking List page
-import BookingListDashboard from "./pages/BookingListDashboard";
-
 // Import Booking Setup Dashboard
 import { BookingSetupDashboard } from "./pages/BookingSetupDashboard";
 import { BookingSetupDetailPage } from "./pages/BookingSetupDetailPage";
@@ -778,6 +775,7 @@ import SafetyCheckAudit from './pages/SafetyCheckAudit';
 import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 import Sitemap from "./pages/Sitemap";
+import BookingList from "./pages/BookingList";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -993,7 +991,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                 <Route
+                <Route
                   path="/dashboard-executive"
                   element={
                     <ProtectedRoute>
@@ -1072,7 +1070,7 @@ function App() {
                   path="/bookings"
                   element={
                     <ProtectedRoute>
-                      <BookingListDashboard />
+                      <BookingList />
                     </ProtectedRoute>
                   }
                 />
@@ -1545,7 +1543,7 @@ function App() {
                     path="/maintenance/ticket/:id/tag-vendor"
                     element={<TicketTagVendorPage />}
                   />
-                   <Route
+                  <Route
                     path="/maintenance/ticket/:id/job-sheet"
                     element={<TicketJobSheetPage />}
                   />
@@ -2871,7 +2869,7 @@ function App() {
                   {/* VAS Booking Routes */}
                   <Route
                     path="/vas/booking/list"
-                    element={<BookingListDashboard />}
+                    element={<BookingList />}
                   />
                   <Route
                     path="/vas/booking/add"
@@ -3075,7 +3073,7 @@ function App() {
                     path="/master/inventory-sub-type/edit/:id"
                     element={<EditInventorySubTypePage />}
                   />
-                 
+
 
                   <Route
                     path="/maintenance/waste/generation/add"

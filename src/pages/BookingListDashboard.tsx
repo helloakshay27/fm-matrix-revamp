@@ -666,7 +666,7 @@ const BookingListDashboard = () => {
   ];
 
   return (
-    <div className="p-[30px] space-y-6">
+    <div className="space-y-6">
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
           <p>Error loading bookings: {error}</p>
