@@ -20,6 +20,7 @@ import {
   Download,
   BarChart3,
   Pencil,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 // Removed legacy BulkUploadDialog; using new design
 import { InventoryBulkUploadDialog } from "@/components/InventoryBulkUploaddialogbox";
@@ -254,6 +255,18 @@ export const InventoryDashboard = () => {
   ]);
   // Maintain explicit draggable order for analytics cards
   const [analyticsCardOrder, setAnalyticsCardOrder] = useState<string[]>([]);
+  const formatAnalyticsDateForDisplay = (date: Date) => {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  const getAnalyticsDateRangeLabel = () => {
+    const { startDate, endDate } = dateRange;
+    if (!startDate || !endDate) return '';
+    return `${formatAnalyticsDateForDisplay(startDate)} - ${formatAnalyticsDateForDisplay(endDate)}`;
+  };
   // Load saved order from localStorage on first mount
   useEffect(() => {
     try {
@@ -1172,7 +1185,11 @@ export const InventoryDashboard = () => {
                 variant="outline"
                 className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
               >
-                <Filter className="w-4 h-4" />
+                <CalendarIcon className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  {getAnalyticsDateRangeLabel()}
+                </span>
+                <Filter className="w-4 h-4 text-gray-600" />
               </Button>
             </div>
             <InventoryAnalyticsSelector

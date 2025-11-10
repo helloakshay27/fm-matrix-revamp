@@ -408,7 +408,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           { name: 'Inactive', value: Number(data?.count_of_inactive_items) || 0, color: ITEM_STATUS_COLORS.inactive },
           { name: 'Critical', value: Number(data?.count_of_critical_items) || 0, color: '#8B7355' },
           { name: 'Non-Critical', value: Number(data?.count_of_non_critical_items) || 0, color: '#DBC2A9' },
-          { name: 'Eco-friendly', value: Number(data?.eco_friendly) || 0, color: '#d1d5db' }
+          // Use a distinct light green for eco-friendly to avoid clashing with Inactive
+          { name: 'Eco-friendly', value: Number(data?.eco_friendly) || 0, color: '#A7F3D0' }
         ];
         const total = Number(data?.total_items) || statusChartData.reduce((sum, item) => sum + (item.value || 0), 0);
         const withPct = statusChartData.map((s) => ({
