@@ -188,22 +188,78 @@ export const ClubMembershipDashboard = () => {
 
   // Handle export
   const handleExport = async () => {
+    const loadingToast = toast.loading('Preparing Excel export...');
     try {
-      toast.loading('Preparing export file...');
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
       
-      // TODO: Replace with actual API call
-      // const response = await apiClient.get('/club-management/memberships/export', {
-      //   responseType: 'blob'
-      // });
+      // Build the export URL
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.xlsx`);
+      url.searchParams.append('access_token', token || '');
       
-      // Mock export
-      setTimeout(() => {
-        toast.success('Export completed successfully');
-      }, 1000);
+      // Add the same filters that are applied to the table
+      if (filters.search) {
+        url.searchParams.append('q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]', filters.search);
+      }
+      
+      if (filters.clubMemberEnabled) {
+        url.searchParams.append('q[club_member_enabled_eq]', filters.clubMemberEnabled);
+      }
+      
+      if (filters.accessCardEnabled) {
+        url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
+      }
+      
+      if (filters.startDate) {
+        const [year, month, day] = filters.startDate.split('-');
+        const formattedDate = `${day}/${month}/${year}`;
+        url.searchParams.append('q[start_date_eq]', formattedDate);
+      }
+      
+      if (filters.endDate) {
+        const [year, month, day] = filters.endDate.split('-');
+        const formattedDate = `${day}/${month}/${year}`;
+        url.searchParams.append('q[end_date_eq]', formattedDate);
+      }
+      
+      console.log('Export URL:', url.toString());
+      
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      }
+      
+      // Get the blob from response
+      const blob = await response.blob();
+      
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // Generate filename with current date
+      const date = new Date().toISOString().split('T')[0];
+      link.download = `club_memberships_${date}.xlsx`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Cleanup
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast.success('Excel file downloaded successfully', { id: loadingToast });
       
     } catch (error) {
       console.error('Error exporting data:', error);
-      toast.error('Failed to export data');
+      toast.error('Failed to export data', { id: loadingToast });
     }
   };
 

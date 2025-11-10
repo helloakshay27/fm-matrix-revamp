@@ -261,6 +261,19 @@ export const AddClubMembershipPage = () => {
       // Set access card
       setCardAllocated(data.access_card_enabled || false);
       
+      // Set existing image previews (but not the files, as they're already on server)
+      if (data.identification_image) {
+        setIdCardPreview(data.identification_image);
+      }
+      
+      if (data.avatar) {
+        // Handle avatar URL format
+        const avatarUrl = data.avatar?.startsWith('%2F') 
+          ? `https://fm-uat-api.lockated.com${decodeURIComponent(data.avatar)}` 
+          : data.avatar;
+        setResidentPhotoPreview(avatarUrl);
+      }
+      
       toast.success('Membership data loaded');
     } catch (error) {
       console.error('Error loading membership data:', error);
@@ -415,15 +428,17 @@ export const AddClubMembershipPage = () => {
       return;
     }
 
-    // Mandatory file validations
-    if (!idCardFile) {
-      toast.error('Please upload ID card (mandatory)');
-      return;
-    }
+    // Mandatory file validations - only for add mode
+    if (!isEditMode) {
+      if (!idCardFile) {
+        toast.error('Please upload ID card (mandatory)');
+        return;
+      }
 
-    if (!residentPhotoFile) {
-      toast.error('Please upload resident photo (mandatory)');
-      return;
+      if (!residentPhotoFile) {
+        toast.error('Please upload resident photo (mandatory)');
+        return;
+      }
     }
 
     if (cardAllocated && !formData.accessCardId) {
@@ -461,34 +476,54 @@ export const AddClubMembershipPage = () => {
 
       if (userSelectionMode === 'select') {
         // Select user mode - only club_member data
+        const clubMemberData: any = {
+          user_id: selectedUserId,
+          pms_site_id: parseInt(siteId),
+          club_member_enabled: true,
+          access_card_enabled: cardAllocated,
+          access_card_id: cardAllocated ? formData.accessCardId : null,
+          start_date: startDate ? startDate.format('YYYY-MM-DD') : null,
+          end_date: endDate ? endDate.format('YYYY-MM-DD') : null,
+        };
+
+        // Only add file fields if they exist (new uploads)
+        if (identificationImageBase64) {
+          clubMemberData.identification_image = identificationImageBase64;
+        }
+        if (avatarBase64) {
+          clubMemberData.avatar = avatarBase64;
+        }
+        if (attachmentsBase64.length > 0) {
+          clubMemberData.attachments = attachmentsBase64;
+        }
+
         payload = {
-          club_member: {
-            user_id: selectedUserId,
-            pms_site_id: parseInt(siteId),
-            club_member_enabled: true,
-            access_card_enabled: cardAllocated,
-            access_card_id: cardAllocated ? formData.accessCardId : null,
-            start_date: startDate ? startDate.format('YYYY-MM-DD') : null,
-            end_date: endDate ? endDate.format('YYYY-MM-DD') : null,
-            identification_image: identificationImageBase64 || null,
-            attachments: attachmentsBase64,
-            avatar: avatarBase64 || null
-          }
+          club_member: clubMemberData
         };
       } else {
         // Manual mode - include user creation
+        const clubMemberData: any = {
+          pms_site_id: parseInt(siteId),
+          club_member_enabled: true,
+          access_card_enabled: cardAllocated,
+          access_card_id: cardAllocated ? formData.accessCardId : null,
+          start_date: startDate ? startDate.format('YYYY-MM-DD') : null,
+          end_date: endDate ? endDate.format('YYYY-MM-DD') : null,
+        };
+
+        // Only add file fields if they exist (new uploads)
+        if (identificationImageBase64) {
+          clubMemberData.identification_image = identificationImageBase64;
+        }
+        if (avatarBase64) {
+          clubMemberData.avatar = avatarBase64;
+        }
+        if (attachmentsBase64.length > 0) {
+          clubMemberData.attachments = attachmentsBase64;
+        }
+
         payload = {
-          club_member: {
-            pms_site_id: parseInt(siteId),
-            club_member_enabled: true,
-            access_card_enabled: cardAllocated,
-            access_card_id: cardAllocated ? formData.accessCardId : null,
-            start_date: startDate ? startDate.format('YYYY-MM-DD') : null,
-            end_date: endDate ? endDate.format('YYYY-MM-DD') : null,
-            identification_image: identificationImageBase64 || null,
-            attachments: attachmentsBase64,
-            avatar: avatarBase64 || null
-          },
+          club_member: clubMemberData,
           user: {
             site_id: parseInt(siteId),
             registration_source: 'Web',
@@ -819,17 +854,21 @@ export const AddClubMembershipPage = () => {
 
           {/* File Uploads */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-4">Upload Documents</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-4">
+              Upload Documents {!isEditMode && <span className="text-red-500">*</span>}
+              {isEditMode && <span className="text-gray-500 text-xs ml-2">(Upload new files to replace existing ones)</span>}
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* ID Card Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ID Card <span className="text-red-500">*</span>
+                  ID Card {!isEditMode && <span className="text-red-500">*</span>}
+                  {isEditMode && idCardPreview && !idCardFile && <span className="text-green-600 text-xs ml-2">(Existing)</span>}
                 </label>
                 <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                  idCardFile ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'
+                  idCardFile ? 'border-green-300 bg-green-50' : idCardPreview ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-[#C72030]'
                 }`}>
-                  {idCardFile ? (
+                  {(idCardFile || idCardPreview) ? (
                     <div>
                       {idCardPreview && (
                         <div className="mb-3">
@@ -841,7 +880,9 @@ export const AddClubMembershipPage = () => {
                         </div>
                       )}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">{idCardFile.name}</span>
+                        <span className="text-sm text-gray-600">
+                          {idCardFile ? idCardFile.name : (isEditMode ? 'Existing ID Card' : '')}
+                        </span>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -855,7 +896,9 @@ export const AddClubMembershipPage = () => {
                   ) : (
                     <div>
                       <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500 mb-2">Upload ID Card (Required)</p>
+                      <p className="text-sm text-gray-500 mb-2">
+                        Upload ID Card {!isEditMode && '(Required)'}
+                      </p>
                       <input
                         type="file"
                         accept="image/*"
@@ -876,12 +919,13 @@ export const AddClubMembershipPage = () => {
               {/* Resident Photo Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Member Photo <span className="text-red-500">*</span>
+                  Member Photo {!isEditMode && <span className="text-red-500">*</span>}
+                  {isEditMode && residentPhotoPreview && !residentPhotoFile && <span className="text-green-600 text-xs ml-2">(Existing)</span>}
                 </label>
                 <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                  residentPhotoFile ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'
+                  residentPhotoFile ? 'border-green-300 bg-green-50' : residentPhotoPreview ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-[#C72030]'
                 }`}>
-                  {residentPhotoFile ? (
+                  {(residentPhotoFile || residentPhotoPreview) ? (
                     <div>
                       {residentPhotoPreview && (
                         <div className="mb-3">
@@ -893,7 +937,9 @@ export const AddClubMembershipPage = () => {
                         </div>
                       )}
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">{residentPhotoFile.name}</span>
+                        <span className="text-sm text-gray-600">
+                          {residentPhotoFile ? residentPhotoFile.name : (isEditMode ? 'Existing Member Photo' : '')}
+                        </span>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -907,7 +953,9 @@ export const AddClubMembershipPage = () => {
                   ) : (
                     <div>
                       <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500 mb-2">Upload Photo (Required)</p>
+                      <p className="text-sm text-gray-500 mb-2">
+                        Upload Photo {!isEditMode && '(Required)'}
+                      </p>
                       <input
                         type="file"
                         accept="image/*"
@@ -1012,7 +1060,7 @@ export const AddClubMembershipPage = () => {
               disabled={isSubmitting}
               className="bg-[#C72030] hover:bg-[#A01020] text-white"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
+              {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
             </Button>
           </div>
         </div>
