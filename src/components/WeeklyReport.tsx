@@ -1034,7 +1034,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         <div className="w-full print-exact">
             {/* readiness marker so external logic (or tests) can detect when page content mounted */}
             <div data-component="weekly-report" data-loading={overallLoading ? 'true' : 'false'} style={{ display: 'none' }} />
-            <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } .first-page-group { break-inside: avoid !important; page-break-inside: avoid !important; page-break-before: auto; page-break-after: always; } }`}</style>
+            <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } .first-page-group { break-inside: avoid !important; page-break-inside: avoid !important; page-break-before: auto; page-break-after: always; } a[href]::after { content: "" !important; } }`}</style>
             {/* Wrap sections 1–3 together to keep them on a single page in PDF */}
             <div className="no-break first-page-group">
                 <header className="w-full bg-[#F6F4EE] flex flex-col items-center justify-center text-center py-6 sm:py-8 mb-6 
@@ -1533,6 +1533,23 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                                         <td className="p-4 print:p-2 text-center text-black">{row.total}</td>
                                     </tr>
                                 ))}
+                                {/* Total Row */}
+                                {!checklistStatusLoading && !checklistStatusError && checklistStatusRows.length > 0 && (() => {
+                                    const totals = checklistStatusRows.reduce((acc, r) => {
+                                        acc.technical += Number(r.technical || 0);
+                                        acc.nonTechnical += Number(r.nonTechnical || 0);
+                                        acc.total += Number(r.total || 0);
+                                        return acc;
+                                    }, { technical: 0, nonTechnical: 0, total: 0 });
+                                    return (
+                                        <tr className="border-t border-gray-300 font-semibold">
+                                            <td className="p-4 print:p-2 text-black">Total</td>
+                                            <td className="p-4 print:p-2 text-center text-black">{totals.technical}</td>
+                                            <td className="p-4 print:p-2 text-center text-black">{totals.nonTechnical}</td>
+                                            <td className="p-4 print:p-2 text-center text-black">{totals.total}</td>
+                                        </tr>
+                                    );
+                                })()}
                             </tbody>
                         </table>
                     </div>
@@ -1577,6 +1594,16 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                                         <td className="p-5 sm:p-6 print:p-3 text-center text-black font-medium">{row.overdue_count}</td>
                                     </tr>
                                 ))}
+                                {/* Total row */}
+                                {!checklistStatusLoading && !checklistStatusError && overdueCategoryRows.length > 0 && (() => {
+                                    const totalOverdue = overdueCategoryRows.reduce((sum, r) => sum + Number(r.overdue_count || 0), 0);
+                                    return (
+                                        <tr className="border-t border-gray-300 font-semibold">
+                                            <td className="p-5 sm:p-6 print:p-3 text-black">Total</td>
+                                            <td className="p-5 sm:p-6 print:p-3 text-center text-black">{totalOverdue}</td>
+                                        </tr>
+                                    );
+                                })()}
                             </tbody>
                         </table>
                     </div>
