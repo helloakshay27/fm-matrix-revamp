@@ -241,11 +241,13 @@ export const AddInventoryPage = () => {
         newErrors.maxStockLevel = '';
         
         // Basic validation
-        if (value && !isValidPositiveNumber(value)) {
+        if (!value) {
+          newErrors.maxStockLevel = 'Max Stock Level is required';
+        } else if (!isValidPositiveNumber(value)) {
           newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
         }
         // Cross-field validation: Max Stock Level should be >= Min Stock Level
-        else if (value && currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
+        else if (currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
           if (parseFloat(value) < parseFloat(currentFormData.minStockLevel)) {
             newErrors.maxStockLevel = 'Max Stock Level cannot be less than Min Stock Level';
           }
@@ -334,9 +336,11 @@ export const AddInventoryPage = () => {
       : !isNaN(parseFloat(formData.minStockLevel)) && parseFloat(formData.minStockLevel) >= 0
         ? ''
         : 'Min Stock Level must be a valid number';
-    newErrors.maxStockLevel = formData.maxStockLevel && (isNaN(parseFloat(formData.maxStockLevel)) || parseFloat(formData.maxStockLevel) < 0)
-      ? 'Max Stock Level must be a valid number'
-      : '';
+    newErrors.maxStockLevel = !formData.maxStockLevel
+      ? 'Max Stock Level is required'
+      : !isNaN(parseFloat(formData.maxStockLevel)) && parseFloat(formData.maxStockLevel) >= 0
+        ? ''
+        : 'Max Stock Level must be a valid number';
     newErrors.minOrderLevel = formData.minOrderLevel && (isNaN(parseFloat(formData.minOrderLevel)) || parseFloat(formData.minOrderLevel) < 0)
       ? 'Min Order Level must be a valid number'
       : '';
@@ -1185,7 +1189,7 @@ export const AddInventoryPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <TextField
-                    label="Max.Stock Level"
+                    label={<>Max.Stock Level<span style={{ color: '#C72030' }}>*</span></>}
                     placeholder="Max Stock"
                     value={formData.maxStockLevel}
                     onChange={(e) => handleInputChange('maxStockLevel', e.target.value)}
