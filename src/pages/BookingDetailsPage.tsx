@@ -145,7 +145,7 @@ export const BookingDetailsPage = () => {
                   value={bookings?.current_status}
                   onValueChange={(newStatus) => handleStatusChange(newStatus)}
                 >
-                  <SelectTrigger className="border-none bg-transparent p-0 h-auto">
+                  <SelectTrigger className="border-none bg-transparent p-0 h-auto [&>svg]:hidden">
                     <div
                       className={`text-gray-900 px-2 py-[2px] flex items-center gap-2 text-sm cursor-pointer ${bookings?.current_status === "Cancelled"
                         ? "bg-red-100"
@@ -167,20 +167,21 @@ export const BookingDetailsPage = () => {
                       {bookings?.current_status}
                     </div>
                   </SelectTrigger>
+                  {
+                    bookings?.fac_type === "Request" && <SelectContent>
+                      <SelectItem value="Pending">
+                        Pending
+                      </SelectItem>
 
-                  <SelectContent>
-                    <SelectItem value="Pending">
-                      Pending
-                    </SelectItem>
+                      <SelectItem value="Confirmed">
+                        Confirmed
+                      </SelectItem>
 
-                    <SelectItem value="Confirmed">
-                      Confirmed
-                    </SelectItem>
-
-                    <SelectItem value="Cancelled">
-                      Cancelled
-                    </SelectItem>
-                  </SelectContent>
+                      <SelectItem value="Cancelled">
+                        Cancelled
+                      </SelectItem>
+                    </SelectContent>
+                  }
                 </Select>
               </div>
 
