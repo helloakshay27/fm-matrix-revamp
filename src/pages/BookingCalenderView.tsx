@@ -361,7 +361,7 @@ const BookingCalenderView = () => {
                         </div>
 
                         {/* Facility Rows */}
-                        {facilities.map((facility) => (
+                        {facilities?.map((facility) => (
                             <div key={facility.id} className="flex">
                                 <div className="w-32 flex-shrink-0 border border-gray-300 sticky left-0 z-20 bg-white">
                                     <div className="relative h-16">
