@@ -28,6 +28,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'listWeek' | 'year'>('dayGridMonth');
   const [date, setDate] = useState(new Date());
   const [selectedYear, setSelectedYear] = useState(moment().year());
+  const [weekOffset, setWeekOffset] = useState(0); // Track week offset for 52-week navigation
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isYearLoading, setIsYearLoading] = useState(false);
   const calendarRef = useRef<FullCalendar>(null);
@@ -69,19 +70,53 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   });
   const navigate = useNavigate();
 
+  // Helper function to parse filter date strings (DD/MM/YYYY format)
+  const parseFilterDate = (dateStr: string): Date => {
+    if (!dateStr || typeof dateStr !== 'string') {
+      return new Date();
+    }
+    
+    const parts = dateStr.trim().split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+      const year = parseInt(parts[2], 10);
+      
+      // Validate the parsed values
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year) && 
+          day > 0 && day <= 31 && month >= 0 && month <= 11 && year > 1900) {
+        return new Date(year, month, day);
+      }
+    }
+    
+    // Fallback to current date if parsing fails
+    console.warn('Failed to parse date:', dateStr, '- using current date');
+    return new Date();
+  };
+
   // Apply default filters on component mount (with default date range)
   useEffect(() => {
+    // Parse the initial filter's start date to set calendar date
+    const initialStartDate = parseFilterDate(activeFilters.dateFrom);
+    setDate(initialStartDate);
+    
     // Always apply the initial filters (which include default date range)
     onDateRangeChange?.(activeFilters.dateFrom, activeFilters.dateTo);
     onFiltersChange?.(activeFilters);
   }, []); // Empty dependency array to run only on mount
 
-  const get52WeeksRange = () => {
-    const today = new Date();
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() - 52 * 7);
-    return { start: startDate, end: today };
-  };
+  const get52WeeksRange = useMemo(() => {
+    // Calculate 52-week range from today + current offset
+    const today = moment();
+    const startDate = today.clone().add(weekOffset, 'weeks').subtract(52, 'weeks');
+    const endDate = today.clone().add(weekOffset, 'weeks');
+    return { 
+      start: startDate.toDate(), 
+      end: endDate.toDate(),
+      startFormatted: startDate.format('DD/MM/YYYY'),
+      endFormatted: endDate.format('DD/MM/YYYY')
+    };
+  }, [weekOffset]);
 
   const calendarEvents = useMemo(() => {
     return events.map(event => ({
@@ -121,72 +156,134 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 
   const handleYearNavigate = (action: 'next' | 'prev') => {
     setIsYearLoading(true);
-    const newYear = action === 'next' ? selectedYear + 1 : selectedYear - 1;
+    
+    // Update week offset (each navigation moves by 52 weeks)
+    const newOffset = action === 'next' ? weekOffset + 52 : weekOffset - 52;
+    setWeekOffset(newOffset);
 
-    // Update selected year
-    setSelectedYear(newYear);
+    // Calculate 52-week date range from today + offset
+    const today = moment();
+    const startDate = today.clone().add(newOffset, 'weeks').subtract(52, 'weeks');
+    const endDate = today.clone().add(newOffset, 'weeks');
 
-    // Update date range for the new year
-    const startOfYear = moment().year(newYear).startOf('year').format('DD/MM/YYYY');
-    const endOfYear = moment().year(newYear).endOf('year').format('DD/MM/YYYY');
-    const filters = { ...activeFilters, dateFrom: startOfYear, dateTo: endOfYear };
+    const startDateFormatted = startDate.format('DD/MM/YYYY');
+    const endDateFormatted = endDate.format('DD/MM/YYYY');
+    
+    const filters = { ...activeFilters, dateFrom: startDateFormatted, dateTo: endDateFormatted };
 
     // Update filters and trigger callbacks
     setActiveFilters(filters);
-    onDateRangeChange?.(startOfYear, endOfYear);
+    onDateRangeChange?.(startDateFormatted, endDateFormatted);
     onFiltersChange?.(filters);
 
     // Reset loading state after a short delay to allow re-render
     setTimeout(() => setIsYearLoading(false), 300);
   };
 
-  const getCurrentYearDateRange = () => {
-    const currentDate = moment().year(selectedYear);
-    const startOfYear = currentDate.clone().startOf('year').format('DD/MM/YYYY');
-    const endOfYear = currentDate.clone().endOf('year').format('DD/MM/YYYY');
-    return { startOfYear, endOfYear };
-  };
-
-  // Update year range when year changes
+  // Update 52-week range when week offset changes (only when in year view)
   useEffect(() => {
-    if (view === 'year') {
-      const { startOfYear, endOfYear } = getCurrentYearDateRange();
-      const filters = { ...activeFilters, dateFrom: startOfYear, dateTo: endOfYear };
+    if (view === 'year' && weekOffset !== 0) {
+      const { startFormatted, endFormatted } = get52WeeksRange;
+      const filters = { ...activeFilters, dateFrom: startFormatted, dateTo: endFormatted };
       setActiveFilters(filters);
-      onDateRangeChange?.(startOfYear, endOfYear);
+      onDateRangeChange?.(startFormatted, endFormatted);
       onFiltersChange?.(filters);
     }
-  }, [selectedYear]);
+  }, [weekOffset, view]);
+
+  // Sync calendar API date with state for non-year views
+  useEffect(() => {
+    if (view !== 'year' && calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      const currentCalendarDate = calendarApi.getDate();
+      
+      // Only update if dates are different (to avoid unnecessary re-renders)
+      if (currentCalendarDate.getTime() !== date.getTime()) {
+        calendarApi.gotoDate(date);
+      }
+    }
+  }, [date, view]);
 
   const handleViewChange = (newView: any) => {
     const calendarApi = calendarRef.current?.getApi();
 
     if (newView === 'year') {
       setIsYearLoading(true);
-      // Get current year's date range
-      const { startOfYear, endOfYear } = getCurrentYearDateRange();
-      const filters = { ...activeFilters, dateFrom: startOfYear, dateTo: endOfYear };
+      
+      // When switching to year view, check if we should use filter dates or current 52-week range
+      // If filters have been explicitly set (not default), calculate offset to align with them
+      
+      // Check if current filters differ from default range (meaning user applied custom filters)
+      const defaultRange = getDefaultDateRange();
+      const hasCustomFilters = activeFilters.dateFrom !== defaultRange.dateFrom || 
+                               activeFilters.dateTo !== defaultRange.dateTo;
+      
+      if (hasCustomFilters) {
+        // Use the filter's date range to calculate weekOffset
+        const filterEnd = parseFilterDate(activeFilters.dateTo);
+        const today = moment();
+        const filterEndMoment = moment(filterEnd);
+        const offsetWeeks = filterEndMoment.diff(today, 'weeks');
+        setWeekOffset(offsetWeeks);
+      }
+      
+      // Get 52-week rolling date range
+      const { startFormatted, endFormatted } = get52WeeksRange;
+      const filters = { ...activeFilters, dateFrom: startFormatted, dateTo: endFormatted };
 
-      // Update filters with current year's range
+      // Update filters with 52-week range
       setActiveFilters(filters);
-      onDateRangeChange?.(startOfYear, endOfYear);
+      onDateRangeChange?.(startFormatted, endFormatted);
       onFiltersChange?.(filters);
 
       // Reset loading state after a short delay
       setTimeout(() => {
         setIsYearLoading(false);
       }, 300);
+    } else {
+      // When switching from year view to other views, set date to filter's start date
+      const filterStartDate = parseFilterDate(activeFilters.dateFrom);
+      setDate(filterStartDate);
+      
+      if (calendarApi) {
+        calendarApi.changeView(newView);
+        calendarApi.gotoDate(filterStartDate);
+      }
     }
 
-    if (calendarApi && newView !== 'year') {
-      calendarApi.changeView(newView);
-    }
     setView(newView);
   };
 
   const handleApplyFilters = (filters: CalendarFilters) => {
     // Complete replacement of filters, not appending
     console.log('Applying new filters (complete replacement):', filters);
+    
+    const filterStartDate = parseFilterDate(filters.dateFrom);
+    
+    // Update calendar date to match filter start date for all views
+    setDate(filterStartDate);
+    
+    // If in year view, calculate the weekOffset based on the filter's start date
+    if (view === 'year') {
+      const today = moment();
+      const filterStart = moment(filterStartDate);
+      const weeksFromToday = filterStart.diff(today, 'weeks');
+      
+      // The filter represents the END of a 52-week period, so we need to calculate offset
+      // to align the 52-week window with the filter's date range
+      const filterEnd = parseFilterDate(filters.dateTo);
+      const filterEndMoment = moment(filterEnd);
+      const offsetWeeks = filterEndMoment.diff(today, 'weeks');
+      
+      setWeekOffset(offsetWeeks);
+    } else {
+      // For other views, update the calendar API to show the filter's date
+      const calendarApi = calendarRef.current?.getApi();
+      if (calendarApi) {
+        calendarApi.gotoDate(filterStartDate);
+      }
+    }
+    
     setActiveFilters({ ...filters }); // Ensure clean object
     onDateRangeChange?.(filters.dateFrom, filters.dateTo);
     onFiltersChange?.({ ...filters }); // Pass clean copy to parent
@@ -233,7 +330,10 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const CustomToolbar = () => {
     const getToolbarTitle = () => {
       if (view === 'year') {
-        return `${selectedYear} - Yearly Calendar View`;
+        const { start, end } = get52WeeksRange;
+        const startMoment = moment(start);
+        const endMoment = moment(end);
+        return `52 Weeks: ${startMoment.format('MMM DD, YYYY')} - ${endMoment.format('MMM DD, YYYY')}`;
       }
       return moment(date).format('MMMM YYYY');
     };
@@ -353,7 +453,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
                   <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
-                  <p className="text-gray-600 font-medium">Loading {selectedYear} calendar...</p>
+                  <p className="text-gray-600 font-medium">Loading 52-week calendar...</p>
                 </div>
               </div>
             ) : (
@@ -361,7 +461,8 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
                 <YearlyView
                   events={calendarEvents.length > 0 ? calendarEvents : []}
                   onSelectEvent={handleSelectEvent}
-                  year={selectedYear}
+                  startDate={get52WeeksRange.start}
+                  endDate={get52WeeksRange.end}
                 />
               </div>
             )}
@@ -581,20 +682,28 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 const YearlyView: React.FC<{
   events: any[];
   onSelectEvent: (event: any) => void;
-  year: number;
-}> = ({ events, onSelectEvent, year }) => {
+  startDate: Date;
+  endDate: Date;
+}> = ({ events, onSelectEvent, startDate, endDate }) => {
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedDayEvents, setSelectedDayEvents] = useState<any[]>([]);
 
-  // Generate 12 months for the selected year
+  // Generate 12 months dynamically based on the date range
   const months = useMemo(() => {
     const monthsArray = [];
+    const start = moment(startDate);
+    const end = moment(endDate);
+    
+    // Get the first day of the start month
+    let current = start.clone().startOf('month');
+    const endMonth = end.clone().endOf('month');
 
-    for (let i = 0; i < 12; i++) {
-      const monthStart = moment().year(year).month(i).startOf('month');
-      const monthEnd = moment().year(year).month(i).endOf('month');
+    // Generate months until we reach the end date
+    while (current.isSameOrBefore(endMonth, 'month')) {
+      const monthStart = current.clone().startOf('month');
+      const monthEnd = current.clone().endOf('month');
 
       // Generate weeks for this month
       const weeks = [];
@@ -633,12 +742,19 @@ const YearlyView: React.FC<{
       monthsArray.push({
         name: monthStart.format('MMM'),
         fullName: monthStart.format('MMMM'),
-        year: year,
+        year: monthStart.year(),
         weeks
       });
+      
+      // Move to next month
+      current.add(1, 'month');
+      
+      // Limit to 12 months maximum for display
+      if (monthsArray.length >= 12) break;
     }
+    
     return monthsArray;
-  }, [events, year]);
+  }, [events, startDate, endDate]);
 
   const handleDayHover = (day: any, event: React.MouseEvent) => {
     // Always show tooltip for debugging, even for days with 0 events
@@ -671,11 +787,11 @@ const YearlyView: React.FC<{
 
       <div className="grid grid-cols-3 gap-6">
         {months.map((month, monthIndex) => (
-          <div key={month.name} className="space-y-2 bg-gray-50 p-4 rounded-lg border">
+          <div key={`${month.year}-${month.name}`} className="space-y-2 bg-gray-50 p-4 rounded-lg border">
             {/* Month Header */}
             <div className="text-center">
               <h3 className="text-base font-semibold text-gray-800 mb-3">
-                {month.name}
+                {month.name} {month.year}
               </h3>
 
               {/* Day Headers */}
