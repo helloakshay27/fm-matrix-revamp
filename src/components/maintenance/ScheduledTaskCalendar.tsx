@@ -333,7 +333,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         const { start, end } = get52WeeksRange;
         const startMoment = moment(start);
         const endMoment = moment(end);
-        return `52 Weeks: ${startMoment.format('MMM DD, YYYY')} - ${endMoment.format('MMM DD, YYYY')}`;
+        return `${startMoment.format('MMM DD, YYYY')} - ${endMoment.format('MMM DD, YYYY')}`;
       }
       return moment(date).format('MMMM YYYY');
     };
