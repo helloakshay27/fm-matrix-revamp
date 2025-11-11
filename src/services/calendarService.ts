@@ -35,6 +35,7 @@ export const calendarService = {
     'q[start_date_lteq]'?: string;
     's[task_custom_form_schedule_type_eq]'?: string;
     's[task_task_of_eq]'?: string;
+    's[custom_form_form_name_eq]'?: string;
   }): Promise<CalendarEvent[]> {
     try {
       // Always include ALL possible parameters - start with defaults
@@ -66,7 +67,8 @@ export const calendarService = {
       'q[start_date_gteq]': '',
       'q[start_date_lteq]': '',
       's[task_custom_form_schedule_type_eq]': '',
-      's[task_task_of_eq]': ''
+      's[task_task_of_eq]': '',
+      's[custom_form_form_name_eq]': ''
     };
   }
 };

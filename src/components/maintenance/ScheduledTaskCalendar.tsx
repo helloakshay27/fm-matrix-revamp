@@ -10,17 +10,20 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { CalendarEvent, calendarService } from '@/services/calendarService';
 import { CalendarFilterModal, CalendarFilters } from '@/components/CalendarFilterModal';
+import { toast } from 'sonner';
 
 interface ScheduledTaskCalendarProps {
   events?: CalendarEvent[];
   onDateRangeChange?: (start: string, end: string) => void;
   onFiltersChange?: (filters: any) => void;
+  isLoading?: boolean;
 }
 
 export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   events = [],
   onDateRangeChange,
-  onFiltersChange
+  onFiltersChange,
+  isLoading = false
 }) => {
   const [view, setView] = useState<'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'listWeek' | 'year'>('dayGridMonth');
   const [date, setDate] = useState(new Date());
@@ -95,6 +98,14 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       }
     }));
   }, [events]);
+
+  // Track when calendar events are fully processed and rendered
+  useEffect(() => {
+    if (calendarEvents.length > 0) {
+      console.log("📊 Calendar events processed:", calendarEvents.length);
+      console.log("✅ Events are ready to render");
+    }
+  }, [calendarEvents]);
 
   const handleNavigate = (action: 'next' | 'prev') => {
     const calendarApi = calendarRef.current?.getApi();
@@ -333,7 +344,8 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       </div>
 
       {/* Calendar/Year View with Toolbar */}
-      <div className="bg-white border rounded-lg p-4" style={{ height: '700px', overflowY: 'auto' }}>
+      <div className="bg-white border rounded-lg p-4 relative" style={{ height: '700px', overflowY: 'auto' }}>
+        {/* Show calendar content */}
         {view === 'year' ? (
           <>
             <CustomToolbar />
@@ -397,6 +409,17 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
               )}
             />
           </>
+        )}
+        
+        {/* Loading Overlay - Shows during API fetch and state mapping */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
+              <p className="text-gray-600 font-medium">Loading calendar events...</p>
+              <p className="text-gray-500 text-sm mt-2">Fetching and processing scheduled tasks</p>
+            </div>
+          </div>
         )}
       </div>
 

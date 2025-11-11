@@ -67,6 +67,8 @@ import {
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { toast } from "sonner";
+import { Toaster } from "sonner";
 
 // Sortable Chart Item Component for Drag and Drop
 const SortableChartItem = ({
@@ -288,6 +290,7 @@ export const ScheduledTaskDashboard = () => {
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [showSelectionPanel, setShowSelectionPanel] = useState(false);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
   const [calendarFilters, setCalendarFilters] = useState<CalendarFilters>(
     () => {
       // Use the same default date range as analytics (today to one week ago)
@@ -323,15 +326,15 @@ export const ScheduledTaskDashboard = () => {
   const [siteWiseData, setSiteWiseData] =
     useState<SiteWiseChecklistResponse | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  
+
   // Individual loading states for each analytics card
   const [loadingStates, setLoadingStates] = useState({
     technical: false,
     nonTechnical: false,
     topTen: false,
-    siteWise: false
+    siteWise: false,
   });
-  
+
   const [selectedAnalytics, setSelectedAnalytics] = useState<string[]>([
     "technical",
     "nonTechnical",
@@ -474,7 +477,10 @@ export const ScheduledTaskDashboard = () => {
       if (filters.taskCategory) {
         queryParams.append("q[task_category_eq]", filters.taskCategory);
       } else if (filters["q[task_category_eq]"]) {
-        queryParams.append("q[task_category_eq]", filters["q[task_category_eq]"]);
+        queryParams.append(
+          "q[task_category_eq]",
+          filters["q[task_category_eq]"]
+        );
       }
 
       const apiUrl = getFullUrl(
@@ -499,7 +505,10 @@ export const ScheduledTaskDashboard = () => {
 
       const data: ApiTaskResponse = await response.json();
       console.log("API Response data:", data);
-      console.log("Occurrences count:", data.asset_task_occurrences?.length || 0);
+      console.log(
+        "Occurrences count:",
+        data.asset_task_occurrences?.length || 0
+      );
 
       const transformedData = transformApiDataToTaskRecord(
         data.asset_task_occurrences || []
@@ -595,6 +604,10 @@ export const ScheduledTaskDashboard = () => {
   // Load calendar events
   useEffect(() => {
     const loadCalendarEvents = async () => {
+      // Start loading when fetching calendar events
+      setCalendarLoading(true);
+      console.log("🔄 Starting calendar events fetch...");
+
       try {
         // Always send all filter parameters (including empty ones) to the API
         const params: any = {
@@ -603,44 +616,52 @@ export const ScheduledTaskDashboard = () => {
           "s[task_custom_form_schedule_type_eq]":
             calendarFilters["s[task_custom_form_schedule_type_eq]"] || "",
           "s[task_task_of_eq]": calendarFilters["s[task_task_of_eq]"] || "",
+          "s[custom_form_form_name_eq]": calendarFilters["s[custom_form_form_name_eq]"] || "",
         };
 
+        console.log("📤 Calendar API params:", params);
+
         const events = await calendarService.fetchCalendarEvents(params);
+        console.log("📦 API Response received:", events?.length || 0, "events");
+
+        // Set the events first
         setCalendarEvents(events);
+
+        // Check if response has data
+        if (events && events.length > 0) {
+          console.log(
+            `✅ Calendar events loaded: ${events.length} events found`
+          );
+          // Add a small delay to ensure state updates and rendering complete
+          // This accounts for the 3-5 second state mapping and rendering time
+          setTimeout(() => {
+            console.log("⏱️ State mapping complete, stopping loader");
+            setCalendarLoading(false);
+          }, 500); // 500ms buffer to ensure smooth transition after state update
+        } else {
+          console.log("⚠️ No calendar events found");
+          // Stop loader and show toast when no data is found
+          setCalendarLoading(false);
+          toast.info("No data found", {
+            description: "No calendar events match the current filters.",
+          });
+        }
       } catch (error) {
-        console.error("Failed to load calendar events:", error);
-        // Use sample data as fallback
-        setCalendarEvents([
-          {
-            id: 14482120,
-            title: "PPM - LIFT LOBBY CLEANING",
-            start: "2025-07-21 07:00:00",
-            details_url:
-              "/pms/asset_task_occurrences/14482120/asset_task_details",
-            color: "#fdbb0b",
-            status: "Scheduled",
-            custom_form: {
-              name: "LIFT LOBBY CLEANING",
-              schedule_type: "PPM",
-            },
-            task: {
-              id: 22099,
-              task_type: null,
-            },
-            schedule_task: {
-              building: "Test QA",
-              wing: null,
-              floor: null,
-              area: null,
-              room: null,
-            },
-          },
-        ]);
+        console.error("❌ Failed to load calendar events:", error);
+        // Stop loading on error
+        setCalendarLoading(false);
+        // Show error toast
+        toast.error("Error loading calendar events", {
+          description: "Failed to load calendar events. Please try again.",
+        });
       }
     };
 
     if (activeTab === "calendar") {
       loadCalendarEvents();
+    } else {
+      // Reset loading state when switching away from calendar tab
+      setCalendarLoading(false);
     }
   }, [activeTab, calendarFilters]);
 
@@ -697,88 +718,104 @@ export const ScheduledTaskDashboard = () => {
     selectedTypes: string[] = selectedAnalytics
   ) => {
     setAnalyticsLoading(true);
-    
+
     // Set selected cards to loading
     setLoadingStates({
       technical: selectedTypes.includes("technical"),
       nonTechnical: selectedTypes.includes("nonTechnical"),
       topTen: selectedTypes.includes("topTen"),
-      siteWise: selectedTypes.includes("siteWise")
+      siteWise: selectedTypes.includes("siteWise"),
     });
-    
+
     try {
       const promises: Promise<any>[] = [];
 
       if (selectedTypes.includes("technical")) {
         promises.push(
-          taskAnalyticsAPI.getTechnicalChecklistData(startDate, endDate).then(data => {
-            setTechnicalData(data);
-            setLoadingStates(prev => ({ ...prev, technical: false }));
-            return data;
-          })
+          taskAnalyticsAPI
+            .getTechnicalChecklistData(startDate, endDate)
+            .then((data) => {
+              setTechnicalData(data);
+              setLoadingStates((prev) => ({ ...prev, technical: false }));
+              return data;
+            })
         );
       } else {
-        promises.push(Promise.resolve(null).then(() => {
-          setTechnicalData(null);
-          return null;
-        }));
+        promises.push(
+          Promise.resolve(null).then(() => {
+            setTechnicalData(null);
+            return null;
+          })
+        );
       }
 
       if (selectedTypes.includes("nonTechnical")) {
         promises.push(
-          taskAnalyticsAPI.getNonTechnicalChecklistData(startDate, endDate).then(data => {
-            setNonTechnicalData(data);
-            setLoadingStates(prev => ({ ...prev, nonTechnical: false }));
-            return data;
-          })
+          taskAnalyticsAPI
+            .getNonTechnicalChecklistData(startDate, endDate)
+            .then((data) => {
+              setNonTechnicalData(data);
+              setLoadingStates((prev) => ({ ...prev, nonTechnical: false }));
+              return data;
+            })
         );
       } else {
-        promises.push(Promise.resolve(null).then(() => {
-          setNonTechnicalData(null);
-          return null;
-        }));
+        promises.push(
+          Promise.resolve(null).then(() => {
+            setNonTechnicalData(null);
+            return null;
+          })
+        );
       }
 
       if (selectedTypes.includes("topTen")) {
         promises.push(
-          taskAnalyticsAPI.getTopTenChecklistData(startDate, endDate).then(data => {
-            setTopTenData(data);
-            setLoadingStates(prev => ({ ...prev, topTen: false }));
-            return data;
-          })
+          taskAnalyticsAPI
+            .getTopTenChecklistData(startDate, endDate)
+            .then((data) => {
+              setTopTenData(data);
+              setLoadingStates((prev) => ({ ...prev, topTen: false }));
+              return data;
+            })
         );
       } else {
-        promises.push(Promise.resolve(null).then(() => {
-          setTopTenData(null);
-          return null;
-        }));
+        promises.push(
+          Promise.resolve(null).then(() => {
+            setTopTenData(null);
+            return null;
+          })
+        );
       }
 
       if (selectedTypes.includes("siteWise")) {
         promises.push(
-          taskAnalyticsAPI.getSiteWiseChecklistData(startDate, endDate).then(data => {
-            setSiteWiseData(data);
-            setLoadingStates(prev => ({ ...prev, siteWise: false }));
-            return data;
-          })
+          taskAnalyticsAPI
+            .getSiteWiseChecklistData(startDate, endDate)
+            .then((data) => {
+              setSiteWiseData(data);
+              setLoadingStates((prev) => ({ ...prev, siteWise: false }));
+              return data;
+            })
         );
       } else {
-        promises.push(Promise.resolve(null).then(() => {
-          setSiteWiseData(null);
-          return null;
-        }));
+        promises.push(
+          Promise.resolve(null).then(() => {
+            setSiteWiseData(null);
+            return null;
+          })
+        );
       }
 
       await Promise.all(promises);
     } catch (error) {
       console.error("Error fetching analytics data:", error);
-      
+
       // Reset all loading states on error
       setLoadingStates({
         technical: false,
         nonTechnical: false,
         topTen: false,
-        siteWise: false
+        siteWise: false,
       });
     } finally {
       setAnalyticsLoading(false);
@@ -1359,6 +1396,7 @@ export const ScheduledTaskDashboard = () => {
         <TabsContent value="calendar" className="mt-4 sm:mt-6">
           <ScheduledTaskCalendar
             events={calendarEvents}
+            isLoading={calendarLoading}
             onDateRangeChange={(start, end) => {
               setCalendarFilters((prev) => ({
                 ...prev,
@@ -1405,83 +1443,93 @@ export const ScheduledTaskDashboard = () => {
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext
-              items={chartOrder}
-              strategy={rectSortingStrategy}
-            >
+            <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {chartOrder.map((analyticsType) => {
-                    if (!selectedAnalytics.includes(analyticsType)) return null;
+                {chartOrder.map((analyticsType) => {
+                  if (!selectedAnalytics.includes(analyticsType)) return null;
 
-                    if (analyticsType === "technical" && (technicalData || loadingStates.technical)) {
-                      return (
-                        <SortableChartItem key="technical" id="technical">
-                          <SectionLoader loading={loadingStates.technical}>
-                            <TaskAnalyticsCard
-                              title="Technical Checklist"
-                              data={technicalData?.response || []}
-                              type="technical"
-                              dateRange={getDateRangeForComponents()}
-                            />
-                          </SectionLoader>
-                        </SortableChartItem>
-                      );
-                    }
+                  if (
+                    analyticsType === "technical" &&
+                    (technicalData || loadingStates.technical)
+                  ) {
+                    return (
+                      <SortableChartItem key="technical" id="technical">
+                        <SectionLoader loading={loadingStates.technical}>
+                          <TaskAnalyticsCard
+                            title="Technical Checklist"
+                            data={technicalData?.response || []}
+                            type="technical"
+                            dateRange={getDateRangeForComponents()}
+                          />
+                        </SectionLoader>
+                      </SortableChartItem>
+                    );
+                  }
 
-                    if (analyticsType === "nonTechnical" && (nonTechnicalData || loadingStates.nonTechnical)) {
-                      return (
-                        <SortableChartItem key="nonTechnical" id="nonTechnical">
-                          <SectionLoader loading={loadingStates.nonTechnical}>
-                            <TaskAnalyticsCard
-                              title="Non-Technical Checklist"
-                              data={nonTechnicalData?.response || []}
-                              type="nonTechnical"
-                              dateRange={getDateRangeForComponents()}
-                            />
-                          </SectionLoader>
-                        </SortableChartItem>
-                      );
-                    }
+                  if (
+                    analyticsType === "nonTechnical" &&
+                    (nonTechnicalData || loadingStates.nonTechnical)
+                  ) {
+                    return (
+                      <SortableChartItem key="nonTechnical" id="nonTechnical">
+                        <SectionLoader loading={loadingStates.nonTechnical}>
+                          <TaskAnalyticsCard
+                            title="Non-Technical Checklist"
+                            data={nonTechnicalData?.response || []}
+                            type="nonTechnical"
+                            dateRange={getDateRangeForComponents()}
+                          />
+                        </SectionLoader>
+                      </SortableChartItem>
+                    );
+                  }
 
-                    if (analyticsType === "topTen" && (topTenData || loadingStates.topTen)) {
-                      return (
-                        <SortableChartItem key="topTen" id="topTen">
-                          <SectionLoader loading={loadingStates.topTen}>
-                            <TaskAnalyticsCard
-                              title="Top 10 Checklist Types"
-                              data={topTenData?.response || []}
-                              type="topTen"
-                              dateRange={getDateRangeForComponents()}
-                            />
-                          </SectionLoader>
-                        </SortableChartItem>
-                      );
-                    }
+                  if (
+                    analyticsType === "topTen" &&
+                    (topTenData || loadingStates.topTen)
+                  ) {
+                    return (
+                      <SortableChartItem key="topTen" id="topTen">
+                        <SectionLoader loading={loadingStates.topTen}>
+                          <TaskAnalyticsCard
+                            title="Top 10 Checklist Types"
+                            data={topTenData?.response || []}
+                            type="topTen"
+                            dateRange={getDateRangeForComponents()}
+                          />
+                        </SectionLoader>
+                      </SortableChartItem>
+                    );
+                  }
 
-                    if (analyticsType === "siteWise" && (siteWiseData || loadingStates.siteWise)) {
-                      return (
-                        <SortableChartItem key="siteWise" id="siteWise">
-                          <SectionLoader loading={loadingStates.siteWise}>
-                            <TaskAnalyticsCard
-                              title="Site-wise Checklist Status"
-                              data={siteWiseData?.response || []}
-                              type="siteWise"
-                              dateRange={getDateRangeForComponents()}
-                            />
-                          </SectionLoader>
-                        </SortableChartItem>
-                      );
-                    }
+                  if (
+                    analyticsType === "siteWise" &&
+                    (siteWiseData || loadingStates.siteWise)
+                  ) {
+                    return (
+                      <SortableChartItem key="siteWise" id="siteWise">
+                        <SectionLoader loading={loadingStates.siteWise}>
+                          <TaskAnalyticsCard
+                            title="Site-wise Checklist Status"
+                            data={siteWiseData?.response || []}
+                            type="siteWise"
+                            dateRange={getDateRangeForComponents()}
+                          />
+                        </SectionLoader>
+                      </SortableChartItem>
+                    );
+                  }
 
-                    return null;
-                  })}                {/* No selection message */}
+                  return null;
+                })}{" "}
+                {/* No selection message */}
                 {selectedAnalytics.length === 0 && (
                   <div className="col-span-2 flex items-center justify-center py-12">
                     <div className="text-center">
                       <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground">
-                        No analytics selected. Please select at least one
-                        report to view.
+                        No analytics selected. Please select at least one report
+                        to view.
                       </p>
                     </div>
                   </div>
@@ -1547,6 +1595,9 @@ export const ScheduledTaskDashboard = () => {
           return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
         })()}
       />
+
+      {/* Sonner Toaster for notifications */}
+      <Toaster position="top-right" richColors closeButton />
     </div>
   );
 };

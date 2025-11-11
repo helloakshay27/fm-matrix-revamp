@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { 
@@ -7,9 +7,38 @@ import {
   InputLabel,
   Select as MuiSelect,
   MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
+import { API_CONFIG } from '@/config/apiConfig';
+
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return function executedFunction(...args: Parameters<T>) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+interface CustomForm {
+  id: number;
+  form_name: string;
+  description: string;
+  checklist_for: string;
+  schedule_type: string;
+  category_name: string | null;
+  custom_form_code: string;
+}
+
 interface CalendarFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,6 +50,7 @@ export interface CalendarFilters {
   dateTo: string;
   's[task_custom_form_schedule_type_eq]': string;
   's[task_task_of_eq]': string;
+  's[custom_form_form_name_eq]'?: string;
 }
 
 const fieldStyles = {
@@ -76,11 +106,15 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
       dateFrom: defaultRange.dateFrom,
       dateTo: defaultRange.dateTo,
       's[task_custom_form_schedule_type_eq]': '',
-      's[task_task_of_eq]': ''
+      's[task_task_of_eq]': '',
+      's[custom_form_form_name_eq]': ''
     };
   });
   const [isLoading, setIsLoading] = useState(false);
   const [dateError, setDateError] = useState<string>('');
+  const [checklist, setChecklist] = useState('');
+  const [customForms, setCustomForms] = useState<CustomForm[]>([]);
+  const [isLoadingCustomForms, setIsLoadingCustomForms] = useState(false);
 
   // Date validation function
   const validateDates = (fromDate: string, toDate: string): string => {
@@ -128,6 +162,82 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
       setDateError(error);
     }
   };
+
+  // Function to fetch custom forms
+  const fetchCustomForms = async (searchQuery: string) => {
+    setIsLoadingCustomForms(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const accessToken = API_CONFIG.TOKEN;
+      
+      if (!baseUrl || !accessToken) {
+        throw new Error('Missing API configuration');
+      }
+      
+      // Remove trailing slash from baseUrl if present
+      const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+      
+      // Add https:// protocol if not present
+      const fullBaseUrl = cleanBaseUrl.startsWith('http') 
+        ? cleanBaseUrl 
+        : `https://${cleanBaseUrl}`;
+      
+      // Build the API URL - ensure proper format
+      const apiUrl = `${fullBaseUrl}/pms/custom_forms.json?page=1&access_token=${accessToken}&q[form_name_cont]=${encodeURIComponent(searchQuery)}`;
+      
+      console.log('Fetching custom forms for calendar filter from:', apiUrl);
+      
+      const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Custom forms response:', data);
+      
+      setCustomForms(data.custom_forms || []);
+    } catch (error) {
+      console.error("Error fetching custom forms:", error);
+      toast.error("Failed to fetch custom forms");
+    } finally {
+      setIsLoadingCustomForms(false);
+    }
+  };
+
+  // Debounced function for checklist search
+  const debouncedFetchCustomForms = useCallback(
+    debounce((query: string) => {
+      if (query) {
+        fetchCustomForms(query);
+      } else {
+        setCustomForms([]);
+      }
+    }, 300),
+    []
+  );
+
+  // Handle checklist input change
+  const handleChecklistChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setChecklist(value);
+    // Update the filter state as user types
+    setFilters(prev => ({
+      ...prev,
+      's[custom_form_form_name_eq]': value
+    }));
+    debouncedFetchCustomForms(value);
+  };
+
+  const handleChecklistSelect = (form: CustomForm) => {
+    setChecklist(form.form_name);
+    setFilters(prev => ({
+      ...prev,
+      's[custom_form_form_name_eq]': form.form_name
+    }));
+    setCustomForms([]); // Clear suggestions after selection
+  };
+
   const handleApply = async () => {
     // Validate dates before applying
     const dateValidationError = validateDates(filters.dateFrom, filters.dateTo);
@@ -150,8 +260,12 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
         dateFrom: formatForAPI(filters.dateFrom),
         dateTo: formatForAPI(filters.dateTo),
         's[task_custom_form_schedule_type_eq]': filters['s[task_custom_form_schedule_type_eq]'],
-        's[task_task_of_eq]': filters['s[task_task_of_eq]']
+        's[task_task_of_eq]': filters['s[task_task_of_eq]'],
+        's[custom_form_form_name_eq]': filters['s[custom_form_form_name_eq]'] || ''
       };
+
+      console.log('📤 Applying Calendar Filters:', apiFilters);
+      console.log('Checklist value:', filters['s[custom_form_form_name_eq]']);
 
       onApplyFilters(apiFilters);
       onClose();
@@ -168,9 +282,12 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
       dateFrom: defaultRange.dateFrom,
       dateTo: defaultRange.dateTo,
       's[task_custom_form_schedule_type_eq]': '',
-      's[task_task_of_eq]': ''
+      's[task_task_of_eq]': '',
+      's[custom_form_form_name_eq]': ''
     };
     setFilters(clearedFilters);
+    setChecklist(''); // Clear checklist input
+    setCustomForms([]); // Clear custom form suggestions
     setDateError(''); // Clear date error
     
     // Convert to DD/MM/YYYY for API
@@ -184,7 +301,8 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
       dateFrom: formatForAPI(clearedFilters.dateFrom),
       dateTo: formatForAPI(clearedFilters.dateTo),
       's[task_custom_form_schedule_type_eq]': '',
-      's[task_task_of_eq]': ''
+      's[task_task_of_eq]': '',
+      's[custom_form_form_name_eq]': ''
     };
 
     onApplyFilters(apiFilters);
@@ -248,7 +366,43 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
           {/* Filter Options Section */}
           <div>
             <h3 className="text-sm font-medium text-[#C72030] mb-4">Filter Options</h3>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-3 gap-6">
+              <div className="relative">
+                <TextField
+                  label="Checklist"
+                  placeholder="Type to search checklists..."
+                  value={checklist}
+                  onChange={handleChecklistChange}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ 
+                    sx: fieldStyles,
+                    endAdornment: isLoadingCustomForms ? (
+                      <CircularProgress size={20} />
+                    ) : null
+                  }}
+                />
+                {customForms.length > 0 && (
+                  <div className="absolute z-[10000] w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {customForms.map((form) => (
+                      <div
+                        key={form.id}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => handleChecklistSelect(form)}
+                      >
+                        <div className="font-medium">{form.form_name}</div>
+                        {form.description && (
+                          <div className="text-sm text-gray-500">
+                            {form.description}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Select Type</InputLabel>
                 <MuiSelect
@@ -288,6 +442,8 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
               </FormControl>
             </div>
           </div>
+
+
         </div>
 
         {/* Action Buttons */}
