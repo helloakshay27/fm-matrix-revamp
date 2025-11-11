@@ -404,24 +404,25 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
                     <span className="text-sm text-gray-900">{ticket.site}</span>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <RotateCcw className="h-4 w-4 text-red-500" />
+                  <div className="flex items-start gap-3">
+                    <RotateCcw className="h-4 w-4 text-red-500 mt-0.5" />
                     <span className="text-sm font-medium text-gray-700 min-w-[100px]">
                       Status
                     </span>
                     <span className="text-sm text-gray-700">:</span>
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex flex-col gap-1 text-sm">
                       <span className="italic text-gray-600">
                         {ticket.status}
                       </span>
+                      <div className="text-sm text-gray-600">
+                        (Handled By {ticket.handledBy})
+                      </div>
                       {/* <ChevronRight className="h-3 w-3 text-gray-600" /> */}
                       {/* <span className="italic text-gray-600">{ticket.nextStatus}</span> */}
                     </div>
                   </div>
 
-                  <div className="text-sm text-gray-600 ml-7">
-                    (Handled By {ticket.handledBy})
-                  </div>
+                 
                 </div>
 
                 {/* Action Buttons */}
