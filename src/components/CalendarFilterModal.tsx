@@ -306,7 +306,6 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     };
 
     onApplyFilters(apiFilters);
-    onClose();
     toast.success('Filters cleared successfully');
   };
 

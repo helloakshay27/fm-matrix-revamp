@@ -12,6 +12,11 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
+.fc .fc-list-sticky .fc-list-day > * {
+    position: sticky;
+    top: 0px;
+    z-index: 1;
+}
 
 .scrollbar-thin::-webkit-scrollbar {
   width: 4px;
