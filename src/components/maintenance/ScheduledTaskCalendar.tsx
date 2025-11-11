@@ -757,13 +757,14 @@ const YearlyView: React.FC<{
   }, [events, startDate, endDate]);
 
   const handleDayHover = (day: any, event: React.MouseEvent) => {
-    // Always show tooltip for debugging, even for days with 0 events
-    setHoveredDay(day.date.format('YYYY-MM-DD'));
-    setMousePosition({ x: event.clientX, y: event.clientY });
+    // Disabled hover tooltip - only show on click
+    // setHoveredDay(day.date.format('YYYY-MM-DD'));
+    // setMousePosition({ x: event.clientX, y: event.clientY });
   };
 
   const handleDayLeave = () => {
-    setHoveredDay(null);
+    // Disabled hover tooltip
+    // setHoveredDay(null);
   };
 
   const handleDayClick = (day: any) => {
@@ -820,12 +821,9 @@ const YearlyView: React.FC<{
                             ${day.isCurrentMonth ? 'text-gray-800' : 'text-gray-400'}
                             ${day.isToday ? 'bg-blue-500 text-white font-bold ring-2 ring-blue-200' : ''}
                             ${hasEvents && !day.isToday ? 'bg-blue-100 text-blue-800 font-medium' : ''}
-                            ${isHovered ? 'bg-blue-200 shadow-lg scale-105' : ''}
                             ${hasEvents ? 'hover:bg-blue-200 hover:shadow-md' : 'hover:bg-gray-100'}
                             transition-all duration-200
                           `}
-                          onMouseEnter={(e) => handleDayHover(day, e)}
-                          onMouseLeave={handleDayLeave}
                           onClick={() => handleDayClick(day)}
                           title={`${moment(day.date).format('MMMM D, YYYY')} - ${day.events.length} events`}
                         >
