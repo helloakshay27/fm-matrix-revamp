@@ -24,8 +24,8 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
     const achPct = achievedPctOverride !== undefined ? achievedPctOverride : achPctCalc;
     const brcPct = breachedPctOverride !== undefined ? breachedPctOverride : brcPctCalc;
     const data = [
-        { name: 'Achieved', value: achieved, color: '#D9D3C4' },
-        { name: 'Breached', value: breached, color: '#C4B89D' }
+        { name: 'Achieved', value: achieved, color: '#DBC2A9' },
+        { name: 'Breached', value: breached, color: '#8B7355' }
     ];
     // Detect print to enlarge only the circle, not the container height
     const [isPrinting, setIsPrinting] = React.useState(false);
@@ -56,20 +56,20 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
         };
     }, []);
     return (
-        <div className="w-full">
-            <h3 className="text-black font-semibold text-base sm:text-lg mb-2">{title}</h3>
-            <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-5 sm:py-6">
-                <div className="w-full h-[300px] sm:h-[360px] print:h-[300px]">
+        <div className="w-full no-break tat-pie-card">
+            <h3 className="text-black font-semibold text-base sm:text-lg mb-1 print:mb-1">{title}</h3>
+            <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-4 sm:py-5 print:px-5 print:py-3">
+                <div className="w-full h-[260px] sm:h-[320px] print:h-[300px] tat-pie-container">
                     <ResponsiveContainer width="100%" height="100%">
-                        <PieChart margin={isPrinting ? { top: 8, right: 12, bottom: 8, left: 12 } : { top: 8, right: 40, bottom: 8, left: 40 }}>
-                            <Pie data={data} dataKey="value" nameKey="name" innerRadius={0} outerRadius={isPrinting ? 145 : 110} stroke="#FFFFFF" paddingAngle={0}>
+                        <PieChart margin={isPrinting ? { top: 0, right: 0, bottom: 0, left: 0 } : { top: 0, right: 0, bottom: 0, left: 0 }}>
+                            <Pie data={data} dataKey="value" nameKey="name" innerRadius={0} outerRadius={isPrinting ? '98%' : '92%'} stroke="#FFFFFF" paddingAngle={0} cx="50%" cy="50%">
                                 {data.map((d, i) => <Cell key={i} fill={d.color} />)}
                             </Pie>
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
 
-                <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm sm:text-base">
+                <div className="mt-2 print:mt-1 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm sm:text-base print:text-[12px]">
                     <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#D9D3C4' }} /> <span className="text-black font-medium">Achieved:</span> <span className="text-black/80">{achieved.toLocaleString()} ({achPct.toFixed(2)}%)</span></div>
                     <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#C4B89D' }} /> <span className="text-black font-medium">Breached:</span> <span className="text-black/80">{breached.toLocaleString()} ({brcPct.toFixed(2)}%)</span></div>
                 </div>
@@ -403,36 +403,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
     const [categoryTatLoading, setCategoryTatLoading] = React.useState(false);
     const [categoryTatError, setCategoryTatError] = React.useState<string | null>(null);
 
-    // === State: Customer Feedback Analysis (dynamic rendering) ===
-    interface CustomerFeedbackRating { key: string; label: string; count: number; percentage: number; rating_value: number; color: string; raw?: any; }
-    const [customerFeedbackRatings, setCustomerFeedbackRatings] = React.useState<CustomerFeedbackRating[]>([]);
-    const [customerFeedbackLoading, setCustomerFeedbackLoading] = React.useState(false);
-    const [customerFeedbackError, setCustomerFeedbackError] = React.useState<string | null>(null);
-
-    // Fixed original color palette for Customer Experience Feedback (do not use API colors for box backgrounds)
-    const customerFeedbackColorPalette: Record<string, string> = {
-        great: '#EDE7DB',      // Excellent
-        good: '#D9D3C4',       // Good
-        okay: '#C4B89D',       // Average
-        bad: '#C1A593',        // Bad
-        terrible: '#D5DBDB'    // Poor
-    };
-
-    // === State: Customer Feedback Weekly Trend (stacked bar) ===
-    interface WeeklyTrendRow {
-        day: string;              // e.g. Mon, Tue
-        date: string;             // original date dd-mm-yyyy
-        Excellent: number;
-        Good: number;
-        Average: number;
-        Bad: number;
-        Poor: number;
-        total: number;            // total_feedback
-        satisfaction: number;     // daily_satisfaction_score
-    }
-    const [weeklyTrendRows, setWeeklyTrendRows] = React.useState<WeeklyTrendRow[]>([]);
-    const [weeklyTrendLoading, setWeeklyTrendLoading] = React.useState(false);
-    const [weeklyTrendError, setWeeklyTrendError] = React.useState<string | null>(null);
+    // Customer Feedback sections removed as requested
 
     // === State: Asset Management Analysis (log response first only) ===
 
@@ -700,141 +671,9 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         return () => controller.abort();
     }, []);
 
-    // Fetch Customer Feedback Analysis (log first then map to ratings)
-    React.useEffect(() => {
-        const rawBase = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        const siteId = localStorage.getItem('selectedSiteId') || '';
-        if (!rawBase || !token) {
-            if (!rawBase) console.warn('[WeeklyReport][customer_feedback_analysis] baseUrl missing in localStorage');
-            if (!token) console.warn('[WeeklyReport][customer_feedback_analysis] token missing in localStorage');
-            return;
-        }
-        const base = rawBase.startsWith('http') ? rawBase : `https://${rawBase}`;
-        const url = `${base.replace(/\/$/, '')}/api/pms/reports/customer_feedback_analysis${siteId ? `?site_id=${siteId}` : ''}`;
-        const controller = new AbortController();
-        console.log('[WeeklyReport] Fetching Customer Feedback Analysis:', { url, siteId });
-        setCustomerFeedbackLoading(true);
-        setCustomerFeedbackError(null);
-        fetch(url, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-            signal: controller.signal
-        }).then(async res => {
-            const status = res.status;
-            let bodyText = '';
-            try { bodyText = await res.text(); } catch { /* ignore */ }
-            let parsed: any = {};
-            try { parsed = bodyText ? JSON.parse(bodyText) : {}; } catch (e) {
-                console.error('[WeeklyReport][customer_feedback_analysis] JSON parse failed', e, bodyText?.slice(0, 400));
-            }
-            if (!res.ok) {
-                console.error('[WeeklyReport][customer_feedback_analysis] API error', status, parsed);
-                setCustomerFeedbackError(`API ${status}`);
-                return;
-            }
-            console.log('[WeeklyReport][customer_feedback_analysis] raw response:', parsed);
-            const analysis = parsed?.feedback_data?.feedback_analysis || parsed?.customer_feedback_data?.analysis || parsed?.analysis || parsed;
-            const ratingObj = analysis?.feedback_by_rating || analysis?.ratings || {};
-            // Mapping backend keys to display labels consistent with original static UI
-            const labelMap: Record<string, string> = {
-                great: 'Excellent',
-                good: 'Good',
-                okay: 'Average',
-                bad: 'Bad',
-                terrible: 'Poor'
-            };
-            const order = ['great', 'good', 'okay', 'bad', 'terrible'];
-            const collected: CustomerFeedbackRating[] = order.map(k => {
-                const r = ratingObj?.[k] || {};
-                return {
-                    key: k,
-                    label: labelMap[k] || k,
-                    count: Number(r.count ?? 0),
-                    percentage: Number(r.percentage ?? 0),
-                    rating_value: Number(r.rating_value ?? 0),
-                    color: r.color || '#EDE7DB',
-                    raw: r
-                } as CustomerFeedbackRating;
-            });
-            // If percentages are zero or all zero, compute manually
-            // const totalCount = collected.reduce((s, r) => s + r.count, 0);
-            // const allZeroPct = collected.every(r => !r.percentage);
-            // if (totalCount > 0 && allZeroPct) {
-            //     collected.forEach(r => { r.percentage = (r.count / totalCount) * 100; });
-            // }
-            setCustomerFeedbackRatings(collected);
-        }).catch(err => {
-            if (err?.name === 'AbortError') return;
-            console.error('[WeeklyReport][customer_feedback_analysis] Fetch failed', err);
-            setCustomerFeedbackError('Network error');
-        }).finally(() => setCustomerFeedbackLoading(false));
-        return () => controller.abort();
-    }, []);
+    // Customer Feedback analysis effect removed
 
-    // Fetch Customer Feedback Weekly Trend (log response only first)
-    React.useEffect(() => {
-        const rawBase = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        const siteId = localStorage.getItem('selectedSiteId') || '';
-        if (!rawBase || !token) {
-            if (!rawBase) console.warn('[WeeklyReport][customer_feedback_weekly_trend] baseUrl missing in localStorage');
-            if (!token) console.warn('[WeeklyReport][customer_feedback_weekly_trend] token missing in localStorage');
-            return;
-        }
-        const base = rawBase.startsWith('http') ? rawBase : `https://${rawBase}`;
-        const url = `${base.replace(/\/$/, '')}/api/pms/reports/customer_feedback_weekly_trend${siteId ? `?site_id=${encodeURIComponent(siteId)}` : ''}`;
-        const controller = new AbortController();
-        console.log('[WeeklyReport] Fetching Customer Feedback Weekly Trend:', { url, siteId });
-        setWeeklyTrendLoading(true);
-        setWeeklyTrendError(null);
-        fetch(url, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-            signal: controller.signal
-        }).then(async res => {
-            const status = res.status;
-            let bodyText = '';
-            try { bodyText = await res.text(); } catch { /* ignore */ }
-            let parsed: any = {};
-            try { parsed = bodyText ? JSON.parse(bodyText) : {}; } catch (e) {
-                console.error('[WeeklyReport][customer_feedback_weekly_trend] JSON parse failed', e, bodyText?.slice(0, 400));
-            }
-            if (!res.ok) {
-                console.error('[WeeklyReport][customer_feedback_weekly_trend] API error', status, parsed);
-                setWeeklyTrendError(`API ${status}`);
-                setWeeklyTrendRows([]);
-                return;
-            }
-            console.log('[WeeklyReport][customer_feedback_weekly_trend] raw response:', parsed);
-            // Map daily_trends -> weeklyTrendRows
-            const daily = parsed?.feedback_trend_data?.feedback_weekly_trend?.daily_trends || parsed?.daily_trends;
-            if (Array.isArray(daily)) {
-                const mapped: WeeklyTrendRow[] = daily.map((d: any) => ({
-                    day: d.day_name || d.day || '',
-                    date: d.date || '',
-                    Excellent: Number(d.feedback_breakdown?.excellent ?? 0),
-                    Good: Number(d.feedback_breakdown?.good ?? 0),
-                    Average: Number(d.feedback_breakdown?.average ?? 0),
-                    Bad: Number(d.feedback_breakdown?.bad ?? 0),
-                    Poor: Number(d.feedback_breakdown?.poor ?? 0),
-                    total: Number(d.total_feedback ?? 0),
-                    satisfaction: Number(d.daily_satisfaction_score ?? 0)
-                }));
-                setWeeklyTrendRows(mapped);
-                console.log('[WeeklyReport][customer_feedback_weekly_trend] mapped weeklyTrendRows:', mapped);
-            } else {
-                console.warn('[WeeklyReport][customer_feedback_weekly_trend] daily_trends not array');
-                setWeeklyTrendRows([]);
-            }
-        }).catch(err => {
-            if (err?.name === 'AbortError') return;
-            console.error('[WeeklyReport][customer_feedback_weekly_trend] Fetch failed', err);
-            setWeeklyTrendError('Network error');
-            setWeeklyTrendRows([]);
-        }).finally(() => setWeeklyTrendLoading(false));
-        return () => controller.abort();
-    }, []);
+    // Customer Feedback weekly trend effect removed
 
     // Fetch TAT Achievement Analysis (log only first as requested)
     React.useEffect(() => {
@@ -973,7 +812,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
 
 
     // --- Global loader: show until ALL individual API loaders have finished (success or error) ---
-    const overallLoading = topCatLoading || weeklySummaryLoading || priorityLoading || ageingLoading || tatLoading || categoryTatLoading || customerFeedbackLoading || weeklyTrendLoading || assetMgmtLoading || checklistStatusLoading;
+    const overallLoading = topCatLoading || weeklySummaryLoading || priorityLoading || ageingLoading || tatLoading || categoryTatLoading || assetMgmtLoading || checklistStatusLoading;
 
     // Detect auto print trigger via query param (?auto=1 / true / yes)
     const auto = React.useMemo(() => {
@@ -1034,7 +873,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         <div className="w-full print-exact">
             {/* readiness marker so external logic (or tests) can detect when page content mounted */}
             <div data-component="weekly-report" data-loading={overallLoading ? 'true' : 'false'} style={{ display: 'none' }} />
-            <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } .first-page-group { break-inside: avoid !important; page-break-inside: avoid !important; page-break-before: auto; page-break-after: always; } a[href]::after { content: "" !important; } }`}</style>
+            <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } .first-page-group { break-inside: avoid !important; page-break-inside: avoid !important; page-break-before: auto; page-break-after: always; } a[href]::after { content: "" !important; } .tat-pie-container .recharts-wrapper { height: 100% !important; width: 100% !important; } .tat-pie-card { page-break-inside: avoid !important; } }`}</style>
             {/* Wrap sections 1–3 together to keep them on a single page in PDF */}
             <div className="no-break first-page-group">
                 <header className="w-full bg-[#F6F4EE] flex flex-col items-center justify-center text-center py-6 sm:py-8 mb-6 
@@ -1119,8 +958,8 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                             <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
                                 <thead>
                                     <tr>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/2">Priority</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-1/2">Open Tickets</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/2">Priority</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-1/2">Open Tickets</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1152,13 +991,13 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                             <table className="w-full table-fixed border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
                                 <thead>
                                     <tr>
-                                        <th rowSpan={2} className="align-middle bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left">Category</th>
-                                        <th colSpan={3} className="bg-[#ECE6DE] w-3/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
+                                        <th rowSpan={2} className="align-middle bg-[#ECE6DE] w-1/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left">Category</th>
+                                        <th colSpan={3} className="bg-[#ECE6DE] w-3/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
                                     </tr>
                                     <tr>
-                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Count</th>
-                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">% out of total</th>
-                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">% inc./dec. from last week</th>
+                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Count</th>
+                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">% out of total</th>
+                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">% inc./dec. from last week</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1204,15 +1043,15 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                         <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
                             <thead>
                                 <tr>
-                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/6">Priority</th>
-                                    <th colSpan={5} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">No. of Days</th>
+                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/6">Priority</th>
+                                    <th colSpan={5} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">No. of Days</th>
                                 </tr>
                                 <tr>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">0-10</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">11-20</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">21-30</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">31-40</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">40 +</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">0-10</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">11-20</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">21-30</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">31-40</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">40 +</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1263,7 +1102,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                     <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">TAT Achievement (Response & Resolution)</h2>
                     <div className="border-t border-dashed border-gray-300 my-3" />
                     {tatLoading && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 gap-8">
                             <TATPieCard title="Response TAT Overall" achieved={0} breached={0} achievedPctOverride={0} breachedPctOverride={0} />
                             <TATPieCard title="Resolution TAT Overall" achieved={0} breached={0} achievedPctOverride={0} breachedPctOverride={0} />
                         </div>
@@ -1272,7 +1111,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                         <div className="text-center text-red-600 text-sm">{tatError}</div>
                     )}
                     {!tatLoading && !tatError && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 gap-8 print:gap-4">
                             <TATPieCard
                                 title={tatResponse?.title || 'Response TAT Overall'}
                                 achieved={tatResponse?.achieved ?? 0}
@@ -1301,16 +1140,16 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                         <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
                             <thead>
                                 <tr>
-                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-[28%]">Category</th>
-                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[10%]">Total</th>
-                                    <th colSpan={2} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[24%]">Resolution TAT</th>
-                                    <th colSpan={2} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-[24%]">Resolution TAT %</th>
+                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-[28%]">Category</th>
+                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[10%]">Total</th>
+                                    <th colSpan={2} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[24%]">Resolution TAT</th>
+                                    <th colSpan={2} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-[24%]">Resolution TAT %</th>
                                 </tr>
                                 <tr>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Achieved</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Breached</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Achieved %</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Breached %</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Achieved</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Breached</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Achieved %</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Breached %</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1339,91 +1178,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                 </div>
             </section>
 
-            {/* Customer Experience Feedback (Dynamic) */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">Customer Experience Feedback</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="border border-gray-300 rounded-sm overflow-hidden">
-                        {customerFeedbackLoading && (
-                            <div className="p-6 text-center text-gray-500 text-sm">Loading feedback...</div>
-                        )}
-                        {!customerFeedbackLoading && customerFeedbackError && (
-                            <div className="p-6 text-center text-red-600 text-sm">{customerFeedbackError}</div>
-                        )}
-                        {!customerFeedbackLoading && !customerFeedbackError && customerFeedbackRatings.length === 0 && (
-                            <div className="p-6 text-center text-gray-500 text-sm">No feedback data</div>
-                        )}
-                        {!customerFeedbackLoading && !customerFeedbackError && customerFeedbackRatings.length > 0 && (
-                            <>
-                                <div className="grid grid-cols-5">
-                                    {customerFeedbackRatings.map(r => (
-                                        <div key={r.key} className="p-3 sm:p-4 print:p-2 text-center font-semibold text-black border-b border-gray-300">{r.label}</div>
-                                    ))}
-                                </div>
-                                <div className="grid grid-cols-5">
-                                    {customerFeedbackRatings.map((r, idx) => (
-                                        <div key={r.key} className={`p-6 sm:p-8 print:p-4 text-center ${idx ? 'border-l-2 border-white' : ''}`} style={{ background: customerFeedbackColorPalette[r.key] || '#EDE7DB' }}>
-                                            <div className="text-3xl sm:text-4xl font-extrabold text-black">{r.count.toLocaleString()}</div>
-                                            <div className="mt-2 text-sm sm:text-base text-black/80">{r.percentage}%</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </section>
-
-            {/* Customer Feedback */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">Customer Feedback</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    {(() => {
-                        const palette: Record<string, string> = { Excellent: '#EDE7DB', Good: '#D9D3C4', Average: '#C4B89D', Bad: '#C1A593', Poor: '#D5DBDB' };
-                        const categories = Object.keys(palette);
-                        if (weeklyTrendLoading) {
-                            return <div className="bg-[#F6F4EE] rounded-sm p-6 sm:p-8 text-center text-gray-500 text-sm">Loading weekly trend...</div>;
-                        }
-                        if (weeklyTrendError) {
-                            return <div className="bg-[#F6F4EE] rounded-sm p-6 sm:p-8 text-center text-red-600 text-sm">{weeklyTrendError}</div>;
-                        }
-                        const allZero = weeklyTrendRows.length > 0 && weeklyTrendRows.every(r => (r.total === 0));
-                        return (
-                            <div className="bg-[#F6F4EE] rounded-sm p-6 sm:p-8">
-                                <h3 className="text-black font-semibold text-base sm:text-lg mb-4 flex items-center gap-4">Weekly Trend {allZero && <span className="text-xs sm:text-sm text-gray-500 font-normal">(No feedback data for this period)</span>}</h3>
-                                <div className="w-full h-72 sm:h-80 print:h-64 relative">
-                                    {weeklyTrendRows.length === 0 && (
-                                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">No data</div>
-                                    )}
-                                    {weeklyTrendRows.length > 0 && (
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={weeklyTrendRows} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-                                                <CartesianGrid stroke="#DDD" strokeDasharray="3 3" />
-                                                <XAxis dataKey="day" stroke="#000" fontSize={12} />
-                                                <YAxis stroke="#000" fontSize={12} allowDecimals={false} />
-                                                <Tooltip cursor={{ fill: '#00000008' }} wrapperStyle={{ fontSize: '12px' }} />
-                                                {categories.map(cat => (
-                                                    <Bar key={cat} dataKey={cat} stackId="fb" fill={palette[cat]} radius={[4, 4, 0, 0]} />
-                                                ))}
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    )}
-                                </div>
-                                <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs sm:text-sm print:text-[10px]">
-                                    {categories.map(cat => (
-                                        <div key={cat} className="flex items-center gap-2">
-                                            <span className="inline-block h-3 w-3 rounded-sm" style={{ background: palette[cat] }} />
-                                            <span className="text-black font-medium">{cat}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })()}
-                </div>
-            </section>
+            {/* Customer Experience Feedback and Customer Feedback sections removed */}
 
             {/* 4. Asset Management */}
             <section className={sectionBox}>
@@ -1444,17 +1199,17 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                             <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
                                 <thead>
                                     <tr>
-                                        <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-[16%]">Metric</th>
-                                        <th colSpan={3} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[42%]">Critical</th>
-                                        <th colSpan={3} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-[42%]">Non-Critical</th>
+                                        <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w>[16%]">Metric</th>
+                                        <th colSpan={3} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[42%]">Critical</th>
+                                        <th colSpan={3} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-[42%]">Non-Critical</th>
                                     </tr>
                                     <tr>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Total</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">In Use</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Breakdown</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Total</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">In Use</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Breakdown</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Total</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">In Use</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Breakdown</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Total</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">In Use</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Breakdown</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1506,13 +1261,13 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                         <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
                             <thead>
                                 <tr>
-                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/3">Task Status</th>
-                                    <th colSpan={3} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
+                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/3">Task Status</th>
+                                    <th colSpan={3} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
                                 </tr>
                                 <tr>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Technical</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Non-Technical</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Technical</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Non-Technical</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1565,8 +1320,8 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                         <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
                             <thead>
                                 <tr>
-                                    <th className="bg-[#ECE6DE] font-semibold p-4 sm:p-5 print:p-2 border-b border-gray-300 text-left w-3/4">Category Of Checklist (PPM)</th>
-                                    <th className="bg-[#ECE6DE] font-semibold p-4 sm:p-5 print:p-2 border-b border-gray-300 text-center w-1/4">Overdue Count</th>
+                                    <th className="bg-[#ECE6DE] font-bold p-4 sm:p-5 print:p-2 border-b border-gray-300 text-left w-3/4">Category Of Checklist (PPM)</th>
+                                    <th className="bg-[#ECE6DE] font-bold p-4 sm:p-5 print:p-2 border-b border-gray-300 text-center w-1/4">Overdue Count</th>
                                 </tr>
                             </thead>
                             <tbody>
